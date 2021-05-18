@@ -154,9 +154,7 @@ class MainActivity : ComponentActivity() {
 								"No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
 							}
 
-							CompositionLocalProvider(
-								LocalViewModelStoreOwner provides viewModelStoreOwner
-							) {
+							CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
 								MainNavigation(navController = navController, viewModelStoreOwner = viewModelStoreOwner)
 							}
 						}

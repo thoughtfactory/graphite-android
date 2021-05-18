@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,18 +41,29 @@ import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.ResourceMap
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.TopBar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
 fun BucketScreen() {
-
+	val scope = rememberCoroutineScope()
 	val viewModel: MainViewModel = viewModel()
 
 	val bucketList by viewModel.bucketList.observeAsState()
 
 	val chipDataList: MutableList<ChipData> = mutableListOf()
 	val isChipSelected: MutableMap<BucketItemType.Type, Boolean> = mutableMapOf()
+
+	val bucketSizeMap: SnapshotStateMap<String, Int> = remember { mutableStateMapOf() }
+	LaunchedEffect(key1 = bucketList.hashCode()) {
+		scope.launch(Dispatchers.IO) {
+			bucketList?.forEach {
+				bucketSizeMap[it.key] = viewModel.bucketRepository.bucketItemDbTableDao.countBucketSize(bucketKey = it.key)
+			}
+		}
+	}
 
 	BucketItemType.Type.values().forEach {
 		var isSelected by remember { mutableStateOf(true) }
@@ -72,15 +84,16 @@ fun BucketScreen() {
 			Spacer(modifier = Modifier.height(8.dp))
 			ChipView(chipDataList = chipDataList)
 			LazyVerticalGrid(
-				columns = GridCells
-					.Adaptive(minSize = 144.dp),
-				modifier = Modifier
-					.padding(4.dp),
+				columns = GridCells.Adaptive(minSize = 144.dp),
+				modifier = Modifier.padding(4.dp),
 			) {
 				bucketList?.forEach { bucket ->
 					if (isChipSelected[BucketItemType.Type.values()[bucket.bucketType]]!!) {
 						item {
-							BucketCard(bucket)
+							BucketCard(
+								bucket = bucket,
+								bucketSize = bucketSizeMap[bucket.key]
+							)
 						}
 					}
 				}
@@ -154,7 +167,8 @@ private fun NoBucketCard() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun BucketCard(
-	bucket: BucketDbEntry
+	bucket: BucketDbEntry,
+	bucketSize: Int?
 ) {
 	val context = LocalContext.current
 
@@ -193,7 +207,7 @@ private fun BucketCard(
 						.size(24.dp)
 				)
 				Text(
-					text = "${bucket.containerSize}",
+					text = "$bucketSize",
 					style = MaterialTheme.typography.bodyMedium,
 					color = MaterialTheme.colorScheme.onSecondaryContainer,
 				)

@@ -25,7 +25,7 @@ class BucketRepository(val momento: Momento) {
 
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
-	private val bucketDbTableDao: BucketDbTableDao = UserDatabase.getInstance(momento).bucketDbTableDao
+	val bucketDbTableDao: BucketDbTableDao = UserDatabase.getInstance(momento).bucketDbTableDao
 	val bucketItemDbTableDao: BucketItemDbTableDao = UserDatabase.getInstance(momento).bucketItemDbTableDao
 
 	var bucketList: LiveData<List<BucketDbEntry>> = bucketDbTableDao.getAllAsLiveData()
@@ -66,7 +66,6 @@ class BucketRepository(val momento: Momento) {
 				this.createdTimestamp = currentTimestamp
 				this.modifiedTimestamp = currentTimestamp
 				this.title = title
-				this.containerSize = 0
 				this.contentThumbnail = null
 				this.isArchived = false
 				this.isFavourite = false

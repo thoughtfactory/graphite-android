@@ -1,6 +1,7 @@
 package com.syncodec.momento.mainComponent.miscellaneous
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.*
 import androidx.compose.material3.*
@@ -10,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -59,7 +61,6 @@ fun BottomNavigationBar(
 
 		items.forEach { item ->
 			NavigationBarItem(
-				selected = currentRoute == item.route,
 				onClick = {
 					if (item.route != currentRoute) {
 						navController.navigate(item.route) {
@@ -74,7 +75,6 @@ fun BottomNavigationBar(
 					}
 				},
 				icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
-				modifier = Modifier,
 				label = {
 					Text(
 						text = item.title,
@@ -90,7 +90,10 @@ fun BottomNavigationBar(
 					unselectedIconColor = MaterialTheme.colorScheme.onBackground,
 					selectedTextColor = MaterialTheme.colorScheme.onBackground,
 					unselectedTextColor = MaterialTheme.colorScheme.onBackground
-				)
+				),
+				selected = currentRoute == item.route,
+				interactionSource = remember { MutableInteractionSource() },
+				modifier = Modifier,
 			)
 		}
 	}

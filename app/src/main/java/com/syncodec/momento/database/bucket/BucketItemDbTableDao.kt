@@ -28,6 +28,9 @@ interface BucketItemDbTableDao {
 	@Query(value = "SELECT * FROM bucket_item_table WHERE bucket_key = :bucketKey ORDER BY created_timestamp DESC")
 	suspend fun getAllBucketItem(bucketKey: String) : List<BucketItemDbEntry>
 
+	@Query(value = "SELECT COUNT(*) FROM bucket_item_table WHERE bucket_key = :bucketKey")
+	suspend fun countBucketSize(bucketKey: String) : Int
+
 	@Query(value = "DELETE FROM bucket_item_table WHERE `key` = :key")
 	suspend fun delete(key: String)
 

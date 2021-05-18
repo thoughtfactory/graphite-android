@@ -20,10 +20,10 @@ interface BucketDbTableDao {
 	fun getAsFlow(key: String): Flow<BucketDbEntry?>
 
 	@Query(value = "SELECT * FROM bucket_table ORDER BY created_timestamp DESC")
-	fun getAllAsLiveData() : LiveData<List<BucketDbEntry>>
+	fun getAllAsLiveData(): LiveData<List<BucketDbEntry>>
 
 	@Query(value = "SELECT * FROM bucket_table ORDER BY created_timestamp DESC")
-	suspend fun getAll() : List<BucketDbEntry>
+	suspend fun getAll(): List<BucketDbEntry>
 
 	@Query(value = "DELETE FROM bucket_table WHERE `key` = :key")
 	suspend fun delete(key: String)

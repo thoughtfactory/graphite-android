@@ -3,7 +3,6 @@ package com.syncodec.momento.database.bucket
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.google.gson.annotations.Expose
 
 @Entity(tableName = "bucket_table")
 data class BucketDbEntry(
@@ -26,9 +25,6 @@ data class BucketDbEntry(
 	@ColumnInfo(name = "title")
 	lateinit var title: String
 
-	@ColumnInfo(name = "bucket_size")
-	var containerSize: Int = 0
-
 	@ColumnInfo(name = "is_favourite")
 	var isFavourite: Boolean = false
 
@@ -44,18 +40,27 @@ data class BucketDbEntry(
 	@ColumnInfo(name = "hash")
 	var hash: Long? = null
 
-	override fun hashCode(): Int {
-		return key.toInt()
-	}
-
 	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
+		if (this.hashCode() != other.hashCode()) return false
 		if (javaClass != other?.javaClass) return false
 
 		other as BucketDbEntry
-
 		if (key != other.key) return false
-
 		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = key.hashCode()
+		result = 31 * result + bucketType
+		result = 31 * result + createdTimestamp.hashCode()
+		result = 31 * result + modifiedTimestamp.hashCode()
+		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
+		result = 31 * result + title.hashCode()
+		result = 31 * result + isFavourite.hashCode()
+		result = 31 * result + isArchived.hashCode()
+		result = 31 * result + isLocked.hashCode()
+		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
+		result = 31 * result + (hash?.hashCode() ?: 0)
+		return result
 	}
 }
