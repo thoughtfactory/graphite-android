@@ -33,12 +33,11 @@ data class StateData(
 @Composable
 fun StateButton(
 	stateList: List<StateData>,
-	initialState: Int,
+	currentState: Int,
 	modifier: Modifier,
 	onStateChange: (Int) -> Unit
 ) {
 	val interactionSource = remember { MutableInteractionSource() }
-	var currentState by remember { mutableStateOf(initialState) }
 	val spacerWeight by animateFloatAsState(targetValue = currentState.toFloat())
 
 	val stateColor by animateColorAsState(
@@ -50,7 +49,6 @@ fun StateButton(
 			.fillMaxWidth()
 			.clip(RoundedCornerShape(50))
 			.background(MaterialTheme.colorScheme.secondaryContainer)
-
 	) {
 		Row(
 			modifier = Modifier
@@ -84,7 +82,6 @@ fun StateButton(
 							interactionSource = interactionSource,
 							indication = null
 						) {
-							currentState = index
 							onStateChange(index)
 						},
 					verticalAlignment = Alignment.CenterVertically,

@@ -57,7 +57,6 @@ private fun CalendarHeaderYear(
 	val yearState = rememberLazyListState()
 	SideEffect {
 		scope.launch {
-			Log.i("npr71", "pagerState : ${pagerState.currentPage}")
 			yearState.scrollToItem(pagerState.currentPage / 12, -1)
 		}
 	}

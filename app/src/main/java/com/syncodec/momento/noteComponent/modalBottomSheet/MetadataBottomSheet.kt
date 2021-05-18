@@ -4,7 +4,8 @@ import android.content.Intent
 import android.location.Location
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -25,8 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.accompanist.flowlayout.FlowRow
-import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
@@ -35,9 +34,7 @@ import com.google.android.libraries.maps.model.MarkerOptions
 import com.syncodec.momento.BuildConfig
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
-import com.syncodec.momento.custom.button.MenuBottomSheetButton
-import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
-import com.syncodec.momento.database.diary.WeatherData
+import com.syncodec.momento.database.note.WeatherData
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.noteComponent.NoteViewModel
 import com.syncodec.momento.miscellaneous.roundTo
@@ -51,24 +48,10 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun MetadataBottomSheet() {
 	val noteViewModel: NoteViewModel = viewModel()
-	val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData> = listOf(
-		MenuBottomSheetButtonData(title = "Archive", imageVector = TablerIcons.Archive, highlight = noteViewModel.isArchived) {
-			noteViewModel.isArchived = !noteViewModel.isArchived
-		},
-		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart, highlight = noteViewModel.isFavourite) {
-			noteViewModel.isFavourite = !noteViewModel.isFavourite
-		},
-		MenuBottomSheetButtonData(title = "Move in vault", imageVector = TablerIcons.Container, highlight = noteViewModel.isLocked) {
-			noteViewModel.isLocked = !noteViewModel.isLocked
-		},
-		MenuBottomSheetButtonData(title = "Move to trash", imageVector = TablerIcons.Trash, highlight = noteViewModel.deletedTimestamp != -1L) {
-			noteViewModel.deletedTimestamp = System.currentTimeMillis()
-		}
-	)
 
 	Column(
 		modifier = Modifier
@@ -94,9 +77,12 @@ fun MetadataBottomSheet() {
 		LocationCard()
 
 		AnimatedVisibility(
-			visible = noteViewModel.location != null
+			visible = noteViewModel.location != null,
+			enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+			exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 		) {
-			if (noteViewModel.location != null) {
+//          WARN    Don't remove from if block or else null pointer exception
+			if (noteViewModel.location!=null) {
 				Column {
 					Spacer(modifier = Modifier.height(8.dp))
 					MapCard(
@@ -109,14 +95,13 @@ fun MetadataBottomSheet() {
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		if (noteViewModel.weatherData != null) {
-			WeatherCard(
-				weatherData = noteViewModel.weatherData
-			)
-			Spacer(modifier = Modifier.height(8.dp))
+		AnimatedVisibility(
+			visible = noteViewModel.weatherData != null,
+			enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+			exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
+		) {
+			WeatherCard(weatherData = noteViewModel.weatherData)
 		}
-
-		StateCard(menuBottomSheetButtonDataList = menuBottomSheetButtonDataList)
 
 		Spacer(modifier = Modifier.height(32.dp))
 
@@ -148,16 +133,15 @@ fun TimestampCard(
 			) {
 				Text(
 					text = "Created on : ",
-					style = MaterialTheme.typography.bodySmall.copy(
-						fontWeight = FontWeight.Bold
-					),
-					color = MaterialTheme.colorScheme.onSecondaryContainer
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onBackground
 				)
 				Spacer(modifier = Modifier.weight(1f))
 				Text(
 					text = timeStampToPrettyFull(createdTimestamp),
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSecondaryContainer
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.onBackground
 				)
 			}
 
@@ -168,10 +152,8 @@ fun TimestampCard(
 			) {
 				Text(
 					text = "Last edited on : ",
-					style = MaterialTheme.typography.bodySmall.copy(
-						fontWeight = FontWeight.Bold
-					),
-					color = MaterialTheme.colorScheme.onSecondaryContainer
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onBackground
 				)
 				Spacer(modifier = Modifier.weight(1f))
 
@@ -198,8 +180,9 @@ fun TimestampCard(
 
 				Text(
 					text = modifiedTimestampPretty,
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSecondaryContainer
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.onBackground
 				)
 			}
 		}
@@ -403,9 +386,8 @@ private fun WeatherCard(
 
 				Text(
 					text = "${weatherData?.temperature ?: "Temperature unavailable"}",
-					style = MaterialTheme.typography.bodySmall.copy(
-						fontWeight = FontWeight.Bold
-					),
+					style = MaterialTheme.typography.bodySmall,
+					fontWeight = FontWeight.Bold,
 					color = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 				)
@@ -438,34 +420,12 @@ private fun WeatherCard(
 
 				Text(
 					text = weatherData?.description ?: "Weather data unavailable",
-					style = MaterialTheme.typography.bodySmall.copy(
-						fontWeight = FontWeight.Bold
-					),
+					style = MaterialTheme.typography.bodySmall,
+					fontWeight = FontWeight.Bold,
 					color = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 				)
 			}
-		}
-	}
-}
-
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
-@Composable
-private fun StateCard(
-	menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData>
-) {
-	FlowRow(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp),
-		mainAxisAlignment = MainAxisAlignment.SpaceBetween,
-	) {
-		menuBottomSheetButtonDataList.forEach {
-			MenuBottomSheetButton(
-				menuBottomSheetButtonData = it,
-				modifier = Modifier
-					.width(80.dp)
-			)
 		}
 	}
 }

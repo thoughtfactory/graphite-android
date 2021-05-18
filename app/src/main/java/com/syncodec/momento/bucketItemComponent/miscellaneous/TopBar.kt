@@ -43,13 +43,13 @@ fun TopBar(
 						Icon(
 							imageVector = TablerIcons.Check,
 							contentDescription = "Save",
-							tint = MaterialTheme.colorScheme.onPrimaryContainer,
+							tint = MaterialTheme.colorScheme.onSecondaryContainer,
 						)
 					} else {
 						Icon(
 							imageVector = TablerIcons.ArrowBack ,
 							contentDescription = "Back",
-							tint = MaterialTheme.colorScheme.onPrimaryContainer,
+							tint = MaterialTheme.colorScheme.onSecondaryContainer,
 						)
 					}
 				}
@@ -63,7 +63,7 @@ fun TopBar(
 				Icon(
 					imageVector = TablerIcons.Dots,
 					contentDescription = "Menu",
-					tint = MaterialTheme.colorScheme.onPrimaryContainer,
+					tint = MaterialTheme.colorScheme.onSecondaryContainer,
 				)
 			}
 		}

@@ -116,8 +116,8 @@ fun MapLocationPopup() {
 				) {
 					FloatingActionButton(
 						onClick = {
-							if (noteViewModel.gpsLocation != null) {
-								map!!.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(noteViewModel.gpsLocation!!.latitude, noteViewModel.gpsLocation!!.longitude), 15f))
+							if (noteViewModel.gpsLocation.value != null) {
+								map!!.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(noteViewModel.gpsLocation.value!!.latitude, noteViewModel.gpsLocation.value!!.longitude), 15f))
 							} else {
 								Toast.makeText(context, "Location unavailable", Toast.LENGTH_LONG).show()
 							}

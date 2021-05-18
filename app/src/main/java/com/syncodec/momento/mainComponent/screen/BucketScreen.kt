@@ -9,8 +9,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
@@ -72,10 +72,10 @@ fun BucketScreen() {
 			Spacer(modifier = Modifier.height(8.dp))
 			ChipView(chipDataList = chipDataList)
 			LazyVerticalGrid(
-				cells = GridCells
+				columns = GridCells
 					.Adaptive(minSize = 144.dp),
 				modifier = Modifier
-					.padding(4.dp)
+					.padding(4.dp),
 			) {
 				bucketList?.forEach { bucket ->
 					if (isChipSelected[BucketItemType.Type.values()[bucket.bucketType]]!!) {
@@ -201,7 +201,7 @@ private fun BucketCard(
 			Text(
 				text = bucket.title,
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.secondary,
+				color = MaterialTheme.colorScheme.onSecondaryContainer,
 				fontWeight = FontWeight.ExtraBold
 			)
 		}

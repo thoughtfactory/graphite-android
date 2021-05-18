@@ -6,9 +6,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -56,7 +56,7 @@ import org.json.JSONObject
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-enum class SheetState{
+enum class SheetState {
 	INIT,
 	SEARCHING,
 	RESULT_FOUND,
@@ -214,7 +214,7 @@ fun AddBookSheet(
 		Spacer(modifier = Modifier.height(8.dp))
 
 		AnimatedContent(targetState = sheetState) {
-			when(it) {
+			when (it) {
 				SheetState.INIT -> ClimateChangeMessage()
 				SheetState.SEARCHING -> {
 					Box(
@@ -235,7 +235,7 @@ fun AddBookSheet(
 				}
 				SheetState.RESULT_FOUND -> {
 					LazyVerticalGrid(
-						cells = GridCells.Adaptive(96.dp),
+						columns = GridCells.Adaptive(96.dp),
 						modifier = Modifier
 							.padding(8.dp)
 					) {
@@ -319,7 +319,9 @@ private fun BookButton(
 			.padding(8.dp),
 	) {
 		Card(
-			elevation = 12.dp,
+			elevation = 0.dp,
+			backgroundColor = Color.Companion.Transparent,
+			shape = RoundedCornerShape(12.dp),
 			modifier = modifier,
 			onClick = { onClick() }
 		) {
@@ -339,6 +341,7 @@ private fun BookButton(
 		Text(
 			text = bookData.title,
 			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onBackground,
 			modifier = Modifier
 				.padding(0.dp, 4.dp, 0.dp, 0.dp)
 		)
@@ -349,6 +352,7 @@ private fun BookButton(
 			Text(
 				text = "~ $author",
 				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
 					.padding(0.dp, 4.dp, 0.dp, 0.dp)
 			)

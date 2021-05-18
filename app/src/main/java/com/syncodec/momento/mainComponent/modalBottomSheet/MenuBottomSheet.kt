@@ -6,9 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -50,7 +50,6 @@ fun MenuBottomSheet() {
 	var showLocked by viewModel.activityState.showLocked
 
 	var vaultState by (mainActivity.application as Momento).vaultState
-	val vaultKey by viewModel.activityState.vaultKeyFlow.collectAsState(initial = null)
 
 	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
 		viewModel.activityState.bottomSheetType.value = bottomSheetType
@@ -123,9 +122,9 @@ fun MenuBottomSheet() {
 		)
 
 		LazyVerticalGrid(
-			cells = GridCells.Fixed(4),
+			columns = GridCells.Fixed(4),
 			modifier = Modifier
-				.padding(24.dp, 0.dp)
+				.padding(24.dp, 0.dp),
 		) {
 			itemsIndexed(menuBottomSheetButtonDataLists) { _, menuBottomSheetButtonData ->
 				MenuBottomSheetButton(menuBottomSheetButtonData)

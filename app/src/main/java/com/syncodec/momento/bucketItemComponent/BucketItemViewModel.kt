@@ -1,6 +1,8 @@
 package com.syncodec.momento.bucketItemComponent
 
 import android.app.Application
+import android.content.Intent
+import android.graphics.BitmapFactory
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
@@ -10,20 +12,21 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.Momento
 import com.syncodec.momento.bucketComponent.modalBottomSheet.BookData
-import com.syncodec.momento.bucketComponent.modalBottomSheet.MovieData
+import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowData
+import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.database.bucket.BucketItemDbEntry
 import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.repository.BucketRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class BucketItemViewModel(application: Application) : AndroidViewModel(application) {
 
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
-	private val bucketRepository: BucketRepository = BucketRepository.getInstance(momento = application as Momento)
+	private val bucketRepository: BucketRepository = BucketRepository.getInstance(momento = application as Momento).apply { tvData.value = null }
 	lateinit var activityState: BucketItemActivity.ActivityState
 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
@@ -34,16 +37,17 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 	var bucketItemDbEntry = mutableStateOf(
 		BucketItemDbEntry(
-			primaryKey = "",
+			key = "",
 			bucketKey = "",
 			bucketItemType = -1
 		)
 	)
 
 	var bookData = mutableStateOf<BookData?>(null)
-	var movieData = mutableStateOf<MovieData?>(null)
+	var showData = mutableStateOf<ShowData?>(null)
+	val tvData = bucketRepository.tvData
 
-	var thumbnail = mutableStateOf<String?>(null)
+	var thumbnail = mutableStateOf<Any?>(null)
 	var thoughtList: SnapshotStateList<String> = mutableStateListOf()
 
 	fun updateThought() {
@@ -75,20 +79,18 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 						title = bookData.value!!.title,
 						state = bucketItemDbEntry.value.state,
 						thoughtList = thoughtList,
-						jsonString = objectMapper.writeValueAsString(bookData.value)
+ 						data = bookData.value!!
 					)
-				BucketItemType.Type.MOVIES -> bucketItemKey.value =
+				BucketItemType.Type.SHOWS -> bucketItemKey.value =
 					bucketRepository.putBucketItem(
 						bucketKey = bucketKey,
 						bucketItemKey = bucketItemKey.value,
 						bucketItemType = bucketItemType,
-						title = movieData.value!!.title,
+						title = showData.value!!.title,
 						state = bucketItemDbEntry.value.state,
 						thoughtList = thoughtList,
-						jsonString = objectMapper.writeValueAsString(movieData.value)
+						data = tvData.value!!
 					)
-				BucketItemType.Type.TVSHOWS -> {
-				}
 				BucketItemType.Type.MEDIA -> {
 				}
 				BucketItemType.Type.LINKS -> {
@@ -97,42 +99,59 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 		}
 	}
 
-	fun getItem() {
+	fun getItem(intent: Intent?) {
 		viewModelScope.launch(Dispatchers.IO) {
-			when (bucketItemType) {
-				BucketItemType.Type.TODO -> {
+			if (bucketItemKey.value == null) {
+				try {
+					when (bucketItemType) {
+						BucketItemType.Type.TODO -> null
+						BucketItemType.Type.BOOKS -> bookData.value =
+							objectMapper.readValue(intent!!.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name)!!)
+						BucketItemType.Type.SHOWS -> {
+							showData.value = objectMapper.readValue(intent!!.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name)!!)
+							thumbnail.value = "https://image.tmdb.org/t/p/w500${showData.value!!.posterPath}"
+							getShowData()
+						}
+						BucketItemType.Type.MEDIA -> null
+						BucketItemType.Type.LINKS -> null
+					}
+					status.value = Status.LOADED
+				} catch (exception: Exception) {
+					status.value = Status.ERROR
 				}
-				BucketItemType.Type.BOOKS -> {
-					try {
-						val bucketItemData = bucketRepository.getBucketItemData(
+			} else {
+				try {
+					val bucketItemData = bucketRepository.getBucketItemData(
+						bucketKey = bucketKey,
+						bucketItemKey = bucketItemKey.value!!
+					)
+					if (bucketItemData.first != null) {
+						bucketItemDbEntry.value = bucketItemData.first!!
+						thumbnail.value = BitmapFactory.decodeFile(getThumbnail())
+						bucketRepository.getThought(
 							bucketKey = bucketKey,
 							bucketItemKey = bucketItemKey.value!!
-						)
-						if (bucketItemData.first != null) {
-							bucketItemDbEntry.value = bucketItemData.first!!
-							bookData.value = objectMapper.readValue(bucketItemData.second)
-							thumbnail.value = getThumbnail()
-							bucketRepository.getThought(
-								bucketKey = bucketKey,
-								bucketItemKey = bucketItemKey.value!!
-							).forEach {
-								thoughtList.add(it)
-							}
-							status.value = Status.LOADED
-						} else {
-							status.value = Status.ERROR
+						).forEach {
+							thoughtList.add(it)
 						}
-					} catch (exception: Exception) {
+
+						when (bucketItemType) {
+							BucketItemType.Type.TODO -> {
+							}
+							BucketItemType.Type.BOOKS -> bookData.value = objectMapper.readValue(bucketItemData.second)
+							BucketItemType.Type.SHOWS -> bucketRepository.tvData.value = objectMapper.readValue(bucketItemData.second)
+							BucketItemType.Type.MEDIA -> {
+							}
+							BucketItemType.Type.LINKS -> {
+							}
+						}
+						status.value = Status.LOADED
+					} else {
 						status.value = Status.ERROR
 					}
-				}
-				BucketItemType.Type.MOVIES -> {
-				}
-				BucketItemType.Type.TVSHOWS -> {
-				}
-				BucketItemType.Type.MEDIA -> {
-				}
-				BucketItemType.Type.LINKS -> {
+				} catch (exception: Exception) {
+					status.value = Status.ERROR
+					exception.printStackTrace()
 				}
 			}
 		}
@@ -144,19 +163,29 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 				BucketItemType.Type.TODO -> {
 				}
 				BucketItemType.Type.BOOKS -> {
-					if (bucketItemDbEntry.value.primaryKey.isNotEmpty()) {
+					if (bucketItemDbEntry.value.key.isNotEmpty()) {
 						bucketRepository.updateBucketItem(bucketItemDbEntry = bucketItemDbEntry.value)
 					}
 				}
-				BucketItemType.Type.MOVIES -> {
-				}
-				BucketItemType.Type.TVSHOWS -> {
+				BucketItemType.Type.SHOWS -> {
+					if (bucketItemDbEntry.value.key.isNotEmpty()) {
+						bucketRepository.updateBucketItem(bucketItemDbEntry = bucketItemDbEntry.value)
+					}
 				}
 				BucketItemType.Type.MEDIA -> {
 				}
 				BucketItemType.Type.LINKS -> {
 				}
 			}
+		}
+	}
+
+	private fun getShowData() {
+		when (showData.value!!.showType) {
+			ShowType.TV -> {
+				bucketRepository.downloadTvData(id = showData.value!!.id)
+			}
+			ShowType.MOVIE -> null
 		}
 	}
 

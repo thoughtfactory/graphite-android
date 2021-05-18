@@ -18,7 +18,7 @@ import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.button.LargeButton
-import com.syncodec.momento.notebookComponent.ViewModel
+import com.syncodec.momento.notebookComponent.NotebookViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Notebook
 import kotlinx.coroutines.launch
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun NewChapterBottomSheet() {
 
-	val viewModel: ViewModel = viewModel()
+	val notebookViewModel: NotebookViewModel = viewModel()
 
 	val scope = rememberCoroutineScope()
 	val focusManager = LocalFocusManager.current
@@ -40,15 +40,11 @@ fun NewChapterBottomSheet() {
 
 	val containerColor by animateColorAsState(
 		targetValue = if (chapterTitleText.isNotEmpty()) MaterialTheme.colorScheme.onPrimaryContainer else Color.LightGray,
-		animationSpec = tween(
-			durationMillis = 400
-		)
+		animationSpec = tween(durationMillis = 600)
 	)
 	val contentColor by animateColorAsState(
 		targetValue = if (chapterTitleText.isNotEmpty()) MaterialTheme.colorScheme.primaryContainer else Color.DarkGray,
-		animationSpec = tween(
-			durationMillis = 400
-		)
+		animationSpec = tween(durationMillis = 600)
 	)
 
 	Column(
@@ -98,13 +94,13 @@ fun NewChapterBottomSheet() {
 			modifier = Modifier
 				.padding(24.dp, 0.dp)
 		) {
-			viewModel.createNewChapter(
+			notebookViewModel.putChapter(
 				title = chapterTitleText,
 				description = chapterDescriptionText
 			)
 			focusManager.clearFocus()
 			scope.launch {
-				viewModel.activityState.bottomSheetState.hide()
+				notebookViewModel.activityState.bottomSheetState.hide()
 			}
 			chapterTitleText = ""
 			chapterDescriptionText = ""

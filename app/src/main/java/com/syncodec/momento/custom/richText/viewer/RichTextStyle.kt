@@ -24,7 +24,7 @@ internal val DefaultParagraphSpacing: TextUnit = 8.sp
  * [RichTextString][com.zachklipp.richtext.ui.string.RichTextString]s
  */
 @Immutable
-public data class RichTextStyle(
+data class RichTextStyle(
 	val paragraphSpacing: TextUnit? = null,
 	val headingStyle: HeadingStyle? = null,
 	val listStyle: ListStyle? = null,
@@ -34,53 +34,53 @@ public data class RichTextStyle(
 	val infoPanelStyle: InfoPanelStyle? = null,
 	val stringStyle: RichTextStringStyle? = null
 ) {
-  public companion object {
-    public val Default: RichTextStyle = RichTextStyle()
-  }
+	companion object {
+		val Default: RichTextStyle = RichTextStyle()
+	}
 }
 
-public fun RichTextStyle.merge(otherStyle: RichTextStyle?): RichTextStyle = RichTextStyle(
-  paragraphSpacing = otherStyle?.paragraphSpacing ?: paragraphSpacing,
-  headingStyle = otherStyle?.headingStyle ?: headingStyle,
-  listStyle = otherStyle?.listStyle ?: listStyle,
-  blockQuoteGutter = otherStyle?.blockQuoteGutter ?: blockQuoteGutter,
-  codeBlockStyle = otherStyle?.codeBlockStyle ?: codeBlockStyle,
-  tableStyle = otherStyle?.tableStyle ?: tableStyle,
-  infoPanelStyle = otherStyle?.infoPanelStyle ?: infoPanelStyle,
-  stringStyle = stringStyle?.merge(otherStyle?.stringStyle) ?: otherStyle?.stringStyle
+fun RichTextStyle.merge(otherStyle: RichTextStyle?): RichTextStyle = RichTextStyle(
+	paragraphSpacing = otherStyle?.paragraphSpacing ?: paragraphSpacing,
+	headingStyle = otherStyle?.headingStyle ?: headingStyle,
+	listStyle = otherStyle?.listStyle ?: listStyle,
+	blockQuoteGutter = otherStyle?.blockQuoteGutter ?: blockQuoteGutter,
+	codeBlockStyle = otherStyle?.codeBlockStyle ?: codeBlockStyle,
+	tableStyle = otherStyle?.tableStyle ?: tableStyle,
+	infoPanelStyle = otherStyle?.infoPanelStyle ?: infoPanelStyle,
+	stringStyle = stringStyle?.merge(otherStyle?.stringStyle) ?: otherStyle?.stringStyle
 )
 
-public fun RichTextStyle.resolveDefaults(): RichTextStyle = RichTextStyle(
-  paragraphSpacing = paragraphSpacing ?: DefaultParagraphSpacing,
-  headingStyle = headingStyle ?: DefaultHeadingStyle,
-  listStyle = (listStyle ?: ListStyle.Default).resolveDefaults(),
-  blockQuoteGutter = blockQuoteGutter ?: DefaultBlockQuoteGutter,
-  codeBlockStyle = (codeBlockStyle ?: CodeBlockStyle.Default).resolveDefaults(),
-  tableStyle = (tableStyle ?: TableStyle.Default).resolveDefaults(),
-  infoPanelStyle = (infoPanelStyle ?: InfoPanelStyle.Default).resolveDefaults(),
-  stringStyle = (stringStyle ?: RichTextStringStyle.Default).resolveDefaults()
+fun RichTextStyle.resolveDefaults(): RichTextStyle = RichTextStyle(
+	paragraphSpacing = paragraphSpacing ?: DefaultParagraphSpacing,
+	headingStyle = headingStyle ?: DefaultHeadingStyle,
+	listStyle = (listStyle ?: ListStyle.Default).resolveDefaults(),
+	blockQuoteGutter = blockQuoteGutter ?: DefaultBlockQuoteGutter,
+	codeBlockStyle = (codeBlockStyle ?: CodeBlockStyle.Default).resolveDefaults(),
+	tableStyle = (tableStyle ?: TableStyle.Default).resolveDefaults(),
+	infoPanelStyle = (infoPanelStyle ?: InfoPanelStyle.Default).resolveDefaults(),
+	stringStyle = (stringStyle ?: RichTextStringStyle.Default).resolveDefaults()
 )
 
 /**
  * The current [RichTextStyle].
  */
-public val RichTextScope.currentRichTextStyle: RichTextStyle
-  @Composable get() = LocalRichTextStyle.current
+val RichTextScope.currentRichTextStyle: RichTextStyle
+	@Composable get() = LocalRichTextStyle.current
 
 /**
  * Sets the [RichTextStyle] for its [children].
  */
 @Composable
-public fun RichTextScope.WithStyle(
+fun RichTextScope.WithStyle(
 	style: RichTextStyle?,
 	children: @Composable RichTextScope.() -> Unit
 ) {
-  if (style == null) {
-    children()
-  } else {
-    val mergedStyle = LocalRichTextStyle.current.merge(style)
-    CompositionLocalProvider(LocalRichTextStyle provides mergedStyle) {
-      children()
-    }
-  }
+	if (style == null) {
+		children()
+	} else {
+		val mergedStyle = LocalRichTextStyle.current.merge(style)
+		CompositionLocalProvider(LocalRichTextStyle provides mergedStyle) {
+			children()
+		}
+	}
 }

@@ -46,8 +46,7 @@ fun AddNewBucketItemButton(
 					text = when (bucketItemType) {
 						BucketItemType.Type.TODO -> "Add New Task"
 						BucketItemType.Type.BOOKS -> "What did you read?"
-						BucketItemType.Type.MOVIES -> "A new movie?"
-						BucketItemType.Type.TVSHOWS -> "What did you watch?"
+						BucketItemType.Type.SHOWS -> "A new story?"
 						BucketItemType.Type.MEDIA -> "Add media"
 						BucketItemType.Type.LINKS -> "Add link"
 					},

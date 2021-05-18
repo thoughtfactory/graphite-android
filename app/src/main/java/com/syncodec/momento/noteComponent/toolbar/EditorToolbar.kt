@@ -1,8 +1,8 @@
 package com.syncodec.momento.noteComponent.toolbar
 
 import android.util.Log
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -35,16 +35,25 @@ import java.text.SimpleDateFormat
 
 private enum class ToolbarState {
 	BASE,
+	STATE,
 	TAG,
 	ALIGN,
 	HEADING,
-	TEXT_HIGHLIGHT,
-	TEXT_COLOR,
+
+	//	TEXT_HIGHLIGHT,
+//	TEXT_COLOR,
 	LINK
 }
 
-enum class ToolbarButton {
+private enum class NoteState {
+	ARCHIVE,
+	FAVOURITE,
+	LOCKED
+}
+
+private enum class ToolbarButton {
 	TIMESTAMP_PICKER,
+	STATE,
 	OPEN_FORMAT,
 	CLOSE_FORMAT,
 	UNDO,
@@ -88,9 +97,6 @@ fun EditorToolbar(
 	richTextEditor: RichTextEditor,
 	onError: (ErrorCode.Companion.ErrorCode) -> Unit,
 ) {
-	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-
 	var showFormatter by remember { mutableStateOf(false) }
 	var toolbarState by remember { mutableStateOf(ToolbarState.BASE) }
 
@@ -115,6 +121,7 @@ fun EditorToolbar(
 		) {
 			when (it) {
 				ToolbarState.BASE -> null
+				ToolbarState.STATE -> NoteStateToolbar()
 				ToolbarState.TAG -> null
 				ToolbarState.HEADING -> TextHeadingToolbar(textFormat = textFormat) { toolbarButton ->
 					when (toolbarButton) {
@@ -141,10 +148,10 @@ fun EditorToolbar(
 							if (textFormat.alignJustify) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec("editor.commands.setTextAlign('justify');")
 					}
 				}
-				ToolbarState.TEXT_HIGHLIGHT -> ColorToolbar(textFormat = textFormat) { color -> richTextEditor.exec("editor.commands.setColor('${color.toHexString()}');") }
-				ToolbarState.TEXT_COLOR -> ColorToolbar(textFormat = textFormat) {
-					Log.i("npr71", "color : ${it.toHexString()}")
-				}
+//				ToolbarState.TEXT_HIGHLIGHT -> ColorToolbar(textFormat = textFormat) { color -> richTextEditor.exec("editor.commands.setColor('${color.toHexString()}');") }
+//				ToolbarState.TEXT_COLOR -> ColorToolbar(textFormat = textFormat) {
+//					Log.i("npr71", "color : ${it.toHexString()}")
+//				}
 			}
 		}
 
@@ -155,7 +162,11 @@ fun EditorToolbar(
 				.background(MaterialTheme.colorScheme.secondaryContainer)
 		) {
 			AnimatedContent(
-				targetState = showFormatter
+				targetState = showFormatter,
+				transitionSpec = {
+					(slideInHorizontally(tween(600)) { width -> -width } + fadeIn() with slideOutHorizontally(tween(600)) { width -> width } + fadeOut())
+						.using(SizeTransform(clip = false))
+				}
 			) {
 				if (it) {
 					FormatEditorToolbar(
@@ -164,7 +175,10 @@ fun EditorToolbar(
 						textColor = textColor,
 					) { toolbarButton ->
 						when (toolbarButton) {
-							ToolbarButton.CLOSE_FORMAT -> showFormatter = false
+							ToolbarButton.CLOSE_FORMAT -> {
+								toolbarState = ToolbarState.BASE
+								showFormatter = false
+							}
 							ToolbarButton.UNDO -> richTextEditor.exec("editor.commands.undo();")
 							ToolbarButton.REDO -> richTextEditor.exec("editor.commands.redo();")
 							ToolbarButton.BOLD -> richTextEditor.exec("editor.chain().focus().toggleBold().run()")
@@ -178,10 +192,10 @@ fun EditorToolbar(
 							ToolbarButton.BLOCKQUOTE -> richTextEditor.exec("editor.chain().focus().toggleBlockquote().run();")
 							ToolbarButton.HEADING -> toolbarState = if (toolbarState == ToolbarState.HEADING) ToolbarState.BASE else ToolbarState.HEADING
 							ToolbarButton.ALIGN -> toolbarState = if (toolbarState == ToolbarState.ALIGN) ToolbarState.BASE else ToolbarState.ALIGN
-							ToolbarButton.TEXT_HIGHLIGHT -> toolbarState =
-								if (toolbarState == ToolbarState.TEXT_HIGHLIGHT) ToolbarState.BASE else ToolbarState.TEXT_HIGHLIGHT
-							ToolbarButton.TEXT_COLOR -> toolbarState =
-								if (toolbarState == ToolbarState.TEXT_COLOR) ToolbarState.BASE else ToolbarState.TEXT_COLOR
+//							ToolbarButton.TEXT_HIGHLIGHT -> toolbarState =
+//								if (toolbarState == ToolbarState.TEXT_HIGHLIGHT) ToolbarState.BASE else ToolbarState.TEXT_HIGHLIGHT
+//							ToolbarButton.TEXT_COLOR -> toolbarState =
+//								if (toolbarState == ToolbarState.TEXT_COLOR) ToolbarState.BASE else ToolbarState.TEXT_COLOR
 							ToolbarButton.INDENT -> richTextEditor.exec("editor.chain().focus().sinkListItem('listItem').run()")
 							ToolbarButton.OUTDENT -> richTextEditor.exec("editor.chain().focus().liftListItem('listItem').run()")
 							ToolbarButton.LINK -> toolbarState = ToolbarState.LINK
@@ -194,7 +208,11 @@ fun EditorToolbar(
 				} else {
 					StateEditorToolbar { toolbarButton ->
 						when (toolbarButton) {
-							ToolbarButton.OPEN_FORMAT -> showFormatter = true
+							ToolbarButton.STATE -> toolbarState = if (toolbarState == ToolbarState.STATE) ToolbarState.BASE else ToolbarState.STATE
+							ToolbarButton.OPEN_FORMAT -> {
+								toolbarState = ToolbarState.BASE
+								showFormatter = true
+							}
 						}
 					}
 				}
@@ -238,7 +256,7 @@ private fun StateEditorToolbar(
 			name = "State",
 			icon = R.drawable.ic_state,
 			highlight = false
-		) {}
+		) { onClick(ToolbarButton.STATE) }
 		ToolbarButton(
 			name = "Text Format",
 			icon = R.drawable.ic_text_format,
@@ -358,33 +376,33 @@ private fun FormatEditorToolbar(
 			},
 			highlight = false,
 		) { onClick(ToolbarButton.ALIGN) }
-		FontFamilyButton(textFormat = textFormat)
-		FontSizeButton()
+//		FontFamilyButton(textFormat = textFormat)
+//		FontSizeButton()
 
 		ToolbarSpacer()
 
-		ToolbarButton(
-			name = "Highlight color",
-			icon = R.drawable.ic_tabler_icon_highlight,
-			highlight = textFormat.orderedList
-		) { onClick(ToolbarButton.TEXT_HIGHLIGHT) }
-		if (highlightColor == null) {
-			ToolbarRemoveColorButton {}
-		} else {
-			ToolbarColorButton(color = highlightColor) {}
-		}
-		ToolbarButton(
-			name = "Text color",
-			icon = R.drawable.ic_format_text_color,
-			highlight = textFormat.orderedList
-		) { onClick(ToolbarButton.TEXT_COLOR) }
-		if (textColor == null) {
-			ToolbarRemoveColorButton {}
-		} else {
-			ToolbarColorButton(color = textColor) {}
-		}
-
-		ToolbarSpacer()
+//		ToolbarButton(
+//			name = "Highlight color",
+//			icon = R.drawable.ic_tabler_icon_highlight,
+//			highlight = textFormat.orderedList
+//		) { onClick(ToolbarButton.TEXT_HIGHLIGHT) }
+//		if (highlightColor == null) {
+//			ToolbarRemoveColorButton {}
+//		} else {
+//			ToolbarColorButton(color = highlightColor) {}
+//		}
+//		ToolbarButton(
+//			name = "Text color",
+//			icon = R.drawable.ic_format_text_color,
+//			highlight = textFormat.orderedList
+//		) { onClick(ToolbarButton.TEXT_COLOR) }
+//		if (textColor == null) {
+//			ToolbarRemoveColorButton {}
+//		} else {
+//			ToolbarColorButton(color = textColor) {}
+//		}
+//
+//		ToolbarSpacer()
 
 		ToolbarButton(
 			name = "Ordered list",
@@ -589,6 +607,47 @@ private fun FontSizeButton() {
 			)
 		}
 		Spacer(modifier = Modifier.width(4.dp))
+	}
+}
+
+@Composable
+private fun NoteStateToolbar() {
+	val viewModel: NoteViewModel = viewModel()
+
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(48.dp)
+			.padding(0.dp, 0.dp, 8.dp, 0.dp),
+		horizontalArrangement = Arrangement.SpaceBetween,
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Row(
+			modifier = Modifier
+				.height(48.dp)
+				.horizontalScroll(rememberScrollState()),
+			verticalAlignment = Alignment.Bottom,
+		) {
+			Spacer(modifier = Modifier.width(8.dp))
+
+			ToolbarButton(
+				name = "Archive",
+				icon = R.drawable.ic_box,
+				highlight = viewModel.isArchived
+			) { viewModel.isArchived = !viewModel.isArchived }
+			ToolbarButton(
+				name = "Favourite",
+				icon = R.drawable.ic_heart_3,
+				highlight = viewModel.isFavourite
+			) { viewModel.isFavourite = !viewModel.isFavourite }
+			ToolbarButton(
+				name = "Lock",
+				icon = R.drawable.ic_locked,
+				highlight = viewModel.isLocked
+			) { viewModel.isLocked = !viewModel.isLocked }
+
+			Spacer(modifier = Modifier.width(8.dp))
+		}
 	}
 }
 

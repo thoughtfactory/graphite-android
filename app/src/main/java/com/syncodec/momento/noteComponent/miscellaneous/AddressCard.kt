@@ -18,13 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.syncodec.momento.R
-import com.syncodec.momento.miscellaneous.PREFERENCE_KEY_VAULT_KEY
-import com.syncodec.momento.miscellaneous.dataStore
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.noteComponent.NoteViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
@@ -36,16 +32,14 @@ fun AddressCard() {
 
 	val scope = rememberCoroutineScope()
 
-	val showCardPreference by noteViewModel.activityState.showLocationPermissionKeyFlow.collectAsState(initial = false)
+	val showCardPreference = true
 
 	val addressState by noteViewModel.activityState.addressState
 	var showAddressCard by noteViewModel.activityState.showAddressCard
 
 	val animateAlpha by animateFloatAsState(
 		targetValue = if (showAddressCard && showCardPreference != false) 1f else 0f,
-		animationSpec = tween(
-			durationMillis = 400
-		),
+		animationSpec = tween(durationMillis = 600),
 		finishedListener = {
 			scope.launch {
 				delay(6400)

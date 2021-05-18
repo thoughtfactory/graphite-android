@@ -8,9 +8,9 @@ import com.google.gson.annotations.Expose
 @Entity(tableName = "bucket_item_table")
 data class BucketItemDbEntry(
 	@PrimaryKey(autoGenerate = false)
-	@ColumnInfo(name = "primary_key")
+	@ColumnInfo(name = "key")
 	@Expose
-	val primaryKey: String,
+	val key: String,
 
 	@ColumnInfo(name = "bucket_key")
 	@Expose
@@ -73,13 +73,13 @@ data class BucketItemDbEntry(
 
 		other as BucketItemDbEntry
 
-		if (primaryKey != other.primaryKey) return false
+		if (key != other.key) return false
 
 		return true
 	}
 
 	override fun hashCode(): Int {
-		var result = primaryKey.hashCode()
+		var result = key.hashCode()
 		result = 31 * result + bucketKey.hashCode()
 		result = 31 * result + bucketItemType
 		result = 31 * result + createdTimestamp.hashCode()

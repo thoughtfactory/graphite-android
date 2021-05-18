@@ -6,9 +6,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -33,10 +33,10 @@ import coil.fetch.VideoFrameUriFetcher
 import coil.request.videoFrameMillis
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
-import com.syncodec.momento.noteComponent.NoteViewModel
-import com.syncodec.momento.noteComponent.TempAttachmentData
 import com.syncodec.momento.miscellaneous.createTempFileToExpose
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
+import com.syncodec.momento.noteComponent.NoteViewModel
+import com.syncodec.momento.noteComponent.TempAttachmentData
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -107,9 +107,9 @@ fun AttachmentBottomSheet() {
 		)
 
 		LazyVerticalGrid(
-			cells = GridCells.Fixed(4),
+			columns = GridCells.Fixed(4),
 			modifier = Modifier
-				.padding(24.dp, 0.dp)
+				.padding(24.dp, 0.dp),
 		) {
 			itemsIndexed(attachmentBottomSheetButtonDataLists) { _, attachmentBottomSheetButtonData ->
 				AttachmentBottomSheetButton(attachmentBottomSheetButtonData)
@@ -119,9 +119,9 @@ fun AttachmentBottomSheet() {
 		Spacer(modifier = Modifier.height(12.dp))
 
 		LazyVerticalGrid(
-			cells = GridCells.Adaptive(144.dp),
+			columns = GridCells.Adaptive(144.dp),
 			modifier = Modifier
-				.padding(24.dp, 0.dp, 24.dp, 32.dp)
+				.padding(24.dp, 0.dp, 24.dp, 32.dp),
 		) {
 			itemsIndexed(noteViewModel.attachmentList) { _, tempAttachmentData ->
 				AttachmentView(

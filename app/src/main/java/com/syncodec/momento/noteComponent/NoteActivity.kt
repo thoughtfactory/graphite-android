@@ -20,14 +20,10 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.libraries.maps.MapView
-import com.syncodec.momento.Momento
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.custom.richText.RichTextEditor
 import com.syncodec.momento.custom.richText.rememberRichTextEditorWithLifecycle
 import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.miscellaneous.PREFERENCE_KEY_NOTE_SHOW_LOCATION_PERMISSION
-import com.syncodec.momento.miscellaneous.PREFERENCE_KEY_VAULT_KEY
-import com.syncodec.momento.miscellaneous.dataStore
 import com.syncodec.momento.noteComponent.miscellaneous.NotificationType
 import com.syncodec.momento.noteComponent.miscellaneous.TopBar
 import com.syncodec.momento.noteComponent.modalBottomSheet.BottomSheetType
@@ -35,8 +31,6 @@ import com.syncodec.momento.noteComponent.modalBottomSheet.SheetLayout
 import com.syncodec.momento.noteComponent.screen.NoteEditorScreen
 import com.syncodec.momento.noteComponent.screen.NoteViewerScreen
 import com.syncodec.momento.ui.theme.MomentoTheme
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import org.json.JSONObject
 
 
@@ -46,23 +40,14 @@ class NoteActivity : ComponentActivity() {
 
 	@OptIn(
 		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
-		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, com.google.accompanist.permissions.ExperimentalPermissionsApi::class
+		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class
 	)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		intent.getIntExtra(Konstant.Companion.Konstant.COMPONENT_TYPE.name, Momento.Companion.ComponentType.DIARY.ordinal).apply {
-			viewModel.componentType = Momento.Companion.ComponentType.values()[this]
-
-			if (viewModel.componentType == Momento.Companion.ComponentType.NOTE) {
-				viewModel.note.notebookKey = intent.getStringExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name)
-				viewModel.note.notebookRoute = intent.getStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name)
-				viewModel.note.title = intent.getStringExtra(Konstant.Companion.Konstant.TITLE.name)
-			} else {
-				viewModel.isViewer = intent.getBooleanExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
-				viewModel.viewerDiaryKey = intent.getStringExtra(Konstant.Companion.Konstant.DIARY_KEY.name)
-			}
-		}
+		viewModel.notebookKey.value = intent.getStringExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name)!!
+		viewModel.chapterPath = intent.getStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name)!!.toMutableStateList()
+		viewModel.note.title = intent.getStringExtra(Konstant.Companion.Konstant.TITLE.name)
 
 		setContent {
 			MomentoTheme {
@@ -81,11 +66,7 @@ class NoteActivity : ComponentActivity() {
 						viewModel.note.content = dataJson
 						viewModel.note.contentThumbnail = dataText
 
-						when (viewModel.componentType) {
-							Momento.Companion.ComponentType.DIARY -> viewModel.saveDiary()
-							Momento.Companion.ComponentType.NOTE -> viewModel.saveNote()
-							else -> viewModel.saveDiary()
-						}
+						viewModel.putNote()
 					}
 				})
 
@@ -131,7 +112,6 @@ class NoteActivity : ComponentActivity() {
 		var showAddressCard: MutableState<Boolean> = mutableStateOf(false),
 		var showMapLocationDialog: MutableState<Boolean> = mutableStateOf(false),
 		var mapView: MapView,
-		val showLocationPermissionKeyFlow: Flow<Boolean?> = dataStore.data.map { preferences -> preferences[PREFERENCE_KEY_NOTE_SHOW_LOCATION_PERMISSION] }
 	)
 
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)

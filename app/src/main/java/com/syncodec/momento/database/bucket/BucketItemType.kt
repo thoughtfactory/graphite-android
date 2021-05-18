@@ -4,8 +4,7 @@ class BucketItemType {
 	enum class Type {
 		TODO,
 		BOOKS,
-		MOVIES,
-		TVSHOWS,
+		SHOWS,
 		MEDIA,
 		LINKS
 	}

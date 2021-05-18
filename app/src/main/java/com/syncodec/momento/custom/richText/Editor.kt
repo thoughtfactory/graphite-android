@@ -2,6 +2,7 @@ package com.syncodec.momento.custom.richText
 
 import android.content.Context
 import android.util.Log
+import android.view.MotionEvent
 import android.webkit.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
@@ -87,6 +88,15 @@ class RichTextEditor(context: Context) : WebView(context) {
 	@JavascriptInterface
 	fun onCreate() {
 		isReady.value = true
+//		setOnTouchListener { v, event ->
+//			if (event.action == MotionEvent.ACTION_UP) {
+//				Log.i("npr71", "focus")
+//				exec("editor.commands.focus('end')")
+//				false
+//			} else {
+//				false
+//			}
+//		}
 	}
 
 	@JavascriptInterface

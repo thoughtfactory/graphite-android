@@ -38,7 +38,7 @@ fun AddThoughtButton(
 			Text(
 				text = "Add your thoughts",
 				color = MaterialTheme.colorScheme.primary,
-				style = MaterialTheme.typography.titleSmall,
+				style = MaterialTheme.typography.bodyLarge,
 			)
 		}
 	}

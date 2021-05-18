@@ -1,19 +1,25 @@
 package com.syncodec.momento.mainComponent.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -26,6 +32,7 @@ import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.TopBar
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import java.text.SimpleDateFormat
 
 
 sealed class MomentoComponentType {
@@ -33,7 +40,7 @@ sealed class MomentoComponentType {
 	object Notebook : MomentoComponentType()
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun MomentoScreen() {
 	val viewModel: MainViewModel = viewModel()
@@ -59,6 +66,11 @@ fun MomentoScreen() {
 		chipDataList.add(ChipData(title = "Locked", imageVector = TablerIcons.Container, isSelected = showLocked) { showLocked = !showLocked })
 	}
 
+	var currentState by remember { mutableStateOf(0) }
+	LaunchedEffect(key1 = currentState) {
+		viewModel.activityState.momentoComponentType.value = if (currentState == 0) MomentoComponentType.Diary else MomentoComponentType.Notebook
+	}
+
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
@@ -76,16 +88,10 @@ fun MomentoScreen() {
 					StateData(title = "Diary", icon = TablerIcons.Signature, color = MaterialTheme.colorScheme.primary),
 					StateData(title = "Notebook", icon = TablerIcons.Notebook, color = MaterialTheme.colorScheme.primary),
 				),
-				initialState = if (viewModel.activityState.momentoComponentType.value == MomentoComponentType.Diary) 0 else 1,
+				currentState = currentState,
 				modifier = Modifier
 					.height(32.dp)
-			) {
-				if (it == 0) {
-					viewModel.activityState.momentoComponentType.value = MomentoComponentType.Diary
-				} else {
-					viewModel.activityState.momentoComponentType.value = MomentoComponentType.Notebook
-				}
-			}
+			) { currentState = it }
 		}
 
 		AnimatedVisibility(

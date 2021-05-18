@@ -9,6 +9,7 @@ import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +29,7 @@ import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.miscellaneous.AddNewBucketItemButton
+import com.syncodec.momento.bucketComponent.miscellaneous.DataTypeSelectDropdownDemo
 import com.syncodec.momento.bucketComponent.miscellaneous.EmptyBucketView
 import com.syncodec.momento.bucketComponent.miscellaneous.TopBar
 import com.syncodec.momento.bucketComponent.modalBottomSheet.*
@@ -63,8 +65,13 @@ class BucketActivity : ComponentActivity() {
 
 		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
 		viewModel.getBucket()
-		viewModel.bucketItemType =
-			BucketItemType.Type.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.TODO.ordinal)]
+		intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, -1).also {
+			if (it != -1) {
+				viewModel.bucketItemType = BucketItemType.Type.values()[it]
+			} else {
+				finish()
+			}
+		}
 
 		setContent {
 			MomentoTheme {
@@ -90,7 +97,7 @@ class BucketActivity : ComponentActivity() {
 	}
 
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
-	private fun onClick(click: Click, any: Any? = null) {
+	private fun onClick(click: Click, data: Any? = null) {
 		val scope = viewModel.activityState.coroutineScope
 		when (click) {
 			Click.BACK -> finish()
@@ -101,41 +108,39 @@ class BucketActivity : ComponentActivity() {
 			Click.STATE_DELTA -> scope.launch { viewModel.activityState.pagerState.animateScrollToPage(3, 0f) }
 			Click.CLICK_ITEM -> {
 				val isSelected by viewModel.activityState.isSelected
-				val selectedBucketItemList = viewModel.activityState.selectedItemList
-				any as String
+				val selectedItemList = viewModel.activityState.selectedItemList
+				data as String
 				if (isSelected) {
-					if (any in selectedBucketItemList) {
-						selectedBucketItemList.remove(any)
+					if (data in selectedItemList) {
+						selectedItemList.remove(data)
 					} else {
-						selectedBucketItemList.add(any)
+						selectedItemList.add(data)
 					}
 				} else {
 					Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
 						putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
-						putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, any)
-						putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.BOOKS.ordinal)
+						putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, data)
+						putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, viewModel.bucketItemType.ordinal)
 
 						startActivity(this)
 					}
 				}
 			}
 			Click.LONG_CLICK_ITEM -> {
-				var isSelected by viewModel.activityState.isSelected
 				val selectedBucketItemList = viewModel.activityState.selectedItemList
-				any as String
-				isSelected = true
-				if (any in selectedBucketItemList) {
-					selectedBucketItemList.remove(any)
+				data as String
+				viewModel.activityState.isSelected.value = true
+				if (data in selectedBucketItemList) {
+					selectedBucketItemList.remove(data)
 				} else {
-					selectedBucketItemList.add(any)
+					selectedBucketItemList.add(data)
 				}
 			}
 			Click.OPEN_ADD_SHEET -> {
 				viewModel.activityState.bottomSheetType.value = when (viewModel.bucketItemType) {
 					BucketItemType.Type.TODO -> BottomSheetType.AddBookSheet
 					BucketItemType.Type.BOOKS -> BottomSheetType.AddBookSheet
-					BucketItemType.Type.MOVIES -> BottomSheetType.AddMovieSheet
-					BucketItemType.Type.TVSHOWS -> BottomSheetType.AddBookSheet
+					BucketItemType.Type.SHOWS -> BottomSheetType.AddMovieSheet
 					BucketItemType.Type.MEDIA -> BottomSheetType.AddBookSheet
 					BucketItemType.Type.LINKS -> BottomSheetType.AddBookSheet
 				}
@@ -149,18 +154,30 @@ class BucketActivity : ComponentActivity() {
 				Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
 					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.BOOKS.ordinal)
-					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(any as BookData))
+					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(data as BookData))
 					startActivity(this)
 				}
 			}
-			Click.ADD_MOVIE -> {
+			Click.ADD_SHOW -> {
 				viewModel.activityState.coroutineScope.launch { viewModel.activityState.bottomSheetState.hide() }
 				Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
-					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.MOVIES.ordinal)
-					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(any as MovieData))
+					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.SHOWS.ordinal)
+					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(data as ShowData))
 					startActivity(this)
 				}
+			}
+			Click.DATA_TYPE_SELECT -> {
+				viewModel.activityState.isSelectionCardVisible.value = true
+			}
+			Click.DATA_TYPE -> {
+				data as DataType?
+				viewModel.activityState.dataType.value = when (data) {
+					DataType.TV -> DataType.TV
+					DataType.MOVIE -> DataType.MOVIE
+					else -> viewModel.activityState.dataType.value
+				}
+				viewModel.activityState.isSelectionCardVisible.value = false
 			}
 			Click.DELETE_ITEM -> {
 				if (viewModel.activityState.selectedItemList.isEmpty()) {
@@ -178,19 +195,21 @@ class BucketActivity : ComponentActivity() {
 		val status by viewModel.status
 		val bucketItemMap = viewModel.bucketItemMap
 		val isSelected by viewModel.activityState.isSelected
-		val selectedBucketItemList = viewModel.activityState.selectedItemList
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
 			sheetContent = {
 				when (viewModel.activityState.bottomSheetType.value) {
 					BottomSheetType.AddBookSheet -> AddBookSheet { onClick(Click.ADD_BOOK, it) }
-					BottomSheetType.AddMovieSheet -> AddMovieSheet { onClick(Click.ADD_MOVIE, it) }
+					BottomSheetType.AddMovieSheet -> AddShowSheet(dataType = viewModel.activityState.dataType.value) { click, data -> onClick(click, data) }
 				}
 			}
 		) {
 			AnimatedContent(
 				targetState = status,
+				modifier = Modifier
+					.fillMaxSize()
+					.background(MaterialTheme.colorScheme.background)
 			) {
 				when (it) {
 					Status.INIT -> LoadingView()
@@ -210,7 +229,7 @@ class BucketActivity : ComponentActivity() {
 									TopBar(
 										bucketTitle = viewModel.bucketDbEntry.title,
 										bucketItemType = viewModel.bucketItemType,
-										isSelected = isSelected,
+										showStateSelector = !isSelected,
 									) { onClick(it) }
 									Column(
 										modifier = Modifier
@@ -242,7 +261,7 @@ class BucketActivity : ComponentActivity() {
 									) { click, key ->
 										onClick(click, key)
 									}
-									BucketItemType.Type.MOVIES -> GridItemScreen(
+									BucketItemType.Type.SHOWS -> GridItemScreen(
 										bucketItemMap = bucketItemMap,
 										selectedBucketItemList = viewModel.activityState.selectedItemList,
 										pagerState = viewModel.activityState.pagerState,
@@ -250,7 +269,6 @@ class BucketActivity : ComponentActivity() {
 									) { click, key ->
 										onClick(click, key)
 									}
-									BucketItemType.Type.TVSHOWS -> null
 									BucketItemType.Type.MEDIA -> null
 									BucketItemType.Type.LINKS -> null
 								}
@@ -263,16 +281,18 @@ class BucketActivity : ComponentActivity() {
 								onDelete = {
 									val selectedItemList = viewModel.activityState.selectedItemList
 
-									viewModel.deleteBucketItem(selectedBucketItemList)
+									viewModel.deleteBucketItem(selectedItemList.toList())
+									val selectedItemSize: Int = selectedItemList.size
 
-									Toast.makeText(
-										this@BucketActivity,
-										"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
-										Toast.LENGTH_SHORT
-									).show()
 									selectedItemList.removeAll { true }
 									viewModel.activityState.isSelected.value = false
 									viewModel.activityState.showDeleteDialog.value = false
+
+									Toast.makeText(
+										this@BucketActivity,
+										"${if (selectedItemSize == 1) "1 entry" else "$selectedItemSize entries"} deleted",
+										Toast.LENGTH_SHORT
+									).show()
 								},
 							)
 						}
@@ -283,6 +303,7 @@ class BucketActivity : ComponentActivity() {
 					Status.ERROR -> null
 				}
 			}
+			DataTypeSelectDropdownDemo(isVisible = viewModel.activityState.isSelectionCardVisible.value) { onClick(Click.DATA_TYPE, it) }
 
 			AddNewBucketItemButton(
 				bucketItemType = viewModel.bucketItemType,
@@ -299,7 +320,8 @@ class BucketActivity : ComponentActivity() {
 		val collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState,
 		val pagerState: PagerState
 	) {
-		val state: MutableState<State> = mutableStateOf(State.ALPHA)
+		var isSelectionCardVisible: MutableState<Boolean> = mutableStateOf(false)
+		var dataType: MutableState<DataType> = mutableStateOf(DataType.MOVIE)
 		var isSelected: MutableState<Boolean> = mutableStateOf(false)
 		val selectedItemList: SnapshotStateList<String> = mutableStateListOf()
 		var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
@@ -313,19 +335,16 @@ class BucketActivity : ComponentActivity() {
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
 		collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState = rememberCollapsingToolbarScaffoldState(),
 		pagerState: PagerState = rememberPagerState()
-	) = remember {
-		ActivityState(coroutineScope, bottomSheetState, collapsingToolbarScaffoldState, pagerState)
-	}
+	) = remember { ActivityState(coroutineScope, bottomSheetState, collapsingToolbarScaffoldState, pagerState) }
 
-	enum class State {
-		ALPHA,
-		BETA,
-		GAMMA,
-		DELTA
+	enum class DataType {
+		TV,
+		MOVIE,
 	}
 
 	enum class Click {
 		BACK,
+		SEARCH,
 		MENU,
 		STATE_ALPHA,
 		STATE_BETA,
@@ -335,7 +354,9 @@ class BucketActivity : ComponentActivity() {
 		LONG_CLICK_ITEM,
 		OPEN_ADD_SHEET,
 		ADD_BOOK,
-		ADD_MOVIE,
+		ADD_SHOW,
+		DATA_TYPE_SELECT,
+		DATA_TYPE,
 		DELETE_ITEM
 	}
 }

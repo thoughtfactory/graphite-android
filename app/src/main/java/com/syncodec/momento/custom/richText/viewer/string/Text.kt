@@ -18,48 +18,48 @@ import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format
  * @sample com.halilibo.richtext.ui.previews.TextPreview
  */
 @Composable
-public fun RichTextScope.Text(
-  text: RichTextString,
-  modifier: Modifier = Modifier,
-  onTextLayout: (TextLayoutResult) -> Unit = {},
-  softWrap: Boolean = true,
-  overflow: TextOverflow = TextOverflow.Clip,
-  maxLines: Int = Int.MAX_VALUE
+fun RichTextScope.Text(
+	text: RichTextString,
+	modifier: Modifier = Modifier,
+	onTextLayout: (TextLayoutResult) -> Unit = {},
+	softWrap: Boolean = true,
+	overflow: TextOverflow = TextOverflow.Clip,
+	maxLines: Int = Int.MAX_VALUE
 ) {
-  val style = currentRichTextStyle.stringStyle
-  val contentColor = currentContentColor
-  val annotated = remember(text, style, contentColor) {
-    val resolvedStyle = (style ?: RichTextStringStyle.Default).resolveDefaults()
-    text.toAnnotatedString(resolvedStyle, contentColor)
-  }
+	val style = currentRichTextStyle.stringStyle
+	val contentColor = currentContentColor
+	val annotated = remember(text, style, contentColor) {
+		val resolvedStyle = (style ?: RichTextStringStyle.Default).resolveDefaults()
+		text.toAnnotatedString(resolvedStyle, contentColor)
+	}
 
-  val inlineContents = remember(text) { text.getInlineContents() }
+	val inlineContents = remember(text) { text.getInlineContents() }
 
-  BoxWithConstraints(modifier = modifier) {
-    val inlineTextContents = manageInlineTextContents(
-      inlineContents = inlineContents,
-      textConstraints = constraints
-    )
+	BoxWithConstraints(modifier = modifier) {
+		val inlineTextContents = manageInlineTextContents(
+			inlineContents = inlineContents,
+			textConstraints = constraints
+		)
 
-    ClickableText(
-      text = annotated,
-      onTextLayout = onTextLayout,
-      inlineContent = inlineTextContents,
-      softWrap = softWrap,
-      overflow = overflow,
-      maxLines = maxLines,
-      onClick = { offset ->
-        annotated.getStringAnnotations(Format.FormatAnnotationScope, offset, offset)
-          .asSequence()
-          .mapNotNull {
-            Format.findTag(
-              it.item,
-              text.formatObjects
-            ) as? Format.Link
-          }
-          .firstOrNull()
-          ?.let { link -> link.onClick() }
-      }
-    )
-  }
+		ClickableText(
+			text = annotated,
+			onTextLayout = onTextLayout,
+			inlineContent = inlineTextContents,
+			softWrap = softWrap,
+			overflow = overflow,
+			maxLines = maxLines,
+			onClick = { offset ->
+				annotated.getStringAnnotations(Format.FormatAnnotationScope, offset, offset)
+					.asSequence()
+					.mapNotNull {
+						Format.findTag(
+							it.item,
+							text.formatObjects
+						) as? Format.Link
+					}
+					.firstOrNull()
+					?.let { link -> link.onClick() }
+			}
+		)
+	}
 }

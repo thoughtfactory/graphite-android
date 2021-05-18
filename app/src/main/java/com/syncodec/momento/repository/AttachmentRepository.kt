@@ -38,21 +38,21 @@ class AttachmentRepository(val momento: Momento) {
 
 	suspend fun saveAttachment(diaryKey: String, tempAttachmentData: TempAttachmentData) {
 		withContext(Dispatchers.IO) {
-			File(momento.getDiaryDirPath(diaryKey = diaryKey)).mkdirs()
-
-			val inputStream = tempAttachmentData.file!!.inputStream()
-			val outputStream = File("${momento.getDiaryDirPath(diaryKey = diaryKey)}/attachment_${tempAttachmentData.primaryKey}").outputStream()
-			copyInputStreamToOutputStream(inputStream = inputStream, outputStream = outputStream)
-
-			Attachment(
-				primaryKey = tempAttachmentData.primaryKey,
-				createdTimestamp = System.currentTimeMillis(),
-				timezoneOffset = 330 * 60,
-				mimeType = tempAttachmentData.mimeType,
-				notePrimaryKey = diaryKey
-			).apply {
-				insert(attachment = this)
-			}
+//			File(momento.getDiaryDirPath(diaryKey = diaryKey)).mkdirs()
+//
+//			val inputStream = tempAttachmentData.file!!.inputStream()
+//			val outputStream = File("${momento.getDiaryDirPath(diaryKey = diaryKey)}/attachment_${tempAttachmentData.primaryKey}").outputStream()
+//			copyInputStreamToOutputStream(inputStream = inputStream, outputStream = outputStream)
+//
+//			Attachment(
+//				primaryKey = tempAttachmentData.primaryKey,
+//				createdTimestamp = System.currentTimeMillis(),
+//				timezoneOffset = 330 * 60,
+//				mimeType = tempAttachmentData.mimeType,
+//				notePrimaryKey = diaryKey
+//			).apply {
+//				insert(attachment = this)
+//			}
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package com.syncodec.momento.ui.theme
 
+import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -8,145 +9,159 @@ import androidx.compose.ui.unit.sp
 import com.syncodec.momento.R
 
 
-val MontserratFontFamily = FontFamily(
-	Font(R.font.montserrat_regular),
-	Font(R.font.montserrat_light, FontWeight.Light),
-	Font(R.font.montserrat_medium, FontWeight.Medium),
-	Font(R.font.montserrat_semibold, FontWeight.SemiBold)
+private val OverlockFontFamily = FontFamily(
+	Font(R.font.overlock_regular, FontWeight.Normal),
+	Font(R.font.overlock_bold, FontWeight.Bold),
 )
 
-val KarlaFontFamily = FontFamily(
-	Font(R.font.karla_regular),
-	Font(R.font.karla_bold, FontWeight.Bold)
+private val SourceSansProFontFamily = FontFamily(
+	Font(R.font.source_sans_pro_regular, FontWeight.Normal),
+	Font(R.font.source_sans_pro_bold, FontWeight.Bold),
 )
 
-val Satisfy = FontFamily(
-	Font(R.font.satisfy_regular),
+private val UbuntuFontFamily = FontFamily(
+	Font(R.font.ubuntu_regular, FontWeight.Normal),
+	Font(R.font.ubuntu_bold, FontWeight.Bold),
 )
 
-val DancingScript = FontFamily(
-	Font(R.font.dancing_script_regular),
-	Font(R.font.dancing_script_medium, FontWeight.Medium),
-	Font(R.font.dancing_script_semi_bold, FontWeight.SemiBold),
-	Font(R.font.dancing_script_bold, FontWeight.Bold),
+private val ATWriter = FontFamily(
+	Font(R.font.atwriter)
 )
 
-val Stardos = FontFamily(
-	Font(R.font.stardos_stencil_regular),
-	Font(R.font.stardos_stencil_bold, FontWeight.Bold),
-)
-
-/*
-	display
-	headline
-	title
-	body
-	label
- */
-val DefaultTypography = androidx.compose.material3.Typography(
-	displayLarge = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.Light,
-		fontSize = 57.sp,
-		lineHeight = 64.sp,
-		letterSpacing = 0.sp
-	),
-	displayMedium = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.Light,
-		fontSize = 45.sp,
-		lineHeight = 52.sp,
-		letterSpacing = 0.sp
-	),
-	displaySmall = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.Normal,
-		fontSize = 36.sp,
-		lineHeight = 44.sp,
-		letterSpacing = 0.sp
-	),
-	headlineLarge = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.SemiBold,
-		fontSize = 32.sp,
-		lineHeight = 40.sp,
-		letterSpacing = 0.sp
-	),
-	headlineMedium = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.Bold,
-		fontSize = 28.sp,
-		lineHeight = 32.sp,
-		letterSpacing = 0.sp
-	),
-	headlineSmall = TextStyle(
-		fontFamily = MontserratFontFamily,
+val OverlockTypography = Typography(
+	titleMedium = TextStyle(
+		fontFamily = OverlockFontFamily,
 		fontWeight = FontWeight.Bold,
 		fontSize = 24.sp,
-		lineHeight = 32.sp,
-		letterSpacing = 0.sp
-	),
-	titleLarge = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.SemiBold,
-		fontSize = 22.sp,
-		lineHeight = 28.sp,
-		letterSpacing = 0.sp
-	),
-	titleMedium = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.ExtraBold,
-		fontSize = 18.sp,
-		lineHeight = 24.sp,
+		lineHeight = 27.sp,
 		letterSpacing = 1.sp
 	),
-	titleSmall = TextStyle(
-		fontFamily = KarlaFontFamily,
+	bodyLarge = TextStyle(
+		fontFamily = OverlockFontFamily,
 		fontWeight = FontWeight.Bold,
 		fontSize = 18.sp,
-		lineHeight = 20.sp,
-		letterSpacing = 0.1.sp
-	),
-	bodyLarge = TextStyle(
-		fontFamily = KarlaFontFamily,
-		fontWeight = FontWeight.ExtraBold,
-		fontSize = 20.sp,
 		lineHeight = 24.sp,
-		letterSpacing = 0.15.sp
+		letterSpacing = 0.8.sp
 	),
 	bodyMedium = TextStyle(
-		fontFamily = KarlaFontFamily,
+		fontFamily = OverlockFontFamily,
 		fontWeight = FontWeight.Normal,
 		fontSize = 16.sp,
 		lineHeight = 20.sp,
 		letterSpacing = 0.4.sp
 	),
 	bodySmall = TextStyle(
-		fontFamily = KarlaFontFamily,
-		fontWeight = FontWeight.Normal,
-		fontSize = 13.sp,
+		fontFamily = OverlockFontFamily,
+		fontWeight = FontWeight.Medium,
+		fontSize = 14.sp,
 		lineHeight = 16.sp,
+		letterSpacing = 0.2.sp
+	)
+)
+
+val SourceSansProTypography = Typography(
+	titleMedium = TextStyle(
+		fontFamily = SourceSansProFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 24.sp,
+		lineHeight = 27.sp,
+		letterSpacing = 1.sp
+	),
+	bodyLarge = TextStyle(
+		fontFamily = SourceSansProFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 18.sp,
+		lineHeight = 24.sp,
 		letterSpacing = 0.8.sp
 	),
-	labelLarge = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.Bold,
-		fontSize = 14.sp,
+	bodyMedium = TextStyle(
+		fontFamily = SourceSansProFontFamily,
+		fontWeight = FontWeight.Normal,
+		fontSize = 16.sp,
 		lineHeight = 20.sp,
-		letterSpacing = 0.1.sp
+		letterSpacing = 0.4.sp
 	),
-	labelMedium = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.SemiBold,
+	bodySmall = TextStyle(
+		fontFamily = SourceSansProFontFamily,
+		fontWeight = FontWeight.Medium,
+		fontSize = 14.sp,
+		lineHeight = 16.sp,
+		letterSpacing = 0.2.sp
+	)
+)
+
+val UbuntuTypography = Typography(
+	titleMedium = TextStyle(
+		fontFamily = UbuntuFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 24.sp,
+		lineHeight = 27.sp,
+		letterSpacing = 1.sp
+	),
+	titleSmall = TextStyle(
+		fontFamily = UbuntuFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 20.sp,
+		lineHeight = 24.sp,
+		letterSpacing = 1.sp
+	),
+	bodyLarge = TextStyle(
+		fontFamily = UbuntuFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 18.sp,
+		lineHeight = 24.sp,
+		letterSpacing = 0.8.sp
+	),
+	bodyMedium = TextStyle(
+		fontFamily = UbuntuFontFamily,
+		fontWeight = FontWeight.Normal,
+		fontSize = 14.sp,
+		lineHeight = 18.sp,
+		letterSpacing = 0.4.sp
+	),
+	bodySmall = TextStyle(
+		fontFamily = UbuntuFontFamily,
+		fontWeight = FontWeight.Medium,
 		fontSize = 12.sp,
 		lineHeight = 16.sp,
-		letterSpacing = 0.5.sp
+		letterSpacing = 0.2.sp
+	)
+)
+
+val ATWriterTypography = Typography(
+	titleMedium = TextStyle(
+		fontFamily = ATWriter,
+		fontWeight = FontWeight.Bold,
+		fontSize = 24.sp,
+		lineHeight = 27.sp,
+		letterSpacing = 1.sp
 	),
-	labelSmall = TextStyle(
-		fontFamily = MontserratFontFamily,
-		fontWeight = FontWeight.SemiBold,
-		fontSize = 11.sp,
+	titleSmall = TextStyle(
+		fontFamily = ATWriter,
+		fontWeight = FontWeight.Bold,
+		fontSize = 20.sp,
+		lineHeight = 24.sp,
+		letterSpacing = 1.sp
+	),
+	bodyLarge = TextStyle(
+		fontFamily = ATWriter,
+		fontWeight = FontWeight.Bold,
+		fontSize = 18.sp,
+		lineHeight = 24.sp,
+		letterSpacing = 1.4.sp
+	),
+	bodyMedium = TextStyle(
+		fontFamily = ATWriter,
+		fontWeight = FontWeight.Normal,
+		fontSize = 14.sp,
+		lineHeight = 18.sp,
+		letterSpacing = 1.4.sp
+	),
+	bodySmall = TextStyle(
+		fontFamily = ATWriter,
+		fontWeight = FontWeight.Medium,
+		fontSize = 12.sp,
 		lineHeight = 16.sp,
-		letterSpacing = 0.5.sp
+		letterSpacing = 1.4.sp
 	)
 )

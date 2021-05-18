@@ -1,5 +1,6 @@
 package com.syncodec.momento.bucketItemComponent.miscellaneous
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,6 +26,7 @@ import compose.icons.tablericons.Pencil
 fun ThumbnailCard(
 	thumbnail: Any?
 ) {
+	Log.i("npr71", "thumbnail : $thumbnail")
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
 
@@ -39,9 +41,7 @@ fun ThumbnailCard(
 		Image(
 			painter = rememberImagePainter(
 				data = thumbnail,
-				builder = {
-					crossfade(true)
-				}
+				builder = { crossfade(true) }
 			),
 			contentDescription = null,
 			contentScale = ContentScale.Crop,

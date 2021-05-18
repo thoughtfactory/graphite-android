@@ -3,25 +3,25 @@ package com.syncodec.momento.bucketItemComponent.modalBottonSheet
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.accompanist.flowlayout.FlowRow
-import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.noteComponent.modalBottomSheet.TimestampCard
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.Copy
+import compose.icons.tablericons.Dots
+import compose.icons.tablericons.FileExport
+import compose.icons.tablericons.Share
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -67,9 +67,9 @@ fun MenuBottomSheet(
 		Spacer(modifier = Modifier.height(12.dp))
 
 		LazyVerticalGrid(
-			cells = GridCells.Adaptive(72.dp),
+			columns = GridCells.Adaptive(72.dp),
 			modifier = Modifier
-				.padding(24.dp, 0.dp)
+				.padding(24.dp, 0.dp),
 		) {
 			itemsIndexed(menuBottomSheetButtonDataLists) { _, menuBottomSheetButtonData ->
 				MenuBottomSheetButton(menuBottomSheetButtonData)

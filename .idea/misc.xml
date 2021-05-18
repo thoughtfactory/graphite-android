@@ -110,10 +110,20 @@
         <entry key="../../../../../../../layout/compose-model-1646051412005.xml" value="0.1" />
         <entry key="../../../../../../../layout/compose-model-1646324350520.xml" value="0.2" />
         <entry key="../../../../../../../layout/compose-model-1646412819536.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1646470249381.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1646592310509.xml" value="0.176" />
+        <entry key="../../../../../../../layout/compose-model-1646595015742.xml" value="0.2" />
+        <entry key="../../../../../../../layout/compose-model-1646809635251.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1646842408396.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1646847513738.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1646847550815.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1646847650701.xml" value="0.1" />
         <entry key="../../../../../../../layout/custom_preview.xml" value="0.1710393541876892" />
         <entry key="app/src/main/java/com/syncodec/momento/custom/calendarview/src/main/res/layout/cv_week_bar.xml" value="0.31927083333333334" />
         <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.1585" />
         <entry key="app/src/main/res/drawable/ic_book.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_box.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_caret_down.xml" value="0.152" />
         <entry key="app/src/main/res/drawable/ic_format_align_center.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_format_align_justify.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_format_align_left.xml" value="0.1" />
@@ -146,6 +156,7 @@
         <entry key="app/src/main/res/drawable/il_environment.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/il_movie.xml" value="0.138" />
         <entry key="app/src/main/res/drawable/il_reading.xml" value="0.1" />
+        <entry key="app/src/main/res/font/roboto.xml" value="0.1" />
         <entry key="app/src/main/res/layout/calendar_view.xml" value="0.31927083333333334" />
         <entry key="app/src/main/res/layout/cv_layout_calendar_view.xml" value="0.1" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1585" />

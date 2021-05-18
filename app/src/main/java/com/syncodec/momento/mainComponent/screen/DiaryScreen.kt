@@ -1,20 +1,14 @@
 package com.syncodec.momento.mainComponent.screen
 
 import android.content.Intent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.FloatTweenSpec
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -40,19 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.R
-import com.syncodec.momento.custom.entry.EntryCard
-import com.syncodec.momento.custom.entry.EntryHeaderCard
-import com.syncodec.momento.custom.entry.EntryTimelineSpacer
-import com.syncodec.momento.custom.entry.NoEntryCard
+import com.syncodec.momento.custom.notebook.*
 import com.syncodec.momento.custom.squircle.Squircle
-import com.syncodec.momento.database.diary.DiaryDbEntry
+import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.mainComponent.MainViewModel
+import com.syncodec.momento.miscellaneous.DataStore
 import com.syncodec.momento.miscellaneous.filterData
 import com.syncodec.momento.miscellaneous.timeStampToPrettyDay
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.todayComponent.TodayActivity
-import org.joda.time.LocalDateTime
 import java.util.*
 
 
@@ -63,6 +54,7 @@ import java.util.*
 fun DiaryScreen() {
 	val context = LocalContext.current
 	val viewModel: MainViewModel = viewModel()
+	val dataStore = DataStore(context = context)
 
 	val vaultState by viewModel.activityState.vaultState
 	val showArchived by viewModel.activityState.showArchived
@@ -70,10 +62,10 @@ fun DiaryScreen() {
 	val showLocked by viewModel.activityState.showLocked
 	var isSelected by viewModel.activityState.isSelected
 
-	val diaryList by viewModel.diaryRepository.diaryDbEntryListLiveData.observeAsState()
+	val diaryList by viewModel.defaultNoteList.observeAsState()
 	val isDiaryEmpty: Boolean = diaryList?.isEmpty() ?: true
 
-	val diaryDbEntryDayMap: MutableMap<Long, MutableList<DiaryDbEntry>> = mutableMapOf()
+	val noteDbEntryDayMap: MutableMap<Long, MutableList<NoteDbEntry>> = mutableMapOf()
 
 	val selectedItemList = viewModel.activityState.selectedItemList
 
@@ -87,10 +79,10 @@ fun DiaryScreen() {
 				set(Calendar.MINUTE, 0)
 				set(Calendar.HOUR, 0)
 			}
-			if (diaryDbEntryDayMap.containsKey(calendar.timeInMillis)) {
-				diaryDbEntryDayMap[calendar.timeInMillis]!!.add(diary)
+			if (noteDbEntryDayMap.containsKey(calendar.timeInMillis)) {
+				noteDbEntryDayMap[calendar.timeInMillis]!!.add(diary)
 			} else {
-				diaryDbEntryDayMap[calendar.timeInMillis] = mutableListOf(diary)
+				noteDbEntryDayMap[calendar.timeInMillis] = mutableListOf(diary)
 			}
 		}
 
@@ -114,8 +106,8 @@ fun DiaryScreen() {
 			item {
 				AnimatedVisibility(
 					visible = !(showArchived || showFavourite || showLocked),
-					enter = expandIn(),
-					exit = shrinkOut()
+					enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+					exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 				) {
 					Column(modifier = Modifier.fillMaxWidth()) {
 						QuoteCard()
@@ -124,7 +116,7 @@ fun DiaryScreen() {
 				}
 			}
 
-			diaryDbEntryDayMap.forEach { (day, diaryList) ->
+			noteDbEntryDayMap.forEach { (day, diaryList) ->
 				val filteredEntries = diaryList.filter {
 					filterData(
 						showArchived = showArchived,
@@ -137,11 +129,11 @@ fun DiaryScreen() {
 				}
 
 				val entrySize = filteredEntries.size
-				val lastEntryKey = if (entrySize!=0) filteredEntries.last().primaryKey else null
+				val lastEntryKey = if (entrySize!=0) filteredEntries.last().key else null
 
 				stickyHeader {
 					AnimatedVisibility(visible = entrySize != 0) {
-						EntryHeaderCard(
+						NotebookHeaderCard(
 							title = timeStampToPrettyDay(day),
 							noEntries = "$entrySize ${if (entrySize == 1) "entry" else "entries"}"
 						)
@@ -150,8 +142,6 @@ fun DiaryScreen() {
 
 				diaryList.forEach { diaryDbEntry ->
 					item {
-						val tint = MaterialTheme.colorScheme.secondaryContainer
-
 						val showEntry: Boolean = filterData(
 							showArchived = showArchived,
 							isArchived = diaryDbEntry.isArchived,
@@ -161,136 +151,52 @@ fun DiaryScreen() {
 							isLocked = diaryDbEntry.isLocked
 						)
 
-						EntryCard(
+						NoteCardData(
 							timestamp = diaryDbEntry.userTimestamp,
+							showFullTime = false,
 							isLocked = diaryDbEntry.isLocked,
-							isSelected = diaryDbEntry.primaryKey in selectedItemList,
+							isSelected = diaryDbEntry.key in selectedItemList,
 							isArchived = diaryDbEntry.isArchived,
 							isFavourite = diaryDbEntry.isFavourite,
 							isDeleted = diaryDbEntry.deletedTimestamp != -1L,
-							isLast = diaryDbEntry.primaryKey == lastEntryKey,
+							isLast = diaryDbEntry.key == lastEntryKey,
 							title = diaryDbEntry.title,
 							contentThumbnail = diaryDbEntry.contentThumbnail,
 							attachmentCount = diaryDbEntry.attachmentCount,
 							attachmentThumbnail = diaryDbEntry.attachmentThumbnail,
 							address = diaryDbEntry.address,
 							isVisible = showEntry,
-							tint = tint,
 							onClick = {
 								if (isSelected) {
 									isSelected = true
-									if (diaryDbEntry.primaryKey in selectedItemList) {
-										selectedItemList.remove(diaryDbEntry.primaryKey)
+									if (diaryDbEntry.key in selectedItemList) {
+										selectedItemList.remove(diaryDbEntry.key)
 									} else {
-										selectedItemList.add(diaryDbEntry.primaryKey)
+										selectedItemList.add(diaryDbEntry.key)
 									}
 								} else {
 									Intent(context, NoteActivity::class.java).apply {
 										putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
-										putExtra(Konstant.Companion.Konstant.DIARY_KEY.name, diaryDbEntry.primaryKey)
+										putExtra(Konstant.Companion.Konstant.DIARY_KEY.name, diaryDbEntry.key)
 										context.startActivity(this)
 									}
 								}
 							},
 							onLongClick = {
 								isSelected = true
-								selectedItemList.add(diaryDbEntry.primaryKey)
+								selectedItemList.add(diaryDbEntry.key)
 							},
 						).apply {
-							EntryCard(entryCard = this)
+							NoteCard(noteCardData = this)
 						}
 
-						EntryTimelineSpacer(
-							tint = tint,
-							isVisible = diaryDbEntry.primaryKey != lastEntryKey && showEntry
-						)
+						NotebookTimelineSpacer(isVisible = diaryDbEntry.key != lastEntryKey && showEntry)
 					}
 				}
 			}
 
 			item {
 				Spacer(modifier = Modifier.height(128.dp))
-			}
-		}
-	}
-}
-
-@Preview
-@Composable
-private fun ProgressCard() {
-	val localDateTime = LocalDateTime.now()
-	val isLeapYear = ((localDateTime.year % 4 == 0) && (localDateTime.year % 100 != 0)) || (localDateTime.year % 400 == 0)
-	val totalTime = 24 * 60 * if (isLeapYear) 366 else 365
-	val currentTime = (localDateTime.dayOfYear * 24 * 60) + (localDateTime.hourOfDay * 60) + localDateTime.minuteOfHour
-
-	var yearProgressValue by remember { mutableStateOf(0f) }
-	val yearProgressAnimation by animateFloatAsState(
-		targetValue = yearProgressValue,
-		animationSpec = FloatTweenSpec(
-			1600, 400, FastOutSlowInEasing
-		)
-	)
-
-	SideEffect { yearProgressValue = (currentTime.toFloat() / totalTime) }
-
-	Card(
-		elevation = 0.dp,
-		shape = RoundedCornerShape(12.dp),
-		modifier = Modifier
-			.height(80.dp)
-			.fillMaxWidth()
-			.padding(12.dp, 8.dp, 12.dp, 4.dp)
-	) {
-		Column(
-			horizontalAlignment = Alignment.Start,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp)
-		) {
-			Text(
-				text = "Year in progress ${localDateTime.year}",
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary
-			)
-
-			Spacer(modifier = Modifier.height(8.dp))
-
-			Row(
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Card(
-					elevation = 0.dp,
-					shape = RoundedCornerShape(4.dp),
-					backgroundColor = Color.LightGray,
-					modifier = Modifier
-						.weight(1f)
-						.height(6.dp),
-				) {
-					Column(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(6.dp),
-					) {
-						Card(
-							elevation = 0.dp,
-							shape = RoundedCornerShape(4.dp),
-							backgroundColor = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.fillMaxWidth(yearProgressAnimation)
-								.height(6.dp),
-						) {
-
-						}
-					}
-				}
-
-				Text(
-					text = String.format("%.2f%%", yearProgressAnimation * 100),
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.primary,
-					modifier = Modifier
-						.padding(16.dp, 0.dp, 0.dp, 0.dp)
-				)
 			}
 		}
 	}

@@ -2,33 +2,45 @@ package com.syncodec.momento.mainComponent
 
 import android.app.Application
 import android.graphics.Bitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.viewModelScope
+import androidx.compose.ui.graphics.toArgb
+import androidx.lifecycle.*
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.BucketDbEntry
 import com.syncodec.momento.database.bucket.BucketItemType
-import com.syncodec.momento.database.diary.DiaryDbEntry
+import com.syncodec.momento.database.note.NoteDbEntry
+import com.syncodec.momento.miscellaneous.DataStore
 import com.syncodec.momento.repository.BucketRepository
-import com.syncodec.momento.repository.DiaryRepository
-import com.syncodec.momento.repository.NotebookRepository
-import kotlinx.coroutines.Dispatchers
+import com.syncodec.momento.repository.NoteRepository
 import kotlinx.coroutines.launch
-import java.io.File
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-	val diaryRepository: DiaryRepository = DiaryRepository.getInstance(momento = application as Momento)
-	val notebookRepository: NotebookRepository = NotebookRepository(momento = application as Momento)
+	val dataStore = DataStore(this.getApplication())
+	val noteRepository: NoteRepository = NoteRepository.getInstance(momento = application as Momento)
 	val bucketRepository: BucketRepository = BucketRepository.getInstance(momento = application as Momento)
 
 	lateinit var activityState: MainActivity.ActivityState
 
-	fun insertDiary(diaryDbEntry: DiaryDbEntry) {
-		viewModelScope.launch {
-			diaryRepository.insert(diaryDbEntry)
+	var defaultNotebookKey: String? = null
+	var defaultNoteList: LiveData<List<NoteDbEntry>> = MutableLiveData()
+
+	suspend fun initDefaultNoteList() {
+		dataStore.getDefaultNotebookKey.collect {
+			defaultNotebookKey = it
+			if (it != null) {
+				defaultNoteList = noteRepository.getNoteAsLiveData(it)
+			} else {
+				val key = noteRepository.putNotebook(
+					title = "Diary",
+					description = "Default diary",
+					color = Color(0xFF52616B).toArgb(),
+					image = null
+				)
+				dataStore.putDefaultNotebookKey(key)
+			}
 		}
 	}
 
@@ -36,34 +48,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		return bucketRepository.getBucketListAsLiveData()
 	}
 
-	fun moveDiaryToTrash(primaryKey: String) {
+	fun deleteNote(key: String, notebookKey: String) {
 		viewModelScope.launch {
-			diaryRepository.delete(primaryKey = primaryKey)
-		}
-//		viewModelScope.launch {
-//			diaryRepository.moveToTrash(primaryKey)
-//		}
-	}
-
-	fun deleteAllDiary() {
-		viewModelScope.launch(Dispatchers.IO) {
-			diaryRepository.deleteAll()
-		}
-	}
-
-	fun deleteAllBucket() {
-//		viewModelScope.launch {
-//			withContext(Dispatchers.IO) {
-//				bucketRepository.deleteAll()
-//				File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
-//			}
-//		}
-	}
-
-	fun deleteAllNotebook() {
-		viewModelScope.launch(Dispatchers.IO) {
-			notebookRepository.deleteAll()
-			File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
+			noteRepository.deleteNote(key = key)
 		}
 	}
 
@@ -74,7 +61,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		image: Bitmap?
 	) {
 		viewModelScope.launch {
-			notebookRepository.createNewNotebook(
+			noteRepository.putNotebook(
 				title = title,
 				description = description,
 				color = color,

@@ -18,24 +18,24 @@ fun ExpandableBox(
 	val enterFadeIn = remember {
 		fadeIn(
 			animationSpec = TweenSpec(
-				durationMillis = 400,
+				durationMillis = 600,
 				easing = FastOutLinearInEasing
 			)
 		)
 	}
 	val enterExpand = remember {
-		expandVertically(animationSpec = tween(400))
+		expandVertically(animationSpec = tween(600))
 	}
 	val exitFadeOut = remember {
 		fadeOut(
 			animationSpec = TweenSpec(
-				durationMillis = 400,
+				durationMillis = 600,
 				easing = LinearOutSlowInEasing
 			)
 		)
 	}
 	val exitCollapse = remember {
-		shrinkVertically(animationSpec = tween(400))
+		shrinkVertically(animationSpec = tween(600))
 	}
 	AnimatedVisibility(
 		visible = isVisible,

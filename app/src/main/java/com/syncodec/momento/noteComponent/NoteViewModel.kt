@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.volley.Request
@@ -19,20 +20,17 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.momento.Momento
-import com.syncodec.momento.database.diary.LocationData
-import com.syncodec.momento.database.diary.Note
-import com.syncodec.momento.database.diary.WeatherData
+import com.syncodec.momento.database.note.Note
+import com.syncodec.momento.database.note.WeatherData
 import com.syncodec.momento.konstant.Secret
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.copyInputStreamToOutputStream
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.miscellaneous.locationAddressFilter
 import com.syncodec.momento.repository.AttachmentRepository
-import com.syncodec.momento.repository.DiaryRepository
-import com.syncodec.momento.repository.NotebookRepository
+import com.syncodec.momento.repository.NoteRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -48,11 +46,8 @@ data class TempAttachmentData(
 
 class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
-	val diaryRepository: DiaryRepository = DiaryRepository.getInstance(momento = application as Momento)
+	val noteRepository: NoteRepository = NoteRepository.getInstance(momento = application as Momento)
 	private val attachmentRepository: AttachmentRepository = AttachmentRepository(momento = application as Momento)
-	private val notebookRepository: NotebookRepository = NotebookRepository(momento = application as Momento)
-
-	lateinit var componentType: Momento.Companion.ComponentType
 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
 
@@ -62,7 +57,10 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	private val currentTimestamp = System.currentTimeMillis()
 	var userTimestamp = mutableStateOf(System.currentTimeMillis())
 
-	var gpsLocation by mutableStateOf<Location?>(null)
+	var notebookKey : MutableState<String> = mutableStateOf("")
+	var chapterPath : SnapshotStateList<String> = mutableStateListOf()
+
+	var gpsLocation = mutableStateOf<Location?>(null)
 	var location by mutableStateOf<Location?>(null)
 	var address by mutableStateOf<String?>(null)
 	var weatherData by mutableStateOf<WeatherData?>(null)
@@ -122,34 +120,11 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		address = null
 	}
 
-	fun saveDiary() {
+	fun putNote() {
 		viewModelScope.launch {
-			note.userTimestamp = userTimestamp.value
-			note.location = LocationData(
-				latitude = this@NoteViewModel.location?.latitude,
-				longitude = this@NoteViewModel.location?.longitude,
-				bearing = this@NoteViewModel.location?.bearing,
-				altitude = this@NoteViewModel.location?.altitude,
-				speed = this@NoteViewModel.location?.speed
-			)
-			note.address = this@NoteViewModel.address
-
-			note.isArchived = isArchived
-			note.isFavourite = isFavourite
-			note.isLocked = isLocked
-
-			attachmentRepository.saveAttachmentList(diaryKey = note.primaryKey, attachmentList = attachmentList)
-			diaryRepository.saveDiary(
-				note = this@NoteViewModel.note,
-				attachmentList = attachmentList,
-				deletedTimestamp = deletedTimestamp
-			)
-		}
-	}
-
-	fun saveNote() {
-		viewModelScope.launch {
-			notebookRepository.saveNote(
+			note.notebookKey = this@NoteViewModel.notebookKey.value
+			note.chapterPath = this@NoteViewModel.chapterPath
+			noteRepository.putNote(
 				note = this@NoteViewModel.note,
 				attachmentList = this@NoteViewModel.attachmentList,
 				deletedTimestamp = this@NoteViewModel.deletedTimestamp
@@ -172,7 +147,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken)
 			.addOnSuccessListener { location: Location? ->
 				Log.i("npr71", "location success...")
-				this.gpsLocation = location
+				this.gpsLocation.value = location
 				this.location = location
 				activityState.addressState.value = NoteActivity.AddressState.LOCATION
 				addressHandler.postDelayed(addressRunnable, 10000)

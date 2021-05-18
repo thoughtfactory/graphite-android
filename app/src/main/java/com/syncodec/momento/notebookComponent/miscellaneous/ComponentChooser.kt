@@ -27,7 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.notebookComponent.NotebookActivity
-import com.syncodec.momento.notebookComponent.ViewModel
+import com.syncodec.momento.notebookComponent.NotebookViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Trash
 import dev.jorgecastillo.androidcolorx.library.tints
@@ -48,8 +48,8 @@ fun ComponentChooser(
 
 	val buttonWidth = (screenWidth - 24.dp) / 3
 
-	val viewModel: ViewModel = viewModel()
-	var componentType by viewModel.activityState.notebookComponentType
+	val notebookViewModel: NotebookViewModel = viewModel()
+	var componentType by notebookViewModel.activityState.notebookComponentType
 
 	val spacerWidth by animateDpAsState(
 		targetValue = when (componentType) {

@@ -26,7 +26,7 @@ fun BottomSheetHeader(
 	) {
 		Text(
 			text = title,
-			style = MaterialTheme.typography.titleMedium,
+			style = MaterialTheme.typography.titleSmall,
 			color = MaterialTheme.colorScheme.onBackground
 		)
 

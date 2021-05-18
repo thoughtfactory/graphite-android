@@ -70,17 +70,18 @@ fun NotebookBottomSheet() {
 	var notebookColor by remember { mutableStateOf<Color?>(null) }
 	var notebookImage by remember { mutableStateOf<Int?>(null) }
 
+	var currentState by remember { mutableStateOf(0)}
+	LaunchedEffect(key1 = currentState) {
+		notebookTheme = if (currentState == 0) NotebookTheme.COLOR else NotebookTheme.IMAGE
+	}
+
 	val containerColor by animateColorAsState(
 		targetValue = if (!(notebookColor == null && notebookImage == null) && notebookTitleText.isNotBlank()) MaterialTheme.colorScheme.onPrimaryContainer else Color.LightGray,
-		animationSpec = tween(
-			durationMillis = 400
-		)
+		animationSpec = tween(durationMillis = 600)
 	)
 	val contentColor by animateColorAsState(
 		targetValue = if (!(notebookColor == null && notebookImage == null) && notebookTitleText.isNotBlank()) MaterialTheme.colorScheme.primaryContainer else Color.DarkGray,
-		animationSpec = tween(
-			durationMillis = 400
-		)
+		animationSpec = tween(durationMillis = 600)
 	)
 
 	Column(
@@ -124,23 +125,19 @@ fun NotebookBottomSheet() {
 				StateData(title = "Color", icon = TablerIcons.ColorSwatch, color = MaterialTheme.colorScheme.primary),
 				StateData(title = "Image", icon = TablerIcons.Photo, color = MaterialTheme.colorScheme.primary)
 			),
-			initialState = 0,
+			currentState = currentState,
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(32.dp)
 				.padding(24.dp, 0.dp),
-		) {
-			notebookTheme = if (it == 0) NotebookTheme.COLOR else NotebookTheme.IMAGE
-		}
+		) { currentState = it }
 
 		Spacer(modifier = Modifier.height(12.dp))
 
 		Crossfade(
 			targetState = notebookTheme,
 			modifier = Modifier,
-			animationSpec = tween(
-				durationMillis = 400
-			)
+			animationSpec = tween(durationMillis = 600)
 		) {
 			when (it) {
 				NotebookTheme.COLOR -> ColorChooser(

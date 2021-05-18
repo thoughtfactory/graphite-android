@@ -5,9 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Card
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,14 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.LargeTextField
@@ -36,7 +30,6 @@ import compose.icons.tablericons.Bucket
 
 
 data class BucketButtonData(
-	val title: String,
 	val subtitle: String,
 	val bucketItemType: BucketItemType.Type?,
 	val highlight: Boolean = false,
@@ -56,19 +49,18 @@ fun BucketBottomSheet(
 	val containerColor by animateColorAsState(
 		targetValue = if (selectedBucketType != null && bucketNameText.isNotBlank()) MaterialTheme.colorScheme.onPrimaryContainer else Color.LightGray,
 		animationSpec = tween(
-			durationMillis = 400
+			durationMillis = 600
 		)
 	)
 	val contentColor by animateColorAsState(
 		targetValue = if (selectedBucketType != null && bucketNameText.isNotBlank()) MaterialTheme.colorScheme.primaryContainer else Color.DarkGray,
 		animationSpec = tween(
-			durationMillis = 400
+			durationMillis = 600
 		)
 	)
 
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
-			title = "To Do",
 			subtitle = "Have any pending tasks?",
 			bucketItemType = BucketItemType.Type.TODO,
 			highlight = selectedBucketType == BucketItemType.Type.TODO,
@@ -76,7 +68,6 @@ fun BucketBottomSheet(
 			selectedBucketType = BucketItemType.Type.TODO
 		},
 		BucketButtonData(
-			title = "Books",
 			subtitle = "A little fiction here, and a little fantasy there",
 			bucketItemType = BucketItemType.Type.BOOKS,
 			highlight = selectedBucketType == BucketItemType.Type.BOOKS,
@@ -84,23 +75,13 @@ fun BucketBottomSheet(
 			selectedBucketType = BucketItemType.Type.BOOKS
 		},
 		BucketButtonData(
-			title = "Movies",
-			subtitle = "Ah! Don't have enough time",
-			bucketItemType = BucketItemType.Type.MOVIES,
-			highlight = selectedBucketType == BucketItemType.Type.MOVIES,
-		) {
-			selectedBucketType = BucketItemType.Type.MOVIES
-		},
-		BucketButtonData(
-			title = "TV Shows",
 			subtitle = "Aren't those characters real!?",
-			bucketItemType = BucketItemType.Type.TVSHOWS,
-			highlight = selectedBucketType == BucketItemType.Type.TVSHOWS,
+			bucketItemType = BucketItemType.Type.SHOWS,
+			highlight = selectedBucketType == BucketItemType.Type.SHOWS,
 		) {
-			selectedBucketType = BucketItemType.Type.TVSHOWS
+			selectedBucketType = BucketItemType.Type.SHOWS
 		},
 		BucketButtonData(
-			title = "Media",
 			subtitle = "Gotta keep them safe",
 			bucketItemType = BucketItemType.Type.MEDIA,
 			highlight = selectedBucketType == BucketItemType.Type.MEDIA,
@@ -108,7 +89,6 @@ fun BucketBottomSheet(
 			selectedBucketType = BucketItemType.Type.MEDIA
 		},
 		BucketButtonData(
-			title = "Links",
 			bucketItemType = BucketItemType.Type.LINKS,
 			highlight = selectedBucketType == BucketItemType.Type.LINKS,
 			subtitle = "Those might be helpful someday",
@@ -131,12 +111,7 @@ fun BucketBottomSheet(
 			modifier = Modifier.horizontalScroll(rememberScrollState())
 		) {
 			Spacer(modifier = Modifier.width(16.dp))
-			BucketButton(bucketButtonDataList[0])
-			BucketButton(bucketButtonDataList[1])
-			BucketButton(bucketButtonDataList[2])
-			BucketButton(bucketButtonDataList[3])
-			BucketButton(bucketButtonDataList[4])
-			BucketButton(bucketButtonDataList[5])
+			bucketButtonDataList.forEach { BucketButton(it) }
 			Spacer(modifier = Modifier.width(16.dp))
 		}
 
@@ -144,7 +119,8 @@ fun BucketBottomSheet(
 
 		Text(
 			text = "And name it",
-			style = MaterialTheme.typography.titleMedium,
+			style = MaterialTheme.typography.titleSmall,
+			color = MaterialTheme.colorScheme.onBackground,
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(24.dp, 0.dp)
@@ -188,16 +164,11 @@ private fun BucketButton(
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
-		animationSpec = tween(
-			durationMillis = 400
-		)
+		animationSpec = tween(600)
 	)
-
-	val borderColor by animateColorAsState(
-		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
-		animationSpec = tween(
-			durationMillis = 400
-		)
+	val contentColor by animateColorAsState(
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onBackground,
+		animationSpec = tween(600)
 	)
 
 	Column(
@@ -207,14 +178,15 @@ private fun BucketButton(
 	) {
 		Card(
 			elevation = 0.dp,
-			shape = RoundedCornerShape(8.dp),
+			shape = RoundedCornerShape(12.dp),
 			backgroundColor = containerColor,
-			border = BorderStroke(2.dp, borderColor),
+			border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),
 			modifier = Modifier
 				.width(160.dp)
 				.height(96.dp)
 				.padding(6.dp)
 				.focusable(true)
+				.clip(RoundedCornerShape(12.dp))
 				.clickable { bucketButtonData.onClick() },
 		) {
 			Column(
@@ -228,17 +200,16 @@ private fun BucketButton(
 				Icon(
 					imageVector = ResourceMap.bucketTypeToIcon[bucketButtonData.bucketItemType]!!,
 					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
+					tint = contentColor,
 					modifier = Modifier
 						.size(24.dp)
 						.alpha(0.8f)
 				)
 
 				Text(
-					text = bucketButtonData.title,
+					text = ResourceMap.BucketItemNameMap[bucketButtonData.bucketItemType]!!,
 					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onSecondaryContainer
+					color = contentColor
 				)
 			}
 		}
@@ -249,7 +220,7 @@ private fun BucketButton(
 			maxLines = 3,
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(6.dp)
+				.padding(6.dp, 0.dp)
 				.alpha(0.47f)
 		)
 	}

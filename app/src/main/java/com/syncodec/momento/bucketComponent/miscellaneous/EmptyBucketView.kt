@@ -30,7 +30,7 @@ fun EmptyBucketView(
 		TopBar(
 			bucketTitle = bucketTitle,
 			bucketItemType = bucketItemType,
-			isSelected = false
+			showStateSelector = false
 		) { onClick(it) }
 		Column(
 			modifier = Modifier

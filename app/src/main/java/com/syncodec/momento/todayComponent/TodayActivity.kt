@@ -95,7 +95,7 @@ class TodayActivity : ComponentActivity() {
 								this.setTextColor(android.graphics.Color.WHITE)
 								this.setBackgroundColor(0)
 								this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 64f)
-								this.setTypeface(ResourcesCompat.getFont(context, R.font.montserrat_light), Typeface.NORMAL)
+								this.setTypeface(ResourcesCompat.getFont(context, R.font.overlock_bold), Typeface.NORMAL)
 								this.letterSpacing = 0.1f
 							}
 						},
@@ -111,7 +111,7 @@ class TodayActivity : ComponentActivity() {
 								this.setTextColor(android.graphics.Color.WHITE)
 								this.setBackgroundColor(0)
 								this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-								this.setTypeface(ResourcesCompat.getFont(context, R.font.montserrat_medium), Typeface.NORMAL)
+								this.setTypeface(ResourcesCompat.getFont(context, R.font.overlock_bold), Typeface.NORMAL)
 								this.letterSpacing = 0.1f
 							}
 						},
@@ -130,7 +130,7 @@ class TodayActivity : ComponentActivity() {
 							this.setTextColor(android.graphics.Color.WHITE)
 							this.setBackgroundColor(0)
 							this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
-							this.setTypeface(ResourcesCompat.getFont(context, R.font.source_sans_pro_semi_bold), Typeface.BOLD)
+							this.setTypeface(ResourcesCompat.getFont(context, R.font.overlock_bold), Typeface.BOLD)
 							this.letterSpacing = 0.1f
 						}
 					},
@@ -160,7 +160,7 @@ class TodayActivity : ComponentActivity() {
 								this.setTextColor(android.graphics.Color.WHITE)
 								this.setBackgroundColor(0)
 								this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-								this.setTypeface(ResourcesCompat.getFont(context, R.font.courgette_regular), Typeface.NORMAL)
+								this.setTypeface(ResourcesCompat.getFont(context, R.font.overlock_bold), Typeface.NORMAL)
 								this.letterSpacing = 0.1f
 							}
 						},

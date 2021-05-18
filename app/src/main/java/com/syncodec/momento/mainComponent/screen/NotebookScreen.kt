@@ -4,11 +4,12 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
@@ -16,7 +17,6 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,11 +34,9 @@ import com.syncodec.momento.R
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.notebookComponent.NotebookActivity
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Pencil
-import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -48,7 +46,7 @@ import kotlinx.coroutines.launch
 fun NotebookScreen() {
 	val viewModel: MainViewModel = viewModel()
 
-	val notebookList = viewModel.notebookRepository.notebookDbEntryListLiveData.observeAsState()
+	val notebookList = viewModel.noteRepository.notebookDbEntryListLiveData.observeAsState()
 
 	Crossfade(
 		targetState = notebookList.value?.isNotEmpty() == true,
@@ -57,10 +55,10 @@ fun NotebookScreen() {
 	) {
 		if (it) {
 			LazyVerticalGrid(
-				cells = GridCells.Adaptive(144.dp),
+				columns = GridCells.Adaptive(144.dp),
 				modifier = Modifier
 					.fillMaxSize()
-					.padding(12.dp, 0.dp)
+					.padding(12.dp, 0.dp),
 			) {
 				notebookList.value?.forEach { notebook ->
 					item {
@@ -146,13 +144,13 @@ private fun NotebookGridCard(
 			.aspectRatio(0.75f),
 		onClick = {
 			Intent(context, NotebookActivity::class.java).apply {
-				putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, notebookDbEntry.primaryKey)
+				putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, notebookDbEntry.key)
 				activity.launch(this)
 			}
 		}
 	) {
 		if (notebookDbEntry.color == null) {
-			viewModel.getNotebookImage(notebookKey = notebookDbEntry.primaryKey)?.let {
+			viewModel.getNotebookImage(notebookKey = notebookDbEntry.key)?.let {
 				Image(
 					bitmap = it,
 					contentDescription = null,

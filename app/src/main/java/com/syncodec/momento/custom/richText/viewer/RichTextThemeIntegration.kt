@@ -7,7 +7,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 
-internal data class RichTextThemeIntegration(
+private data class RichTextThemeIntegration(
   val textStyle: @Composable () -> TextStyle = { LocalInternalTextStyle.current },
   val ProvideTextStyle: @Composable (TextStyle, @Composable () -> Unit) -> Unit = { newTextStyle, content ->
     CompositionLocalProvider(LocalInternalTextStyle provides newTextStyle) {
@@ -22,7 +22,7 @@ internal data class RichTextThemeIntegration(
   }
 )
 
-internal val LocalRichTextThemeIntegration: ProvidableCompositionLocal<RichTextThemeIntegration> =
+private val LocalRichTextThemeIntegration: ProvidableCompositionLocal<RichTextThemeIntegration> =
   compositionLocalOf { RichTextThemeIntegration() }
 
 /**
@@ -46,7 +46,7 @@ internal val LocalRichTextThemeIntegration: ProvidableCompositionLocal<RichTextT
  * for content color.
  */
 @Composable
-public fun RichTextThemeIntegration(
+fun RichTextThemeIntegration(
   textStyle: @Composable (() -> TextStyle)? = null,
   ProvideTextStyle: @Composable ((TextStyle, @Composable () -> Unit) -> Unit)? = null,
   contentColor: @Composable (() -> Color)? = null,

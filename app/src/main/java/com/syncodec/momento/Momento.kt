@@ -3,16 +3,13 @@ package com.syncodec.momento
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.syncodec.momento.database.diary.Note
-import com.syncodec.momento.database.notebook.Chapter
-import com.syncodec.momento.database.notebook.Notebook
+import com.syncodec.momento.database.note.Note
 import java.io.*
 import java.net.URL
 import java.net.URLConnection
@@ -28,9 +25,6 @@ class Momento : Application() {
 
 	var DATA: String = "data"
 		get() = "$ROOT/$field"
-
-	var DIARY_DIR = "diary"
-		get() = "$DATA/$field"
 
 	var BUCKET_DIR = "bucket"
 		get() = "$DATA/$field"
@@ -92,34 +86,12 @@ class Momento : Application() {
 		return "$NOTEBOOK_DIR/notebook_$notebookKey/note_$noteKey.json"
 	}
 
-	fun getDiaryDirPath(diaryKey: String): String {
-		return "$DIARY_DIR/diary_$diaryKey"
-	}
-
-	fun getDiaryDataPath(diaryKey: String): String {
-		File("$DIARY_DIR/diary_${diaryKey}").mkdirs()
-		return "${getDiaryDirPath(diaryKey = diaryKey)}/diary_$diaryKey.json"
-	}
-
-	fun putDiary(
-		note: Note
-	): Boolean {
-		val file = File(getDiaryDataPath(diaryKey = note.primaryKey))
-		return if (file.exists()) {
-			objectMapper.writeValue(file, note)
-			true
-		} else {
-			File("$DIARY_DIR/diary_${note.primaryKey}").mkdirs()
-			objectMapper.writeValue(file, note)
-			false
-		}
-	}
-
-	fun getDiary(
-		primaryKey: String
-	): Note {
-		val file = File(getDiaryDataPath(diaryKey = primaryKey))
-		return objectMapper.readValue(file.readBytes())
+	fun removeNote(
+		key: String,
+		notebookKey: String
+	) {
+		val file = File(getNoteDataPath(notebookKey = notebookKey, noteKey = key))
+		file.delete()
 	}
 
 	fun putBucketItemData(
@@ -218,30 +190,6 @@ class Momento : Application() {
 
 	//	Notebook
 
-	fun putNotebook(
-		notebook: Notebook
-	): Boolean {
-		val file = File(getNotebookDataPath(notebookKey = notebook.primaryKey))
-		return if (file.exists()) {
-			objectMapper.writeValue(file, notebook)
-			true
-		} else {
-			objectMapper.writeValue(file, notebook)
-			false
-		}
-	}
-
-	fun getNotebook(
-		primaryKey: String
-	): Notebook {
-		val file = File(getNotebookDataPath(notebookKey = primaryKey))
-		if (file.exists() && file.isFile) {
-			return objectMapper.readValue(file)
-		} else {
-			throw FileNotFoundException()
-		}
-	}
-
 	fun putNotebookImage(notebookKey: String, image: Bitmap) {
 		val imageFile = File(getNotebookImagePath(notebookKey = notebookKey))
 		val os: OutputStream = BufferedOutputStream(FileOutputStream(imageFile))
@@ -256,15 +204,6 @@ class Momento : Application() {
 			BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size).asImageBitmap()
 		} else {
 			null
-		}
-	}
-
-	fun putChapter(
-		chapter: Chapter,
-	) {
-		this.getNotebook(primaryKey = chapter.notebookKey).apply {
-			this.chapterMap[chapter.primaryKey] = chapter
-			putNotebook(this)
 		}
 	}
 
@@ -286,11 +225,11 @@ class Momento : Application() {
 		val file = File(getNoteDataPath(notebookKey = note.notebookKey!!, noteKey = note.primaryKey))
 		objectMapper.writeValue(file, note)
 
-		this.getNotebook(primaryKey = note.notebookKey!!).apply {
-			note.content = null
-			this.noteMap[note.primaryKey] = note
-			putNotebook(this)
-		}
+//		this.getNotebook(primaryKey = note.notebookKey!!).apply {
+//			note.content = null
+//			this.noteMap[note.primaryKey] = note
+//			putNotebook(this)
+//		}
 	}
 
 	companion object {

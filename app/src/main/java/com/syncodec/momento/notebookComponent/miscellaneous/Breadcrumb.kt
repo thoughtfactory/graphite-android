@@ -21,38 +21,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.syncodec.momento.notebookComponent.ViewModel
+import com.syncodec.momento.notebookComponent.NotebookViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronRight
 
 
 @Composable
 fun Breadcrumb(
-	currentRoute: SnapshotStateList<String>,
+	chapterRoute: SnapshotStateList<String>,
+	onClick: (Int) -> Unit
 ) {
-	val viewModel: ViewModel = viewModel()
-
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(24.dp)
-			.horizontalScroll(
-				state = rememberScrollState()
-			),
+			.horizontalScroll(state = rememberScrollState()),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Spacer(modifier = Modifier.width(12.dp))
 
-		Crumb(crumb = "/")
-		currentRoute.forEach {
-			Crumb(crumb = it)
-		}
+		Crumb(crumb = "/") { onClick(0) }
+		chapterRoute.forEachIndexed { index, crumb -> Crumb(crumb = crumb) { onClick(index + 1) } }
 	}
 }
 
 @Composable
 private fun Crumb(
-	crumb: String
+	crumb: String,
+	onClick: () -> Unit
 ) {
 	var showCrumb by remember { mutableStateOf(false) }
 	LaunchedEffect(
@@ -83,28 +79,24 @@ private fun Crumb(
 					.fillMaxHeight()
 					.padding(0.dp, 0.dp)
 					.clip(RoundedCornerShape(12.dp))
-					.background(MaterialTheme.colorScheme.primary)
-					.clickable {
-//						viewModel.openNotebook()
-					},
+					.background(MaterialTheme.colorScheme.onSecondaryContainer)
+					.clickable { onClick() },
 				contentAlignment = Alignment.Center
 			) {
 				Text(
 					text = crumb,
-					style = MaterialTheme.typography.titleSmall,
-					color = MaterialTheme.colorScheme.onPrimary,
+					style = MaterialTheme.typography.bodyLarge,
+					color = MaterialTheme.colorScheme.secondaryContainer,
 					textAlign = TextAlign.Center,
-					modifier = Modifier
-						.padding(16.dp, 0.dp)
+					modifier = Modifier.padding(16.dp, 0.dp)
 				)
 			}
 
 			Icon(
 				imageVector = TablerIcons.ChevronRight,
 				contentDescription = null,
-				modifier = Modifier
-					.requiredSize(16.dp),
-				tint = MaterialTheme.colorScheme.onPrimaryContainer
+				modifier = Modifier.requiredSize(16.dp),
+				tint = MaterialTheme.colorScheme.onSecondaryContainer
 			)
 		}
 	}

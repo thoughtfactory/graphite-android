@@ -4,7 +4,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.Expose
-import com.syncodec.momento.database.diary.DiaryDbEntry
 
 @Entity(tableName = "bucket_table")
 data class BucketDbEntry(

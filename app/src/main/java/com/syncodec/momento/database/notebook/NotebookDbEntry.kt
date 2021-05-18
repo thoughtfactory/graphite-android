@@ -4,42 +4,37 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.Expose
+import com.syncodec.momento.database.note.Note
 
 @Entity(tableName = "notebook_table")
 data class NotebookDbEntry(
 	@PrimaryKey
-	@ColumnInfo(name = "primary_key")
-	@Expose
-	val primaryKey: String,
+	@ColumnInfo(name = "key")
+	val key: String,
 
 	@ColumnInfo(name =  "created_timestamp")
-	@Expose
 	val createdTimestamp: Long,
 ) {
 	@ColumnInfo(name =  "modified_timestamp")
-	@Expose
 	var modifiedTimestamp: Long = System.currentTimeMillis()
 
 	@ColumnInfo(name = "title")
-	@Expose
 	lateinit var title: String
 
 	@ColumnInfo(name = "description")
-	@Expose
 	var description: String? = null
 
 	@ColumnInfo(name = "color")
-	@Expose
 	var color: Int? = null
 
-	@ColumnInfo(name =  "number_chapter")
-	var numberChapter: Int = 0
+	@ColumnInfo(name = "isFavourite")
+	var isFavourite: Boolean = false
 
-	@ColumnInfo(name =  "number_note")
-	var numberNote: Int = 0
+	@ColumnInfo(name = "isArchived")
+	var isArchived: Boolean = false
 
-	@ColumnInfo(name =  "number_attachment")
-	var numberAttachment: Int = 0
+	@ColumnInfo(name = "isLocked")
+	var isLocked: Boolean = false
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
@@ -50,22 +45,12 @@ data class NotebookDbEntry(
 
 		other as NotebookDbEntry
 
-		if (primaryKey != other.primaryKey) return false
+		if (key != other.key) return false
 
 		return true
 	}
 
 	override fun hashCode(): Int {
-		var result = primaryKey.hashCode()
-		result = 31 * result + createdTimestamp.hashCode()
-		result = 31 * result + modifiedTimestamp.hashCode()
-		result = 31 * result + title.hashCode()
-		result = 31 * result + (description?.hashCode() ?: 0)
-		result = 31 * result + (color?.hashCode() ?: 0)
-		result = 31 * result + numberChapter
-		result = 31 * result + numberNote
-		result = 31 * result + numberAttachment
-		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
-		return result
+		return key.hashCode()
 	}
 }

@@ -1,11 +1,11 @@
 package com.syncodec.momento.notebookComponent
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,21 +17,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
+import androidx.compose.ui.unit.sp
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.syncodec.momento.R
+import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.notebookComponent.miscellaneous.TopBar
@@ -40,15 +38,14 @@ import com.syncodec.momento.notebookComponent.modalBottomSheet.SheetLayout
 import com.syncodec.momento.notebookComponent.screen.NotebookScreen
 import com.syncodec.momento.ui.theme.MomentoTheme
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Note
 import compose.icons.tablericons.Notebook
+import compose.icons.tablericons.Notes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class NotebookActivity : ComponentActivity() {
-	private val viewModel by viewModels<ViewModel>()
+	private val viewModel by viewModels<NotebookViewModel>()
 
 	@OptIn(
 		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
@@ -58,23 +55,14 @@ class NotebookActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		viewModel.notebookKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
-		viewModel.observeNotebook()
-		viewModel.openNotebook()
+		CoroutineScope(Dispatchers.IO).launch { viewModel.initData() }
 
 		setContent {
-			val scope = rememberCoroutineScope()
 			viewModel.activityState = rememberNotebookActivityState()
-
-			SideEffect {
-				scope.launch {
-					delay(ANIMATION_DURATION.toLong())
-					viewModel.activityState.showContent.value = true
-				}
-			}
 
 			MomentoTheme {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
 
 				Screen()
 			}
@@ -87,17 +75,11 @@ class NotebookActivity : ComponentActivity() {
 				viewModel.activityState.selectedItemList.removeAll { true }
 				viewModel.activityState.isSelected.value = false
 			}
-			viewModel.currentRoute.isNotEmpty() -> {
-				CoroutineScope(Dispatchers.IO).launch {
-//					for animating purpose
-					viewModel.activityState.showContent.value = false
-					delay(ANIMATION_DURATION.toLong())
-
-					viewModel.currentRoute.removeLast()
-					viewModel.currentRouteName.removeLast()
-
-					viewModel.activityState.showContent.value = true
-				}
+			viewModel.chapterPath.isNotEmpty() -> {
+				viewModel.chapterPath.removeLast()
+				viewModel.chapterNamePath.removeLast()
+				viewModel.activityState.showNotes.value = true
+				viewModel.activityState.showChapters.value = true
 			}
 			else -> {
 				super.onBackPressed()
@@ -105,7 +87,58 @@ class NotebookActivity : ComponentActivity() {
 		}
 	}
 
-	@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class, ExperimentalMaterialApi::class)
+	private fun onClick(click: Click, data: Any? = null) {
+		when (click) {
+			Click.CLICK_NOTE -> {
+				data as String
+				val selectedItemList = viewModel.activityState.selectedItemList
+				if (viewModel.activityState.isSelected.value) {
+					if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
+				} else {
+
+				}
+			}
+			Click.LONG_CLICK_NOTE -> {
+				data as String
+				val selectedItemList = viewModel.activityState.selectedItemList
+				viewModel.activityState.isSelected.value = true
+				if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
+			}
+			Click.CLICK_CHAPTER -> {
+				data as String
+				val selectedItemList = viewModel.activityState.selectedItemList
+				if (viewModel.activityState.isSelected.value) {
+					if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
+				} else {
+					viewModel.chapterPath.add(data)
+					val chapterName = viewModel.chapterList.value?.find { it.key == data }!!.title
+					viewModel.chapterNamePath.add(chapterName)
+				}
+			}
+			Click.LONG_CLICK_CHAPTER -> {
+				data as String
+				val selectedItemList = viewModel.activityState.selectedItemList
+				viewModel.activityState.isSelected.value = true
+				if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
+			}
+			Click.NOTE_HEADER -> viewModel.activityState.showNotes.value = !viewModel.activityState.showNotes.value
+			Click.CHAPTER_HEADER -> viewModel.activityState.showChapters.value = !viewModel.activityState.showChapters.value
+			Click.BREAD_CRUMB -> {
+				data as Int
+				Log.i("npr71", "dropper : ${viewModel.chapterPath.size - data}")
+
+				for (i in 0 until viewModel.chapterPath.size - data) {
+					viewModel.chapterPath.removeLast()
+					viewModel.chapterNamePath.removeLast()
+				}
+			}
+		}
+	}
+
+	@OptIn(
+		ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class, ExperimentalMaterialApi::class,
+		androidx.compose.animation.ExperimentalAnimationApi::class
+	)
 	@Composable
 	private fun Screen() {
 
@@ -118,7 +151,8 @@ class NotebookActivity : ComponentActivity() {
 		}
 
 		val status by viewModel.status
-
+		val noteList by viewModel.noteList.observeAsState(initial = listOf())
+		val chapterList by viewModel.chapterList.observeAsState(initial = listOf())
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
@@ -129,47 +163,43 @@ class NotebookActivity : ComponentActivity() {
 			},
 		) {
 			Scaffold(
-				topBar = { TopBar() },
+				topBar = {
+					TopBar(
+						status = status,
+						title = viewModel.notebookDbEntry.title,
+						chapterRoute = viewModel.chapterNamePath
+					) { click, index -> onClick(click, index) }
+				},
 			) {
-				when (status) {
-					Status.INIT -> {
-					}
-					Status.LOADING -> {
-						val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
-						Box(
-							modifier = Modifier.fillMaxSize(),
-							contentAlignment = Alignment.Center
-						) {
-							LottieAnimation(
-								composition = lottieComposition,
-								iterations = LottieConstants.IterateForever,
+				AnimatedContent(
+					targetState = status
+				) {
+					when (it) {
+						Status.INIT -> LoadingView()
+						Status.LOADING -> LoadingView()
+						Status.LOADED -> {
+							Box(
 								modifier = Modifier
-									.requiredSize(64.dp)
-							)
-						}
-					}
-					Status.LOADED -> {
-						Box(
-							modifier = Modifier
-								.fillMaxSize()
-						) {
-							Crossfade(
-								targetState = viewModel.activityState.showContent.value,
-								animationSpec = tween(
-									durationMillis = ANIMATION_DURATION
-								)
+									.fillMaxSize()
 							) {
-								if (it) {
-									NotebookScreen()
-								}
+								NotebookScreen(
+									noteList = noteList.filter { it.chapterPath == viewModel.chapterPath },
+									chapterList = chapterList.filter { it.chapterPath == viewModel.chapterPath },
+									selectedItemList = viewModel.activityState.selectedItemList,
+									showNotes = viewModel.activityState.showNotes.value,
+									showChapters = viewModel.activityState.showChapters.value,
+									showArchived = viewModel.activityState.showArchived.value,
+									showFavourite = viewModel.activityState.showFavourite.value,
+									showLocked = viewModel.activityState.showLocked.value
+								) { click, data -> onClick(click = click, data = data) }
+								FloatingActionButton(
+									onClickAddNote = { openSheet(BottomSheetType.NewNoteBottomSheet) },
+									onClickAddChapter = { openSheet(BottomSheetType.NewChapterBottomSheet) }
+								)
 							}
-							FloatingActionButton(
-								onClickAddNote = { openSheet(BottomSheetType.NewNoteBottomSheet) },
-								onClickAddChapter = { openSheet(BottomSheetType.NewChapterBottomSheet) }
-							)
 						}
-					}
-					Status.ERROR -> {
+						Status.ERROR -> {
+						}
 					}
 				}
 			}
@@ -188,7 +218,6 @@ class NotebookActivity : ComponentActivity() {
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			Spacer(modifier = Modifier.weight(1f))
-			Spacer(modifier = Modifier.width(2.dp))
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -201,18 +230,20 @@ class NotebookActivity : ComponentActivity() {
 					modifier = Modifier
 						.height(56.dp),
 					backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+					elevation = 0.dp,
+					enabled = true,
 					shape = RoundedCornerShape(16.dp),
-					elevation = 8.dp,
 					onClick = { onClickAddNote() }
 				) {
 					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
 						modifier = Modifier
 							.fillMaxHeight()
 							.padding(16.dp, 0.dp),
-						verticalAlignment = Alignment.CenterVertically
 					) {
 						Icon(
-							imageVector = TablerIcons.Note,
+							imageVector = TablerIcons.Notes,
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onPrimaryContainer,
 							modifier = Modifier
@@ -220,11 +251,12 @@ class NotebookActivity : ComponentActivity() {
 						)
 						Spacer(modifier = Modifier.width(8.dp))
 						androidx.compose.material3.Text(
-							text = "Add a new note",
-							modifier = Modifier,
-							style = MaterialTheme.typography.titleSmall,
-							fontWeight = FontWeight.Bold,
-							color = MaterialTheme.colorScheme.onPrimaryContainer
+							text = "Add new note",
+							style = MaterialTheme.typography.bodyLarge,
+							color = MaterialTheme.colorScheme.onPrimaryContainer,
+							textAlign = TextAlign.Center,
+							lineHeight = 0.sp,
+							maxLines = 1,
 						)
 					}
 				}
@@ -258,12 +290,12 @@ class NotebookActivity : ComponentActivity() {
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.NewNoteBottomSheet)
 		var selectedItemList: SnapshotStateList<String> = mutableStateListOf()
 
-		var showContent: MutableState<Boolean> = mutableStateOf(false)
-
 		var isSelected = mutableStateOf(false)
+		var showNotes = mutableStateOf(true)
+		var showChapters = mutableStateOf(true)
 		var showArchived = mutableStateOf(false)
 		var showFavourite = mutableStateOf(false)
-		var showTrash = mutableStateOf(false)
+		var showLocked = mutableStateOf(false)
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
@@ -274,6 +306,16 @@ class NotebookActivity : ComponentActivity() {
 		ActivityState(bottomSheetState)
 	}
 
+	enum class Click {
+		CLICK_NOTE,
+		LONG_CLICK_NOTE,
+		CLICK_CHAPTER,
+		LONG_CLICK_CHAPTER,
+		NOTE_HEADER,
+		CHAPTER_HEADER,
+		BREAD_CRUMB
+	}
+
 	enum class ComponentType {
 		ALL,
 		CHAPTER,
@@ -281,6 +323,6 @@ class NotebookActivity : ComponentActivity() {
 	}
 
 	companion object {
-		const val ANIMATION_DURATION = 400
+		const val ANIMATION_DURATION = 600
 	}
 }

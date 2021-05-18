@@ -1,14 +1,13 @@
 package com.syncodec.momento.bucketComponent.screen
 
-import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -50,8 +49,8 @@ fun GridItemScreen(
 		userScrollEnabled = false
 	) {
 		LazyVerticalGrid(
-			cells = GridCells.Adaptive(96.dp),
-			modifier = Modifier
+			columns = GridCells.Adaptive(96.dp),
+			Modifier
 				.padding(12.dp, 12.dp, 12.dp, 0.dp)
 				.background(Color.Transparent)
 		) {

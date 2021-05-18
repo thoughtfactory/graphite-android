@@ -1,26 +1,33 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
+import androidx.compose.material.*
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.Typography
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
-import com.syncodec.momento.custom.richText.viewer.string.InlineContent
+import com.syncodec.momento.custom.richText.viewer.*
 import com.syncodec.momento.custom.richText.viewer.string.RichTextString
+import com.syncodec.momento.custom.richText.viewer.string.RichTextStringStyle
 import com.syncodec.momento.custom.richText.viewer.string.Text
 import com.syncodec.momento.custom.richText.viewer.string.richTextString
-import com.syncodec.momento.R
-import com.syncodec.momento.custom.richText.viewer.*
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -63,10 +70,11 @@ fun ViewerComponent(
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
-			.padding(12.dp, 0.dp)
+			.padding(16.dp, 0.dp)
 			.verticalScroll(rememberScrollState())
+			.background(MaterialTheme.colorScheme.background)
 	) {
-		Spacer(modifier = Modifier.height(12.dp))
+		Spacer(modifier = Modifier.height(14.dp))
 		RenderContent(
 			tiptapData = tiptapData,
 			richTextScope = null,
@@ -97,43 +105,62 @@ private fun RenderDoc(
 	contentList: JSONArray?,
 	nestLevel: Int
 ) {
-	RichText(
-		modifier = Modifier
-			.fillMaxWidth(),
+	val colorScheme = MaterialTheme.colorScheme
+	val typography = MaterialTheme.typography
+	val richTextStyle by remember { mutableStateOf(viewerTextStyle(colorScheme = colorScheme, typography = typography)) }
+
+	val textSelectionColors = TextSelectionColors(
+		handleColor = colorScheme.secondary,
+		backgroundColor = colorScheme.secondary.copy(0.47f)
+	)
+
+	Surface(
+		color = MaterialTheme.colorScheme.background,
+		contentColor = MaterialTheme.colorScheme.onBackground,
 	) {
-		for (i in 0 until (contentList?.length() ?: 0)) {
-			val content = contentList!!.optJSONObject(i)
-			when (content.optString(TYPE)) {
-				PARAGRAPH -> RenderParagraph(
-					attrs = content.optJSONObject(ATTRS),
-					contentList = content.optJSONArray(CONTENT),
-					nestLevel = nestLevel + 1
-				)
-				HEADING -> RenderHeading(
-					attrs = content.optJSONObject(ATTRS),
-					contentList = content.optJSONArray(CONTENT),
-					nestLevel = nestLevel + 1
-				)
-				BLOCKQUOTE -> RenderBlockquote(
-					attr = content.optJSONObject(ATTRS),
-					contentList = content.optJSONArray(CONTENT),
-					nestLevel = nestLevel + 1
-				)
-				BULLET_LIST -> RenderList(
-					contentList = content.optJSONArray(CONTENT),
-					listType = ListType.Unordered,
-					nestLevel = nestLevel + 1
-				)
-				ORDERED_LIST -> RenderList(
-					contentList = content.optJSONArray(CONTENT),
-					listType = ListType.Ordered,
-					nestLevel = nestLevel + 1
-				)
-				TASK_LIST -> RenderList(
-					contentList = content.optJSONArray(CONTENT),
-					listType = ListType.Task,
-					nestLevel = nestLevel + 1
-				)
+		CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
+			SelectionContainer {
+				MaterialRichText(
+					style = richTextStyle,
+					modifier = Modifier
+						.fillMaxWidth(),
+				) {
+					for (i in 0 until (contentList?.length() ?: 0)) {
+						val content = contentList!!.optJSONObject(i)
+						when (content.optString(TYPE)) {
+							PARAGRAPH -> RenderParagraph(
+								attrs = content.optJSONObject(ATTRS),
+								contentList = content.optJSONArray(CONTENT),
+								nestLevel = nestLevel + 1
+							)
+							HEADING -> RenderHeading(
+								attrs = content.optJSONObject(ATTRS),
+								contentList = content.optJSONArray(CONTENT),
+								nestLevel = nestLevel + 1
+							)
+							BLOCKQUOTE -> RenderBlockquote(
+								attr = content.optJSONObject(ATTRS),
+								contentList = content.optJSONArray(CONTENT),
+								nestLevel = nestLevel + 1
+							)
+							BULLET_LIST -> RenderList(
+								contentList = content.optJSONArray(CONTENT),
+								listType = ListType.Unordered,
+								nestLevel = nestLevel + 1
+							)
+							ORDERED_LIST -> RenderList(
+								contentList = content.optJSONArray(CONTENT),
+								listType = ListType.Ordered,
+								nestLevel = nestLevel + 1
+							)
+							TASK_LIST -> RenderList(
+								contentList = content.optJSONArray(CONTENT),
+								listType = ListType.Task,
+								nestLevel = nestLevel + 1
+							)
+						}
+					}
+				}
 			}
 		}
 	}
@@ -319,50 +346,65 @@ private fun RichTextString.Builder.RenderText(
 	nestLevel: Int
 ) {
 	if (text != null) {
-		for (i in 0 until (marks?.length() ?: 0)) {
-			val mark = marks!!.getJSONObject(i)
-			when (mark.optString(TYPE)) {
-				BOLD -> {
-					addFormat(
-						format = RichTextString.Format.Bold,
-						start = start,
-						end = end
-					)
-				}
-				ITALIC -> {
-					addFormat(
-						format = RichTextString.Format.Italic,
-						start = start,
-						end = end
-					)
-				}
-				UNDERLINE -> {
-					addFormat(
-						format = RichTextString.Format.Underline,
-						start = start,
-						end = end
-					)
-				}
-				STRIKE -> {
-					addFormat(
-						format = RichTextString.Format.Strikethrough,
-						start = start,
-						end = end
-					)
-				}
-				SUPERSCRIPT -> {
-					addFormat(
-						format = RichTextString.Format.Superscript,
-						start = start,
-						end = end
-					)
-				}
-				SUBSCRIPT -> {
-					addFormat(
-						format = RichTextString.Format.Subscript,
-						start = start,
-						end = end
-					)
+		if (marks == null || marks.length() == 0) {
+			addFormat(
+				format = RichTextString.Format.UnFormat,
+				start = start,
+				end = end
+			)
+		} else {
+			for (i in 0 until marks.length()) {
+				val mark = marks.getJSONObject(i)
+				when (mark.optString(TYPE)) {
+					BOLD -> {
+						addFormat(
+							format = RichTextString.Format.Bold,
+							start = start,
+							end = end
+						)
+					}
+					ITALIC -> {
+						addFormat(
+							format = RichTextString.Format.Italic,
+							start = start,
+							end = end
+						)
+					}
+					UNDERLINE -> {
+						addFormat(
+							format = RichTextString.Format.Underline,
+							start = start,
+							end = end
+						)
+					}
+					STRIKE -> {
+						addFormat(
+							format = RichTextString.Format.Strikethrough,
+							start = start,
+							end = end
+						)
+					}
+					SUPERSCRIPT -> {
+						addFormat(
+							format = RichTextString.Format.Superscript,
+							start = start,
+							end = end
+						)
+					}
+					SUBSCRIPT -> {
+						addFormat(
+							format = RichTextString.Format.Subscript,
+							start = start,
+							end = end
+						)
+					}
+					else -> {
+						addFormat(
+							format = RichTextString.Format.UnFormat,
+							start = start,
+							end = end
+						)
+					}
 				}
 			}
 		}
@@ -370,23 +412,101 @@ private fun RichTextString.Builder.RenderText(
 	}
 }
 
-private val checkBoxFalse = InlineContent {
-	Row(
-		verticalAlignment = Alignment.CenterVertically,
-		modifier = Modifier
-			.height(20.dp),
-	) {
-		Icon(
-			painter = painterResource(id = R.drawable.ic_checkbox_unchecked),
-			contentDescription = "Unchecked",
-			tint = MaterialTheme.colorScheme.primary,
-			modifier = Modifier
-				.requiredSize(18.dp)
-				.background(MaterialTheme.colorScheme.secondaryContainer)
+@OptIn(ExperimentalUnitApi::class)
+private fun viewerTextStyle(
+	colorScheme: ColorScheme,
+	typography: Typography
+): RichTextStyle {
+	return RichTextStyle(
+		stringStyle = RichTextStringStyle(
+			unFormatStyle = SpanStyle(
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodyMedium.fontSize,
+			),
+			boldStyle = SpanStyle(
+				fontWeight = FontWeight.Bold,
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodyMedium.fontSize,
+			),
+			italicStyle = SpanStyle(
+				fontStyle = FontStyle.Italic,
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodyMedium.fontSize,
+			),
+			underlineStyle = SpanStyle(
+				textDecoration = TextDecoration.Underline,
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodyMedium.fontSize,
+			),
+			strikethroughStyle = SpanStyle(
+				textDecoration = TextDecoration.LineThrough,
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodyMedium.fontSize,
+			),
+			subscriptStyle = SpanStyle(
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodySmall.fontSize,
+				baselineShift = BaselineShift.Subscript
+			),
+			superscriptStyle = SpanStyle(
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodySmall.fontSize,
+				baselineShift = BaselineShift.Superscript
+			),
+			linkStyle = SpanStyle(
+				textDecoration = TextDecoration.Underline,
+				fontFamily = typography.bodyMedium.fontFamily,
+				fontSize = typography.bodySmall.fontSize,
+				color = colorScheme.onSecondaryContainer
+			)
 		)
-		Spacer(modifier = Modifier.width(4.dp))
+	)
+}
+
+@Composable
+private fun MaterialRichText(
+	modifier: Modifier = Modifier,
+	style: RichTextStyle? = null,
+	children: @Composable RichTextScope.() -> Unit
+) {
+	SetupMaterialRichText {
+		RichText(
+			modifier = modifier,
+			style = style,
+			children = children
+		)
 	}
 }
+
+@Composable
+private fun SetupMaterialRichText(
+	child: @Composable () -> Unit
+) {
+	val isApplied = LocalMaterialThemingApplied.current
+
+	if (!isApplied) {
+		RichTextThemeIntegration(
+			textStyle = { LocalTextStyle.current },
+			contentColor = { LocalContentColor.current },
+			ProvideTextStyle = { textStyle, content ->
+				ProvideTextStyle(textStyle, content)
+			},
+			ProvideContentColor = { color, content ->
+				CompositionLocalProvider(LocalContentColor provides color) {
+					content()
+				}
+			}
+		) {
+			CompositionLocalProvider(LocalMaterialThemingApplied provides true) {
+				child()
+			}
+		}
+	} else {
+		child()
+	}
+}
+
+private val LocalMaterialThemingApplied = compositionLocalOf { false }
 
 
 class MockNoteDataList : PreviewParameterProvider<List<String>> {

@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
-@OptIn(ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun LargeButton(
 	text: String,
@@ -57,7 +57,7 @@ fun LargeButton(
 			) { text ->
 				Text(
 					text = text,
-					style = MaterialTheme.typography.titleMedium,
+					style = MaterialTheme.typography.bodyLarge,
 					color = contentColor,
 					textAlign = TextAlign.Center,
 					lineHeight = 0.sp,

@@ -20,36 +20,32 @@ import com.syncodec.momento.BuildConfig
 import java.io.*
 import java.net.URL
 import java.net.URLConnection
+import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-val PREFERENCE_KEY_VAULT_KEY = stringPreferencesKey("vault_key")
-val PREFERENCE_KEY_ACTIVE_COMPONENT = intPreferencesKey("component")
-val PREFERENCE_KEY_NOTE_SHOW_LOCATION_PERMISSION = booleanPreferencesKey("show_location_permission_card")
+fun timeStampToPrettyDay(timestamp: Long): String = DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()
 
+fun timeStampToPrettyFull(timestamp: Long): String = DateFormat.format("EEE dd MMM, yyyy, HH:mm aa", timestamp).toString()
 
-fun timeStampToPrettyDay(timestamp: Long): String {
-	return DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()
-}
+fun timeStampToTime(timestamp: Long): String = DateFormat.format("HH:mm aa", timestamp).toString()
 
-fun timeStampToPrettyFull(timestamp: Long): String {
-	return DateFormat.format("EEE dd MMM, yyyy, HH:mm aa", timestamp).toString()
-}
+fun timestampToDate(timestamp: Long): String = DateFormat.format("EEE dd MMM, yyyy", timestamp).toString()
 
-fun timeStampToTime(timestamp: Long): String {
-	return DateFormat.format("HH:mm aa", timestamp).toString()
-}
+fun entryTimestamp0(timestamp: Long): String = DateFormat.format("EEE dd MMM", timestamp).toString()
+fun entryTimestamp1(timestamp: Long): String = DateFormat.format(", yyyy, HH:mm aa", timestamp).toString()
 
 fun generatePrimaryKey(keyLength: Int = 20): String {
-	val chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray()
-	val stringBuilder = StringBuilder(20)
-	for (i in 0 until keyLength) {
-		val c = chars[Random.nextInt(chars.size)]
-		stringBuilder.append(c)
-	}
-	return stringBuilder.toString()
+//	val chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray()
+//	val stringBuilder = StringBuilder(20)
+//
+//	for (i in 0 until keyLength) {
+//		val c = chars[Random.nextInt(chars.size)]
+//		stringBuilder.append(c)
+//	}
+//	return stringBuilder.toString()
+	return UUID.randomUUID().toString()
 }
 
 @Throws(IOException::class)

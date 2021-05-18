@@ -2,6 +2,7 @@
 
 package com.syncodec.momento.custom.richText.viewer.string
 
+import android.util.Log
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -37,297 +38,275 @@ internal const val REPLACEMENT_CHAR: String = "\uFFFD"
  * Defines the [SpanStyle]s that are used for various [RichTextString] formatting directives.
  */
 @Immutable
-public data class RichTextStringStyle(
-  val boldStyle: SpanStyle? = null,
-  val italicStyle: SpanStyle? = null,
-  val underlineStyle: SpanStyle? = null,
-  val strikethroughStyle: SpanStyle? = null,
-  val subscriptStyle: SpanStyle? = null,
-  val superscriptStyle: SpanStyle? = null,
-  val codeStyle: SpanStyle? = null,
-  val linkStyle: SpanStyle? = null
+data class RichTextStringStyle(
+	val unFormatStyle: SpanStyle? = null,
+	val boldStyle: SpanStyle? = null,
+	val italicStyle: SpanStyle? = null,
+	val underlineStyle: SpanStyle? = null,
+	val strikethroughStyle: SpanStyle? = null,
+	val subscriptStyle: SpanStyle? = null,
+	val superscriptStyle: SpanStyle? = null,
+	val codeStyle: SpanStyle? = null,
+	val linkStyle: SpanStyle? = null
 ) {
-  internal fun merge(otherStyle: RichTextStringStyle?): RichTextStringStyle {
-    if (otherStyle == null) return this
-    return RichTextStringStyle(
-      boldStyle = boldStyle.merge(otherStyle.boldStyle),
-      italicStyle = italicStyle.merge(otherStyle.italicStyle),
-      underlineStyle = underlineStyle.merge(otherStyle.underlineStyle),
-      strikethroughStyle = strikethroughStyle.merge(otherStyle.strikethroughStyle),
-      subscriptStyle = subscriptStyle.merge(otherStyle.subscriptStyle),
-      superscriptStyle = superscriptStyle.merge(otherStyle.superscriptStyle),
-      codeStyle = codeStyle.merge(otherStyle.codeStyle),
-      linkStyle = linkStyle.merge(otherStyle.linkStyle)
-    )
-  }
+	internal fun merge(otherStyle: RichTextStringStyle?): RichTextStringStyle {
+		if (otherStyle == null) return this
+		return RichTextStringStyle(
+			unFormatStyle = unFormatStyle.merge(otherStyle.unFormatStyle),
+			boldStyle = boldStyle.merge(otherStyle.boldStyle),
+			italicStyle = italicStyle.merge(otherStyle.italicStyle),
+			underlineStyle = underlineStyle.merge(otherStyle.underlineStyle),
+			strikethroughStyle = strikethroughStyle.merge(otherStyle.strikethroughStyle),
+			subscriptStyle = subscriptStyle.merge(otherStyle.subscriptStyle),
+			superscriptStyle = superscriptStyle.merge(otherStyle.superscriptStyle),
+			codeStyle = codeStyle.merge(otherStyle.codeStyle),
+			linkStyle = linkStyle.merge(otherStyle.linkStyle)
+		)
+	}
 
-  internal fun resolveDefaults(): RichTextStringStyle =
-    RichTextStringStyle(
-      boldStyle = boldStyle ?: Bold.DefaultStyle,
-      italicStyle = italicStyle ?: Italic.DefaultStyle,
-      underlineStyle = underlineStyle ?: Underline.DefaultStyle,
-      strikethroughStyle = strikethroughStyle ?: Strikethrough.DefaultStyle,
-      subscriptStyle = subscriptStyle ?: Subscript.DefaultStyle,
-      superscriptStyle = superscriptStyle ?: Superscript.DefaultStyle,
-      codeStyle = codeStyle ?: Code.DefaultStyle,
-      linkStyle = linkStyle ?: Link.DefaultStyle
-    )
+	internal fun resolveDefaults(): RichTextStringStyle =
+		RichTextStringStyle(
+			unFormatStyle = unFormatStyle ?: Format.UnFormat.DefaultStyle,
+			boldStyle = boldStyle ?: Bold.DefaultStyle,
+			italicStyle = italicStyle ?: Italic.DefaultStyle,
+			underlineStyle = underlineStyle ?: Underline.DefaultStyle,
+			strikethroughStyle = strikethroughStyle ?: Strikethrough.DefaultStyle,
+			subscriptStyle = subscriptStyle ?: Subscript.DefaultStyle,
+			superscriptStyle = superscriptStyle ?: Superscript.DefaultStyle,
+			codeStyle = codeStyle ?: Code.DefaultStyle,
+			linkStyle = linkStyle ?: Link.DefaultStyle
+		)
 
-  public companion object {
-    public val Default: RichTextStringStyle = RichTextStringStyle()
+	companion object {
+		val Default: RichTextStringStyle = RichTextStringStyle()
 
-    private fun SpanStyle?.merge(otherStyle: SpanStyle?): SpanStyle? =
-      this?.merge(otherStyle) ?: otherStyle
-  }
+		private fun SpanStyle?.merge(otherStyle: SpanStyle?): SpanStyle? =
+			this?.merge(otherStyle) ?: otherStyle
+	}
 }
 
 /**
  * Convenience function for creating a [RichTextString] using a [Builder].
  */
-public inline fun richTextString(builder: Builder.() -> Unit): RichTextString =
-  Builder().apply(builder)
-    .toRichTextString()
+inline fun richTextString(builder: Builder.() -> Unit): RichTextString =
+	Builder().apply(builder)
+		.toRichTextString()
 
 /**
  * A special type of [AnnotatedString] that is formatted using higher-level directives that are
  * configured using a [RichTextStringStyle].
  */
 @Immutable
-public data class RichTextString internal constructor(
-  private val taggedString: AnnotatedString,
-  internal val formatObjects: Map<String, Any>
+data class RichTextString internal constructor(
+	private val taggedString: AnnotatedString,
+	internal val formatObjects: Map<String, Any>
 ) {
 
-  private val length: Int get() = taggedString.length
-  val text: String get() = taggedString.text
+	private val length: Int get() = taggedString.length
+	val text: String get() = taggedString.text
 
-  public operator fun plus(other: RichTextString): RichTextString =
-    Builder(length + other.length).run {
-      append(this@RichTextString)
-      append(other)
-      toRichTextString()
-    }
+	operator fun plus(other: RichTextString): RichTextString =
+		Builder(length + other.length).run {
+			append(this@RichTextString)
+			append(other)
+			toRichTextString()
+		}
 
-  internal fun toAnnotatedString(
-    style: RichTextStringStyle,
-    contentColor: Color
-  ): AnnotatedString =
-    buildAnnotatedString {
-      append(taggedString)
+	internal fun toAnnotatedString(
+		style: RichTextStringStyle,
+		contentColor: Color
+	): AnnotatedString =
+		buildAnnotatedString {
+			append(taggedString)
 
-      // Get all of our format annotations.
-      val tags = taggedString.getStringAnnotations(FormatAnnotationScope, 0, taggedString.length)
-      // And apply their actual SpanStyles to the string.
-      tags.forEach { range ->
-        val format = Format.findTag(range.item, formatObjects) ?: return@forEach
-        format.getStyle(style, contentColor)
-          ?.let { spanStyle -> addStyle(spanStyle, range.start, range.end) }
-      }
-    }
+			// Get all of our format annotations.
+			val tags = taggedString.getStringAnnotations(FormatAnnotationScope, 0, taggedString.length)
+			// And apply their actual SpanStyles to the string.
+			tags.forEach { range ->
+				val format = Format.findTag(range.item, formatObjects) ?: return@forEach
+				format.getStyle(style, contentColor)
+					?.let { spanStyle -> addStyle(spanStyle, range.start, range.end) }
+			}
+		}
 
-  internal fun getInlineContents(): Map<String, InlineContent> =
-    formatObjects.asSequence()
-      .mapNotNull { (tag, format) ->
-        tag.removePrefix("inline:")
-          // If no prefix was found then we ignore it.
-          .takeUnless { it === tag }
-          ?.let {
-            @Suppress("UNCHECKED_CAST")
-            Pair(it, format as InlineContent)
-          }
-      }
-      .toMap()
+	internal fun getInlineContents(): Map<String, InlineContent> =
+		formatObjects.asSequence()
+			.mapNotNull { (tag, format) ->
+				tag.removePrefix("inline:")
+					// If no prefix was found then we ignore it.
+					.takeUnless { it === tag }
+					?.let {
+						@Suppress("UNCHECKED_CAST")
+						Pair(it, format as InlineContent)
+					}
+			}
+			.toMap()
 
-  public sealed class Format(private val simpleTag: String? = null) {
+	sealed class Format(private val simpleTag: String? = null) {
 
-    internal open fun getStyle(
-      richTextStyle: RichTextStringStyle,
-      contentColor: Color
-    ): SpanStyle? = null
+		internal open fun getStyle(
+			richTextStyle: RichTextStringStyle,
+			contentColor: Color
+		): SpanStyle? = null
 
-    public object Italic : Format("italic") {
-      internal val DefaultStyle = SpanStyle(fontStyle = FontStyle.Italic)
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.italicStyle
-    }
+		object UnFormat: Format("unFormat") {
+			internal val DefaultStyle = SpanStyle()
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.unFormatStyle
+		}
 
-    public object Bold : Format(simpleTag = "foo") {
-      internal val DefaultStyle = SpanStyle(fontWeight = FontWeight.Bold)
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.boldStyle
-    }
+		object Italic : Format("italic") {
+			internal val DefaultStyle = SpanStyle(fontStyle = FontStyle.Italic)
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.italicStyle
+		}
 
-    public object Underline : Format("underline") {
-      internal val DefaultStyle = SpanStyle(textDecoration = TextDecoration.Underline)
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.underlineStyle
-    }
+		object Bold : Format(simpleTag = "bold") {
+			internal val DefaultStyle = SpanStyle(fontWeight = FontWeight.Bold)
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.boldStyle
+		}
 
-    public object Strikethrough : Format("strikethrough") {
-      internal val DefaultStyle = SpanStyle(textDecoration = TextDecoration.LineThrough)
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.strikethroughStyle
-    }
+		object Underline : Format("underline") {
+			internal val DefaultStyle = SpanStyle(textDecoration = TextDecoration.Underline)
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.underlineStyle
+		}
 
-    public object Subscript : Format("subscript") {
-      internal val DefaultStyle = SpanStyle(
-        baselineShift = BaselineShift(-0.2f),
-        // TODO this should be relative to current font size
-        fontSize = 10.sp
-      )
+		object Strikethrough : Format("strikethrough") {
+			internal val DefaultStyle = SpanStyle(textDecoration = TextDecoration.LineThrough)
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.strikethroughStyle
+		}
 
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.subscriptStyle
-    }
+		object Subscript : Format("subscript") {
+			internal val DefaultStyle = SpanStyle(
+				baselineShift = BaselineShift(-0.2f),
+				// TODO this should be relative to current font size
+				fontSize = 10.sp
+			)
 
-    public object Superscript : Format("superscript") {
-      internal val DefaultStyle = SpanStyle(
-        baselineShift = BaselineShift.Superscript,
-        fontSize = 10.sp
-      )
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.subscriptStyle
+		}
 
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.superscriptStyle
-    }
+		object Superscript : Format("superscript") {
+			internal val DefaultStyle = SpanStyle(baselineShift = BaselineShift.Superscript, fontSize = 10.sp)
 
-    public object Code : Format("code") {
-      internal val DefaultStyle = SpanStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Medium,
-        background = DefaultCodeBlockBackground
-      )
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.superscriptStyle
+		}
 
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.codeStyle
-    }
+		object Code : Format("code") {
+			internal val DefaultStyle = SpanStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium, background = DefaultCodeBlockBackground)
 
-    public data class Link(val onClick: () -> Unit) : Format() {
-      override fun getStyle(
-        richTextStyle: RichTextStringStyle,
-        contentColor: Color
-      ) = richTextStyle.linkStyle!!.let { style ->
-        // Tweak the colors a bit to make it more likely to contrast with the background color.
-        val averagedValues = Color(
-          red = ((contentColor.red + style.color.red) * .5f
-              + style.color.red * .5f).coerceAtMost(1f),
-          green = ((contentColor.green + style.color.green) * .5f
-              + style.color.green * .5f).coerceAtMost(1f),
-          blue = ((contentColor.blue + style.color.blue) * .5f
-              + style.color.blue * .5f).coerceAtMost(1f)
-        )
-        style.copy(color = averagedValues)
-      }
+			override fun getStyle(richTextStyle: RichTextStringStyle, contentColor: Color) = richTextStyle.codeStyle
+		}
 
-      internal companion object {
-        val DefaultStyle = SpanStyle(
-          textDecoration = TextDecoration.Underline,
-          color = Color.Blue
-        )
-      }
-    }
+		data class Link(val onClick: () -> Unit) : Format() {
+			override fun getStyle(
+				richTextStyle: RichTextStringStyle,
+				contentColor: Color
+			) = richTextStyle.linkStyle!!.let { style ->
+				// Tweak the colors a bit to make it more likely to contrast with the background color.
+				val averagedValues = Color(
+					red = ((contentColor.red + style.color.red) * .5f
+							+ style.color.red * .5f).coerceAtMost(1f),
+					green = ((contentColor.green + style.color.green) * .5f
+							+ style.color.green * .5f).coerceAtMost(1f),
+					blue = ((contentColor.blue + style.color.blue) * .5f
+							+ style.color.blue * .5f).coerceAtMost(1f)
+				)
+				style.copy(color = averagedValues)
+			}
 
-    internal fun registerTag(tags: MutableMap<String, Any>): String {
-      simpleTag?.let { return it }
-      val uuid = randomUUID()
-      tags[uuid] = this
-      return "format:$uuid"
-    }
+			internal companion object {
+				val DefaultStyle = SpanStyle(textDecoration = TextDecoration.Underline, color = Color.Blue)
+			}
+		}
 
-    internal companion object {
-      val FormatAnnotationScope = Format::class.qualifiedName!!
+		internal fun registerTag(tags: MutableMap<String, Any>): String {
+			simpleTag?.let { return it }
+			val uuid = randomUUID()
+			tags[uuid] = this
+			return "format:$uuid"
+		}
 
-      // For some reason, if this isn't lazy, Bold will always be null. Is Compose messing up static
-      // initialization order?
-      private val simpleTags by lazy(NONE) {
-        listOf(Bold, Italic, Underline, Strikethrough, Subscript, Superscript, Code)
-      }
+		internal companion object {
+			val FormatAnnotationScope = Format::class.qualifiedName!!
 
-      fun findTag(
-        tag: String,
-        tags: Map<String, Any>
-      ): Format? {
-        val stripped = tag.removePrefix("format:")
-        return if (stripped === tag) {
-          // If the original string was returned, it means the string did not have the prefix.
-          simpleTags.firstOrNull { it.simpleTag == tag }
-        } else {
-          tags[stripped] as? Format
-        }
-      }
-    }
-  }
+			// For some reason, if this isn't lazy, Bold will always be null. Is Compose messing up static
+			// initialization order?
+			private val simpleTags by lazy(NONE) {
+				listOf(UnFormat, Bold, Italic, Underline, Strikethrough, Subscript, Superscript, Code)
+			}
 
-  public class Builder(capacity: Int = 16) {
-    private val builder = AnnotatedString.Builder(capacity)
-    private val formatObjects = mutableMapOf<String, Any>()
+			fun findTag(
+				tag: String,
+				tags: Map<String, Any>
+			): Format? {
+				val stripped = tag.removePrefix("format:")
+				return if (stripped === tag) {
+					// If the original string was returned, it means the string did not have the prefix.
+					simpleTags.firstOrNull { it.simpleTag == tag }
+				} else {
+					tags[stripped] as? Format
+				}
+			}
+		}
+	}
 
-    public fun addFormat(
-      format: Format,
-      start: Int,
-      end: Int
-    ) {
-      val tag = format.registerTag(formatObjects)
-      builder.addStringAnnotation(FormatAnnotationScope, tag, start, end)
-    }
+	class Builder(capacity: Int = 16) {
+		private val builder = AnnotatedString.Builder(capacity)
+		private val formatObjects = mutableMapOf<String, Any>()
 
-    public fun pushFormat(format: Format): Int {
-      val tag = format.registerTag(formatObjects)
-      return builder.pushStringAnnotation(FormatAnnotationScope, tag)
-    }
+		fun addFormat(
+			format: Format,
+			start: Int,
+			end: Int
+		) {
+			val tag = format.registerTag(formatObjects)
+			Log.i("npr71", "format : $tag")
+			builder.addStringAnnotation(FormatAnnotationScope, tag, start, end)
+		}
 
-    public fun pop(): Unit = builder.pop()
+		fun pushFormat(format: Format): Int {
+			val tag = format.registerTag(formatObjects)
+			return builder.pushStringAnnotation(FormatAnnotationScope, tag)
+		}
 
-    public fun pop(index: Int): Unit = builder.pop(index)
+		fun pop(): Unit = builder.pop()
 
-    public fun append(text: String): Unit = builder.append(text)
+		fun pop(index: Int): Unit = builder.pop(index)
 
-    public fun append(text: RichTextString) {
-      builder.append(text.taggedString)
-      formatObjects.putAll(text.formatObjects)
-    }
+		fun append(text: String): Unit = builder.append(text)
 
-    public fun appendInlineContent(
-      alternateText: String = REPLACEMENT_CHAR,
-      content: InlineContent
-    ) {
-      val tag = randomUUID()
-      formatObjects["inline:$tag"] = content
-      builder.appendInlineContent(tag, alternateText)
-    }
+		fun append(text: RichTextString) {
+			builder.append(text.taggedString)
+			formatObjects.putAll(text.formatObjects)
+		}
 
-    /**
-     * Provides access to the underlying builder, which can be used to add arbitrary formatting,
-     * including mixed with formatting from this Builder.
-     */
-    public fun <T> withAnnotatedString(block: AnnotatedString.Builder.() -> T): T = builder.block()
+		fun appendInlineContent(
+			alternateText: String = REPLACEMENT_CHAR,
+			content: InlineContent
+		) {
+			val tag = randomUUID()
+			formatObjects["inline:$tag"] = content
+			builder.appendInlineContent(tag, alternateText)
+		}
 
-    public fun toRichTextString(): RichTextString =
-      RichTextString(
-        builder.toAnnotatedString(),
-        formatObjects.toMap()
-      )
-  }
+		/**
+		 * Provides access to the underlying builder, which can be used to add arbitrary formatting,
+		 * including mixed with formatting from this Builder.
+		 */
+		fun <T> withAnnotatedString(block: AnnotatedString.Builder.() -> T): T = builder.block()
+
+		fun toRichTextString(): RichTextString =
+			RichTextString(
+				builder.toAnnotatedString(),
+				formatObjects.toMap()
+			)
+	}
 }
 
-public inline fun Builder.withFormat(
-  format: Format,
-  block: Builder.() -> Unit
+inline fun Builder.withFormat(
+	format: Format,
+	block: Builder.() -> Unit
 ) {
-  val index = pushFormat(format)
-  block()
-  pop(index)
+	val index = pushFormat(format)
+	block()
+	pop(index)
 }

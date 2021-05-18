@@ -20,18 +20,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.Momento
-import com.syncodec.momento.custom.entry.EntryCard
-import com.syncodec.momento.custom.entry.EntryHeaderCard
-import com.syncodec.momento.custom.entry.EntryTimelineSpacer
+import com.syncodec.momento.custom.notebook.NoteCard
+import com.syncodec.momento.custom.notebook.NoteCardData
+import com.syncodec.momento.custom.notebook.NotebookHeaderCard
+import com.syncodec.momento.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.miscellaneous.PREFERENCE_KEY_VAULT_KEY
-import com.syncodec.momento.miscellaneous.dataStore
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.searchComponent.miscellaneous.SearchBar
 import com.syncodec.momento.searchComponent.miscellaneous.filterData
 import com.syncodec.momento.ui.theme.MomentoTheme
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.util.regex.Pattern
 
 class SearchActivity : ComponentActivity() {
@@ -49,7 +46,7 @@ class SearchActivity : ComponentActivity() {
 			MomentoTheme {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.secondaryContainer)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
 
 				viewModel.activityState = rememberActivityState()
 
@@ -123,7 +120,7 @@ class SearchActivity : ComponentActivity() {
 				item { Spacer(modifier = Modifier.height(12.dp)) }
 
 				stickyHeader {
-					EntryHeaderCard(
+					NotebookHeaderCard(
 						title = "Diary",
 						noEntries = if (visibleDiarySize == 0) "No entries" else if (visibleDiarySize == 1) "1 entry" else "$visibleDiarySize entries"
 					) {
@@ -133,10 +130,9 @@ class SearchActivity : ComponentActivity() {
 
 				noteMap.forEach { (key, data) ->
 					item {
-						val tint = MaterialTheme.colorScheme.secondaryContainer
-
-						EntryCard(
+						NoteCardData(
 							timestamp = data.first.userTimestamp,
+							showFullTime = true,
 							isLocked = data.first.isLocked,
 							isSelected = false,
 							isArchived = data.first.isArchived,
@@ -149,7 +145,6 @@ class SearchActivity : ComponentActivity() {
 							attachmentThumbnail = data.first.attachmentThumbnail,
 							address = data.first.address,
 							isVisible = data.second,
-							tint = tint,
 							onClick = {
 								Intent(context, NoteActivity::class.java).apply {
 									putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
@@ -159,13 +154,10 @@ class SearchActivity : ComponentActivity() {
 							},
 							onLongClick = null
 						).apply {
-							EntryCard(entryCard = this)
+							NoteCard(noteCardData = this)
 						}
 
-						EntryTimelineSpacer(
-							tint = tint,
-							isVisible = data.second && key != lastVisibleDiaryKey
-						)
+						NotebookTimelineSpacer(isVisible = data.second && key != lastVisibleDiaryKey)
 					}
 				}
 			}
@@ -177,7 +169,6 @@ class SearchActivity : ComponentActivity() {
 		val bottomSheetState: ModalBottomSheetState,
 	) {
 		var query = mutableStateOf("")
-		val vaultKeyFlow: Flow<String?> = dataStore.data.map { preferences -> preferences[PREFERENCE_KEY_VAULT_KEY] }
 		var vaultState = (application as Momento).vaultState
 
 		var showArchived = mutableStateOf(false)

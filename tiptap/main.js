@@ -33,12 +33,6 @@ const OrderedList = require('@tiptap/extension-ordered-list');
 const TaskList = require('@tiptap/extension-task-list');
 const TaskItem = require('@tiptap/extension-task-item');
 
-// Table
-const Table = require('@tiptap/extension-table');
-const TableHeader = require('@tiptap/extension-table-header');
-const TableRow = require('@tiptap/extension-table-row');
-const TableCell = require('@tiptap/extension-table-cell');
-
 // functionality
 const TextAlign = require('@tiptap/extension-text-align');
 const CharacterCount = require('@tiptap/extension-character-count');
@@ -49,10 +43,16 @@ const History = require('@tiptap/extension-history');
 const Placeholder = require('@tiptap/extension-placeholder');
 const Typography = require('@tiptap/extension-typography');
 
+// import './styles.scss'
 
 
 const editor = new Editor.Editor({
     element: document.querySelector('.tiptap'),
+    editorProps: {
+        attributes: {
+            class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none',
+        },
+    },
     extensions: [
         Document.Document,
         Text.Text,
@@ -144,9 +144,6 @@ const editor = new Editor.Editor({
                 class: 'horizontal-rule-style'
             }
         }),
-        // Image.Image.configure({
-        //     inline: true,
-        // }),
 
         // List
         ListItem.ListItem,
@@ -175,21 +172,6 @@ const editor = new Editor.Editor({
             }
         }),
 
-        // Table
-        // Table.Table.configure({
-        //     resizable: true,
-        //     handleWidth: 5,
-        //     cellMinWidth: 25,
-        //     lastColumnResizable: true,
-        //     lastColumnResizable: true,
-        //     allowTableNodeSelection: true
-        // }),
-        // TableRow.TableRow.extend({
-        //     content: '(tableCell | tableHeader)*',
-        // }),
-        // TableHeader.TableHeader,
-        // TableCell.TableCell,
-
         // Functionality
         TextAlign.TextAlign.configure({
             types: ['heading', 'paragraph'],
@@ -213,11 +195,6 @@ const editor = new Editor.Editor({
         Typography.Typography,
 
     ],
-    editorProps: {
-        attributes: {
-            class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none',
-        },
-    },
     autofocus: true,
     editable: true,
     injectCSS: false,
@@ -307,6 +284,18 @@ editor.getData = () => {
     data.dataText = editor.getText();
 
     bridge.getData(JSON.stringify(data));
+};
+
+editor.setBaseFontFamily = (fontFamily) => {
+    document.getElementById("base").style.fontFamily = fontFamily;
+};
+
+editor.setBaseFontColor = (fontColor) => {
+    document.getElementById("base").style.color = fontColor;
+};
+
+editor.tryFocus = () => {
+    
 }
 
 module.exports = editor;

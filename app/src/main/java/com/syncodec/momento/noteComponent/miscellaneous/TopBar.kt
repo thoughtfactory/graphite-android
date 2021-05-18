@@ -3,26 +3,24 @@ package com.syncodec.momento.noteComponent.miscellaneous
 import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.noteComponent.NoteViewModel
 import com.syncodec.momento.noteComponent.modalBottomSheet.BottomSheetType
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.Dots
+import compose.icons.tablericons.InfoCircle
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)

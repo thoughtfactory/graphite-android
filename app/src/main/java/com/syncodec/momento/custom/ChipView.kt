@@ -44,7 +44,7 @@ fun ChipView(
 		Spacer(modifier = Modifier.width(12.dp))
 		chipDataList.forEach {
 			val containerColor by animateColorAsState(
-				targetValue = if (it.isSelected) MaterialTheme.colorScheme.onSecondaryContainer else Color.Companion.Transparent,
+				targetValue = if (it.isSelected) MaterialTheme.colorScheme.primary else Color.Companion.Transparent,
 				animationSpec = tween(durationMillis = 400)
 			)
 			val contentColor by animateColorAsState(
@@ -53,7 +53,7 @@ fun ChipView(
 			)
 
 			Card(
-				border = BorderStroke(2.dp, MaterialTheme.colorScheme.onSecondaryContainer),
+				border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
 				backgroundColor = containerColor,
 				elevation = 0.dp,
 				shape = RoundedCornerShape(20.dp),

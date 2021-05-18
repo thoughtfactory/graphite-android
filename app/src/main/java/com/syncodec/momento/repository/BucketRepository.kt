@@ -1,20 +1,26 @@
 package com.syncodec.momento.repository
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
+import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.Momento
 import com.syncodec.momento.bucketComponent.modalBottomSheet.BookData
+import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.bucket.*
+import com.syncodec.momento.konstant.Secret
 import com.syncodec.momento.miscellaneous.downloadImage
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import java.lang.Exception
+import org.json.JSONObject
 import javax.inject.Singleton
 
 @Singleton
@@ -45,9 +51,11 @@ class BucketRepository(val momento: Momento) {
 		return bucketItemTableDao.get(primaryKey = bucketItemKey)
 	}
 
-	suspend fun deleteBucketItem(bucketKey: String, bucketItemKey: String) {
-		bucketItemTableDao.delete(primaryKey = bucketItemKey)
-		momento.deleteBucketItem(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
+	suspend fun deleteBucketItem(bucketKey: String, keyList: List<String>) {
+		keyList.forEach {
+			bucketItemTableDao.delete(it)
+			momento.deleteBucketItem(bucketKey = bucketKey, bucketItemKey = it)
+		}
 	}
 
 	suspend fun putBucket(bucketType: BucketItemType.Type, title: String) {
@@ -78,12 +86,12 @@ class BucketRepository(val momento: Momento) {
 		title: String,
 		state: Int,
 		thoughtList: List<String>,
-		jsonString: String
+		data: Any
 	): String {
 		val currentTimestamp = System.currentTimeMillis()
 
 		val bucketItemDbEntry = BucketItemDbEntry(
-			primaryKey = bucketItemKey ?: generatePrimaryKey(),
+			key = bucketItemKey ?: generatePrimaryKey(),
 			bucketKey = bucketKey,
 			bucketItemType = bucketItemType.ordinal,
 			createdTimestamp = currentTimestamp
@@ -100,35 +108,43 @@ class BucketRepository(val momento: Momento) {
 		val thumbnail: Bitmap? = when (bucketItemType) {
 			BucketItemType.Type.TODO -> null
 			BucketItemType.Type.BOOKS -> {
-				val bookData: BookData = objectMapper.readValue(jsonString)
-				if (bookData.coverI != null) {
-					try {
-						downloadImage(thumbnailUrl = "https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg")
-					} catch (exception: Exception) {
-						null
-					}
-				} else null
+				try {
+					data as BookData
+					if (data.coverI != null) {
+						downloadImage(thumbnailUrl = "https://covers.openlibrary.org/b/id/${data.coverI}-M.jpg")
+					} else null
+				} catch (exception: Exception) {
+					null
+				}
 			}
-			BucketItemType.Type.MOVIES -> null
-			BucketItemType.Type.TVSHOWS -> null
+			BucketItemType.Type.SHOWS -> {
+				try {
+					data as TvData
+					if (data.posterPath != null) {
+						downloadImage(thumbnailUrl = "https://image.tmdb.org/t/p/w500${data.posterPath}")
+					} else null
+				} catch (exception: Exception) {
+					null
+				}
+			}
 			BucketItemType.Type.MEDIA -> null
 			BucketItemType.Type.LINKS -> null
 		}
 
 		momento.putBucketItemData(
 			bucketKey = bucketKey,
-			bucketItemKey = bucketItemDbEntry.primaryKey,
-			jsonString = jsonString,
+			bucketItemKey = bucketItemDbEntry.key,
+			jsonString = objectMapper.writeValueAsString(data),
 			thumbnail = thumbnail
 		)
 
 		momento.putThought(
 			bucketKey = bucketKey,
-			bucketItemKey = bucketItemDbEntry.primaryKey,
+			bucketItemKey = bucketItemDbEntry.key,
 			thoughtList = thoughtList
 		)
 
-		return bucketItemDbEntry.primaryKey
+		return bucketItemDbEntry.key
 	}
 
 	suspend fun getBucketItemData(
@@ -169,8 +185,7 @@ class BucketRepository(val momento: Momento) {
 		bucketKey: String,
 		bucketItemKey: String
 	): List<String> {
-		val thoughtList = momento.getThought(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
-		return thoughtList
+		return momento.getThought(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
 	}
 
 	fun getBucketItemThumbnail(
@@ -181,6 +196,95 @@ class BucketRepository(val momento: Momento) {
 			bucketKey = bucketKey,
 			bucketItemKey = bucketItemKey
 		)
+	}
+
+	var tvData: MutableState<TvData?> = mutableStateOf(null)
+	fun downloadTvData(id: String) {
+		val requestQueue = Volley.newRequestQueue(momento.applicationContext)
+		val tvDataUrl =
+			"https://api.themoviedb.org/3/tv/$id?api_key=daf55a105cab241cd55fa75413656db4&language=en-US${Secret.TMDB_KEY}&language=en-US&query="
+
+		StringRequest(
+			Request.Method.GET,
+			tvDataUrl,
+			{ requestResult ->
+				val tvDataJson = JSONObject(requestResult)
+				tvDataJson.apply {
+					val creatorDataList: MutableList<CreatorData> = mutableListOf()
+					optJSONArray("created_by")?.apply {
+						for (i in 0 until length()) {
+							optJSONObject(i).apply {
+								CreatorData(
+									id = optString("id"),
+									creditId = optString("credit_id"),
+									name = optString("name")
+								).apply { creatorDataList.add(this) }
+							}
+						}
+					}
+
+					val episodeRunTimeList: MutableList<Int> = mutableListOf()
+					optJSONArray("episode_run_time")?.apply {
+						for (i in 0 until length()) {
+							episodeRunTimeList.add(getInt(i))
+						}
+					}
+
+					val genreIdList: MutableList<Int> = mutableListOf()
+					optJSONArray("genres")?.apply {
+						for (i in 0 until length()) {
+							genreIdList.add(getJSONObject(i).getInt("id"))
+						}
+					}
+
+					val seasonDataList: MutableList<SeasonData> = mutableListOf()
+					optJSONArray("seasons")?.apply {
+						for (i in 0 until length()) {
+							optJSONObject(i).apply {
+								SeasonData(
+									airDate = optString("air_date"),
+									noEpisode = optInt("episode_count"),
+									id = optString("id"),
+									name = optString("name"),
+									overview = optString("overview"),
+									posterPath = optString("poster_path"),
+									seasonNo = optInt("season_number"),
+								).apply { seasonDataList.add(this) }
+							}
+						}
+					}
+
+					TvData(
+						adult = optBoolean("adult"),
+						backdropPath = optString("backdrop_path"),
+						creatorDataList = creatorDataList,
+						episodeRunTime = episodeRunTimeList,
+						firstAirDate = optString("first_air_date"),
+						genreIds = genreIdList,
+						homepage = optString("homepage"),
+						id = optString("id"),
+						inProduction = optBoolean("in_production"),
+						name = optString("name"),
+						noEpisode = optInt("number_of_episodes"),
+						noSeason = optInt("number_of_seasons"),
+						originalLanguage = optString("original_language"),
+						overview = optString("overview"),
+						popularity = optDouble("popularity"),
+						posterPath = optString("poster_path"),
+//						seasonDataList = seasonDataList,
+						showType = ShowType.TV,
+						status = optString("statue"),
+						tagline = optString("tagline"),
+						type = optString("type"),
+						voteAverage = optDouble("vote_average"),
+						voteCount = optInt("vote_count"),
+					).apply { tvData.value = this }
+				}
+			},
+			{
+				it.printStackTrace()
+			}
+		).apply { requestQueue.add(this) }
 	}
 
 	companion object {

@@ -83,5 +83,12 @@
 			android:windowSoftInputMode="adjustResize"
 			android:theme="@style/Theme.Momento.NoActionBar">
 		</activity>
+
+		<activity
+			android:name=".settings.SettingsActivity"
+			android:exported="false"
+			android:windowSoftInputMode="adjustResize"
+			android:theme="@style/Theme.Momento.NoActionBar">
+		</activity>
 	</application>
 </manifest>
