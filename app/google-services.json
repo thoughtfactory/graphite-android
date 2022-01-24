@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "729277081868",
+    "project_id": "the-life-cycle",
+    "storage_bucket": "the-life-cycle.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729277081868:android:583de97578b3e88cdd8129",
+        "android_client_info": {
+          "package_name": "com.syncodec.momento"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "729277081868-oin9p7ustebbs6bla6td69nmlqm8njb5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.syncodec.momento",
+            "certificate_hash": "7dddaaa56c84dff70e7f679132f7fc0611e13ec9"
+          }
+        },
+        {
+          "client_id": "729277081868-uj2bhu9j6mtpinaqrg4ruidg3b5358jf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpjbJXhyYYixSqBIGzIURxzsi2H0dpTIY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "729277081868-uj2bhu9j6mtpinaqrg4ruidg3b5358jf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
