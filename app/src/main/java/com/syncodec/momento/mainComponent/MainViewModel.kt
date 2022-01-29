@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.momento.MainActivity
+import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.database.notebook.Notebook
@@ -14,6 +15,7 @@ import com.syncodec.momento.repository.NotebookRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.*
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,6 +46,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		viewModelScope.launch {
 			withContext(Dispatchers.IO) {
 				bucketRepository.deleteAll()
+				File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
 			}
 		}
 	}

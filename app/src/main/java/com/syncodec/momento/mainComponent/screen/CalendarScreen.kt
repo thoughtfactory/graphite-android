@@ -3,8 +3,11 @@ package com.syncodec.momento.mainComponent.screen
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
@@ -48,26 +51,23 @@ fun CalendarScreen() {
 	}
 	scrollToToday()
 
-	Scaffold(
-		topBar = {
-			MainTopBar(
-				showBackground = true,
-				openSheet = openSheet
-			)
-		}
-	) {
-		Column(
-			modifier = Modifier
-				.padding(1.dp, 0.dp)
-				.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.71f))
-		) {
-			CalendarView(
-				calendarState = calendarState,
-				modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-			)
 
-		}
+	Column(
+		modifier = Modifier
+			.fillMaxWidth()
+			.fillMaxHeight()
+			.background(MaterialTheme.colorScheme.background)
+	) {
+		MainTopBar(
+			showBackground = true,
+			openSheet = openSheet
+		)
+		CalendarView(
+			calendarState = calendarState,
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(2.dp, 0.dp)
+				.weight(1f)
+		)
 	}
 }

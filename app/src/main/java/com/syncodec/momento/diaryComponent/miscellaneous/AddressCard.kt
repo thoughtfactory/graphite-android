@@ -17,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -35,16 +34,17 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.momento.BuildConfig
-import com.syncodec.momento.database.diary.Diary
 import com.syncodec.momento.database.diary.WeatherData
 import com.syncodec.momento.diaryComponent.DiaryViewModel
 import com.syncodec.momento.konstant.Secret
-import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import compose.icons.TablerIcons
 import compose.icons.tablericons.MapPin
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.IOException
 import java.util.*
 
 
@@ -56,6 +56,8 @@ fun AddressCard() {
 	val scope = rememberCoroutineScope()
 
 	val viewModel: DiaryViewModel = viewModel()
+
+	var isLocationRequested: Boolean by remember { mutableStateOf(false) }
 
 	var fusedLocationClient: FusedLocationProviderClient = FusedLocationProviderClient(context)
 	var cancellationToken = CancellationTokenSource().token
@@ -89,49 +91,73 @@ fun AddressCard() {
 			locationPermissionState.hasPermission -> {
 				LaunchedEffect(key1 = true) {
 					delay(1200)
-					if (viewModel.diary.location == null) {
+					if (!isLocationRequested) {
+						isLocationRequested = true
+
 						fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken)
 						fusedLocationClient.lastLocation
 							.addOnSuccessListener { location: Location? ->
-								viewModel.diary.location = location
+								viewModel.location = location
 
 								if (location != null) {
-
-									val weatherRequestUrl =
-										"https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.latitude}&appid=${Secret.OPEN_WEATHER_KEY}"
-									val weatherRequestQueue = Volley.newRequestQueue(context)
-									val stringRequest = StringRequest(
-										Request.Method.GET,
-										weatherRequestUrl,
-										{ requestResult ->
-											val jsonObject = JSONObject(requestResult)
-											val weatherList = jsonObject.getJSONArray("weather")
-											if (weatherList.length() > 0) {
-												val weather = JSONObject(weatherList.get(0).toString())
-												val main = jsonObject.getJSONObject("main")
-												WeatherData(
-													icon = weather.getString("icon"),
-													description = weather.getString("description"),
-													temperature = main.getDouble("temp")
-												).apply { viewModel.diary.weatherData = this }
-											}
-										},
-										{
+									scope.launch {
+										withContext(Dispatchers.IO) {
+											val weatherRequestUrl =
+												"https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.latitude}&appid=${Secret.OPEN_WEATHER_KEY}"
+											val weatherRequestQueue = Volley.newRequestQueue(context)
+											val stringRequest = StringRequest(
+												Request.Method.GET,
+												weatherRequestUrl,
+												{ requestResult ->
+													val jsonObject = JSONObject(requestResult)
+													val weatherList = jsonObject.getJSONArray("weather")
+													if (weatherList.length() > 0) {
+														val weather = JSONObject(weatherList.get(0).toString())
+														val main = jsonObject.getJSONObject("main")
+														scope.launch {
+															withContext(Dispatchers.Main) {
+																WeatherData(
+																	icon = weather.getString("icon"),
+																	description = weather.getString("description"),
+																	temperature = main.getDouble("temp")
+																).apply { viewModel.weatherData = this }
+															}
+														}
+													}
+												},
+												{
+												}
+											)
+											weatherRequestQueue.add(stringRequest)
 										}
-									)
-									weatherRequestQueue.add(stringRequest)
-
-									val geocoder = Geocoder(context, Locale.getDefault())
-									val addressList = geocoder.getFromLocation(viewModel.diary.location!!.latitude, viewModel.diary.location!!.longitude, 1)
-									if (addressList.isNotEmpty()) {
-										val address = addressList.first()
-										viewModel.diary.address =
-											"${address.featureName} ${address.thoroughfare}, ${address.locality}, ${address.subAdminArea}, ${address.adminArea} ${address.postalCode}, ${address.countryName}"
-
-										instantUpdate = false
-										showAddressCard = true
 									}
 								}
+								if (location!=null) {
+									scope.launch {
+										withContext(Dispatchers.IO) {
+											try {
+												val geocoder = Geocoder(context, Locale.getDefault())
+												val addressList = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+												if (addressList.isNotEmpty()) {
+													val address = addressList.first()
+													withContext(Dispatchers.Main) {
+														viewModel.address =
+															"${address.featureName} ${address.thoroughfare}, ${address.locality}, ${address.subAdminArea}, ${address.adminArea} ${address.postalCode}, ${address.countryName}"
+
+														instantUpdate = false
+														showAddressCard = true
+													}
+												}
+											} catch (exception: IOException) {
+
+											} catch (exception: Exception) {
+
+											}
+										}
+									}
+								}
+							}
+							.addOnFailureListener {
 							}
 					}
 				}
@@ -148,10 +174,10 @@ fun AddressCard() {
 							.padding(16.dp, 12.dp),
 					) {
 						Text(
-							text = if (viewModel.diary.location == null) "Waiting for location..." else {
-								if (viewModel.diary.address == null)
-									"Address unavailable : ${viewModel.diary.location!!.latitude}, ${viewModel.diary.location!!.latitude}"
-								else viewModel.diary.address!!
+							text = if (viewModel.location == null) "Waiting for location..." else {
+								if (viewModel.address == null)
+									"Address unavailable : ${viewModel.location!!.latitude}, ${viewModel.location!!.latitude}"
+								else viewModel.address!!
 							},
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onBackground,

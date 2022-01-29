@@ -28,7 +28,9 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun DiaryEditorTopBar() {
+fun DiaryEditorTopBar(
+	onSave: () -> Unit
+) {
 	val activity = LocalContext.current as? Activity
 	val viewModel: DiaryViewModel = viewModel()
 	val scope = rememberCoroutineScope()
@@ -47,11 +49,11 @@ fun DiaryEditorTopBar() {
 				.padding(8.dp)
 		) {
 			IconButton(
-				onClick = { activity?.finish() },
+				onClick = { onSave() },
 			) {
 				Icon(
-					imageVector = TablerIcons.ChevronLeft,
-					contentDescription = "Back",
+					imageVector = TablerIcons.Check,
+					contentDescription = "Save",
 					tint = MaterialTheme.colorScheme.onPrimaryContainer,
 				)
 			}

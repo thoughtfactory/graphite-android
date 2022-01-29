@@ -54,46 +54,43 @@ fun NotebookScreen() {
 
 	Column {
 		MainTopBar(openSheet = openSheet)
-		Box {
-			if (notebookList.value?.isNotEmpty() == true) {
-				LazyColumn(
-					modifier = Modifier
-						.padding(0.dp, 0.dp, 0.dp, 64.dp)
-				) {
-					notebookList.value?.forEach { notebook ->
-						item {
-							NotebookCard(
-								modifier = Modifier
-									.fillMaxWidth()
-									.height(128.dp)
-									.padding(12.dp, 16.dp, 12.dp, 4.dp),
-								notebook = notebook
-							)
-						}
-					}
-				}
-			} else {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.fillMaxHeight()
-						.padding(16.dp),
-					contentAlignment = Alignment.Center
-				) {
-					Column {
-						NoNotebookCard(
+		if (notebookList.value?.isNotEmpty() == true) {
+			LazyColumn(
+				modifier = Modifier
+					.padding(0.dp, 0.dp, 0.dp, 64.dp)
+			) {
+				notebookList.value?.forEach { notebook ->
+					item {
+						NotebookCard(
 							modifier = Modifier
 								.fillMaxWidth()
-								.height(320.dp)
-						) { bottomSheetType ->
-							openSheet(bottomSheetType)
-						}
-						Spacer(modifier = Modifier.height(88.dp))
+								.height(128.dp)
+								.padding(12.dp, 16.dp, 12.dp, 4.dp),
+							notebook = notebook
+						)
 					}
 				}
 			}
+		} else {
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.fillMaxHeight()
+					.padding(16.dp),
+				contentAlignment = Alignment.Center
+			) {
+				Column {
+					NoNotebookCard(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(320.dp)
+					) { bottomSheetType ->
+						openSheet(bottomSheetType)
+					}
+					Spacer(modifier = Modifier.height(88.dp))
+				}
+			}
 		}
-
 	}
 }
 
@@ -117,11 +114,13 @@ private fun NoNotebookCard(
 				.padding(12.dp),
 		) {
 			Image(
-				painter = painterResource(id = R.drawable.il_book),
+				painter = painterResource(id = R.drawable.il_reading),
 				contentDescription = null,
 				modifier = Modifier
 					.requiredSize(192.dp)
 			)
+
+			Spacer(modifier = Modifier.height(24.dp))
 
 			OutlinedButton(
 				onClick = { openSheet(BottomSheetType.NotebookBottomSheet) },

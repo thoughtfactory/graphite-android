@@ -1,35 +1,32 @@
 package com.syncodec.momento.bucketComponent
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.miscellaneous.BucketTopBar
-import com.syncodec.momento.bucketComponent.modalBottomSheet.AddBookSheet
 import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
+import com.syncodec.momento.bucketComponent.modalBottomSheet.SheetLayout
 import com.syncodec.momento.bucketComponent.screen.BooksScreen
+import com.syncodec.momento.bucketComponent.screen.MoviesScreen
 import com.syncodec.momento.bucketComponent.screen.TodoScreen
 import com.syncodec.momento.custom.DotsPulsing
 import com.syncodec.momento.database.bucket.BucketItemType
@@ -44,9 +41,6 @@ class BucketActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<BucketViewModel>()
 
-	private lateinit var primaryKey: String
-	private lateinit var bucketItemType: BucketItemType
-
 	@OptIn(
 		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
 		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class
@@ -54,12 +48,15 @@ class BucketActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		primaryKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
-		bucketItemType = BucketItemType.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.TODO.ordinal)]
+		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
+		viewModel.bucketItemType = BucketItemType.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.TODO.ordinal)]
 
-		viewModel.openBucket(primaryKey)
+		viewModel.openBucket()
 
 		setContent {
+			val systemUiController = rememberSystemUiController()
+			systemUiController.setStatusBarColor(Color.White)
+
 			viewModel.bucketActivityState = rememberBucketActivityState()
 
 			MomentoTheme {
@@ -71,49 +68,62 @@ class BucketActivity : ComponentActivity() {
 	@OptIn(ExperimentalMaterialApi::class)
 	@Composable
 	private fun BucketScreen() {
+		val configuration = LocalConfiguration.current
+		val screenWidth = configuration.screenWidthDp.dp
+		val screenHeight = configuration.screenHeightDp.dp
 
-		val systemUiController = rememberSystemUiController()
-		systemUiController.setStatusBarColor(Color.White)
+		val collapsingToolbarScaffoldState = viewModel.bucketActivityState.collapsingToolbarScaffoldState
+
+		val status: Int by viewModel.status
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.bucketActivityState.bottomSheetState,
 			sheetElevation = 0.dp,
 			sheetBackgroundColor = Color.Transparent,
 			sheetContent = {
-				AddBookSheet()
+				SheetLayout()
 			},
 		) {
 			CollapsingToolbarScaffold(
-				state = viewModel.bucketActivityState.collapsingToolbarScaffoldState,
+				state = collapsingToolbarScaffoldState,
 				scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 				modifier = Modifier,
 				toolbar = {
 					BucketTopBar()
-					Image(
-						painter = painterResource(id = R.drawable.home_background2),
-						contentDescription = null,
-						contentScale = ContentScale.Crop,
+					Box(
 						modifier = Modifier
 							.fillMaxWidth()
 							.height(256.dp)
-							.blur(4.dp),
-					)
+							.padding(0.dp, 64.dp, 0.dp, 0.dp)
+							.road(Alignment.CenterStart, Alignment.BottomEnd)
+					) {
+						Image(
+							painter = when (viewModel.bucketItemType) {
+								BucketItemType.TODO -> painterResource(id = R.drawable.il_book_screen_header)
+								BucketItemType.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
+								BucketItemType.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
+								BucketItemType.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
+								BucketItemType.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
+								BucketItemType.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
+							},
+							contentDescription = null,
+							contentScale = ContentScale.Fit,
+							modifier = Modifier
+								.fillMaxWidth()
+								.height(256.dp)
+								.graphicsLayer {
+									this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
+								},
+						)
+					}
 				}
 			) {
-//				when (bucketItemType) {
-//					BucketItemType.TODO -> TodoScreen()
-//					BucketItemType.BOOKS -> BooksScreen()
-//					BucketItemType.MOVIES -> {}
-//					BucketItemType.TVSHOWS -> {}
-//					BucketItemType.MEDIA -> {}
-//					BucketItemType.LINKS -> {}
-//				}
-				when (viewModel.status.value) {
+				when (status) {
 					1 -> {
-						when (bucketItemType) {
+						when (viewModel.bucketItemType) {
 							BucketItemType.TODO -> TodoScreen()
 							BucketItemType.BOOKS -> BooksScreen()
-							BucketItemType.MOVIES -> {}
+							BucketItemType.MOVIES -> MoviesScreen()
 							BucketItemType.TVSHOWS -> {}
 							BucketItemType.MEDIA -> {}
 							BucketItemType.LINKS -> {}

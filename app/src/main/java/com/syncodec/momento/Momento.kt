@@ -1,14 +1,19 @@
 package com.syncodec.momento
 
 import android.app.Application
+import android.os.Environment
+import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.database.bucket.Bucket
 import com.syncodec.momento.database.bucket.BucketItem
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
+import com.syncodec.momento.database.diary.Diary
+import okhttp3.OkHttp
+import java.io.*
+import java.net.URL
+import java.net.URLConnection
+
 
 class Momento : Application() {
 
@@ -20,6 +25,9 @@ class Momento : Application() {
 	var DATA: String = "data"
 		get() = "$ROOT/$field"
 
+	var DIARY_DIR = "diary"
+		get() = "$DATA/$field"
+
 	var BUCKET_DIR = "bucket"
 		get() = "$DATA/$field"
 
@@ -27,6 +35,18 @@ class Momento : Application() {
 		super.onCreate()
 
 		ROOT = applicationContext.applicationInfo.dataDir
+	}
+
+	suspend fun putDiary(diary: Diary): Boolean {
+		val file = File("$DIARY_DIR/diary_${diary.primaryKey}/diary_${diary.primaryKey}.json")
+		return if (file.exists()) {
+			objectMapper.writeValue(file, diary)
+			true
+		} else {
+			File("$DIARY_DIR/diary_${diary.primaryKey}").mkdirs()
+			objectMapper.writeValue(file, diary)
+			false
+		}
 	}
 
 	suspend fun getBucketFull(primaryKey: String): FileOutputStream {
@@ -50,11 +70,11 @@ class Momento : Application() {
 	suspend fun putBucket(bucket: Bucket): Boolean {
 		val file = File("$BUCKET_DIR/bucket_${bucket.primaryKey}/bucket_${bucket.primaryKey}.json")
 		return if (file.exists()) {
-			file.writeBytes(objectMapper.writeValueAsBytes(bucket))
+			objectMapper.writeValue(file, bucket)
 			true
 		} else {
 			File("$BUCKET_DIR/bucket_${bucket.primaryKey}").mkdirs()
-			file.writeBytes(objectMapper.writeValueAsBytes(bucket))
+			objectMapper.writeValue(file, bucket)
 			false
 		}
 	}
@@ -68,8 +88,17 @@ class Momento : Application() {
 		}
 	}
 
-	suspend fun putBucketItem(bucketItem: BucketItem): Boolean {
-		val file = File("$BUCKET_DIR/bucket_${bucketItem.bucketKey}/bucket_${bucketItem.primaryKey}.json")
+	suspend fun putBucketItem(
+		bucketItem: BucketItem,
+		isNewItem: Boolean = false
+	): Boolean {
+		if (isNewItem) {
+			getBucket(bucketItem.bucketKey).apply {
+				bucketItemKeyList.add(bucketItem.primaryKey)
+				putBucket(this)
+			}
+		}
+		val file = File("$BUCKET_DIR/bucket_${bucketItem.bucketKey}/bucket_item_${bucketItem.primaryKey}.json")
 		return if (file.exists()) {
 			file.writeBytes(objectMapper.writeValueAsBytes(bucketItem))
 			getBucket(bucketItem.bucketKey).apply {
@@ -85,7 +114,10 @@ class Momento : Application() {
 		}
 	}
 
-	suspend fun getAllBucketItems(bucketKey: String, bucketItemKeyList: List<String>): MutableList<BucketItem> {
+	suspend fun getAllBucketItems(
+		bucketKey: String,
+		bucketItemKeyList: Set<String>
+	): MutableList<BucketItem> {
 		val bucketItemList: MutableList<BucketItem> = mutableListOf()
 		bucketItemKeyList.forEach { bucketItemKey ->
 			try {
@@ -99,5 +131,70 @@ class Momento : Application() {
 		}
 
 		return bucketItemList
+	}
+
+	fun downloadBucketItemThumbnail(
+		thumbnailUrl: String,
+		bucketKey: String,
+		bucketItemKey: String
+	): String {
+		val url = URL(thumbnailUrl)
+		val connection: URLConnection = url.openConnection()
+		connection.connect()
+
+		val thumbnailPath = "$BUCKET_DIR/bucket_${bucketKey}/bucket_item_thumbnail${bucketItemKey}.jpg"
+
+		val input: InputStream = BufferedInputStream(
+			url.openStream(),
+			8192
+		)
+
+		val output: OutputStream = FileOutputStream(
+			File(thumbnailPath)
+		)
+		val data = ByteArray(1024)
+
+		var total: Long = 0
+		var count = 0
+
+		while (input.read(data).also { count = it } != -1) {
+			total += count
+			output.write(data, 0, count)
+		}
+		output.flush()
+		output.close()
+		input.close()
+
+		return thumbnailPath
+	}
+
+	fun downloadMovieData(
+		requestUrl: String
+	): String {
+		val url = URL(requestUrl)
+		val connection: URLConnection = url.openConnection()
+		connection.connect()
+
+		val input: InputStream = BufferedInputStream(
+			url.openStream(),
+			8192
+		)
+
+		val output = ByteArrayOutputStream()
+
+		val data = ByteArray(1024)
+
+		var total: Long = 0
+		var count = 0
+
+		while (input.read(data).also { count = it } != -1) {
+			total += count
+			output.write(data, 0, count)
+		}
+		output.flush()
+		output.close()
+		input.close()
+
+		return output.toString()
 	}
 }

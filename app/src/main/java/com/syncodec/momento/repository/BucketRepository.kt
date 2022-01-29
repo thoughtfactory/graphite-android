@@ -7,13 +7,11 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.UserDatabase
-import com.syncodec.momento.database.bucket.Bucket
-import com.syncodec.momento.database.bucket.BucketDbEntry
-import com.syncodec.momento.database.bucket.BucketItemType
-import com.syncodec.momento.database.bucket.BucketTableDao
+import com.syncodec.momento.database.bucket.*
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
 
 class BucketRepository(val application: Application) {
 
@@ -28,12 +26,7 @@ class BucketRepository(val application: Application) {
 
 	@Throws(FileNotFoundException::class)
 	suspend fun open(primaryKey: String): Bucket {
-		val bucketFile = File("")
-		if (bucketFile.exists()) {
-			return objectMapper.readValue(bucketFile.readBytes())
-		} else {
-			throw FileNotFoundException()
-		}
+		return (application as Momento).getBucket(primaryKey)
 	}
 
 	suspend fun insert(bucketDbEntry: BucketDbEntry) {
@@ -56,7 +49,7 @@ class BucketRepository(val application: Application) {
 		}
 
 		BucketDbEntry(
-			primaryKey = generatePrimaryKey(),
+			primaryKey = primaryKey,
 			bucketType = bucketType.ordinal
 		).apply {
 			this.createdTimestamp = currentTimestamp
@@ -64,6 +57,35 @@ class BucketRepository(val application: Application) {
 			this.title = title
 			insert(this)
 		}
+	}
+
+	suspend fun readBucket(
+		bucketKey: String, bucketItemKeyList: Set<String>
+	): MutableList<BucketItem> {
+		return (application as Momento).getAllBucketItems(
+			bucketKey = bucketKey,
+			bucketItemKeyList = bucketItemKeyList
+		)
+	}
+
+	suspend fun insertBucketItem(
+		bucketItem: BucketItem,
+		isNewItem: Boolean = false
+	) {
+		(application as Momento).putBucketItem(
+			bucketItem = bucketItem,
+			isNewItem = isNewItem
+		)
+	}
+
+	suspend fun readBucketItem(
+		bucketKey: String,
+		bucketItemKey: String
+	): BucketItem {
+		return (application as Momento).getBucketItem(
+			bucketKey = bucketKey,
+			bucketItemKey = bucketItemKey
+		)
 	}
 
 	suspend fun delete(primaryKey: String) {

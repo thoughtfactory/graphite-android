@@ -1,20 +1,21 @@
 package com.syncodec.momento.database.bucket
 
-import androidx.room.PrimaryKey
+import org.json.JSONObject
 import kotlin.properties.Delegates
 
 data class BucketItem(
 	val primaryKey: String,
 	val bucketKey: String,
-	val itemType: BucketItemType
+	val itemType: BucketItemType,
+	val createdTimestamp: Long
 ) {
-	var createdTimestamp by Delegates.notNull<Long>()
 	var modifiedTimestamp by Delegates.notNull<Long>()
-	var contentThumbnail: String? = null
+	var isContentThumbnailAvailable: Boolean? = null
 	var title: String? = null
-	var content: String? = null
+	var contentList: MutableList<String> = mutableListOf()
+	var innerContent: String? = null
 	var rating: Int? = null
-	var tag: List<String> = mutableListOf()
+	var tag: MutableList<String> = mutableListOf()
 	var isFavourite: Boolean = false
 	var isArchived: Boolean = false
 	var isLocked: Boolean = false

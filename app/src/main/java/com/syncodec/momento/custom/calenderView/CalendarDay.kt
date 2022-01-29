@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -24,7 +25,7 @@ fun CalendarDay(
 	date: Int? = null,
 ) {
 	Card(
-		backgroundColor = Color.White.copy(alpha = 0.23f),
+		backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 		elevation = 0.dp,
 		modifier = modifier
 	) {
@@ -33,7 +34,8 @@ fun CalendarDay(
 				text = "$date",
 				textAlign = TextAlign.Center,
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onPrimaryContainer,
+				fontWeight = FontWeight.Bold,
+				color = MaterialTheme.colorScheme.onSecondaryContainer,
 				modifier = Modifier
 					.fillMaxWidth()
 					.fillMaxHeight()

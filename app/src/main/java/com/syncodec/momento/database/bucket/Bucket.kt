@@ -10,7 +10,7 @@ data class Bucket(
 	var modifiedTimestamp by Delegates.notNull<Long>()
 	var contentThumbnail: String? = null
 	lateinit var title: String
-	var bucketItemKeyList: MutableList<String> = mutableListOf()
+	var bucketItemKeyList: MutableSet<String> = mutableSetOf()
 	var containerSize: Int = bucketItemKeyList.size
 	var isFavourite: Boolean = false
 	var isArchived: Boolean = false

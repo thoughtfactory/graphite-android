@@ -7,7 +7,7 @@ tinymce.init({
 	toolbar: false,
 	lists_indent_on_tab: true,
 	plugins: [
-		'advlist autolink lists link image charmap print preview anchor',
+		'advlist checklist autolink lists link image charmap print preview anchor',
 		'searchreplace visualblocks code fullscreen',
 		'insertdatetime media table paste code help wordcount'
 	],
@@ -28,7 +28,18 @@ function initEditor() {
 
 	editor.on('SelectionChange', function (e) {
 		getCurrentFormat();
+		console.log(e);
 	});
+
+	editor.on('ScrollIntoView', function (e) {
+		e.preventDefault();
+		e.elm.scrollIntoView({
+			behavior: 'smooth',
+			block: 'nearest'
+		});
+	});
+
+	recurseSaveData();
 }
 
 var triggerTimer = null
@@ -46,14 +57,83 @@ function getCurrentFormat() {
 			currentFormat[format] = true;
 		});
 
-		// bridge.format(JSON.stringify(currentFormat));
+		currentFormat.link = undefined;
 
-	}, 200);
+
+		var node = editor.selection.getNode();
+
+		while (node != null) {
+			if (node.nodeName === 'A') {
+				currentFormat.link = node.getAttribute('href');
+			}
+
+			if (/^(LI|UL|OL|DL)$/.test(node.nodeName)) {
+				var element = editor.selection.getNode();
+				if (element.nodeName === 'LI') {
+					element = editor.dom.getParent(element, 'ol,ul');
+				}
+
+				if (element.nodeName === 'OL') {
+					currentFormat.orderedList = true;
+				} else {
+					if (element.className === 'tox-checklist') {
+						currentFormat.checkList = true;
+					} else {
+						currentFormat.unorderedList = true;
+					}
+				}
+			}
+
+			node = node.parentElement;
+		}
+
+		const style = editor.selection.getNode().style;
+		if (style.fontFamily == '') {
+
+		} else {
+			currentFormat.fontFamily = style.fontFamily;
+		}
+
+		if (style.fontSize == '') {
+			currentFormat.fontSize = '12px';
+		} else {
+			currentFormat.fontSize = style.fontSize;
+		}
+
+		const selectionRange = editor.selection.getRng();
+		var range = {};
+		range.startOffset = selectionRange.startOffset;
+		range.startOffset = selectionRange.endOffset;
+
+		if (selectionRange != undefined) {
+			currentFormat.startOffset = selectionRange.startOffset;
+			currentFormat.endOffset = selectionRange.endOffset;
+		}
+
+		console.log(JSON.stringify(currentFormat));
+		bridge.format(JSON.stringify(currentFormat));
+
+	}, 50);
 };
 
-function recurseGetCurrentFormat() {
-	getCurrentFormat();
-	setTimeout(recurseGetCurrentFormat, 500);
-}
+function saveData(callback) {
+	var content = {
+		"html": editor.getContent({
+			format: 'html'
+		}),
+		"text": editor.getContent({
+			format: 'text'
+		}),
+	};
+	console.log(content);
+	if (callback) {
+		bridge.dataCallback(JSON.stringify(content));
+	} else {
+		bridge.data(JSON.stringify(content));
+	}
+};
 
-recurseGetCurrentFormat();
+function recurseSaveData() {
+	saveData(false);
+	setTimeout(recurseSaveData, 2000);
+};

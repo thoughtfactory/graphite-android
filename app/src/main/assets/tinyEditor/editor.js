@@ -1,4 +1,4 @@
-function undeo() {
+function undo() {
     editor.execCommand('undo');
 };
 
@@ -6,7 +6,7 @@ function redo() {
     editor.execCommand('redo');
 };
 
-function clearFormatting() {
+function removeFormat() {
     editor.execCommand('removeFormat');
 };
 
@@ -35,19 +35,31 @@ function superscript() {
 };
 
 function alignment(align) {
-    editor.execCommand(align);
+    editor.execCommand('formatBlock', false, align);
 };
 
 function heading(value) {
     editor.execCommand('formatBlock', false, value);
 };
 
-function bulletList() {
-    editor.execCommand();
+function blockquote() {
+    editor.execCommand('formatBlock', false, "blockquote");
 };
 
-function numberedList(value) {
-    editor.execCommand();
+function hashtag() {
+    editor.execCommand('formatBlock', false, "code");
+};
+
+function insertUnorderedList() {
+    editor.execCommand('InsertUnorderedList', false, {});
+};
+
+function insertOrderedList() {
+    editor.execCommand('InsertOrderedList', false, {});
+};
+
+function insertCheckbox() {
+    editor.execCommand('mceInsertRawHTML', false, "<input type='checkbox'>");
 };
 
 function indent() {
@@ -59,5 +71,21 @@ function outdent() {
 };
 
 function link(url) {
-    editor.execCommand('mceInsertLink', true, 'https://www.tiny.cloud');
+    editor.execCommand('mceInsertLink', false, url);
+};
+
+function insertTable(nRows, nCols) {
+    editor.execCommand('mceInsertTable', false, { rows: nRows, columns: nCols });
+};
+
+function applyTextColor(color) {
+    editor.execCommand('ForeColor', false, color);
+};
+
+function applyHighlightColor(color) {
+    editor.execCommand('HiliteColor', false, color);
+};
+
+function setFontSize(size) {
+    editor.execCommand('FontSize', false, size);
 };

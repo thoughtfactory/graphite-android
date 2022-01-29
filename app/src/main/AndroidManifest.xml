@@ -64,7 +64,7 @@
 		</activity>
 
 		<activity
-			android:name=".bucketComponent.EditActivity"
+			android:name=".bucketComponent.BucketItemActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Momento.NoActionBar">
 		</activity>

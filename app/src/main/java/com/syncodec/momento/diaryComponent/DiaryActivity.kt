@@ -1,8 +1,5 @@
 package com.syncodec.momento.diaryComponent
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.location.*
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -31,24 +28,24 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
-import com.google.android.gms.tasks.CancellationToken
-import com.google.android.gms.tasks.CancellationTokenSource
+import com.syncodec.momento.custom.EditorView
 import com.syncodec.momento.diaryComponent.miscellaneous.AddressCard
 import com.syncodec.momento.diaryComponent.miscellaneous.DiaryEditorTopBar
 import com.syncodec.momento.diaryComponent.miscellaneous.EditorToolbar
 import com.syncodec.momento.diaryComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.diaryComponent.modalBottomSheet.SheetLayout
+import com.syncodec.momento.diaryComponent.miscellaneous.NotificationLayout
+import com.syncodec.momento.diaryComponent.miscellaneous.NotificationType
+import com.syncodec.momento.konstant.ErrorCode
 import com.syncodec.momento.ui.theme.MomentoTheme
+import org.json.JSONObject
 
 
 class DiaryActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<DiaryViewModel>()
 
-	private lateinit var editorView: com.syncodec.momento.custom.EditorView
+	private lateinit var editorView: EditorView
 
 	@OptIn(
 		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
@@ -57,7 +54,31 @@ class DiaryActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		editorView = com.syncodec.momento.custom.EditorView(this)
+		editorView = EditorView(this)
+
+		editorView.setOnSaveData(object : EditorView.OnSaveDataListener {
+			override fun onSaveData(data: String) {
+				val dataJson = JSONObject(data)
+				val dataHtml = dataJson.getString("html")
+				val dataText = dataJson.getString("text")
+
+				viewModel.diary.content = dataHtml
+				viewModel.diary.contentThumbnail = dataText
+			}
+		})
+
+		editorView.setOnSaveCallbackData(object : EditorView.OnSaveDataCallbackListener{
+			override fun onSaveDataCallback(data: String) {
+				val dataJson = JSONObject(data)
+				val dataHtml = dataJson.getString("html")
+				val dataText = dataJson.getString("text")
+
+				viewModel.diary.content = dataHtml
+				viewModel.diary.contentThumbnail = dataText
+
+				viewModel.saveDiary()
+			}
+		})
 
 		setContent {
 			MomentoTheme {
@@ -88,7 +109,11 @@ class DiaryActivity : ComponentActivity() {
 					.scale(1f)
 			) {
 				Scaffold(
-					topBar = { DiaryEditorTopBar() }
+					topBar = {
+						DiaryEditorTopBar {
+							editorView.exec("saveData(true);")
+						}
+					}
 				) {
 					Column {
 						Box(
@@ -104,10 +129,20 @@ class DiaryActivity : ComponentActivity() {
 								modifier = Modifier
 									.fillMaxWidth()
 									.fillMaxHeight()
+									.background(MaterialTheme.colorScheme.primaryContainer)
 							)
 							AddressCard()
+							NotificationLayout()
 						}
-						EditorToolbar(editorView)
+						EditorToolbar(
+							editorView = editorView
+						) { errorCode ->
+							when(errorCode) {
+								ErrorCode.Companion.ErrorCode.URL_RANGE_SELECTION_ERROR -> viewModel.diaryActivityState.notificationType.value = NotificationType.UrlSelectionNotification
+							}
+							viewModel.diaryActivityState.isNotificationVisible.value = true
+						}
+
 					}
 				}
 			}
@@ -119,6 +154,8 @@ class DiaryActivity : ComponentActivity() {
 		val bottomSheetState: ModalBottomSheetState,
 	) {
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.MediaBottomSheet)
+		var notificationType: MutableState<NotificationType> = mutableStateOf(NotificationType.UrlSelectionNotification)
+		var isNotificationVisible: MutableState<Boolean> = mutableStateOf(false)
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)

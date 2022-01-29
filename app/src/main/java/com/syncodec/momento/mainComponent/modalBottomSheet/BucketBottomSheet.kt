@@ -43,8 +43,10 @@ data class BucketButtonData(
 @OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
-fun BucketBottomSheet() {
-	val selectedBucketItemType = remember { mutableStateOf<BucketItemType?>(null) }
+fun BucketBottomSheet(
+	onCreate: (String, BucketItemType) -> Unit = { _, _ -> }
+) {
+	var selectedBucketType by remember { mutableStateOf<BucketItemType?>(null) }
 	var bucketNameText by rememberSaveable { mutableStateOf("") }
 	var isBucketNameTextFocused by remember { mutableStateOf(false) }
 
@@ -60,56 +62,54 @@ fun BucketBottomSheet() {
 			title = "To Do",
 			subtitle = "Have any pending tasks?",
 			bucketItemType = BucketItemType.TODO,
-			highlight = selectedBucketItemType.value == BucketItemType.TODO,
+			highlight = selectedBucketType == BucketItemType.TODO,
 			imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.TODO]!!
 		) {
-			selectedBucketItemType.value = BucketItemType.TODO
+			selectedBucketType = BucketItemType.TODO
 		},
 		BucketButtonData(
 			title = "Books",
 			subtitle = "A little fiction here, and a little fantasy there",
 			bucketItemType = BucketItemType.BOOKS,
-			highlight = selectedBucketItemType.value == BucketItemType.BOOKS,
+			highlight = selectedBucketType == BucketItemType.BOOKS,
 			imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.BOOKS]!!
 		) {
-			selectedBucketItemType.value = BucketItemType.BOOKS
+			selectedBucketType = BucketItemType.BOOKS
 		},
 		BucketButtonData(
 			title = "Movies",
 			subtitle = "Ah! Don't have enough time",
 			bucketItemType = BucketItemType.MOVIES,
-			highlight = selectedBucketItemType.value == BucketItemType.MOVIES,
+			highlight = selectedBucketType == BucketItemType.MOVIES,
 			imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.MOVIES]!!
 		) {
-			selectedBucketItemType.value = BucketItemType.MOVIES
+			selectedBucketType = BucketItemType.MOVIES
 		},
 		BucketButtonData(
 			title = "TV Shows",
 			subtitle = "Aren't those characters real!?",
 			bucketItemType = BucketItemType.TVSHOWS,
-			highlight = selectedBucketItemType.value == BucketItemType.TVSHOWS,
+			highlight = selectedBucketType == BucketItemType.TVSHOWS,
 			imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.MEDIA]!!
 		) {
-			selectedBucketItemType.value = BucketItemType.TVSHOWS
+			selectedBucketType = BucketItemType.TVSHOWS
 		},
 		BucketButtonData(
 			title = "Media",
 			subtitle = "Gotta keep them safe",
 			bucketItemType = BucketItemType.MEDIA,
-			highlight = selectedBucketItemType.value == BucketItemType.MEDIA,
+			highlight = selectedBucketType == BucketItemType.MEDIA,
 			imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.MEDIA]!!
 		) {
-			selectedBucketItemType.value = BucketItemType.MEDIA
+			selectedBucketType = BucketItemType.MEDIA
 		},
 		BucketButtonData(
 			title = "Links",
 			bucketItemType = BucketItemType.LINKS,
-			highlight = selectedBucketItemType.value == BucketItemType.LINKS,
+			highlight = selectedBucketType == BucketItemType.LINKS,
 			subtitle = "Those might be helpful someday",
 			imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.LINKS]!!
-		) {
-			selectedBucketItemType.value = BucketItemType.LINKS
-		}
+		) {}
 	)
 
 	Column(
@@ -156,6 +156,14 @@ fun BucketBottomSheet() {
 		Spacer(modifier = Modifier.height(12.dp))
 
 		BasicTextField(
+			value = bucketNameText,
+			onValueChange = { bucketNameText = it },
+			singleLine = true,
+			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+			textStyle = MaterialTheme.typography.bodyMedium.copy(
+				color = MaterialTheme.colorScheme.primary,
+				fontWeight = FontWeight.Bold
+			),
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
@@ -170,32 +178,30 @@ fun BucketBottomSheet() {
 				.onFocusChanged { focusState ->
 					isBucketNameTextFocused = focusState.isFocused
 				},
-			value = bucketNameText,
-			onValueChange = { bucketNameText = it },
-			singleLine = true,
-			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-			textStyle = MaterialTheme.typography.bodyMedium,
 			decorationBox = { innerTextField ->
 				Card(
 					backgroundColor = Color.Transparent,
-					shape = RoundedCornerShape(2.dp),
-					border = BorderStroke(1.dp, if (isBucketNameTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray),
-					elevation = 0.dp
+					shape = RoundedCornerShape(4.dp),
+					border = BorderStroke(2.dp, if (isBucketNameTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray),
+					elevation = 0.dp,
+					modifier = Modifier
+						.padding(4.dp)
+						.fillMaxWidth()
 				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						modifier = Modifier.padding(16.dp, 0.dp)
+					Box(
+						contentAlignment = Alignment.CenterStart,
+						modifier = Modifier
+							.padding(12.dp, 0.dp)
 					) {
-						Box {
-							if (bucketNameText.isEmpty()) {
-								Text(
-									"Umm... Let me think...",
-									style = MaterialTheme.typography.bodyMedium,
-									color = Color.LightGray
-								)
-							}
-							innerTextField()
+						if (bucketNameText.isEmpty()) {
+							Text(
+								"Umm... Let me think...",
+								style = MaterialTheme.typography.bodyMedium,
+								color = Color.LightGray,
+								fontWeight = FontWeight.Bold
+							)
 						}
+						innerTextField()
 					}
 				}
 			}
@@ -205,13 +211,15 @@ fun BucketBottomSheet() {
 
 		Card(
 			elevation = 0.dp,
-			backgroundColor = createButtonColors.containerColor(enabled = selectedBucketItemType.value != null && bucketNameText.isNotBlank()).value,
+			backgroundColor = createButtonColors.containerColor(enabled = selectedBucketType != null && bucketNameText.isNotBlank()).value,
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
 				.padding(24.dp, 0.dp)
 				.focusable()
-				.clickable { },
+				.clickable(selectedBucketType != null && bucketNameText.isNotBlank()) {
+					onCreate(bucketNameText, selectedBucketType!!)
+				},
 		) {
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
@@ -223,7 +231,7 @@ fun BucketBottomSheet() {
 				Text(
 					text = "Create",
 					style = MaterialTheme.typography.titleMedium,
-					color = createButtonColors.contentColor(enabled = bucketNameText.isNotBlank()).value,
+					color = createButtonColors.contentColor(enabled = selectedBucketType != null && bucketNameText.isNotBlank()).value,
 					textAlign = TextAlign.Center,
 					lineHeight = 0.sp,
 					maxLines = 1,

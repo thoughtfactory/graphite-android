@@ -39,7 +39,6 @@ fun ExpandableBox(
 	}
 	AnimatedVisibility(
 		visible = visible,
-		initiallyVisible = initialVisibility,
 		enter = enterExpand + enterFadeIn,
 		exit = exitCollapse + exitFadeOut
 	) {

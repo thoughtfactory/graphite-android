@@ -7,8 +7,10 @@ class Konstant {
 
 		enum class Konstant {
 			PRIMARY_KEY,
+			BUCKET_KEY,
+			BUCKET_ITEM_KEY,
 			BUCKET_TYPE,
-			BOOK_DATA
+			BUCKET_ITEM_DATA
 		}
 	}
 }

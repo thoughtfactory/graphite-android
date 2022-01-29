@@ -57,6 +57,7 @@ fun MenuBottomSheet() {
 		MenuBottomSheetButtonData(title = "Duplicate", imageVector = TablerIcons.Copy) {},
 		MenuBottomSheetButtonData(title = "Move to trash", imageVector = TablerIcons.Trash) {},
 
+		MenuBottomSheetButtonData(title = "Discard changes", imageVector = TablerIcons.X) {},
 		MenuBottomSheetButtonData(title = "Share", imageVector = TablerIcons.Share) {},
 		MenuBottomSheetButtonData(title = "Export", imageVector = TablerIcons.FileExport) {},
 	)
@@ -110,13 +111,13 @@ private fun MenuBottomSheetButton(
 					Card(
 						elevation = 0.dp,
 						backgroundColor = MaterialTheme.colorScheme.onSecondaryContainer,
-						shape = RoundedCornerShape(8.dp),
+						shape = RoundedCornerShape(16.dp),
 						modifier = Modifier
 							.fillMaxWidth()
 							.aspectRatio(1f)
 							.padding(6.dp)
 							.focusable(true)
-							.clip(RoundedCornerShape(8.dp))
+							.clip(RoundedCornerShape(16.dp))
 							.clickable(true) { menuBottomSheetButtonData.onClick() },
 					) {
 						Icon(

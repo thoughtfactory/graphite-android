@@ -77,6 +77,8 @@ fun NotebookBottomSheet() {
 			subTitle = "Keep your notes organized in notebooks"
 		)
 
+		Spacer(modifier = Modifier.height(8.dp))
+
 		BasicTextField(
 			modifier = Modifier
 				.fillMaxWidth()

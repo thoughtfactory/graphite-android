@@ -57,12 +57,12 @@ fun AddDataPopup() {
 									}
 								}
 
-								viewModel.createNewBucket(BucketItemType.TODO, "todo")
-								viewModel.createNewBucket(BucketItemType.BOOKS, "books")
+//								viewModel.createNewBucket(BucketItemType.TODO, "todo")
+//								viewModel.createNewBucket(BucketItemType.BOOKS, "books")
 								viewModel.createNewBucket(BucketItemType.MOVIES, "movies")
-								viewModel.createNewBucket(BucketItemType.TVSHOWS, "tv shows")
-								viewModel.createNewBucket(BucketItemType.MEDIA, "media")
-								viewModel.createNewBucket(BucketItemType.LINKS, "links")
+//								viewModel.createNewBucket(BucketItemType.TVSHOWS, "tv shows")
+//								viewModel.createNewBucket(BucketItemType.MEDIA, "media")
+//								viewModel.createNewBucket(BucketItemType.LINKS, "links")
 
 							}
 						) {

@@ -31,6 +31,18 @@ data class DiaryDbEntry(
 	@Expose
 	var contentThumbnail: String? = null
 
+	@ColumnInfo(name = "latitude")
+	@Expose
+	var latitude: Double? = null
+
+	@ColumnInfo(name = "longitude")
+	@Expose
+	var longitude: Double? = null
+
+	@ColumnInfo(name = "address")
+	@Expose
+	var address: String? = null
+
 	@ColumnInfo(name = "mood")
 	@Expose
 	var mood: Int = 0
