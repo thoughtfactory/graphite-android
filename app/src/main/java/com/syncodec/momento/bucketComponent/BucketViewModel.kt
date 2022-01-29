@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.syncodec.momento.Momento
 import java.security.cert.CertPath
 
 class BucketViewModel(application: Application) : AndroidViewModel(application) {
@@ -33,12 +34,15 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 	private val _status: MutableState<Int> = mutableStateOf(0)
 	val status: State<Int> get() = _status
 
+	var contentThumbnailPath: String by mutableStateOf("")
+
 	fun openBucket() {
 		viewModelScope.launch {
 			withContext(Dispatchers.IO) {
 				try {
 					bucket = bucketRepository.open(bucketKey)
 					readBucket()
+					contentThumbnailPath = "${(getApplication<Application>() as Momento).BUCKET_DIR}/bucket_${bucketKey}/bucket_item_thumbnail_xxxxxx.jpg"
 					withContext(Dispatchers.Main) { _status.value = 1 }
 				} catch (exception: FileNotFoundException) {
 					withContext(Dispatchers.Main) { _status.value = -1 }

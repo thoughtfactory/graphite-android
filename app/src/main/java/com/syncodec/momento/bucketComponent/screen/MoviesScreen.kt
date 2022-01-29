@@ -1,6 +1,7 @@
 package com.syncodec.momento.bucketComponent.screen
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberImagePainter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.syncodec.momento.R
@@ -42,6 +44,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.CircleDotted
 import compose.icons.tablericons.Plus
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -94,6 +97,7 @@ fun MoviesScreen() {
 				item {
 					MovieItem(
 						bucketItem = bucketItem,
+						contentThumbnailPath = viewModel.contentThumbnailPath,
 						modifier = Modifier
 							.aspectRatio(0.75f)
 					) {
@@ -214,8 +218,10 @@ private fun AddMovieItem(
 private fun MovieItem(
 	modifier: Modifier,
 	bucketItem: BucketItem,
+	contentThumbnailPath: String,
 	onClick: () -> Unit
 ) {
+
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -226,7 +232,12 @@ private fun MovieItem(
 			onClick = { onClick() }
 		) {
 			Image(
-				painter = painterResource(id = R.drawable.home_background),
+				painter = rememberImagePainter(
+					data = File(contentThumbnailPath.replace("xxxxxx", bucketItem.primaryKey)),
+					builder = {
+						crossfade(true)
+					}
+				),
 				contentDescription = null,
 				contentScale = ContentScale.Crop,
 				modifier = modifier,

@@ -142,7 +142,7 @@ class Momento : Application() {
 		val connection: URLConnection = url.openConnection()
 		connection.connect()
 
-		val thumbnailPath = "$BUCKET_DIR/bucket_${bucketKey}/bucket_item_thumbnail${bucketItemKey}.jpg"
+		val thumbnailPath = "$BUCKET_DIR/bucket_${bucketKey}/bucket_item_thumbnail_${bucketItemKey}.jpg"
 
 		val input: InputStream = BufferedInputStream(
 			url.openStream(),

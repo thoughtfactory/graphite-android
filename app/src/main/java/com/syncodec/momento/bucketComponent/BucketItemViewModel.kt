@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 
-class BucketItemViewModel(application: Application): AndroidViewModel(application) {
+class BucketItemViewModel(application: Application) : AndroidViewModel(application) {
 
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
@@ -39,6 +39,7 @@ class BucketItemViewModel(application: Application): AndroidViewModel(applicatio
 	var isContentThumbnailAvailable: Boolean? by mutableStateOf(null)
 	var contentThumbnailPath: String? = null
 
+	var contentList = mutableStateListOf<String>()
 	var movieCharactersData: List<MovieCharacterData> by mutableStateOf(listOf())
 
 
@@ -51,8 +52,6 @@ class BucketItemViewModel(application: Application): AndroidViewModel(applicatio
 		)
 	)
 
-	var contentList = mutableStateListOf<String>()
-
 	private val _status: MutableState<Int> = mutableStateOf(0)
 	val status: State<Int> get() = _status
 
@@ -63,7 +62,7 @@ class BucketItemViewModel(application: Application): AndroidViewModel(applicatio
 		bucketItem = BucketItem(
 			primaryKey = generatePrimaryKey(),
 			bucketKey = this.bucketKey,
-			itemType =  this.bucketItemType,
+			itemType = this.bucketItemType,
 			createdTimestamp = currentTimestamp
 		).apply {
 			this.modifiedTimestamp = currentTimestamp
@@ -108,7 +107,10 @@ class BucketItemViewModel(application: Application): AndroidViewModel(applicatio
 			contentList = bucketItem.contentList.toMutableStateList()
 			bucketItem.contentList = contentList
 
-			contentThumbnailPath = "${(getApplication<Application>() as Momento).BUCKET_DIR}/bucket_${bucketKey}/bucket_item_thumbnail${bucketItemKey}.jpg"
+			val movieData: MovieData = objectMapper.readValue(bucketItem.innerContent!!)
+			movieCharactersData = movieData.characterDataList
+
+			contentThumbnailPath = "${(getApplication<Application>() as Momento).BUCKET_DIR}/bucket_${bucketKey}/bucket_item_thumbnail_${bucketItemKey}.jpg"
 			this@BucketItemViewModel.isContentThumbnailAvailable = true
 			bucketItem.isContentThumbnailAvailable = true
 
@@ -155,7 +157,6 @@ class BucketItemViewModel(application: Application): AndroidViewModel(applicatio
 				movieData.characterDataList = movieCharacterDataList
 				bucketItem.innerContent = objectMapper.writeValueAsString(movieData)
 				updateBucketItem()
-
 
 				val thumbnailUrl = "https://image.tmdb.org/t/p/w500${movieData.posterPath}"
 				val contentThumbnail = (getApplication<Application>() as Momento).downloadBucketItemThumbnail(

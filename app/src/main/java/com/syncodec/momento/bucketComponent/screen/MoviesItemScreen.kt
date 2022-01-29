@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -64,6 +65,8 @@ fun MoviesItemScreen() {
 
 	val scrollState = rememberScrollState()
 
+	Log.i("npr71", "t : ${viewModel.contentThumbnailPath}")
+
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -100,20 +103,36 @@ fun MoviesItemScreen() {
 			Box(
 				modifier = Modifier
 					.fillMaxSize()
-					.clip(CircleShape),
+					.padding(5.dp),
 				contentAlignment = Alignment.BottomEnd
 			) {
-				Icon(
-					imageVector = TablerIcons.Pencil,
-					contentDescription = null,
-					tint = MaterialTheme.colorScheme.primaryContainer
-				)
+				Card(
+					modifier = Modifier
+						.requiredSize(40.dp)
+						.clip(CircleShape)
+						.clickable {  },
+					shape = CircleShape,
+					elevation = 0.dp,
+					backgroundColor = Color.Companion.Black.copy(alpha = 0.47f)
+				) {
+					Icon(
+						imageVector = TablerIcons.Pencil,
+						contentDescription = null,
+						tint = MaterialTheme.colorScheme.primaryContainer,
+						modifier = Modifier
+							.fillMaxSize()
+							.padding(10.dp)
+					)
+				}
 			}
 		}
 
 		Spacer(modifier = Modifier.height(24.dp))
 
-		HeaderCard(movieData = movieData, movieCharactersData = viewModel.movieCharactersData)
+		HeaderCard(
+			movieData = movieData,
+			movieCharactersData = viewModel.movieCharactersData)
+
 
 		Spacer(modifier = Modifier.height(12.dp))
 
