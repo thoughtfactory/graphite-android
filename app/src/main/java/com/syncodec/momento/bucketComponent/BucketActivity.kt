@@ -1,15 +1,18 @@
 package com.syncodec.momento.bucketComponent
 
-import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,9 +32,11 @@ import com.syncodec.momento.bucketComponent.screen.BooksScreen
 import com.syncodec.momento.bucketComponent.screen.MoviesScreen
 import com.syncodec.momento.bucketComponent.screen.TodoScreen
 import com.syncodec.momento.custom.DotsPulsing
+import com.syncodec.momento.custom.LargeButton
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.ui.theme.MomentoTheme
+import kotlinx.coroutines.launch
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.CollapsingToolbarScaffoldState
 import me.onebone.toolbar.ScrollStrategy
@@ -50,16 +55,13 @@ class BucketActivity : ComponentActivity() {
 
 		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
 		viewModel.bucketItemType = BucketItemType.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.TODO.ordinal)]
-
 		viewModel.openBucket()
 
 		setContent {
-			val systemUiController = rememberSystemUiController()
-			systemUiController.setStatusBarColor(Color.White)
-
 			viewModel.bucketActivityState = rememberBucketActivityState()
-
 			MomentoTheme {
+				val systemUiController = rememberSystemUiController()
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
 				BucketScreen()
 			}
 		}
@@ -71,6 +73,8 @@ class BucketActivity : ComponentActivity() {
 		val configuration = LocalConfiguration.current
 		val screenWidth = configuration.screenWidthDp.dp
 		val screenHeight = configuration.screenHeightDp.dp
+
+		val scope = rememberCoroutineScope()
 
 		val collapsingToolbarScaffoldState = viewModel.bucketActivityState.collapsingToolbarScaffoldState
 
@@ -84,63 +88,95 @@ class BucketActivity : ComponentActivity() {
 				SheetLayout()
 			},
 		) {
-			CollapsingToolbarScaffold(
-				state = collapsingToolbarScaffoldState,
-				scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+			Box(
 				modifier = Modifier,
-				toolbar = {
-					BucketTopBar()
-					Box(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(256.dp)
-							.padding(0.dp, 64.dp, 0.dp, 0.dp)
-							.road(Alignment.CenterStart, Alignment.BottomEnd)
-					) {
-						Image(
-							painter = when (viewModel.bucketItemType) {
-								BucketItemType.TODO -> painterResource(id = R.drawable.il_book_screen_header)
-								BucketItemType.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
-								BucketItemType.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
-								BucketItemType.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
-								BucketItemType.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
-								BucketItemType.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
-							},
-							contentDescription = null,
-							contentScale = ContentScale.Fit,
+				contentAlignment = Alignment.BottomCenter
+			) {
+				CollapsingToolbarScaffold(
+					state = collapsingToolbarScaffoldState,
+					scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+					modifier = Modifier
+						.fillMaxSize(),
+					toolbar = {
+						BucketTopBar()
+						Box(
 							modifier = Modifier
 								.fillMaxWidth()
 								.height(256.dp)
-								.graphicsLayer {
-									this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
+								.padding(16.dp, 64.dp, 16.dp, 16.dp)
+								.road(Alignment.CenterStart, Alignment.BottomEnd)
+						) {
+							Image(
+								painter = when (viewModel.bucketItemType) {
+									BucketItemType.TODO -> painterResource(id = R.drawable.il_book_screen_header)
+									BucketItemType.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
+									BucketItemType.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
+									BucketItemType.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
+									BucketItemType.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
+									BucketItemType.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
 								},
-						)
+								contentDescription = null,
+								contentScale = ContentScale.Fit,
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(256.dp)
+									.graphicsLayer {
+										this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
+									},
+							)
+						}
+					}
+				) {
+					when (status) {
+						1 -> {
+							when (viewModel.bucketItemType) {
+								BucketItemType.TODO -> TodoScreen()
+								BucketItemType.BOOKS -> BooksScreen()
+								BucketItemType.MOVIES -> MoviesScreen()
+								BucketItemType.TVSHOWS -> {}
+								BucketItemType.MEDIA -> {}
+								BucketItemType.LINKS -> {}
+							}
+						}
+						0 -> {
+							Box(
+								contentAlignment = Alignment.BottomCenter,
+								modifier = Modifier
+									.fillMaxSize(),
+							) {
+								DotsPulsing()
+							}
+						}
+						-2 -> {}
+						-1 -> {}
+						else -> {}
 					}
 				}
-			) {
-				when (status) {
-					1 -> {
-						when (viewModel.bucketItemType) {
-							BucketItemType.TODO -> TodoScreen()
-							BucketItemType.BOOKS -> BooksScreen()
-							BucketItemType.MOVIES -> MoviesScreen()
-							BucketItemType.TVSHOWS -> {}
-							BucketItemType.MEDIA -> {}
-							BucketItemType.LINKS -> {}
-						}
-					}
-					0 -> {
-						Box(
-							contentAlignment = Alignment.BottomCenter,
+
+				if (viewModel.bucketItemList.isNotEmpty()) {
+					Column(
+						modifier = Modifier
+							.fillMaxWidth()
+					) {
+						LargeButton(
+							text = "A new movie?",
+							backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+							textColor = MaterialTheme.colorScheme.onPrimaryContainer,
 							modifier = Modifier
-								.fillMaxSize(),
+								.fillMaxWidth()
+								.height(48.dp)
+								.padding(24.dp, 0.dp)
+								.focusable()
 						) {
-							DotsPulsing()
+							viewModel.bucketActivityState.bottomSheetType.value = BottomSheetType.AddMovieSheet
+							scope.launch {
+								viewModel.bucketActivityState.bottomSheetState.show()
+							}
+
 						}
+
+						Spacer(modifier = Modifier.height(24.dp))
 					}
-					-2 -> {}
-					-1 -> {}
-					else -> {}
 				}
 			}
 		}

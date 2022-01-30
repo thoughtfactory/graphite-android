@@ -1,6 +1,9 @@
 package com.syncodec.momento.bucketComponent.modalBottomSheet
 
 import android.content.Intent
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -82,6 +85,13 @@ fun AddMovieSheet() {
 
 	var isSearching by remember { mutableStateOf(false) }
 	var isSearchResultAvailable by remember { mutableStateOf(false) }
+
+	val activity = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.StartActivityForResult()
+	) {
+		Log.i("npr71", "resuming...")
+		viewModel.openBucket()
+	}
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -239,7 +249,7 @@ fun AddMovieSheet() {
 								putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.MOVIES.ordinal)
 								putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
 								putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(movieData))
-								context.startActivity(this)
+								activity.launch(this)
 							}
 						}
 					}

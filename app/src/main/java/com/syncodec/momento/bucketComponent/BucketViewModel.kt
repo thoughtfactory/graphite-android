@@ -1,9 +1,12 @@
 package com.syncodec.momento.bucketComponent
 
 import android.app.Application
+import android.os.FileObserver
+import android.util.Log
 import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.Bucket
 import com.syncodec.momento.database.bucket.BucketDbEntry
 import com.syncodec.momento.database.bucket.BucketItem
@@ -14,9 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import java.security.cert.CertPath
+import java.util.*
+
 
 class BucketViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -53,7 +55,7 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 		viewModelScope.launch {
 			withContext(Dispatchers.IO) {
 				try {
-					bucketItemList = bucketRepository.readBucket(bucketKey = bucketKey, bucketItemKeyList = bucket.bucketItemKeyList)
+					bucketItemList = bucketRepository.readBucket(bucketKey = bucketKey)
 					withContext(Dispatchers.Main) { _status.value = 1 }
 				} catch (exception: FileNotFoundException) {
 					withContext(Dispatchers.Main) { _status.value = -1 }

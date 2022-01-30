@@ -1,5 +1,6 @@
 package com.syncodec.momento.database.bucket
 
+import android.util.Base64
 import org.json.JSONObject
 import kotlin.properties.Delegates
 
@@ -10,7 +11,7 @@ data class BucketItem(
 	val createdTimestamp: Long
 ) {
 	var modifiedTimestamp by Delegates.notNull<Long>()
-	var isContentThumbnailAvailable: Boolean? = null
+	var thumbnail: ByteArray? = null
 	var title: String? = null
 	var contentList: MutableList<String> = mutableListOf()
 	var innerContent: String? = null

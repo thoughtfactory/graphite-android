@@ -25,7 +25,7 @@ class BucketRepository(val application: Application) {
 	}
 
 	@Throws(FileNotFoundException::class)
-	suspend fun open(primaryKey: String): Bucket {
+	fun open(primaryKey: String): Bucket {
 		return (application as Momento).getBucket(primaryKey)
 	}
 
@@ -59,22 +59,19 @@ class BucketRepository(val application: Application) {
 		}
 	}
 
-	suspend fun readBucket(
-		bucketKey: String, bucketItemKeyList: Set<String>
+	fun readBucket(
+		bucketKey: String
 	): MutableList<BucketItem> {
 		return (application as Momento).getAllBucketItems(
 			bucketKey = bucketKey,
-			bucketItemKeyList = bucketItemKeyList
 		)
 	}
 
-	suspend fun insertBucketItem(
+	fun putBucketItem(
 		bucketItem: BucketItem,
-		isNewItem: Boolean = false
 	) {
 		(application as Momento).putBucketItem(
 			bucketItem = bucketItem,
-			isNewItem = isNewItem
 		)
 	}
 
