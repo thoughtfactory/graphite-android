@@ -89,7 +89,6 @@ fun AddMovieSheet() {
 	val activity = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.StartActivityForResult()
 	) {
-		Log.i("npr71", "resuming...")
 		viewModel.openBucket()
 	}
 

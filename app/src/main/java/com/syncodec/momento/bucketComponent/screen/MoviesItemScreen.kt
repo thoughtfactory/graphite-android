@@ -64,8 +64,6 @@ fun MoviesItemScreen() {
 
 	val scrollState = rememberScrollState()
 
-	Log.i("npr71", "thumbnail : ${viewModel.thumbnail?.size}")
-
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
