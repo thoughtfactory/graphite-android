@@ -1,8 +1,6 @@
 package com.syncodec.momento.bucketComponent.screen
 
-import android.graphics.Bitmap.CompressFormat
 import android.graphics.BitmapFactory
-import android.util.Base64
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -49,7 +47,6 @@ import com.syncodec.momento.custom.LargeButton
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
-import java.io.ByteArrayOutputStream
 import kotlin.random.Random
 
 
@@ -67,6 +64,7 @@ fun MoviesItemScreen() {
 
 	val scrollState = rememberScrollState()
 
+	Log.i("npr71", "thumbnail : ${viewModel.thumbnail?.size}")
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,

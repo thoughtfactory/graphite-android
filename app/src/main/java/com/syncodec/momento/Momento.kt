@@ -1,12 +1,15 @@
 package com.syncodec.momento
 
 import android.app.Application
+import android.os.Environment
+import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.database.bucket.Bucket
 import com.syncodec.momento.database.bucket.BucketItem
 import com.syncodec.momento.database.diary.Diary
+import okhttp3.OkHttp
 import java.io.*
 import java.net.URL
 import java.net.URLConnection
