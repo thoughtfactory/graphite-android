@@ -68,6 +68,7 @@ class BucketItemActivity : ComponentActivity() {
 		viewModel.bucketItemKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
 		viewModel.bucketItemDataJson = JSONObject(intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name)!!)
 
+//		TODO is it required
 		setResult(1)
 
 		if (viewModel.bucketItemKey == null) {

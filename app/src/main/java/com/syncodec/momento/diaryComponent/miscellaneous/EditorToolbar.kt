@@ -174,22 +174,22 @@ fun EditorToolbar(
 		},
 		ToolItem(title = "Bold", icon = TablerIcons.Bold, highlight = textFormat.bold) {
 			editorView.exec(
-				"bold()"
+				"editor.commands.toggleBold();"
 			)
 		},
 		ToolItem(title = "Italic", icon = TablerIcons.Italic, highlight = textFormat.italic) {
 			editorView.exec(
-				"italic()"
+				"editor.commands.toggleItalic();"
 			)
 		},
 		ToolItem(title = "Underline", icon = TablerIcons.Underline, highlight = textFormat.underline) {
 			editorView.exec(
-				"underline()"
+				"editor.commands.toggleUnderline();"
 			)
 		},
 		ToolItem(title = "Strikethrough", icon = TablerIcons.Strikethrough, highlight = textFormat.strikethrough) {
 			editorView.exec(
-				"strikethrough()"
+				"editor.commands.toggleStrike()"
 			)
 		},
 		ToolItem(title = "Superscript", icon = TablerIcons.Superscript, highlight = textFormat.superscript) {

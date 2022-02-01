@@ -47,6 +47,7 @@ import com.syncodec.momento.custom.LargeButton
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import org.w3c.dom.CharacterData
 import kotlin.random.Random
 
 
@@ -60,7 +61,9 @@ fun MoviesItemScreen() {
 	val objectMapper = ObjectMapper().registerModule(KotlinModule())
 
 	val viewModel: BucketItemViewModel = viewModel()
+	val bucketItem = viewModel.bucketItem
 	val movieData: MovieData = objectMapper.readValue(viewModel.bucketItemDataJson.toString())
+	val characterDataListString = viewModel.extraData
 
 	val scrollState = rememberScrollState()
 
@@ -128,9 +131,8 @@ fun MoviesItemScreen() {
 
 		HeaderCard(
 			movieData = movieData,
-			movieCharactersData = viewModel.movieCharactersData
+			movieCharactersData = objectMapper.readValue(characterDataListString)
 		)
-
 
 		Spacer(modifier = Modifier.height(12.dp))
 

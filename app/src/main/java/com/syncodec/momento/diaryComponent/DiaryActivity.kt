@@ -76,6 +76,8 @@ class DiaryActivity : ComponentActivity() {
 				viewModel.diary.content = dataHtml
 				viewModel.diary.contentThumbnail = dataText
 
+				Log.i("npr71", "thumbnail : ${viewModel.diary.contentThumbnail}")
+
 				viewModel.saveDiary()
 			}
 		})

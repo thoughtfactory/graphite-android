@@ -4,14 +4,11 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.bucket.*
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
-import java.io.File
 import java.io.FileNotFoundException
-import java.io.FileOutputStream
 
 class BucketRepository(val application: Application) {
 
@@ -20,8 +17,8 @@ class BucketRepository(val application: Application) {
 	private var bucketTableDao: BucketTableDao = UserDatabase.getInstance(application).bucketTableDao
 
 	val bucketDbEntryListLiveData: LiveData<List<BucketDbEntry>> = bucketTableDao.getAllAsLiveData()
-	suspend fun get(primaryKey: String): BucketDbEntry? {
-		return bucketTableDao.get(primaryKey)
+	suspend fun get(bucketKey: String): BucketDbEntry? {
+		return bucketTableDao.get(bucketKey)
 	}
 
 	@Throws(FileNotFoundException::class)
@@ -33,7 +30,10 @@ class BucketRepository(val application: Application) {
 		bucketTableDao.insert(bucketDbEntry)
 	}
 
-	suspend fun createNewBucket(title: String, bucketType: BucketItemType) {
+	suspend fun createNewBucket(
+		title: String,
+		bucketType: BucketItemType
+	) {
 		val primaryKey = generatePrimaryKey()
 		val currentTimestamp = System.currentTimeMillis()
 
@@ -67,7 +67,23 @@ class BucketRepository(val application: Application) {
 		)
 	}
 
-	fun putBucketItem(
+	suspend fun updateBucketSize(bucketKey: String) {
+		get(bucketKey = bucketKey)!!.apply {
+			containerSize = (application as Momento).getBucketSize(bucketKey = bucketKey)
+			insert(this)
+		}
+	}
+
+	suspend fun createNewBucketItem(
+		bucketItem: BucketItem
+	) {
+		(application as Momento).putBucketItem(
+			bucketItem = bucketItem,
+		)
+		updateBucketSize(bucketItem.bucketKey)
+	}
+
+	suspend fun putBucketItem(
 		bucketItem: BucketItem,
 	) {
 		(application as Momento).putBucketItem(
@@ -80,6 +96,16 @@ class BucketRepository(val application: Application) {
 		bucketItemKey: String
 	): BucketItem {
 		return (application as Momento).getBucketItem(
+			bucketKey = bucketKey,
+			bucketItemKey = bucketItemKey
+		)
+	}
+
+	fun deleteBucketItem(
+		bucketKey: String,
+		bucketItemKey: String
+	) {
+		(application as Momento).deleteBucketItem(
 			bucketKey = bucketKey,
 			bucketItemKey = bucketItemKey
 		)

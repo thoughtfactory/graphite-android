@@ -23,6 +23,7 @@ class DiaryRepository(val application: Application) {
             this.createdTimestamp = diary.createdTimestamp
             this.modifiedTimestamp = diary.modifiedTimestamp
             this.userTimestamp = diary.userTimestamp
+            this.contentThumbnail = diary.contentThumbnail
             this.latitude = diary.location?.latitude
             this.latitude = diary.location?.longitude
             this.address = diary.address

@@ -1,7 +1,6 @@
 package com.syncodec.momento.bucketComponent.modalBottomSheet
 
 import android.content.Intent
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -40,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberImagePainter
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
@@ -203,6 +203,7 @@ fun AddMovieSheet() {
 
 				LottieAnimation(
 					composition = lottieComposition,
+					iterations = LottieConstants.IterateForever,
 					modifier = Modifier
 						.requiredSize(64.dp)
 				)

@@ -13,3 +13,4 @@
 .externalNativeBuild
 .cxx
 local.properties
+./tiptap/node_modules/*

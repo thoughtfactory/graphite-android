@@ -112,7 +112,8 @@ fun DiaryScreen() {
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(256.dp)
-					.blur(4.dp),
+					.blur(4.dp)
+					.parallax(0.4f)
 			)
 		}
 	) {

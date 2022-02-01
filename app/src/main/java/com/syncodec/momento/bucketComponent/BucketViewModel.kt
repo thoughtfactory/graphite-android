@@ -66,6 +66,21 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 		}
 	}
 
+	fun deleteBucketItem(bucketItemKeyList: List<String>) {
+		bucketItemKeyList.forEach { bucketItemKey ->
+			bucketRepository.deleteBucketItem(
+				bucketKey = bucketKey,
+				bucketItemKey = bucketItemKey
+			)
+		}
+		openBucket()
+		viewModelScope.launch {
+			withContext(Dispatchers.IO) {
+				bucketRepository.updateBucketSize(bucketKey = bucketKey)
+			}
+		}
+	}
+
 	fun insertBucket(
 		bucketType: BucketItemType,
 		title: String,

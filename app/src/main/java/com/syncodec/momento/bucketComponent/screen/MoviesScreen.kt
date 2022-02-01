@@ -2,13 +2,15 @@ package com.syncodec.momento.bucketComponent.screen
 
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
@@ -19,8 +21,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,12 +40,10 @@ import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.BucketItemActivity
 import com.syncodec.momento.bucketComponent.BucketViewModel
 import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
-import com.syncodec.momento.custom.LargeButton
 import com.syncodec.momento.database.bucket.BucketItem
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import compose.icons.TablerIcons
-import compose.icons.tablericons.CircleDotted
 import compose.icons.tablericons.Plus
 import kotlinx.coroutines.launch
 
@@ -60,6 +59,9 @@ fun MoviesScreen() {
 
 	val viewModel: BucketViewModel = viewModel()
 	val scope = rememberCoroutineScope()
+
+	var isSelectedToDelete by viewModel.bucketActivityState.isSelectedToDelete
+	val selectedToDeleteList: MutableList<String> = viewModel.bucketActivityState.selectedToDeleteList
 
 	val activity = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.StartActivityForResult()
@@ -99,17 +101,40 @@ fun MoviesScreen() {
 					MovieItem(
 						bucketItem = bucketItem,
 						thumbnail = bucketItem.thumbnail,
+						highlight = isSelectedToDelete and (bucketItem.primaryKey in selectedToDeleteList),
 						modifier = Modifier
 							.aspectRatio(0.75f)
-					) {
-						Intent(context, BucketItemActivity::class.java).apply {
-							putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.MOVIES.ordinal)
-							putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, bucketItem.bucketKey)
-							putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, bucketItem.primaryKey)
-							putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, bucketItem.innerContent)
-							activity.launch(this)
-						}
-					}
+							.combinedClickable(
+								enabled = true,
+								onClick = {
+									if (isSelectedToDelete) {
+										if (bucketItem.primaryKey in selectedToDeleteList) {
+											selectedToDeleteList.remove(bucketItem.primaryKey)
+										} else {
+											selectedToDeleteList.add(bucketItem.primaryKey)
+										}
+									} else {
+										Intent(context, BucketItemActivity::class.java).apply {
+											putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.MOVIES.ordinal)
+											putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, bucketItem.bucketKey)
+											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, bucketItem.primaryKey)
+											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, bucketItem.innerContent)
+											activity.launch(this)
+										}
+									}
+								},
+								onLongClick = {
+									if (!isSelectedToDelete) {
+										isSelectedToDelete = true
+									}
+									if (bucketItem.primaryKey in selectedToDeleteList) {
+										selectedToDeleteList.remove(bucketItem.primaryKey)
+									} else {
+										selectedToDeleteList.add(bucketItem.primaryKey)
+									}
+								}
+							)
+					)
 				}
 			}
 			when (viewModel.bucketItemList.size % 3) {
@@ -216,7 +241,7 @@ private fun MovieItem(
 	modifier: Modifier,
 	bucketItem: BucketItem,
 	thumbnail: ByteArray?,
-	onClick: () -> Unit
+	highlight: Boolean
 ) {
 
 	Column(
@@ -226,19 +251,19 @@ private fun MovieItem(
 	) {
 		Card(
 			elevation = 12.dp,
-			onClick = { onClick() }
+			border = BorderStroke(4.dp, if (highlight) MaterialTheme.colorScheme.primary else Color.Transparent),
+			modifier = modifier,
 		) {
 			if (thumbnail != null) {
 				Image(
 					painter = rememberImagePainter(
 						data = BitmapFactory.decodeByteArray(thumbnail, 0, thumbnail.size),
 						builder = {
-							crossfade(true)
+							crossfade(false)
 						}
 					),
 					contentDescription = null,
 					contentScale = ContentScale.Crop,
-					modifier = modifier,
 				)
 			}
 		}

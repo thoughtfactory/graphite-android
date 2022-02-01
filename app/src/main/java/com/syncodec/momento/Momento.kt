@@ -51,7 +51,9 @@ class Momento : Application() {
 		return "$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey.json"
 	}
 
-	fun putDiary(diary: Diary): Boolean {
+	fun putDiary(
+		diary: Diary
+	): Boolean {
 		val file = File("$DIARY_DIR/diary_${diary.primaryKey}/diary_${diary.primaryKey}.json")
 		return if (file.exists()) {
 			objectMapper.writeValue(file, diary)
@@ -63,7 +65,9 @@ class Momento : Application() {
 		}
 	}
 
-	fun getBucketFull(primaryKey: String): FileOutputStream {
+	fun getBucketFull(
+		primaryKey: String
+	): FileOutputStream {
 		val bucketFile = File(getBucketDirPath(bucketKey = primaryKey))
 		if (bucketFile.exists() && bucketFile.isDirectory) {
 			return bucketFile.outputStream()
@@ -72,7 +76,9 @@ class Momento : Application() {
 		}
 	}
 
-	fun getBucket(primaryKey: String): Bucket {
+	fun getBucket(
+		primaryKey: String
+	): Bucket {
 		val file = File(getBucketDataPath(primaryKey = primaryKey))
 		if (file.exists() && file.isFile) {
 			return objectMapper.readValue(file)
@@ -81,7 +87,9 @@ class Momento : Application() {
 		}
 	}
 
-	fun putBucket(bucket: Bucket): Boolean {
+	fun putBucket(
+		bucket: Bucket
+	): Boolean {
 		val file = File(getBucketDataPath(primaryKey = bucket.primaryKey))
 		return if (file.exists()) {
 			objectMapper.writeValue(file, bucket)
@@ -92,7 +100,10 @@ class Momento : Application() {
 		}
 	}
 
-	fun getBucketItem(bucketKey: String, bucketItemKey: String): BucketItem {
+	fun getBucketItem(
+		bucketKey: String,
+		bucketItemKey: String
+	): BucketItem {
 		val file = File(getBucketItemPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
 		if (file.exists() && file.isFile) {
 			return objectMapper.readValue(file)
@@ -135,6 +146,27 @@ class Momento : Application() {
 		}
 
 		return bucketItemList
+	}
+
+	fun deleteBucketItem(
+		bucketKey: String,
+		bucketItemKey: String
+	) {
+		File(
+			getBucketItemPath(
+				bucketKey = bucketKey,
+				bucketItemKey = bucketItemKey
+			)
+		).delete()
+	}
+
+	fun getBucketSize(
+		bucketKey: String
+	): Int {
+		val bucketDirFile = File(getBucketDirPath(bucketKey = bucketKey))
+		return bucketDirFile.listFiles { file, name ->
+			name.startsWith("bucket_item")
+		}?.size ?: 0
 	}
 
 	fun downloadBucketItemThumbnail(

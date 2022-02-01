@@ -1,6 +1,8 @@
 package com.syncodec.momento.bucketComponent.modalBottomSheet
 
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -36,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberImagePainter
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
@@ -71,7 +74,7 @@ fun AddBookSheet() {
 	var bookNameTextBackgroundColor by remember { mutableStateOf(Color(244, 244, 245)) }
 
 	val baseUrl = "https://openlibrary.org/search.json?title="
-	val endUrl = "&fields=key,title,author_name,cover_i&limit=10&offset=0"
+	val endUrl = "&fields=key,title,author_name,cover_i,first_publish_year&limit=10&offset=0"
 	val requestQueue = Volley.newRequestQueue(context)
 	var tag: String = "tag"
 
@@ -79,6 +82,12 @@ fun AddBookSheet() {
 
 	var isSearching by remember { mutableStateOf(false) }
 	var isSearchResultAvailable by remember { mutableStateOf(false) }
+
+	val activity = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.StartActivityForResult()
+	) {
+		viewModel.openBucket()
+	}
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -191,6 +200,7 @@ fun AddBookSheet() {
 
 				LottieAnimation(
 					composition = lottieComposition,
+					iterations = LottieConstants.IterateForever,
 					modifier = Modifier
 						.requiredSize(64.dp)
 				)
@@ -234,7 +244,14 @@ fun AddBookSheet() {
 							bookData = bookData,
 							modifier = Modifier
 								.aspectRatio(0.75f)
-						)
+						) {
+							Intent(context, BucketItemActivity::class.java).apply {
+								putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.BOOKS.ordinal)
+								putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
+								putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(bookData))
+								activity.launch(this)
+							}
+						}
 					}
 				}
 			}
@@ -248,12 +265,9 @@ fun AddBookSheet() {
 @Composable
 private fun BookButton(
 	modifier: Modifier,
-	bookData: BookData
+	bookData: BookData,
+	onClick: () -> Unit
 ) {
-	val context = LocalContext.current
-	val viewModel: BucketViewModel = viewModel()
-	val objectMapper = ObjectMapper().registerModule(KotlinModule())
-
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -262,14 +276,7 @@ private fun BookButton(
 		Card(
 			elevation = 12.dp,
 			modifier = modifier,
-			onClick = {
-				Intent(context, BucketItemActivity::class.java).apply {
-					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.BOOKS.ordinal)
-					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
-					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(bookData))
-					context.startActivity(this)
-				}
-			}
+			onClick = { onClick() }
 		) {
 
 			if (bookData.coverI != null) {
@@ -316,5 +323,8 @@ data class BookData(
 	val coverI: String?,
 
 	@JsonProperty("author_name")
-	val authorName: List<String>?
+	val authorName: List<String>?,
+
+	@JsonProperty("first_publish_year")
+	val firstPublishYear: Int?
 )

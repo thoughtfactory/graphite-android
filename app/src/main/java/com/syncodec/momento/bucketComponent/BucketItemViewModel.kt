@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.Momento
+import com.syncodec.momento.bucketComponent.modalBottomSheet.BookData
 import com.syncodec.momento.bucketComponent.modalBottomSheet.MovieData
 import com.syncodec.momento.bucketComponent.screen.MovieCharacterData
 import com.syncodec.momento.database.bucket.Bucket
@@ -40,7 +41,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 	var contentList = mutableStateListOf<String>()
 	var thumbnail: ByteArray? by mutableStateOf(null)
-	var movieCharactersData: List<MovieCharacterData> by mutableStateOf(listOf())
+	var extraData: String by mutableStateOf( objectMapper.writeValueAsString(mutableListOf<String>()) )
 
 	var bucketItem by mutableStateOf(
 		BucketItem(
@@ -51,35 +52,11 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 		)
 	)
 
-	var bucketDbEntry by mutableStateOf(
-		BucketDbEntry(
-			primaryKey = "",
-			bucketType = BucketItemType.TODO.ordinal
-		)
-	)
-	var bucket by mutableStateOf(
-		Bucket(
-			primaryKey = "",
-			bucketType = BucketItemType.TODO
-		)
-	)
-
 	private val _status: MutableState<Int> = mutableStateOf(0)
 	val status: State<Int> get() = _status
 
-
-	fun readBucket() {
-		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				bucketDbEntry = bucketRepository.get(primaryKey = bucketKey)!!
-				bucket = bucketRepository.open(primaryKey = bucketKey)
-			}
-		}
-	}
-
 	fun generateNewBucketItem() {
 		val currentTimestamp = System.currentTimeMillis()
-		val movieData: MovieData = objectMapper.readValue(bucketItemDataJson.toString())
 
 		bucketItem = BucketItem(
 			primaryKey = generatePrimaryKey(),
@@ -88,7 +65,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 			createdTimestamp = currentTimestamp
 		).apply {
 			this.modifiedTimestamp = currentTimestamp
-			this.title = movieData.title
+			this.title = bucketItemDataJson.getString("title")
 			this.innerContent = bucketItemDataJson.toString()
 			this.contentList = this@BucketItemViewModel.contentList
 			this.thumbnail = this@BucketItemViewModel.thumbnail
@@ -96,17 +73,23 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 		bucketItemKey = bucketItem.bucketKey
 
-
 		viewModelScope.launch {
 			withContext(Dispatchers.IO) {
-				readBucket()
-				bucketRepository.putBucketItem(
+				bucketRepository.createNewBucketItem(
 					bucketItem = bucketItem
 				)
 				withContext(Dispatchers.Main) {
 					_status.value = 1
 				}
-				getMovieData()
+				when(bucketItemType) {
+					BucketItemType.TODO -> ""
+					BucketItemType.BOOKS -> getBookData()
+					BucketItemType.MOVIES -> getMovieData()
+					BucketItemType.TVSHOWS -> TODO()
+					BucketItemType.MEDIA -> TODO()
+					BucketItemType.LINKS -> TODO()
+				}
+
 			}
 		}
 	}
@@ -130,8 +113,16 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 			contentList = bucketItem.contentList.toMutableStateList()
 			bucketItem.contentList = contentList
 
-			val movieData: MovieData = objectMapper.readValue(bucketItem.innerContent!!)
-			movieCharactersData = movieData.characterDataList
+			if (bucketItem.innerContent!=null) {
+				extraData = when(bucketItemType) {
+					BucketItemType.TODO -> ""
+					BucketItemType.BOOKS -> ""
+					BucketItemType.MOVIES -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+					BucketItemType.TVSHOWS -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+					BucketItemType.MEDIA -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+					BucketItemType.LINKS -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+				}
+			}
 
 			this@BucketItemViewModel.thumbnail = bucketItem.thumbnail
 
@@ -142,53 +133,71 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 	}
 
 	private fun getMovieData() {
-		CoroutineScope(Dispatchers.IO).launch {
-			val movieData: MovieData = objectMapper.readValue(bucketItemDataJson.toString())
-			val requestUrl = "https://api.themoviedb.org/3/movie/${movieData.id}/credits?api_key=${Secret.TMDB_KEY}&language=en-US"
+		viewModelScope.launch {
+			withContext(Dispatchers.IO) {
+				val movieData: MovieData = objectMapper.readValue(bucketItemDataJson.toString())
+				val requestUrl = "https://api.themoviedb.org/3/movie/${movieData.id}/credits?api_key=${Secret.TMDB_KEY}&language=en-US"
 
-			val movieDataString = (getApplication<Application>() as Momento).downloadMovieData(requestUrl = requestUrl)
-			val jsonObject = JSONObject(movieDataString)
+				val movieDataString = (getApplication<Application>() as Momento).downloadMovieData(requestUrl = requestUrl)
+				val jsonObject = JSONObject(movieDataString)
 
-			val cast = jsonObject.getJSONArray("cast")
-			val castLength = cast.length()
-			val movieCharacterDataList: MutableList<MovieCharacterData> = mutableListOf()
-			for (i in 0 until castLength) {
-				val movieCharacterData = objectMapper.readValue<MovieCharacterData>(cast.get(i).toString())
-				movieCharacterDataList.add(movieCharacterData)
-			}
-
-			val crew = jsonObject.getJSONArray("crew")
-			val crewLength = crew.length()
-			for (i in 0 until crewLength) {
-				val crewData = crew.getJSONObject(i)
-				val job = crewData.getString("job")
-
-				if (job == "Director") {
-					val movieCharacterData = MovieCharacterData(
-						id = crewData.getString("id"),
-						name = crewData.getString("name"),
-						character = crewData.getString("job")
-					)
-
+				val cast = jsonObject.getJSONArray("cast")
+				val castLength = cast.length()
+				val movieCharacterDataList: MutableList<MovieCharacterData> = mutableListOf()
+				for (i in 0 until castLength) {
+					val movieCharacterData = objectMapper.readValue<MovieCharacterData>(cast.get(i).toString())
 					movieCharacterDataList.add(movieCharacterData)
 				}
+
+				val crew = jsonObject.getJSONArray("crew")
+				val crewLength = crew.length()
+				for (i in 0 until crewLength) {
+					val crewData = crew.getJSONObject(i)
+					val job = crewData.getString("job")
+
+					if (job == "Director") {
+						val movieCharacterData = MovieCharacterData(
+							id = crewData.getString("id"),
+							name = crewData.getString("name"),
+							character = crewData.getString("job")
+						)
+
+						movieCharacterDataList.add(movieCharacterData)
+					}
+				}
+				movieData.characterDataList = movieCharacterDataList
+				bucketItem.innerContent = objectMapper.writeValueAsString(movieData)
+				extraData = objectMapper.writeValueAsString(movieData.characterDataList)
+				updateBucketItem()
+
+				val thumbnailUrl = "https://image.tmdb.org/t/p/w500${movieData.posterPath}"
+				val contentThumbnail = (getApplication<Application>() as Momento).downloadBucketItemThumbnail(
+					thumbnailUrl = thumbnailUrl,
+				)
+				withContext(Dispatchers.Main) {
+					this@BucketItemViewModel.thumbnail = contentThumbnail
+					bucketItem.thumbnail = contentThumbnail
+				}
+				updateBucketItem()
 			}
-			movieCharactersData = movieCharacterDataList
-			movieData.characterDataList = movieCharacterDataList
-			bucketItem.innerContent = objectMapper.writeValueAsString(movieData)
-			updateBucketItem()
+		}
+	}
 
-			val thumbnailUrl = "https://image.tmdb.org/t/p/w500${movieData.posterPath}"
-			val contentThumbnail = (getApplication<Application>() as Momento).downloadBucketItemThumbnail(
-				thumbnailUrl = thumbnailUrl,
-			)
+	private fun getBookData() {
+		viewModelScope.launch {
+			val bookData: BookData = objectMapper.readValue(bucketItemDataJson.toString())
 
-			withContext(Dispatchers.Main) {
-				this@BucketItemViewModel.thumbnail = contentThumbnail
-				bucketItem.thumbnail = contentThumbnail
+			withContext(Dispatchers.IO) {
+				val thumbnailUrl = "https://covers.openlibrary.org/b/id/${bookData.coverI}-L.jpg"
+				val contentThumbnail = (getApplication<Application>() as Momento).downloadBucketItemThumbnail(
+					thumbnailUrl = thumbnailUrl,
+				)
+				withContext(Dispatchers.Main) {
+					this@BucketItemViewModel.thumbnail = contentThumbnail
+					bucketItem.thumbnail = contentThumbnail
+				}
+				updateBucketItem()
 			}
-			updateBucketItem()
-
 		}
 	}
 }

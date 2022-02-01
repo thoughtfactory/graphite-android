@@ -1,12 +1,13 @@
 package com.syncodec.momento.bucketComponent.screen
 
 import android.content.Intent
+import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
@@ -19,7 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,12 +31,17 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberImagePainter
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.BucketViewModel
 import com.syncodec.momento.bucketComponent.BucketItemActivity
 import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
+import com.syncodec.momento.database.bucket.BucketItem
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import compose.icons.TablerIcons
@@ -41,19 +49,38 @@ import compose.icons.tablericons.CircleDotted
 import compose.icons.tablericons.Plus
 import kotlinx.coroutines.launch
 
+
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun BooksScreen() {
+	val context = LocalContext.current
+	val configuration = LocalConfiguration.current
+	val screenHeight = configuration.screenHeightDp.dp
+	val screenWidth = configuration.screenWidthDp.dp
+
+	val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
 	val viewModel: BucketViewModel = viewModel()
 	val scope = rememberCoroutineScope()
+
+	var isSelectedToDelete by viewModel.bucketActivityState.isSelectedToDelete
+	val selectedToDeleteList: MutableList<String> = viewModel.bucketActivityState.selectedToDeleteList
+
+	val activity = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.StartActivityForResult()
+	) {
+		viewModel.openBucket()
+	}
 
 	AnimatedVisibility(
 		visible = viewModel.bucketItemList.isEmpty(),
 		enter = fadeIn(),
 		exit = fadeOut()
 	) {
-		NoBookCard {
+		NoBooksCard(
+			modifier = Modifier
+				.fillMaxWidth()
+		) {
 			viewModel.bucketActivityState.bottomSheetType.value = BottomSheetType.AddBookSheet
 			scope.launch {
 				viewModel.bucketActivityState.bottomSheetState.show()
@@ -69,21 +96,83 @@ fun BooksScreen() {
 		LazyVerticalGrid(
 			cells = GridCells.Adaptive(96.dp),
 			modifier = Modifier
-				.padding(8.dp)
+				.fillMaxSize()
+				.padding(8.dp, 0.dp)
 		) {
-			item {
-				AddBookItem(
-					modifier = Modifier
-						.aspectRatio(0.75f)
-						.clickable { }
-				)
-			}
-			viewModel.bucketItemList.forEach {
+			viewModel.bucketItemList.forEach { bucketItem ->
 				item {
 					BookItem(
+						bucketItem = bucketItem,
+						thumbnail = bucketItem.thumbnail,
+						highlight = isSelectedToDelete and (bucketItem.primaryKey in selectedToDeleteList),
 						modifier = Modifier
 							.aspectRatio(0.75f)
+							.combinedClickable(
+								enabled = true,
+								onClick = {
+									if (isSelectedToDelete) {
+										if (bucketItem.primaryKey in selectedToDeleteList) {
+											selectedToDeleteList.remove(bucketItem.primaryKey)
+										} else {
+											selectedToDeleteList.add(bucketItem.primaryKey)
+										}
+									} else {
+										Intent(context, BucketItemActivity::class.java).apply {
+											putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.BOOKS.ordinal)
+											putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, bucketItem.bucketKey)
+											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, bucketItem.primaryKey)
+											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, bucketItem.innerContent)
+											activity.launch(this)
+										}
+									}
+								},
+								onLongClick = {
+									if (!isSelectedToDelete) {
+										isSelectedToDelete = true
+									}
+									if (bucketItem.primaryKey in selectedToDeleteList) {
+										selectedToDeleteList.remove(bucketItem.primaryKey)
+									} else {
+										selectedToDeleteList.add(bucketItem.primaryKey)
+									}
+								}
+							)
 					)
+				}
+			}
+			when (viewModel.bucketItemList.size % 3) {
+				0 -> {
+					for (i in 0 until 3) {
+						item {
+							Box(
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(screenHeight - 64.dp - 64.dp - (screenWidth / 3) - 16.dp)
+							)
+						}
+					}
+				}
+				1 -> {
+					for (i in 0 until 2) {
+						item {
+							Box(
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(screenHeight - 64.dp - 64.dp)
+							)
+						}
+					}
+				}
+				2 -> {
+					for (i in 0 until 1) {
+						item {
+							Box(
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(screenHeight - 64.dp - 64.dp)
+							)
+						}
+					}
 				}
 			}
 		}
@@ -91,7 +180,7 @@ fun BooksScreen() {
 }
 
 @Composable
-private fun NoBookCard(
+private fun NoBooksCard(
 	modifier: Modifier = Modifier,
 	openSheet: (BottomSheetType) -> Unit
 ) {
@@ -99,22 +188,20 @@ private fun NoBookCard(
 	val screenWidth = configuration.screenWidthDp.dp
 	val screenHeight = configuration.screenHeightDp.dp
 
-	Card(
-		elevation = 0.dp,
-		shape = RoundedCornerShape(12.dp),
-		backgroundColor = MaterialTheme.colorScheme.background.copy(alpha = 0.47f),
-		modifier = modifier
+	Box(
+		modifier = modifier,
+		contentAlignment = Alignment.Center
 	) {
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally,
 			verticalArrangement = Arrangement.Center,
 			modifier = Modifier
-				.fillMaxWidth()
+				.fillMaxWidth(0.8f)
 				.height(screenHeight - 256.dp)
 				.padding(12.dp),
 		) {
 			Image(
-				painter = painterResource(id = R.drawable.il_reading),
+				painter = painterResource(id = R.drawable.il_watching_movie),
 				contentDescription = null,
 				modifier = Modifier
 					.requiredSize(192.dp)
@@ -123,17 +210,18 @@ private fun NoBookCard(
 			Spacer(modifier = Modifier.height(24.dp))
 
 			OutlinedButton(
-				onClick = { openSheet(BottomSheetType.AddBookSheet) },
+				onClick = { openSheet(BottomSheetType.AddMovieSheet) },
 				colors = ButtonDefaults.buttonColors(
 					containerColor = MaterialTheme.colorScheme.primaryContainer
 				),
 				modifier = Modifier
-					.fillMaxWidth(0.8f)
+					.fillMaxWidth()
 			) {
 				Icon(
 					imageVector = TablerIcons.Plus,
 					contentDescription = "Add some books",
-					tint = MaterialTheme.colorScheme.primary
+					tint = MaterialTheme.colorScheme.primary,
+					modifier = Modifier
 				)
 
 				Spacer(modifier = Modifier.width(16.dp))
@@ -150,51 +238,14 @@ private fun NoBookCard(
 
 }
 
-
-@Composable
-private fun AddBookItem(
-	modifier: Modifier
-) {
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.padding(8.dp),
-	) {
-		Card(
-			elevation = 12.dp,
-			modifier = modifier,
-		) {
-			Icon(
-				imageVector = TablerIcons.CircleDotted,
-				contentDescription = null,
-				tint = Color.LightGray,
-				modifier = Modifier
-					.requiredSize(40.dp)
-			)
-			Icon(
-				imageVector = TablerIcons.Plus,
-				contentDescription = null,
-				tint = Color.LightGray,
-				modifier = Modifier
-					.requiredSize(20.dp)
-			)
-		}
-
-		Text(
-			text = "A new book?",
-			style = MaterialTheme.typography.bodyMedium,
-			modifier = Modifier
-				.padding(0.dp, 4.dp, 0.dp, 0.dp)
-		)
-	}
-}
-
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun BookItem(
-	modifier: Modifier
+	modifier: Modifier,
+	bucketItem: BucketItem,
+	thumbnail: ByteArray?,
+	highlight: Boolean
 ) {
-	val context = LocalContext.current
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -203,27 +254,28 @@ private fun BookItem(
 	) {
 		Card(
 			elevation = 12.dp,
-			onClick = {
-				Intent(context, BucketItemActivity::class.java).apply {
-					val bookDataString =
-						"{\"key\":\"/works/OL21667536W\",\"title\":\"How to Avoid a Climate Disaster\",\"cover_i\":10656063,\"author_name\":[\"Bill Gates\"]}"
-					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.BOOKS)
-//					putExtra(Konstant.Companion.Konstant.BOOK_DATA.name, bookDataString)
-					context.startActivity(this)
-				}
-			}
+			border = BorderStroke(4.dp, if (highlight) MaterialTheme.colorScheme.primary else Color.Transparent),
+			modifier = modifier,
 		) {
-			Image(
-				painter = painterResource(id = R.drawable.home_background),
-				contentDescription = null,
-				contentScale = ContentScale.Crop,
-				modifier = modifier,
-			)
+			if (thumbnail != null) {
+				Image(
+					painter = rememberImagePainter(
+						data = BitmapFactory.decodeByteArray(thumbnail, 0, thumbnail.size),
+						builder = {
+							crossfade(false)
+						}
+					),
+					contentDescription = null,
+					contentScale = ContentScale.Crop,
+				)
+			}
 		}
 
 		Text(
-			text = "Book",
+			text = bucketItem.title ?: "",
 			style = MaterialTheme.typography.bodyMedium,
+			maxLines = 2,
+			overflow = TextOverflow.Ellipsis,
 			modifier = Modifier
 				.padding(0.dp, 4.dp, 0.dp, 0.dp)
 		)

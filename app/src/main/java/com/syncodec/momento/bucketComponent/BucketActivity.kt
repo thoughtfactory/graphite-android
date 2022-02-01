@@ -1,19 +1,19 @@
 package com.syncodec.momento.bucketComponent
 
 import android.os.Bundle
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -64,6 +64,15 @@ class BucketActivity : ComponentActivity() {
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
 				BucketScreen()
 			}
+		}
+	}
+
+	override fun onBackPressed() {
+		if (viewModel.bucketActivityState.isSelectedToDelete.value) {
+			viewModel.bucketActivityState.selectedToDeleteList.removeAll { true }
+			viewModel.bucketActivityState.isSelectedToDelete.value = false
+		} else {
+			finish()
 		}
 	}
 
@@ -159,7 +168,16 @@ class BucketActivity : ComponentActivity() {
 							.fillMaxWidth()
 					) {
 						LargeButton(
-							text = "A new movie?",
+							text = if (viewModel.bucketActivityState.isSelectedToDelete.value)
+								"Delete"
+							else when (viewModel.bucketItemType) {
+								BucketItemType.TODO -> "Add New Task"
+								BucketItemType.BOOKS -> "What did you read?"
+								BucketItemType.MOVIES -> "A new movie?"
+								BucketItemType.TVSHOWS -> "What did you watch?"
+								BucketItemType.MEDIA -> "Add media"
+								BucketItemType.LINKS -> "Add link"
+							},
 							backgroundColor = MaterialTheme.colorScheme.primaryContainer,
 							textColor = MaterialTheme.colorScheme.onPrimaryContainer,
 							modifier = Modifier
@@ -168,11 +186,23 @@ class BucketActivity : ComponentActivity() {
 								.padding(24.dp, 0.dp)
 								.focusable()
 						) {
-							viewModel.bucketActivityState.bottomSheetType.value = BottomSheetType.AddMovieSheet
-							scope.launch {
-								viewModel.bucketActivityState.bottomSheetState.show()
+							if (viewModel.bucketActivityState.isSelectedToDelete.value) {
+								viewModel.deleteBucketItem(viewModel.bucketActivityState.selectedToDeleteList!!)
 							}
+							else {
+								viewModel.bucketActivityState.bottomSheetType.value = when (viewModel.bucketItemType) {
+									BucketItemType.TODO -> BottomSheetType.AddMovieSheet
+									BucketItemType.BOOKS -> BottomSheetType.AddBookSheet
+									BucketItemType.MOVIES -> BottomSheetType.AddMovieSheet
+									BucketItemType.TVSHOWS -> BottomSheetType.AddMovieSheet
+									BucketItemType.MEDIA -> BottomSheetType.AddMovieSheet
+									BucketItemType.LINKS -> BottomSheetType.AddMovieSheet
+								}
 
+								scope.launch {
+									viewModel.bucketActivityState.bottomSheetState.show()
+								}
+							}
 						}
 
 						Spacer(modifier = Modifier.height(24.dp))
@@ -185,7 +215,9 @@ class BucketActivity : ComponentActivity() {
 	@OptIn(ExperimentalMaterialApi::class)
 	class BucketActivityState(
 		val bottomSheetState: ModalBottomSheetState,
-		val collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState
+		val collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState,
+		var isSelectedToDelete: MutableState<Boolean>,
+		val selectedToDeleteList: SnapshotStateList<String>
 	) {
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.AddBookSheet)
 	}
@@ -194,8 +226,10 @@ class BucketActivity : ComponentActivity() {
 	@Composable
 	fun rememberBucketActivityState(
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
-		collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState = rememberCollapsingToolbarScaffoldState()
+		collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState = rememberCollapsingToolbarScaffoldState(),
+		isSelectedToDelete: MutableState<Boolean> = remember { mutableStateOf(false) },
+		selectedToDeleteList: SnapshotStateList<String> = remember { mutableStateListOf() }
 	) = remember {
-		BucketActivityState(bottomSheetState, collapsingToolbarScaffoldState)
+		BucketActivityState(bottomSheetState, collapsingToolbarScaffoldState, isSelectedToDelete, selectedToDeleteList)
 	}
 }

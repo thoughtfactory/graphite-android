@@ -134,6 +134,6 @@ class EditorView(context: Context): WebView(context) {
 
 	companion object {
 		const val TAG = "EDITOR_VIEW"
-		const val INDEX_PATH = "file:///android_asset/tinyEditor/index.html"
+		const val INDEX_PATH = "file:///android_asset/tiptap/index.html"
 	}
 }
