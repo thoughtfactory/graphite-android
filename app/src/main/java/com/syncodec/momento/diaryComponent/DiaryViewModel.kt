@@ -23,11 +23,12 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.momento.database.diary.Note
 import com.syncodec.momento.database.diary.WeatherData
-import com.syncodec.momento.konstant.MediaType
+import com.syncodec.momento.konstant.AttachmentType
 import com.syncodec.momento.konstant.Secret
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
+import com.syncodec.momento.miscellaneous.locationAddressFilter
 import com.syncodec.momento.repository.DiaryRepository
-import com.syncodec.momento.repository.MediaRepository
+import com.syncodec.momento.repository.AttachmentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,18 +36,19 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.*
 
-data class TempMediaData(val uri: Uri, val mediaType: MediaType)
+data class TempAttachmentData(val uri: Uri, val mimeType: String?)
 
 class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
 	val diaryRepository: DiaryRepository = DiaryRepository(application)
-	val mediaRepository: MediaRepository = MediaRepository(application)
+	val attachmentRepository: AttachmentRepository = AttachmentRepository(application)
 
 	private val currentTimestamp = System.currentTimeMillis()
 
+	var gpsLocation by mutableStateOf<Location?>(null)
+	var location by mutableStateOf<Location?>(null)
 	var address by mutableStateOf<String?>(null)
 	var weatherData by mutableStateOf<WeatherData?>(null)
-	var location by mutableStateOf<Location?>(null)
 
 	var note: Note by mutableStateOf(
 		Note(
@@ -65,10 +67,12 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
 	lateinit var diaryActivityState: DiaryActivity.DiaryActivityState
 
-	var mediaList: MutableList<TempMediaData> = mutableStateListOf()
+	var attachmentList: MutableList<TempAttachmentData> = mutableStateListOf()
 
-	fun insertMedia(uri: Uri, mediaType: MediaType) {
-		mediaList.add(TempMediaData(uri = uri, mediaType = mediaType))
+	fun insertAttachment(
+		tempAttachmentData: TempAttachmentData
+	) {
+		attachmentList.add(tempAttachmentData)
 	}
 
 	fun removeLocationData() {
@@ -100,6 +104,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 		fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken)
 			.addOnSuccessListener { location: Location? ->
 				Log.i("npr71", "location success...")
+				this.gpsLocation = location
 				this.location = location
 				diaryActivityState.addressState.value = DiaryActivity.AddressState.LOCATION
 				addressHandler.postDelayed(addressRunnable, 10000)
@@ -111,10 +116,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 						onAddressAvailable = { address ->
 							viewModelScope.launch {
 								withContext(Dispatchers.Main) {
-									if (address!=null) {
-										this@DiaryViewModel.address =
-											"${address.featureName} ${address.thoroughfare}, ${address.locality}, ${address.subAdminArea}, ${address.adminArea} ${address.postalCode}, ${address.countryName}"
-									}
+									this@DiaryViewModel.address = locationAddressFilter(address = address)
 									if (this@DiaryViewModel.address != null) {
 										diaryActivityState.addressState.value = DiaryActivity.AddressState.SUCCESS
 									}
@@ -192,22 +194,4 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 			}
 		}
 	}
-
-//	fun insertAttachment(uri: Uri, mediaType: MediaType) {
-//		viewModelScope.launch {
-//			withContext(Dispatchers.IO) {
-//				val currentTimestamp = System.currentTimeMillis()
-//				Media(
-//					primaryKey = generatePrimaryKey(Konstant.MEDIA_PRIMARY_KEY_LENGTH),
-//					createdTimestamp = currentTimestamp,
-//					timezoneOffset = TimeZone
-//						.getDefault()
-//						.getOffset(currentTimestamp),
-//					mediaType = mediaType.name
-//				).apply {
-//					mediaList.add(this)
-//				}
-//			}
-//		}
-//	}
 }

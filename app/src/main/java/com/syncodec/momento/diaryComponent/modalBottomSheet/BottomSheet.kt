@@ -7,7 +7,7 @@ import com.syncodec.momento.diaryComponent.DiaryViewModel
 sealed class BottomSheetType {
 	object MenuBottomSheet : BottomSheetType()
 	object MetadataBottomSheet : BottomSheetType()
-	object MediaBottomSheet : BottomSheetType()
+	object AttachmentBottomSheet : BottomSheetType()
 }
 
 @Composable
@@ -16,6 +16,6 @@ fun SheetLayout() {
 	when (viewModel.diaryActivityState.bottomSheetType.value) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet()
 		BottomSheetType.MetadataBottomSheet -> MetadataBottomSheet()
-		BottomSheetType.MediaBottomSheet -> MediaBottomSheet()
+		BottomSheetType.AttachmentBottomSheet -> AttachmentBottomSheet()
 	}
 }

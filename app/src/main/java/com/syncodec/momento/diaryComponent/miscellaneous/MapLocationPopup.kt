@@ -1,5 +1,6 @@
 package com.syncodec.momento.diaryComponent.miscellaneous
 
+import android.location.Location
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
@@ -32,6 +33,7 @@ import com.syncodec.momento.R
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.diaryComponent.DiaryActivity
 import com.syncodec.momento.diaryComponent.DiaryViewModel
+import com.syncodec.momento.miscellaneous.locationAddressFilter
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import compose.icons.tablericons.Circle
@@ -94,15 +96,7 @@ fun MapLocationPopup() {
 							viewModel.reverseGeocode(
 								latitude = map!!.cameraPosition.target.latitude,
 								longitude = map!!.cameraPosition.target.longitude,
-								onAddressAvailable = { _address ->
-									scope.launch {
-										address = if (_address != null) {
-											"${_address.featureName} ${_address.thoroughfare}, ${_address.locality}, ${_address.subAdminArea}, ${_address.adminArea} ${_address.postalCode}, ${_address.countryName}"
-										} else {
-											null
-										}
-									}
-								},
+								onAddressAvailable = { _address -> scope.launch { address = locationAddressFilter(_address) } },
 								onIoException = {
 									Log.i("Diary Activity", "Reverse Geocode : IO Exception : Maybe network unavailable")
 								},
@@ -122,8 +116,8 @@ fun MapLocationPopup() {
 				) {
 					FloatingActionButton(
 						onClick = {
-							if (viewModel.location != null) {
-								map!!.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location!!.latitude, location.longitude), 15f))
+							if (viewModel.gpsLocation != null) {
+								map!!.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(viewModel.gpsLocation!!.latitude, viewModel.gpsLocation!!.longitude), 15f))
 							} else {
 								Toast.makeText(context, "Location unavailable", Toast.LENGTH_LONG).show()
 							}
@@ -140,7 +134,13 @@ fun MapLocationPopup() {
 
 					FloatingActionButton(
 						onClick = {
-							viewModel.location = location
+							Location("").apply {
+								if (map != null) {
+									latitude = map!!.cameraPosition.target.latitude
+									longitude = map!!.cameraPosition.target.longitude
+									viewModel.location = this
+								}
+							}
 							viewModel.address = address
 							if (viewModel.address != null) {
 								viewModel.diaryActivityState.addressState.value = DiaryActivity.AddressState.SUCCESS

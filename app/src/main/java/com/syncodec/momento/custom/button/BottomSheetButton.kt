@@ -22,29 +22,29 @@ data class MenuBottomSheetButtonData(val title: String, val imageVector: ImageVe
 
 @Composable
 fun MenuBottomSheetButton(
-	menuBottomSheetButtonData: MenuBottomSheetButtonData?
+	menuBottomSheetButtonData: MenuBottomSheetButtonData?,
+	modifier: Modifier = Modifier
 ) {
 	Column(
-		horizontalAlignment = Alignment.CenterHorizontally
+		horizontalAlignment = Alignment.CenterHorizontally,
+		modifier = modifier
 	) {
 		if (menuBottomSheetButtonData != null) {
 			Crossfade(targetState = menuBottomSheetButtonData.highlight) { highlight ->
 				if (highlight) {
 					Card(
 						elevation = 0.dp,
-						backgroundColor = MaterialTheme.colorScheme.onPrimaryContainer,
+						backgroundColor = MaterialTheme.colorScheme.onSecondaryContainer,
 						shape = RoundedCornerShape(12.dp),
 						modifier = Modifier
-							.fillMaxWidth()
-							.aspectRatio(1f)
-							.padding(6.dp)
+							.requiredSize(72.dp)
 							.focusable(true)
 							.clickable(true) { menuBottomSheetButtonData.onClick() },
 					) {
 						Icon(
 							imageVector = menuBottomSheetButtonData.imageVector,
 							contentDescription = null,
-							tint = MaterialTheme.colorScheme.primaryContainer,
+							tint = MaterialTheme.colorScheme.secondaryContainer,
 							modifier = Modifier
 								.requiredSize(24.dp)
 						)
@@ -52,12 +52,10 @@ fun MenuBottomSheetButton(
 				} else {
 					Card(
 						elevation = 0.dp,
-						backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+						backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 						shape = RoundedCornerShape(12.dp),
 						modifier = Modifier
-							.fillMaxWidth()
-							.aspectRatio(1f)
-							.padding(6.dp)
+							.requiredSize(72.dp)
 							.focusable(true)
 							.clip(RoundedCornerShape(12.dp))
 							.clickable(true) { menuBottomSheetButtonData.onClick() },
@@ -65,7 +63,7 @@ fun MenuBottomSheetButton(
 						Icon(
 							imageVector = menuBottomSheetButtonData.imageVector,
 							contentDescription = null,
-							tint = MaterialTheme.colorScheme.onPrimaryContainer,
+							tint = MaterialTheme.colorScheme.onSecondaryContainer,
 							modifier = Modifier
 								.requiredSize(24.dp)
 						)
@@ -81,6 +79,8 @@ fun MenuBottomSheetButton(
 				modifier = Modifier
 					.fillMaxWidth()
 			)
+		} else {
+			Spacer(modifier = Modifier.requiredSize(80.dp))
 		}
 	}
 }

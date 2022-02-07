@@ -12,13 +12,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.google.android.libraries.maps.CameraUpdateFactory
+import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.syncodec.momento.custom.BottomSheetHeader
@@ -36,6 +37,7 @@ import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.database.diary.WeatherData
 import com.syncodec.momento.diaryComponent.DiaryActivity
 import com.syncodec.momento.diaryComponent.DiaryViewModel
+import com.syncodec.momento.miscellaneous.roundTo
 import com.syncodec.momento.miscellaneous.timeStampToPrettyFull
 import compose.icons.TablerIcons
 import compose.icons.WeatherIcons
@@ -49,11 +51,6 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun MetadataBottomSheet() {
-	val context = LocalContext.current
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
-	val screenWidth = configuration.screenWidthDp.dp
-
 	val viewModel: DiaryViewModel = viewModel()
 
 	Column(
@@ -81,6 +78,7 @@ fun MetadataBottomSheet() {
 			location = viewModel.location,
 			address = viewModel.address,
 			addressState = viewModel.diaryActivityState.addressState.value,
+			refreshLocation = { viewModel.getLocation() },
 			showMapLocationDialog = { viewModel.diaryActivityState.showMapLocationDialog.value = true }
 		) {
 			viewModel.removeLocationData()
@@ -93,7 +91,8 @@ fun MetadataBottomSheet() {
 				Column {
 					Spacer(modifier = Modifier.height(8.dp))
 					MapCard(
-						location = viewModel.location!!
+						location = viewModel.location!!,
+						mapView = viewModel.diaryActivityState.mapView
 					)
 				}
 			}
@@ -101,11 +100,12 @@ fun MetadataBottomSheet() {
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		WeatherCard(
-			weatherData = viewModel.weatherData
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
+		if(viewModel.weatherData!=null) {
+			WeatherCard(
+				weatherData = viewModel.weatherData
+			)
+			Spacer(modifier = Modifier.height(8.dp))
+		}
 
 		StateCard(
 
@@ -125,7 +125,7 @@ fun TimestampCard(
 	Card(
 		elevation = 0.dp,
 		backgroundColor = MaterialTheme.colorScheme.background,
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
+		border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),
 		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier
 			.fillMaxWidth()
@@ -144,13 +144,13 @@ fun TimestampCard(
 					style = MaterialTheme.typography.bodySmall.copy(
 						fontWeight = FontWeight.Bold
 					),
-					color = MaterialTheme.colorScheme.onPrimaryContainer
+					color = MaterialTheme.colorScheme.onSecondaryContainer
 				)
 				Spacer(modifier = Modifier.weight(1f))
 				Text(
 					text = timeStampToPrettyFull(createdTimestamp),
 					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onPrimaryContainer
+					color = MaterialTheme.colorScheme.onSecondaryContainer
 				)
 			}
 
@@ -164,7 +164,7 @@ fun TimestampCard(
 					style = MaterialTheme.typography.bodySmall.copy(
 						fontWeight = FontWeight.Bold
 					),
-					color = MaterialTheme.colorScheme.onPrimaryContainer
+					color = MaterialTheme.colorScheme.onSecondaryContainer
 				)
 				Spacer(modifier = Modifier.weight(1f))
 
@@ -192,7 +192,7 @@ fun TimestampCard(
 				Text(
 					text = modifiedTimestampPretty,
 					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onPrimaryContainer
+					color = MaterialTheme.colorScheme.onSecondaryContainer
 				)
 			}
 		}
@@ -205,6 +205,7 @@ private fun LocationCard(
 	location: Location?,
 	address: String?,
 	addressState: DiaryActivity.AddressState,
+	refreshLocation: () -> Unit,
 	showMapLocationDialog: () -> Unit,
 	removeLocationData: () -> Unit
 ) {
@@ -216,12 +217,18 @@ private fun LocationCard(
 	) {
 		Card(
 			elevation = 0.dp,
-			backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-			border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
+			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 			shape = RoundedCornerShape(12.dp),
 			modifier = Modifier
+				.height(128.dp)
 				.weight(1f)
 				.padding(0.dp, 0.dp, 4.dp, 0.dp),
+			enabled = addressState == DiaryActivity.AddressState.REMOVED,
+			onClick = {
+				if (addressState == DiaryActivity.AddressState.REMOVED) {
+					refreshLocation()
+				}
+			}
 		) {
 			Column(
 				modifier = Modifier
@@ -230,35 +237,39 @@ private fun LocationCard(
 			) {
 				Text(
 					text = when (addressState) {
-						DiaryActivity.AddressState.OFF, -> "AddressState : OFF"
+						DiaryActivity.AddressState.OFF -> "AddressState : OFF"
 						DiaryActivity.AddressState.INIT -> "Getting address..."
 						DiaryActivity.AddressState.NO_PERMISSION -> "Location permission unavailable"
 						DiaryActivity.AddressState.REQUEST_PERMISSION -> "Location permission unavailable"
 						DiaryActivity.AddressState.SHOW_RATIONALE -> "Location permission unavailable"
 						DiaryActivity.AddressState.REQUESTED -> "Getting address..."
 						DiaryActivity.AddressState.LOCATION -> "Address unavailable"
-						DiaryActivity.AddressState.SUCCESS -> address!!.replace(", ", ",\n")
+						DiaryActivity.AddressState.SUCCESS -> address!!
 						DiaryActivity.AddressState.ERROR -> "Error getting address"
 						DiaryActivity.AddressState.REMOVED -> "Click to get address"
 					},
 					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onPrimaryContainer,
-					maxLines = 5,
+					color = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 						.weight(1f)
 				)
 
 				Spacer(modifier = Modifier.height(8.dp))
 
-				Text(
-					text = if (location == null) "Location unavailable" else "${location.latitude}, ${location.longitude}",
-					style = MaterialTheme.typography.bodySmall.copy(
-						fontWeight = FontWeight.Bold
-					),
-					color = MaterialTheme.colorScheme.onPrimaryContainer,
-					modifier = Modifier
-						.fillMaxWidth()
-				)
+				if (addressState == DiaryActivity.AddressState.REQUESTED ||
+					addressState == DiaryActivity.AddressState.LOCATION ||
+					addressState == DiaryActivity.AddressState.SUCCESS
+				) {
+					Text(
+						text = if (location == null) "Location unavailable" else "${location.latitude.roundTo(6)}, ${location.longitude.roundTo(6)}",
+						style = MaterialTheme.typography.bodySmall.copy(
+							fontWeight = FontWeight.Bold
+						),
+						color = MaterialTheme.colorScheme.onSecondaryContainer,
+						modifier = Modifier
+							.fillMaxWidth()
+					)
+				}
 			}
 		}
 
@@ -266,17 +277,18 @@ private fun LocationCard(
 			modifier = Modifier
 				.padding(4.dp, 0.dp, 0.dp, 0.dp)
 		) {
-			FloatingActionButton(
-				onClick = { showMapLocationDialog() },
-				elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp),
+			Card(
+				elevation = 0.dp,
 				shape = RoundedCornerShape(12.dp),
+				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 				modifier = Modifier
-					.requiredSize(60.dp)
+					.requiredSize(60.dp),
+				onClick = { showMapLocationDialog() }
 			) {
 				Icon(
 					imageVector = TablerIcons.Map,
 					contentDescription = "Pick location",
-					tint = MaterialTheme.colorScheme.onPrimaryContainer,
+					tint = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 						.requiredSize(20.dp)
 				)
@@ -284,17 +296,18 @@ private fun LocationCard(
 
 			Spacer(modifier = Modifier.weight(1f))
 
-			FloatingActionButton(
-				onClick = { removeLocationData() },
-				elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp),
+			Card(
+				elevation = 0.dp,
 				shape = RoundedCornerShape(12.dp),
+				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 				modifier = Modifier
-					.requiredSize(60.dp)
+					.requiredSize(60.dp),
+				onClick = { removeLocationData() }
 			) {
 				Icon(
 					imageVector = TablerIcons.X,
 					contentDescription = "Remove Location",
-					tint = MaterialTheme.colorScheme.onPrimaryContainer,
+					tint = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 						.requiredSize(20.dp)
 				)
@@ -306,13 +319,12 @@ private fun LocationCard(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun MapCard(
-	location: Location
+	location: Location,
+	mapView: MapView
 ) {
-	val mapView = rememberMapViewWithLifecycle()
-
 	Card(
 		elevation = 0.dp,
-		backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+		backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 		shape = RoundedCornerShape(16.dp),
 		modifier = Modifier
 			.fillMaxWidth()
@@ -324,6 +336,7 @@ private fun MapCard(
 		AndroidView({ mapView }) { mapView ->
 			mapView.getMapAsync { googleMap ->
 				googleMap.uiSettings.isZoomControlsEnabled = false
+				googleMap.uiSettings.setAllGesturesEnabled(false)
 
 				val latLng = LatLng(location.latitude, location.longitude)
 				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
@@ -349,7 +362,7 @@ private fun WeatherCard(
 		Card(
 			elevation = 0.dp,
 			shape = RoundedCornerShape(12.dp),
-			backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 			modifier = Modifier
 				.height(60.dp)
 				.weight(1f),
@@ -363,7 +376,7 @@ private fun WeatherCard(
 				Icon(
 					imageVector = WeatherIcons.Thermometer,
 					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onPrimaryContainer
+					tint = MaterialTheme.colorScheme.onSecondaryContainer
 				)
 
 				Spacer(modifier = Modifier.width(8.dp))
@@ -373,7 +386,7 @@ private fun WeatherCard(
 					style = MaterialTheme.typography.bodySmall.copy(
 						fontWeight = FontWeight.Bold
 					),
-					color = MaterialTheme.colorScheme.onPrimaryContainer,
+					color = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 				)
 			}
@@ -384,7 +397,7 @@ private fun WeatherCard(
 		Card(
 			elevation = 0.dp,
 			shape = RoundedCornerShape(12.dp),
-			backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 			modifier = Modifier
 				.height(60.dp)
 				.weight(1f)
@@ -398,7 +411,7 @@ private fun WeatherCard(
 				Icon(
 					imageVector = WeatherIcons.Sunrise,
 					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onPrimaryContainer
+					tint = MaterialTheme.colorScheme.onSecondaryContainer
 				)
 
 				Spacer(modifier = Modifier.width(8.dp))
@@ -408,7 +421,7 @@ private fun WeatherCard(
 					style = MaterialTheme.typography.bodySmall.copy(
 						fontWeight = FontWeight.Bold
 					),
-					color = MaterialTheme.colorScheme.onPrimaryContainer,
+					color = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 				)
 			}
@@ -426,13 +439,18 @@ private fun StateCard() {
 		MenuBottomSheetButtonData(title = "Move in vault", imageVector = TablerIcons.Container) {},
 		MenuBottomSheetButtonData(title = "Move to trash", imageVector = TablerIcons.Trash) {})
 
-	LazyVerticalGrid(
-		cells = GridCells.Fixed(4),
+	FlowRow(
 		modifier = Modifier
-			.padding(24.dp, 0.dp)
+			.fillMaxWidth()
+			.padding(24.dp, 0.dp),
+		mainAxisAlignment = MainAxisAlignment.SpaceBetween,
 	) {
-		itemsIndexed(menuBottomSheetButtonDataList) { _, menuBottomSheetButtonData ->
-			MenuBottomSheetButton(menuBottomSheetButtonData)
+		menuBottomSheetButtonDataList.forEach {
+			MenuBottomSheetButton(
+				menuBottomSheetButtonData = it,
+				modifier = Modifier
+					.width(80.dp)
+			)
 		}
 	}
 }

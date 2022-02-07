@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.flowlayout.FlowRow
+import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
@@ -46,6 +48,7 @@ fun MenuBottomSheet() {
 		MenuBottomSheetButtonData(title = "Discard changes", imageVector = TablerIcons.X) {},
 		MenuBottomSheetButtonData(title = "Share", imageVector = TablerIcons.Share) {},
 		MenuBottomSheetButtonData(title = "Export", imageVector = TablerIcons.FileExport) {},
+		null
 	)
 
 	Column(
@@ -70,15 +73,31 @@ fun MenuBottomSheet() {
 
 		Spacer(modifier = Modifier.height(12.dp))
 
-		LazyVerticalGrid(
-			cells = GridCells.Fixed(4),
+		FlowRow(
 			modifier = Modifier
-				.padding(24.dp, 0.dp)
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp),
+			mainAxisAlignment = MainAxisAlignment.SpaceBetween,
 		) {
-			itemsIndexed(menuBottomSheetButtonDataLists) { _, menuBottomSheetButtonData ->
-				MenuBottomSheetButton(menuBottomSheetButtonData)
+			menuBottomSheetButtonDataLists.forEach {
+				MenuBottomSheetButton(
+					menuBottomSheetButtonData = it,
+					modifier = Modifier
+						.width(80.dp)
+				)
 			}
 		}
+
+
+//		LazyVerticalGrid(
+//			cells = GridCells.Adaptive(72.dp),
+//			modifier = Modifier
+//				.padding(24.dp, 0.dp)
+//		) {
+//			itemsIndexed(menuBottomSheetButtonDataLists) { _, menuBottomSheetButtonData ->
+//				MenuBottomSheetButton(menuBottomSheetButtonData)
+//			}
+//		}
 
 		Spacer(modifier = Modifier.height(32.dp))
 	}

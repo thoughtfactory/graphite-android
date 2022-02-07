@@ -25,7 +25,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.android.libraries.maps.MapView
 import com.syncodec.momento.custom.EditorView
+import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.diaryComponent.miscellaneous.*
 import com.syncodec.momento.diaryComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.diaryComponent.modalBottomSheet.SheetLayout
@@ -158,7 +160,8 @@ class DiaryActivity : ComponentActivity() {
 	class DiaryActivityState @OptIn(ExperimentalPermissionsApi::class) constructor(
 		val bottomSheetState: ModalBottomSheetState,
 		val locationPermissionState: PermissionState,
-		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.MediaBottomSheet),
+		var mapView: MapView,
+		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.AttachmentBottomSheet),
 		var notificationType: MutableState<NotificationType> = mutableStateOf(NotificationType.UrlSelectionNotification),
 		var isNotificationVisible: MutableState<Boolean> = mutableStateOf(false),
 		var addressState: MutableState<AddressState> = mutableStateOf(AddressState.INIT),
@@ -170,11 +173,13 @@ class DiaryActivity : ComponentActivity() {
 	@Composable
 	fun rememberDiaryActivityState(
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
-		locationPermissionState: PermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+		locationPermissionState: PermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION),
+		mapView: MapView = rememberMapViewWithLifecycle()
 	) = remember {
 		DiaryActivityState(
 			bottomSheetState = bottomSheetState,
-			locationPermissionState = locationPermissionState
+			locationPermissionState = locationPermissionState,
+			mapView = mapView
 		)
 	}
 

@@ -1,4 +1,4 @@
-package com.syncodec.momento.database.media
+package com.syncodec.momento.database.attachment
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 import com.google.gson.annotations.Expose
 
 
-@Entity(tableName = "media_table")
-data class Media(
+@Entity(tableName = "attachment_table")
+data class Attachment(
 	@PrimaryKey
 	@ColumnInfo(name = "primary_key")
 	@Expose
@@ -21,9 +21,9 @@ data class Media(
 	@Expose
 	val timezoneOffset: Int,
 
-	@ColumnInfo(name = "media_type")
+	@ColumnInfo(name = "attachment_type")
 	@Expose
-	val mediaType: String
+	val attachmentType: String
 
 ) {
 	@ColumnInfo(name = "content_thumbnail")
@@ -37,10 +37,20 @@ data class Media(
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false
 
-		other as Media
+		other as Attachment
 
 		if (primaryKey != other.primaryKey) return false
 
 		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = primaryKey.hashCode()
+		result = 31 * result + createdTimestamp.hashCode()
+		result = 31 * result + timezoneOffset
+		result = 31 * result + attachmentType.hashCode()
+		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
+		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
+		return result
 	}
 }

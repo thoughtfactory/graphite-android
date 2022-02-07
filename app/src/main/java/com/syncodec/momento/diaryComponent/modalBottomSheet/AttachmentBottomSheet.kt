@@ -1,6 +1,7 @@
 package com.syncodec.momento.diaryComponent.modalBottomSheet
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,9 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,43 +31,62 @@ import coil.compose.rememberImagePainter
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.diaryComponent.DiaryViewModel
-import com.syncodec.momento.diaryComponent.TempMediaData
-import com.syncodec.momento.konstant.MediaType
+import com.syncodec.momento.diaryComponent.TempAttachmentData
+import com.syncodec.momento.konstant.AttachmentType
+import com.syncodec.momento.miscellaneous.createTempFileToExpose
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 
-data class MediaBottomSheetButtonData(val title: String, val imageVector: ImageVector, val onClick: () -> Unit)
+data class AttachmentBottomSheetButtonData(val title: String, val imageVector: ImageVector, val onClick: () -> Unit)
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun MediaBottomSheet() {
+fun AttachmentBottomSheet() {
 	val context = LocalContext.current
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
-	val screenWidth = configuration.screenWidthDp.dp
 
 	val viewModel: DiaryViewModel = viewModel()
 
-	var uri: Uri? = null
-	var mediaType: MediaType? = null
+	var photoUri: Uri? = null
 
 	val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
 		if (isCaptured) {
-			viewModel.insertMedia(uri = uri!!, mediaType = mediaType!!)
+			TempAttachmentData(
+				uri = photoUri!!,
+				mimeType = context.contentResolver.getType(photoUri!!)
+			).apply {
+				viewModel.insertAttachment(this)
+			}
 		}
 	}
 
-	val mediaBottomSheetButtonDataList: List<MediaBottomSheetButtonData> = listOf(
-		MediaBottomSheetButtonData(title = "Camera", imageVector = TablerIcons.Camera) {
-			mediaType = MediaType.PHOTO
-			uri = com.syncodec.momento.miscellaneous.createTempFileToExpose(context = context, mediaType = mediaType!!)
-			takePicture.launch(uri)
+	val openMediaPicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
+		uriList.forEach {
+			TempAttachmentData(
+				uri = it,
+				mimeType = context.contentResolver.getType(it)
+			).apply {
+				viewModel.insertAttachment(this)
+			}
+		}
+	}
+
+	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uriList ->
+		Log.i("npr71", "uri : $uriList")
+	}
+
+	val attachmentBottomSheetButtonDataLists: List<AttachmentBottomSheetButtonData> = listOf(
+		AttachmentBottomSheetButtonData(title = "Camera", imageVector = TablerIcons.Camera) {
+			photoUri = createTempFileToExpose(context = context, attachmentType = AttachmentType.PHOTO)
+			takePicture.launch(photoUri)
 		},
-		MediaBottomSheetButtonData(title = "Gallery", imageVector = TablerIcons.Photo) {
+		AttachmentBottomSheetButtonData(title = "Gallery", imageVector = TablerIcons.Photo) {
+			openMediaPicker.launch(arrayOf("image/*", "video/*", "audio/*"))
 		},
-		MediaBottomSheetButtonData(title = "Audio", imageVector = TablerIcons.Microphone) {},
-		MediaBottomSheetButtonData(title = "Draw", imageVector = TablerIcons.Writing) {},
+		AttachmentBottomSheetButtonData(title = "Audio", imageVector = TablerIcons.Microphone) {},
+		AttachmentBottomSheetButtonData(title = "File", imageVector = TablerIcons.File) {
+			openFilePicker.launch(arrayOf("*/*"))
+		},
 	)
 
 	Column(
@@ -78,7 +99,7 @@ fun MediaBottomSheet() {
 		BottomSheetStrip()
 
 		BottomSheetHeader(
-			title = "Media",
+			title = "Attachment",
 			imageVector = TablerIcons.Paperclip
 		)
 
@@ -87,8 +108,8 @@ fun MediaBottomSheet() {
 			modifier = Modifier
 				.padding(24.dp, 0.dp)
 		) {
-			itemsIndexed(mediaBottomSheetButtonDataList) { _, mediaBottomSheetButtonData ->
-				MediaBottomSheetButton(mediaBottomSheetButtonData)
+			itemsIndexed(attachmentBottomSheetButtonDataLists) { _, attachmentBottomSheetButtonData ->
+				AttachmentBottomSheetButton(attachmentBottomSheetButtonData)
 			}
 		}
 
@@ -99,19 +120,20 @@ fun MediaBottomSheet() {
 			modifier = Modifier
 				.padding(24.dp, 0.dp, 24.dp, 32.dp)
 		) {
-			itemsIndexed(viewModel.mediaList) { index, tempMediaData ->
-				MediaView(
-					modifier = Modifier,
-					tempMediaData = tempMediaData
-				)
+			itemsIndexed(viewModel.attachmentList) { _, tempMediaData ->
+				AttachmentView(
+					tempAttachmentData = tempMediaData
+				) {
+
+				}
 			}
 		}
 	}
 }
 
 @Composable
-private fun MediaBottomSheetButton(
-	mediaBottomSheetButtonData: MediaBottomSheetButtonData
+private fun AttachmentBottomSheetButton(
+	attachmentBottomSheetButtonData: AttachmentBottomSheetButtonData
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally
@@ -126,10 +148,10 @@ private fun MediaBottomSheetButton(
 				.padding(6.dp)
 				.focusable(true)
 				.clip(RoundedCornerShape(8.dp))
-				.clickable(true) { mediaBottomSheetButtonData.onClick() },
+				.clickable(true) { attachmentBottomSheetButtonData.onClick() },
 		) {
 			Icon(
-				imageVector = mediaBottomSheetButtonData.imageVector,
+				imageVector = attachmentBottomSheetButtonData.imageVector,
 				contentDescription = null,
 				tint = MaterialTheme.colorScheme.onSecondaryContainer,
 				modifier = Modifier
@@ -137,7 +159,7 @@ private fun MediaBottomSheetButton(
 			)
 		}
 		Text(
-			text = mediaBottomSheetButtonData.title,
+			text = attachmentBottomSheetButtonData.title,
 			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onBackground,
 			textAlign = TextAlign.Center,
@@ -150,28 +172,45 @@ private fun MediaBottomSheetButton(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun MediaView(
-	modifier: Modifier,
-	tempMediaData: TempMediaData
+private fun AttachmentView(
+	tempAttachmentData: TempAttachmentData,
+	onClick: () -> Unit
 ) {
 	Card(
 		elevation = 0.dp,
 		backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-		shape = RoundedCornerShape(8.dp),
+		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier
 			.fillMaxWidth()
 			.aspectRatio(1f)
-			.padding(6.dp)
-			.focusable(true)
-			.clip(RoundedCornerShape(8.dp))
-			.clickable(true) { },
+			.padding(4.dp)
+			.focusable(true),
+		onClick = { onClick() }
 	) {
-		when (tempMediaData.mediaType) {
-			MediaType.PHOTO -> {
+		when (tempAttachmentData.mimeType?.split("/")?.first()) {
+			"image" -> {
 				Image(
-					rememberImagePainter(tempMediaData.uri),
+					rememberImagePainter(tempAttachmentData.uri),
 					contentDescription = null,
-					contentScale = ContentScale.Crop
+					contentScale = ContentScale.Crop,
+					modifier = Modifier
+						.fillMaxSize()
+				)
+			}
+			"video" -> {}
+			else -> {}
+		}
+
+		Box(
+			modifier = Modifier
+				.fillMaxSize(),
+			contentAlignment = Alignment.TopEnd
+		) {
+			IconButton(onClick = { /*TODO*/ }) {
+				Icon(
+					imageVector = TablerIcons.CircleMinus,
+					contentDescription = "Remove attachment",
+					tint = Color.Companion.Red
 				)
 			}
 		}

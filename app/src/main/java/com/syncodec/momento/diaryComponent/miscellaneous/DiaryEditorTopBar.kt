@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.diaryComponent.DiaryViewModel
 import com.syncodec.momento.diaryComponent.modalBottomSheet.BottomSheetType
@@ -89,7 +88,7 @@ fun DiaryEditorTopBar(
 
 			IconButton(
 				onClick = {
-					viewModel.diaryActivityState.bottomSheetType.value = BottomSheetType.MediaBottomSheet
+					viewModel.diaryActivityState.bottomSheetType.value = BottomSheetType.AttachmentBottomSheet
 					scope.launch {
 						viewModel.diaryActivityState.bottomSheetState.show()
 					}
