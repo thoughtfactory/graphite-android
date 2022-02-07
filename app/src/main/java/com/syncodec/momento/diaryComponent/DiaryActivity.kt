@@ -1,5 +1,6 @@
 package com.syncodec.momento.diaryComponent
 
+import android.Manifest
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -7,19 +8,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -27,15 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.custom.EditorView
-import com.syncodec.momento.diaryComponent.miscellaneous.AddressCard
-import com.syncodec.momento.diaryComponent.miscellaneous.DiaryEditorTopBar
-import com.syncodec.momento.diaryComponent.miscellaneous.EditorToolbar
+import com.syncodec.momento.diaryComponent.miscellaneous.*
 import com.syncodec.momento.diaryComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.diaryComponent.modalBottomSheet.SheetLayout
-import com.syncodec.momento.diaryComponent.miscellaneous.NotificationLayout
-import com.syncodec.momento.diaryComponent.miscellaneous.NotificationType
 import com.syncodec.momento.konstant.ErrorCode
 import com.syncodec.momento.ui.theme.MomentoTheme
 import org.json.JSONObject
@@ -59,24 +52,11 @@ class DiaryActivity : ComponentActivity() {
 		editorView.setOnSaveData(object : EditorView.OnSaveDataListener {
 			override fun onSaveData(data: String) {
 				val dataJson = JSONObject(data)
-				val dataHtml = dataJson.getString("html")
-				val dataText = dataJson.getString("text")
+				val dataHtml = dataJson.getString("dataHtml")
+				val dataText = dataJson.getString("dataText")
 
-				viewModel.diary.content = dataHtml
-				viewModel.diary.contentThumbnail = dataText
-			}
-		})
-
-		editorView.setOnSaveCallbackData(object : EditorView.OnSaveDataCallbackListener{
-			override fun onSaveDataCallback(data: String) {
-				val dataJson = JSONObject(data)
-				val dataHtml = dataJson.getString("html")
-				val dataText = dataJson.getString("text")
-
-				viewModel.diary.content = dataHtml
-				viewModel.diary.contentThumbnail = dataText
-
-				Log.i("npr71", "thumbnail : ${viewModel.diary.contentThumbnail}")
+				viewModel.note.content = dataHtml
+				viewModel.note.contentThumbnail = dataText
 
 				viewModel.saveDiary()
 			}
@@ -96,6 +76,29 @@ class DiaryActivity : ComponentActivity() {
 		val systemUiController = rememberSystemUiController()
 		systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
 
+		val activityState = viewModel.diaryActivityState
+
+
+		when {
+			activityState.locationPermissionState.hasPermission -> {
+				Log.i("npr71", "location hasPermission...")
+				viewModel.diaryActivityState.addressState.value = AddressState.REQUESTED
+				viewModel.getLocation()
+			}
+			activityState.locationPermissionState.shouldShowRationale -> {
+				Log.i("npr71", "address show rationale...")
+				viewModel.diaryActivityState.addressState.value = AddressState.SHOW_RATIONALE
+			}
+			!activityState.locationPermissionState.permissionRequested -> {
+				Log.i("npr71", "address request permission...")
+				viewModel.diaryActivityState.addressState.value = AddressState.REQUEST_PERMISSION
+			}
+			else -> {
+				Log.i("npr71", "address no permission...")
+				viewModel.diaryActivityState.addressState.value = AddressState.NO_PERMISSION
+			}
+		}
+
 		ModalBottomSheetLayout(
 			sheetState = viewModel.diaryActivityState.bottomSheetState,
 			sheetElevation = 0.dp,
@@ -113,7 +116,7 @@ class DiaryActivity : ComponentActivity() {
 				Scaffold(
 					topBar = {
 						DiaryEditorTopBar {
-							editorView.exec("saveData(true);")
+							editorView.exec("editor.getData();")
 						}
 					}
 				) {
@@ -135,6 +138,7 @@ class DiaryActivity : ComponentActivity() {
 							)
 							AddressCard()
 							NotificationLayout()
+							MapLocationPopup()
 						}
 						EditorToolbar(
 							editorView = editorView
@@ -144,7 +148,6 @@ class DiaryActivity : ComponentActivity() {
 							}
 							viewModel.diaryActivityState.isNotificationVisible.value = true
 						}
-
 					}
 				}
 			}
@@ -152,20 +155,39 @@ class DiaryActivity : ComponentActivity() {
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
-	class DiaryActivityState(
+	class DiaryActivityState @OptIn(ExperimentalPermissionsApi::class) constructor(
 		val bottomSheetState: ModalBottomSheetState,
-	) {
-		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.MediaBottomSheet)
-		var notificationType: MutableState<NotificationType> = mutableStateOf(NotificationType.UrlSelectionNotification)
-		var isNotificationVisible: MutableState<Boolean> = mutableStateOf(false)
-	}
+		val locationPermissionState: PermissionState,
+		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.MediaBottomSheet),
+		var notificationType: MutableState<NotificationType> = mutableStateOf(NotificationType.UrlSelectionNotification),
+		var isNotificationVisible: MutableState<Boolean> = mutableStateOf(false),
+		var addressState: MutableState<AddressState> = mutableStateOf(AddressState.INIT),
+		var showAddressCard: MutableState<Boolean> = mutableStateOf(false),
+		var showMapLocationDialog: MutableState<Boolean> = mutableStateOf(false)
+	)
 
-	@OptIn(ExperimentalMaterialApi::class)
+	@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
 	@Composable
 	fun rememberDiaryActivityState(
-		scaffoldState: ScaffoldState = rememberScaffoldState(),
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
-	) = remember(scaffoldState) {
-		DiaryActivityState(bottomSheetState)
+		locationPermissionState: PermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+	) = remember {
+		DiaryActivityState(
+			bottomSheetState = bottomSheetState,
+			locationPermissionState = locationPermissionState
+		)
+	}
+
+	enum class AddressState {
+		OFF,
+		INIT,
+		NO_PERMISSION,
+		REQUEST_PERMISSION,
+		SHOW_RATIONALE,
+		REQUESTED,
+		LOCATION,
+		SUCCESS,
+		ERROR,
+		REMOVED
 	}
 }

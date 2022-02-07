@@ -1,15 +1,14 @@
 package com.syncodec.momento
 
 import android.app.Application
-import android.os.Environment
-import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.database.bucket.Bucket
 import com.syncodec.momento.database.bucket.BucketItem
-import com.syncodec.momento.database.diary.Diary
-import okhttp3.OkHttp
+import com.syncodec.momento.database.diary.Note
+import com.syncodec.momento.database.notebook.Chapter
+import com.syncodec.momento.database.notebook.Notebook
 import java.io.*
 import java.net.URL
 import java.net.URLConnection
@@ -31,6 +30,9 @@ class Momento : Application() {
 	var BUCKET_DIR = "bucket"
 		get() = "$DATA/$field"
 
+	var NOTEBOOK_DIR = "notebook"
+		get() = "$DATA/$field"
+
 	override fun onCreate() {
 		super.onCreate()
 
@@ -41,9 +43,9 @@ class Momento : Application() {
 		return "$BUCKET_DIR/bucket_$bucketKey"
 	}
 
-	fun getBucketDataPath(primaryKey: String): String {
-		File("$BUCKET_DIR/bucket_${primaryKey}").mkdirs()
-		return "$BUCKET_DIR/bucket_$primaryKey/bucket_$primaryKey.json"
+	fun getBucketDataPath(bucketKey: String): String {
+		File("$BUCKET_DIR/bucket_${bucketKey}").mkdirs()
+		return "$BUCKET_DIR/bucket_$bucketKey/bucket_$bucketKey.json"
 	}
 
 	fun getBucketItemPath(bucketKey: String, bucketItemKey: String): String {
@@ -51,16 +53,31 @@ class Momento : Application() {
 		return "$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey.json"
 	}
 
+	fun getNotebookDirPath(notebookKey: String): String {
+		return "$NOTEBOOK_DIR/notebook_$notebookKey"
+	}
+
+	fun getNotebookDataPath(notebookKey: String): String {
+		File("$NOTEBOOK_DIR/notebookKey_${notebookKey}").mkdirs()
+		return "$NOTEBOOK_DIR/notebookKey_$notebookKey/notebook_$notebookKey.json"
+	}
+
+	fun getChapterPath(notebookKey: String, chapterKey: String): String {
+		File("$NOTEBOOK_DIR/notebookKey_${notebookKey}").mkdirs()
+		return "$NOTEBOOK_DIR/notebookKey_$notebookKey/chapter_$chapterKey.json"
+	}
+
+
 	fun putDiary(
-		diary: Diary
+		note: Note
 	): Boolean {
-		val file = File("$DIARY_DIR/diary_${diary.primaryKey}/diary_${diary.primaryKey}.json")
+		val file = File("$DIARY_DIR/diary_${note.primaryKey}/diary_${note.primaryKey}.json")
 		return if (file.exists()) {
-			objectMapper.writeValue(file, diary)
+			objectMapper.writeValue(file, note)
 			true
 		} else {
-			File("$DIARY_DIR/diary_${diary.primaryKey}").mkdirs()
-			objectMapper.writeValue(file, diary)
+			File("$DIARY_DIR/diary_${note.primaryKey}").mkdirs()
+			objectMapper.writeValue(file, note)
 			false
 		}
 	}
@@ -79,7 +96,7 @@ class Momento : Application() {
 	fun getBucket(
 		primaryKey: String
 	): Bucket {
-		val file = File(getBucketDataPath(primaryKey = primaryKey))
+		val file = File(getBucketDataPath(bucketKey = primaryKey))
 		if (file.exists() && file.isFile) {
 			return objectMapper.readValue(file)
 		} else {
@@ -90,7 +107,7 @@ class Momento : Application() {
 	fun putBucket(
 		bucket: Bucket
 	): Boolean {
-		val file = File(getBucketDataPath(primaryKey = bucket.primaryKey))
+		val file = File(getBucketDataPath(bucketKey = bucket.primaryKey))
 		return if (file.exists()) {
 			objectMapper.writeValue(file, bucket)
 			true
@@ -227,4 +244,83 @@ class Momento : Application() {
 
 		return output.toString()
 	}
+
+	//	Notebook
+
+	fun putNotebook(
+		notebook: Notebook
+	): Boolean {
+		val file = File(getNotebookDataPath(notebookKey = notebook.primaryKey))
+		return if (file.exists()) {
+			objectMapper.writeValue(file, notebook)
+			true
+		} else {
+			objectMapper.writeValue(file, notebook)
+			false
+		}
+	}
+
+	fun getNotebook(
+		primaryKey: String
+	): Notebook {
+		val file = File(getNotebookDataPath(notebookKey = primaryKey))
+		if (file.exists() && file.isFile) {
+			return objectMapper.readValue(file)
+		} else {
+			throw FileNotFoundException()
+		}
+
+	}
+
+	fun openNotebook(
+		primaryKey: String
+	): Notebook {
+		val file = File(getNotebookDataPath(notebookKey = primaryKey))
+		if (file.exists() && file.isFile) {
+			return objectMapper.readValue(file)
+		} else {
+			throw FileNotFoundException()
+		}
+	}
+
+	fun putChapter(
+		chapter: Chapter,
+	): Boolean {
+		val file = File(
+			getChapterPath(
+				notebookKey = chapter.notebookKey,
+				chapterKey = chapter.primaryKey
+			)
+		)
+		getNotebook(primaryKey = chapter.notebookKey).apply {
+			this.chapterMap[chapter.primaryKey] = chapter
+			putNotebook(this)
+		}
+		return if (file.exists()) {
+			objectMapper.writeValue(file, chapter)
+			true
+		} else {
+			objectMapper.writeValue(file, chapter)
+			false
+		}
+	}
+
+//	fun getNote(
+//		notebookKey: String,
+//		currentPath: List<String>,
+//		noteKey: String
+//	): Note {
+//		var chapterPath = getNotebookDirPath(notebookKey = notebookKey)
+//		currentPath.forEach { chapterPath = "$chapterPath/$it" }
+//		chapterPath = "$chapterPath/chapter_$chapterKey/chapter_$chapterKey.json"
+//
+//		val file = File(chapterPath)
+//		if (file.exists() && file.isFile) {
+//			return objectMapper.readValue(file)
+//		} else {
+//			throw FileNotFoundException()
+//
+//		}
+//	}
+
 }

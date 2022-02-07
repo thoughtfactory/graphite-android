@@ -10,12 +10,12 @@ import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.database.diary.DiaryTableDao
 import com.syncodec.momento.database.media.Media
 import com.syncodec.momento.database.media.MediaTableDao
-import com.syncodec.momento.database.notebook.Notebook
+import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.database.notebook.NotebookTableDao
 import javax.inject.Singleton
 
 @Singleton
-@Database(entities = [DiaryDbEntry::class, BucketDbEntry::class, Notebook::class, Media::class], version = 1, exportSchema = false)
+@Database(entities = [DiaryDbEntry::class, BucketDbEntry::class, NotebookDbEntry::class, Media::class], version = 1, exportSchema = false)
 abstract class UserDatabase : RoomDatabase() {
 
 	abstract val diaryTableDao: DiaryTableDao

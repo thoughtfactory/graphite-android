@@ -112,37 +112,39 @@ class MainActivity : ComponentActivity() {
 					bottomBar = { BottomNavigationBar(navController) },
 					floatingActionButtonPosition = FabPosition.End,
 					floatingActionButton = {
-						FloatingActionButton(
-							onClick = {
-								when (currentRoute) {
-									BottomNavigationItem.Momento.route -> {
-										when(viewModel.mainActivityState.momentoScreenType.value) {
-											MomentoScreenType.Diary -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
-											MomentoScreenType.Notebook -> openSheet(BottomSheetType.NotebookBottomSheet)
-											MomentoScreenType.Scratchpad -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
+						when (currentRoute) {
+							BottomNavigationItem.Me.route -> Box(modifier = Modifier)
+							else -> {
+								FloatingActionButton(
+									onClick = {
+										when (currentRoute) {
+											BottomNavigationItem.Momento.route -> {
+												when (viewModel.mainActivityState.momentoScreenType.value) {
+													MomentoScreenType.Diary -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
+													MomentoScreenType.Notebook -> openSheet(BottomSheetType.NotebookBottomSheet)
+													MomentoScreenType.Scratchpad -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
+												}
+											}
+											BottomNavigationItem.Bucket.route -> openSheet(BottomSheetType.BucketBottomSheet)
+											BottomNavigationItem.Calendar.route -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
+											BottomNavigationItem.Atlas.route -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
+										}
+									},
+									modifier = Modifier
+										.navigationBarsPadding(),
+								) {
+									Crossfade(targetState = currentRoute) { route ->
+										when (route) {
+											BottomNavigationItem.Momento.route -> when (viewModel.mainActivityState.momentoScreenType.value) {
+												MomentoScreenType.Diary -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
+												MomentoScreenType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
+												MomentoScreenType.Scratchpad -> Icon(imageVector = TablerIcons.Notes, contentDescription = null)
+											}
+											BottomNavigationItem.Bucket.route -> Icon(imageVector = TablerIcons.Plus, contentDescription = null)
+											BottomNavigationItem.Calendar.route -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
+											BottomNavigationItem.Atlas.route -> Icon(imageVector = TablerIcons.ArrowsMinimize, contentDescription = null)
 										}
 									}
-									BottomNavigationItem.Bucket.route -> openSheet(BottomSheetType.BucketBottomSheet)
-									BottomNavigationItem.Calendar.route -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
-									BottomNavigationItem.Atlas.route -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
-									BottomNavigationItem.Me.route -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
-								}
-							},
-							modifier = Modifier
-								.navigationBarsPadding(),
-						) {
-							Crossfade(targetState = navController.currentDestination?.route) { route ->
-								when (route) {
-									BottomNavigationItem.Momento.route -> when(viewModel.mainActivityState.momentoScreenType.value) {
-										MomentoScreenType.Diary -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
-										MomentoScreenType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
-										MomentoScreenType.Scratchpad -> Icon(imageVector = TablerIcons.Notes, contentDescription = null)
-									}
-									BottomNavigationItem.Bucket.route -> Icon(imageVector = TablerIcons.Plus, contentDescription = null)
-									BottomNavigationItem.Calendar.route -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
-									BottomNavigationItem.Atlas.route -> Icon(imageVector = TablerIcons.ArrowsMinimize, contentDescription = null)
-									BottomNavigationItem.Me.route -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
-									else -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
 								}
 							}
 						}

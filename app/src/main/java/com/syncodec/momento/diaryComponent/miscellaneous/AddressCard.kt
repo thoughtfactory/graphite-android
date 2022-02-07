@@ -1,77 +1,52 @@
 package com.syncodec.momento.diaryComponent.miscellaneous
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Intent
-import android.location.Geocoder
-import android.location.Location
-import android.net.Uri
-import android.provider.Settings
+import android.content.Context
 import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.volley.Request
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.tasks.CancellationTokenSource
-import com.syncodec.momento.BuildConfig
-import com.syncodec.momento.database.diary.WeatherData
+import com.syncodec.momento.R
+import com.syncodec.momento.diaryComponent.DiaryActivity
 import com.syncodec.momento.diaryComponent.DiaryViewModel
-import com.syncodec.momento.konstant.Secret
-import compose.icons.TablerIcons
-import compose.icons.tablericons.MapPin
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.io.IOException
-import java.util.*
 
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AddressCard() {
 	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-
 	val viewModel: DiaryViewModel = viewModel()
 
-	var isLocationRequested: Boolean by remember { mutableStateOf(false) }
+	val scope = rememberCoroutineScope()
+	var isLoadedOnce by remember { mutableStateOf(false) }
 
-	var fusedLocationClient: FusedLocationProviderClient = FusedLocationProviderClient(context)
-	var cancellationToken = CancellationTokenSource().token
+	val addressState by viewModel.diaryActivityState.addressState
+	var showAddressCard by viewModel.diaryActivityState.showAddressCard
 
-	val locationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-
-	var showAddressCard by remember { mutableStateOf(false) }
-	var instantUpdate by remember { mutableStateOf(true) }
-	var cardSize by remember { mutableStateOf(IntSize.Zero) }
-
-	val translateY by animateFloatAsState(
-		targetValue = if (showAddressCard) 0f else cardSize.height.toFloat(),
+	val animateAlpha by animateFloatAsState(
+		targetValue = if (showAddressCard) 1f else 0f,
 		animationSpec = tween(
-			durationMillis = if (instantUpdate) 0 else 400
+			durationMillis = 400
 		),
 		finishedListener = {
 			scope.launch {
@@ -84,88 +59,25 @@ fun AddressCard() {
 	Box(
 		modifier = Modifier
 			.graphicsLayer {
-				this.translationY = -translateY
+				this.alpha = animateAlpha
 			}
 	) {
-		when {
-			locationPermissionState.hasPermission -> {
-				LaunchedEffect(key1 = true) {
-					delay(1200)
-					if (!isLocationRequested) {
-						isLocationRequested = true
-
-						fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken)
-						fusedLocationClient.lastLocation
-							.addOnSuccessListener { location: Location? ->
-								viewModel.location = location
-
-								if (location != null) {
-									scope.launch {
-										withContext(Dispatchers.IO) {
-											val weatherRequestUrl =
-												"https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.latitude}&appid=${Secret.OPEN_WEATHER_KEY}"
-											val weatherRequestQueue = Volley.newRequestQueue(context)
-											val stringRequest = StringRequest(
-												Request.Method.GET,
-												weatherRequestUrl,
-												{ requestResult ->
-													val jsonObject = JSONObject(requestResult)
-													val weatherList = jsonObject.getJSONArray("weather")
-													if (weatherList.length() > 0) {
-														val weather = JSONObject(weatherList.get(0).toString())
-														val main = jsonObject.getJSONObject("main")
-														scope.launch {
-															withContext(Dispatchers.Main) {
-																WeatherData(
-																	icon = weather.getString("icon"),
-																	description = weather.getString("description"),
-																	temperature = main.getDouble("temp")
-																).apply { viewModel.weatherData = this }
-															}
-														}
-													}
-												},
-												{
-												}
-											)
-											weatherRequestQueue.add(stringRequest)
-										}
-									}
-								}
-								if (location!=null) {
-									scope.launch {
-										withContext(Dispatchers.IO) {
-											try {
-												val geocoder = Geocoder(context, Locale.getDefault())
-												val addressList = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-												if (addressList.isNotEmpty()) {
-													val address = addressList.first()
-													withContext(Dispatchers.Main) {
-														viewModel.address =
-															"${address.featureName} ${address.thoroughfare}, ${address.locality}, ${address.subAdminArea}, ${address.adminArea} ${address.postalCode}, ${address.countryName}"
-
-														instantUpdate = false
-														showAddressCard = true
-													}
-												}
-											} catch (exception: IOException) {
-
-											} catch (exception: Exception) {
-
-											}
-										}
-									}
-								}
-							}
-							.addOnFailureListener {
-							}
-					}
-				}
+		when (addressState) {
+			DiaryActivity.AddressState.OFF -> {
+				Log.i("npr71", "AddressState : OFF")
+			}
+			DiaryActivity.AddressState.INIT -> {
+				Log.i("npr71", "AddressState : INIT")
+			}
+			DiaryActivity.AddressState.NO_PERMISSION -> {
+				Log.i("npr71", "AddressState : NO_PERMISSION")
+			}
+			DiaryActivity.AddressState.REQUEST_PERMISSION -> {
+				Log.i("npr71", "AddressState : REQUEST_PERMISSION")
 				Box(
 					modifier = Modifier
 						.fillMaxWidth()
 						.background(MaterialTheme.colorScheme.background)
-						.onGloballyPositioned { cardSize = it.size }
 				) {
 					Row(
 						verticalAlignment = Alignment.CenterVertically,
@@ -174,70 +86,58 @@ fun AddressCard() {
 							.padding(16.dp, 12.dp),
 					) {
 						Text(
-							text = if (viewModel.location == null) "Waiting for location..." else {
-								if (viewModel.address == null)
-									"Address unavailable : ${viewModel.location!!.latitude}, ${viewModel.location!!.latitude}"
-								else viewModel.address!!
-							},
+							text = "Want to geotag your entry?\nKeep your memory connected with location",
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onBackground,
+							fontWeight = FontWeight.Bold,
 							modifier = Modifier
-								.fillMaxWidth(0.88f)
+								.weight(1f)
 						)
 
-						Spacer(modifier = Modifier.weight(1f))
-
-						Icon(
-							imageVector = TablerIcons.MapPin,
-							contentDescription = null,
-							tint = MaterialTheme.colorScheme.onBackground,
+						Button(
+							onClick = { viewModel.diaryActivityState.locationPermissionState.launchPermissionRequest() },
+							colors = ButtonDefaults.outlinedButtonColors(
+								containerColor = MaterialTheme.colorScheme.primaryContainer
+							),
+							border = BorderStroke(1.dp, MaterialTheme.colorScheme.primaryContainer),
 							modifier = Modifier
-								.requiredSize(20.dp)
-						)
-					}
-				}
-			}
-			locationPermissionState.shouldShowRationale -> {
-				LaunchedEffect(true) {
-					delay(3200)
-					instantUpdate = false
-					showAddressCard = true
-				}
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.background(MaterialTheme.colorScheme.background)
-						.onGloballyPositioned { cardSize = it.size }
-						.clickable(showAddressCard) { locationPermissionState.launchPermissionRequest() }
-				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						horizontalArrangement = Arrangement.Center,
-						modifier = Modifier
-							.padding(16.dp, 12.dp),
-					) {
-						Text(
-							text = "Want to save location for this note? Click to provide permission.",
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.onBackground,
-							modifier = Modifier
-								.fillMaxWidth(0.9f)
-						)
-					}
-				}
-			}
-			else -> {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.background(MaterialTheme.colorScheme.background)
-						.onGloballyPositioned { cardSize = it.size }
-						.clickable(showAddressCard) {
-							val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-							val uri: Uri = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-							intent.data = uri
-							context.startActivity(intent)
+								.wrapContentWidth(),
+						) {
+							Row(
+								modifier = Modifier,
+								verticalAlignment = Alignment.CenterVertically
+							) {
+								Icon(
+									painter = painterResource(id = R.drawable.ic_map_marker),
+									contentDescription = null,
+									tint = MaterialTheme.colorScheme.onPrimaryContainer,
+									modifier = Modifier
+										.requiredSize(20.dp)
+								)
+								Spacer(modifier = Modifier.width(6.dp))
+								Text(
+									text = "Yep!!",
+									style = MaterialTheme.typography.bodyMedium,
+									fontWeight = FontWeight.Bold,
+									color = MaterialTheme.colorScheme.onPrimaryContainer
+								)
+							}
 						}
+					}
+				}
+			}
+			DiaryActivity.AddressState.SHOW_RATIONALE -> {
+				Log.i("npr71", "AddressState : SHOW_RATIONALE")
+			}
+			DiaryActivity.AddressState.REQUESTED -> {
+				Log.i("npr71", "AddressState : REQUESTED")
+			}
+			DiaryActivity.AddressState.LOCATION -> {
+				Log.i("npr71", "AddressState : LOCATION")
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.background(MaterialTheme.colorScheme.background)
 				) {
 					Row(
 						verticalAlignment = Alignment.CenterVertically,
@@ -246,12 +146,103 @@ fun AddressCard() {
 							.padding(16.dp, 12.dp),
 					) {
 						Text(
-							text = "Location permission unavailable",
+							text = "Address unavailable\nLat : ${viewModel.location!!.latitude}, Lng : ${viewModel.location!!.longitude}",
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onBackground,
+							fontWeight = FontWeight.Bold,
 							modifier = Modifier
-								.fillMaxWidth(0.8f)
+								.weight(1f)
 						)
+					}
+				}
+			}
+			DiaryActivity.AddressState.SUCCESS -> {
+				Log.i("npr71", "AddressState : SUCCESS")
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.background(MaterialTheme.colorScheme.background)
+				) {
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+						modifier = Modifier
+							.padding(16.dp, 12.dp),
+					) {
+						Text(
+							text = viewModel.address!!,
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onBackground,
+							fontWeight = FontWeight.Bold,
+							modifier = Modifier
+								.weight(1f)
+						)
+					}
+				}
+			}
+			DiaryActivity.AddressState.ERROR -> {
+				Log.i("npr71", "AddressState : ERROR")
+			}
+			DiaryActivity.AddressState.REMOVED -> {
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.background(MaterialTheme.colorScheme.background)
+				) {
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+						modifier = Modifier
+							.padding(16.dp, 12.dp),
+					) {
+						Text(
+							text = "Geo tag removed...",
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onBackground,
+							fontWeight = FontWeight.Bold,
+							modifier = Modifier
+								.weight(1f)
+						)
+					}
+				}
+			}
+		}
+		when (addressState) {
+			DiaryActivity.AddressState.OFF -> {}
+			DiaryActivity.AddressState.INIT -> {}
+			DiaryActivity.AddressState.NO_PERMISSION -> {}
+			DiaryActivity.AddressState.REQUEST_PERMISSION -> {
+				LaunchedEffect(key1 = true) {
+					scope.launch {
+						delay(1200)
+						viewModel.diaryActivityState.showAddressCard.value = true
+					}
+				}
+			}
+			DiaryActivity.AddressState.SHOW_RATIONALE -> {}
+			DiaryActivity.AddressState.REQUESTED -> {}
+			DiaryActivity.AddressState.LOCATION -> {
+				LaunchedEffect(key1 = true) {
+					scope.launch {
+						delay(1200)
+						viewModel.diaryActivityState.showAddressCard.value = true
+					}
+				}
+			}
+			DiaryActivity.AddressState.SUCCESS -> {
+				LaunchedEffect(key1 = true) {
+					scope.launch {
+						delay(1200)
+						viewModel.diaryActivityState.showAddressCard.value = true
+					}
+				}
+			}
+			DiaryActivity.AddressState.ERROR -> {}
+			DiaryActivity.AddressState.REMOVED -> {
+				LaunchedEffect(key1 = true) {
+					scope.launch {
+						delay(0)
+						viewModel.diaryActivityState.showAddressCard.value = true
 					}
 				}
 			}

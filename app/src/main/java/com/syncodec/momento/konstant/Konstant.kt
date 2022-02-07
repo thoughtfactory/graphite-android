@@ -10,7 +10,8 @@ class Konstant {
 			BUCKET_KEY,
 			BUCKET_ITEM_KEY,
 			BUCKET_TYPE,
-			BUCKET_ITEM_DATA
+			BUCKET_ITEM_DATA,
+			NOTEBOOK_KEY
 		}
 	}
 }

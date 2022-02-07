@@ -5,8 +5,6 @@ import androidx.lifecycle.LiveData
 import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.media.Media
 import com.syncodec.momento.database.media.MediaTableDao
-import com.syncodec.momento.database.notebook.Notebook
-import com.syncodec.momento.database.notebook.NotebookTableDao
 
 class MediaRepository(application: Application) {
 	private var mediaTableDao: MediaTableDao

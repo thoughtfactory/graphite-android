@@ -2,9 +2,13 @@ package com.syncodec.momento.diaryComponent.modalBottomSheet
 
 import android.location.Location
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -19,20 +23,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.flowlayout.FlowRow
+import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.button.MenuBottomSheetButton
+import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.database.diary.WeatherData
+import com.syncodec.momento.diaryComponent.DiaryActivity
 import com.syncodec.momento.diaryComponent.DiaryViewModel
 import com.syncodec.momento.miscellaneous.timeStampToPrettyFull
 import compose.icons.TablerIcons
 import compose.icons.WeatherIcons
-import compose.icons.tablericons.InfoCircle
-import compose.icons.tablericons.Map
-import compose.icons.tablericons.X
+import compose.icons.tablericons.*
 import compose.icons.weathericons.Sunrise
 import compose.icons.weathericons.Thermometer
 import java.util.*
@@ -64,14 +71,17 @@ fun MetadataBottomSheet() {
 		)
 
 		TimestampCard(
-			createdTimestamp = viewModel.diary.createdTimestamp,
-			modifiedTimestamp = viewModel.diary.modifiedTimestamp
+			createdTimestamp = viewModel.note.createdTimestamp,
+			modifiedTimestamp = viewModel.note.modifiedTimestamp
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
+
 		LocationCard(
 			location = viewModel.location,
-			address = viewModel.address
+			address = viewModel.address,
+			addressState = viewModel.diaryActivityState.addressState.value,
+			showMapLocationDialog = { viewModel.diaryActivityState.showMapLocationDialog.value = true }
 		) {
 			viewModel.removeLocationData()
 		}
@@ -90,8 +100,15 @@ fun MetadataBottomSheet() {
 		}
 
 		Spacer(modifier = Modifier.height(8.dp))
+
 		WeatherCard(
 			weatherData = viewModel.weatherData
+		)
+
+		Spacer(modifier = Modifier.height(8.dp))
+
+		StateCard(
+
 		)
 
 		Spacer(modifier = Modifier.height(32.dp))
@@ -107,13 +124,12 @@ fun TimestampCard(
 ) {
 	Card(
 		elevation = 0.dp,
-		backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-		shape = RoundedCornerShape(8.dp),
+		backgroundColor = MaterialTheme.colorScheme.background,
+		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
+		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(24.dp, 0.dp)
-			.clip(RoundedCornerShape(12.dp)),
-		onClick = { /*TODO*/ }
 	) {
 		Column(
 			modifier = Modifier
@@ -188,6 +204,8 @@ fun TimestampCard(
 private fun LocationCard(
 	location: Location?,
 	address: String?,
+	addressState: DiaryActivity.AddressState,
+	showMapLocationDialog: () -> Unit,
 	removeLocationData: () -> Unit
 ) {
 	Row(
@@ -199,20 +217,30 @@ private fun LocationCard(
 		Card(
 			elevation = 0.dp,
 			backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+			border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
 			shape = RoundedCornerShape(12.dp),
 			modifier = Modifier
 				.weight(1f)
-				.padding(0.dp, 0.dp, 4.dp, 0.dp)
-				.clip(RoundedCornerShape(8.dp)),
+				.padding(0.dp, 0.dp, 4.dp, 0.dp),
 		) {
 			Column(
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(12.dp)
 			) {
-
 				Text(
-					text = address?.replace(", ", ",\n") ?: "Address unavailable",
+					text = when (addressState) {
+						DiaryActivity.AddressState.OFF, -> "AddressState : OFF"
+						DiaryActivity.AddressState.INIT -> "Getting address..."
+						DiaryActivity.AddressState.NO_PERMISSION -> "Location permission unavailable"
+						DiaryActivity.AddressState.REQUEST_PERMISSION -> "Location permission unavailable"
+						DiaryActivity.AddressState.SHOW_RATIONALE -> "Location permission unavailable"
+						DiaryActivity.AddressState.REQUESTED -> "Getting address..."
+						DiaryActivity.AddressState.LOCATION -> "Address unavailable"
+						DiaryActivity.AddressState.SUCCESS -> address!!.replace(", ", ",\n")
+						DiaryActivity.AddressState.ERROR -> "Error getting address"
+						DiaryActivity.AddressState.REMOVED -> "Click to get address"
+					},
 					style = MaterialTheme.typography.bodySmall,
 					color = MaterialTheme.colorScheme.onPrimaryContainer,
 					maxLines = 5,
@@ -239,7 +267,7 @@ private fun LocationCard(
 				.padding(4.dp, 0.dp, 0.dp, 0.dp)
 		) {
 			FloatingActionButton(
-				onClick = { /*TODO*/ },
+				onClick = { showMapLocationDialog() },
 				elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp),
 				shape = RoundedCornerShape(12.dp),
 				modifier = Modifier
@@ -384,6 +412,27 @@ private fun WeatherCard(
 					modifier = Modifier
 				)
 			}
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+@Composable
+private fun StateCard() {
+
+	val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData> = listOf(
+		MenuBottomSheetButtonData(title = "Archive", imageVector = TablerIcons.Archive) {},
+		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart) {},
+		MenuBottomSheetButtonData(title = "Move in vault", imageVector = TablerIcons.Container) {},
+		MenuBottomSheetButtonData(title = "Move to trash", imageVector = TablerIcons.Trash) {})
+
+	LazyVerticalGrid(
+		cells = GridCells.Fixed(4),
+		modifier = Modifier
+			.padding(24.dp, 0.dp)
+	) {
+		itemsIndexed(menuBottomSheetButtonDataList) { _, menuBottomSheetButtonData ->
+			MenuBottomSheetButton(menuBottomSheetButtonData)
 		}
 	}
 }

@@ -11,12 +11,13 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.json.JSONObject
 
 @SuppressLint("JavascriptInterface")
-class EditorView(context: Context): WebView(context) {
+class EditorView(context: Context) : WebView(context) {
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	interface OnFormatUpdateListener {
 		fun onFormatUpdate(newTextFormat: TextFormat)
 	}
+
 	private var onFormatUpdateListener: OnFormatUpdateListener? = null
 	fun setOnFormatUpdate(listener: OnFormatUpdateListener) {
 		onFormatUpdateListener = listener
@@ -25,17 +26,10 @@ class EditorView(context: Context): WebView(context) {
 	interface OnSaveDataListener {
 		fun onSaveData(data: String)
 	}
+
 	private var onSaveDataListener: OnSaveDataListener? = null
 	fun setOnSaveData(listener: OnSaveDataListener) {
 		onSaveDataListener = listener
-	}
-
-	interface OnSaveDataCallbackListener {
-		fun onSaveDataCallback(data: String)
-	}
-	private var onSaveDataCallbackListener: OnSaveDataCallbackListener? = null
-	fun setOnSaveCallbackData(listener: OnSaveDataCallbackListener) {
-		onSaveDataCallbackListener = listener
 	}
 
 	private var isReady: Boolean = false
@@ -65,25 +59,20 @@ class EditorView(context: Context): WebView(context) {
 	}
 
 	@JavascriptInterface
-	fun format(textFormatJsonString: String){
+	fun format(textFormatJsonString: String) {
 		val newTextFormat: TextFormat = objectMapper.readValue(textFormatJsonString)
 		onFormatUpdateListener?.onFormatUpdate(newTextFormat)
 	}
 
 	@JavascriptInterface
-	fun data(data: String){
+	fun getData(data: String) {
 		onSaveDataListener?.onSaveData(data)
-	}
-
-	@JavascriptInterface
-	fun dataCallback(data: String){
-		onSaveDataCallbackListener?.onSaveDataCallback(data)
 	}
 
 	private fun load(trigger: String) {
 		evaluateJavascript(trigger) { result ->
 			run {
-                Log.i("JS", result)
+				Log.i("JS", result)
 			}
 		}
 	}
@@ -101,29 +90,37 @@ class EditorView(context: Context): WebView(context) {
 		val bold: Boolean = false,
 		val italic: Boolean = false,
 		val underline: Boolean = false,
-		val strikethrough: Boolean = false,
+		val strike: Boolean = false,
 		val superscript: Boolean = false,
 		val subscript: Boolean = false,
 
-		val alignleft: Boolean = false,
-		val aligncenter: Boolean = false,
-		val alignright: Boolean = false,
-		val alignjustify: Boolean = false,
+		val textAlignLeft: Boolean = false,
+		val textAlignCenter: Boolean = false,
+		val textAlignRight: Boolean = false,
+		val textAlignJustify: Boolean = false,
 
-		val p: Boolean = false,
-		val h1: Boolean = false,
-		val h2: Boolean = false,
-		val h3: Boolean = false,
-		val h4: Boolean = false,
-		val h5: Boolean = false,
-		val h6: Boolean = false,
+		val link: String? = null,
 
-		val link: String = "",
 		val blockquote: Boolean = false,
 		val code: Boolean = false,
+		val codeBlock: Boolean = false,
 
+		val paragraph: Boolean = false,
+		val heading1: Boolean = false,
+		val heading2: Boolean = false,
+		val heading3: Boolean = false,
+		val heading4: Boolean = false,
+		val heading5: Boolean = false,
+		val heading6: Boolean = false,
+
+		val bulletList: Boolean = false,
 		val orderedList: Boolean = false,
-		val unorderedList: Boolean = false,
+		val taskList: Boolean = false,
+
+		val characterCount: Int = 0,
+		val wordCount: Int = 0,
+		val textColor: String? = null,
+		val highlightColor: String? = null,
 
 		val fontSize: String = "12px",
 		val fontFamily: String = "Open Sans",

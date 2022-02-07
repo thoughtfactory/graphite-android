@@ -1,12 +1,9 @@
 package com.syncodec.momento.bucketComponent
 
 import android.app.Application
-import android.os.FileObserver
-import android.util.Log
 import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.Bucket
 import com.syncodec.momento.database.bucket.BucketDbEntry
 import com.syncodec.momento.database.bucket.BucketItem
@@ -17,12 +14,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
-import java.util.*
 
 
 class BucketViewModel(application: Application) : AndroidViewModel(application) {
 
-	val bucketRepository: BucketRepository = BucketRepository(application)
+	private val bucketRepository: BucketRepository = BucketRepository(application)
 
 	lateinit var bucketKey: String
 	lateinit var bucketItemType: BucketItemType

@@ -72,6 +72,7 @@
 		<activity
 			android:name=".notebookComponent.NotebookActivity"
 			android:exported="false"
+			android:windowSoftInputMode="adjustResize"
 			android:theme="@style/Theme.Momento.NoActionBar">
 		</activity>
 	</application>

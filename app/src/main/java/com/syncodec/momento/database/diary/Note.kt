@@ -3,7 +3,7 @@ package com.syncodec.momento.database.diary
 import android.location.Location
 import kotlin.properties.Delegates
 
-data class Diary(
+data class Note(
 	val primaryKey: String,
 	val timezoneOffset: Int
 ) {
@@ -17,6 +17,8 @@ data class Diary(
 	var location: Location? = null
 	var address: String? = null
 	var weatherData: WeatherData? = null
+	var notebookKey: String? = null
+	var notebookRoute: MutableList<String>? = null
 	var isFavourite: Boolean = false
 	var isArchived: Boolean = false
 	var isLocked: Boolean = false

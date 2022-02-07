@@ -6,28 +6,28 @@ import androidx.room.*
 @Dao
 interface NotebookTableDao {
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
-	fun insert(notebook: Notebook)
+	fun insert(notebookDbEntry: NotebookDbEntry)
 
 	@Query(value = "UPDATE notebook_table SET g_drive_file_id = :gDriveFileId WHERE primary_key = :key")
 	fun addGDriveFileId(key: Long, gDriveFileId: String)
 
 	@Update
-	fun update(notebook: Notebook)
+	fun update(notebookDbEntry: NotebookDbEntry)
 
 	@Query(value = "SELECT * FROM notebook_table WHERE primary_key = :primaryKey")
-	suspend fun get(primaryKey: String): Notebook?
+	suspend fun get(primaryKey: String): NotebookDbEntry?
 
-	@Query(value = "SELECT * FROM notebook_table ORDER BY user_timestamp DESC")
-	fun getAllAsLiveData() : LiveData<List<Notebook>>
+	@Query(value = "SELECT * FROM notebook_table ORDER BY created_timestamp DESC")
+	fun getAllAsLiveData() : LiveData<List<NotebookDbEntry>>
 
-	@Query(value = "SELECT * FROM notebook_table ORDER BY user_timestamp DESC")
-	suspend fun getAll() : List<Notebook>
+	@Query(value = "SELECT * FROM notebook_table ORDER BY created_timestamp DESC")
+	suspend fun getAll() : List<NotebookDbEntry>
 
 	@Query(value = "DELETE FROM notebook_table WHERE primary_key = :primaryKey")
 	suspend fun delete(primaryKey: String)
 
 	@Delete
-	suspend fun delete(diaryEntries: List<Notebook>)
+	suspend fun delete(diaryEntries: List<NotebookDbEntry>)
 
 	//	TODO REMOVE THIS
 	@Query(value = "DELETE FROM notebook_table")

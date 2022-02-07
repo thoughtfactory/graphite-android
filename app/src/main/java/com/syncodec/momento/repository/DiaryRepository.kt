@@ -1,11 +1,9 @@
 package com.syncodec.momento.repository
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.LiveData
-import com.syncodec.momento.Momento
 import com.syncodec.momento.database.UserDatabase
-import com.syncodec.momento.database.diary.Diary
+import com.syncodec.momento.database.diary.Note
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.database.diary.DiaryTableDao
 
@@ -15,18 +13,18 @@ class DiaryRepository(val application: Application) {
 
     val diaryDbEntryListLiveData: LiveData<List<DiaryDbEntry>> = diaryTableDao.getAllAsLiveData()
 
-    suspend fun saveDiary(diary: Diary) {
+    suspend fun saveDiary(note: Note) {
         DiaryDbEntry(
-            primaryKey = diary.primaryKey,
-            timezoneOffset = diary.timezoneOffset
+            primaryKey = note.primaryKey,
+            timezoneOffset = note.timezoneOffset
         ).apply {
-            this.createdTimestamp = diary.createdTimestamp
-            this.modifiedTimestamp = diary.modifiedTimestamp
-            this.userTimestamp = diary.userTimestamp
-            this.contentThumbnail = diary.contentThumbnail
-            this.latitude = diary.location?.latitude
-            this.latitude = diary.location?.longitude
-            this.address = diary.address
+            this.createdTimestamp = note.createdTimestamp
+            this.modifiedTimestamp = note.modifiedTimestamp
+            this.userTimestamp = note.userTimestamp
+            this.contentThumbnail = note.contentThumbnail
+            this.latitude = note.location?.latitude
+            this.latitude = note.location?.longitude
+            this.address = note.address
 
            insert(this)
         }

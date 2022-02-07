@@ -2,12 +2,12 @@ package com.syncodec.momento.mainComponent.screen
 
 import android.content.Intent
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -20,7 +20,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
@@ -31,7 +30,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.R
@@ -155,22 +153,13 @@ fun DiaryScreen() {
 					)
 				}
 
-				diaryList.forEach { diary ->
-					item {
-						DiaryCard(
-							diaryDbEntry = diary,
-							modifier = Modifier
-								.fillMaxWidth()
-								.height(128.dp)
-								.padding(12.dp, 8.dp, 12.dp, 4.dp)
-								.animateItemPlacement(
-									animationSpec = tween(
-										durationMillis = 800,
-										easing = FastOutSlowInEasing
-									)
-								)
-						)
-					}
+				item {
+					DiaryDayCard(
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(12.dp, 0.dp),
+						diaryList = diaryList
+					)
 				}
 			}
 		}
@@ -392,6 +381,43 @@ private fun GroupHeaderCard(
 }
 
 @Composable
+private fun DiaryDayCard(
+	modifier: Modifier,
+	diaryList: List<DiaryDbEntry>
+) {
+	Card(
+		modifier = modifier,
+		backgroundColor = MaterialTheme.colorScheme.background,
+		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
+		shape = RoundedCornerShape(12.dp)
+	) {
+		Column(
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			diaryList.forEach { diaryDbEntry ->
+				DiaryCard(
+					diaryDbEntry = diaryDbEntry,
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(128.dp)
+						.padding(12.dp, 8.dp, 12.dp, 4.dp)
+				)
+
+				Spacer(modifier = Modifier.height(4.dp))
+
+				Box(
+					modifier = Modifier
+						.fillMaxWidth(0.8f)
+						.height(2.dp)
+						.background(MaterialTheme.colorScheme.primaryContainer)
+				)
+			}
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
 private fun DiaryCard(
 	modifier: Modifier,
 	diaryDbEntry: DiaryDbEntry
@@ -399,9 +425,9 @@ private fun DiaryCard(
 	Card(
 		elevation = 0.dp,
 		shape = RoundedCornerShape(12.dp),
-		backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-		modifier = modifier
-			.alpha(0.71f)
+		backgroundColor = MaterialTheme.colorScheme.background,
+		modifier = modifier,
+		onClick = {}
 	) {
 		Column(
 			modifier = Modifier

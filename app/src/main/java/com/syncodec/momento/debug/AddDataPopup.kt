@@ -75,6 +75,7 @@ fun AddDataPopup() {
 								openDialog.value = false
 								viewModel.deleteAllDiary()
 								viewModel.deleteAllBucket()
+								viewModel.deleteAllNotebook()
 							}
 						) {
 							Text("delete")

@@ -7,7 +7,7 @@ import com.syncodec.momento.MainActivity
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.database.diary.DiaryDbEntry
-import com.syncodec.momento.database.notebook.Notebook
+import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.repository.BucketRepository
 import com.syncodec.momento.repository.DiaryRepository
@@ -51,27 +51,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		}
 	}
 
-	fun insertNotebook(
-		title: String,
-		description: String
-	) {
+	fun deleteAllNotebook() {
 		viewModelScope.launch {
 			withContext(Dispatchers.IO) {
-				val currentTimestamp = System.currentTimeMillis()
-				Notebook(
-					primaryKey = generatePrimaryKey(),
-					createdTimestamp = currentTimestamp,
-					timezoneOffset = TimeZone
-						.getDefault()
-						.getOffset(currentTimestamp)
-				).apply {
-					this.title = title
-					this.description = description
-					this.modifiedTimestamp = currentTimestamp
-					this.userTimestamp = currentTimestamp
-					notebookRepository.insert(this)
-				}
+				notebookRepository.deleteAll()
+				File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
 			}
+		}
+	}
+
+	fun insertNotebook(
+		title: String,
+		description: String?,
+		color: Long?
+	) {
+		viewModelScope.launch {
+			notebookRepository.createNewNotebook(
+				title = title,
+				description = description,
+				color = color
+			)
 		}
 	}
 
@@ -80,8 +79,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		title: String
 	) {
 		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				bucketRepository.createNewBucket(title = title, bucketType = bucketType)			}
+			bucketRepository.createNewBucket(
+				title = title,
+				bucketType = bucketType
+			)
 		}
 	}
 }

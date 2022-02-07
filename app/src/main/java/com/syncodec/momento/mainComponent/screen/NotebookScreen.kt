@@ -1,34 +1,45 @@
 package com.syncodec.momento.mainComponent.screen
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
-import com.syncodec.momento.database.notebook.Notebook
+import com.syncodec.momento.database.notebook.NotebookDbEntry
+import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
+import com.syncodec.momento.notebookComponent.NotebookActivity
 import compose.icons.TablerIcons
+import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.Plus
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -43,7 +54,7 @@ fun NotebookScreen() {
 	val viewModel: MainViewModel = viewModel()
 	val scope = rememberCoroutineScope()
 
-	val notebookList = viewModel.notebookRepository.notebookListLiveData.observeAsState()
+	val notebookList = viewModel.notebookRepository.notebookDbEntryListLiveData.observeAsState()
 
 	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
 		viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
@@ -52,22 +63,53 @@ fun NotebookScreen() {
 		}
 	}
 
+	val showCardView = true
+
 	Column {
-		MainTopBar(openSheet = openSheet)
+		MainTopBar(
+			openSheet = openSheet,
+			showBackground = true
+		)
+
+		Spacer(modifier = Modifier.height(12.dp))
+
+		BreadCrumb()
+
+		Spacer(modifier = Modifier.height(12.dp))
+
 		if (notebookList.value?.isNotEmpty() == true) {
-			LazyColumn(
-				modifier = Modifier
-					.padding(0.dp, 0.dp, 0.dp, 64.dp)
-			) {
-				notebookList.value?.forEach { notebook ->
-					item {
-						NotebookCard(
-							modifier = Modifier
-								.fillMaxWidth()
-								.height(128.dp)
-								.padding(12.dp, 16.dp, 12.dp, 4.dp),
-							notebook = notebook
-						)
+			if (showCardView) {
+				LazyVerticalGrid(
+					cells = GridCells.Adaptive(144.dp),
+					horizontalArrangement = Arrangement.Center,
+					verticalArrangement = Arrangement.Center,
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(12.dp, 0.dp)
+				) {
+					notebookList.value?.forEach { notebook ->
+						item {
+							NotebookGridCard(
+								notebookDbEntry = notebook
+							)
+						}
+					}
+				}
+			} else {
+				LazyColumn(
+					modifier = Modifier
+						.padding(0.dp, 0.dp, 0.dp, 64.dp)
+				) {
+					notebookList.value?.forEach { notebook ->
+						item {
+							NotebookCard(
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(128.dp)
+									.padding(12.dp, 0.dp, 12.dp, 4.dp),
+								notebookDbEntry = notebook
+							)
+						}
 					}
 				}
 			}
@@ -147,17 +189,30 @@ private fun NoNotebookCard(
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun NotebookCard(
 	modifier: Modifier,
-	notebook: Notebook,
+	notebookDbEntry: NotebookDbEntry,
 ) {
+	val context = LocalContext.current
+	val activity = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.StartActivityForResult()
+	) {
+	}
+
 	Card(
 		elevation = 0.dp,
 		shape = RoundedCornerShape(12.dp),
-		backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-		modifier = modifier
-			.alpha(0.71f)
+		backgroundColor = MaterialTheme.colorScheme.background,
+		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
+		modifier = modifier,
+		onClick = {
+			Intent(context, NotebookActivity::class.java).apply {
+				putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, notebookDbEntry.primaryKey)
+				activity.launch(this)
+			}
+		}
 	) {
 		Column(
 			modifier = Modifier
@@ -166,10 +221,113 @@ private fun NotebookCard(
 				.padding(12.dp)
 		) {
 			Text(
-				text = notebook.title,
+				text = notebookDbEntry.title,
 				style = MaterialTheme.typography.bodyLarge,
+				color = MaterialTheme.colorScheme.onPrimaryContainer
 			)
 		}
 	}
 
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun NotebookGridCard(
+	notebookDbEntry: NotebookDbEntry,
+) {
+	Card(
+		elevation = 16.dp,
+		shape = RoundedCornerShape(4.dp, 16.dp, 16.dp, 4.dp),
+//		backgroundColor = if (notebookDbEntry.color == null) Color(0xFF7480FE) else Color(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255), 255),
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(16.dp)
+			.aspectRatio(0.75f),
+		onClick = {}
+	) {
+		Image(
+			painter = painterResource(id = R.drawable.book_cover_1),
+			contentDescription = null,
+			contentScale = ContentScale.Crop
+		)
+
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(16.dp)
+		) {
+			IconButton(
+				onClick = { /*TODO*/ },
+				modifier = Modifier
+					.requiredSize(16.dp)
+					.padding(0.dp)
+					.clip(CircleShape)
+					.align(Alignment.TopEnd)
+			) {
+				Icon(
+					imageVector = TablerIcons.Pencil,
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.background,
+					modifier = Modifier
+						.requiredSize(24.dp)
+						.padding(0.dp)
+				)
+			}
+		}
+
+		Row(
+			modifier = Modifier
+				.fillMaxSize()
+		) {
+			Box(
+				modifier = Modifier
+					.width(16.dp)
+					.fillMaxHeight()
+					.background(Color.Black.copy(alpha = 0.31f))
+			)
+			Column(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(16.dp),
+				horizontalAlignment = Alignment.CenterHorizontally,
+			) {
+				Spacer(
+					modifier = Modifier
+						.fillMaxWidth()
+						.weight(1f)
+				)
+				Text(
+					text = notebookDbEntry.title,
+					style = MaterialTheme.typography.titleLarge,
+					color = Color.White.copy(alpha = 0.88f),
+					textAlign = TextAlign.Start,
+					modifier = Modifier
+						.fillMaxWidth(),
+				)
+				Text(
+					text = "71 Entries",
+					style = MaterialTheme.typography.bodyMedium,
+					color = Color.White,
+					textAlign = TextAlign.Start,
+					modifier = Modifier
+						.fillMaxWidth(),
+				)
+			}
+		}
+	}
+}
+
+@Composable
+private fun BreadCrumb() {
+	Card(
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(48.dp)
+			.padding(12.dp, 0.dp)
+			.clip(RoundedCornerShape(12.dp)),
+		backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+		shape = RoundedCornerShape(12.dp)
+	) {
+		Text(text = "Hello world")
+	}
 }

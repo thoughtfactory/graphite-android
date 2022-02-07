@@ -170,8 +170,76 @@ editor.on('transaction', ({
     editor,
     transaction
 }) => {
-    // console.log(editor.isActive('bold'));
+
+    var currentFormat = {};
+
+    currentFormat.bold = editor.isActive('bold');
+    currentFormat.italic = editor.isActive('italic');
+    currentFormat.underline = editor.isActive('underline');
+    currentFormat.strike = editor.isActive('strike');
+    currentFormat.superscripe = editor.isActive('superscript');
+    currentFormat.sunscript = editor.isActive('subscript');
+
+    currentFormat.link = editor.getAttributes('link').href;
+
+    currentFormat.blockquote = editor.isActive('blockquote');
+    currentFormat.code = editor.isActive('code');
+    currentFormat.codeBlock = editor.isActive('codeBlock');
+
+    currentFormat.paragraph = editor.isActive('paragraph');
+    currentFormat.heading = editor.isActive('heading');
+    currentFormat.heading1 = editor.isActive('heading', {
+        level: 1
+    });
+    currentFormat.heading2 = editor.isActive('heading', {
+        level: 2
+    });
+    currentFormat.heading3 = editor.isActive('heading', {
+        level: 3
+    });
+    currentFormat.heading4 = editor.isActive('heading', {
+        level: 4
+    });
+    currentFormat.heading5 = editor.isActive('heading', {
+        level: 5
+    });
+    currentFormat.heading6 = editor.isActive('heading', {
+        level: 6
+    });
+
+    currentFormat.textAlignLeft = editor.isActive({
+        textAlign: 'left'
+    });
+    currentFormat.textAlignCenter = editor.isActive({
+        textAlign: 'center'
+    });
+    currentFormat.textAlignRight = editor.isActive({
+        textAlign: 'right'
+    });
+    currentFormat.textAlignJustify = editor.isActive({
+        textAlign: 'justify'
+    });
+
+    currentFormat.bulletList = editor.isActive('bulletList');
+    currentFormat.orderedList = editor.isActive('orderedList');
+    currentFormat.taskList = editor.isActive('taskList');
+
+    currentFormat.characterCount = editor.storage.characterCount.characters();
+    currentFormat.wordCount = editor.storage.characterCount.words();
+    currentFormat.textColor = editor.getAttributes('textStyle').color;
+    currentFormat.highlightColor = editor.getAttributes('highlight').color;
+    currentFormat.FontFamily = editor.getAttributes('textStyle').FontFamily;
+    // editor.isActive('textStyle', { fontFamily: 'serif' })
+
+    bridge.format(JSON.stringify(currentFormat));
 });
 
+editor.getData = () => {
+    data = {};
+    data.dataHtml = editor.getHTML();
+    data.dataText = editor.getText();
+
+    bridge.getData(JSON.stringify(data));
+}
 
 module.exports = editor;

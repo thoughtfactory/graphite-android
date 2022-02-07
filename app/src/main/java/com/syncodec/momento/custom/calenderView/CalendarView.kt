@@ -19,8 +19,8 @@ import java.util.*
 fun CalendarView(
 	modifier: Modifier = Modifier,
 	calendarState: LazyListState = rememberLazyListState(),
-	startYear: Int = 0,
-	endYear: Int = 4096
+	startYear: Int = 1900,
+	endYear: Int = 2200
 ) {
 	val monthList = MonthIndex.values()
 
@@ -31,7 +31,7 @@ fun CalendarView(
 			state = calendarState,
 			modifier = modifier
 		) {
-			itemsIndexed((startYear until endYear).toList()) { index, year ->
+			itemsIndexed((startYear until endYear).toList()) { _, year ->
 				for (month in 0 until 12) {
 					Spacer(modifier = Modifier.height(8.dp))
 					Text(

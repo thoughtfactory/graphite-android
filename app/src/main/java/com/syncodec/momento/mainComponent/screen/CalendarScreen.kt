@@ -46,7 +46,7 @@ fun CalendarScreen() {
 
 	val scrollToToday: () -> Unit = {
 		scope.launch {
-			calendarState.scrollToItem(2020, 1)
+			calendarState.scrollToItem(2022-1900, 1)
 		}
 	}
 	scrollToToday()

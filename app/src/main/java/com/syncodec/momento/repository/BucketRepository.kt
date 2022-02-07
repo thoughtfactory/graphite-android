@@ -8,6 +8,8 @@ import com.syncodec.momento.Momento
 import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.bucket.*
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 
 class BucketRepository(val application: Application) {
@@ -34,28 +36,30 @@ class BucketRepository(val application: Application) {
 		title: String,
 		bucketType: BucketItemType
 	) {
-		val primaryKey = generatePrimaryKey()
-		val currentTimestamp = System.currentTimeMillis()
+		withContext(Dispatchers.IO) {
+			val primaryKey = generatePrimaryKey()
+			val currentTimestamp = System.currentTimeMillis()
 
-		Bucket(
-			primaryKey = primaryKey,
-			bucketType = bucketType
-		).apply {
-			this.createdTimestamp = currentTimestamp
-			this.modifiedTimestamp = currentTimestamp
-			this.title = title
+			Bucket(
+				primaryKey = primaryKey,
+				bucketType = bucketType
+			).apply {
+				this.createdTimestamp = currentTimestamp
+				this.modifiedTimestamp = currentTimestamp
+				this.title = title
 
-			(application as Momento).putBucket(this)
-		}
+				(application as Momento).putBucket(this)
+			}
 
-		BucketDbEntry(
-			primaryKey = primaryKey,
-			bucketType = bucketType.ordinal
-		).apply {
-			this.createdTimestamp = currentTimestamp
-			this.modifiedTimestamp = currentTimestamp
-			this.title = title
-			insert(this)
+			BucketDbEntry(
+				primaryKey = primaryKey,
+				bucketType = bucketType.ordinal
+			).apply {
+				this.createdTimestamp = currentTimestamp
+				this.modifiedTimestamp = currentTimestamp
+				this.title = title
+				insert(this)
+			}
 		}
 	}
 
