@@ -1,6 +1,7 @@
 package com.syncodec.momento.mainComponent.screen
 
 import android.content.Intent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -8,11 +9,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -21,23 +25,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.R
 import com.syncodec.momento.database.diary.DiaryDbEntry
+import com.syncodec.momento.database.diary.MockDiaryDbEntry
+import com.syncodec.momento.database.diary.MockDiaryDbEntryList
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.miscellaneous.timeStampToPrettyDay
+import com.syncodec.momento.miscellaneous.timeStampToTime
 import com.syncodec.momento.todayComponent.TodayActivity
 import kotlinx.coroutines.launch
 import me.onebone.toolbar.CollapsingToolbarScaffold
@@ -145,19 +157,14 @@ fun DiaryScreen() {
 
 			diaryDbEntryDayMap.forEach { (day, diaryList) ->
 				stickyHeader {
-					GroupHeaderCard(
+					DayHeaderCard(
 						title = timeStampToPrettyDay(day),
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(12.dp, 16.dp, 12.dp, 4.dp)
+						noEntries = diaryList.size
 					)
 				}
 
 				item {
 					DiaryDayCard(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(12.dp, 0.dp),
 						diaryList = diaryList
 					)
 				}
@@ -343,7 +350,7 @@ private fun QuoteCard(
 					Text(
 						text = "Looking down the misty path to uncertain destinations",
 						style = MaterialTheme.typography.bodySmall,
-						fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+						fontStyle = FontStyle.Italic,
 						color = Color.White,
 						overflow = TextOverflow.Ellipsis,
 						maxLines = 1
@@ -355,90 +362,349 @@ private fun QuoteCard(
 }
 
 @Composable
-private fun GroupHeaderCard(
-	modifier: Modifier = Modifier,
-	title: String
+private fun DayHeaderCard(
+	title: String,
+	noEntries: Int
 ) {
-	Row(
-		verticalAlignment = Alignment.Bottom,
-		modifier = modifier,
+	Box(
+		modifier = Modifier
+			.fillMaxWidth()
+			.background(MaterialTheme.colorScheme.background)
 	) {
-		Box(
+		Row(
+			verticalAlignment = Alignment.Bottom,
 			modifier = Modifier
-				.width(3.dp)
-				.height(32.dp)
-				.background(MaterialTheme.colorScheme.primary)
-		)
+				.fillMaxWidth()
+				.padding(14.dp, 16.dp, 12.dp, 12.dp)
+		) {
+			Box(
+				modifier = Modifier
+					.width(4.dp)
+					.height(32.dp)
+					.clip(RoundedCornerShape(4.dp))
+					.background(MaterialTheme.colorScheme.primary)
+			)
 
-		Spacer(modifier = Modifier.width(8.dp))
+			Spacer(modifier = Modifier.width(8.dp))
 
-		Text(
-			text = title,
-			color = MaterialTheme.colorScheme.primary,
-			style = MaterialTheme.typography.bodyLarge
-		)
+			Text(
+				text = title,
+				color = MaterialTheme.colorScheme.primary,
+				style = MaterialTheme.typography.bodyLarge
+			)
+
+			Spacer(modifier = Modifier.weight(1f))
+
+			Text(
+				text = "$noEntries entries",
+				color = MaterialTheme.colorScheme.onSurface,
+				style = MaterialTheme.typography.bodyMedium,
+			)
+		}
 	}
 }
 
+@OptIn(ExperimentalMaterialApi::class)
+@Preview
 @Composable
 private fun DiaryDayCard(
-	modifier: Modifier,
+	@PreviewParameter(MockDiaryDbEntryList::class)
 	diaryList: List<DiaryDbEntry>
 ) {
 	Card(
-		modifier = modifier,
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(0.dp, 0.dp, 8.dp, 0.dp),
 		backgroundColor = MaterialTheme.colorScheme.background,
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
-		shape = RoundedCornerShape(12.dp)
+		shape = RoundedCornerShape(12.dp),
+		elevation = 0.dp
 	) {
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
-			diaryList.forEach { diaryDbEntry ->
+			Spacer(modifier = Modifier.height(0.dp))
+			diaryList.forEachIndexed { index, diaryDbEntry ->
+				val tint = MaterialTheme.colorScheme.secondaryContainer
 				DiaryCard(
 					diaryDbEntry = diaryDbEntry,
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(128.dp)
-						.padding(12.dp, 8.dp, 12.dp, 4.dp)
+					isFirst = index == 0,
+					isLast = index == diaryList.size - 1,
+					tint = tint
 				)
-
-				Spacer(modifier = Modifier.height(4.dp))
-
-				Box(
-					modifier = Modifier
-						.fillMaxWidth(0.8f)
-						.height(2.dp)
-						.background(MaterialTheme.colorScheme.primaryContainer)
-				)
+				if (index != diaryList.size - 1) {
+					DiaryDaySpacer(tint = tint)
+				}
 			}
 		}
 	}
 }
 
 @OptIn(ExperimentalMaterialApi::class)
+@Preview
 @Composable
 private fun DiaryCard(
-	modifier: Modifier,
-	diaryDbEntry: DiaryDbEntry
+	@PreviewParameter(MockDiaryDbEntry::class)
+	diaryDbEntry: DiaryDbEntry,
+	isFirst: Boolean = false,
+	isLast: Boolean = false,
+	tint: Color = Color.LightGray
 ) {
-	Card(
-		elevation = 0.dp,
-		shape = RoundedCornerShape(12.dp),
-		backgroundColor = MaterialTheme.colorScheme.background,
-		modifier = modifier,
-		onClick = {}
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(if (isLast) 152.dp else 144.dp)
+			.padding(8.dp, 0.dp, 8.dp, if(isLast) 8.dp else 0.dp),
 	) {
-		Column(
+		DiarySpacer(
+			isFirst = isFirst,
+			isLast = isLast,
+			tint = tint
+		)
+		Spacer(modifier = Modifier.width(4.dp))
+		Card(
+			elevation = 4.dp,
+			shape = RoundedCornerShape(12.dp),
+			backgroundColor = MaterialTheme.colorScheme.background,
+			border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
 			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
-				.padding(12.dp, 8.dp, 12.dp, 4.dp)
+				.fillMaxSize(),
+			onClick = {}
 		) {
-			Text(
-				text = "${diaryDbEntry.contentThumbnail}",
-				style = MaterialTheme.typography.bodySmall,
+			Column(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(12.dp, 8.dp, 12.dp, 4.dp)
+			) {
+				Row(
+					modifier = Modifier,
+					verticalAlignment = Alignment.CenterVertically
+				) {
+
+					Text(
+						text = timeStampToTime(diaryDbEntry.userTimestamp),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.primary,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						modifier = Modifier
+					)
+
+					Spacer(modifier = Modifier.weight(1f))
+
+					Icon(
+						painter = painterResource(id = R.drawable.ic_lock),
+//						imageVector = TablerIcons.LockOff,
+						contentDescription = "Locked",
+						tint = Color.Unspecified,
+//						tint = MaterialTheme.colorScheme.primary,
+						modifier = Modifier
+							.requiredSize(14.dp)
+					)
+
+					Spacer(modifier = Modifier.width(2.dp))
+
+					Text(
+						text = "·",
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.primary,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						modifier = Modifier
+					)
+
+					Spacer(modifier = Modifier.width(2.dp))
+
+					Icon(
+						painter = painterResource(id = R.drawable.ic_archive),
+//						imageVector = TablerIcons.Archive,
+						contentDescription = "Locked",
+						tint = Color.Unspecified,
+//						tint = MaterialTheme.colorScheme.primary,
+						modifier = Modifier
+							.requiredSize(14.dp)
+					)
+
+					Spacer(modifier = Modifier.width(2.dp))
+
+					Text(
+						text = "·",
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.primary,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						modifier = Modifier
+					)
+
+					Spacer(modifier = Modifier.width(2.dp))
+
+					Icon(
+						painter = painterResource(id = R.drawable.ic_pin),
+//						imageVector = TablerIcons.Pin,
+						contentDescription = "Locked",
+						tint = Color.Unspecified,
+//						tint = MaterialTheme.colorScheme.primary,
+						modifier = Modifier
+							.requiredSize(14.dp)
+					)
+
+					Spacer(modifier = Modifier.width(2.dp))
+
+					Text(
+						text = "·",
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.primary,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						modifier = Modifier
+					)
+
+					Spacer(modifier = Modifier.width(2.dp))
+
+					Icon(
+						painter = painterResource(id = R.drawable.ic_favourite),
+//						imageVector = TablerIcons.Heart,
+						contentDescription = "Locked",
+						tint = Color.Unspecified,
+//						tint = MaterialTheme.colorScheme.primary,
+						modifier = Modifier
+							.requiredSize(14.dp)
+					)
+				}
+
+				Spacer(modifier = Modifier.height(8.dp))
+
+				Text(
+					text = "${diaryDbEntry.contentThumbnail}",
+					style = MaterialTheme.typography.bodyMedium,
+					maxLines = 4
+				)
+
+				Spacer(modifier = Modifier.weight(1f))
+
+				if (diaryDbEntry.address != null) {
+					Row(
+						modifier = Modifier
+							.fillMaxWidth(),
+						verticalAlignment = Alignment.CenterVertically
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_location_pin),
+//							imageVector = TablerIcons.MapPin,
+							contentDescription = null,
+							tint = Color.Unspecified,
+//							tint = MaterialTheme.colorScheme.primary,
+							modifier = Modifier
+								.requiredSize(16.dp)
+						)
+						Spacer(modifier = Modifier.width(4.dp))
+						Text(
+							text = "${diaryDbEntry.address}",
+							style = MaterialTheme.typography.bodySmall,
+							fontWeight = FontWeight.Bold,
+							fontStyle = FontStyle.Italic,
+							color = MaterialTheme.colorScheme.primary,
+							maxLines = 1,
+							modifier = Modifier
+						)
+					}
+				}
+			}
+
+			Box(
+				modifier = Modifier
+					.fillMaxSize(),
+				contentAlignment = Alignment.CenterEnd
+			) {
+				Box(
+					modifier = Modifier
+						.width(4.dp)
+						.fillMaxHeight(0.8f)
+						.clip(RoundedCornerShape(8.dp, 0.dp, 0.dp, 8.dp))
+						.background(MaterialTheme.colorScheme.tertiary)
+				)
+			}
+		}
+
+	}
+}
+
+@Composable
+private fun DiaryDaySpacer(
+	tint: Color
+) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(10.dp)
+			.padding(8.dp, 0.dp),
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Box(
+			modifier = Modifier
+				.width(16.dp)
+				.height(10.dp),
+			contentAlignment = Alignment.Center
+		) {
+			Box(
+				modifier = Modifier
+					.width(4.dp)
+					.fillMaxHeight()
+					.background(tint)
+			)
+		}
+		Box(
+			modifier = Modifier
+				.fillMaxWidth(),
+			contentAlignment = Alignment.Center
+		) {
+			Box(
+				modifier = Modifier
+					.fillMaxWidth(0.8f)
+					.height(2.dp)
+					.background(MaterialTheme.colorScheme.primaryContainer)
 			)
 		}
 	}
+}
+
+@Composable
+private fun DiarySpacer(
+	isFirst: Boolean = false,
+	isLast: Boolean = false,
+	tint: Color
+) {
+	Box(
+		modifier = Modifier
+			.width(16.dp)
+			.fillMaxHeight()
+			.background(Color.Transparent)
+	) {
+		Column(
+			modifier = Modifier
+				.fillMaxSize(),
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			Box(
+				modifier = Modifier
+					.width(4.dp)
+					.height(16.dp)
+					.background(if (isFirst) Color.Transparent else tint)
+			)
+			Box(
+				modifier = Modifier
+					.width(16.dp)
+					.height(16.dp)
+					.padding(2.dp)
+					.clip(CircleShape)
+					.background(tint)
+			)
+			Box(
+				modifier = Modifier
+					.width(4.dp)
+					.fillMaxHeight()
+					.background(if (isLast) Color.Transparent else tint)
+			)
+		}
+	}
+
 }

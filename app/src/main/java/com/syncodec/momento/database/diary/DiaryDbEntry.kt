@@ -1,19 +1,21 @@
 package com.syncodec.momento.database.diary
 
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.Expose
+import com.syncodec.momento.miscellaneous.generatePrimaryKey
 
 @Entity(tableName = "diary_table")
 data class DiaryDbEntry(
-    @PrimaryKey(autoGenerate = false)
-    @ColumnInfo(name = "primary_key")
-    @Expose
-    val primaryKey: String,
-    @ColumnInfo(name = "timezone_offset")
-    @Expose
-    val timezoneOffset: Int
+	@PrimaryKey(autoGenerate = false)
+	@ColumnInfo(name = "primary_key")
+	@Expose
+	val primaryKey: String,
+	@ColumnInfo(name = "timezone_offset")
+	@Expose
+	val timezoneOffset: Int
 ) {
 	@ColumnInfo(name = "created_timestamp")
 	@Expose
@@ -84,4 +86,101 @@ data class DiaryDbEntry(
 
 		return true
 	}
+}
+
+class MockDiaryDbEntry : PreviewParameterProvider<DiaryDbEntry> {
+	override val values = sequenceOf(
+		DiaryDbEntry(
+			primaryKey = "generatePrimaryKey()",
+			timezoneOffset = 330 * 60
+		).apply {
+			this.createdTimestamp = 1644265384000
+			this.modifiedTimestamp = 1644351784000
+			this.userTimestamp = 1651695784000
+			this.contentThumbnail = "the question is what color will everything be at the moment I come for you? What will the sky be sayin\n\nalpha beta gamma"
+			this.latitude = 22.3054116329618
+			this.longitude = 70.78487291405152
+			this.address = "Street Numer 5, Hari Nagar, Rajkot, Gujarat 360005"
+			this.mood = 1
+			this.title = "My favourite quotes"
+			this.isFavourite = true
+			this.isArchived = false
+			this.isLocked = false
+		}
+	)
+}
+
+class MockDiaryDbEntryList : PreviewParameterProvider<List<DiaryDbEntry>> {
+	override val values = sequenceOf(
+		listOf(
+			DiaryDbEntry(
+				primaryKey = "generatePrimaryKey()",
+				timezoneOffset = 330 * 60
+			).apply {
+				this.createdTimestamp = 1644265384000
+				this.modifiedTimestamp = 1644351784000
+				this.userTimestamp = 1651695784000
+				this.contentThumbnail = "the question is what color will everything be at the moment I come for you? What will the sky be sayin\n\nalpha beta gamma"
+				this.latitude = 22.3054116329618
+				this.longitude = 70.78487291405152
+				this.address = "Street Numer 5, Hari Nagar, Rajkot, Gujarat 360005"
+				this.mood = 1
+				this.title = "My favourite quotes"
+				this.isFavourite = true
+				this.isArchived = false
+				this.isLocked = false
+			},
+			DiaryDbEntry(
+				primaryKey = "generatePrimaryKey()",
+				timezoneOffset = 330 * 60
+			).apply {
+				this.createdTimestamp = 1644265384000
+				this.modifiedTimestamp = 1644351784000
+				this.userTimestamp = 1651695784000
+				this.contentThumbnail = "the question is what color will everything be at the moment I come for you? What will the sky be sayin\n\nalpha beta gamma"
+				this.latitude = 22.3054116329618
+				this.longitude = 70.78487291405152
+				this.address = "Street Numer 5, Hari Nagar, Rajkot, Gujarat 360005"
+				this.mood = 1
+				this.title = "My favourite quotes"
+				this.isFavourite = true
+				this.isArchived = false
+				this.isLocked = false
+			},
+			DiaryDbEntry(
+				primaryKey = "generatePrimaryKey()",
+				timezoneOffset = 330 * 60
+			).apply {
+				this.createdTimestamp = 1644265384000
+				this.modifiedTimestamp = 1644351784000
+				this.userTimestamp = 1651695784000
+				this.contentThumbnail = "the question is what color will everything be at the moment I come for you? What will the sky be sayin\n\nalpha beta gamma"
+				this.latitude = 22.3054116329618
+				this.longitude = 70.78487291405152
+				this.address = "Street Numer 5, Hari Nagar, Rajkot, Gujarat 360005"
+				this.mood = 1
+				this.title = "My favourite quotes"
+				this.isFavourite = true
+				this.isArchived = false
+				this.isLocked = false
+			},
+			DiaryDbEntry(
+				primaryKey = "generatePrimaryKey()",
+				timezoneOffset = 330 * 60
+			).apply {
+				this.createdTimestamp = 1644265384000
+				this.modifiedTimestamp = 1644351784000
+				this.userTimestamp = 1651695784000
+				this.contentThumbnail = "the question is what color will everything be at the moment I come for you? What will the sky be sayin\n\nalpha beta gamma"
+				this.latitude = 22.3054116329618
+				this.longitude = 70.78487291405152
+				this.address = "Street Numer 5, Hari Nagar, Rajkot, Gujarat 360005"
+				this.mood = 1
+				this.title = "My favourite quotes"
+				this.isFavourite = true
+				this.isArchived = false
+				this.isLocked = false
+			}
+		)
+	)
 }

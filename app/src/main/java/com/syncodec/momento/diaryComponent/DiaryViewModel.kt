@@ -23,12 +23,11 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.momento.database.diary.Note
 import com.syncodec.momento.database.diary.WeatherData
-import com.syncodec.momento.konstant.AttachmentType
 import com.syncodec.momento.konstant.Secret
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.miscellaneous.locationAddressFilter
-import com.syncodec.momento.repository.DiaryRepository
 import com.syncodec.momento.repository.AttachmentRepository
+import com.syncodec.momento.repository.DiaryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,8 +59,6 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 			this.createdTimestamp = currentTimestamp
 			this.modifiedTimestamp = currentTimestamp
 			this.userTimestamp = currentTimestamp
-			this.location = this@DiaryViewModel.location
-			this.address = this@DiaryViewModel.address
 		}
 	)
 
@@ -84,6 +81,8 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 	fun saveDiary() {
 		viewModelScope.launch {
 			withContext(Dispatchers.IO) {
+				note.location = this@DiaryViewModel.location
+				note.address = this@DiaryViewModel.address
 				diaryRepository.saveDiary(this@DiaryViewModel.note)
 			}
 		}

@@ -53,6 +53,7 @@ const Typography = require('@tiptap/extension-typography');
 
 const editor = new Editor.Editor({
     element: document.querySelector('.element'),
+    content: `<ul><li><p>the question is <strong class="bold-style">what color will everything be at the moment I come for you? What will the sky be sayin</strong></p></li><li><p>alpha<u>&nbsp;beta </u><em><u>gamma</u></em></p></li></ul>`,
     extensions: [
         Document.Document,
         Text.Text,

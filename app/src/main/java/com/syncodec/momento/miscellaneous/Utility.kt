@@ -15,11 +15,15 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 fun timeStampToPrettyDay(timestamp: Long): String {
-	return DateFormat.format("dd MMM, yyyy", timestamp).toString()
+	return DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()
 }
 
 fun timeStampToPrettyFull(timestamp: Long): String {
 	return DateFormat.format("EEE dd MMM, yyyy, HH:mm aa", timestamp).toString()
+}
+
+fun timeStampToTime(timestamp: Long): String {
+	return DateFormat.format("HH:mm aa", timestamp).toString()
 }
 
 fun generatePrimaryKey(keyLength: Int = 20): String {

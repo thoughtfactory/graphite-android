@@ -1,14 +1,14 @@
 package com.syncodec.momento.diaryComponent.modalBottomSheet
 
+import android.content.Intent
 import android.location.Location
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -16,24 +16,29 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fasterxml.jackson.databind.util.ClassUtil.getPackageName
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
+import com.syncodec.momento.BuildConfig
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
-import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.database.diary.WeatherData
 import com.syncodec.momento.diaryComponent.DiaryActivity
 import com.syncodec.momento.diaryComponent.DiaryViewModel
@@ -74,15 +79,7 @@ fun MetadataBottomSheet() {
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		LocationCard(
-			location = viewModel.location,
-			address = viewModel.address,
-			addressState = viewModel.diaryActivityState.addressState.value,
-			refreshLocation = { viewModel.getLocation() },
-			showMapLocationDialog = { viewModel.diaryActivityState.showMapLocationDialog.value = true }
-		) {
-			viewModel.removeLocationData()
-		}
+		LocationCard()
 
 		AnimatedVisibility(
 			visible = viewModel.location != null
@@ -100,7 +97,7 @@ fun MetadataBottomSheet() {
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		if(viewModel.weatherData!=null) {
+		if (viewModel.weatherData != null) {
 			WeatherCard(
 				weatherData = viewModel.weatherData
 			)
@@ -199,16 +196,14 @@ fun TimestampCard(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
 @Composable
-private fun LocationCard(
-	location: Location?,
-	address: String?,
-	addressState: DiaryActivity.AddressState,
-	refreshLocation: () -> Unit,
-	showMapLocationDialog: () -> Unit,
-	removeLocationData: () -> Unit
-) {
+private fun LocationCard() {
+	val context = LocalContext.current
+	val viewModel: DiaryViewModel = viewModel()
+
+	val addressState by viewModel.diaryActivityState.addressState
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -223,10 +218,24 @@ private fun LocationCard(
 				.height(128.dp)
 				.weight(1f)
 				.padding(0.dp, 0.dp, 4.dp, 0.dp),
-			enabled = addressState == DiaryActivity.AddressState.REMOVED,
+			enabled = when (addressState) {
+				DiaryActivity.AddressState.NO_PERMISSION -> true
+				DiaryActivity.AddressState.REQUEST_PERMISSION -> true
+				DiaryActivity.AddressState.SHOW_RATIONALE -> true
+				DiaryActivity.AddressState.REMOVED -> true
+				else -> false
+			},
 			onClick = {
-				if (addressState == DiaryActivity.AddressState.REMOVED) {
-					refreshLocation()
+				when (addressState) {
+					DiaryActivity.AddressState.NO_PERMISSION -> {
+						Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+							data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+							context.startActivity(this)
+						}
+					}
+					DiaryActivity.AddressState.REQUEST_PERMISSION -> viewModel.diaryActivityState.locationPermissionState.launchPermissionRequest()
+					DiaryActivity.AddressState.SHOW_RATIONALE -> viewModel.diaryActivityState.locationPermissionState.launchPermissionRequest()
+					DiaryActivity.AddressState.REMOVED -> viewModel.getLocation()
 				}
 			}
 		) {
@@ -239,12 +248,12 @@ private fun LocationCard(
 					text = when (addressState) {
 						DiaryActivity.AddressState.OFF -> "AddressState : OFF"
 						DiaryActivity.AddressState.INIT -> "Getting address..."
-						DiaryActivity.AddressState.NO_PERMISSION -> "Location permission unavailable"
-						DiaryActivity.AddressState.REQUEST_PERMISSION -> "Location permission unavailable"
-						DiaryActivity.AddressState.SHOW_RATIONALE -> "Location permission unavailable"
+						DiaryActivity.AddressState.NO_PERMISSION -> "Location permission unavailable. Click to open settings."
+						DiaryActivity.AddressState.REQUEST_PERMISSION -> "Location permission unavailable. Click to provide permission."
+						DiaryActivity.AddressState.SHOW_RATIONALE -> "Location permission unavailable. Click to provide permission."
 						DiaryActivity.AddressState.REQUESTED -> "Getting address..."
 						DiaryActivity.AddressState.LOCATION -> "Address unavailable"
-						DiaryActivity.AddressState.SUCCESS -> address!!
+						DiaryActivity.AddressState.SUCCESS -> viewModel.address!!
 						DiaryActivity.AddressState.ERROR -> "Error getting address"
 						DiaryActivity.AddressState.REMOVED -> "Click to get address"
 					},
@@ -261,7 +270,8 @@ private fun LocationCard(
 					addressState == DiaryActivity.AddressState.SUCCESS
 				) {
 					Text(
-						text = if (location == null) "Location unavailable" else "${location.latitude.roundTo(6)}, ${location.longitude.roundTo(6)}",
+						text = if (viewModel.location == null) "Location unavailable"
+						else "${viewModel.location!!.latitude.roundTo(6)}, ${viewModel.location!!.longitude.roundTo(6)}",
 						style = MaterialTheme.typography.bodySmall.copy(
 							fontWeight = FontWeight.Bold
 						),
@@ -283,7 +293,7 @@ private fun LocationCard(
 				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 				modifier = Modifier
 					.requiredSize(60.dp),
-				onClick = { showMapLocationDialog() }
+				onClick = { viewModel.diaryActivityState.showMapLocationDialog.value = true }
 			) {
 				Icon(
 					imageVector = TablerIcons.Map,
@@ -302,7 +312,7 @@ private fun LocationCard(
 				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 				modifier = Modifier
 					.requiredSize(60.dp),
-				onClick = { removeLocationData() }
+				onClick = { viewModel.removeLocationData() }
 			) {
 				Icon(
 					imageVector = TablerIcons.X,
