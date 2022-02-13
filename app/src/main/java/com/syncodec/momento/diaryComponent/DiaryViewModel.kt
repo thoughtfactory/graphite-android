@@ -9,10 +9,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.volley.Request
@@ -21,9 +18,12 @@ import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.syncodec.momento.Momento
 import com.syncodec.momento.database.diary.Note
 import com.syncodec.momento.database.diary.WeatherData
 import com.syncodec.momento.konstant.Secret
+import com.syncodec.momento.konstant.Status
+import com.syncodec.momento.miscellaneous.copyInputStreamToOutputStream
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.miscellaneous.locationAddressFilter
 import com.syncodec.momento.repository.AttachmentRepository
@@ -32,15 +32,25 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 
-data class TempAttachmentData(val uri: Uri, val mimeType: String?)
+data class TempAttachmentData(
+	val primaryKey: String,
+	val uri: Uri,
+	val mimeType: String?,
+	var file: File? = null
+)
 
 class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
 	val diaryRepository: DiaryRepository = DiaryRepository(application)
-	val attachmentRepository: AttachmentRepository = AttachmentRepository(application)
+	val attachmentRepository: AttachmentRepository = AttachmentRepository(application as Momento)
+
+	private val _status: MutableState<Status> = mutableStateOf(Status.SUCCESS)
+	val status: State<Status> get() = _status
 
 	private val currentTimestamp = System.currentTimeMillis()
 
@@ -67,8 +77,29 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 	var attachmentList: MutableList<TempAttachmentData> = mutableStateListOf()
 
 	fun insertAttachment(
-		tempAttachmentData: TempAttachmentData
+		uri: Uri,
+		mimeType: String?
 	) {
+		val tempAttachmentData = TempAttachmentData(
+			primaryKey = generatePrimaryKey(),
+			uri = uri,
+			mimeType = mimeType
+		)
+
+		val tempFile = com.syncodec.momento.miscellaneous.createTempFile(
+			primaryKey = tempAttachmentData.primaryKey,
+			mimeType = tempAttachmentData.mimeType
+		)
+
+		tempAttachmentData.file = tempFile
+
+		val inputStream = getApplication<Momento>().contentResolver.openInputStream(tempAttachmentData.uri)
+		val outputStream = FileOutputStream(tempFile)
+
+		if (inputStream != null) {
+			copyInputStreamToOutputStream(inputStream = inputStream, outputStream = outputStream)
+		}
+
 		attachmentList.add(tempAttachmentData)
 	}
 
@@ -80,11 +111,14 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
 	fun saveDiary() {
 		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				note.location = this@DiaryViewModel.location
-				note.address = this@DiaryViewModel.address
-				diaryRepository.saveDiary(this@DiaryViewModel.note)
-			}
+			note.location = this@DiaryViewModel.location
+			note.address = this@DiaryViewModel.address
+
+			attachmentRepository.saveAttachmentList(diaryKey = note.primaryKey, attachmentList = attachmentList)
+			diaryRepository.saveDiary(
+				note = this@DiaryViewModel.note,
+				attachmentList = attachmentList
+			)
 		}
 	}
 
@@ -193,4 +227,6 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 			}
 		}
 	}
+
+
 }

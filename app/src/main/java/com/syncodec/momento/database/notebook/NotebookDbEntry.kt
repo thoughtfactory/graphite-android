@@ -30,7 +30,7 @@ data class NotebookDbEntry(
 
 	@ColumnInfo(name = "color")
 	@Expose
-	var color: Long? = null
+	var color: Int? = null
 
 	@ColumnInfo(name =  "number_chapter")
 	var numberChapter: Int = 0
@@ -53,5 +53,19 @@ data class NotebookDbEntry(
 		if (primaryKey != other.primaryKey) return false
 
 		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = primaryKey.hashCode()
+		result = 31 * result + createdTimestamp.hashCode()
+		result = 31 * result + modifiedTimestamp.hashCode()
+		result = 31 * result + title.hashCode()
+		result = 31 * result + (description?.hashCode() ?: 0)
+		result = 31 * result + (color?.hashCode() ?: 0)
+		result = 31 * result + numberChapter
+		result = 31 * result + numberNote
+		result = 31 * result + numberAttachment
+		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
+		return result
 	}
 }

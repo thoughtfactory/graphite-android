@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.MainActivity
+import com.syncodec.momento.custom.calendarView2.Calendar
 import com.syncodec.momento.custom.calenderView.CalendarView
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
@@ -42,16 +43,6 @@ fun CalendarScreen() {
 		}
 	}
 
-	val calendarState = rememberLazyListState()
-
-	val scrollToToday: () -> Unit = {
-		scope.launch {
-			calendarState.scrollToItem(2022-1900, 1)
-		}
-	}
-	scrollToToday()
-
-
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -62,12 +53,54 @@ fun CalendarScreen() {
 			showBackground = true,
 			openSheet = openSheet
 		)
-		CalendarView(
-			calendarState = calendarState,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(2.dp, 0.dp)
-				.weight(1f)
-		)
+		Calendar()
 	}
 }
+
+
+
+//@ExperimentalMaterialApi
+//@ExperimentalFoundationApi
+//@Composable
+//fun CalendarScreen() {
+//	val configuration = LocalConfiguration.current
+//	val screenHeight = configuration.screenHeightDp.dp
+//	val screenWidth = configuration.screenWidthDp.dp
+//
+//	val viewModel: MainViewModel = viewModel()
+//	val scope = rememberCoroutineScope()
+//	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
+//		scope.launch {
+//			viewModel.mainActivityState.bottomSheetState.show()
+//		}
+//	}
+//
+//	val calendarState = rememberLazyListState()
+//
+//	val scrollToToday: () -> Unit = {
+//		scope.launch {
+//			calendarState.scrollToItem(2022-1900, 1)
+//		}
+//	}
+//	scrollToToday()
+//
+//
+//	Column(
+//		modifier = Modifier
+//			.fillMaxWidth()
+//			.fillMaxHeight()
+//			.background(MaterialTheme.colorScheme.background)
+//	) {
+//		MainTopBar(
+//			showBackground = true,
+//			openSheet = openSheet
+//		)
+//		CalendarView(
+//			calendarState = calendarState,
+//			modifier = Modifier
+//				.fillMaxWidth()
+//				.padding(2.dp, 0.dp)
+//				.weight(1f)
+//		)
+//	}
+//}

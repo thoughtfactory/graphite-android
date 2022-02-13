@@ -11,7 +11,7 @@ import androidx.compose.runtime.remember
 @Composable
 @OptIn(ExperimentalAnimationApi::class)
 fun ExpandableBox(
-	visible: Boolean = true,
+	isVisible: Boolean = true,
 	initialVisibility: Boolean = false,
 	content: @Composable () -> Unit
 ) {
@@ -38,7 +38,7 @@ fun ExpandableBox(
 		shrinkVertically(animationSpec = tween(400))
 	}
 	AnimatedVisibility(
-		visible = visible,
+		visible = isVisible,
 		enter = enterExpand + enterFadeIn,
 		exit = exitCollapse + exitFadeOut
 	) {

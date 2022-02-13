@@ -59,15 +59,15 @@ class TodayActivity : ComponentActivity() {
 			color = Color.Transparent
 		)
 
-		val pagerState = rememberPagerState(10, 9)
+		val pagerState = rememberPagerState(9)
 		HorizontalPager(
-			modifier = Modifier
+			state = pagerState,
+			count = 10,
+			verticalAlignment = Alignment.Bottom,
+			itemSpacing = 2.dp,	modifier = Modifier
 				.fillMaxWidth()
 				.fillMaxHeight()
 				.background(Color.Black),
-			state = pagerState,
-			verticalAlignment = Alignment.Bottom,
-			itemSpacing = 2.dp,
 		) { page ->
 			Image(
 				painter = painterResource(id = R.drawable.background),

@@ -36,6 +36,13 @@ val Stardos = FontFamily(
 	Font(R.font.stardos_stencil_bold, FontWeight.Bold),
 )
 
+/*
+	display
+	headline
+	title
+	body
+	label
+ */
 val MomentoTypography = androidx.compose.material3.Typography(
 	displayLarge = TextStyle(
 		fontFamily = MontserratFontFamily,

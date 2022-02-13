@@ -95,19 +95,9 @@ fun MainTopBar(
 							onClick = { /*TODO*/ },
 						) {
 							Icon(
-								imageVector = TablerIcons.Cloud,
-								contentDescription = null,
-								tint = Color.Unspecified,
-							)
-						}
-
-						IconButton(
-							onClick = { /*TODO*/ },
-						) {
-							Icon(
 								imageVector = TablerIcons.Search,
 								contentDescription = null,
-								tint = Color.Unspecified,
+								tint = MaterialTheme.colorScheme.onBackground,
 							)
 						}
 

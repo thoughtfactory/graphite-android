@@ -1,5 +1,6 @@
 package com.syncodec.momento.database.notebook
 
+import android.graphics.Bitmap
 import kotlin.properties.Delegates
 
 data class Notebook(
@@ -10,7 +11,7 @@ data class Notebook(
 	var contentThumbnail: String? = null
 	lateinit var title: String
 	var description: String? = null
-	var color: Long? = null
+	var color: Int? = null
 	var chapterMap: MutableMap<String, Chapter> = mutableMapOf()
 	var noteList: MutableList<NoteDbEntry> = mutableListOf()
 	var isFavourite: Boolean = false

@@ -6,14 +6,12 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
@@ -25,6 +23,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.R
 import com.syncodec.momento.mainComponent.MainViewModel
+import com.syncodec.momento.mainComponent.miscellaneous.ComponentChooser
+import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
+import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
+import kotlinx.coroutines.launch
 
 
 sealed class MomentoScreenType {
@@ -38,11 +40,42 @@ sealed class MomentoScreenType {
 fun MomentoScreen() {
 	val viewModel: MainViewModel = viewModel()
 
-	Box(
+	val scope = rememberCoroutineScope()
+	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
+		viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
+		scope.launch {
+			viewModel.mainActivityState.bottomSheetState.show()
+		}
+	}
+
+	val scaffoldScale by animateFloatAsState(
+		targetValue = if (viewModel.mainActivityState.bottomSheetState.progress.to == ModalBottomSheetValue.Hidden) 1f else 0.95f,
+		animationSpec = spring(
+			dampingRatio = Spring.DampingRatioHighBouncy,
+			stiffness = Spring.StiffnessMediumLow
+		),
+	)
+
+	Column(
 		modifier = Modifier
+			.fillMaxSize()
 			.padding(0.dp, 0.dp, 0.dp, 64.dp)
 	) {
-		Crossfade(targetState = viewModel.mainActivityState.momentoScreenType.value) { momentoScreenType ->
+		MainTopBar(
+			openSheet = openSheet,
+			showBackground = true
+		)
+
+		ComponentChooser()
+
+		Crossfade(
+			targetState = viewModel.mainActivityState.momentoScreenType.value,
+			modifier = Modifier
+				.graphicsLayer {
+					this.scaleX = scaffoldScale
+					this.scaleY = scaffoldScale
+				}
+		) { momentoScreenType ->
 			when (momentoScreenType) {
 				MomentoScreenType.Diary -> DiaryScreen()
 				MomentoScreenType.Notebook -> NotebookScreen()

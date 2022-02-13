@@ -1,18 +1,19 @@
 package com.syncodec.momento.miscellaneous
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.location.Address
 import android.net.Uri
 import android.text.format.DateFormat
+import android.util.Base64
 import androidx.core.content.FileProvider
 import com.syncodec.momento.BuildConfig
-import com.syncodec.momento.konstant.AttachmentType
-import java.io.File
-import java.io.IOException
-import java.util.*
+import java.io.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.random.Random
+
 
 fun timeStampToPrettyDay(timestamp: Long): String {
 	return DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()
@@ -37,17 +38,45 @@ fun generatePrimaryKey(keyLength: Int = 20): String {
 }
 
 @Throws(IOException::class)
-fun createTempFile(attachmentType: AttachmentType): File {
-	return File.createTempFile("${attachmentType.name.lowercase(Locale.getDefault())}_", "_${generatePrimaryKey(8)}")
+fun createTempFile(primaryKey: String, mimeType: String?): File {
+	return File.createTempFile("attachment_", "_$primaryKey")
 }
 
 @Throws(IOException::class)
-fun createTempFileToExpose(context: Context, attachmentType: AttachmentType): Uri {
+fun createTempFileToExpose(context: Context, primaryKey: String, mimeType: String): Uri {
 	return FileProvider.getUriForFile(
 		context,
 		"${BuildConfig.APPLICATION_ID}.provider",
-		createTempFile(attachmentType)
+		createTempFile(primaryKey = primaryKey, mimeType = mimeType)
 	)
+}
+
+fun copyInputStreamToOutputStream(inputStream: FileInputStream, outputStream: FileOutputStream) {
+	try {
+		val buf = ByteArray(1024)
+		var len: Int
+		while (inputStream.read(buf).also { len = it } > 0) {
+			outputStream.write(buf, 0, len)
+		}
+		outputStream.close()
+		inputStream.close()
+	} catch (e: Exception) {
+		e.printStackTrace()
+	}
+}
+
+fun copyInputStreamToOutputStream(inputStream: InputStream, outputStream: FileOutputStream) {
+	try {
+		val buf = ByteArray(1024)
+		var len: Int
+		while (inputStream.read(buf).also { len = it } > 0) {
+			outputStream.write(buf, 0, len)
+		}
+		outputStream.close()
+		inputStream.close()
+	} catch (e: Exception) {
+		e.printStackTrace()
+	}
 }
 
 fun locationAddressFilter(address: Address?): String? {
@@ -67,4 +96,16 @@ fun locationAddressFilter(address: Address?): String? {
 fun Double.roundTo(numFractionDigits: Int): Double {
 	val factor = 10.0.pow(numFractionDigits.toDouble())
 	return (this * factor).roundToInt() / factor
+}
+
+fun Bitmap.bitmapToBase64String(): String? {
+	val outputStream = ByteArrayOutputStream()
+	this.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+	return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
+}
+
+@Throws(IllegalArgumentException::class)
+fun String.base64stringToBitmap(): Bitmap? {
+	val decodedBytes: ByteArray = Base64.decode(this.substring(this.indexOf(",") + 1), Base64.DEFAULT)
+	return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
 }

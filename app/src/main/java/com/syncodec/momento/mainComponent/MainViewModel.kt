@@ -1,6 +1,8 @@
 package com.syncodec.momento.mainComponent
 
 import android.app.Application
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.momento.MainActivity
@@ -63,13 +65,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	fun insertNotebook(
 		title: String,
 		description: String?,
-		color: Long?
+		color: Int?,
+		image: Bitmap?
 	) {
 		viewModelScope.launch {
 			notebookRepository.createNewNotebook(
 				title = title,
 				description = description,
-				color = color
+				color = color,
+				image = image
 			)
 		}
 	}
@@ -84,5 +88,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 				bucketType = bucketType
 			)
 		}
+	}
+
+	fun getNotebookImage(
+		notebookKey: String
+	): ImageBitmap? {
+		return getApplication<Momento>().getNotebookImage(notebookKey = notebookKey)
 	}
 }

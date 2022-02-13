@@ -3,7 +3,10 @@ package com.syncodec.momento.mainComponent.screen
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -32,14 +34,12 @@ import com.syncodec.momento.R
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.notebookComponent.NotebookActivity
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.Plus
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -47,10 +47,6 @@ import kotlin.random.Random
 @ExperimentalPagerApi
 @Composable
 fun NotebookScreen() {
-	val configuration = LocalConfiguration.current
-	val screenWidth = configuration.screenWidthDp.dp
-	val screenHeight = configuration.screenHeightDp.dp
-
 	val viewModel: MainViewModel = viewModel()
 	val scope = rememberCoroutineScope()
 
@@ -65,17 +61,9 @@ fun NotebookScreen() {
 
 	val showCardView = true
 
-	Column {
-		MainTopBar(
-			openSheet = openSheet,
-			showBackground = true
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		BreadCrumb()
-
-		Spacer(modifier = Modifier.height(12.dp))
+	Column(
+		modifier = Modifier
+	) {
 
 		if (notebookList.value?.isNotEmpty() == true) {
 			if (showCardView) {
@@ -235,21 +223,27 @@ private fun NotebookCard(
 private fun NotebookGridCard(
 	notebookDbEntry: NotebookDbEntry,
 ) {
+	val viewModel: MainViewModel = viewModel()
+
 	Card(
-		elevation = 16.dp,
+		elevation = 8.dp,
 		shape = RoundedCornerShape(4.dp, 16.dp, 16.dp, 4.dp),
-//		backgroundColor = if (notebookDbEntry.color == null) Color(0xFF7480FE) else Color(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255), 255),
+		backgroundColor = if (notebookDbEntry.color != null) Color(notebookDbEntry.color!!) else Color.Unspecified,
 		modifier = Modifier
 			.fillMaxSize()
 			.padding(16.dp)
 			.aspectRatio(0.75f),
 		onClick = {}
 	) {
-		Image(
-			painter = painterResource(id = R.drawable.book_cover_1),
-			contentDescription = null,
-			contentScale = ContentScale.Crop
-		)
+		if (notebookDbEntry.color == null) {
+			viewModel.getNotebookImage(notebookKey = notebookDbEntry.primaryKey)?.let {
+				Image(
+					bitmap = it,
+					contentDescription = null,
+					contentScale = ContentScale.Crop
+				)
+			}
+		}
 
 		Box(
 			modifier = Modifier

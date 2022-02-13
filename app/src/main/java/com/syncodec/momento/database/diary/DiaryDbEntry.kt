@@ -5,7 +5,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.Expose
-import com.syncodec.momento.miscellaneous.generatePrimaryKey
 
 @Entity(tableName = "diary_table")
 data class DiaryDbEntry(
@@ -32,6 +31,14 @@ data class DiaryDbEntry(
 	@ColumnInfo(name = "content_thumbnail")
 	@Expose
 	var contentThumbnail: String? = null
+
+	@ColumnInfo(name = "attachment_thumbnail")
+	@Expose
+	var attachmentThumbnail: String? = null
+
+	@ColumnInfo(name = "attachment_count")
+	@Expose
+	var attachmentCount: Int = 0
 
 	@ColumnInfo(name = "latitude")
 	@Expose

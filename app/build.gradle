@@ -65,13 +65,13 @@ dependencies {
 	implementation 'androidx.appcompat:appcompat:1.4.1'
 	implementation 'androidx.fragment:fragment-ktx:1.4.1'
 
-	implementation 'androidx.compose.ui:ui:1.2.0-alpha02'
+	implementation 'androidx.compose.ui:ui:1.2.0-alpha03'
 	implementation "androidx.compose.material:material:$compose_version"
 	implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-	implementation 'androidx.compose.material3:material3:1.0.0-alpha04'
-	implementation "androidx.compose.ui:ui-util:1.2.0-alpha02"
+	implementation 'androidx.compose.material3:material3:1.0.0-alpha05'
+	implementation "androidx.compose.ui:ui-util:1.2.0-alpha03"
 
-	implementation 'androidx.navigation:navigation-compose:2.5.0-alpha01'
+	implementation 'androidx.navigation:navigation-compose:2.5.0-alpha02'
 	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.0'
 
 	implementation 'androidx.core:core-animation:1.0.0-alpha02'
@@ -81,20 +81,20 @@ dependencies {
 
 	implementation 'com.google.accompanist:accompanist-insets:0.20.2'
 	implementation 'com.google.accompanist:accompanist-flowlayout:0.21.5-rc'
-	implementation 'com.google.accompanist:accompanist-pager:0.13.0'
+	implementation 'com.google.accompanist:accompanist-pager:0.19.0'
 	implementation 'com.google.accompanist:accompanist-pager-indicators:0.13.0'
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.16.0'
 	implementation "com.google.accompanist:accompanist-swiperefresh:0.10.0"
 	implementation "com.google.accompanist:accompanist-permissions:0.18.0"
 
-	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.0'
-	implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.0'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.4.0'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0'
+	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
+	implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.1'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.4.1'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1'
 
-	implementation 'androidx.compose.runtime:runtime-livedata:1.0.5'
-	implementation 'androidx.compose.runtime:runtime:1.0.5'
+	implementation 'androidx.compose.runtime:runtime-livedata:1.1.0'
+	implementation 'androidx.compose.runtime:runtime:1.1.0'
 
 	def room_version = "2.4.1"
 	implementation "androidx.room:room-runtime:$room_version"
@@ -110,11 +110,14 @@ dependencies {
 
 	implementation 'io.coil-kt:coil:1.4.0'
 	implementation 'io.coil-kt:coil-compose:1.4.0'
+	implementation 'io.coil-kt:coil-video:1.4.0'
 	implementation "com.airbnb.android:lottie-compose:4.2.2"
 
 	implementation 'com.android.volley:volley:1.2.1'
 
 	implementation 'joda-time:joda-time:2.10.13'
+
+	implementation 'me.jorgecastillo:androidcolorx:0.2.0'
 
 	implementation 'br.com.devsrsouza.compose.icons.android:tabler-icons:1.0.0'
 	implementation 'br.com.devsrsouza.compose.icons.android:erikflowers-weather-icons:1.0.0'

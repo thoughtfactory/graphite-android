@@ -63,32 +63,6 @@ fun MenuBottomSheet() {
 		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart) {},
 		MenuBottomSheetButtonData(title = "Pinned", imageVector = TablerIcons.Pinned) {},
 		MenuBottomSheetButtonData(title = "Trash", imageVector = TablerIcons.Trash) {},
-
-		MenuBottomSheetButtonData(
-			title = "Diary",
-			imageVector = TablerIcons.Signature,
-			highlight = viewModel.mainActivityState.momentoScreenType.value == MomentoScreenType.Diary
-		) {
-			viewModel.mainActivityState.momentoScreenType.value = MomentoScreenType.Diary
-			hideSheet()
-		},
-		MenuBottomSheetButtonData(
-			title = "Notebook",
-			imageVector = TablerIcons.Notebook,
-			highlight = viewModel.mainActivityState.momentoScreenType.value == MomentoScreenType.Notebook
-		) {
-			viewModel.mainActivityState.momentoScreenType.value = MomentoScreenType.Notebook
-			hideSheet()
-		},
-		MenuBottomSheetButtonData(
-			title = "Scratchpad",
-			imageVector = TablerIcons.Notes,
-			highlight = viewModel.mainActivityState.momentoScreenType.value == MomentoScreenType.Scratchpad
-		) {
-			viewModel.mainActivityState.momentoScreenType.value = MomentoScreenType.Scratchpad
-			hideSheet()
-		},
-		null,
 	)
 
 

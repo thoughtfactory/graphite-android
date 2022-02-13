@@ -277,7 +277,7 @@ private fun HeaderCard(
 			}
 
 			ExpandableBox(
-				visible = expandInformation,
+				isVisible = expandInformation,
 				initialVisibility = false
 			) {
 				Column {

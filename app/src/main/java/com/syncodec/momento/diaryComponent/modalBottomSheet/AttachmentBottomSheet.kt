@@ -27,15 +27,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.ImagePainter
 import coil.compose.rememberImagePainter
+import coil.fetch.VideoFrameUriFetcher
+import coil.request.videoFrameMillis
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.diaryComponent.DiaryViewModel
 import com.syncodec.momento.diaryComponent.TempAttachmentData
-import com.syncodec.momento.konstant.AttachmentType
 import com.syncodec.momento.miscellaneous.createTempFileToExpose
+import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import java.nio.file.spi.FileTypeDetector
 
 
 data class AttachmentBottomSheetButtonData(val title: String, val imageVector: ImageVector, val onClick: () -> Unit)
@@ -51,23 +56,19 @@ fun AttachmentBottomSheet() {
 
 	val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
 		if (isCaptured) {
-			TempAttachmentData(
+			viewModel.insertAttachment(
 				uri = photoUri!!,
 				mimeType = context.contentResolver.getType(photoUri!!)
-			).apply {
-				viewModel.insertAttachment(this)
-			}
+			)
 		}
 	}
 
 	val openMediaPicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
 		uriList.forEach {
-			TempAttachmentData(
+			viewModel.insertAttachment(
 				uri = it,
 				mimeType = context.contentResolver.getType(it)
-			).apply {
-				viewModel.insertAttachment(this)
-			}
+			)
 		}
 	}
 
@@ -77,7 +78,11 @@ fun AttachmentBottomSheet() {
 
 	val attachmentBottomSheetButtonDataLists: List<AttachmentBottomSheetButtonData> = listOf(
 		AttachmentBottomSheetButtonData(title = "Camera", imageVector = TablerIcons.Camera) {
-			photoUri = createTempFileToExpose(context = context, attachmentType = AttachmentType.PHOTO)
+			photoUri = createTempFileToExpose(
+				context = context,
+				primaryKey = generatePrimaryKey(),
+				mimeType = "image/*"
+			)
 			takePicture.launch(photoUri)
 		},
 		AttachmentBottomSheetButtonData(title = "Gallery", imageVector = TablerIcons.Photo) {
@@ -120,9 +125,9 @@ fun AttachmentBottomSheet() {
 			modifier = Modifier
 				.padding(24.dp, 0.dp, 24.dp, 32.dp)
 		) {
-			itemsIndexed(viewModel.attachmentList) { _, tempMediaData ->
+			itemsIndexed(viewModel.attachmentList) { _, tempAttachmentData ->
 				AttachmentView(
-					tempAttachmentData = tempMediaData
+					tempAttachmentData = tempAttachmentData
 				) {
 
 				}
@@ -170,12 +175,13 @@ private fun AttachmentBottomSheetButton(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalCoilApi::class)
 @Composable
 private fun AttachmentView(
 	tempAttachmentData: TempAttachmentData,
 	onClick: () -> Unit
 ) {
+	val context = LocalContext.current
 	Card(
 		elevation = 0.dp,
 		backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -190,15 +196,39 @@ private fun AttachmentView(
 		when (tempAttachmentData.mimeType?.split("/")?.first()) {
 			"image" -> {
 				Image(
-					rememberImagePainter(tempAttachmentData.uri),
+					painter = rememberImagePainter(tempAttachmentData.uri),
 					contentDescription = null,
 					contentScale = ContentScale.Crop,
 					modifier = Modifier
 						.fillMaxSize()
 				)
 			}
-			"video" -> {}
-			else -> {}
+			"video" -> Image(
+				painter = rememberImagePainter(
+					data = tempAttachmentData.uri,
+					builder = {
+						fetcher(VideoFrameUriFetcher(context))
+						// optionally set frame location
+						videoFrameMillis(1000)
+						this.listener(
+							onError = { request, exception ->
+								Log.d("npr71", "error : ${exception.message}")
+							}
+						)
+					}
+				),
+				contentDescription = null,
+				contentScale = ContentScale.Crop,
+				modifier = Modifier
+					.fillMaxSize()
+			)
+			else -> Image(
+				painter = rememberImagePainter(tempAttachmentData.uri),
+				contentDescription = null,
+				contentScale = ContentScale.Crop,
+				modifier = Modifier
+					.fillMaxSize()
+			)
 		}
 
 		Box(
@@ -208,9 +238,9 @@ private fun AttachmentView(
 		) {
 			IconButton(onClick = { /*TODO*/ }) {
 				Icon(
-					imageVector = TablerIcons.CircleMinus,
+					imageVector = TablerIcons.X,
 					contentDescription = "Remove attachment",
-					tint = Color.Companion.Red
+					tint = Color.Companion.White
 				)
 			}
 		}

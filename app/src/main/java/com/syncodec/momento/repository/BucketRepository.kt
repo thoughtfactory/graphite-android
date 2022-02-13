@@ -28,7 +28,7 @@ class BucketRepository(val application: Application) {
 		return (application as Momento).getBucket(primaryKey)
 	}
 
-	suspend fun insert(bucketDbEntry: BucketDbEntry) {
+	fun insert(bucketDbEntry: BucketDbEntry) {
 		bucketTableDao.insert(bucketDbEntry)
 	}
 

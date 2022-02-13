@@ -1,7 +1,5 @@
 package com.syncodec.momento.database.bucket
 
-import android.util.Base64
-import org.json.JSONObject
 import kotlin.properties.Delegates
 
 data class BucketItem(

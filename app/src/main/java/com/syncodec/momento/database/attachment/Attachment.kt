@@ -21,10 +21,13 @@ data class Attachment(
 	@Expose
 	val timezoneOffset: Int,
 
-	@ColumnInfo(name = "attachment_type")
+	@ColumnInfo(name = "mime_type")
 	@Expose
-	val attachmentType: String
+	val mimeType: String?,
 
+	@ColumnInfo(name = "note_primary_key")
+	@Expose
+	val notePrimaryKey: String
 ) {
 	@ColumnInfo(name = "content_thumbnail")
 	@Expose
@@ -48,7 +51,7 @@ data class Attachment(
 		var result = primaryKey.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + timezoneOffset
-		result = 31 * result + attachmentType.hashCode()
+		result = 31 * result + mimeType.hashCode()
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
 		return result

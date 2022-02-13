@@ -65,7 +65,7 @@ fun ClimateChangeMessage() {
 			}
 
 			ExpandableBox(
-				visible = expanded
+				isVisible = expanded
 			) {
 				Column {
 					Spacer(modifier = Modifier.height(16.dp))

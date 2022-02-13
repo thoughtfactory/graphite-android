@@ -1,6 +1,7 @@
 package com.syncodec.momento.repository
 
 import android.app.Application
+import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.UserDatabase
@@ -32,7 +33,8 @@ class NotebookRepository(val application: Application) {
 	suspend fun createNewNotebook(
 		title: String,
 		description: String?,
-		color: Long?
+		color: Int?,
+		image: Bitmap?
 	) {
 		withContext(Dispatchers.IO) {
 			val primaryKey = generatePrimaryKey()
@@ -48,6 +50,10 @@ class NotebookRepository(val application: Application) {
 				this.color = color
 
 				(application as Momento).putNotebook(this)
+			}
+
+			if (image != null) {
+				(application as Momento).putNotebookImage(notebookKey = primaryKey, image = image)
 			}
 
 			NotebookDbEntry(

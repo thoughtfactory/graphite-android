@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
@@ -20,9 +21,6 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.EditorView
 import com.syncodec.momento.konstant.ErrorCode
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Italic
-import compose.icons.tablericons.Underline
 
 
 data class ToolItem(
@@ -123,12 +121,12 @@ private fun ToolbarButton(
 	)
 
 	Surface(
-		onClick = { onClick() },
 		shape = RoundedCornerShape(8.dp),
 		color = containerColor.value,
 		modifier = Modifier
 			.requiredSize(48.dp)
-			.padding(2.dp),
+			.padding(2.dp)
+			.clickable { onClick() },
 		shadowElevation = containerElevation.value
 	) {
 		Icon(

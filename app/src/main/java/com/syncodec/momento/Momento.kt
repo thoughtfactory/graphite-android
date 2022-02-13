@@ -1,6 +1,10 @@
 package com.syncodec.momento
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -57,21 +61,34 @@ class Momento : Application() {
 		return "$NOTEBOOK_DIR/notebook_$notebookKey"
 	}
 
+	fun getNotebookImagePath(notebookKey: String): String {
+		File(getNotebookDirPath(notebookKey = notebookKey)).mkdirs()
+		return "${getNotebookDirPath(notebookKey = notebookKey)}/notebook_image_$notebookKey.png"
+	}
+
 	fun getNotebookDataPath(notebookKey: String): String {
-		File("$NOTEBOOK_DIR/notebookKey_${notebookKey}").mkdirs()
-		return "$NOTEBOOK_DIR/notebookKey_$notebookKey/notebook_$notebookKey.json"
+		File("$NOTEBOOK_DIR/notebook_${notebookKey}").mkdirs()
+		return "${getNotebookDirPath(notebookKey = notebookKey)}/notebook_$notebookKey.json"
 	}
 
 	fun getChapterPath(notebookKey: String, chapterKey: String): String {
-		File("$NOTEBOOK_DIR/notebookKey_${notebookKey}").mkdirs()
-		return "$NOTEBOOK_DIR/notebookKey_$notebookKey/chapter_$chapterKey.json"
+		File("$NOTEBOOK_DIR/notebook_${notebookKey}").mkdirs()
+		return "$NOTEBOOK_DIR/notebook_$notebookKey/chapter_$chapterKey.json"
 	}
 
+	fun getDiaryDirPath(diaryKey: String): String {
+		return "$DIARY_DIR/diary_$diaryKey"
+	}
+
+	fun getDiaryDataPath(diaryKey: String):String {
+		File("$DIARY_DIR/diary_${diaryKey}").mkdirs()
+		return "${getDiaryDirPath(diaryKey = diaryKey)}/diary_$diaryKey.json"
+	}
 
 	fun putDiary(
 		note: Note
 	): Boolean {
-		val file = File("$DIARY_DIR/diary_${note.primaryKey}/diary_${note.primaryKey}.json")
+		val file = File(getDiaryDataPath(diaryKey = note.primaryKey))
 		return if (file.exists()) {
 			objectMapper.writeValue(file, note)
 			true
@@ -270,6 +287,23 @@ class Momento : Application() {
 			throw FileNotFoundException()
 		}
 
+	}
+
+	fun putNotebookImage(notebookKey: String, image: Bitmap) {
+		val imageFile = File(getNotebookImagePath(notebookKey = notebookKey))
+		val os: OutputStream = BufferedOutputStream(FileOutputStream(imageFile))
+		image.compress(Bitmap.CompressFormat.JPEG, 100, os)
+		os.close()
+	}
+
+	fun getNotebookImage(notebookKey: String): ImageBitmap? {
+		val imageFile = File(getNotebookImagePath(notebookKey = notebookKey))
+		return if (imageFile.exists()) {
+			val imageBytes = imageFile.readBytes()
+			BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size).asImageBitmap()
+		}else {
+			null
+		}
 	}
 
 	fun openNotebook(

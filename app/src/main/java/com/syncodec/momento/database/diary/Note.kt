@@ -17,6 +17,7 @@ data class Note(
 	var location: Location? = null
 	var address: String? = null
 	var weatherData: WeatherData? = null
+	var attachmentKeyList: MutableList<String> = mutableListOf()
 	var notebookKey: String? = null
 	var notebookRoute: MutableList<String>? = null
 	var isFavourite: Boolean = false

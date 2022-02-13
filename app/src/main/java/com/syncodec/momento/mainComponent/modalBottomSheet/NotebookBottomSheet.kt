@@ -1,14 +1,21 @@
 package com.syncodec.momento.mainComponent.modalBottomSheet
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -17,15 +24,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.momento.R
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.mainComponent.MainViewModel
+import com.syncodec.momento.mainComponent.screen.MomentoScreenType
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Notebook
+import compose.icons.tablericons.Pencil
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -45,7 +65,9 @@ fun NotebookBottomSheet() {
 	var notebookDescriptionText by rememberSaveable { mutableStateOf("") }
 	var isNotebookDescriptionTextFocused by remember { mutableStateOf(false) }
 
-	var notebookColor: Long? = null
+	var notebookTheme by remember { mutableStateOf(NotebookTheme.COLOR) }
+	var notebookColor: Color? = null
+	var notebookImage: Bitmap? = null
 
 	val createButtonColors = ButtonDefaults.buttonColors(
 		contentColor = MaterialTheme.colorScheme.primaryContainer,
@@ -92,8 +114,29 @@ fun NotebookBottomSheet() {
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		ColorList {
-			notebookColor = it
+		ThemeChooser(
+			notebookTheme = notebookTheme
+		) {
+			notebookTheme = it
+		}
+
+		Crossfade(
+			targetState = notebookTheme,
+			modifier = Modifier,
+			animationSpec = tween(
+				durationMillis = 400
+			)
+		) {
+			when (it) {
+				NotebookTheme.COLOR -> ColorChooser { color ->
+					notebookColor = color
+					notebookImage = null
+				}
+				NotebookTheme.IMAGE -> ImageChooser { image ->
+					notebookColor = null
+					notebookImage = image
+				}
+			}
 		}
 
 		Spacer(modifier = Modifier.height(16.dp))
@@ -111,7 +154,8 @@ fun NotebookBottomSheet() {
 			viewModel.insertNotebook(
 				title = notebookTitleText,
 				description = notebookDescriptionText,
-				color = notebookColor
+				color = notebookColor?.toArgb(),
+				image = notebookImage
 			)
 			focusManager.clearFocus()
 			scope.launch {
@@ -179,30 +223,257 @@ private fun LargeTextField(
 	)
 }
 
+private enum class NotebookTheme {
+	COLOR,
+	IMAGE
+}
+
 @Composable
-private fun ColorList(
-	onClick: (Long) -> Unit
+private fun ThemeChooser(
+	notebookTheme: NotebookTheme,
+	onThemeChange: (NotebookTheme) -> Unit
 ) {
-	Row(
+	val configuration = LocalConfiguration.current
+	val screenWidth = configuration.screenWidthDp.dp
+
+	val buttonWidth = (screenWidth - 48.dp) / 2
+
+	val spacerWidth by animateDpAsState(
+		targetValue = when (notebookTheme) {
+			NotebookTheme.COLOR -> 0.dp
+			NotebookTheme.IMAGE -> buttonWidth
+		},
+		tween(
+			durationMillis = 400
+		)
+	)
+
+	val colorColor by animateColorAsState(
+		targetValue = if (notebookTheme == NotebookTheme.COLOR) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
+		tween(durationMillis = 400)
+	)
+	val imageColor by animateColorAsState(
+		targetValue = if (notebookTheme == NotebookTheme.IMAGE) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
+		tween(durationMillis = 400)
+	)
+
+	val interactionSource = remember { MutableInteractionSource() }
+
+	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.height(64.dp)
-			.horizontalScroll(state = rememberScrollState()),
-		verticalAlignment = Alignment.CenterVertically
+			.height(56.dp)
+			.padding(24.dp, 0.dp),
+		verticalArrangement = Arrangement.Center
 	) {
-		Spacer(modifier = Modifier.width(12.dp))
-		for (i in 0 until 13) {
+		Box(
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(40.dp),
+			contentAlignment = Alignment.Center
+		) {
 			Box(
 				modifier = Modifier
-					.requiredSize(48.dp)
-					.padding(2.dp)
-					.clip(RoundedCornerShape(8.dp))
-					.background(Color(Random.nextInt()))
-					.clickable {
-						onClick(Random.nextLong())
-					}
+					.fillMaxWidth()
+					.height(28.dp)
+					.padding(4.dp, 0.dp)
+					.clip(RoundedCornerShape(12.dp))
+					.background(MaterialTheme.colorScheme.secondaryContainer)
+			)
+
+			Row(
+				modifier = Modifier
+					.fillMaxSize()
+			) {
+				Spacer(modifier = Modifier.width(spacerWidth))
+				Box(
+					modifier = Modifier
+						.fillMaxHeight()
+						.width(buttonWidth)
+						.clip(RoundedCornerShape(24.dp))
+						.background(MaterialTheme.colorScheme.primary),
+				)
+			}
+
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(28.dp),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = Modifier
+						.fillMaxHeight()
+						.weight(1f)
+						.clip(RoundedCornerShape(24.dp))
+						.clickable(interactionSource = interactionSource, indication = null) {
+							onThemeChange(NotebookTheme.COLOR)
+						},
+				) {
+					Text(
+						text = "Color",
+						style = MaterialTheme.typography.bodySmall,
+						color = colorColor,
+						fontWeight = FontWeight.Bold,
+						textAlign = TextAlign.Center,
+						maxLines = 1
+					)
+				}
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = Modifier
+						.fillMaxHeight()
+						.weight(1f)
+						.clip(RoundedCornerShape(24.dp))
+						.clickable(interactionSource = interactionSource, indication = null) {
+							onThemeChange(NotebookTheme.IMAGE)
+						},
+				) {
+					Text(
+						text = "Image",
+						style = MaterialTheme.typography.bodySmall,
+						color = imageColor,
+						fontWeight = FontWeight.Bold,
+						textAlign = TextAlign.Center,
+						maxLines = 1
+					)
+				}
+			}
+		}
+	}
+}
+
+@Composable
+private fun ColorChooser(
+	onChooseColor: (Color) -> Unit
+) {
+	val colorList: List<Color> = listOf(
+		Color.Red,
+		Color.Green,
+		Color.Blue
+	)
+
+	LazyRow(
+		modifier = Modifier
+			.fillMaxWidth()
+	) {
+		item {
+			Spacer(modifier = Modifier.width(8.dp))
+			BookCard(
+				color = colorList.first()
+			) { color, _ ->
+				onChooseColor(color!!)
+			}
+		}
+		for (i in 1 until colorList.size - 1) {
+			item {
+				BookCard(
+					color = colorList[i]
+				) { color, _ ->
+					onChooseColor(color!!)
+				}
+			}
+		}
+		item {
+			BookCard(
+				color = colorList.last()
+			) { color, _ ->
+				onChooseColor(color!!)
+			}
+			Spacer(modifier = Modifier.width(8.dp))
+		}
+	}
+}
+
+@Composable
+private fun ImageChooser(
+	onChooseImage: (Bitmap) -> Unit
+) {
+	val context = LocalContext.current
+
+	val imageList: List<Int> = listOf(
+		R.drawable.book_cover_1,
+		R.drawable.background,
+		R.drawable.book_cover_1,
+		R.drawable.book_cover_1,
+		R.drawable.book_cover_1,
+		R.drawable.book_cover_1,
+		R.drawable.book_cover_1,
+		R.drawable.book_cover_1,
+		R.drawable.book_cover_1,
+		R.drawable.book_cover_1,
+	)
+
+	LazyRow(
+		modifier = Modifier
+			.fillMaxWidth()
+	) {
+		item {
+			Spacer(modifier = Modifier.width(8.dp))
+			BookCard(
+				image = imageList.first()
+			) { _, image ->
+				onChooseImage(BitmapFactory.decodeResource(context.resources, image!!))
+			}
+		}
+		for (i in 1 until imageList.size - 1) {
+			item {
+				BookCard(
+					image = imageList[i]
+				) { _, image ->
+					onChooseImage(BitmapFactory.decodeResource(context.resources, image!!))
+				}
+			}
+		}
+		item {
+			BookCard(
+				image = imageList.last()
+			) { _, image ->
+				onChooseImage(BitmapFactory.decodeResource(context.resources, image!!))
+			}
+			Spacer(modifier = Modifier.width(8.dp))
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun BookCard(
+	color: Color? = null,
+	image: Int? = null,
+	onClick: (Color?, Int?) -> Unit
+) {
+	Card(
+		elevation = 8.dp,
+		shape = RoundedCornerShape(4.dp, 16.dp, 16.dp, 4.dp),
+		backgroundColor = color ?: Color.Transparent,
+		modifier = Modifier
+			.width(80.dp)
+			.aspectRatio(0.75f)
+			.padding(4.dp),
+		onClick = {
+			onClick(color, image)
+		}
+	) {
+		if (image != null) {
+			Image(
+				painter = painterResource(id = image),
+				contentDescription = null,
+				contentScale = ContentScale.Crop
 			)
 		}
-		Spacer(modifier = Modifier.width(12.dp))
+
+		Row(
+			modifier = Modifier
+				.fillMaxSize()
+		) {
+			Box(
+				modifier = Modifier
+					.width(12.dp)
+					.fillMaxHeight()
+					.background(Color.Black.copy(alpha = 0.31f))
+			)
+		}
 	}
 }
