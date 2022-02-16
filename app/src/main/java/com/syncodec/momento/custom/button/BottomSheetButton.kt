@@ -18,7 +18,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 
-data class MenuBottomSheetButtonData(val title: String, val imageVector: ImageVector, val highlight: Boolean = false, val onClick: () -> Unit)
+data class MenuBottomSheetButtonData(
+	val title: String,
+	val imageVector: ImageVector,
+	val highlight: Boolean = false,
+	val onClick: () -> Unit
+)
 
 @Composable
 fun MenuBottomSheetButton(

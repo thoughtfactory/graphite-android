@@ -115,7 +115,7 @@ fun MoviesScreen() {
 										}
 									} else {
 										Intent(context, BucketItemActivity::class.java).apply {
-											putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.MOVIES.ordinal)
+											putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.MOVIES.ordinal)
 											putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, bucketItem.bucketKey)
 											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, bucketItem.primaryKey)
 											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, bucketItem.innerContent)

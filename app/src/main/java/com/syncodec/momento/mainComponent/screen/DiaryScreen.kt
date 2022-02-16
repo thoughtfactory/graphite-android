@@ -4,10 +4,7 @@ import android.content.Intent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FloatTweenSpec
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -29,11 +26,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -42,14 +41,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.R
+import com.syncodec.momento.custom.squircle.Squircle
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.database.diary.MockDiaryDbEntry
-import com.syncodec.momento.database.diary.MockDiaryDbEntryList
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.miscellaneous.base64stringToBitmap
 import com.syncodec.momento.miscellaneous.timeStampToPrettyDay
 import com.syncodec.momento.miscellaneous.timeStampToTime
 import com.syncodec.momento.todayComponent.TodayActivity
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Paperclip
+import dev.jorgecastillo.androidcolorx.library.tints
 import org.joda.time.LocalDateTime
 import java.util.*
 
@@ -61,11 +63,40 @@ import java.util.*
 fun DiaryScreen() {
 	val viewModel: MainViewModel = viewModel()
 
+	val showArchived by viewModel.mainActivityState.showArchived
+	val showFavourite by viewModel.mainActivityState.showFavourite
+	val showTrash by viewModel.mainActivityState.showTrash
+	var isSelected by viewModel.mainActivityState.isSelected
+
 	val diaryList by viewModel.diaryRepository.diaryDbEntryListLiveData.observeAsState()
+	val isDiaryEmpty: Boolean = diaryList?.isEmpty() ?: true
+
 	val diaryDbEntryDayMap: MutableMap<Long, MutableList<DiaryDbEntry>> = mutableMapOf()
 
+	val selectedEntryList = viewModel.mainActivityState.selectedEntryList
+
 	val calendar = Calendar.getInstance()
-	diaryList?.forEach { diary ->
+	diaryList
+		?.filter {
+			if (showArchived && showFavourite && showTrash) {
+				it.isArchived && it.isFavourite && it.deletedTimestamp!=-1L
+			} else if (showArchived && showFavourite) {
+				it.isArchived && it.isFavourite && it.deletedTimestamp == -1L
+			} else if (showArchived && showTrash) {
+				it.isArchived && it.deletedTimestamp!=-1L
+			} else if(showFavourite && showTrash) {
+				it.isFavourite && it.deletedTimestamp!=-1L
+			} else if(showArchived) {
+				it.isArchived && it.deletedTimestamp == -1L
+			} else if(showFavourite) {
+				it.isFavourite && it.deletedTimestamp == -1L
+			} else if(showTrash) {
+				it.deletedTimestamp != -1L
+			} else {
+				it.deletedTimestamp == -1L
+			}
+		}
+		?.forEach { diary ->
 		calendar.apply {
 			timeInMillis = diary.userTimestamp
 			set(Calendar.MILLISECOND, 0)
@@ -80,36 +111,123 @@ fun DiaryScreen() {
 		}
 	}
 
-	LazyColumn(
-		modifier = Modifier
-	) {
-//			item {
-//				Spacer(modifier = Modifier.height(4.dp))
-//				ProgressCard(
-//					modifier = Modifier
-//						.fillMaxWidth()
-//						.padding(12.dp, 8.dp, 12.dp, 4.dp)
-//				)
-//			}
+	if (isDiaryEmpty) {
+		NoDiaryCard(!(showArchived || showFavourite || showTrash))
+	} else {
+		LazyColumn(
+			modifier = Modifier
+		) {
+			if (!(showArchived || showFavourite || showTrash)) {
+				item {
+					QuoteCard()
+					Spacer(modifier = Modifier.height(16.dp))
+				}
+			}
 
-		item {
-			Spacer(modifier = Modifier.height(8.dp))
-			QuoteCard()
-			Spacer(modifier = Modifier.height(16.dp))
-		}
+			diaryDbEntryDayMap.forEach { (day, diaryList) ->
+				stickyHeader {
+					DayHeaderCard(
+						title = timeStampToPrettyDay(day),
+						noEntries = diaryList.size
+					)
+				}
 
-		diaryDbEntryDayMap.forEach { (day, diaryList) ->
-			stickyHeader {
-				DayHeaderCard(
-					title = timeStampToPrettyDay(day),
-					noEntries = diaryList.size
-				)
+				diaryList.forEachIndexed { index, diaryDbEntry ->
+					item {
+						val tint = MaterialTheme.colorScheme.secondaryContainer
+
+						DiaryCard(
+							diaryDbEntry = diaryDbEntry,
+							isLast = index == diaryList.size - 1,
+							isSelected = diaryDbEntry.primaryKey in selectedEntryList,
+							tint = tint,
+							onClick = {
+								if (isSelected) {
+									isSelected = true
+									if (diaryDbEntry.primaryKey in selectedEntryList) {
+										selectedEntryList.remove(diaryDbEntry.primaryKey)
+									} else {
+										selectedEntryList.add(diaryDbEntry.primaryKey)
+									}
+								} else {
+								}
+							}
+						) {
+							isSelected = true
+							selectedEntryList.add(diaryDbEntry.primaryKey)
+						}
+						if (index != diaryList.size - 1) {
+							DiaryDaySpacer(tint = tint)
+						}
+					}
+				}
 			}
 
 			item {
-				DiaryDayCard(
-					diaryList = diaryList
+				Spacer(modifier = Modifier.height(128.dp))
+			}
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun NoDiaryCard(
+	showQuoteCard: Boolean
+) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+	) {
+		if (showQuoteCard) {
+			QuoteCard()
+			Spacer(modifier = Modifier.height(36.dp))
+		} else {
+			Spacer(modifier = Modifier.height(76.dp))
+		}
+
+		Box(
+			modifier = Modifier
+				.fillMaxSize(),
+			contentAlignment = Alignment.Center
+		) {
+			Column(
+				modifier = Modifier
+					.fillMaxWidth(),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.Center
+			) {
+				Image(
+					painter = painterResource(id = R.drawable.il_reading),
+					contentDescription = "No diary entries",
+					modifier = Modifier
+						.fillMaxWidth(0.5f)
 				)
+
+				Spacer(modifier = Modifier.height(24.dp))
+
+				Text(
+					text = "The town was paper, but the memories were not.",
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.primary,
+					modifier = Modifier
+						.fillMaxWidth(0.71f)
+				)
+
+				Spacer(modifier = Modifier.height(16.dp))
+
+				Text(
+					text = "~ John Green, Paper Towns",
+					style = MaterialTheme.typography.bodySmall,
+					fontStyle = FontStyle.Italic,
+					textAlign = TextAlign.End,
+					color = MaterialTheme.colorScheme.primary,
+					modifier = Modifier
+						.fillMaxWidth(0.71f)
+				)
+
+				Spacer(modifier = Modifier.height(108.dp))
 			}
 		}
 	}
@@ -196,18 +314,18 @@ private fun ProgressCard() {
 	}
 }
 
+@Preview
 @ExperimentalMaterialApi
 @Composable
 private fun QuoteCard() {
 	val context = LocalContext.current
-	Card(
-		elevation = 0.dp,
-		shape = RoundedCornerShape(20.dp),
+	Box(
 		modifier = Modifier
 			.height(80.dp)
 			.fillMaxWidth()
-			.padding(12.dp, 0.dp),
-		onClick = { context.startActivity(Intent(context, TodayActivity::class.java)) }
+			.padding(12.dp, 0.dp)
+			.clip(RoundedCornerShape(12.dp))
+			.clickable { context.startActivity(Intent(context, TodayActivity::class.java)) },
 	) {
 		Box(
 			modifier = Modifier
@@ -228,13 +346,12 @@ private fun QuoteCard() {
 				modifier = Modifier
 					.fillMaxWidth()
 					.fillMaxHeight()
-					.padding(16.dp),
+					.padding(12.dp),
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Box(
-					modifier = Modifier
-						.requiredSize(56.dp)
-						.clip(RoundedCornerShape(12.dp)),
+				Squircle(
+					sizeInDp = 56.dp,
+					smoothing = 6.0,
 				) {
 					Image(
 						painter = painterResource(id = R.drawable.background),
@@ -252,6 +369,7 @@ private fun QuoteCard() {
 						Text(
 							text = "04",
 							style = MaterialTheme.typography.bodyMedium,
+							fontWeight = FontWeight.Bold,
 							color = Color.White,
 							overflow = TextOverflow.Ellipsis,
 							maxLines = 1
@@ -312,79 +430,51 @@ private fun DayHeaderCard(
 			verticalAlignment = Alignment.Bottom,
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(14.dp, 0.dp, 12.dp, 12.dp)
+				.padding(14.dp, 0.dp, 12.dp, 0.dp)
 		) {
 			Box(
 				modifier = Modifier
 					.width(4.dp)
-					.height(32.dp)
+					.height(40.dp)
 					.clip(RoundedCornerShape(4.dp))
 					.background(MaterialTheme.colorScheme.primary)
 			)
 
 			Spacer(modifier = Modifier.width(8.dp))
 
-			Text(
-				text = title,
-				color = MaterialTheme.colorScheme.primary,
-				style = MaterialTheme.typography.bodyLarge
-			)
-
-			Spacer(modifier = Modifier.weight(1f))
-
-			Text(
-				text = "$noEntries entries",
-				color = MaterialTheme.colorScheme.onSurface,
-				style = MaterialTheme.typography.bodyMedium,
-			)
-		}
-	}
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Preview
-@Composable
-private fun DiaryDayCard(
-	@PreviewParameter(MockDiaryDbEntryList::class)
-	diaryList: List<DiaryDbEntry>
-) {
-	Card(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(0.dp, 0.dp, 8.dp, 0.dp),
-		backgroundColor = MaterialTheme.colorScheme.background,
-		shape = RoundedCornerShape(12.dp),
-		elevation = 0.dp
-	) {
-		Column(
-			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			Spacer(modifier = Modifier.height(0.dp))
-			diaryList.forEachIndexed { index, diaryDbEntry ->
-				val tint = MaterialTheme.colorScheme.secondaryContainer
-				DiaryCard(
-					diaryDbEntry = diaryDbEntry,
-					isFirst = index == 0,
-					isLast = index == diaryList.size - 1,
-					tint = tint
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(0.dp, 8.dp)
+			) {
+				Text(
+					text = title,
+					color = MaterialTheme.colorScheme.primary,
+					style = MaterialTheme.typography.bodyLarge
 				)
-				if (index != diaryList.size - 1) {
-					DiaryDaySpacer(tint = tint)
-				}
+
+				Spacer(modifier = Modifier.weight(1f))
+
+				Text(
+					text = "$noEntries entries",
+					color = MaterialTheme.colorScheme.onSurface,
+					style = MaterialTheme.typography.bodyMedium,
+				)
 			}
 		}
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@Preview
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun DiaryCard(
 	@PreviewParameter(MockDiaryDbEntry::class)
 	diaryDbEntry: DiaryDbEntry,
-	isFirst: Boolean = false,
 	isLast: Boolean = false,
-	tint: Color = Color.LightGray
+	isSelected: Boolean = false,
+	tint: Color = Color.LightGray,
+	onClick: () -> Unit,
+	onLongClick: () -> Unit
 ) {
 	Row(
 		modifier = Modifier
@@ -393,7 +483,6 @@ private fun DiaryCard(
 			.padding(8.dp, 0.dp, 8.dp, if (isLast) 8.dp else 0.dp),
 	) {
 		DiarySpacer(
-			isFirst = isFirst,
 			isLast = isLast,
 			tint = tint
 		)
@@ -401,11 +490,15 @@ private fun DiaryCard(
 		Card(
 			elevation = 0.dp,
 			shape = RoundedCornerShape(12.dp),
-			backgroundColor = MaterialTheme.colorScheme.background,
+			backgroundColor = if (isSelected) Color.LightGray else Color.Transparent,
 			border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
 			modifier = Modifier
-				.fillMaxSize(),
-			onClick = {}
+				.fillMaxSize()
+				.clip(RoundedCornerShape(12.dp))
+				.combinedClickable(
+					onClick = { onClick() },
+					onLongClick = { onLongClick() }
+				)
 		) {
 			Column(
 				modifier = Modifier
@@ -428,89 +521,107 @@ private fun DiaryCard(
 
 					Spacer(modifier = Modifier.weight(1f))
 
-					Icon(
-						painter = painterResource(id = R.drawable.ic_lock_3),
-//						imageVector = TablerIcons.LockOff,
-						contentDescription = "Locked",
-//						tint = Color.Unspecified,
-						tint = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.requiredSize(14.dp)
-					)
+					if (diaryDbEntry.isLocked) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_lock_3),
+							contentDescription = "Locked",
+							tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
+							modifier = Modifier
+								.requiredSize(14.dp)
+						)
+					}
 
-					Spacer(modifier = Modifier.width(2.dp))
+					if (diaryDbEntry.isArchived) {
+						if (diaryDbEntry.isLocked) {
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = "·",
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.primary,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1,
+								modifier = Modifier
+							)
+							Spacer(modifier = Modifier.width(2.dp))
+						}
+						Icon(
+							painter = painterResource(id = R.drawable.ic_archive_3),
+							contentDescription = "Archived",
+							tint = MaterialTheme.colorScheme.primary,
+							modifier = Modifier
+								.requiredSize(14.dp)
+						)
+					}
 
-					Text(
-						text = "·",
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.primary,
-						fontWeight = FontWeight.Bold,
-						maxLines = 1,
-						modifier = Modifier
-					)
+					if (diaryDbEntry.isFavourite) {
+						if (diaryDbEntry.isLocked || diaryDbEntry.isArchived) {
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = "·",
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.primary,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1,
+								modifier = Modifier
+							)
+							Spacer(modifier = Modifier.width(2.dp))
+						}
 
-					Spacer(modifier = Modifier.width(2.dp))
+						Icon(
+							painter = painterResource(id = R.drawable.ic_heart_3),
+							contentDescription = "Favourite",
+							tint = MaterialTheme.colorScheme.primary,
+							modifier = Modifier
+								.requiredSize(14.dp)
+						)
+					}
 
-					Icon(
-						painter = painterResource(id = R.drawable.ic_archive_3),
-//						imageVector = TablerIcons.Archive,
-						contentDescription = "Locked",
-//						tint = Color.Unspecified,
-						tint = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.requiredSize(14.dp)
-					)
+					if (diaryDbEntry.attachmentCount != 0) {
+						if (diaryDbEntry.isLocked || diaryDbEntry.isArchived || diaryDbEntry.isFavourite) {
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = "·",
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.primary,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1,
+								modifier = Modifier
+							)
+							Spacer(modifier = Modifier.width(2.dp))
+						}
 
-					Spacer(modifier = Modifier.width(2.dp))
+						Icon(
+							imageVector = TablerIcons.Paperclip,
+							contentDescription = "Attachment",
+							tint = MaterialTheme.colorScheme.primary,
+							modifier = Modifier
+								.requiredSize(14.dp)
+						)
+						Spacer(modifier = Modifier.width(2.dp))
+						Text(
+							text = "·",
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.primary,
+							fontWeight = FontWeight.Bold,
+							maxLines = 1,
+							modifier = Modifier
+						)
+						Spacer(modifier = Modifier.width(2.dp))
+						Text(
+							text = "${diaryDbEntry.attachmentCount}",
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.primary,
+							fontWeight = FontWeight.Bold,
+							maxLines = 1,
+							modifier = Modifier
+						)
+					}
 
-					Text(
-						text = "·",
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.primary,
-						fontWeight = FontWeight.Bold,
-						maxLines = 1,
-						modifier = Modifier
-					)
-
-					Spacer(modifier = Modifier.width(2.dp))
-
-					Icon(
-						painter = painterResource(id = R.drawable.ic_pin_3),
-//						imageVector = TablerIcons.Pin,
-						contentDescription = "Locked",
-//						tint = Color.Unspecified,
-						tint = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.requiredSize(14.dp)
-					)
-
-					Spacer(modifier = Modifier.width(2.dp))
-
-					Text(
-						text = "·",
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.primary,
-						fontWeight = FontWeight.Bold,
-						maxLines = 1,
-						modifier = Modifier
-					)
-
-					Spacer(modifier = Modifier.width(2.dp))
-
-					Icon(
-						painter = painterResource(id = R.drawable.ic_heart_3),
-//						imageVector = TablerIcons.Heart,
-						contentDescription = "Locked",
-//						tint = Color.Unspecified,
-						tint = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.requiredSize(14.dp)
-					)
 				}
 
 				Spacer(modifier = Modifier.height(8.dp))
 
-				if (diaryDbEntry.attachmentThumbnail==null) {
+				if (diaryDbEntry.attachmentThumbnail == null) {
 					Text(
 						text = "${diaryDbEntry.contentThumbnail}",
 						style = MaterialTheme.typography.bodyMedium,
@@ -528,13 +639,13 @@ private fun DiaryCard(
 							style = MaterialTheme.typography.bodyMedium,
 							maxLines = 4,
 							modifier = Modifier
+								.height(80.dp)
 								.weight(1f)
 						)
-						Card(
-							modifier = Modifier
-								.requiredSize(80.dp),
-							elevation = 0.dp,
-							shape = RoundedCornerShape(12.dp)
+						Spacer(modifier = Modifier.width(8.dp))
+						Squircle(
+							sizeInDp = 80.dp,
+							smoothing = 4.0
 						) {
 							Image(
 								painter = rememberImagePainter(data = diaryDbEntry.attachmentThumbnail!!.base64stringToBitmap()),
@@ -559,18 +670,18 @@ private fun DiaryCard(
 //							imageVector = TablerIcons.MapPin,
 							contentDescription = null,
 //							tint = Color.Unspecified,
-							tint = MaterialTheme.colorScheme.primary,
+							tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
 							modifier = Modifier
-								.aspectRatio(1f)
+								.requiredSize(16.dp)
 						)
-						Spacer(modifier = Modifier.width(4.dp))
+						Spacer(modifier = Modifier.width(2.dp))
 						Text(
 							text = "${diaryDbEntry.address}",
 							style = MaterialTheme.typography.bodySmall,
-							fontWeight = FontWeight.Bold,
 							fontStyle = FontStyle.Italic,
-							color = MaterialTheme.colorScheme.primary,
+							color = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
 							maxLines = 1,
+							overflow = TextOverflow.Ellipsis,
 							modifier = Modifier
 						)
 					}
@@ -623,7 +734,6 @@ private fun DiaryDaySpacer(
 
 @Composable
 private fun DiarySpacer(
-	isFirst: Boolean = false,
 	isLast: Boolean = false,
 	tint: Color
 ) {
@@ -642,7 +752,7 @@ private fun DiarySpacer(
 				modifier = Modifier
 					.width(4.dp)
 					.height(33.dp)
-					.background(if (isFirst) Color.Transparent else tint)
+					.background(tint)
 			)
 			Box(
 				modifier = Modifier

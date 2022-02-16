@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -18,9 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.*
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.R
@@ -34,6 +38,7 @@ import com.syncodec.momento.custom.DotsPulsing
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
+import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.ui.theme.MomentoTheme
 import kotlinx.coroutines.launch
 import me.onebone.toolbar.CollapsingToolbarScaffold
@@ -53,7 +58,8 @@ class BucketActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
-		viewModel.bucketItemType = BucketItemType.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.TODO.ordinal)]
+		viewModel.bucketItemType =
+			BucketItemType.Type.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.TODO.ordinal)]
 		viewModel.openBucket()
 
 		setContent {
@@ -71,22 +77,17 @@ class BucketActivity : ComponentActivity() {
 			viewModel.bucketActivityState.selectedToDeleteList.removeAll { true }
 			viewModel.bucketActivityState.isSelectedToDelete.value = false
 		} else {
-			finish()
+			super.onBackPressed()
 		}
 	}
 
-	@OptIn(ExperimentalMaterialApi::class)
+	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 	@Composable
 	private fun BucketScreen() {
-		val configuration = LocalConfiguration.current
-		val screenWidth = configuration.screenWidthDp.dp
-		val screenHeight = configuration.screenHeightDp.dp
-
-		val scope = rememberCoroutineScope()
 
 		val collapsingToolbarScaffoldState = viewModel.bucketActivityState.collapsingToolbarScaffoldState
 
-		val status: Int by viewModel.status
+		val status by viewModel.status
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.bucketActivityState.bottomSheetState,
@@ -96,120 +97,332 @@ class BucketActivity : ComponentActivity() {
 				SheetLayout()
 			},
 		) {
-			Box(
-				modifier = Modifier,
-				contentAlignment = Alignment.BottomCenter
-			) {
-				CollapsingToolbarScaffold(
-					state = collapsingToolbarScaffoldState,
-					scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-					modifier = Modifier
-						.fillMaxSize(),
-					toolbar = {
-						BucketTopBar()
-						Box(
+			when (status) {
+				Status.INIT -> {
+					Box(
+						contentAlignment = Alignment.Center,
+						modifier = Modifier
+							.fillMaxSize(),
+					) {
+						val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
+
+						LottieAnimation(
+							composition = lottieComposition,
+							iterations = LottieConstants.IterateForever,
 							modifier = Modifier
-								.fillMaxWidth()
-								.height(256.dp)
-								.padding(16.dp, 64.dp, 16.dp, 16.dp)
-								.road(Alignment.CenterStart, Alignment.BottomEnd)
-						) {
-							Image(
-								painter = when (viewModel.bucketItemType) {
-									BucketItemType.TODO -> painterResource(id = R.drawable.il_book_screen_header)
-									BucketItemType.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
-									BucketItemType.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
-									BucketItemType.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
-									BucketItemType.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
-									BucketItemType.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
-								},
-								contentDescription = null,
-								contentScale = ContentScale.Fit,
-								modifier = Modifier
-									.fillMaxWidth()
-									.height(256.dp)
-									.graphicsLayer {
-										this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
-									},
-							)
-						}
-					}
-				) {
-					when (status) {
-						1 -> {
-							when (viewModel.bucketItemType) {
-								BucketItemType.TODO -> TodoScreen()
-								BucketItemType.BOOKS -> BooksScreen()
-								BucketItemType.MOVIES -> MoviesScreen()
-								BucketItemType.TVSHOWS -> {}
-								BucketItemType.MEDIA -> {}
-								BucketItemType.LINKS -> {}
-							}
-						}
-						0 -> {
-							Box(
-								contentAlignment = Alignment.BottomCenter,
-								modifier = Modifier
-									.fillMaxSize(),
-							) {
-								DotsPulsing()
-							}
-						}
-						-2 -> {}
-						-1 -> {}
-						else -> {}
+								.requiredSize(128.dp)
+						)
 					}
 				}
-
-				if (viewModel.bucketItemList.isNotEmpty()) {
-					Column(
+				Status.LOADING -> {
+					Box(
+						contentAlignment = Alignment.Center,
 						modifier = Modifier
-							.fillMaxWidth()
+							.fillMaxSize(),
 					) {
-						LargeButton(
-							text = if (viewModel.bucketActivityState.isSelectedToDelete.value)
-								"Delete"
-							else when (viewModel.bucketItemType) {
-								BucketItemType.TODO -> "Add New Task"
-								BucketItemType.BOOKS -> "What did you read?"
-								BucketItemType.MOVIES -> "A new movie?"
-								BucketItemType.TVSHOWS -> "What did you watch?"
-								BucketItemType.MEDIA -> "Add media"
-								BucketItemType.LINKS -> "Add link"
-							},
-							backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-							textColor = MaterialTheme.colorScheme.onPrimaryContainer,
-							modifier = Modifier
-								.fillMaxWidth()
-								.height(48.dp)
-								.padding(24.dp, 0.dp)
-								.focusable()
-						) {
-							if (viewModel.bucketActivityState.isSelectedToDelete.value) {
-								viewModel.deleteBucketItem(viewModel.bucketActivityState.selectedToDeleteList!!)
-							}
-							else {
-								viewModel.bucketActivityState.bottomSheetType.value = when (viewModel.bucketItemType) {
-									BucketItemType.TODO -> BottomSheetType.AddMovieSheet
-									BucketItemType.BOOKS -> BottomSheetType.AddBookSheet
-									BucketItemType.MOVIES -> BottomSheetType.AddMovieSheet
-									BucketItemType.TVSHOWS -> BottomSheetType.AddMovieSheet
-									BucketItemType.MEDIA -> BottomSheetType.AddMovieSheet
-									BucketItemType.LINKS -> BottomSheetType.AddMovieSheet
-								}
+						val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
 
-								scope.launch {
-									viewModel.bucketActivityState.bottomSheetState.show()
+						LottieAnimation(
+							composition = lottieComposition,
+							iterations = LottieConstants.IterateForever,
+							modifier = Modifier
+								.requiredSize(128.dp)
+						)
+					}
+				}
+				Status.LOADED -> {
+					if (viewModel.bucketItemList.isEmpty()) {
+						EmptyBucketView()
+					} else {
+						CollapsingToolbarScaffold(
+							modifier = Modifier.fillMaxSize(),
+							state = collapsingToolbarScaffoldState,
+							scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+							toolbar = {
+								BucketTopBar()
+								Box(
+									modifier = Modifier
+										.fillMaxWidth()
+										.height(256.dp)
+										.padding(16.dp, 64.dp, 16.dp, 16.dp)
+										.road(Alignment.CenterStart, Alignment.BottomEnd)
+								) {
+									Image(
+										painter = when (viewModel.bucketItemType) {
+											BucketItemType.Type.TODO -> painterResource(id = R.drawable.il_book_screen_header)
+											BucketItemType.Type.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
+											BucketItemType.Type.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
+											BucketItemType.Type.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
+											BucketItemType.Type.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
+											BucketItemType.Type.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
+										},
+										contentDescription = null,
+										contentScale = ContentScale.Fit,
+										modifier = Modifier
+											.fillMaxWidth()
+											.height(256.dp)
+											.graphicsLayer {
+												this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
+											},
+									)
+								}
+							}
+						) {
+							when (viewModel.bucketItemType) {
+								BucketItemType.Type.TODO -> TodoScreen()
+								BucketItemType.Type.BOOKS -> BooksScreen()
+								BucketItemType.Type.MOVIES -> MoviesScreen()
+								BucketItemType.Type.TVSHOWS -> {
+								}
+								BucketItemType.Type.MEDIA -> {
+								}
+								BucketItemType.Type.LINKS -> {
 								}
 							}
 						}
 
-						Spacer(modifier = Modifier.height(24.dp))
+						AddNewBucketItemButton()
+					}
+				}
+			}
+
+		}
+	}
+
+	@Composable
+	private fun EmptyBucketView() {
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+		) {
+			BucketTopBar()
+			Box(
+				modifier = Modifier
+					.fillMaxSize(),
+				contentAlignment = Alignment.Center
+			) {
+				Column(
+					modifier = Modifier
+						.fillMaxWidth(),
+					horizontalAlignment = Alignment.CenterHorizontally,
+					verticalArrangement = Arrangement.Center
+				) {
+					Spacer(modifier = Modifier.height(24.dp))
+					Image(
+						painter = painterResource(id = R.drawable.il_reading),
+						contentDescription = "No diary entries",
+						modifier = Modifier
+							.fillMaxWidth(0.5f)
+					)
+
+					Spacer(modifier = Modifier.height(24.dp))
+
+					Text(
+						text = "The town was paper, but the memories were not.",
+						style = MaterialTheme.typography.bodyMedium,
+						fontWeight = FontWeight.Bold,
+						color = MaterialTheme.colorScheme.primary,
+						modifier = Modifier
+							.fillMaxWidth(0.71f)
+					)
+
+					Spacer(modifier = Modifier.height(16.dp))
+
+					Text(
+						text = "~ John Green, Paper Towns",
+						style = MaterialTheme.typography.bodySmall,
+						fontStyle = FontStyle.Italic,
+						textAlign = TextAlign.End,
+						color = MaterialTheme.colorScheme.primary,
+						modifier = Modifier
+							.fillMaxWidth(0.71f)
+					)
+				}
+			}
+		}
+	}
+
+	@OptIn(ExperimentalMaterialApi::class)
+	@Composable
+	private fun AddNewBucketItemButton() {
+		val scope = rememberCoroutineScope()
+
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(0.dp, 0.dp, 0.dp, 24.dp),
+			contentAlignment = Alignment.BottomCenter
+		) {
+			LargeButton(
+				text = if (viewModel.bucketActivityState.isSelectedToDelete.value)
+					"Delete"
+				else when (viewModel.bucketItemType) {
+					BucketItemType.Type.TODO -> "Add New Task"
+					BucketItemType.Type.BOOKS -> "What did you read?"
+					BucketItemType.Type.MOVIES -> "A new movie?"
+					BucketItemType.Type.TVSHOWS -> "What did you watch?"
+					BucketItemType.Type.MEDIA -> "Add media"
+					BucketItemType.Type.LINKS -> "Add link"
+				},
+				backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+				textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(48.dp)
+					.padding(24.dp, 0.dp)
+					.focusable()
+			) {
+				if (viewModel.bucketActivityState.isSelectedToDelete.value) {
+					viewModel.deleteBucketItem(viewModel.bucketActivityState.selectedToDeleteList)
+				} else {
+					viewModel.bucketActivityState.bottomSheetType.value = when (viewModel.bucketItemType) {
+						BucketItemType.Type.TODO -> BottomSheetType.AddMovieSheet
+						BucketItemType.Type.BOOKS -> BottomSheetType.AddBookSheet
+						BucketItemType.Type.MOVIES -> BottomSheetType.AddMovieSheet
+						BucketItemType.Type.TVSHOWS -> BottomSheetType.AddMovieSheet
+						BucketItemType.Type.MEDIA -> BottomSheetType.AddMovieSheet
+						BucketItemType.Type.LINKS -> BottomSheetType.AddMovieSheet
+					}
+
+					scope.launch {
+						viewModel.bucketActivityState.bottomSheetState.show()
 					}
 				}
 			}
 		}
 	}
+
+//	@OptIn(ExperimentalMaterialApi::class)
+//	@Composable
+//	private fun BucketScreen() {
+//		val scope = rememberCoroutineScope()
+//
+//		val collapsingToolbarScaffoldState = viewModel.bucketActivityState.collapsingToolbarScaffoldState
+//
+//		val status: Int by viewModel.status
+//
+//		ModalBottomSheetLayout(
+//			sheetState = viewModel.bucketActivityState.bottomSheetState,
+//			sheetElevation = 0.dp,
+//			sheetBackgroundColor = Color.Transparent,
+//			sheetContent = {
+//				SheetLayout()
+//			},
+//		) {
+//			Box(
+//				modifier = Modifier,
+//				contentAlignment = Alignment.BottomCenter
+//			) {
+//				CollapsingToolbarScaffold(
+//					state = collapsingToolbarScaffoldState,
+//					scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+//					modifier = Modifier
+//						.fillMaxSize(),
+//					toolbar = {
+//						BucketTopBar()
+//						Box(
+//							modifier = Modifier
+//								.fillMaxWidth()
+//								.height(256.dp)
+//								.padding(16.dp, 64.dp, 16.dp, 16.dp)
+//								.road(Alignment.CenterStart, Alignment.BottomEnd)
+//						) {
+//							Image(
+//								painter = when (viewModel.bucketItemType) {
+//									BucketItemType.Type.TODO -> painterResource(id = R.drawable.il_book_screen_header)
+//									BucketItemType.Type.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
+//									BucketItemType.Type.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
+//									BucketItemType.Type.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
+//									BucketItemType.Type.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
+//									BucketItemType.Type.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
+//								},
+//								contentDescription = null,
+//								contentScale = ContentScale.Fit,
+//								modifier = Modifier
+//									.fillMaxWidth()
+//									.height(256.dp)
+//									.graphicsLayer {
+//										this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
+//									},
+//							)
+//						}
+//					}
+//				) {
+//					when (status) {
+//						1 -> {
+//							when (viewModel.bucketItemType) {
+//								BucketItemType.Type.TODO -> TodoScreen()
+//								BucketItemType.Type.BOOKS -> BooksScreen()
+//								BucketItemType.Type.MOVIES -> MoviesScreen()
+//								BucketItemType.Type.TVSHOWS -> {}
+//								BucketItemType.Type.MEDIA -> {}
+//								BucketItemType.Type.LINKS -> {}
+//							}
+//						}
+//						0 -> {
+//							Box(
+//								contentAlignment = Alignment.BottomCenter,
+//								modifier = Modifier
+//									.fillMaxSize(),
+//							) {
+//								DotsPulsing()
+//							}
+//						}
+//						-2 -> {}
+//						-1 -> {}
+//						else -> {}
+//					}
+//				}
+//
+//				if (viewModel.bucketItemList.isNotEmpty()) {
+//					Column(
+//						modifier = Modifier
+//							.fillMaxWidth()
+//					) {
+//						LargeButton(
+//							text = if (viewModel.bucketActivityState.isSelectedToDelete.value)
+//								"Delete"
+//							else when (viewModel.bucketItemType) {
+//								BucketItemType.Type.TODO -> "Add New Task"
+//								BucketItemType.Type.BOOKS -> "What did you read?"
+//								BucketItemType.Type.MOVIES -> "A new movie?"
+//								BucketItemType.Type.TVSHOWS -> "What did you watch?"
+//								BucketItemType.Type.MEDIA -> "Add media"
+//								BucketItemType.Type.LINKS -> "Add link"
+//							},
+//							backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+//							textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+//							modifier = Modifier
+//								.fillMaxWidth()
+//								.height(48.dp)
+//								.padding(24.dp, 0.dp)
+//								.focusable()
+//						) {
+//							if (viewModel.bucketActivityState.isSelectedToDelete.value) {
+//								viewModel.deleteBucketItem(viewModel.bucketActivityState.selectedToDeleteList!!)
+//							}
+//							else {
+//								viewModel.bucketActivityState.bottomSheetType.value = when (viewModel.bucketItemType) {
+//									BucketItemType.Type.TODO -> BottomSheetType.AddMovieSheet
+//									BucketItemType.Type.BOOKS -> BottomSheetType.AddBookSheet
+//									BucketItemType.Type.MOVIES -> BottomSheetType.AddMovieSheet
+//									BucketItemType.Type.TVSHOWS -> BottomSheetType.AddMovieSheet
+//									BucketItemType.Type.MEDIA -> BottomSheetType.AddMovieSheet
+//									BucketItemType.Type.LINKS -> BottomSheetType.AddMovieSheet
+//								}
+//
+//								scope.launch {
+//									viewModel.bucketActivityState.bottomSheetState.show()
+//								}
+//							}
+//						}
+//
+//						Spacer(modifier = Modifier.height(24.dp))
+//					}
+//				}
+//			}
+//		}
+//	}
 
 	@OptIn(ExperimentalMaterialApi::class)
 	class BucketActivityState(

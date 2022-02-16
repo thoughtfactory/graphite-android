@@ -5,12 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Scaffold
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -18,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.syncodec.momento.MainActivity
 import com.syncodec.momento.custom.calendarView2.Calendar
 import com.syncodec.momento.custom.calenderView.CalendarView
 import com.syncodec.momento.mainComponent.MainViewModel
@@ -31,17 +25,6 @@ import kotlinx.coroutines.launch
 @ExperimentalFoundationApi
 @Composable
 fun CalendarScreen() {
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
-	val screenWidth = configuration.screenWidthDp.dp
-
-	val viewModel: MainViewModel = viewModel()
-	val scope = rememberCoroutineScope()
-	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-		scope.launch {
-			viewModel.mainActivityState.bottomSheetState.show()
-		}
-	}
 
 	Column(
 		modifier = Modifier
@@ -49,10 +32,7 @@ fun CalendarScreen() {
 			.fillMaxHeight()
 			.background(MaterialTheme.colorScheme.background)
 	) {
-		MainTopBar(
-			showBackground = true,
-			openSheet = openSheet
-		)
+		MainTopBar()
 		Calendar()
 	}
 }

@@ -10,6 +10,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,23 +20,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.R
+import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.ui.theme.Stardos
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Cloud
 import compose.icons.tablericons.Search
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun MainTopBar(
-	showBackground: Boolean = false,
-	openSheet: (BottomSheetType) -> Unit
-) {
+fun MainTopBar() {
+	val scope = rememberCoroutineScope()
+	val viewModel: MainViewModel = viewModel()
+
+	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
+		viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
+		scope.launch {
+			viewModel.mainActivityState.bottomSheetState.show()
+		}
+	}
+
 	Column(
 		modifier = Modifier
 			.zIndex(1f)
-			.background(if (showBackground) MaterialTheme.colorScheme.primaryContainer else Color.Unspecified),
+			.background(MaterialTheme.colorScheme.primaryContainer),
 		) {
 
 		Box(

@@ -28,8 +28,6 @@ import com.syncodec.momento.diaryComponent.DiaryViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

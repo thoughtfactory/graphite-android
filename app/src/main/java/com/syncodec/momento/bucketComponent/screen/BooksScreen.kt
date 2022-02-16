@@ -7,11 +7,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
@@ -38,14 +40,13 @@ import coil.compose.rememberImagePainter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.syncodec.momento.R
-import com.syncodec.momento.bucketComponent.BucketViewModel
 import com.syncodec.momento.bucketComponent.BucketItemActivity
+import com.syncodec.momento.bucketComponent.BucketViewModel
 import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.database.bucket.BucketItem
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import compose.icons.TablerIcons
-import compose.icons.tablericons.CircleDotted
 import compose.icons.tablericons.Plus
 import kotlinx.coroutines.launch
 
@@ -118,7 +119,7 @@ fun BooksScreen() {
 										}
 									} else {
 										Intent(context, BucketItemActivity::class.java).apply {
-											putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.BOOKS.ordinal)
+											putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.BOOKS.ordinal)
 											putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, bucketItem.bucketKey)
 											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, bucketItem.primaryKey)
 											putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, bucketItem.innerContent)

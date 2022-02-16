@@ -43,7 +43,7 @@ val Stardos = FontFamily(
 	body
 	label
  */
-val MomentoTypography = androidx.compose.material3.Typography(
+val DefaultTypography = androidx.compose.material3.Typography(
 	displayLarge = TextStyle(
 		fontFamily = MontserratFontFamily,
 		fontWeight = FontWeight.Light,
@@ -119,14 +119,14 @@ val MomentoTypography = androidx.compose.material3.Typography(
 		fontWeight = FontWeight.Normal,
 		fontSize = 16.sp,
 		lineHeight = 20.sp,
-		letterSpacing = 0.25.sp
+		letterSpacing = 0.4.sp
 	),
 	bodySmall = TextStyle(
 		fontFamily = KarlaFontFamily,
 		fontWeight = FontWeight.Normal,
-		fontSize = 14.sp,
+		fontSize = 13.sp,
 		lineHeight = 16.sp,
-		letterSpacing = 0.4.sp
+		letterSpacing = 0.8.sp
 	),
 	labelLarge = TextStyle(
 		fontFamily = MontserratFontFamily,

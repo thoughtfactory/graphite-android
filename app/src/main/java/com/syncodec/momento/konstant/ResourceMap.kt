@@ -9,13 +9,22 @@ import compose.icons.weathericons.DaySunny
 
 class ResourceMap {
 	companion object {
-		val bucketTypeToIcon: Map<BucketItemType, ImageVector> = mapOf(
-			BucketItemType.TODO to TablerIcons.ListCheck,
-			BucketItemType.BOOKS to TablerIcons.Notebook,
-			BucketItemType.MOVIES to TablerIcons.Movie,
-			BucketItemType.TVSHOWS to TablerIcons.DeviceTv,
-			BucketItemType.MEDIA to TablerIcons.AspectRatio,
-			BucketItemType.LINKS to TablerIcons.Link,
+		val bucketTypeToIcon: Map<BucketItemType.Type, ImageVector> = mapOf(
+			BucketItemType.Type.TODO to TablerIcons.ListCheck,
+			BucketItemType.Type.BOOKS to TablerIcons.Notebook,
+			BucketItemType.Type.MOVIES to TablerIcons.Movie,
+			BucketItemType.Type.TVSHOWS to TablerIcons.DeviceTv,
+			BucketItemType.Type.MEDIA to TablerIcons.AspectRatio,
+			BucketItemType.Type.LINKS to TablerIcons.Link,
+		)
+
+		val BucketItemNameMap: Map<BucketItemType.Type, String> = mapOf(
+			BucketItemType.Type.TODO to "Todo",
+			BucketItemType.Type.BOOKS to "Books",
+			BucketItemType.Type.MOVIES to "Movies",
+			BucketItemType.Type.TVSHOWS to "Tv shows",
+			BucketItemType.Type.MEDIA to "Media",
+			BucketItemType.Type.LINKS to "Links",
 		)
 
 		val weatherCode: Map<String, ImageVector> = mapOf(

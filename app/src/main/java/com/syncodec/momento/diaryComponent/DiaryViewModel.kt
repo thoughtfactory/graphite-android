@@ -59,6 +59,11 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 	var address by mutableStateOf<String?>(null)
 	var weatherData by mutableStateOf<WeatherData?>(null)
 
+	var isArchived by mutableStateOf(false)
+	var isFavourite by mutableStateOf(false)
+	var isLocked by mutableStateOf(false)
+	var deletedTimestamp by mutableStateOf(-1L)
+
 	var note: Note by mutableStateOf(
 		Note(
 			primaryKey = generatePrimaryKey(),
@@ -114,10 +119,15 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 			note.location = this@DiaryViewModel.location
 			note.address = this@DiaryViewModel.address
 
+			note.isArchived = isArchived
+			note.isFavourite = isFavourite
+			note.isLocked = isLocked
+
 			attachmentRepository.saveAttachmentList(diaryKey = note.primaryKey, attachmentList = attachmentList)
 			diaryRepository.saveDiary(
 				note = this@DiaryViewModel.note,
-				attachmentList = attachmentList
+				attachmentList = attachmentList,
+				deletedTimestamp = deletedTimestamp
 			)
 		}
 	}

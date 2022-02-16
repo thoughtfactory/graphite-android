@@ -1,32 +1,32 @@
 package com.syncodec.momento.mainComponent.screen
 
-import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.syncodec.momento.R
+import com.syncodec.momento.custom.ChipData
+import com.syncodec.momento.custom.ChipView
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.ComponentChooser
-import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
-import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
-import kotlinx.coroutines.launch
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Archive
+import compose.icons.tablericons.Heart
+import compose.icons.tablericons.Trash
 
 
 sealed class MomentoScreenType {
@@ -40,13 +40,11 @@ sealed class MomentoScreenType {
 fun MomentoScreen() {
 	val viewModel: MainViewModel = viewModel()
 
-	val scope = rememberCoroutineScope()
-	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-		viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
-		scope.launch {
-			viewModel.mainActivityState.bottomSheetState.show()
-		}
-	}
+	var showArchived by viewModel.mainActivityState.showArchived
+	var showFavourite by viewModel.mainActivityState.showFavourite
+	var showTrash by viewModel.mainActivityState.showTrash
+	val isSelected by viewModel.mainActivityState.isSelected
+	var showDeleteDialog by viewModel.mainActivityState.showDeleteDialog
 
 	val scaffoldScale by animateFloatAsState(
 		targetValue = if (viewModel.mainActivityState.bottomSheetState.progress.to == ModalBottomSheetValue.Hidden) 1f else 0.95f,
@@ -56,17 +54,31 @@ fun MomentoScreen() {
 		),
 	)
 
+	val chipDataList: List<ChipData> = listOf(
+		ChipData(title = "Archived", imageVector = TablerIcons.Archive, isSelected = showArchived) { showArchived = !showArchived },
+		ChipData(title = "Favourite", imageVector = TablerIcons.Heart, isSelected = showFavourite) { showFavourite = !showFavourite },
+//		ChipData(title = "Trash", imageVector = TablerIcons.Trash, isSelected = showTrash) { showTrash = !showTrash },
+	)
+
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
 			.padding(0.dp, 0.dp, 0.dp, 64.dp)
 	) {
-		MainTopBar(
-			openSheet = openSheet,
-			showBackground = true
+		ComponentChooser(
+			isSelected = isSelected,
+			selectedSize = viewModel.mainActivityState.selectedEntryList.size,
+			onClickDelete = { showDeleteDialog = true }
 		)
 
-		ComponentChooser()
+		AnimatedVisibility(
+			visible = showArchived || showFavourite || showTrash,
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(4.dp, 0.dp, 4.dp, 8.dp)
+		) {
+			ChipView(chipDataList = chipDataList)
+		}
 
 		Crossfade(
 			targetState = viewModel.mainActivityState.momentoScreenType.value,

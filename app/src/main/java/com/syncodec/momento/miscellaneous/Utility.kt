@@ -8,12 +8,19 @@ import android.net.Uri
 import android.text.format.DateFormat
 import android.util.Base64
 import androidx.core.content.FileProvider
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import com.syncodec.momento.BuildConfig
 import java.io.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+val VAULT_KEY = stringPreferencesKey("vault_key")
 
 fun timeStampToPrettyDay(timestamp: Long): String {
 	return DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()

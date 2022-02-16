@@ -1,44 +1,40 @@
 package com.syncodec.momento.custom
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
-import com.syncodec.momento.custom.modifier.dashedBorder
 
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun ClimateChangeMessage() {
 
 	var expanded by remember{ mutableStateOf(false) }
 
-	Box(
-		contentAlignment = Alignment.Center,
+	Card(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(24.dp)
-			.background(MaterialTheme.colorScheme.background)
-			.clip(shape = RoundedCornerShape(12.dp))
-			.clickable { expanded = !expanded }
-			.dashedBorder(
-				width = 2.dp,
-				color = MaterialTheme.colorScheme.primary,
-				shape = RoundedCornerShape(4.dp),
-				on = 8.dp,
-				off = 8.dp
-			),
+			.background(Color.Transparent),
+		shape = RoundedCornerShape(12.dp),
+		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
+		onClick = {expanded = !expanded}
 	) {
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally,
@@ -59,6 +55,7 @@ fun ClimateChangeMessage() {
 				Text(
 					text = "Internet is already responsible for 2% of greenhouse gas emission. Search only for most accurate title.",
 					style = MaterialTheme.typography.bodySmall,
+					fontWeight = FontWeight.Bold,
 					color = MaterialTheme.colorScheme.onPrimaryContainer,
 					textAlign = TextAlign.Justify,
 				)

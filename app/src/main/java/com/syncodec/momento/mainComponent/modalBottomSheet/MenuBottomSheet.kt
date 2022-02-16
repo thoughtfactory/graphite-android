@@ -1,5 +1,6 @@
 package com.syncodec.momento.mainComponent.modalBottomSheet
 
+import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -15,19 +16,20 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.momento.MainActivity
+import com.syncodec.momento.Momento
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.mainComponent.screen.MomentoScreenType
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import kotlinx.coroutines.launch
@@ -40,6 +42,19 @@ data class MenuBottomSheetButtonData(val title: String, val imageVector: ImageVe
 fun MenuBottomSheet() {
 	val viewModel: MainViewModel = viewModel()
 	val scope = rememberCoroutineScope()
+	val mainActivity = LocalContext.current as MainActivity
+
+	var showArchived by viewModel.mainActivityState.showArchived
+	var showFavourite by viewModel.mainActivityState.showFavourite
+	var showTrash by viewModel.mainActivityState.showTrash
+	val isSelected by viewModel.mainActivityState.isSelected
+	var showDeleteDialog by viewModel.mainActivityState.showDeleteDialog
+
+	var vaultState by (mainActivity.application as Momento).vaultState
+	val vaultKey by viewModel.mainActivityState.vaultKeyFlow.collectAsState(initial = null)
+
+	Log.i("npr71", "vaultKey : $vaultKey")
+
 	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
 		viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
 		scope.launch {
@@ -55,16 +70,45 @@ fun MenuBottomSheet() {
 
 	val menuBottomSheetButtonDataLists: List<MenuBottomSheetButtonData?> = listOf(
 		MenuBottomSheetButtonData(title = "Media", imageVector = TablerIcons.Photo) {},
-		MenuBottomSheetButtonData(title = "Vault", imageVector = TablerIcons.Container) {},
+		MenuBottomSheetButtonData(
+			title = "Vault",
+			imageVector = TablerIcons.Container,
+			highlight = when (vaultState) {
+				Momento.Companion.VaultState.NOT_OPENED -> false
+				Momento.Companion.VaultState.TRY_OPEN -> false
+				Momento.Companion.VaultState.SETUP -> false
+				Momento.Companion.VaultState.OPENED -> true
+				Momento.Companion.VaultState.CLOSED -> false
+				Momento.Companion.VaultState.ERROR -> false
+			}
+		) {
+//			scope.launch {
+//				withContext(Dispatchers.IO) {
+//					mainActivity.dataStore.edit { preference ->
+//						preference[VAULT_KEY] = generatePrimaryKey()
+//					}
+//				}
+//			}
+			when (vaultState) {
+				Momento.Companion.VaultState.NOT_OPENED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
+				Momento.Companion.VaultState.TRY_OPEN -> {
+				}
+				Momento.Companion.VaultState.SETUP -> {
+				}
+				Momento.Companion.VaultState.OPENED -> vaultState = Momento.Companion.VaultState.CLOSED
+				Momento.Companion.VaultState.CLOSED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
+				Momento.Companion.VaultState.ERROR -> {
+				}
+			}
+			hideSheet()
+		},
 		MenuBottomSheetButtonData(title = "Life in Weeks", imageVector = TablerIcons.CalendarMinus) {},
 		MenuBottomSheetButtonData(title = "Settings", imageVector = TablerIcons.Settings) {},
 
-		MenuBottomSheetButtonData(title = "Archived", imageVector = TablerIcons.Archive) {},
-		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart) {},
-		MenuBottomSheetButtonData(title = "Pinned", imageVector = TablerIcons.Pinned) {},
-		MenuBottomSheetButtonData(title = "Trash", imageVector = TablerIcons.Trash) {},
+		MenuBottomSheetButtonData(title = "Archived", imageVector = TablerIcons.Archive, highlight = showArchived) { showArchived = !showArchived },
+		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart, highlight = showFavourite) { showFavourite = !showFavourite },
+//		MenuBottomSheetButtonData(title = "Trash", imageVector = TablerIcons.Trash, highlight = showTrash) { showTrash = !showTrash }
 	)
-
 
 	Column(
 		modifier = Modifier

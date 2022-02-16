@@ -85,7 +85,12 @@
         <entry key="../../../../../../../layout/compose-model-1644343023906.xml" value="1.0" />
         <entry key="../../../../../../../layout/compose-model-1644393514281.xml" value="0.1" />
         <entry key="../../../../../../../layout/compose-model-1644763892828.xml" value="0.264" />
-        <entry key="../../../../../../../layout/compose-model-1644770233624.xml" value="0.8" />
+        <entry key="../../../../../../../layout/compose-model-1644770233624.xml" value="0.264" />
+        <entry key="../../../../../../../layout/compose-model-1644773802573.xml" value="0.72" />
+        <entry key="../../../../../../../layout/compose-model-1644781419339.xml" value="0.536" />
+        <entry key="../../../../../../../layout/compose-model-1644824393306.xml" value="0.2" />
+        <entry key="../../../../../../../layout/compose-model-1644825192974.xml" value="0.264" />
+        <entry key="../../../../../../../layout/compose-model-1644836252788.xml" value="0.2953703703703704" />
         <entry key="../../../../../../../layout/custom_preview.xml" value="0.1710393541876892" />
         <entry key="app/src/main/java/com/syncodec/momento/custom/calendarview/src/main/res/layout/cv_week_bar.xml" value="0.31927083333333334" />
         <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.1585" />
@@ -94,6 +99,7 @@
         <entry key="app/src/main/res/drawable/il_book_screen.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/il_environment.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/il_movie.xml" value="0.138" />
+        <entry key="app/src/main/res/drawable/il_reading.xml" value="0.1" />
         <entry key="app/src/main/res/layout/calendar_view.xml" value="0.31927083333333334" />
         <entry key="app/src/main/res/layout/cv_layout_calendar_view.xml" value="0.1" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1585" />

@@ -94,7 +94,7 @@ fun MomentoTheme(
 
 	androidx.compose.material3.MaterialTheme(
 		colorScheme = myColorScheme,
-		typography = MomentoTypography
+		typography = DefaultTypography
 	) {
 		// TODO (M3): MaterialTheme doesn't provide LocalIndication, remove when it does
 		val rippleIndication = rememberRipple()

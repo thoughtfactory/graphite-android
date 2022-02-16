@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.bucketComponent.BucketViewModel
+import com.syncodec.momento.konstant.Status
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronLeft
 import compose.icons.tablericons.Dots
@@ -27,7 +28,7 @@ fun BucketTopBar() {
 	val activity = LocalContext.current as? Activity
 
 	val viewModel: BucketViewModel = viewModel()
-	val status: Int by viewModel.status
+	val status by viewModel.status
 
 	Box(
 		modifier = Modifier
@@ -38,8 +39,7 @@ fun BucketTopBar() {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
 			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
+				.fillMaxSize()
 				.padding(8.dp)
 		) {
 			IconButton(
@@ -53,7 +53,7 @@ fun BucketTopBar() {
 			}
 
 			Text(
-				text = if (status != 1) "" else viewModel.bucket.title,
+				text = if (status != Status.LOADED) "" else viewModel.bucket.title,
 				color = MaterialTheme.colorScheme.onPrimaryContainer,
 				style = MaterialTheme.typography.titleMedium,
 				modifier = Modifier
@@ -77,8 +77,7 @@ fun BucketTopBar() {
 			}
 
 			IconButton(
-				onClick = {
-				},
+				onClick = {},
 			) {
 				Icon(
 					imageVector = TablerIcons.Dots,

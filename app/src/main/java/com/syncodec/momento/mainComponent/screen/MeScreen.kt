@@ -92,7 +92,7 @@ fun MeScreen() {
 				RecentCard()
 
 				Spacer(modifier = Modifier.height(8.dp))
-				ComponentChooser()
+				ComponentChooser() {}
 			}
 		}
 	}

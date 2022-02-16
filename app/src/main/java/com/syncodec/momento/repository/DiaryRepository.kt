@@ -18,11 +18,12 @@ import kotlinx.coroutines.withContext
 class DiaryRepository(val application: Application) {
 	private var diaryTableDao: DiaryTableDao = UserDatabase.getInstance(application).diaryTableDao
 
-	val diaryDbEntryListLiveData: LiveData<List<DiaryDbEntry>> = diaryTableDao.getAllAsLiveData()
+	val diaryDbEntryListLiveData: LiveData<List<DiaryDbEntry>> = diaryTableDao.getAsLiveData()
 
 	suspend fun saveDiary(
 		note: Note,
-		attachmentList: MutableList<TempAttachmentData>
+		attachmentList: MutableList<TempAttachmentData>,
+		deletedTimestamp: Long
 	) {
 		withContext(Dispatchers.IO) {
 			(application as Momento).putDiary(note = note)
@@ -36,23 +37,31 @@ class DiaryRepository(val application: Application) {
 				this.userTimestamp = note.userTimestamp
 				this.contentThumbnail = note.contentThumbnail
 				this.latitude = note.location?.latitude
-				this.latitude = note.location?.longitude
+				this.longitude = note.location?.longitude
 				this.address = note.address
-				this.attachmentCount = note.attachmentKeyList.size
+				this.attachmentCount = attachmentList.size
+				this.isArchived = note.isArchived
+				this.isFavourite = note.isFavourite
+				this.isLocked = note.isLocked
+				this.deletedTimestamp = deletedTimestamp
 
 				attachmentList.forEach { tempAttachmentData ->
 					if (this.attachmentThumbnail==null) {
 						when(tempAttachmentData.mimeType?.split("/")?.first()) {
 							"image" -> {
-								val THUMBSIZE = 128
+								try {
+									val THUMBSIZE = 64
 
-								val thumbImage = ThumbnailUtils.extractThumbnail(
-									BitmapFactory.decodeFile(tempAttachmentData.file!!.path),
-									THUMBSIZE,
-									THUMBSIZE
-								)
+									val thumbImage = ThumbnailUtils.extractThumbnail(
+										BitmapFactory.decodeFile(tempAttachmentData.file!!.path),
+										THUMBSIZE,
+										THUMBSIZE
+									)
 
-								this.attachmentThumbnail = thumbImage.bitmapToBase64String()
+									this.attachmentThumbnail = thumbImage.bitmapToBase64String()
+								} catch (exception: Exception) {
+
+								}
 							}
 							"video" -> {}
 						}
@@ -65,11 +74,24 @@ class DiaryRepository(val application: Application) {
 	}
 
 	suspend fun insert(diaryDbEntry: DiaryDbEntry) {
-		diaryTableDao.insert(diaryDbEntry)
+		withContext(Dispatchers.IO) {
+			diaryTableDao.insert(diaryDbEntry)
+		}
 	}
 
 	suspend fun delete(primaryKey: String) {
-		diaryTableDao.delete(primaryKey)
+		withContext(Dispatchers.IO) {
+			diaryTableDao.delete(primaryKey)
+		}
+	}
+
+	suspend fun moveToTrash(primaryKey: String) {
+		withContext(Dispatchers.IO) {
+			diaryTableDao.get(primaryKey)?.apply {
+				this.deletedTimestamp = System.currentTimeMillis()
+				diaryTableDao.insert(this)
+			}
+		}
 	}
 
 	suspend fun deleteAll() {

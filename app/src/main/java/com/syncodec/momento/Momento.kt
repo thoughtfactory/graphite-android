@@ -3,6 +3,9 @@ package com.syncodec.momento
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -22,6 +25,7 @@ class Momento : Application() {
 
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
+	var vaultState = mutableStateOf(VaultState.NOT_OPENED)
 
 	lateinit var ROOT: String
 
@@ -357,4 +361,14 @@ class Momento : Application() {
 //		}
 //	}
 
+	companion object {
+		enum class VaultState {
+			NOT_OPENED,
+			TRY_OPEN,
+			SETUP,
+			OPENED,
+			CLOSED,
+			ERROR
+		}
+	}
 }

@@ -5,7 +5,7 @@ import kotlin.properties.Delegates
 data class BucketItem(
 	val primaryKey: String,
 	val bucketKey: String,
-	val itemType: BucketItemType,
+	val itemType: BucketItemType.Type,
 	val createdTimestamp: Long
 ) {
 	var modifiedTimestamp by Delegates.notNull<Long>()

@@ -34,7 +34,7 @@ class BucketRepository(val application: Application) {
 
 	suspend fun createNewBucket(
 		title: String,
-		bucketType: BucketItemType
+		bucketType: BucketItemType.Type
 	) {
 		withContext(Dispatchers.IO) {
 			val primaryKey = generatePrimaryKey()

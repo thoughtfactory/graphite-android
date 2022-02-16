@@ -24,9 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fasterxml.jackson.databind.util.ClassUtil.getPackageName
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -57,6 +55,20 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun MetadataBottomSheet() {
 	val viewModel: DiaryViewModel = viewModel()
+	val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData> = listOf(
+		MenuBottomSheetButtonData(title = "Archive", imageVector = TablerIcons.Archive, highlight = viewModel.isArchived) {
+			viewModel.isArchived = !viewModel.isArchived
+		},
+		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart, highlight = viewModel.isFavourite) {
+			viewModel.isFavourite = !viewModel.isFavourite
+		},
+		MenuBottomSheetButtonData(title = "Move in vault", imageVector = TablerIcons.Container, highlight = viewModel.isLocked) {
+			viewModel.isLocked = !viewModel.isLocked
+		},
+		MenuBottomSheetButtonData(title = "Move to trash", imageVector = TablerIcons.Trash, highlight = viewModel.deletedTimestamp != -1L) {
+			viewModel.deletedTimestamp = System.currentTimeMillis()
+		}
+	)
 
 	Column(
 		modifier = Modifier
@@ -104,9 +116,7 @@ fun MetadataBottomSheet() {
 			Spacer(modifier = Modifier.height(8.dp))
 		}
 
-		StateCard(
-
-		)
+		StateCard(menuBottomSheetButtonDataList = menuBottomSheetButtonDataList)
 
 		Spacer(modifier = Modifier.height(32.dp))
 
@@ -441,14 +451,9 @@ private fun WeatherCard(
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun StateCard() {
-
-	val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData> = listOf(
-		MenuBottomSheetButtonData(title = "Archive", imageVector = TablerIcons.Archive) {},
-		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart) {},
-		MenuBottomSheetButtonData(title = "Move in vault", imageVector = TablerIcons.Container) {},
-		MenuBottomSheetButtonData(title = "Move to trash", imageVector = TablerIcons.Trash) {})
-
+private fun StateCard(
+	menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData>
+) {
 	FlowRow(
 		modifier = Modifier
 			.fillMaxWidth()

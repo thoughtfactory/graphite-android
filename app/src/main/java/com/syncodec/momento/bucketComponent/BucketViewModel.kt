@@ -8,6 +8,7 @@ import com.syncodec.momento.database.bucket.Bucket
 import com.syncodec.momento.database.bucket.BucketDbEntry
 import com.syncodec.momento.database.bucket.BucketItem
 import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.repository.BucketRepository
 import kotlinx.coroutines.Dispatchers
@@ -21,43 +22,35 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 	private val bucketRepository: BucketRepository = BucketRepository(application)
 
 	lateinit var bucketKey: String
-	lateinit var bucketItemType: BucketItemType
+	lateinit var bucketItemType: BucketItemType.Type
 
 	lateinit var bucketActivityState: BucketActivity.BucketActivityState
 
-	var bucket: Bucket by mutableStateOf(Bucket("", BucketItemType.TODO))
+	var bucket: Bucket by mutableStateOf(Bucket("", BucketItemType.Type.TODO))
 	var bucketItemList by mutableStateOf(emptyList<BucketItem>())
 
-	private val _status: MutableState<Int> = mutableStateOf(0)
-	val status: State<Int> get() = _status
+	private val _status: MutableState<Status> = mutableStateOf(Status.INIT)
+	val status: State<Status> get() = _status
 
 	fun openBucket() {
 		viewModelScope.launch {
+			withContext(Dispatchers.Main) { _status.value = Status.LOADING }
 			withContext(Dispatchers.IO) {
-				try {
-					bucket = bucketRepository.open(bucketKey)
-					readBucket()
-					withContext(Dispatchers.Main) { _status.value = 1 }
-				} catch (exception: FileNotFoundException) {
-					withContext(Dispatchers.Main) { _status.value = -1 }
-				} catch (exception: Exception) {
-					withContext(Dispatchers.Main) { _status.value = -2 }
-				}
+				bucket = bucketRepository.open(bucketKey)
+				readBucket()
 			}
 		}
 	}
 
-	fun readBucket() {
-		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				try {
-					bucketItemList = bucketRepository.readBucket(bucketKey = bucketKey)
-					withContext(Dispatchers.Main) { _status.value = 1 }
-				} catch (exception: FileNotFoundException) {
-					withContext(Dispatchers.Main) { _status.value = -1 }
-				} catch (exception: Exception) {
-					withContext(Dispatchers.Main) { _status.value = -2 }
-				}
+	private suspend fun readBucket() {
+		withContext(Dispatchers.IO) {
+			try {
+				bucketItemList = bucketRepository.readBucket(bucketKey = bucketKey)
+				withContext(Dispatchers.Main) { _status.value = Status.LOADED }
+			} catch (exception: FileNotFoundException) {
+				withContext(Dispatchers.Main) { _status.value = Status.ERROR }
+			} catch (exception: Exception) {
+				withContext(Dispatchers.Main) { _status.value = Status.ERROR }
 			}
 		}
 	}
@@ -78,7 +71,7 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 	}
 
 	fun insertBucket(
-		bucketType: BucketItemType,
+		bucketType: BucketItemType.Type,
 		title: String,
 	) {
 		viewModelScope.launch {

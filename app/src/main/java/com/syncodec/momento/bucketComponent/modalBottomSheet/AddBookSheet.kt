@@ -246,7 +246,7 @@ fun AddBookSheet() {
 								.aspectRatio(0.75f)
 						) {
 							Intent(context, BucketItemActivity::class.java).apply {
-								putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.BOOKS.ordinal)
+								putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.BOOKS.ordinal)
 								putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
 								putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(bookData))
 								activity.launch(this)

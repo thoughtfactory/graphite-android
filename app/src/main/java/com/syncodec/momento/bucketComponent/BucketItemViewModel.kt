@@ -32,7 +32,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 	val bucketRepository: BucketRepository = BucketRepository(application)
 
 
-	lateinit var bucketItemType: BucketItemType
+	lateinit var bucketItemType: BucketItemType.Type
 	lateinit var bucketKey: String
 	var bucketItemKey: String? = null
 	lateinit var bucketItemDataJson: JSONObject
@@ -47,7 +47,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 		BucketItem(
 			primaryKey = "",
 			bucketKey = "",
-			itemType = BucketItemType.TODO,
+			itemType = BucketItemType.Type.TODO,
 			createdTimestamp = -1
 		)
 	)
@@ -82,12 +82,12 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 					_status.value = 1
 				}
 				when(bucketItemType) {
-					BucketItemType.TODO -> ""
-					BucketItemType.BOOKS -> getBookData()
-					BucketItemType.MOVIES -> getMovieData()
-					BucketItemType.TVSHOWS -> TODO()
-					BucketItemType.MEDIA -> TODO()
-					BucketItemType.LINKS -> TODO()
+					BucketItemType.Type.TODO -> ""
+					BucketItemType.Type.BOOKS -> getBookData()
+					BucketItemType.Type.MOVIES -> getMovieData()
+					BucketItemType.Type.TVSHOWS -> TODO()
+					BucketItemType.Type.MEDIA -> TODO()
+					BucketItemType.Type.LINKS -> TODO()
 				}
 
 			}
@@ -115,12 +115,12 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 			if (bucketItem.innerContent!=null) {
 				extraData = when(bucketItemType) {
-					BucketItemType.TODO -> ""
-					BucketItemType.BOOKS -> ""
-					BucketItemType.MOVIES -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
-					BucketItemType.TVSHOWS -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
-					BucketItemType.MEDIA -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
-					BucketItemType.LINKS -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+					BucketItemType.Type.TODO -> ""
+					BucketItemType.Type.BOOKS -> ""
+					BucketItemType.Type.MOVIES -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+					BucketItemType.Type.TVSHOWS -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+					BucketItemType.Type.MEDIA -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
+					BucketItemType.Type.LINKS -> objectMapper.writeValueAsString(objectMapper.readValue<MovieData>(bucketItem.innerContent!!).characterDataList)
 				}
 			}
 

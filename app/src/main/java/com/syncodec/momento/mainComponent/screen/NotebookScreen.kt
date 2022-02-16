@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -102,76 +104,54 @@ fun NotebookScreen() {
 				}
 			}
 		} else {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.fillMaxHeight()
-					.padding(16.dp),
-				contentAlignment = Alignment.Center
-			) {
-				Column {
-					NoNotebookCard(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(320.dp)
-					) { bottomSheetType ->
-						openSheet(bottomSheetType)
-					}
-					Spacer(modifier = Modifier.height(88.dp))
-				}
-			}
+			NoNotebookCard()
 		}
 	}
 }
 
 @Composable
-private fun NoNotebookCard(
-	modifier: Modifier = Modifier,
-	openSheet: (BottomSheetType) -> Unit
-) {
-	Card(
-		elevation = 0.dp,
-		shape = RoundedCornerShape(12.dp),
-		backgroundColor = MaterialTheme.colorScheme.background.copy(alpha = 0.47f),
-		modifier = modifier
+private fun NoNotebookCard() {
+	Box(
+		modifier = Modifier
+			.fillMaxSize(),
+		contentAlignment = Alignment.Center
 	) {
 		Column(
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.Center,
 			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
-				.padding(12.dp),
+				.fillMaxWidth(),
+			horizontalAlignment = Alignment.CenterHorizontally,
+			verticalArrangement = Arrangement.Center
 		) {
+			Spacer(modifier = Modifier.height(8.dp))
 			Image(
 				painter = painterResource(id = R.drawable.il_reading),
-				contentDescription = null,
+				contentDescription = "No diary entries",
 				modifier = Modifier
-					.requiredSize(192.dp)
+					.fillMaxWidth(0.5f)
 			)
 
 			Spacer(modifier = Modifier.height(24.dp))
 
-			OutlinedButton(
-				onClick = { openSheet(BottomSheetType.NotebookBottomSheet) },
-				colors = ButtonDefaults.buttonColors(
-					containerColor = MaterialTheme.colorScheme.primaryContainer
-				)
-			) {
-				Icon(
-					imageVector = TablerIcons.Plus,
-					contentDescription = "Add new notebook",
-					tint = MaterialTheme.colorScheme.primary
-				)
+			Text(
+				text = "The town was paper, but the memories were not.",
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold,
+				color = MaterialTheme.colorScheme.primary,
+				modifier = Modifier
+					.fillMaxWidth(0.71f)
+			)
 
-				Spacer(modifier = Modifier.width(16.dp))
+			Spacer(modifier = Modifier.height(16.dp))
 
-				Text(
-					text = "Add your first notebook",
-					style = MaterialTheme.typography.bodyLarge,
-					color = MaterialTheme.colorScheme.primary
-				)
-			}
+			Text(
+				text = "~ John Green, Paper Towns",
+				style = MaterialTheme.typography.bodySmall,
+				fontStyle = FontStyle.Italic,
+				textAlign = TextAlign.End,
+				color = MaterialTheme.colorScheme.primary,
+				modifier = Modifier
+					.fillMaxWidth(0.71f)
+			)
 		}
 	}
 

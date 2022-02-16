@@ -63,7 +63,7 @@ class BucketItemActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		viewModel.bucketItemType = BucketItemType.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.TODO.ordinal)]
+		viewModel.bucketItemType = BucketItemType.Type.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.TODO.ordinal)]
 		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_KEY.name)!!
 		viewModel.bucketItemKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
 		viewModel.bucketItemDataJson = JSONObject(intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name)!!)
@@ -99,12 +99,12 @@ class BucketItemActivity : ComponentActivity() {
 		when(status) {
 			1 -> {
 				when (viewModel.bucketItemType) {
-					BucketItemType.TODO -> {}
-					BucketItemType.BOOKS -> {}
-					BucketItemType.MOVIES -> { }
-					BucketItemType.TVSHOWS -> {}
-					BucketItemType.MEDIA -> {}
-					BucketItemType.LINKS -> {}
+					BucketItemType.Type.TODO -> {}
+					BucketItemType.Type.BOOKS -> {}
+					BucketItemType.Type.MOVIES -> { }
+					BucketItemType.Type.TVSHOWS -> {}
+					BucketItemType.Type.MEDIA -> {}
+					BucketItemType.Type.LINKS -> {}
 				}
 			}
 		}
@@ -122,27 +122,27 @@ class BucketItemActivity : ComponentActivity() {
 			) {
 				if (viewModel.bucketItemKey == null) {
 					when (viewModel.bucketItemType) {
-						BucketItemType.TODO -> TodoScreen()
-						BucketItemType.BOOKS -> BooksItemScreen()
-						BucketItemType.MOVIES -> {
+						BucketItemType.Type.TODO -> TodoScreen()
+						BucketItemType.Type.BOOKS -> BooksItemScreen()
+						BucketItemType.Type.MOVIES -> {
 							MoviesItemScreen()
 						}
-						BucketItemType.TVSHOWS -> {}
-						BucketItemType.MEDIA -> {}
-						BucketItemType.LINKS -> {}
+						BucketItemType.Type.TVSHOWS -> {}
+						BucketItemType.Type.MEDIA -> {}
+						BucketItemType.Type.LINKS -> {}
 					}
 				} else {
 					when (status) {
 						1 -> {
 							when (viewModel.bucketItemType) {
-								BucketItemType.TODO -> TodoScreen()
-								BucketItemType.BOOKS -> BooksItemScreen()
-								BucketItemType.MOVIES -> {
+								BucketItemType.Type.TODO -> TodoScreen()
+								BucketItemType.Type.BOOKS -> BooksItemScreen()
+								BucketItemType.Type.MOVIES -> {
 									MoviesItemScreen()
 								}
-								BucketItemType.TVSHOWS -> {}
-								BucketItemType.MEDIA -> {}
-								BucketItemType.LINKS -> {}
+								BucketItemType.Type.TVSHOWS -> {}
+								BucketItemType.Type.MEDIA -> {}
+								BucketItemType.Type.LINKS -> {}
 							}
 						}
 						0 -> {
