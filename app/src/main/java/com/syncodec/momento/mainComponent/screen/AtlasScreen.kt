@@ -21,7 +21,7 @@ import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.android.libraries.maps.model.PolylineOptions
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
+import com.syncodec.momento.mainComponent.miscellaneous.TopBar
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import kotlinx.coroutines.launch
 
@@ -40,13 +40,13 @@ fun AtlasScreen(
 	val scope = rememberCoroutineScope()
 	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
 		scope.launch {
-			viewModel.mainActivityState.bottomSheetState.show()
+			viewModel.activityState.bottomSheetState.show()
 		}
 	}
 
 	Scaffold(
 		topBar = {
-			MainTopBar()
+			TopBar()
 		}
 	) {
 		Column(

@@ -22,10 +22,11 @@ interface DiaryTableDao {
 	@Query(value = "SELECT * FROM diary_table WHERE is_locked = 0 ORDER BY user_timestamp DESC")
 	fun getAsLiveData() : LiveData<List<DiaryDbEntry>>
 
+	@Query(value = "SELECT primary_key FROM diary_table WHERE is_locked = 0 ORDER BY user_timestamp DESC")
+	fun getKeyAsLiveData() : LiveData<List<String>>
+
 	@Query(value = "SELECT * FROM diary_table WHERE deleted_timestamp = -1 ORDER BY user_timestamp DESC")
 	fun getDeletedAsLiveData() : LiveData<List<DiaryDbEntry>>
-
-
 
 	@Query(value = "SELECT * FROM diary_table ORDER BY user_timestamp DESC")
 	suspend fun getAll() : List<DiaryDbEntry>

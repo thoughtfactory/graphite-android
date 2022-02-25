@@ -32,18 +32,17 @@ import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.debug.AddDataPopup
-import com.syncodec.momento.diaryComponent.DiaryActivity
-import com.syncodec.momento.mainComponent.miscellaneous.DeleteDialog
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.BottomNavigationBar
 import com.syncodec.momento.mainComponent.miscellaneous.BottomNavigationItem
+import com.syncodec.momento.mainComponent.miscellaneous.DeleteDialog
 import com.syncodec.momento.mainComponent.miscellaneous.MainNavigation
-import com.syncodec.momento.mainComponent.miscellaneous.MainTopBar
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.mainComponent.modalBottomSheet.SheetLayout
-import com.syncodec.momento.mainComponent.screen.MomentoScreenType
-import com.syncodec.momento.miscellaneous.VAULT_KEY
+import com.syncodec.momento.mainComponent.screen.MomentoComponentType
+import com.syncodec.momento.miscellaneous.PREFERENCE_KEY_VAULT_KEY
 import com.syncodec.momento.miscellaneous.dataStore
+import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.ui.theme.MomentoTheme
 import com.syncodec.momento.vaultComponent.VaultOpenerScreen
 import compose.icons.TablerIcons
@@ -64,7 +63,8 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			viewModel.mainActivityState = rememberMainActivityState()
+			viewModel.activityState = rememberMainActivityState()
+
 			MomentoTheme {
 				MainScreen()
 				AddDataPopup()
@@ -73,12 +73,12 @@ class MainActivity : ComponentActivity() {
 	}
 
 	override fun onBackPressed() {
-		if (viewModel.mainActivityState.vaultState.value == Momento.Companion.VaultState.TRY_OPEN) {
-			viewModel.mainActivityState.vaultState.value = Momento.Companion.VaultState.NOT_OPENED
+		if (viewModel.activityState.vaultState.value == Momento.Companion.VaultState.TRY_OPEN) {
+			viewModel.activityState.vaultState.value = Momento.Companion.VaultState.NOT_OPENED
 		} else {
-			if (viewModel.mainActivityState.isSelected.value) {
-				viewModel.mainActivityState.isSelected.value = false
-				viewModel.mainActivityState.selectedEntryList.removeAll { true }
+			if (viewModel.activityState.isSelected.value) {
+				viewModel.activityState.isSelected.value = false
+				viewModel.activityState.selectedEntryList.removeAll { true }
 			} else {
 				super.onBackPressed()
 			}
@@ -102,14 +102,14 @@ class MainActivity : ComponentActivity() {
 		val currentRoute = navBackStackEntry?.destination?.route
 
 		val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-			viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
+			viewModel.activityState.bottomSheetType.value = bottomSheetType
 			scope.launch {
-				viewModel.mainActivityState.bottomSheetState.show()
+				viewModel.activityState.bottomSheetState.show()
 			}
 		}
 
 		Crossfade(
-			targetState = viewModel.mainActivityState.vaultState.value,
+			targetState = viewModel.activityState.vaultState.value,
 			animationSpec = tween(
 				durationMillis = 400
 			)
@@ -119,14 +119,18 @@ class MainActivity : ComponentActivity() {
 					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
 
 					VaultOpenerScreen(
-						onSuccess = { viewModel.mainActivityState.vaultState.value = Momento.Companion.VaultState.OPENED }
+						onSuccess = { viewModel.activityState.vaultState.value = Momento.Companion.VaultState.OPENED }
 					) {}
 				}
 				else -> {
-					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
+					if (currentRoute == BottomNavigationItem.Me.route) {
+						systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
+					} else {
+						systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
+					}
 
 					ModalBottomSheetLayout(
-						sheetState = viewModel.mainActivityState.bottomSheetState,
+						sheetState = viewModel.activityState.bottomSheetState,
 						sheetElevation = 0.dp,
 						sheetBackgroundColor = Color.Transparent,
 						sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
@@ -140,9 +144,6 @@ class MainActivity : ComponentActivity() {
 						) {
 							Scaffold(
 								bottomBar = { BottomNavigationBar(navController) },
-								topBar = {
-									MainTopBar()
-								},
 								floatingActionButtonPosition = FabPosition.End,
 								floatingActionButton = {
 									when (currentRoute) {
@@ -152,25 +153,24 @@ class MainActivity : ComponentActivity() {
 												onClick = {
 													when (currentRoute) {
 														BottomNavigationItem.Momento.route -> {
-															when (viewModel.mainActivityState.momentoScreenType.value) {
-																MomentoScreenType.Diary -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
-																MomentoScreenType.Notebook -> openSheet(BottomSheetType.NotebookBottomSheet)
-																MomentoScreenType.Scratchpad -> startActivity(
+															when (viewModel.activityState.momentoComponentType.value) {
+																MomentoComponentType.Diary -> startActivity(
 																	Intent(
 																		this@MainActivity,
-																		DiaryActivity::class.java
+																		NoteActivity::class.java
 																	)
 																)
+																MomentoComponentType.Notebook -> openSheet(BottomSheetType.NotebookBottomSheet)
 															}
 														}
 														BottomNavigationItem.Bucket.route -> openSheet(BottomSheetType.BucketBottomSheet)
 														BottomNavigationItem.Calendar.route -> startActivity(
 															Intent(
 																this@MainActivity,
-																DiaryActivity::class.java
+																NoteActivity::class.java
 															)
 														)
-														BottomNavigationItem.Atlas.route -> startActivity(Intent(this@MainActivity, DiaryActivity::class.java))
+														BottomNavigationItem.Atlas.route -> startActivity(Intent(this@MainActivity, NoteActivity::class.java))
 													}
 												},
 												modifier = Modifier
@@ -178,10 +178,9 @@ class MainActivity : ComponentActivity() {
 											) {
 												Crossfade(targetState = currentRoute) { route ->
 													when (route) {
-														BottomNavigationItem.Momento.route -> when (viewModel.mainActivityState.momentoScreenType.value) {
-															MomentoScreenType.Diary -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
-															MomentoScreenType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
-															MomentoScreenType.Scratchpad -> Icon(imageVector = TablerIcons.Notes, contentDescription = null)
+														BottomNavigationItem.Momento.route -> when (viewModel.activityState.momentoComponentType.value) {
+															MomentoComponentType.Diary -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
+															MomentoComponentType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
 														}
 														BottomNavigationItem.Bucket.route -> Icon(imageVector = TablerIcons.Plus, contentDescription = null)
 														BottomNavigationItem.Calendar.route -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
@@ -207,7 +206,6 @@ class MainActivity : ComponentActivity() {
 								}
 							}
 							DeleteDialog()
-
 						}
 					}
 				}
@@ -215,20 +213,18 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
-	data class UserPreferences(val showCompleted: Boolean)
-
 	@OptIn(ExperimentalMaterialApi::class)
-	inner class MainActivityState(
+	inner class ActivityState(
 		val bottomSheetState: ModalBottomSheetState,
 	) {
-		val vaultKeyFlow: Flow<String?> = dataStore.data.map { preferences -> preferences[VAULT_KEY] }
+		val vaultKeyFlow: Flow<String?> = dataStore.data.map { preferences -> preferences[PREFERENCE_KEY_VAULT_KEY] }
 		var vaultState = (application as Momento).vaultState
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.MenuBottomSheet)
-		var momentoScreenType: MutableState<MomentoScreenType> = mutableStateOf(MomentoScreenType.Diary)
-		var isSelected = mutableStateOf(false)
+		var momentoComponentType: MutableState<MomentoComponentType> = mutableStateOf(MomentoComponentType.Diary)
 		var selectedEntryList: SnapshotStateList<String> = mutableStateListOf()
-		var showDeleteDialog = mutableStateOf(false)
+		var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
 
+		var isSelected = mutableStateOf(false)
 		var showArchived = mutableStateOf(false)
 		var showFavourite = mutableStateOf(false)
 		var showTrash = mutableStateOf(false)
@@ -239,6 +235,6 @@ class MainActivity : ComponentActivity() {
 	fun rememberMainActivityState(
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
 	) = remember {
-		MainActivityState(bottomSheetState)
+		ActivityState(bottomSheetState)
 	}
 }

@@ -1,6 +1,5 @@
 package com.syncodec.momento.mainComponent.modalBottomSheet
 
-import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -44,27 +43,25 @@ fun MenuBottomSheet() {
 	val scope = rememberCoroutineScope()
 	val mainActivity = LocalContext.current as MainActivity
 
-	var showArchived by viewModel.mainActivityState.showArchived
-	var showFavourite by viewModel.mainActivityState.showFavourite
-	var showTrash by viewModel.mainActivityState.showTrash
-	val isSelected by viewModel.mainActivityState.isSelected
-	var showDeleteDialog by viewModel.mainActivityState.showDeleteDialog
+	var showArchived by viewModel.activityState.showArchived
+	var showFavourite by viewModel.activityState.showFavourite
+	var showTrash by viewModel.activityState.showTrash
+	val isSelected by viewModel.activityState.isSelected
+	var showDeleteDialog by viewModel.activityState.showDeleteDialog
 
 	var vaultState by (mainActivity.application as Momento).vaultState
-	val vaultKey by viewModel.mainActivityState.vaultKeyFlow.collectAsState(initial = null)
-
-	Log.i("npr71", "vaultKey : $vaultKey")
+	val vaultKey by viewModel.activityState.vaultKeyFlow.collectAsState(initial = null)
 
 	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-		viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
+		viewModel.activityState.bottomSheetType.value = bottomSheetType
 		scope.launch {
-			viewModel.mainActivityState.bottomSheetState.show()
+			viewModel.activityState.bottomSheetState.show()
 		}
 	}
 
 	val hideSheet: () -> Unit = {
 		scope.launch {
-			viewModel.mainActivityState.bottomSheetState.hide()
+			viewModel.activityState.bottomSheetState.hide()
 		}
 	}
 
@@ -82,13 +79,6 @@ fun MenuBottomSheet() {
 				Momento.Companion.VaultState.ERROR -> false
 			}
 		) {
-//			scope.launch {
-//				withContext(Dispatchers.IO) {
-//					mainActivity.dataStore.edit { preference ->
-//						preference[VAULT_KEY] = generatePrimaryKey()
-//					}
-//				}
-//			}
 			when (vaultState) {
 				Momento.Companion.VaultState.NOT_OPENED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
 				Momento.Companion.VaultState.TRY_OPEN -> {

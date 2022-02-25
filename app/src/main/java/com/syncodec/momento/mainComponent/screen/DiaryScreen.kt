@@ -7,13 +7,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -26,32 +23,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.rememberImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.R
+import com.syncodec.momento.custom.entry.EntryCard
+import com.syncodec.momento.custom.entry.EntryHeaderCard
+import com.syncodec.momento.custom.entry.EntryTimelineSpacer
+import com.syncodec.momento.custom.entry.NoEntryCard
 import com.syncodec.momento.custom.squircle.Squircle
 import com.syncodec.momento.database.diary.DiaryDbEntry
-import com.syncodec.momento.database.diary.MockDiaryDbEntry
+import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.miscellaneous.base64stringToBitmap
 import com.syncodec.momento.miscellaneous.timeStampToPrettyDay
-import com.syncodec.momento.miscellaneous.timeStampToTime
+import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.todayComponent.TodayActivity
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Paperclip
-import dev.jorgecastillo.androidcolorx.library.tints
 import org.joda.time.LocalDateTime
 import java.util.*
 
@@ -61,58 +54,70 @@ import java.util.*
 @ExperimentalPagerApi
 @Composable
 fun DiaryScreen() {
+	val context = LocalContext.current
 	val viewModel: MainViewModel = viewModel()
 
-	val showArchived by viewModel.mainActivityState.showArchived
-	val showFavourite by viewModel.mainActivityState.showFavourite
-	val showTrash by viewModel.mainActivityState.showTrash
-	var isSelected by viewModel.mainActivityState.isSelected
+	val showArchived by viewModel.activityState.showArchived
+	val showFavourite by viewModel.activityState.showFavourite
+	val showTrash by viewModel.activityState.showTrash
+	var isSelected by viewModel.activityState.isSelected
 
 	val diaryList by viewModel.diaryRepository.diaryDbEntryListLiveData.observeAsState()
 	val isDiaryEmpty: Boolean = diaryList?.isEmpty() ?: true
 
 	val diaryDbEntryDayMap: MutableMap<Long, MutableList<DiaryDbEntry>> = mutableMapOf()
 
-	val selectedEntryList = viewModel.mainActivityState.selectedEntryList
+	val selectedEntryList = viewModel.activityState.selectedEntryList
 
 	val calendar = Calendar.getInstance()
 	diaryList
 		?.filter {
 			if (showArchived && showFavourite && showTrash) {
-				it.isArchived && it.isFavourite && it.deletedTimestamp!=-1L
+				it.isArchived && it.isFavourite && it.deletedTimestamp != -1L
 			} else if (showArchived && showFavourite) {
 				it.isArchived && it.isFavourite && it.deletedTimestamp == -1L
 			} else if (showArchived && showTrash) {
-				it.isArchived && it.deletedTimestamp!=-1L
-			} else if(showFavourite && showTrash) {
-				it.isFavourite && it.deletedTimestamp!=-1L
-			} else if(showArchived) {
+				it.isArchived && it.deletedTimestamp != -1L
+			} else if (showFavourite && showTrash) {
+				it.isFavourite && it.deletedTimestamp != -1L
+			} else if (showArchived) {
 				it.isArchived && it.deletedTimestamp == -1L
-			} else if(showFavourite) {
+			} else if (showFavourite) {
 				it.isFavourite && it.deletedTimestamp == -1L
-			} else if(showTrash) {
+			} else if (showTrash) {
 				it.deletedTimestamp != -1L
 			} else {
 				it.deletedTimestamp == -1L
 			}
 		}
 		?.forEach { diary ->
-		calendar.apply {
-			timeInMillis = diary.userTimestamp
-			set(Calendar.MILLISECOND, 0)
-			set(Calendar.SECOND, 0)
-			set(Calendar.MINUTE, 0)
-			set(Calendar.HOUR, 0)
+			calendar.apply {
+				timeInMillis = diary.userTimestamp
+				set(Calendar.MILLISECOND, 0)
+				set(Calendar.SECOND, 0)
+				set(Calendar.MINUTE, 0)
+				set(Calendar.HOUR, 0)
+			}
+			if (diaryDbEntryDayMap.containsKey(calendar.timeInMillis)) {
+				diaryDbEntryDayMap[calendar.timeInMillis]!!.add(diary)
+			} else {
+				diaryDbEntryDayMap[calendar.timeInMillis] = mutableListOf(diary)
+			}
 		}
-		if (diaryDbEntryDayMap.containsKey(calendar.timeInMillis)) {
-			diaryDbEntryDayMap[calendar.timeInMillis]!!.add(diary)
-		} else {
-			diaryDbEntryDayMap[calendar.timeInMillis] = mutableListOf(diary)
-		}
-	}
 
 	if (isDiaryEmpty) {
-		NoDiaryCard(!(showArchived || showFavourite || showTrash))
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+		) {
+			if (!(showArchived || showFavourite || showTrash)) {
+				QuoteCard()
+				Spacer(modifier = Modifier.height(36.dp))
+			} else {
+				Spacer(modifier = Modifier.height(76.dp))
+			}
+			NoEntryCard()
+		}
 	} else {
 		LazyColumn(
 			modifier = Modifier
@@ -126,9 +131,9 @@ fun DiaryScreen() {
 
 			diaryDbEntryDayMap.forEach { (day, diaryList) ->
 				stickyHeader {
-					DayHeaderCard(
+					EntryHeaderCard(
 						title = timeStampToPrettyDay(day),
-						noEntries = diaryList.size
+						noEntries = "${diaryList.size} ${if (diaryList.size == 1) "entry" else "entries"}"
 					)
 				}
 
@@ -136,10 +141,19 @@ fun DiaryScreen() {
 					item {
 						val tint = MaterialTheme.colorScheme.secondaryContainer
 
-						DiaryCard(
-							diaryDbEntry = diaryDbEntry,
-							isLast = index == diaryList.size - 1,
+						EntryCard(
+							timestamp = diaryDbEntry.userTimestamp,
+							isLocked = diaryDbEntry.isLocked,
 							isSelected = diaryDbEntry.primaryKey in selectedEntryList,
+							isArchived = diaryDbEntry.isArchived,
+							isFavourite = diaryDbEntry.isFavourite,
+							isDeleted = diaryDbEntry.deletedTimestamp != -1L,
+							isLast = index == diaryList.size - 1,
+							title = diaryDbEntry.title,
+							contentThumbnail = diaryDbEntry.contentThumbnail,
+							attachmentCount = diaryDbEntry.attachmentCount,
+							attachmentThumbnail = diaryDbEntry.attachmentThumbnail,
+							address = diaryDbEntry.address,
 							tint = tint,
 							onClick = {
 								if (isSelected) {
@@ -150,14 +164,23 @@ fun DiaryScreen() {
 										selectedEntryList.add(diaryDbEntry.primaryKey)
 									}
 								} else {
+									Intent(context, NoteActivity::class.java).apply {
+										putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
+										putExtra(Konstant.Companion.Konstant.DIARY_KEY.name, diaryDbEntry.primaryKey)
+										context.startActivity(this)
+									}
 								}
-							}
-						) {
-							isSelected = true
-							selectedEntryList.add(diaryDbEntry.primaryKey)
+							},
+							onLongClick = {
+								isSelected = true
+								selectedEntryList.add(diaryDbEntry.primaryKey)
+							},
+						).apply {
+							EntryCard(entryCard = this)
 						}
+
 						if (index != diaryList.size - 1) {
-							DiaryDaySpacer(tint = tint)
+							EntryTimelineSpacer(tint = tint)
 						}
 					}
 				}
@@ -165,69 +188,6 @@ fun DiaryScreen() {
 
 			item {
 				Spacer(modifier = Modifier.height(128.dp))
-			}
-		}
-	}
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun NoDiaryCard(
-	showQuoteCard: Boolean
-) {
-	Column(
-		modifier = Modifier
-			.fillMaxSize()
-	) {
-		if (showQuoteCard) {
-			QuoteCard()
-			Spacer(modifier = Modifier.height(36.dp))
-		} else {
-			Spacer(modifier = Modifier.height(76.dp))
-		}
-
-		Box(
-			modifier = Modifier
-				.fillMaxSize(),
-			contentAlignment = Alignment.Center
-		) {
-			Column(
-				modifier = Modifier
-					.fillMaxWidth(),
-				horizontalAlignment = Alignment.CenterHorizontally,
-				verticalArrangement = Arrangement.Center
-			) {
-				Image(
-					painter = painterResource(id = R.drawable.il_reading),
-					contentDescription = "No diary entries",
-					modifier = Modifier
-						.fillMaxWidth(0.5f)
-				)
-
-				Spacer(modifier = Modifier.height(24.dp))
-
-				Text(
-					text = "The town was paper, but the memories were not.",
-					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.primary,
-					modifier = Modifier
-						.fillMaxWidth(0.71f)
-				)
-
-				Spacer(modifier = Modifier.height(16.dp))
-
-				Text(
-					text = "~ John Green, Paper Towns",
-					style = MaterialTheme.typography.bodySmall,
-					fontStyle = FontStyle.Italic,
-					textAlign = TextAlign.End,
-					color = MaterialTheme.colorScheme.primary,
-					modifier = Modifier
-						.fillMaxWidth(0.71f)
-				)
-
-				Spacer(modifier = Modifier.height(108.dp))
 			}
 		}
 	}
@@ -412,362 +372,6 @@ private fun QuoteCard() {
 					)
 				}
 			}
-		}
-	}
-}
-
-@Composable
-private fun DayHeaderCard(
-	title: String,
-	noEntries: Int
-) {
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.background)
-	) {
-		Row(
-			verticalAlignment = Alignment.Bottom,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(14.dp, 0.dp, 12.dp, 0.dp)
-		) {
-			Box(
-				modifier = Modifier
-					.width(4.dp)
-					.height(40.dp)
-					.clip(RoundedCornerShape(4.dp))
-					.background(MaterialTheme.colorScheme.primary)
-			)
-
-			Spacer(modifier = Modifier.width(8.dp))
-
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(0.dp, 8.dp)
-			) {
-				Text(
-					text = title,
-					color = MaterialTheme.colorScheme.primary,
-					style = MaterialTheme.typography.bodyLarge
-				)
-
-				Spacer(modifier = Modifier.weight(1f))
-
-				Text(
-					text = "$noEntries entries",
-					color = MaterialTheme.colorScheme.onSurface,
-					style = MaterialTheme.typography.bodyMedium,
-				)
-			}
-		}
-	}
-}
-
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
-@Composable
-private fun DiaryCard(
-	@PreviewParameter(MockDiaryDbEntry::class)
-	diaryDbEntry: DiaryDbEntry,
-	isLast: Boolean = false,
-	isSelected: Boolean = false,
-	tint: Color = Color.LightGray,
-	onClick: () -> Unit,
-	onLongClick: () -> Unit
-) {
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(if (isLast) 152.dp else 144.dp)
-			.padding(8.dp, 0.dp, 8.dp, if (isLast) 8.dp else 0.dp),
-	) {
-		DiarySpacer(
-			isLast = isLast,
-			tint = tint
-		)
-		Spacer(modifier = Modifier.width(4.dp))
-		Card(
-			elevation = 0.dp,
-			shape = RoundedCornerShape(12.dp),
-			backgroundColor = if (isSelected) Color.LightGray else Color.Transparent,
-			border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
-			modifier = Modifier
-				.fillMaxSize()
-				.clip(RoundedCornerShape(12.dp))
-				.combinedClickable(
-					onClick = { onClick() },
-					onLongClick = { onLongClick() }
-				)
-		) {
-			Column(
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(12.dp, 8.dp, 12.dp, 8.dp)
-			) {
-				Row(
-					modifier = Modifier,
-					verticalAlignment = Alignment.CenterVertically
-				) {
-
-					Text(
-						text = timeStampToTime(diaryDbEntry.userTimestamp),
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.primary,
-						fontWeight = FontWeight.Bold,
-						maxLines = 1,
-						modifier = Modifier
-					)
-
-					Spacer(modifier = Modifier.weight(1f))
-
-					if (diaryDbEntry.isLocked) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_lock_3),
-							contentDescription = "Locked",
-							tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-					}
-
-					if (diaryDbEntry.isArchived) {
-						if (diaryDbEntry.isLocked) {
-							Spacer(modifier = Modifier.width(2.dp))
-							Text(
-								text = "·",
-								style = MaterialTheme.typography.bodySmall,
-								color = MaterialTheme.colorScheme.primary,
-								fontWeight = FontWeight.Bold,
-								maxLines = 1,
-								modifier = Modifier
-							)
-							Spacer(modifier = Modifier.width(2.dp))
-						}
-						Icon(
-							painter = painterResource(id = R.drawable.ic_archive_3),
-							contentDescription = "Archived",
-							tint = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-					}
-
-					if (diaryDbEntry.isFavourite) {
-						if (diaryDbEntry.isLocked || diaryDbEntry.isArchived) {
-							Spacer(modifier = Modifier.width(2.dp))
-							Text(
-								text = "·",
-								style = MaterialTheme.typography.bodySmall,
-								color = MaterialTheme.colorScheme.primary,
-								fontWeight = FontWeight.Bold,
-								maxLines = 1,
-								modifier = Modifier
-							)
-							Spacer(modifier = Modifier.width(2.dp))
-						}
-
-						Icon(
-							painter = painterResource(id = R.drawable.ic_heart_3),
-							contentDescription = "Favourite",
-							tint = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-					}
-
-					if (diaryDbEntry.attachmentCount != 0) {
-						if (diaryDbEntry.isLocked || diaryDbEntry.isArchived || diaryDbEntry.isFavourite) {
-							Spacer(modifier = Modifier.width(2.dp))
-							Text(
-								text = "·",
-								style = MaterialTheme.typography.bodySmall,
-								color = MaterialTheme.colorScheme.primary,
-								fontWeight = FontWeight.Bold,
-								maxLines = 1,
-								modifier = Modifier
-							)
-							Spacer(modifier = Modifier.width(2.dp))
-						}
-
-						Icon(
-							imageVector = TablerIcons.Paperclip,
-							contentDescription = "Attachment",
-							tint = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = "·",
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.primary,
-							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							modifier = Modifier
-						)
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = "${diaryDbEntry.attachmentCount}",
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.primary,
-							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							modifier = Modifier
-						)
-					}
-
-				}
-
-				Spacer(modifier = Modifier.height(8.dp))
-
-				if (diaryDbEntry.attachmentThumbnail == null) {
-					Text(
-						text = "${diaryDbEntry.contentThumbnail}",
-						style = MaterialTheme.typography.bodyMedium,
-						maxLines = 4,
-						modifier = Modifier
-							.height(80.dp)
-					)
-				} else {
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-					) {
-						Text(
-							text = "${diaryDbEntry.contentThumbnail}",
-							style = MaterialTheme.typography.bodyMedium,
-							maxLines = 4,
-							modifier = Modifier
-								.height(80.dp)
-								.weight(1f)
-						)
-						Spacer(modifier = Modifier.width(8.dp))
-						Squircle(
-							sizeInDp = 80.dp,
-							smoothing = 4.0
-						) {
-							Image(
-								painter = rememberImagePainter(data = diaryDbEntry.attachmentThumbnail!!.base64stringToBitmap()),
-								contentDescription = null,
-								modifier = Modifier
-									.fillMaxSize()
-							)
-						}
-					}
-				}
-
-				Spacer(modifier = Modifier.weight(1f))
-
-				if (diaryDbEntry.address != null) {
-					Row(
-						modifier = Modifier
-							.fillMaxWidth(),
-						verticalAlignment = Alignment.CenterVertically
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_location_pin_3),
-//							imageVector = TablerIcons.MapPin,
-							contentDescription = null,
-//							tint = Color.Unspecified,
-							tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
-							modifier = Modifier
-								.requiredSize(16.dp)
-						)
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = "${diaryDbEntry.address}",
-							style = MaterialTheme.typography.bodySmall,
-							fontStyle = FontStyle.Italic,
-							color = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
-							maxLines = 1,
-							overflow = TextOverflow.Ellipsis,
-							modifier = Modifier
-						)
-					}
-				}
-			}
-
-			Box(
-				modifier = Modifier
-					.fillMaxSize(),
-				contentAlignment = Alignment.CenterEnd
-			) {
-				Box(
-					modifier = Modifier
-						.width(8.dp)
-						.height(80.dp)
-						.clip(CutCornerShape(16.dp, 0.dp, 0.dp, 16.dp))
-						.background(MaterialTheme.colorScheme.secondaryContainer)
-				)
-			}
-		}
-	}
-}
-
-@Composable
-private fun DiaryDaySpacer(
-	tint: Color
-) {
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(10.dp)
-			.padding(8.dp, 0.dp),
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		Box(
-			modifier = Modifier
-				.width(16.dp)
-				.height(10.dp),
-			contentAlignment = Alignment.Center
-		) {
-			Box(
-				modifier = Modifier
-					.width(4.dp)
-					.fillMaxHeight()
-					.background(tint)
-			)
-		}
-	}
-}
-
-@Composable
-private fun DiarySpacer(
-	isLast: Boolean = false,
-	tint: Color
-) {
-	Box(
-		modifier = Modifier
-			.width(16.dp)
-			.fillMaxHeight()
-			.background(Color.Transparent)
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxSize(),
-			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			Box(
-				modifier = Modifier
-					.width(4.dp)
-					.height(33.dp)
-					.background(tint)
-			)
-			Box(
-				modifier = Modifier
-					.width(16.dp)
-					.height(16.dp)
-					.padding(2.dp)
-					.clip(CircleShape)
-					.background(tint)
-			)
-			Box(
-				modifier = Modifier
-					.width(4.dp)
-					.fillMaxHeight()
-					.background(if (isLast) Color.Transparent else tint)
-			)
 		}
 	}
 }

@@ -40,7 +40,6 @@ import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.notebookComponent.NotebookActivity
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Pencil
-import compose.icons.tablericons.Plus
 import kotlinx.coroutines.launch
 
 
@@ -55,9 +54,9 @@ fun NotebookScreen() {
 	val notebookList = viewModel.notebookRepository.notebookDbEntryListLiveData.observeAsState()
 
 	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-		viewModel.mainActivityState.bottomSheetType.value = bottomSheetType
+		viewModel.activityState.bottomSheetType.value = bottomSheetType
 		scope.launch {
-			viewModel.mainActivityState.bottomSheetState.show()
+			viewModel.activityState.bottomSheetState.show()
 		}
 	}
 
@@ -204,6 +203,11 @@ private fun NotebookGridCard(
 	notebookDbEntry: NotebookDbEntry,
 ) {
 	val viewModel: MainViewModel = viewModel()
+	val context = LocalContext.current
+	val activity = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.StartActivityForResult()
+	) {
+	}
 
 	Card(
 		elevation = 8.dp,
@@ -213,7 +217,12 @@ private fun NotebookGridCard(
 			.fillMaxSize()
 			.padding(16.dp)
 			.aspectRatio(0.75f),
-		onClick = {}
+		onClick = {
+			Intent(context, NotebookActivity::class.java).apply {
+				putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, notebookDbEntry.primaryKey)
+				activity.launch(this)
+			}
+		}
 	) {
 		if (notebookDbEntry.color == null) {
 			viewModel.getNotebookImage(notebookKey = notebookDbEntry.primaryKey)?.let {
@@ -231,7 +240,7 @@ private fun NotebookGridCard(
 				.padding(16.dp)
 		) {
 			IconButton(
-				onClick = { /*TODO*/ },
+				onClick = {},
 				modifier = Modifier
 					.requiredSize(16.dp)
 					.padding(0.dp)

@@ -1,5 +1,7 @@
 package com.syncodec.momento.mainComponent.modalBottomSheet
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.ResourceMap
 import compose.icons.TablerIcons
@@ -55,6 +58,20 @@ fun BucketBottomSheet(
 		containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
 		disabledContainerColor = Color.LightGray.copy(alpha = 0.13f)
 	)
+
+	val containerColor by animateColorAsState(
+		targetValue = if (selectedBucketType != null && bucketNameText.isNotBlank()) MaterialTheme.colorScheme.onPrimaryContainer else Color.LightGray,
+		animationSpec = tween(
+			durationMillis = 400
+		)
+	)
+	val contentColor by animateColorAsState(
+		targetValue = if (selectedBucketType != null && bucketNameText.isNotBlank()) MaterialTheme.colorScheme.primaryContainer else Color.DarkGray,
+		animationSpec = tween(
+			durationMillis = 400
+		)
+	)
+
 
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
@@ -203,32 +220,22 @@ fun BucketBottomSheet(
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		Box(
+		LargeButton(
+			text = "Create",
+			containerColor = containerColor,
+			contentColor = contentColor,
+			isElevated = selectedBucketType != null && bucketNameText.isNotBlank(),
+			isClickable = selectedBucketType != null && bucketNameText.isNotBlank(),
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(48.dp)
 				.padding(24.dp, 0.dp)
-				.focusable()
-				.clip(RoundedCornerShape(12.dp))
-				.background(createButtonColors.containerColor(enabled = selectedBucketType != null && bucketNameText.isNotBlank()).value)
-				.clickable(selectedBucketType != null && bucketNameText.isNotBlank()) {
-					onCreate(bucketNameText, selectedBucketType!!)
-					bucketNameText = ""
-					selectedBucketType = null
-				},
-			contentAlignment = Alignment.Center
 		) {
-			Text(
-				text = "Create",
-				style = MaterialTheme.typography.titleMedium,
-				color = createButtonColors.contentColor(enabled = selectedBucketType != null && bucketNameText.isNotBlank()).value,
-				textAlign = TextAlign.Center,
-				lineHeight = 0.sp,
-				maxLines = 1,
-			)
+			onCreate(bucketNameText, selectedBucketType!!)
+			bucketNameText = ""
+			selectedBucketType = null
 		}
 
-		Spacer(modifier = Modifier.height(24.dp))
+		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
@@ -236,6 +243,21 @@ fun BucketBottomSheet(
 private fun BucketButton(
 	bucketButtonData: BucketButtonData
 ) {
+	val containerColor by animateColorAsState(
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+		animationSpec = tween(
+			durationMillis = 400
+		)
+	)
+
+	val borderColor by animateColorAsState(
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+		animationSpec = tween(
+			durationMillis = 400
+		)
+	)
+
+
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -244,8 +266,8 @@ private fun BucketButton(
 		Card(
 			elevation = 0.dp,
 			shape = RoundedCornerShape(8.dp),
-			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-			border = BorderStroke(2.dp, if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else Color.Transparent),
+			backgroundColor = containerColor,
+			border = BorderStroke(2.dp, borderColor),
 			modifier = Modifier
 				.width(160.dp)
 				.height(96.dp)
@@ -264,7 +286,7 @@ private fun BucketButton(
 				Icon(
 					imageVector = ResourceMap.bucketTypeToIcon[bucketButtonData.bucketItemType]!!,
 					contentDescription = null,
-					tint = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer,
+					tint = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier
 						.size(24.dp)
 						.alpha(0.8f)
@@ -273,8 +295,8 @@ private fun BucketButton(
 				Text(
 					text = bucketButtonData.title,
 					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.ExtraBold,
-					color = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.onSecondaryContainer
 				)
 			}
 		}

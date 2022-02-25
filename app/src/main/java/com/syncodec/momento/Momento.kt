@@ -3,16 +3,13 @@ package com.syncodec.momento
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.compose.runtime.getValue
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.syncodec.momento.database.bucket.Bucket
-import com.syncodec.momento.database.bucket.BucketItem
 import com.syncodec.momento.database.diary.Note
 import com.syncodec.momento.database.notebook.Chapter
 import com.syncodec.momento.database.notebook.Notebook
@@ -56,9 +53,24 @@ class Momento : Application() {
 		return "$BUCKET_DIR/bucket_$bucketKey/bucket_$bucketKey.json"
 	}
 
-	fun getBucketItemPath(bucketKey: String, bucketItemKey: String): String {
+	fun getBucketItemDirPath(bucketKey: String, bucketItemKey: String): String {
+		File("$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey").mkdirs()
+		return "$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey"
+	}
+
+	fun getBucketItemDataPath(bucketKey: String, bucketItemKey: String): String {
+		File("$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey").mkdirs()
+		return "$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey/data.json"
+	}
+
+	fun getBucketItemThoughtPath(bucketKey: String, bucketItemKey: String): String {
+		File("$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey").mkdirs()
+		return "$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey/thought.json"
+	}
+
+	fun getBucketItemThumbnailPath(bucketKey: String, bucketItemKey: String): String {
 		File("$BUCKET_DIR/bucket_$bucketKey").mkdirs()
-		return "$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey.json"
+		return "$BUCKET_DIR/bucket_$bucketKey/bucket_item_$bucketItemKey/bucket_item_thumbnail_$bucketItemKey.png"
 	}
 
 	fun getNotebookDirPath(notebookKey: String): String {
@@ -75,9 +87,9 @@ class Momento : Application() {
 		return "${getNotebookDirPath(notebookKey = notebookKey)}/notebook_$notebookKey.json"
 	}
 
-	fun getChapterPath(notebookKey: String, chapterKey: String): String {
+	fun getNoteDataPath(notebookKey: String, noteKey: String): String {
 		File("$NOTEBOOK_DIR/notebook_${notebookKey}").mkdirs()
-		return "$NOTEBOOK_DIR/notebook_$notebookKey/chapter_$chapterKey.json"
+		return "$NOTEBOOK_DIR/notebook_$notebookKey/note_$noteKey.json"
 	}
 
 	fun getDiaryDirPath(diaryKey: String): String {
@@ -103,137 +115,74 @@ class Momento : Application() {
 		}
 	}
 
-	fun getBucketFull(
+	fun getDiary(
 		primaryKey: String
-	): FileOutputStream {
-		val bucketFile = File(getBucketDirPath(bucketKey = primaryKey))
-		if (bucketFile.exists() && bucketFile.isDirectory) {
-			return bucketFile.outputStream()
-		} else {
-			throw FileNotFoundException()
+	) : Note {
+		val file = File(getDiaryDataPath(diaryKey = primaryKey))
+		return objectMapper.readValue(file.readBytes())
+	}
+
+	fun putBucketItemData(
+		bucketKey: String,
+		bucketItemKey: String,
+		jsonString: String,
+		thumbnail: Bitmap?
+	) {
+		val bucketItemDataFile = File(getBucketItemDataPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
+		bucketItemDataFile.writeText(jsonString)
+
+		if (thumbnail!=null) {
+			val bucketItemThumbnailFile = File(getBucketItemThumbnailPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
+			thumbnail.compress(Bitmap.CompressFormat.PNG, 100, bucketItemThumbnailFile.outputStream())
 		}
 	}
 
-	fun getBucket(
-		primaryKey: String
-	): Bucket {
-		val file = File(getBucketDataPath(bucketKey = primaryKey))
-		if (file.exists() && file.isFile) {
-			return objectMapper.readValue(file)
-		} else {
-			throw FileNotFoundException()
-		}
+	fun getBucketItemData(
+		bucketKey: String,
+		bucketItemKey: String,
+	): String {
+		val file = File(getBucketItemDataPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
+		return file.readText()
 	}
 
-	fun putBucket(
-		bucket: Bucket
-	): Boolean {
-		val file = File(getBucketDataPath(bucketKey = bucket.primaryKey))
-		return if (file.exists()) {
-			objectMapper.writeValue(file, bucket)
-			true
-		} else {
-			objectMapper.writeValue(file, bucket)
-			false
-		}
+	fun putThought(
+		bucketKey: String,
+		bucketItemKey: String,
+		thoughtList: List<String>
+	) {
+		val file = File(getBucketItemThoughtPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
+		objectMapper.writeValue(file, thoughtList)
 	}
 
-	fun getBucketItem(
+	fun getThought(
 		bucketKey: String,
 		bucketItemKey: String
-	): BucketItem {
-		val file = File(getBucketItemPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
-		if (file.exists() && file.isFile) {
-			return objectMapper.readValue(file)
-		} else {
-			throw FileNotFoundException()
+	): List<String> {
+		return try {
+			val file = File(getBucketItemThoughtPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
+			objectMapper.readValue(file)
+		} catch (exception: Exception) {
+			emptyList()
 		}
 	}
 
-	fun putBucketItem(
-		bucketItem: BucketItem,
-	): Boolean {
-		val file = File(getBucketItemPath(bucketKey = bucketItem.bucketKey, bucketItemKey = bucketItem.primaryKey))
-		return if (file.exists()) {
-			file.writeBytes(objectMapper.writeValueAsBytes(bucketItem))
-			true
-		} else {
-			file.writeBytes(objectMapper.writeValueAsBytes(bucketItem))
-			false
-		}
-	}
-
-	fun getAllBucketItems(
+	fun getBucketItemThumbnail(
 		bucketKey: String,
-	): MutableList<BucketItem> {
-		val bucketDirFile = File(getBucketDirPath(bucketKey = bucketKey))
-
-		val bucketItemList: MutableList<BucketItem> = mutableListOf()
-
-		bucketDirFile.listFiles { file, name ->
-			name.startsWith("bucket_item")
-		}?.forEach {
-			try {
-				val bucketItem: BucketItem = objectMapper.readValue(it)
-				bucketItemList.add(bucketItem)
-			} catch (exception: FileNotFoundException) {
-
-			} catch (exception: Exception) {
-
-			}
-		}
-
-		return bucketItemList
+		bucketItemKey: String
+	): String {
+		return getBucketItemThumbnailPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
 	}
 
 	fun deleteBucketItem(
 		bucketKey: String,
 		bucketItemKey: String
 	) {
-		File(
-			getBucketItemPath(
-				bucketKey = bucketKey,
-				bucketItemKey = bucketItemKey
-			)
-		).delete()
-	}
-
-	fun getBucketSize(
-		bucketKey: String
-	): Int {
-		val bucketDirFile = File(getBucketDirPath(bucketKey = bucketKey))
-		return bucketDirFile.listFiles { file, name ->
-			name.startsWith("bucket_item")
-		}?.size ?: 0
-	}
-
-	fun downloadBucketItemThumbnail(
-		thumbnailUrl: String,
-	): ByteArray {
-		val url = URL(thumbnailUrl)
-		val connection: URLConnection = url.openConnection()
-		connection.connect()
-
-		val input: InputStream = BufferedInputStream(
-			url.openStream(),
-			8192
-		)
-
-		val output = ByteArrayOutputStream()
-		val data = ByteArray(1024)
-
-		var total: Long = 0
-		var count = 0
-
-		while (input.read(data).also { count = it } != -1) {
-			total += count
-			output.write(data, 0, count)
-		}
-		output.flush()
-		output.close()
-		input.close()
-
-		return output.toByteArray()
+//		File(
+//			getBucketItemPath(
+//				bucketKey = bucketKey,
+//				bucketItemKey = bucketItemKey
+//			)
+//		).delete()
 	}
 
 	fun downloadMovieData(
@@ -290,7 +239,6 @@ class Momento : Application() {
 		} else {
 			throw FileNotFoundException()
 		}
-
 	}
 
 	fun putNotebookImage(notebookKey: String, image: Bitmap) {
@@ -310,10 +258,20 @@ class Momento : Application() {
 		}
 	}
 
-	fun openNotebook(
-		primaryKey: String
-	): Notebook {
-		val file = File(getNotebookDataPath(notebookKey = primaryKey))
+	fun putChapter(
+		chapter: Chapter,
+	) {
+		this.getNotebook(primaryKey = chapter.notebookKey).apply {
+			this.chapterMap[chapter.primaryKey] = chapter
+			putNotebook(this)
+		}
+	}
+
+	fun getNote(
+		notebookKey: String,
+		noteKey: String
+	): Note {
+		val file = File(getNoteDataPath(notebookKey = notebookKey, noteKey = noteKey))
 		if (file.exists() && file.isFile) {
 			return objectMapper.readValue(file)
 		} else {
@@ -321,47 +279,29 @@ class Momento : Application() {
 		}
 	}
 
-	fun putChapter(
-		chapter: Chapter,
-	): Boolean {
-		val file = File(
-			getChapterPath(
-				notebookKey = chapter.notebookKey,
-				chapterKey = chapter.primaryKey
-			)
-		)
-		getNotebook(primaryKey = chapter.notebookKey).apply {
-			this.chapterMap[chapter.primaryKey] = chapter
+	fun putNote(
+		note: Note
+	) {
+		val file = File(getNoteDataPath(notebookKey = note.notebookKey!!, noteKey = note.primaryKey))
+		objectMapper.writeValue(file, note)
+
+		this.getNotebook(primaryKey = note.notebookKey!!).apply {
+			note.content = null
+			this.noteMap[note.primaryKey] = note
 			putNotebook(this)
-		}
-		return if (file.exists()) {
-			objectMapper.writeValue(file, chapter)
-			true
-		} else {
-			objectMapper.writeValue(file, chapter)
-			false
 		}
 	}
 
-//	fun getNote(
-//		notebookKey: String,
-//		currentPath: List<String>,
-//		noteKey: String
-//	): Note {
-//		var chapterPath = getNotebookDirPath(notebookKey = notebookKey)
-//		currentPath.forEach { chapterPath = "$chapterPath/$it" }
-//		chapterPath = "$chapterPath/chapter_$chapterKey/chapter_$chapterKey.json"
-//
-//		val file = File(chapterPath)
-//		if (file.exists() && file.isFile) {
-//			return objectMapper.readValue(file)
-//		} else {
-//			throw FileNotFoundException()
-//
-//		}
-//	}
-
 	companion object {
+		enum class ComponentType {
+			DIARY,
+			NOTE,
+			CHAPTER,
+			NOTEBOOK,
+			BUCKET,
+			BUCKET_ITEM
+		}
+
 		enum class VaultState {
 			NOT_OPENED,
 			TRY_OPEN,

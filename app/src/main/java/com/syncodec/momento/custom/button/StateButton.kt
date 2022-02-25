@@ -1,0 +1,115 @@
+package com.syncodec.momento.custom.button
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+
+
+data class StateData(
+	val title: String,
+	val icon: ImageVector,
+	val color: Color
+)
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun StateButton(
+	stateList: List<StateData>,
+	initialState: Int,
+	modifier: Modifier,
+	onStateChange: (Int) -> Unit
+) {
+	val interactionSource = remember { MutableInteractionSource() }
+	var currentState by remember { mutableStateOf(initialState) }
+	val spacerWeight by animateFloatAsState(targetValue = currentState.toFloat())
+
+	val stateColor by animateColorAsState(
+		targetValue = stateList[currentState].color
+	)
+
+	Box(
+		modifier = modifier
+			.fillMaxWidth()
+			.clip(RoundedCornerShape(50))
+			.background(MaterialTheme.colorScheme.secondaryContainer)
+
+	) {
+		Row(
+			modifier = Modifier
+				.fillMaxSize()
+		) {
+			Spacer(modifier = Modifier.weight((spacerWeight + 0.00001).toFloat()))
+			Box(
+				modifier = Modifier
+					.fillMaxHeight()
+					.weight(1f)
+					.clip(RoundedCornerShape(50))
+					.background(stateColor)
+			)
+			Spacer(modifier = Modifier.weight((stateList.size - spacerWeight - 1 + 0.00001).toFloat()))
+		}
+
+		Row(
+			modifier = Modifier
+				.fillMaxSize()
+				.fillMaxHeight(),
+			verticalAlignment = Alignment.CenterVertically
+		) {
+			stateList.forEachIndexed { index, state ->
+				val textColor by animateColorAsState(targetValue = if (index == currentState) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer)
+				Row(
+					modifier = Modifier
+						.weight(1f)
+						.fillMaxHeight()
+						.padding(8.dp, 0.dp)
+						.clickable(
+							interactionSource = interactionSource,
+							indication = null
+						) {
+							currentState = index
+							onStateChange(index)
+						},
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.Center
+				) {
+					Icon(
+						imageVector = state.icon,
+						contentDescription = state.title,
+						tint = textColor,
+						modifier = Modifier
+							.requiredSize(20.dp)
+					)
+					Spacer(modifier = Modifier.width(6.dp))
+					Text(
+						text = state.title,
+						style = MaterialTheme.typography.bodyMedium,
+						fontWeight = FontWeight.Bold,
+						color = textColor,
+						textAlign = TextAlign.Center,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+						modifier = Modifier
+					)
+				}
+			}
+		}
+	}
+}

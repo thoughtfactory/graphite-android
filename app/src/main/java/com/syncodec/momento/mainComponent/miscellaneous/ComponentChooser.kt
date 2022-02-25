@@ -1,6 +1,5 @@
 package com.syncodec.momento.mainComponent.miscellaneous
 
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
@@ -15,10 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,31 +26,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.mainComponent.screen.MomentoScreenType
+import com.syncodec.momento.mainComponent.screen.MomentoComponentType
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Trash
 import dev.jorgecastillo.androidcolorx.library.tints
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun ComponentChooser(
-	isSelected: Boolean = false,
-	selectedSize: Int = 0,
-	onClickDelete: () -> Unit
-) {
+fun ComponentChooser() {
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
-
-	val buttonWidth = (screenWidth - 24.dp) / 3
+	val buttonWidth = (screenWidth - 24.dp) / 2
 
 	val viewModel: MainViewModel = viewModel()
-	var momentoScreenType by viewModel.mainActivityState.momentoScreenType
+
+	val isSelected by viewModel.activityState.isSelected
+	val selectedSize = viewModel.activityState.selectedEntryList.size
+
+	var momentoScreenType by viewModel.activityState.momentoComponentType
 
 	val spacerWidth by animateDpAsState(
 		targetValue = when (momentoScreenType) {
-			MomentoScreenType.Diary -> 0.dp
-			MomentoScreenType.Notebook -> (screenWidth - 24.dp) / 3
-			MomentoScreenType.Scratchpad -> (screenWidth - 24.dp) * 2 / 3
+			MomentoComponentType.Diary -> 0.dp
+			MomentoComponentType.Notebook -> (screenWidth - 24.dp) / 2
 		},
 		tween(
 			durationMillis = 400
@@ -62,15 +56,11 @@ fun ComponentChooser(
 	)
 
 	val diaryColor by animateColorAsState(
-		targetValue = if (momentoScreenType == MomentoScreenType.Diary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
+		targetValue = if (momentoScreenType == MomentoComponentType.Diary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
 		tween(durationMillis = 400)
 	)
 	val notebookColor by animateColorAsState(
-		targetValue = if (momentoScreenType == MomentoScreenType.Notebook) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
-		tween(durationMillis = 400)
-	)
-	val scratchpadColor by animateColorAsState(
-		targetValue = if (momentoScreenType == MomentoScreenType.Scratchpad) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
+		targetValue = if (momentoScreenType == MomentoComponentType.Notebook) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
 		tween(durationMillis = 400)
 	)
 
@@ -104,14 +94,14 @@ fun ComponentChooser(
 						horizontalArrangement = Arrangement.SpaceBetween
 					) {
 						Text(
-							text = "${if(selectedSize==0) "No entry" else if (selectedSize==1) "1 entry" else "$selectedSize entries"} selected",
+							text = "${if (selectedSize == 0) "No entry" else if (selectedSize == 1) "1 entry" else "$selectedSize entries"} selected",
 							style = MaterialTheme.typography.bodyMedium,
 							fontWeight = FontWeight.Bold,
 							color = MaterialTheme.colorScheme.onPrimaryContainer
 						)
 						IconButton(
 							onClick = {
-								onClickDelete()
+								viewModel.activityState.showDeleteDialog.value = true
 							}
 						) {
 							Icon(
@@ -178,7 +168,7 @@ fun ComponentChooser(
 								.weight(1f)
 								.clip(RoundedCornerShape(24.dp))
 								.clickable(interactionSource = interactionSource, indication = null) {
-									momentoScreenType = MomentoScreenType.Diary
+									momentoScreenType = MomentoComponentType.Diary
 								},
 						) {
 							Text(
@@ -197,32 +187,13 @@ fun ComponentChooser(
 								.weight(1f)
 								.clip(RoundedCornerShape(24.dp))
 								.clickable(interactionSource = interactionSource, indication = null) {
-									momentoScreenType = MomentoScreenType.Notebook
+									momentoScreenType = MomentoComponentType.Notebook
 								},
 						) {
 							Text(
 								text = "Notebook",
 								style = MaterialTheme.typography.bodySmall,
 								color = notebookColor,
-								fontWeight = FontWeight.Bold,
-								textAlign = TextAlign.Center,
-								maxLines = 1
-							)
-						}
-						Box(
-							contentAlignment = Alignment.Center,
-							modifier = Modifier
-								.fillMaxHeight()
-								.weight(1f)
-								.clip(RoundedCornerShape(24.dp))
-								.clickable(interactionSource = interactionSource, indication = null) {
-									momentoScreenType = MomentoScreenType.Scratchpad
-								},
-						) {
-							Text(
-								text = "Scratchpad",
-								style = MaterialTheme.typography.bodySmall,
-								color = scratchpadColor,
 								fontWeight = FontWeight.Bold,
 								textAlign = TextAlign.Center,
 								maxLines = 1

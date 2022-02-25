@@ -4,7 +4,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.syncodec.momento.notebookComponent.NotebookViewModel
+import com.syncodec.momento.notebookComponent.ViewModel
 
 sealed class BottomSheetType {
 	object NewChapterBottomSheet : BottomSheetType()
@@ -15,8 +15,8 @@ sealed class BottomSheetType {
 @Composable
 fun SheetLayout() {
 	val scope = rememberCoroutineScope()
-	val viewModel: NotebookViewModel = viewModel()
-	when (viewModel.notebookActivityState.bottomSheetType.value) {
+	val viewModel: ViewModel = viewModel()
+	when (viewModel.activityState.bottomSheetType.value) {
 		BottomSheetType.NewChapterBottomSheet -> NewChapterBottomSheet()
 		BottomSheetType.NewNoteBottomSheet -> NewNoteBottomSheet()
 	}

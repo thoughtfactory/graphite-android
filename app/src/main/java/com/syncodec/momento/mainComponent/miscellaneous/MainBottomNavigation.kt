@@ -1,6 +1,5 @@
 package com.syncodec.momento.mainComponent.miscellaneous
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.*
 import androidx.compose.material3.Icon
@@ -16,16 +15,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.syncodec.momento.MainActivity
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
-import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.screen.*
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*

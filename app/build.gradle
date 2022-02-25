@@ -81,11 +81,12 @@ dependencies {
 
 	implementation 'com.google.accompanist:accompanist-insets:0.20.2'
 	implementation 'com.google.accompanist:accompanist-flowlayout:0.21.5-rc'
-	implementation 'com.google.accompanist:accompanist-pager:0.19.0'
-	implementation 'com.google.accompanist:accompanist-pager-indicators:0.13.0'
+	implementation 'com.google.accompanist:accompanist-pager:0.24.1-alpha'
+	implementation 'com.google.accompanist:accompanist-pager-indicators:0.24.1-alpha'
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.16.0'
 	implementation "com.google.accompanist:accompanist-swiperefresh:0.10.0"
 	implementation "com.google.accompanist:accompanist-permissions:0.18.0"
+	implementation "com.google.accompanist:accompanist-webview:0.24.1-alpha"
 
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
 	implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.1'

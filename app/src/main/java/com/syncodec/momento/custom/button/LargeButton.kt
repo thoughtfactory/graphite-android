@@ -1,8 +1,8 @@
 package com.syncodec.momento.custom.button
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
@@ -19,28 +19,33 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun LargeButton(
-	modifier: Modifier = Modifier,
 	text: String,
-	backgroundColor: Color,
-	textColor: Color,
+	containerColor: Color,
+	contentColor: Color,
+	isElevated: Boolean = false,
+	isClickable: Boolean,
+	modifier: Modifier,
 	onClick: () -> Unit
 ) {
 	Card(
-		elevation = 8.dp,
-		backgroundColor = backgroundColor,
-		modifier = modifier,
+		modifier = modifier
+			.height(48.dp)
+			.focusable(),
+		backgroundColor = containerColor,
+		elevation = if (isElevated) 8.dp else 0.dp,
+		enabled = isClickable,
+		shape = RoundedCornerShape(12.dp),
 		onClick = { onClick() }
 	) {
 		Box(
-			contentAlignment = Alignment.Center,
 			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
+				.fillMaxSize(),
+			contentAlignment = Alignment.Center
 		) {
 			Text(
 				text = text,
-				style = MaterialTheme.typography.bodyLarge,
-				color = textColor,
+				style = MaterialTheme.typography.titleMedium,
+				color = contentColor,
 				textAlign = TextAlign.Center,
 				lineHeight = 0.sp,
 				maxLines = 1,

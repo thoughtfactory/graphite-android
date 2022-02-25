@@ -8,7 +8,7 @@ data class Chapter(
 	val notebookRoute: MutableList<String>
 ) {
 	var createdTimestamp by Delegates.notNull<Long>()
-	var modifiedTime by Delegates.notNull<Long>()
+	var modifiedTimestamp by Delegates.notNull<Long>()
 	lateinit var title: String
 	var description: String? = null
 }

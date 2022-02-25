@@ -1,6 +1,5 @@
 package com.syncodec.momento.repository
 
-import android.app.Application
 import android.graphics.BitmapFactory
 import android.media.ThumbnailUtils
 import androidx.lifecycle.LiveData
@@ -9,16 +8,17 @@ import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.database.diary.DiaryTableDao
 import com.syncodec.momento.database.diary.Note
-import com.syncodec.momento.diaryComponent.TempAttachmentData
+import com.syncodec.momento.noteComponent.TempAttachmentData
 import com.syncodec.momento.miscellaneous.bitmapToBase64String
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-class DiaryRepository(val application: Application) {
-	private var diaryTableDao: DiaryTableDao = UserDatabase.getInstance(application).diaryTableDao
+class DiaryRepository(val momento: Momento) {
+	private var diaryTableDao: DiaryTableDao = UserDatabase.getInstance(momento).diaryTableDao
 
 	val diaryDbEntryListLiveData: LiveData<List<DiaryDbEntry>> = diaryTableDao.getAsLiveData()
+	val diaryDbEntryKeyListLiveData: LiveData<List<String>> = diaryTableDao.getKeyAsLiveData()
 
 	suspend fun saveDiary(
 		note: Note,
@@ -26,7 +26,7 @@ class DiaryRepository(val application: Application) {
 		deletedTimestamp: Long
 	) {
 		withContext(Dispatchers.IO) {
-			(application as Momento).putDiary(note = note)
+			momento.putDiary(note = note)
 
 			DiaryDbEntry(
 				primaryKey = note.primaryKey,
@@ -77,6 +77,10 @@ class DiaryRepository(val application: Application) {
 		withContext(Dispatchers.IO) {
 			diaryTableDao.insert(diaryDbEntry)
 		}
+	}
+
+	fun loadDiary(primaryKey: String): Note {
+		return momento.getDiary(primaryKey = primaryKey)
 	}
 
 	suspend fun delete(primaryKey: String) {

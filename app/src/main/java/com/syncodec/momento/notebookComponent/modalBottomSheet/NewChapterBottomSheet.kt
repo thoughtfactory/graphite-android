@@ -2,6 +2,7 @@ package com.syncodec.momento.notebookComponent.modalBottomSheet
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,18 +16,19 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
-import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.notebookComponent.NotebookViewModel
+import com.syncodec.momento.notebookComponent.ViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Notebook
 import kotlinx.coroutines.launch
@@ -36,7 +38,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun NewChapterBottomSheet() {
 
-	val viewModel: NotebookViewModel = viewModel()
+	val viewModel: ViewModel = viewModel()
 
 	val scope = rememberCoroutineScope()
 	val focusManager = LocalFocusManager.current
@@ -57,7 +59,7 @@ fun NewChapterBottomSheet() {
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(420.dp)
+			.heightIn(240.dp)
 			.background(MaterialTheme.colorScheme.background),
 	) {
 
@@ -73,10 +75,19 @@ fun NewChapterBottomSheet() {
 		Spacer(modifier = Modifier.height(8.dp))
 
 		BasicTextField(
+			value = chapterTitleText,
+			onValueChange = { chapterTitleText = it },
+			singleLine = true,
+			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+			textStyle = MaterialTheme.typography.bodyMedium.copy(
+				color = MaterialTheme.colorScheme.primary,
+				fontWeight = FontWeight.Bold
+			),
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
 				.padding(24.dp, 0.dp)
+				.clip(RoundedCornerShape(12.dp))
 				.background(
 					if (chapterTitleText.isEmpty() && !isChapterTitleTextFocused) {
 						Color.LightGray.copy(alpha = 0.13f)
@@ -87,32 +98,31 @@ fun NewChapterBottomSheet() {
 				.onFocusChanged { focusState ->
 					isChapterTitleTextFocused = focusState.isFocused
 				},
-			value = chapterTitleText,
-			onValueChange = { chapterTitleText = it },
-			singleLine = true,
-			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-			textStyle = MaterialTheme.typography.bodyMedium,
 			decorationBox = { innerTextField ->
 				Card(
+					modifier = Modifier
+						.fillMaxWidth(),
 					backgroundColor = Color.Transparent,
-					shape = RoundedCornerShape(2.dp),
-					border = BorderStroke(1.dp, if (isChapterTitleTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray),
-					elevation = 0.dp
+					elevation = 0.dp,
+					shape = RoundedCornerShape(12.dp),
+					border = BorderStroke(2.dp, if (isChapterTitleTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray)
 				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						modifier = Modifier.padding(16.dp, 0.dp)
+					Box(
+						contentAlignment = Alignment.CenterStart,
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(12.dp, 0.dp)
 					) {
-						Box {
-							if (chapterTitleText.isEmpty()) {
-								Text(
-									"Don;t keep chapter name empty",
-									style = MaterialTheme.typography.bodyMedium,
-									color = Color.LightGray
-								)
-							}
-							innerTextField()
+						if (chapterTitleText.isEmpty()) {
+							Text(
+								"Don't keep chapter name empty",
+								style = MaterialTheme.typography.bodyMedium,
+								color = Color.LightGray,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1
+							)
 						}
+						innerTextField()
 					}
 				}
 			}
@@ -121,10 +131,19 @@ fun NewChapterBottomSheet() {
 		Spacer(modifier = Modifier.height(12.dp))
 
 		BasicTextField(
+			value = chapterDescriptionText,
+			onValueChange = { chapterDescriptionText = it },
+			singleLine = true,
+			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+			textStyle = MaterialTheme.typography.bodyMedium.copy(
+				color = MaterialTheme.colorScheme.primary,
+				fontWeight = FontWeight.Bold
+			),
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
 				.padding(24.dp, 0.dp)
+				.clip(RoundedCornerShape(12.dp))
 				.background(
 					if (chapterDescriptionText.isEmpty() && !isChapterDescriptionTextFocused) {
 						Color.LightGray.copy(alpha = 0.13f)
@@ -135,32 +154,30 @@ fun NewChapterBottomSheet() {
 				.onFocusChanged { focusState ->
 					isChapterDescriptionTextFocused = focusState.isFocused
 				},
-			value = chapterDescriptionText,
-			onValueChange = { chapterDescriptionText = it },
-			singleLine = true,
-			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-			textStyle = MaterialTheme.typography.bodyMedium,
 			decorationBox = { innerTextField ->
 				Card(
+					modifier = Modifier
+						.fillMaxWidth(),
 					backgroundColor = Color.Transparent,
-					shape = RoundedCornerShape(2.dp),
-					border = BorderStroke(1.dp, if (isChapterDescriptionTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray),
-					elevation = 0.dp
+					elevation = 0.dp,
+					shape = RoundedCornerShape(12.dp),
+					border = BorderStroke(2.dp, if (isChapterDescriptionTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray)
 				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						modifier = Modifier.padding(16.dp, 0.dp)
+					Box(
+						contentAlignment = Alignment.CenterStart,
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(12.dp, 0.dp)
 					) {
-						Box {
-							if (chapterDescriptionText.isEmpty()) {
-								Text(
-									"What is it about?",
-									style = MaterialTheme.typography.bodyMedium,
-									color = Color.LightGray
-								)
-							}
-							innerTextField()
+						if (chapterDescriptionText.isEmpty()) {
+							Text(
+								"What is it about?",
+								style = MaterialTheme.typography.bodyMedium,
+								color = Color.LightGray,
+								fontWeight = FontWeight.Bold
+							)
 						}
+						innerTextField()
 					}
 				}
 			}
@@ -168,42 +185,36 @@ fun NewChapterBottomSheet() {
 
 		Spacer(modifier = Modifier.height(16.dp))
 
-		Card(
-			elevation = 0.dp,
-			backgroundColor = createButtonColors.containerColor(enabled = chapterTitleText.isNotBlank()).value,
-			enabled = chapterTitleText.isNotBlank(),
+		Box(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
 				.padding(24.dp, 0.dp)
-				.focusable(),
-			onClick = {
-				viewModel.createNewChapter(
-					title = chapterTitleText,
-					description = chapterDescriptionText
-				)
-				focusManager.clearFocus()
-				scope.launch {
-					viewModel.notebookActivityState.bottomSheetState.hide()
-				}
-			}
+				.focusable()
+				.clip(RoundedCornerShape(12.dp))
+				.background(createButtonColors.containerColor(enabled = chapterTitleText.isNotBlank()).value)
+				.clickable(chapterTitleText.isNotBlank()) {
+					viewModel.createNewChapter(
+						title = chapterTitleText,
+						description = chapterDescriptionText
+					)
+					focusManager.clearFocus()
+					scope.launch {
+						viewModel.activityState.bottomSheetState.hide()
+					}
+					chapterTitleText = ""
+					chapterDescriptionText = ""
+				},
+			contentAlignment = Alignment.Center
 		) {
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.Center,
-				modifier = Modifier
-					.fillMaxWidth()
-					.fillMaxHeight()
-			) {
-				Text(
-					text = "Create",
-					style = MaterialTheme.typography.titleMedium,
-					color = createButtonColors.contentColor(enabled = chapterTitleText.isNotBlank()).value,
-					textAlign = TextAlign.Center,
-					lineHeight = 0.sp,
-					maxLines = 1,
-				)
-			}
+			Text(
+				text = "Add new chapter",
+				style = MaterialTheme.typography.titleMedium,
+				color = createButtonColors.contentColor(enabled = chapterTitleText.isNotBlank()).value,
+				textAlign = TextAlign.Center,
+				lineHeight = 0.sp,
+				maxLines = 1,
+			)
 		}
 
 		Spacer(modifier = Modifier.height(32.dp))

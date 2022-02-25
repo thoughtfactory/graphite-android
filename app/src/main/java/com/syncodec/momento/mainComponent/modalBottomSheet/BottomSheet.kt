@@ -19,11 +19,11 @@ sealed class BottomSheetType {
 fun SheetLayout() {
 	val scope = rememberCoroutineScope()
 	val viewModel: MainViewModel = viewModel()
-	when (viewModel.mainActivityState.bottomSheetType.value) {
+	when (viewModel.activityState.bottomSheetType.value) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet()
 		BottomSheetType.BucketBottomSheet -> BucketBottomSheet { bucketName, bucketType ->
 			viewModel.createNewBucket(bucketType = bucketType, title = bucketName)
-			scope.launch { viewModel.mainActivityState.bottomSheetState.hide() }
+			scope.launch { viewModel.activityState.bottomSheetState.hide() }
 		}
 		BottomSheetType.NotebookBottomSheet -> NotebookBottomSheet()
 	}

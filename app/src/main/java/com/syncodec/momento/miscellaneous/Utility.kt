@@ -10,17 +10,23 @@ import android.util.Base64
 import androidx.core.content.FileProvider
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.syncodec.momento.BuildConfig
 import java.io.*
+import java.net.URL
+import java.net.URLConnection
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-val VAULT_KEY = stringPreferencesKey("vault_key")
+val PREFERENCE_KEY_VAULT_KEY = stringPreferencesKey("vault_key")
+val PREFERENCE_KEY_ACTIVE_COMPONENT = intPreferencesKey("component")
+val PREFERENCE_KEY_NOTE_SHOW_LOCATION_PERMISSION = booleanPreferencesKey("show_location_permission_card")
+
 
 fun timeStampToPrettyDay(timestamp: Long): String {
 	return DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()
@@ -115,4 +121,44 @@ fun Bitmap.bitmapToBase64String(): String? {
 fun String.base64stringToBitmap(): Bitmap? {
 	val decodedBytes: ByteArray = Base64.decode(this.substring(this.indexOf(",") + 1), Base64.DEFAULT)
 	return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+}
+
+@Throws(IOException::class)
+fun getStringFromInputStream(stream: InputStream?): String {
+	var n = 0
+	val buffer = CharArray(1024 * 4)
+	val reader = InputStreamReader(stream, "UTF8")
+	val writer = StringWriter()
+	while (-1 != reader.read(buffer).also { n = it }) writer.write(buffer, 0, n)
+	return writer.toString()
+}
+
+fun downloadImage(
+	thumbnailUrl: String,
+): Bitmap? {
+	val url = URL(thumbnailUrl)
+	val connection: URLConnection = url.openConnection()
+	connection.connect()
+
+	val input: InputStream = BufferedInputStream(
+		url.openStream(),
+		8192
+	)
+
+	val output = ByteArrayOutputStream()
+	val data = ByteArray(1024)
+
+	var total: Long = 0
+	var count = 0
+
+	while (input.read(data).also { count = it } != -1) {
+		total += count
+		output.write(data, 0, count)
+	}
+	output.flush()
+	output.close()
+	input.close()
+
+	val byteArray = output.toByteArray()
+	return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
 }

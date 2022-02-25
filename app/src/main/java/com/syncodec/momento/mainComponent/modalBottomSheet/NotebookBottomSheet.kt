@@ -10,7 +10,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Card
@@ -24,9 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -42,12 +38,9 @@ import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.mainComponent.screen.MomentoScreenType
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Notebook
-import compose.icons.tablericons.Pencil
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -143,13 +136,12 @@ fun NotebookBottomSheet() {
 
 		LargeButton(
 			text = "Create",
-			backgroundColor = createButtonColors.containerColor(enabled = notebookTitleText.isNotBlank()).value,
-			textColor = createButtonColors.contentColor(enabled = notebookTitleText.isNotBlank()).value,
+			containerColor = createButtonColors.containerColor(enabled = notebookTitleText.isNotBlank()).value,
+			contentColor = createButtonColors.contentColor(enabled = notebookTitleText.isNotBlank()).value,
+			isClickable = true,
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(48.dp)
 				.padding(24.dp, 0.dp)
-				.focusable()
 		) {
 			viewModel.insertNotebook(
 				title = notebookTitleText,
@@ -159,7 +151,7 @@ fun NotebookBottomSheet() {
 			)
 			focusManager.clearFocus()
 			scope.launch {
-				viewModel.mainActivityState.bottomSheetState.hide()
+				viewModel.activityState.bottomSheetState.hide()
 			}
 
 			notebookTitleText = ""

@@ -5,7 +5,7 @@ import com.syncodec.momento.Momento
 import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.attachment.Attachment
 import com.syncodec.momento.database.attachment.AttachmentTableDao
-import com.syncodec.momento.diaryComponent.TempAttachmentData
+import com.syncodec.momento.noteComponent.TempAttachmentData
 import com.syncodec.momento.miscellaneous.copyInputStreamToOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

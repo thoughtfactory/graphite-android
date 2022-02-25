@@ -40,7 +40,7 @@ fun MeScreen() {
 	val scope = rememberCoroutineScope()
 	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
 		scope.launch {
-			viewModel.mainActivityState.bottomSheetState.show()
+			viewModel.activityState.bottomSheetState.show()
 		}
 	}
 
@@ -92,7 +92,7 @@ fun MeScreen() {
 				RecentCard()
 
 				Spacer(modifier = Modifier.height(8.dp))
-				ComponentChooser() {}
+				ComponentChooser()
 			}
 		}
 	}

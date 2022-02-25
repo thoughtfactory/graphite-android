@@ -28,6 +28,10 @@ data class DiaryDbEntry(
 	@Expose
 	var userTimestamp: Long = -1
 
+	@ColumnInfo(name = "title")
+	@Expose
+	var title: String? = null
+
 	@ColumnInfo(name = "content_thumbnail")
 	@Expose
 	var contentThumbnail: String? = null
@@ -56,14 +60,6 @@ data class DiaryDbEntry(
 	@Expose
 	var mood: Int = 0
 
-	@ColumnInfo(name = "title")
-	@Expose
-	var title: String? = null
-
-	@ColumnInfo(name = "deleted_timestamp")
-	@Expose
-	var deletedTimestamp: Long = -1
-
 	@ColumnInfo(name = "is_favourite")
 	@Expose
 	var isFavourite: Boolean = false
@@ -75,6 +71,10 @@ data class DiaryDbEntry(
 	@ColumnInfo(name = "is_locked")
 	@Expose
 	var isLocked: Boolean = false
+
+	@ColumnInfo(name = "deleted_timestamp")
+	@Expose
+	var deletedTimestamp: Long = -1
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null

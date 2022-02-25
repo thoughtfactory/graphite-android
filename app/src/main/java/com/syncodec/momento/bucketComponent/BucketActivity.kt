@@ -1,54 +1,53 @@
 package com.syncodec.momento.bucketComponent
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.*
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.syncodec.momento.R
-import com.syncodec.momento.bucketComponent.miscellaneous.BucketTopBar
-import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
-import com.syncodec.momento.bucketComponent.modalBottomSheet.SheetLayout
 import com.syncodec.momento.bucketComponent.screen.BooksScreen
-import com.syncodec.momento.bucketComponent.screen.MoviesScreen
-import com.syncodec.momento.bucketComponent.screen.TodoScreen
-import com.syncodec.momento.custom.DotsPulsing
-import com.syncodec.momento.custom.button.LargeButton
+import com.syncodec.momento.bucketComponent.miscellaneous.AddNewBucketItemButton
+import com.syncodec.momento.bucketComponent.miscellaneous.EmptyBucketView
+import com.syncodec.momento.bucketComponent.miscellaneous.TopBar
+import com.syncodec.momento.bucketComponent.modalBottomSheet.AddBookSheet
+import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
+import com.syncodec.momento.bucketItemComponent.BucketItemActivity
+import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.ui.theme.MomentoTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.CollapsingToolbarScaffoldState
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 
+
 class BucketActivity : ComponentActivity() {
 
-	private val viewModel by viewModels<BucketViewModel>()
+	val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
+
+	val viewModel by viewModels<BucketViewModel>()
 
 	@OptIn(
 		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
@@ -60,376 +59,126 @@ class BucketActivity : ComponentActivity() {
 		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
 		viewModel.bucketItemType =
 			BucketItemType.Type.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.TODO.ordinal)]
-		viewModel.openBucket()
 
 		setContent {
-			viewModel.bucketActivityState = rememberBucketActivityState()
 			MomentoTheme {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
-				BucketScreen()
+				viewModel.activityState = rememberBucketActivityState()
+				Screen()
 			}
 		}
 	}
 
 	override fun onBackPressed() {
-		if (viewModel.bucketActivityState.isSelectedToDelete.value) {
-			viewModel.bucketActivityState.selectedToDeleteList.removeAll { true }
-			viewModel.bucketActivityState.isSelectedToDelete.value = false
-		} else {
-			super.onBackPressed()
-		}
+		super.onBackPressed()
 	}
 
-	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+	@OptIn(ExperimentalMaterialApi::class)
 	@Composable
-	private fun BucketScreen() {
+	private fun Screen() {
+		val scope = rememberCoroutineScope()
 
-		val collapsingToolbarScaffoldState = viewModel.bucketActivityState.collapsingToolbarScaffoldState
-
-		val status by viewModel.status
+		val isSelected by viewModel.activityState.isSelected
 
 		ModalBottomSheetLayout(
-			sheetState = viewModel.bucketActivityState.bottomSheetState,
-			sheetElevation = 0.dp,
-			sheetBackgroundColor = Color.Transparent,
+			sheetState = viewModel.activityState.bottomSheetState,
 			sheetContent = {
-				SheetLayout()
-			},
+//				SheetLayout(bottomSheetType = viewModel.activityState.bottomSheetType.value)
+				when (viewModel.activityState.bottomSheetType.value) {
+					BottomSheetType.AddBookSheet -> AddBookSheet {
+						scope.launch { viewModel.activityState.bottomSheetState.hide() }
+						Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
+							putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
+							putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.BOOKS.ordinal)
+							putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, objectMapper.writeValueAsString(it))
+
+							startActivity(this)
+						}
+					}
+				}
+			}
 		) {
-			when (status) {
-				Status.INIT -> {
-					Box(
-						contentAlignment = Alignment.Center,
-						modifier = Modifier
-							.fillMaxSize(),
-					) {
-						val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
 
-						LottieAnimation(
-							composition = lottieComposition,
-							iterations = LottieConstants.IterateForever,
-							modifier = Modifier
-								.requiredSize(128.dp)
-						)
-					}
-				}
-				Status.LOADING -> {
-					Box(
-						contentAlignment = Alignment.Center,
-						modifier = Modifier
-							.fillMaxSize(),
-					) {
-						val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
+			val bucketItemList by viewModel.getBucketItemList().observeAsState()
 
-						LottieAnimation(
-							composition = lottieComposition,
-							iterations = LottieConstants.IterateForever,
-							modifier = Modifier
-								.requiredSize(128.dp)
-						)
-					}
-				}
-				Status.LOADED -> {
-					if (viewModel.bucketItemList.isEmpty()) {
-						EmptyBucketView()
-					} else {
+			Crossfade(
+				targetState = bucketItemList,
+				animationSpec = tween(durationMillis = 400)
+			) {
+				when {
+					it == null -> LoadingView()
+					it.isEmpty() -> EmptyBucketView()
+					else -> {
 						CollapsingToolbarScaffold(
-							modifier = Modifier.fillMaxSize(),
-							state = collapsingToolbarScaffoldState,
+							modifier = Modifier,
+							state = rememberCollapsingToolbarScaffoldState(),
 							scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 							toolbar = {
-								BucketTopBar()
+								TopBar()
 								Box(
 									modifier = Modifier
 										.fillMaxWidth()
-										.height(256.dp)
-										.padding(16.dp, 64.dp, 16.dp, 16.dp)
-										.road(Alignment.CenterStart, Alignment.BottomEnd)
+										.height(192.dp)
+										.background(MaterialTheme.colorScheme.secondaryContainer)
 								) {
-									Image(
-										painter = when (viewModel.bucketItemType) {
-											BucketItemType.Type.TODO -> painterResource(id = R.drawable.il_book_screen_header)
-											BucketItemType.Type.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
-											BucketItemType.Type.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
-											BucketItemType.Type.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
-											BucketItemType.Type.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
-											BucketItemType.Type.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
-										},
-										contentDescription = null,
-										contentScale = ContentScale.Fit,
-										modifier = Modifier
-											.fillMaxWidth()
-											.height(256.dp)
-											.graphicsLayer {
-												this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
-											},
-									)
+
 								}
 							}
 						) {
 							when (viewModel.bucketItemType) {
-								BucketItemType.Type.TODO -> TodoScreen()
-								BucketItemType.Type.BOOKS -> BooksScreen()
-								BucketItemType.Type.MOVIES -> MoviesScreen()
-								BucketItemType.Type.TVSHOWS -> {
+								BucketItemType.Type.TODO -> null
+								BucketItemType.Type.BOOKS -> BooksScreen(
+									bucketItemList = bucketItemList!!,
+									isSelected = isSelected,
+									selectedBucketItemList = viewModel.activityState.selectedBucketItemList
+								) {
+									return@BooksScreen viewModel.getThumbnail(bucketItemKey = it)
 								}
-								BucketItemType.Type.MEDIA -> {
-								}
-								BucketItemType.Type.LINKS -> {
-								}
+								BucketItemType.Type.MOVIES -> null
+								BucketItemType.Type.TVSHOWS -> null
+								BucketItemType.Type.MEDIA -> null
+								BucketItemType.Type.LINKS -> null
 							}
 						}
-
-						AddNewBucketItemButton()
 					}
 				}
 			}
 
-		}
-	}
-
-	@Composable
-	private fun EmptyBucketView() {
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-		) {
-			BucketTopBar()
-			Box(
-				modifier = Modifier
-					.fillMaxSize(),
-				contentAlignment = Alignment.Center
+			AddNewBucketItemButton(
+				bottomSheetType = viewModel.activityState.bottomSheetType.value,
+				bucketItemType = viewModel.bucketItemType,
+				isSelected = isSelected,
+				selectedBucketItemList = viewModel.activityState.selectedBucketItemList
 			) {
-				Column(
-					modifier = Modifier
-						.fillMaxWidth(),
-					horizontalAlignment = Alignment.CenterHorizontally,
-					verticalArrangement = Arrangement.Center
-				) {
-					Spacer(modifier = Modifier.height(24.dp))
-					Image(
-						painter = painterResource(id = R.drawable.il_reading),
-						contentDescription = "No diary entries",
-						modifier = Modifier
-							.fillMaxWidth(0.5f)
-					)
-
-					Spacer(modifier = Modifier.height(24.dp))
-
-					Text(
-						text = "The town was paper, but the memories were not.",
-						style = MaterialTheme.typography.bodyMedium,
-						fontWeight = FontWeight.Bold,
-						color = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.fillMaxWidth(0.71f)
-					)
-
-					Spacer(modifier = Modifier.height(16.dp))
-
-					Text(
-						text = "~ John Green, Paper Towns",
-						style = MaterialTheme.typography.bodySmall,
-						fontStyle = FontStyle.Italic,
-						textAlign = TextAlign.End,
-						color = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.fillMaxWidth(0.71f)
-					)
-				}
-			}
-		}
-	}
-
-	@OptIn(ExperimentalMaterialApi::class)
-	@Composable
-	private fun AddNewBucketItemButton() {
-		val scope = rememberCoroutineScope()
-
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(0.dp, 0.dp, 0.dp, 24.dp),
-			contentAlignment = Alignment.BottomCenter
-		) {
-			LargeButton(
-				text = if (viewModel.bucketActivityState.isSelectedToDelete.value)
-					"Delete"
-				else when (viewModel.bucketItemType) {
-					BucketItemType.Type.TODO -> "Add New Task"
-					BucketItemType.Type.BOOKS -> "What did you read?"
-					BucketItemType.Type.MOVIES -> "A new movie?"
-					BucketItemType.Type.TVSHOWS -> "What did you watch?"
-					BucketItemType.Type.MEDIA -> "Add media"
-					BucketItemType.Type.LINKS -> "Add link"
-				},
-				backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-				textColor = MaterialTheme.colorScheme.onPrimaryContainer,
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(48.dp)
-					.padding(24.dp, 0.dp)
-					.focusable()
-			) {
-				if (viewModel.bucketActivityState.isSelectedToDelete.value) {
-					viewModel.deleteBucketItem(viewModel.bucketActivityState.selectedToDeleteList)
+				if (isSelected) {
+					viewModel.activityState.showDeleteDialog.value = true
 				} else {
-					viewModel.bucketActivityState.bottomSheetType.value = when (viewModel.bucketItemType) {
-						BucketItemType.Type.TODO -> BottomSheetType.AddMovieSheet
+					viewModel.activityState.bottomSheetType.value = when (viewModel.bucketItemType) {
+						BucketItemType.Type.TODO -> BottomSheetType.AddBookSheet
 						BucketItemType.Type.BOOKS -> BottomSheetType.AddBookSheet
-						BucketItemType.Type.MOVIES -> BottomSheetType.AddMovieSheet
-						BucketItemType.Type.TVSHOWS -> BottomSheetType.AddMovieSheet
-						BucketItemType.Type.MEDIA -> BottomSheetType.AddMovieSheet
-						BucketItemType.Type.LINKS -> BottomSheetType.AddMovieSheet
+						BucketItemType.Type.MOVIES -> BottomSheetType.AddBookSheet
+						BucketItemType.Type.TVSHOWS -> BottomSheetType.AddBookSheet
+						BucketItemType.Type.MEDIA -> BottomSheetType.AddBookSheet
+						BucketItemType.Type.LINKS -> BottomSheetType.AddBookSheet
 					}
 
 					scope.launch {
-						viewModel.bucketActivityState.bottomSheetState.show()
+						viewModel.activityState.bottomSheetState.show()
 					}
 				}
 			}
 		}
 	}
 
-//	@OptIn(ExperimentalMaterialApi::class)
-//	@Composable
-//	private fun BucketScreen() {
-//		val scope = rememberCoroutineScope()
-//
-//		val collapsingToolbarScaffoldState = viewModel.bucketActivityState.collapsingToolbarScaffoldState
-//
-//		val status: Int by viewModel.status
-//
-//		ModalBottomSheetLayout(
-//			sheetState = viewModel.bucketActivityState.bottomSheetState,
-//			sheetElevation = 0.dp,
-//			sheetBackgroundColor = Color.Transparent,
-//			sheetContent = {
-//				SheetLayout()
-//			},
-//		) {
-//			Box(
-//				modifier = Modifier,
-//				contentAlignment = Alignment.BottomCenter
-//			) {
-//				CollapsingToolbarScaffold(
-//					state = collapsingToolbarScaffoldState,
-//					scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-//					modifier = Modifier
-//						.fillMaxSize(),
-//					toolbar = {
-//						BucketTopBar()
-//						Box(
-//							modifier = Modifier
-//								.fillMaxWidth()
-//								.height(256.dp)
-//								.padding(16.dp, 64.dp, 16.dp, 16.dp)
-//								.road(Alignment.CenterStart, Alignment.BottomEnd)
-//						) {
-//							Image(
-//								painter = when (viewModel.bucketItemType) {
-//									BucketItemType.Type.TODO -> painterResource(id = R.drawable.il_book_screen_header)
-//									BucketItemType.Type.BOOKS -> painterResource(id = R.drawable.il_book_screen_header)
-//									BucketItemType.Type.MOVIES -> painterResource(id = R.drawable.il_movie_screen_header)
-//									BucketItemType.Type.TVSHOWS -> painterResource(id = R.drawable.il_book_screen_header)
-//									BucketItemType.Type.MEDIA -> painterResource(id = R.drawable.il_book_screen_header)
-//									BucketItemType.Type.LINKS -> painterResource(id = R.drawable.il_book_screen_header)
-//								},
-//								contentDescription = null,
-//								contentScale = ContentScale.Fit,
-//								modifier = Modifier
-//									.fillMaxWidth()
-//									.height(256.dp)
-//									.graphicsLayer {
-//										this.alpha = collapsingToolbarScaffoldState.toolbarState.progress
-//									},
-//							)
-//						}
-//					}
-//				) {
-//					when (status) {
-//						1 -> {
-//							when (viewModel.bucketItemType) {
-//								BucketItemType.Type.TODO -> TodoScreen()
-//								BucketItemType.Type.BOOKS -> BooksScreen()
-//								BucketItemType.Type.MOVIES -> MoviesScreen()
-//								BucketItemType.Type.TVSHOWS -> {}
-//								BucketItemType.Type.MEDIA -> {}
-//								BucketItemType.Type.LINKS -> {}
-//							}
-//						}
-//						0 -> {
-//							Box(
-//								contentAlignment = Alignment.BottomCenter,
-//								modifier = Modifier
-//									.fillMaxSize(),
-//							) {
-//								DotsPulsing()
-//							}
-//						}
-//						-2 -> {}
-//						-1 -> {}
-//						else -> {}
-//					}
-//				}
-//
-//				if (viewModel.bucketItemList.isNotEmpty()) {
-//					Column(
-//						modifier = Modifier
-//							.fillMaxWidth()
-//					) {
-//						LargeButton(
-//							text = if (viewModel.bucketActivityState.isSelectedToDelete.value)
-//								"Delete"
-//							else when (viewModel.bucketItemType) {
-//								BucketItemType.Type.TODO -> "Add New Task"
-//								BucketItemType.Type.BOOKS -> "What did you read?"
-//								BucketItemType.Type.MOVIES -> "A new movie?"
-//								BucketItemType.Type.TVSHOWS -> "What did you watch?"
-//								BucketItemType.Type.MEDIA -> "Add media"
-//								BucketItemType.Type.LINKS -> "Add link"
-//							},
-//							backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-//							textColor = MaterialTheme.colorScheme.onPrimaryContainer,
-//							modifier = Modifier
-//								.fillMaxWidth()
-//								.height(48.dp)
-//								.padding(24.dp, 0.dp)
-//								.focusable()
-//						) {
-//							if (viewModel.bucketActivityState.isSelectedToDelete.value) {
-//								viewModel.deleteBucketItem(viewModel.bucketActivityState.selectedToDeleteList!!)
-//							}
-//							else {
-//								viewModel.bucketActivityState.bottomSheetType.value = when (viewModel.bucketItemType) {
-//									BucketItemType.Type.TODO -> BottomSheetType.AddMovieSheet
-//									BucketItemType.Type.BOOKS -> BottomSheetType.AddBookSheet
-//									BucketItemType.Type.MOVIES -> BottomSheetType.AddMovieSheet
-//									BucketItemType.Type.TVSHOWS -> BottomSheetType.AddMovieSheet
-//									BucketItemType.Type.MEDIA -> BottomSheetType.AddMovieSheet
-//									BucketItemType.Type.LINKS -> BottomSheetType.AddMovieSheet
-//								}
-//
-//								scope.launch {
-//									viewModel.bucketActivityState.bottomSheetState.show()
-//								}
-//							}
-//						}
-//
-//						Spacer(modifier = Modifier.height(24.dp))
-//					}
-//				}
-//			}
-//		}
-//	}
-
 	@OptIn(ExperimentalMaterialApi::class)
-	class BucketActivityState(
+	class ActivityState(
+		val coroutineScope: CoroutineScope,
 		val bottomSheetState: ModalBottomSheetState,
 		val collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState,
-		var isSelectedToDelete: MutableState<Boolean>,
-		val selectedToDeleteList: SnapshotStateList<String>
+		var isSelected: MutableState<Boolean>,
+		val selectedBucketItemList: SnapshotStateList<String>,
+		var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false),
 	) {
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.AddBookSheet)
 	}
@@ -437,11 +186,12 @@ class BucketActivity : ComponentActivity() {
 	@OptIn(ExperimentalMaterialApi::class)
 	@Composable
 	fun rememberBucketActivityState(
+		coroutineScope: CoroutineScope = rememberCoroutineScope(),
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
 		collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState = rememberCollapsingToolbarScaffoldState(),
 		isSelectedToDelete: MutableState<Boolean> = remember { mutableStateOf(false) },
 		selectedToDeleteList: SnapshotStateList<String> = remember { mutableStateListOf() }
 	) = remember {
-		BucketActivityState(bottomSheetState, collapsingToolbarScaffoldState, isSelectedToDelete, selectedToDeleteList)
+		ActivityState(coroutineScope, bottomSheetState, collapsingToolbarScaffoldState, isSelectedToDelete, selectedToDeleteList)
 	}
 }

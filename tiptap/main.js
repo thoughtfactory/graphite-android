@@ -53,7 +53,6 @@ const Typography = require('@tiptap/extension-typography');
 
 const editor = new Editor.Editor({
     element: document.querySelector('.element'),
-    content: `<ul><li><p>the question is <strong class="bold-style">what color will everything be at the moment I come for you? What will the sky be sayin</strong></p></li><li><p>alpha<u>&nbsp;beta </u><em><u>gamma</u></em></p></li></ul>`,
     extensions: [
         Document.Document,
         Text.Text,
@@ -164,8 +163,14 @@ const editor = new Editor.Editor({
     },
     autofocus: true,
     editable: true,
-    injectCSS: false
+    injectCSS: false,
+    onCreate: onCreate,
+    editable: false
 });
+
+function onCreate() {
+    // bridge.onCreate();
+};
 
 editor.on('transaction', ({
     editor,
@@ -232,15 +237,15 @@ editor.on('transaction', ({
     currentFormat.FontFamily = editor.getAttributes('textStyle').FontFamily;
     // editor.isActive('textStyle', { fontFamily: 'serif' })
 
-    bridge.format(JSON.stringify(currentFormat));
+    // bridge.format(JSON.stringify(currentFormat));
 });
 
 editor.getData = () => {
     data = {};
-    data.dataHtml = editor.getHTML();
+    data.dataJson = editor.getJSON();
     data.dataText = editor.getText();
 
-    bridge.getData(JSON.stringify(data));
+    // bridge.getData(JSON.stringify(data));
 }
 
 module.exports = editor;

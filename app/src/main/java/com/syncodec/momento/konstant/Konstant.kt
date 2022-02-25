@@ -11,7 +11,12 @@ class Konstant {
 			BUCKET_ITEM_KEY,
 			BUCKET_TYPE,
 			BUCKET_ITEM_DATA,
-			NOTEBOOK_KEY
+			NOTEBOOK_KEY,
+			CHAPTER_KEY,
+			COMPONENT_TYPE,
+			TITLE,
+			IS_VIEWER,
+			DIARY_KEY
 		}
 
 		val monthName: List<String> = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")

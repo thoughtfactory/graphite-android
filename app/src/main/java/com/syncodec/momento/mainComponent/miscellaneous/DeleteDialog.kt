@@ -15,10 +15,10 @@ fun DeleteDialog() {
 	val context = LocalContext.current
 	val viewModel: MainViewModel = viewModel()
 
-	var showDeleteDialog by viewModel.mainActivityState.showDeleteDialog
+	var showDeleteDialog by viewModel.activityState.showDeleteDialog
 
 
-	val selectedEntryList = viewModel.mainActivityState.selectedEntryList
+	val selectedEntryList = viewModel.activityState.selectedEntryList
 
 	if (showDeleteDialog) {
 		AlertDialog(
@@ -46,7 +46,7 @@ fun DeleteDialog() {
 							Toast.LENGTH_SHORT
 						).show()
 						selectedEntryList.removeAll { true }
-						viewModel.mainActivityState.isSelected.value = false
+						viewModel.activityState.isSelected.value = false
 						showDeleteDialog = false
 					}
 				) {

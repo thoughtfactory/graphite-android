@@ -3,13 +3,13 @@ package com.syncodec.momento.mainComponent
 import android.app.Application
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.datastore.core.DataStore
-import androidx.datastore.migrations.SharedPreferencesMigration
-import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.Momento
+import com.syncodec.momento.database.bucket.BucketDbEntry
+import com.syncodec.momento.database.bucket.BucketItemDbEntry
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.repository.BucketRepository
@@ -22,16 +22,20 @@ import java.io.File
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-	val diaryRepository: DiaryRepository = DiaryRepository(application)
-	val notebookRepository: NotebookRepository = NotebookRepository(application)
-	val bucketRepository: BucketRepository = BucketRepository(application)
+	val diaryRepository: DiaryRepository = DiaryRepository(momento = application as Momento)
+	val notebookRepository: NotebookRepository = NotebookRepository(momento = application as Momento)
+	val bucketRepository: BucketRepository = BucketRepository(momento = application as Momento)
 
-	lateinit var mainActivityState: MainActivity.MainActivityState
+	lateinit var activityState: MainActivity.ActivityState
 
 	fun insertDiary(diaryDbEntry: DiaryDbEntry) {
 		viewModelScope.launch {
 			diaryRepository.insert(diaryDbEntry)
 		}
+	}
+
+	fun getBucketList(): LiveData<List<BucketDbEntry>> {
+		return bucketRepository.getBucketList()
 	}
 
 	fun moveDiaryToTrash(primaryKey: String) {
@@ -52,12 +56,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun deleteAllBucket() {
-		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				bucketRepository.deleteAll()
-				File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
-			}
-		}
+//		viewModelScope.launch {
+//			withContext(Dispatchers.IO) {
+//				bucketRepository.deleteAll()
+//				File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
+//			}
+//		}
 	}
 
 	fun deleteAllNotebook() {
@@ -90,9 +94,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		title: String
 	) {
 		viewModelScope.launch {
-			bucketRepository.createNewBucket(
-				title = title,
-				bucketType = bucketType
+			bucketRepository.putBucket(
+				bucketType = bucketType,
+				title = title
 			)
 		}
 	}

@@ -87,5 +87,6 @@ fun MenuBottomSheetButton(
 		} else {
 			Spacer(modifier = Modifier.requiredSize(80.dp))
 		}
+		Spacer(modifier = Modifier.height(12.dp))
 	}
 }

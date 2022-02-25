@@ -1,7 +1,9 @@
 package com.syncodec.momento.notebookComponent.modalBottomSheet
 
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,36 +17,38 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.momento.Momento
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
-import com.syncodec.momento.custom.modifier.dashedBorder
-import com.syncodec.momento.mainComponent.MainViewModel
+import com.syncodec.momento.konstant.Konstant
+import com.syncodec.momento.noteComponent.NoteActivity
+import com.syncodec.momento.notebookComponent.ViewModel
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Notebook
+import compose.icons.tablericons.Note
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NewNoteBottomSheet() {
-
-	val viewModel: MainViewModel = viewModel()
+	val context = LocalContext.current
+	val viewModel: ViewModel = viewModel()
 
 	val scope = rememberCoroutineScope()
 	val focusManager = LocalFocusManager.current
 
-	var notebookTitleText by rememberSaveable { mutableStateOf("") }
-	var notebookDescriptionText by rememberSaveable { mutableStateOf("") }
-	var isNotebookTitleTextFocused by remember { mutableStateOf(false) }
-	var isNotebookDescriptionTextFocused by remember { mutableStateOf(false) }
+	var noteTitleText by rememberSaveable { mutableStateOf("") }
+	var isNoteTitleFocused by remember { mutableStateOf(false) }
 
 	val createButtonColors = ButtonDefaults.buttonColors(
 		contentColor = MaterialTheme.colorScheme.primaryContainer,
@@ -57,7 +61,7 @@ fun NewNoteBottomSheet() {
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(420.dp)
+			.heightIn(240.dp)
 			.background(MaterialTheme.colorScheme.background),
 	) {
 
@@ -66,102 +70,61 @@ fun NewNoteBottomSheet() {
 		Spacer(modifier = Modifier.height(12.dp))
 
 		BottomSheetHeader(
-			title = "Writing a new book?",
-			imageVector = TablerIcons.Notebook,
-			subTitle = "Keep your notes organized in notebooks"
+			title = "New note?",
+			imageVector = TablerIcons.Note,
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
 
 		BasicTextField(
+			value = noteTitleText,
+			onValueChange = { noteTitleText = it },
+			singleLine = true,
+			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+			textStyle = MaterialTheme.typography.bodyMedium.copy(
+				color = MaterialTheme.colorScheme.primary,
+				fontWeight = FontWeight.Bold
+			),
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
 				.padding(24.dp, 0.dp)
+				.clip(RoundedCornerShape(12.dp))
 				.background(
-					if (notebookTitleText.isEmpty() && !isNotebookTitleTextFocused) {
+					if (noteTitleText.isEmpty() && !isNoteTitleFocused) {
 						Color.LightGray.copy(alpha = 0.13f)
 					} else {
 						MaterialTheme.colorScheme.background
 					}
 				)
 				.onFocusChanged { focusState ->
-					isNotebookTitleTextFocused = focusState.isFocused
+					isNoteTitleFocused = focusState.isFocused
 				},
-			value = notebookTitleText,
-			onValueChange = { notebookTitleText = it },
-			singleLine = true,
-			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-			textStyle = MaterialTheme.typography.bodyMedium,
 			decorationBox = { innerTextField ->
 				Card(
+					modifier = Modifier
+						.fillMaxWidth(),
 					backgroundColor = Color.Transparent,
-					shape = RoundedCornerShape(2.dp),
-					border = BorderStroke(1.dp, if (isNotebookTitleTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray),
-					elevation = 0.dp
+					elevation = 0.dp,
+					shape = RoundedCornerShape(12.dp),
+					border = BorderStroke(2.dp, if (isNoteTitleFocused) MaterialTheme.colorScheme.primary else Color.LightGray)
 				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						modifier = Modifier.padding(16.dp, 0.dp)
+					Box(
+						contentAlignment = Alignment.CenterStart,
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(12.dp, 0.dp)
 					) {
-						Box {
-							if (notebookTitleText.isEmpty()) {
-								Text(
-									"Give your book a title",
-									style = MaterialTheme.typography.bodyMedium,
-									color = Color.LightGray
-								)
-							}
-							innerTextField()
+						if (noteTitleText.isEmpty()) {
+							Text(
+								"What is this note about",
+								style = MaterialTheme.typography.bodyMedium,
+								color = Color.LightGray,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1
+							)
 						}
-					}
-				}
-			}
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		BasicTextField(
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(48.dp)
-				.padding(24.dp, 0.dp)
-				.background(
-					if (notebookDescriptionText.isEmpty() && !isNotebookDescriptionTextFocused) {
-						Color.LightGray.copy(alpha = 0.13f)
-					} else {
-						MaterialTheme.colorScheme.background
-					}
-				)
-				.onFocusChanged { focusState ->
-					isNotebookDescriptionTextFocused = focusState.isFocused
-				},
-			value = notebookDescriptionText,
-			onValueChange = { notebookDescriptionText = it },
-			singleLine = true,
-			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-			textStyle = MaterialTheme.typography.bodyMedium,
-			decorationBox = { innerTextField ->
-				Card(
-					backgroundColor = Color.Transparent,
-					shape = RoundedCornerShape(2.dp),
-					border = BorderStroke(1.dp, if (isNotebookDescriptionTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray),
-					elevation = 0.dp
-				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						modifier = Modifier.padding(16.dp, 0.dp)
-					) {
-						Box {
-							if (notebookDescriptionText.isEmpty()) {
-								Text(
-									"And a little description",
-									style = MaterialTheme.typography.bodyMedium,
-									color = Color.LightGray
-								)
-							}
-							innerTextField()
-						}
+						innerTextField()
 					}
 				}
 			}
@@ -169,75 +132,38 @@ fun NewNoteBottomSheet() {
 
 		Spacer(modifier = Modifier.height(16.dp))
 
-		Card(
-			elevation = 0.dp,
-			backgroundColor = createButtonColors.containerColor(enabled = notebookTitleText.isNotBlank()).value,
-			enabled = notebookTitleText.isNotBlank(),
+		Box(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
 				.padding(24.dp, 0.dp)
-				.focusable(),
-			onClick = {
-//				viewModel.insertNotebook(
-//					title = notebookTitleText,
-//					description = notebookDescriptionText
-//				)
-				focusManager.clearFocus()
-				scope.launch {
-					viewModel.mainActivityState.bottomSheetState.hide()
-				}
-			}
-		) {
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.Center,
-				modifier = Modifier
-					.fillMaxWidth()
-					.fillMaxHeight()
-			) {
-				Text(
-					text = "Create",
-					style = MaterialTheme.typography.titleMedium,
-					color = createButtonColors.contentColor(enabled = notebookTitleText.isNotBlank()).value,
-					textAlign = TextAlign.Center,
-					lineHeight = 0.sp,
-					maxLines = 1,
-				)
-			}
-		}
+				.focusable()
+				.clip(RoundedCornerShape(12.dp))
+				.background(createButtonColors.containerColor(enabled = noteTitleText.isNotBlank()).value)
+				.clickable(noteTitleText.isNotBlank()) {
+					focusManager.clearFocus()
+					scope.launch {
+						viewModel.activityState.bottomSheetState.hide()
+					}
 
-		Spacer(modifier = Modifier.height(16.dp))
+					Intent(context, NoteActivity::class.java).apply {
+						putExtra(Konstant.Companion.Konstant.COMPONENT_TYPE.name, Momento.Companion.ComponentType.NOTE.ordinal)
+						putExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name, viewModel.notebookKey)
+						putStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name, ArrayList(viewModel.currentRoute))
+						putExtra(Konstant.Companion.Konstant.TITLE.name, noteTitleText)
 
-		Card(
-			elevation = 0.dp,
-			backgroundColor = MaterialTheme.colorScheme.background,
-			onClick = {},
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
-				.dashedBorder(
-					width = 2.dp,
-					color = MaterialTheme.colorScheme.primary,
-					shape = RoundedCornerShape(4.dp),
-					on = 8.dp,
-					off = 8.dp
-				)
+						context.startActivity(this)
+					}
+				},
+			contentAlignment = Alignment.Center
 		) {
 			Text(
-				text = "Expenses (notebook)\n" +
-						"        ╠════ 2020 (chapter)\n" +
-						"        ║       ├──── January (topic)\n" +
-						"        ║       ├──── February\n" +
-						"        ║       ├──── March\n" +
-						"        ╠════ 2021\n" +
-						"        ╠════ 2022",
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary,
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(16.dp)
-					.alpha(0.47f)
+				text = "Add new note",
+				style = MaterialTheme.typography.titleMedium,
+				color = createButtonColors.contentColor(enabled = noteTitleText.isNotBlank()).value,
+				textAlign = TextAlign.Center,
+				lineHeight = 0.sp,
+				maxLines = 1,
 			)
 		}
 

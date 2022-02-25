@@ -39,6 +39,7 @@ import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.ResourceMap
 import com.syncodec.momento.mainComponent.MainViewModel
+import com.syncodec.momento.mainComponent.miscellaneous.TopBar
 
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
@@ -47,7 +48,7 @@ fun BucketScreen() {
 
 	val viewModel: MainViewModel = viewModel()
 
-	val bucketList by viewModel.bucketRepository.bucketDbEntryListLiveData.observeAsState()
+	val bucketList by viewModel.getBucketList().observeAsState()
 
 	val chipDataList: MutableList<ChipData> = mutableListOf()
 	val isChipSelected: MutableMap<BucketItemType.Type, Boolean> = mutableMapOf()
@@ -62,11 +63,12 @@ fun BucketScreen() {
 		isChipSelected[it] = isSelected
 	}
 
-	if (bucketList?.isNotEmpty() == true) {
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-		) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+	) {
+		TopBar()
+		if (bucketList?.isNotEmpty() == true) {
 			Spacer(modifier = Modifier.height(8.dp))
 			ChipView(chipDataList = chipDataList)
 			LazyVerticalGrid(
@@ -83,9 +85,9 @@ fun BucketScreen() {
 					}
 				}
 			}
+		} else {
+			NoBucketCard()
 		}
-	} else {
-		NoBucketCard()
 	}
 }
 
@@ -94,7 +96,7 @@ fun BucketScreen() {
 private fun NoBucketCard() {
 	val viewModel: MainViewModel = viewModel()
 	val scaffoldScale by animateFloatAsState(
-		targetValue = if (viewModel.mainActivityState.bottomSheetState.progress.to == ModalBottomSheetValue.Hidden) 1f else 0.95f,
+		targetValue = if (viewModel.activityState.bottomSheetState.progress.to == ModalBottomSheetValue.Hidden) 1f else 0.95f,
 		animationSpec = spring(
 			dampingRatio = Spring.DampingRatioHighBouncy,
 			stiffness = Spring.StiffnessMediumLow
