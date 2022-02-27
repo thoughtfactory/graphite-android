@@ -1,46 +1,61 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.Text
+import android.util.Log
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
+import androidx.compose.ui.unit.sp
+import com.halilibo.richtext.ui.*
+import com.halilibo.richtext.ui.string.InlineContent
+import com.halilibo.richtext.ui.string.RichTextString
+import com.halilibo.richtext.ui.string.Text
+import com.halilibo.richtext.ui.string.richTextString
+import com.syncodec.momento.R
+import org.json.JSONArray
+import org.json.JSONObject
 
-data class TiptapData(
-	val type: String,
-	val content: List<TiptapContent>
-)
+private const val CONTENT = "content"
+private const val CONTENT_TYPE = "type"
+private const val ATTRS = "attrs"
+private const val MARKS = "marks"
+private const val TYPE = "type"
 
-data class TiptapContent(
-	val type: String?,      //paragraph
-	val attrs: TiptapAttrs?,
-	val content: List<TiptapInnerContent>?
-)
+private const val DOC = "doc"
+private const val PARAGRAPH = "paragraph"
+private const val HEADING = "heading"
+private const val BLOCKQUOTE = "blockquote"
+private const val BULLET_LIST = "bulletList"
+private const val ORDERED_LIST = "orderedList"
+private const val TASK_LIST = "taskList"
+private const val LIST_ITEM = "listItem"
+private const val TASK_ITEM = "taskItem"
+private const val TEXT = "text"
 
-data class TiptapInnerContent(
-	val type: String?,  //text, hardbreak
-	val marks: List<TiptapMarks>?,
-	val text: String?
-)
+private const val LEVEL = "level"
 
-data class TiptapAttrs(
-	val textAlign: String
-)
-
-data class TiptapMarks(
-	val type: String
-)
+private const val BOLD = "bold"
+private const val ITALIC = "italic"
+private const val UNDERLINE = "underline"
+private const val STRIKE = "strike"
+private const val SUPERSCRIPT = "superscript"
+private const val SUBSCRIPT = "subscript"
 
 @Preview
 @Composable
@@ -48,46 +63,387 @@ fun ViewerComponent(
 	@PreviewParameter(MockNoteDataList::class)
 	noteData: String
 ) {
-	val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+	val tiptapData = JSONObject(noteData)
 
-	val tiptapData: TiptapData = objectMapper.readValue(noteData)
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(12.dp, 0.dp)
+			.verticalScroll(rememberScrollState())
+	) {
+		Spacer(modifier = Modifier.height(12.dp))
+		RenderContent(
+			tiptapData = tiptapData,
+			richTextScope = null,
+			nestLevel = 0
+		)
+		Spacer(modifier = Modifier.height(96.dp))
+	}
+}
 
-	SelectionContainer {
-		LazyColumn {
-			tiptapData.content.forEach { tiptapContent ->
-				if (tiptapContent.content!=null) {
-					tiptapContent.content.forEach {tiptapInnerContent ->
-						when(tiptapInnerContent.type) {
-							"text" -> {
-								if (tiptapInnerContent.text!=null) {
-									item {
-										tiptapInnerContent.marks
-										Text(
-											text = tiptapInnerContent.text
-										)
-									}
-								}
-							}
-							"hardbreak" -> {
-								item {
-									Spacer(modifier = Modifier.height(4.dp))
-								}
-							}
-						}
+@Composable
+private fun RenderContent(
+	tiptapData: JSONObject,
+	richTextScope: RichTextScope?,
+	nestLevel: Int
+) {
+	var nest = ""
+	for (i in 0 until nestLevel) {
+		nest += "\t"
+	}
+	Log.i("npr71", "$nest content")
+
+	when (tiptapData.optString(CONTENT_TYPE)) {
+		DOC -> {
+			RenderDoc(
+				contentList = tiptapData.optJSONArray(CONTENT),
+				nestLevel = nestLevel + 1
+			)
+		}
+	}
+}
+
+@Composable
+private fun RenderDoc(
+	contentList: JSONArray?,
+	nestLevel: Int
+) {
+	var nest = ""
+	for (i in 0 until nestLevel) {
+		nest += "\t"
+	}
+	Log.i("npr71", "$nest doc")
+
+	RichText(
+		modifier = Modifier
+			.fillMaxWidth(),
+	) {
+		for (i in 0 until (contentList?.length() ?: 0)) {
+			val content = contentList!!.optJSONObject(i)
+			when (content.optString(TYPE)) {
+				PARAGRAPH -> RenderParagraph(
+					attrs = content.optJSONObject(ATTRS),
+					contentList = content.optJSONArray(CONTENT),
+					nestLevel = nestLevel + 1
+				)
+				HEADING -> RenderHeading(
+					attrs = content.optJSONObject(ATTRS),
+					contentList = content.optJSONArray(CONTENT),
+					nestLevel = nestLevel + 1
+				)
+				BLOCKQUOTE -> RenderBlockquote(
+					attr = content.optJSONObject(ATTRS),
+					contentList = content.optJSONArray(CONTENT),
+					nestLevel = nestLevel + 1
+				)
+				BULLET_LIST -> RenderList(
+					contentList = content.optJSONArray(CONTENT),
+					listType = ListType.Unordered,
+					nestLevel = nestLevel + 1
+				)
+				ORDERED_LIST -> RenderList(
+					contentList = content.optJSONArray(CONTENT),
+					listType = ListType.Ordered,
+					nestLevel = nestLevel + 1
+				)
+				TASK_LIST -> RenderList(
+					contentList = content.optJSONArray(CONTENT),
+					listType = ListType.Unordered,
+					nestLevel = nestLevel + 1
+				)
+			}
+		}
+	}
+}
+
+@Composable
+private fun RichTextScope.RenderParagraph(
+	attrs: JSONObject?,
+	contentList: JSONArray?,
+	isTaskItem: Boolean = false,
+	nestLevel: Int
+) {
+	var nest = ""
+	for (i in 0 until nestLevel) {
+		nest += "\t"
+	}
+	Log.i("npr71", "$nest para")
+
+	richTextString {
+		var textLength = 0
+		for (i in 0 until (contentList?.length() ?: 0)) {
+			val content = contentList!!.optJSONObject(i)
+			val text = content.optString(TEXT)
+
+			if (isTaskItem) {
+				appendInlineContent(
+					content = checkBoxFalse,
+				)
+			}
+
+			when (content.optString(TYPE)) {
+				TEXT -> RenderText(
+					text = text,
+					marks = content.optJSONArray(MARKS),
+					start = textLength,
+					end = textLength + text.length,
+					nestLevel = nestLevel + 1
+				)
+			}
+			textLength += text.length
+		}
+
+		Text(
+			text = toRichTextString(),
+			modifier = Modifier,
+			onTextLayout = {
+			}
+		)
+	}
+}
+
+@Composable
+private fun RichTextScope.RenderHeading(
+	attrs: JSONObject?,
+	contentList: JSONArray?,
+	nestLevel: Int
+) {
+	var nest = ""
+	for (i in 0 until nestLevel) {
+		nest += "\t"
+	}
+	Log.i("npr71", "$nest head")
+
+	val level = attrs?.optInt(LEVEL)
+
+	if (level != null) {
+		Heading(level = level) {
+			richTextString {
+				var textLength = 0
+				for (i in 0 until (contentList?.length() ?: 0)) {
+					val content = contentList!!.optJSONObject(i)
+					val text = content.optString(TEXT)
+					when (content.optString(TYPE)) {
+						TEXT -> RenderText(
+							text = text,
+							marks = content.optJSONArray(MARKS),
+							start = textLength,
+							end = textLength + text.length,
+							nestLevel = nestLevel + 1
+						)
 					}
+					textLength += text.length
+				}
+				Text(text = toRichTextString())
+			}
+		}
+	} else {
+		richTextString {
+			var textLength = 0
+			for (i in 0 until (contentList?.length() ?: 0)) {
+				val content = contentList!!.optJSONObject(i)
+				val text = content.optString(TEXT)
+				when (content.optString(TYPE)) {
+					TEXT -> RenderText(
+						text = text,
+						marks = content.optJSONArray(MARKS),
+						start = textLength,
+						end = textLength + text.length,
+						nestLevel = nestLevel + 1
+					)
+				}
+				textLength += text.length
+			}
+			Text(text = toRichTextString())
+		}
+	}
+}
+
+
+@Composable
+private fun RichTextScope.RenderBlockquote(
+	attr: JSONObject?,
+	contentList: JSONArray?,
+	nestLevel: Int
+) {
+	var nest = ""
+	for (i in 0 until nestLevel) {
+		nest += "\t"
+	}
+	Log.i("npr71", "$nest block")
+
+	BlockQuote {
+		for (i in 0 until (contentList?.length() ?: 0)) {
+			val content = contentList!!.optJSONObject(i)
+			when (content.optString(TYPE)) {
+				PARAGRAPH -> RenderParagraph(
+					attrs = content.optJSONObject(ATTRS),
+					contentList = content.getJSONArray(CONTENT),
+					nestLevel = nestLevel + 1
+				)
+			}
+		}
+	}
+}
+
+@Composable
+private fun RichTextScope.RenderList(
+	contentList: JSONArray?,
+	listType: ListType,
+	nestLevel: Int,
+) {
+	var nest = ""
+	for (i in 0 until nestLevel) {
+		nest += "\t"
+	}
+	Log.i("npr71", "$nest bulletList")
+
+	val itemList: MutableList<@Composable (RichTextScope.() -> Unit)> = mutableListOf()
+
+	for (i in 0 until (contentList?.length() ?: 0)) {
+		val content = contentList!!.optJSONObject(i)
+		when (content.optString(TYPE)) {
+			LIST_ITEM -> itemList.add(
+				RenderListItem(
+					contentList = content.optJSONArray(CONTENT),
+					isTaskItem = false,
+					nestLevel = nestLevel + 1
+				)
+			)
+			TASK_ITEM -> itemList.add(
+				RenderListItem(
+					contentList = content.optJSONArray(CONTENT),
+					isTaskItem = true,
+					nestLevel = nestLevel + 1
+				)
+			)
+		}
+	}
+
+	if (itemList.isNotEmpty()) {
+		FormattedList(
+			listType = listType,
+			*itemList.toTypedArray()
+		)
+	}
+}
+
+@Composable
+private fun RenderListItem(
+	contentList: JSONArray?,
+	isTaskItem: Boolean,
+	nestLevel: Int
+): @Composable (RichTextScope.() -> Unit) {
+	return {
+		for (i in 0 until (contentList?.length() ?: 0)) {
+			var nest = ""
+			for (i in 0 until nestLevel) {
+				nest += "\t"
+			}
+			Log.i("npr71", "$nest listItem")
+			val content = contentList!!.optJSONObject(i)
+			when (content.optString(TYPE)) {
+				PARAGRAPH -> RenderParagraph(
+					attrs = content.optJSONObject(ATTRS),
+					contentList = content.optJSONArray(CONTENT),
+					isTaskItem = isTaskItem,
+					nestLevel = nestLevel + 1
+				)
+			}
+		}
+	}
+}
+
+@Composable
+private fun RichTextString.Builder.RenderText(
+	text: String?,
+	marks: JSONArray?,
+	start: Int,
+	end: Int,
+	nestLevel: Int
+) {
+	var nest = ""
+	for (i in 0 until nestLevel) {
+		nest += "\t"
+	}
+	Log.i("npr71", "$nest text ")
+
+	if (text != null) {
+		for (i in 0 until (marks?.length() ?: 0)) {
+			val mark = marks!!.getJSONObject(i)
+			when (mark.optString(TYPE)) {
+				BOLD -> {
+					addFormat(
+						format = RichTextString.Format.Bold,
+						start = start,
+						end = end
+					)
+				}
+				ITALIC -> {
+					addFormat(
+						format = RichTextString.Format.Italic,
+						start = start,
+						end = end
+					)
+				}
+				UNDERLINE -> {
+					addFormat(
+						format = RichTextString.Format.Underline,
+						start = start,
+						end = end
+					)
+				}
+				STRIKE -> {
+					addFormat(
+						format = RichTextString.Format.Strikethrough,
+						start = start,
+						end = end
+					)
+				}
+				SUPERSCRIPT -> {
+					addFormat(
+						format = RichTextString.Format.Superscript,
+						start = start,
+						end = end
+					)
+				}
+				SUBSCRIPT -> {
+					addFormat(
+						format = RichTextString.Format.Subscript,
+						start = start,
+						end = end
+					)
 				}
 			}
 		}
-
+		append(text = text)
 	}
-
 }
+
+private val checkBoxFalse = InlineContent {
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = Modifier
+			.height(20.dp),
+	) {
+		Icon(
+			painter = painterResource(id = R.drawable.ic_checkbox_unchecked),
+			contentDescription = "Unchecked",
+			tint = MaterialTheme.colorScheme.primary,
+			modifier = Modifier
+				.requiredSize(18.dp)
+				.background(MaterialTheme.colorScheme.secondaryContainer)
+		)
+		Spacer(modifier = Modifier.width(4.dp))
+	}
+}
+
 
 class MockNoteDataList : PreviewParameterProvider<List<String>> {
 	override val values = sequenceOf(
 		listOf(
-//			"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"NGREDIENT\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ cup curd \\/ yogurt (thick)\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ tsp turmeric \\/ haldi\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢1 tsp kashmiri red chilli powder \\/ lal mirch powder\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ tsp coriander powder \\/ daniya powder\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢¼ tsp cumin powder \\/ jeera powder\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ tsp garam masala\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ tsp kasuri methi \\/ dry fenugreek leaves (crushed)\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ tsp chaat masala\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢1 tsp ginger - garlic paste\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢¼ tsp ajwain \\/ carom seeds\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢2 tsp besan \\/ gram flour (dry roasted)\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢1 tbsp lemon juice\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢salt to taste\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢3 tsp oil\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"vegetables:\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ onions (petals)\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢½ capsicum (red & green, cubed)\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"▢5 cubes paneer \\/ cottage cheese\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"INSTRUCTIONS\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\" \"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"firstly, take ½ cup thick curd \\/ yogurt.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"further add in all the spices along with salt.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"mix till all the spices are combined well with curd.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"now add ½ onion petals, ½ cubed capsicum (red & green) and 5 cubes paneer.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"also add 1 tsp of oil.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"mix gently till all the vegetables are coated well.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"furthermore, to marinate, cover and refrigerate for 30 minutes.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"after marination, insert the marinated paneer, capsicum and onions into wooden skewers.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"further, roast it on a hot tawa or grill in oven or tandoor.\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"finally, sprinkle some chaat masala and serve paneer tikka immediately.\"}]}]}"		)
-			"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"“You've gotta dance like there's nobody watching,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Love like you'll never be hurt,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Sing like there's nobody listening,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"And live like it's heaven on earth.”\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"― William W. Purkey\"}]}]}"
+			"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"“You've gotta dance like there's nobody watching,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Love like you'll never be hurt,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Sing like there's nobody listening,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"And live like it's heaven on earth.”\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"― William W. Purkey\"}]}]}",
+			"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"plain text\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"bold\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"italic\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"underline\"}],\"text\":\"underline\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"strike\"}],\"text\":\"strike\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"plain\"},{\"type\":\"text\",\"marks\":[{\"type\":\"superscript\"}],\"text\":\"super\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"plain\"},{\"type\":\"text\",\"marks\":[{\"type\":\"subscript\"}],\"text\":\"sub\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"paragraph\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":1},\"content\":[{\"type\":\"text\",\"text\":\"H1\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"H2\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"H3\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":4},\"content\":[{\"type\":\"text\",\"text\":\"H4\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":5},\"content\":[{\"type\":\"text\",\"text\":\"H5\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":6},\"content\":[{\"type\":\"text\",\"text\":\"H6\"}]},{\"type\":\"blockquote\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"hardBreak\"},{\"type\":\"text\",\"text\":\"blockquote\"}]}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"left align\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"center\"},\"content\":[{\"type\":\"text\",\"text\":\"center align\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"right\"},\"content\":[{\"type\":\"text\",\"text\":\"right align\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"justify\"},\"content\":[{\"type\":\"text\",\"text\":\"justify\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"Bullet list\"}]},{\"type\":\"bulletList\",\"content\":[{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"bullet 1\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"bullet 2\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"bullet 3\"}]}]}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"Ordered list\"}]},{\"type\":\"orderedList\",\"attrs\":{\"start\":1},\"content\":[{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"order 1\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"order 2\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"order 3\"}]}]}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"Task list\"}]},{\"type\":\"taskList\",\"content\":[{\"type\":\"taskItem\",\"attrs\":{\"checked\":false},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"task 1\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"task 2\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"task 3\"}]}]}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"}}]}"
 		)
 	)
 }

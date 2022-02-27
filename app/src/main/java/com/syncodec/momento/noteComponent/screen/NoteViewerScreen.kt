@@ -48,7 +48,6 @@ fun NoteViewerScreen() {
 				if (index != null && index != -1) {
 					pagerState.scrollToPage(page = index)
 				}
-				Log.i("npr71", "pager : $index")
 			}
 		}
 	}
@@ -143,9 +142,6 @@ private fun Viewer(
 					sheetPeekHeight = 96.dp,
 					sheetElevation = 8.dp
 				) {
-					Log.i("npr71", "diary : ${diary?.content?.length}")
-					Log.i("npr71", "diary : ${diary?.content}")
-
 					if (diary != null) {
 						diary!!.content?.let { it1 -> ViewerComponent(noteData = it1) }
 					}

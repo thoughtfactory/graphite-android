@@ -7,6 +7,8 @@ import android.location.Address
 import android.net.Uri
 import android.text.format.DateFormat
 import android.util.Base64
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.FileProvider
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -161,4 +163,8 @@ fun downloadImage(
 
 	val byteArray = output.toByteArray()
 	return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+}
+
+fun Color.toHexString(): String {
+	return String.format("#%06X", (0xFFFFFF and this.toArgb()))
 }

@@ -1,14 +1,30 @@
-/* .bold-style {
-    background-color: tomato;
-    color: white;
-    border: 2px solid black;
-    margin: 20px;
-    padding: 20px;
+/* .tiptap {
+    width: max-content;
+    height: max-content;
+} */
+
+body {
+    height: 100%;
 }
 
-div {
-    white-space: pre-line;
-    background-color: lightgreen;
-    color: black;
-    font-size: 25px;
+.ProseMirror:focus {
+    outline: none;
+}
+
+.ProseMirror p {
+    margin: 1em 0;
+    width: max-content;
+    height: max-content;
+}
+
+.bold-style {
+    font-weight: bold;
+}
+
+.italic-style {
+    font-style: italic;
+}
+
+/* .underline-style {
+    font-style: ;
 } */

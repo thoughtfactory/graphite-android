@@ -52,7 +52,7 @@ const Typography = require('@tiptap/extension-typography');
 
 
 const editor = new Editor.Editor({
-    element: document.querySelector('.element'),
+    element: document.querySelector('.tiptap'),
     extensions: [
         Document.Document,
         Text.Text,
@@ -62,82 +62,138 @@ const editor = new Editor.Editor({
                 class: 'bold-style',
             },
         }),
-        Italic.Italic,
-        Underline.Underline,
-        Strike.Strike,
-        Superscript.Superscript,
-        Subscript.Subscript,
+        Italic.Italic.configure({
+            HTMLAttributes: {
+                class: 'italic-style',
+            },
+        }),
+        Underline.Underline.configure({
+            HTMLAttributes: {
+                class: 'underline-style',
+            },
+        }),
+        Strike.Strike.configure({
+            HTMLAttributes: {
+                class: 'strike-style',
+            },
+        }),
+        Superscript.Superscript.configure({
+            HTMLAttributes: {
+                class: 'superscript-style',
+            },
+        }),
+        Subscript.Subscript.configure({
+            HTMLAttributes: {
+                class: 'subscript-style',
+            },
+        }),
 
-        Code.Code,
+        Code.Code.configure({
+            HTMLAttributes: {
+                class: 'code-style'
+            }
+        }),
         Highlight.Highlight.configure({
             multicolor: true,
+            HTMLAttributes: {
+                class: 'highlight-style'
+            }
         }),
         Link.Link.configure({
-            autolink: false,
+            autolink: true,
             openOnClick: false,
-            linkOnPaste: false,
+            linkOnPaste: true,
+            HTMLAttributes: {
+                class: 'link-style'
+            }
         }),
 
         TextStyle.TextStyle,
 
         // node
-        Blockquote.Blockquote,
-        Codeblock.CodeBlockLowlight,
-        Hardbreak.HardBreak,
-        Paragraph.Paragraph,
+        Blockquote.Blockquote.configure({
+            HTMLAttributes: {
+                class: 'blockquote-style'
+            }
+        }),
+        Codeblock.CodeBlockLowlight.configure({
+            exitOnTripleEnter: true,
+            HTMLAttributes: {
+                class: 'codeblock-style'
+            }
+        }),
+        Hardbreak.HardBreak.configure({
+            keepMarks: true,
+            HTMLAttributes: {
+                class: 'hardbreak-style'
+            }
+        }),
+        Paragraph.Paragraph.configure({
+            HTMLAttributes: {
+                class: 'paragraph-style'
+            }
+        }),
         Heading.Heading.configure({
             levels: [1, 2, 3, 4, 5, 6],
+            HTMLAttributes: {
+                class: 'heading-style'
+            }
         }),
-        HorizontalRule.HorizontalRule,
-        Image.Image.configure({
-            inline: true,
+        HorizontalRule.HorizontalRule.configure({
+            HTMLAttributes: {
+                class: 'horizontal-rule-style'
+            }
         }),
-        // Mention.Mention.configure({
-        //     renderLabel({
-        //         options,
-        //         node
-        //     }) {
-        //         return `${options.suggestion.char}${node.attrs.label ?? node.attrs.id}`
-        //     },
-        //     suggestion: ,
+        // Image.Image.configure({
+        //     inline: true,
         // }),
-
 
         // List
         ListItem.ListItem,
         BulletList.BulletList.configure({
             itemTypeName: 'listItem',
+            HTMLAttributes: {
+                class: 'bullet-list-style'
+            }
         }),
         OrderedList.OrderedList.configure({
             itemTypeName: 'listItem',
+            HTMLAttributes: {
+                class: 'ordered-list-style'
+            }
         }),
         TaskItem.TaskItem.configure({
+            nested: true,
             HTMLAttributes: {
-                class: 'my-custom-class',
+                class: 'task-item-style',
             },
         }),
         TaskList.TaskList.configure({
             itemTypeName: 'taskItem',
+            HTMLAttributes: {
+                class: 'task-list-class'
+            }
         }),
 
         // Table
-        Table.Table.configure({
-            resizable: true,
-            handleWidth: 5,
-            cellMinWidth: 25,
-            lastColumnResizable: true,
-            lastColumnResizable: true,
-            allowTableNodeSelection: true
-        }),
-        TableRow.TableRow.extend({
-            content: '(tableCell | tableHeader)*',
-        }),
-        TableHeader.TableHeader,
-        TableCell.TableCell,
+        // Table.Table.configure({
+        //     resizable: true,
+        //     handleWidth: 5,
+        //     cellMinWidth: 25,
+        //     lastColumnResizable: true,
+        //     lastColumnResizable: true,
+        //     allowTableNodeSelection: true
+        // }),
+        // TableRow.TableRow.extend({
+        //     content: '(tableCell | tableHeader)*',
+        // }),
+        // TableHeader.TableHeader,
+        // TableCell.TableCell,
 
         // Functionality
         TextAlign.TextAlign.configure({
             types: ['heading', 'paragraph'],
+            alignments: ['left', 'center', 'right', 'justify'],
             defaultAlignment: 'left',
         }),
         CharacterCount.CharacterCount,
@@ -147,11 +203,12 @@ const editor = new Editor.Editor({
         }),
         GapCursor.Gapcursor,
         History.History.configure({
-            depth: 10,
-            newGroupDelay: 1000,
+            depth: 20,
+            newGroupDelay: 40,
         }),
         Placeholder.Placeholder.configure({
-            placeholder: 'My Custom Placeholder',
+            placeholder: 'What story did you bring today?',
+            showOnlyWhenEditable: true,
         }),
         Typography.Typography,
 
@@ -165,7 +222,7 @@ const editor = new Editor.Editor({
     editable: true,
     injectCSS: false,
     onCreate: onCreate,
-    editable: false
+    editable: true,
 });
 
 function onCreate() {
@@ -183,8 +240,8 @@ editor.on('transaction', ({
     currentFormat.italic = editor.isActive('italic');
     currentFormat.underline = editor.isActive('underline');
     currentFormat.strike = editor.isActive('strike');
-    currentFormat.superscripe = editor.isActive('superscript');
-    currentFormat.sunscript = editor.isActive('subscript');
+    currentFormat.superscript = editor.isActive('superscript');
+    currentFormat.subscript = editor.isActive('subscript');
 
     currentFormat.link = editor.getAttributes('link').href;
 
@@ -213,16 +270,16 @@ editor.on('transaction', ({
         level: 6
     });
 
-    currentFormat.textAlignLeft = editor.isActive({
+    currentFormat.alignLeft = editor.isActive({
         textAlign: 'left'
     });
-    currentFormat.textAlignCenter = editor.isActive({
+    currentFormat.alignCenter = editor.isActive({
         textAlign: 'center'
     });
-    currentFormat.textAlignRight = editor.isActive({
+    currentFormat.alignRight = editor.isActive({
         textAlign: 'right'
     });
-    currentFormat.textAlignJustify = editor.isActive({
+    currentFormat.alignJustify = editor.isActive({
         textAlign: 'justify'
     });
 
@@ -234,7 +291,11 @@ editor.on('transaction', ({
     currentFormat.wordCount = editor.storage.characterCount.words();
     currentFormat.textColor = editor.getAttributes('textStyle').color;
     currentFormat.highlightColor = editor.getAttributes('highlight').color;
-    currentFormat.FontFamily = editor.getAttributes('textStyle').FontFamily;
+    currentFormat.fontFamily = editor.getAttributes('textStyle').FontFamily;
+
+    currentFormat.currentSelection = editor.state.selection.$anchor.pos;
+    currentFormat.canIndent = editor.can().sinkListItem('listItem');
+    currentFormat.canOutdent = editor.can().liftListItem('listItem');
     // editor.isActive('textStyle', { fontFamily: 'serif' })
 
     // bridge.format(JSON.stringify(currentFormat));

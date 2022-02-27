@@ -35,34 +35,8 @@ class RichTextEditor(context: Context) : WebView(context) {
 		onSaveDataListener = listener
 	}
 
-	private var onScrollChangeListener: OnScrollChangeListener? = null
-	override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
-		super.onScrollChanged(l, t, oldl, oldt)
-		onScrollChangeListener?.onScrollChange(this, l, t, oldl, oldt)
-	}
-
-	fun setOnScrollChangeListener(onScrollChangeListener: OnScrollChangeListener?) {
-		this.onScrollChangeListener = onScrollChangeListener
-	}
-
-	fun getOnScrollChangeListener(): OnScrollChangeListener? {
-		return onScrollChangeListener
-	}
-
-	interface OnScrollChangeListener {
-		/**
-		 * Called when the scroll position of a view changes.
-		 *
-		 * @param v          The view whose scroll position has changed.
-		 * @param scrollX    Current horizontal scroll origin.
-		 * @param scrollY    Current vertical scroll origin.
-		 * @param oldScrollX Previous horizontal scroll origin.
-		 * @param oldScrollY Previous vertical scroll origin.
-		 */
-		fun onScrollChange(v: WebView?, scrollX: Int, scrollY: Int, oldScrollX: Int, oldScrollY: Int)
-	}
-
 	var isReady: MutableState<Boolean> = mutableStateOf(false)
+	var currentSelection: Int = 0
 
 	init {
 		isVerticalScrollBarEnabled = false
@@ -98,7 +72,9 @@ class RichTextEditor(context: Context) : WebView(context) {
 	fun exec(trigger: String) {
 		Log.i(TAG, "isReady : ${isReady.value}")
 		if (isReady.value) {
+			load("editor.commands.blur();")
 			load(trigger)
+			load("editor.commands.focus($currentSelection);")
 		} else {
 			postDelayed({ exec(trigger) }, 100)
 		}
@@ -113,6 +89,7 @@ class RichTextEditor(context: Context) : WebView(context) {
 	fun format(textFormatJsonString: String) {
 		val newTextFormat: TextFormat = objectMapper.readValue(textFormatJsonString)
 		onFormatUpdateListener?.onFormatUpdate(newTextFormat)
+		currentSelection = newTextFormat.currentSelection
 	}
 
 	@JavascriptInterface
@@ -128,10 +105,10 @@ class RichTextEditor(context: Context) : WebView(context) {
 		val superscript: Boolean = false,
 		val subscript: Boolean = false,
 
-		val textAlignLeft: Boolean = false,
-		val textAlignCenter: Boolean = false,
-		val textAlignRight: Boolean = false,
-		val textAlignJustify: Boolean = false,
+		val alignLeft: Boolean = false,
+		val alignCenter: Boolean = false,
+		val alignRight: Boolean = false,
+		val alignJustify: Boolean = false,
 
 		val link: String? = null,
 
@@ -159,8 +136,7 @@ class RichTextEditor(context: Context) : WebView(context) {
 		val fontSize: String = "12px",
 		val fontFamily: String = "Open Sans",
 
-		val startOffset: Int = -1,
-		val endOffset: Int = -1
+		val currentSelection: Int = 0
 	)
 
 	companion object {

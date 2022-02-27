@@ -108,7 +108,34 @@
         <entry key="app/src/main/java/com/syncodec/momento/custom/calendarview/src/main/res/layout/cv_week_bar.xml" value="0.31927083333333334" />
         <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.1585" />
         <entry key="app/src/main/res/drawable/ic_book.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_align_center.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_align_justify.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_align_left.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_align_right.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_blockquote.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_code.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_code_block.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_font_family.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_h1.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_h2.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_h3.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_h4.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_h5.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_h6.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_indent.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_link.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_list_bullet.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_list_check.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_list_ordered.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_outdent.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_paragraph.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_quote.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_subscript.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_superscript.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_format_unlink.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_hashtag.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.1585" />
+        <entry key="app/src/main/res/drawable/ic_tabler_icon_highlight.xml" value="0.1325" />
         <entry key="app/src/main/res/drawable/il_book_screen.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/il_environment.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/il_movie.xml" value="0.138" />
