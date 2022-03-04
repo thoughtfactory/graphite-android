@@ -1,33 +1,26 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
 import android.util.Log
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.halilibo.richtext.ui.*
-import com.halilibo.richtext.ui.string.InlineContent
-import com.halilibo.richtext.ui.string.RichTextString
-import com.halilibo.richtext.ui.string.Text
-import com.halilibo.richtext.ui.string.richTextString
+import com.syncodec.momento.custom.richText.viewer.string.InlineContent
+import com.syncodec.momento.custom.richText.viewer.string.RichTextString
+import com.syncodec.momento.custom.richText.viewer.string.Text
+import com.syncodec.momento.custom.richText.viewer.string.richTextString
 import com.syncodec.momento.R
+import com.syncodec.momento.custom.richText.viewer.*
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -47,8 +40,10 @@ private const val TASK_LIST = "taskList"
 private const val LIST_ITEM = "listItem"
 private const val TASK_ITEM = "taskItem"
 private const val TEXT = "text"
+private const val HARD_BREAK = "hardBreak"
 
 private const val LEVEL = "level"
+private const val CHECKED = "checked"
 
 private const val BOLD = "bold"
 private const val ITALIC = "italic"
@@ -87,12 +82,6 @@ private fun RenderContent(
 	richTextScope: RichTextScope?,
 	nestLevel: Int
 ) {
-	var nest = ""
-	for (i in 0 until nestLevel) {
-		nest += "\t"
-	}
-	Log.i("npr71", "$nest content")
-
 	when (tiptapData.optString(CONTENT_TYPE)) {
 		DOC -> {
 			RenderDoc(
@@ -108,12 +97,6 @@ private fun RenderDoc(
 	contentList: JSONArray?,
 	nestLevel: Int
 ) {
-	var nest = ""
-	for (i in 0 until nestLevel) {
-		nest += "\t"
-	}
-	Log.i("npr71", "$nest doc")
-
 	RichText(
 		modifier = Modifier
 			.fillMaxWidth(),
@@ -148,7 +131,7 @@ private fun RenderDoc(
 				)
 				TASK_LIST -> RenderList(
 					contentList = content.optJSONArray(CONTENT),
-					listType = ListType.Unordered,
+					listType = ListType.Task,
 					nestLevel = nestLevel + 1
 				)
 			}
@@ -160,30 +143,24 @@ private fun RenderDoc(
 private fun RichTextScope.RenderParagraph(
 	attrs: JSONObject?,
 	contentList: JSONArray?,
-	isTaskItem: Boolean = false,
 	nestLevel: Int
 ) {
-	var nest = ""
-	for (i in 0 until nestLevel) {
-		nest += "\t"
-	}
-	Log.i("npr71", "$nest para")
-
 	richTextString {
 		var textLength = 0
 		for (i in 0 until (contentList?.length() ?: 0)) {
 			val content = contentList!!.optJSONObject(i)
 			val text = content.optString(TEXT)
 
-			if (isTaskItem) {
-				appendInlineContent(
-					content = checkBoxFalse,
-				)
-			}
-
 			when (content.optString(TYPE)) {
 				TEXT -> RenderText(
 					text = text,
+					marks = content.optJSONArray(MARKS),
+					start = textLength,
+					end = textLength + text.length,
+					nestLevel = nestLevel + 1
+				)
+				HARD_BREAK -> RenderText(
+					text = "\n",
 					marks = content.optJSONArray(MARKS),
 					start = textLength,
 					end = textLength + text.length,
@@ -208,12 +185,6 @@ private fun RichTextScope.RenderHeading(
 	contentList: JSONArray?,
 	nestLevel: Int
 ) {
-	var nest = ""
-	for (i in 0 until nestLevel) {
-		nest += "\t"
-	}
-	Log.i("npr71", "$nest head")
-
 	val level = attrs?.optInt(LEVEL)
 
 	if (level != null) {
@@ -266,19 +237,13 @@ private fun RichTextScope.RenderBlockquote(
 	contentList: JSONArray?,
 	nestLevel: Int
 ) {
-	var nest = ""
-	for (i in 0 until nestLevel) {
-		nest += "\t"
-	}
-	Log.i("npr71", "$nest block")
-
 	BlockQuote {
 		for (i in 0 until (contentList?.length() ?: 0)) {
 			val content = contentList!!.optJSONObject(i)
 			when (content.optString(TYPE)) {
 				PARAGRAPH -> RenderParagraph(
 					attrs = content.optJSONObject(ATTRS),
-					contentList = content.getJSONArray(CONTENT),
+					contentList = content.optJSONArray(CONTENT),
 					nestLevel = nestLevel + 1
 				)
 			}
@@ -292,13 +257,7 @@ private fun RichTextScope.RenderList(
 	listType: ListType,
 	nestLevel: Int,
 ) {
-	var nest = ""
-	for (i in 0 until nestLevel) {
-		nest += "\t"
-	}
-	Log.i("npr71", "$nest bulletList")
-
-	val itemList: MutableList<@Composable (RichTextScope.() -> Unit)> = mutableListOf()
+	val itemList: MutableList<Pair<@Composable (RichTextScope.() -> Unit), Boolean?>> = mutableListOf()
 
 	for (i in 0 until (contentList?.length() ?: 0)) {
 		val content = contentList!!.optJSONObject(i)
@@ -306,14 +265,14 @@ private fun RichTextScope.RenderList(
 			LIST_ITEM -> itemList.add(
 				RenderListItem(
 					contentList = content.optJSONArray(CONTENT),
-					isTaskItem = false,
+					attrs = content.optJSONObject(ATTRS),
 					nestLevel = nestLevel + 1
 				)
 			)
 			TASK_ITEM -> itemList.add(
 				RenderListItem(
 					contentList = content.optJSONArray(CONTENT),
-					isTaskItem = true,
+					attrs = content.optJSONObject(ATTRS),
 					nestLevel = nestLevel + 1
 				)
 			)
@@ -331,27 +290,24 @@ private fun RichTextScope.RenderList(
 @Composable
 private fun RenderListItem(
 	contentList: JSONArray?,
-	isTaskItem: Boolean,
+	attrs: JSONObject?,
 	nestLevel: Int
-): @Composable (RichTextScope.() -> Unit) {
-	return {
-		for (i in 0 until (contentList?.length() ?: 0)) {
-			var nest = ""
-			for (i in 0 until nestLevel) {
-				nest += "\t"
+): Pair<@Composable (RichTextScope.() -> Unit), Boolean?> {
+	return Pair(
+		{
+			for (i in 0 until (contentList?.length() ?: 0)) {
+				val content = contentList!!.optJSONObject(i)
+				when (content.optString(TYPE)) {
+					PARAGRAPH -> RenderParagraph(
+						attrs = content.optJSONObject(ATTRS),
+						contentList = content.optJSONArray(CONTENT),
+						nestLevel = nestLevel + 1
+					)
+				}
 			}
-			Log.i("npr71", "$nest listItem")
-			val content = contentList!!.optJSONObject(i)
-			when (content.optString(TYPE)) {
-				PARAGRAPH -> RenderParagraph(
-					attrs = content.optJSONObject(ATTRS),
-					contentList = content.optJSONArray(CONTENT),
-					isTaskItem = isTaskItem,
-					nestLevel = nestLevel + 1
-				)
-			}
-		}
-	}
+		},
+		attrs?.optBoolean(CHECKED)
+	)
 }
 
 @Composable
@@ -362,12 +318,6 @@ private fun RichTextString.Builder.RenderText(
 	end: Int,
 	nestLevel: Int
 ) {
-	var nest = ""
-	for (i in 0 until nestLevel) {
-		nest += "\t"
-	}
-	Log.i("npr71", "$nest text ")
-
 	if (text != null) {
 		for (i in 0 until (marks?.length() ?: 0)) {
 			val mark = marks!!.getJSONObject(i)

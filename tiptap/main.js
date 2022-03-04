@@ -226,7 +226,7 @@ const editor = new Editor.Editor({
 });
 
 function onCreate() {
-    // bridge.onCreate();
+    bridge.onCreate();
 };
 
 editor.on('transaction', ({
@@ -298,7 +298,7 @@ editor.on('transaction', ({
     currentFormat.canOutdent = editor.can().liftListItem('listItem');
     // editor.isActive('textStyle', { fontFamily: 'serif' })
 
-    // bridge.format(JSON.stringify(currentFormat));
+    bridge.format(JSON.stringify(currentFormat));
 });
 
 editor.getData = () => {
@@ -306,7 +306,7 @@ editor.getData = () => {
     data.dataJson = editor.getJSON();
     data.dataText = editor.getText();
 
-    // bridge.getData(JSON.stringify(data));
+    bridge.getData(JSON.stringify(data));
 }
 
 module.exports = editor;

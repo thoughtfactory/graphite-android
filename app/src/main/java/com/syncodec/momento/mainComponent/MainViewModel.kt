@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.BucketDbEntry
-import com.syncodec.momento.database.bucket.BucketItemDbEntry
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.repository.BucketRepository
@@ -17,14 +16,13 @@ import com.syncodec.momento.repository.DiaryRepository
 import com.syncodec.momento.repository.NotebookRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-	val diaryRepository: DiaryRepository = DiaryRepository(momento = application as Momento)
+	val diaryRepository: DiaryRepository = DiaryRepository.getInstance(momento = application as Momento)
 	val notebookRepository: NotebookRepository = NotebookRepository(momento = application as Momento)
-	val bucketRepository: BucketRepository = BucketRepository(momento = application as Momento)
+	val bucketRepository: BucketRepository = BucketRepository.getInstance(momento = application as Momento)
 
 	lateinit var activityState: MainActivity.ActivityState
 
@@ -35,7 +33,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun getBucketList(): LiveData<List<BucketDbEntry>> {
-		return bucketRepository.getBucketList()
+		return bucketRepository.getBucketListAsLiveData()
 	}
 
 	fun moveDiaryToTrash(primaryKey: String) {
@@ -48,10 +46,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun deleteAllDiary() {
-		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				diaryRepository.deleteAll()
-			}
+		viewModelScope.launch(Dispatchers.IO) {
+			diaryRepository.deleteAll()
 		}
 	}
 
@@ -65,11 +61,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun deleteAllNotebook() {
-		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				notebookRepository.deleteAll()
-				File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
-			}
+		viewModelScope.launch(Dispatchers.IO) {
+			notebookRepository.deleteAll()
+			File("${(getApplication<Application>() as Momento).DATA}/").deleteRecursively()
 		}
 	}
 

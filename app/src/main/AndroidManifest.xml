@@ -45,6 +45,12 @@
 		</activity>
 
 		<activity
+			android:name=".searchComponent.SearchActivity"
+			android:exported="false"
+			android:theme="@style/Theme.Momento.NoActionBar">
+		</activity>
+
+		<activity
 			android:name=".todayComponent.TodayActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Momento.NoActionBar">

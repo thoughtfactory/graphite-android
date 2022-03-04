@@ -84,7 +84,7 @@ class NotebookActivity : ComponentActivity() {
 	override fun onBackPressed() {
 		when {
 			viewModel.activityState.isSelected.value -> {
-				viewModel.activityState.selectedEntryList.removeAll { true }
+				viewModel.activityState.selectedItemList.removeAll { true }
 				viewModel.activityState.isSelected.value = false
 			}
 			viewModel.currentRoute.isNotEmpty() -> {
@@ -256,7 +256,7 @@ class NotebookActivity : ComponentActivity() {
 	) {
 		var notebookComponentType: MutableState<ComponentType> = mutableStateOf(ComponentType.ALL)
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.NewNoteBottomSheet)
-		var selectedEntryList: SnapshotStateList<String> = mutableStateListOf()
+		var selectedItemList: SnapshotStateList<String> = mutableStateListOf()
 
 		var showContent: MutableState<Boolean> = mutableStateOf(false)
 

@@ -11,14 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.database.bucket.BucketItemType
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun AddNewBucketItemButton(
-	bottomSheetType: BottomSheetType,
 	bucketItemType: BucketItemType.Type,
 	isSelected: Boolean,
 	selectedBucketItemList: List<String>,
@@ -33,9 +31,9 @@ fun AddNewBucketItemButton(
 		Crossfade(targetState = isSelected) {
 			if (it) {
 				LargeButton(
-					text = "Delete ${if (selectedBucketItemList.size == 1) "1 item" else "${selectedBucketItemList.size} items"}?",
-					containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
-					contentColor = MaterialTheme.colorScheme.primaryContainer,
+					text = if (selectedBucketItemList.isEmpty()) "Select item to delete" else "Delete ${if (selectedBucketItemList.size == 1) "1 item" else "${selectedBucketItemList.size} items"}?",
+					containerColor = MaterialTheme.colorScheme.onBackground,
+					contentColor = MaterialTheme.colorScheme.background,
 					isClickable = true,
 					modifier = Modifier
 						.fillMaxWidth()

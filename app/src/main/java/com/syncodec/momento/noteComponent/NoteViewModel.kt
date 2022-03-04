@@ -48,7 +48,7 @@ data class TempAttachmentData(
 
 class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
-	val diaryRepository: DiaryRepository = DiaryRepository(momento = application as Momento)
+	val diaryRepository: DiaryRepository = DiaryRepository.getInstance(momento = application as Momento)
 	private val attachmentRepository: AttachmentRepository = AttachmentRepository(momento = application as Momento)
 	private val notebookRepository: NotebookRepository = NotebookRepository(momento = application as Momento)
 
@@ -182,12 +182,10 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 						latitude = location.latitude,
 						longitude = location.longitude,
 						onAddressAvailable = { address ->
-							viewModelScope.launch {
-								withContext(Dispatchers.Main) {
-									this@NoteViewModel.address = locationAddressFilter(address = address)
-									if (this@NoteViewModel.address != null) {
-										activityState.addressState.value = NoteActivity.AddressState.SUCCESS
-									}
+							viewModelScope.launch(Dispatchers.Main) {
+								this@NoteViewModel.address = locationAddressFilter(address = address)
+								if (this@NoteViewModel.address != null) {
+									activityState.addressState.value = NoteActivity.AddressState.SUCCESS
 								}
 							}
 						},
@@ -201,32 +199,30 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 				}
 
 				if (location != null) {
-					viewModelScope.launch {
-						withContext(Dispatchers.IO) {
-							val weatherRequestUrl =
-								"https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.latitude}&appid=${Secret.OPEN_WEATHER_KEY}"
-							val weatherRequestQueue = Volley.newRequestQueue(getApplication())
-							val stringRequest = StringRequest(
-								Request.Method.GET,
-								weatherRequestUrl,
-								{ requestResult ->
-									val jsonObject = JSONObject(requestResult)
-									val weatherList = jsonObject.getJSONArray("weather")
-									if (weatherList.length() > 0) {
-										val weather = JSONObject(weatherList.get(0).toString())
-										val main = jsonObject.getJSONObject("main")
-										WeatherData(
-											icon = weather.getString("icon"),
-											description = weather.getString("description"),
-											temperature = main.getDouble("temp")
-										).apply { weatherData = this }
-									}
-								},
-								{
+					viewModelScope.launch(Dispatchers.IO) {
+						val weatherRequestUrl =
+							"https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.latitude}&appid=${Secret.OPEN_WEATHER_KEY}"
+						val weatherRequestQueue = Volley.newRequestQueue(getApplication())
+						val stringRequest = StringRequest(
+							Request.Method.GET,
+							weatherRequestUrl,
+							{ requestResult ->
+								val jsonObject = JSONObject(requestResult)
+								val weatherList = jsonObject.getJSONArray("weather")
+								if (weatherList.length() > 0) {
+									val weather = JSONObject(weatherList.get(0).toString())
+									val main = jsonObject.getJSONObject("main")
+									WeatherData(
+										icon = weather.getString("icon"),
+										description = weather.getString("description"),
+										temperature = main.getDouble("temp")
+									).apply { weatherData = this }
 								}
-							)
-							weatherRequestQueue.add(stringRequest)
-						}
+							},
+							{
+							}
+						)
+						weatherRequestQueue.add(stringRequest)
 					}
 				}
 			}
@@ -243,22 +239,20 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		onIoException: () -> Unit,
 		onException: () -> Unit
 	) {
-		viewModelScope.launch {
-			withContext(Dispatchers.IO) {
-				try {
-					val geocoder = Geocoder(getApplication(), Locale.getDefault())
-					val addressList = geocoder.getFromLocation(latitude, longitude, 1)
-					if (addressList.isNotEmpty()) {
-						val address = addressList.first()
-						onAddressAvailable(address)
-					} else {
-						onAddressAvailable(null)
-					}
-				} catch (exception: IOException) {
-					onIoException()
-				} catch (exception: Exception) {
-					onException()
+		viewModelScope.launch(Dispatchers.IO) {
+			try {
+				val geocoder = Geocoder(getApplication(), Locale.getDefault())
+				val addressList = geocoder.getFromLocation(latitude, longitude, 1)
+				if (addressList.isNotEmpty()) {
+					val address = addressList.first()
+					onAddressAvailable(address)
+				} else {
+					onAddressAvailable(null)
 				}
+			} catch (exception: IOException) {
+				onIoException()
+			} catch (exception: Exception) {
+				onException()
 			}
 		}
 	}

@@ -8,17 +8,23 @@ import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.database.diary.DiaryTableDao
 import com.syncodec.momento.database.diary.Note
-import com.syncodec.momento.noteComponent.TempAttachmentData
 import com.syncodec.momento.miscellaneous.bitmapToBase64String
+import com.syncodec.momento.miscellaneous.generatePrimaryKey
+import com.syncodec.momento.noteComponent.TempAttachmentData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Singleton
 
-
+@Singleton
 class DiaryRepository(val momento: Momento) {
 	private var diaryTableDao: DiaryTableDao = UserDatabase.getInstance(momento).diaryTableDao
 
-	val diaryDbEntryListLiveData: LiveData<List<DiaryDbEntry>> = diaryTableDao.getAsLiveData()
+	val diaryDbEntryListLiveData: LiveData<List<DiaryDbEntry>> = diaryTableDao.getAllAsLiveData()
 	val diaryDbEntryKeyListLiveData: LiveData<List<String>> = diaryTableDao.getKeyAsLiveData()
+
+	suspend fun getAllKey(): List<String> {
+		return diaryTableDao.getAllKey()
+	}
 
 	suspend fun saveDiary(
 		note: Note,
@@ -100,5 +106,20 @@ class DiaryRepository(val momento: Momento) {
 
 	suspend fun deleteAll() {
 		diaryTableDao.deleteAll()
+	}
+
+	companion object {
+		private var INSTANCE: DiaryRepository? = null
+
+		fun getInstance(momento: Momento): DiaryRepository {
+			synchronized(lock = this) {
+				var instance = INSTANCE
+				if (instance == null) {
+					instance = DiaryRepository(momento = momento)
+					INSTANCE = instance
+				}
+				return instance
+			}
+		}
 	}
 }

@@ -17,7 +17,9 @@ import com.syncodec.momento.noteComponent.TempAttachmentData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
+import javax.inject.Singleton
 
+@Singleton
 class NotebookRepository(val momento: Momento) {
 	private var notebookTableDao: NotebookTableDao = UserDatabase.getInstance(momento).notebookTableDao
 

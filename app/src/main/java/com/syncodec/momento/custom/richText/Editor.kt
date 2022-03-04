@@ -69,12 +69,16 @@ class RichTextEditor(context: Context) : WebView(context) {
 		}
 	}
 
-	fun exec(trigger: String) {
+	fun exec(trigger: String, blur: Boolean = true) {
 		Log.i(TAG, "isReady : ${isReady.value}")
 		if (isReady.value) {
-			load("editor.commands.blur();")
-			load(trigger)
-			load("editor.commands.focus($currentSelection);")
+			if (blur) {
+				clearFocus()
+				load(trigger)
+				requestFocus()
+			} else {
+				load(trigger)
+			}
 		} else {
 			postDelayed({ exec(trigger) }, 100)
 		}

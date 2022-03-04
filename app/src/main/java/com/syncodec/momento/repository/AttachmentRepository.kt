@@ -10,7 +10,9 @@ import com.syncodec.momento.miscellaneous.copyInputStreamToOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import javax.inject.Singleton
 
+@Singleton
 class AttachmentRepository(val momento: Momento) {
 	private var attachmentTableDao: AttachmentTableDao = UserDatabase.getInstance(momento).attachmentTableDao
 

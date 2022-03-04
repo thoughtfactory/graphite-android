@@ -1,5 +1,6 @@
 package com.syncodec.momento.custom.button
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun LargeButton(
 	text: String,
@@ -42,14 +43,27 @@ fun LargeButton(
 				.fillMaxSize(),
 			contentAlignment = Alignment.Center
 		) {
-			Text(
-				text = text,
-				style = MaterialTheme.typography.titleMedium,
-				color = contentColor,
-				textAlign = TextAlign.Center,
-				lineHeight = 0.sp,
-				maxLines = 1,
-			)
+			AnimatedContent(
+				targetState = text,
+				transitionSpec = {
+					if (targetState > initialState) {
+						slideInVertically { height -> height } + fadeIn() with slideOutVertically { height -> -height } + fadeOut()
+					} else {
+						slideInVertically { height -> -height } + fadeIn() with slideOutVertically { height -> height } + fadeOut()
+					}.using(
+						SizeTransform(clip = false)
+					)
+				}
+			) { text ->
+				Text(
+					text = text,
+					style = MaterialTheme.typography.titleMedium,
+					color = contentColor,
+					textAlign = TextAlign.Center,
+					lineHeight = 0.sp,
+					maxLines = 1,
+				)
+			}
 		}
 	}
 }

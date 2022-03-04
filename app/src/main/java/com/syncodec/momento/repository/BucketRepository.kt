@@ -1,8 +1,6 @@
 package com.syncodec.momento.repository
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.lifecycle.LiveData
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -14,9 +12,12 @@ import com.syncodec.momento.database.bucket.*
 import com.syncodec.momento.miscellaneous.downloadImage
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.lang.Exception
+import javax.inject.Singleton
 
+@Singleton
 class BucketRepository(val momento: Momento) {
 
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
@@ -24,16 +25,29 @@ class BucketRepository(val momento: Momento) {
 	private val bucketDbTableDao: BucketDbTableDao = UserDatabase.getInstance(momento).bucketDbTableDao
 	private val bucketItemTableDao: BucketItemTableDao = UserDatabase.getInstance(momento).bucketItemTableDao
 
-	fun getBucketList(): LiveData<List<BucketDbEntry>> {
+	fun getBucketListAsLiveData(): LiveData<List<BucketDbEntry>> {
 		return bucketDbTableDao.getAllAsLiveData()
+	}
+
+	fun getBucketItemListAsLiveData(bucketKey: String): Flow<List<BucketItemDbEntry>> {
+		return bucketItemTableDao.getAllAsLiveData(bucketKey = bucketKey)
+	}
+
+	suspend fun getAllBucketDbEntry(bucketKey: String): List<BucketItemDbEntry> {
+		return bucketItemTableDao.getAllBucketItem(bucketKey = bucketKey)
+	}
+
+	suspend fun getBucket(bucketKey: String): BucketDbEntry? {
+		return bucketDbTableDao.get(primaryKey = bucketKey)
 	}
 
 	suspend fun getBucketItem(bucketItemKey: String): BucketItemDbEntry? {
 		return bucketItemTableDao.get(primaryKey = bucketItemKey)
 	}
 
-	fun getBucketItemList(bucketKey: String): LiveData<List<BucketItemDbEntry>> {
-		return bucketItemTableDao.getAllAsLiveData(bucketKey = bucketKey)
+	suspend fun deleteBucketItem(bucketKey: String, bucketItemKey: String) {
+		bucketItemTableDao.delete(primaryKey = bucketItemKey)
+		momento.deleteBucketItem(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
 	}
 
 	suspend fun putBucket(bucketType: BucketItemType.Type, title: String) {
@@ -57,7 +71,7 @@ class BucketRepository(val momento: Momento) {
 		}
 	}
 
-	suspend fun putBucketItem(
+	fun putBucketItem(
 		bucketKey: String,
 		bucketItemKey: String?,
 		bucketItemType: BucketItemType.Type,
@@ -65,56 +79,56 @@ class BucketRepository(val momento: Momento) {
 		state: Int,
 		thoughtList: List<String>,
 		jsonString: String
-	) {
-		withContext(Dispatchers.IO) {
-			val currentTimestamp = System.currentTimeMillis()
+	): String {
+		val currentTimestamp = System.currentTimeMillis()
 
-			val bucketItemDbEntry = BucketItemDbEntry(
-				primaryKey = bucketItemKey ?: generatePrimaryKey(),
-				bucketKey = bucketKey,
-				bucketItemType = bucketItemType.ordinal,
-				createdTimestamp = currentTimestamp
-			).apply {
-				this.modifiedTimestamp = currentTimestamp
-				this.title = title
-				this.state = state
-				this.isFavourite = false
-				this.isArchived = false
-				this.isLocked = false
-			}
-			bucketItemTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
-
-			val thumbnail: Bitmap? = when (bucketItemType) {
-				BucketItemType.Type.TODO -> null
-				BucketItemType.Type.BOOKS -> {
-					val bookData: BookData = objectMapper.readValue(jsonString)
-					if (bookData.coverI != null) {
-						try {
-							downloadImage(thumbnailUrl = "https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg")
-						} catch (exception: Exception) {
-							null
-						}
-					} else null
-				}
-				BucketItemType.Type.MOVIES -> null
-				BucketItemType.Type.TVSHOWS -> null
-				BucketItemType.Type.MEDIA -> null
-				BucketItemType.Type.LINKS -> null
-			}
-
-			momento.putBucketItemData(
-				bucketKey = bucketKey,
-				bucketItemKey = bucketItemDbEntry.primaryKey,
-				jsonString = jsonString,
-				thumbnail = thumbnail
-			)
-
-			momento.putThought(
-				bucketKey = bucketKey,
-				bucketItemKey = bucketItemDbEntry.primaryKey,
-				thoughtList = thoughtList
-			)
+		val bucketItemDbEntry = BucketItemDbEntry(
+			primaryKey = bucketItemKey ?: generatePrimaryKey(),
+			bucketKey = bucketKey,
+			bucketItemType = bucketItemType.ordinal,
+			createdTimestamp = currentTimestamp
+		).apply {
+			this.modifiedTimestamp = currentTimestamp
+			this.title = title
+			this.state = state
+			this.isFavourite = false
+			this.isArchived = false
+			this.isLocked = false
 		}
+		bucketItemTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
+
+		val thumbnail: Bitmap? = when (bucketItemType) {
+			BucketItemType.Type.TODO -> null
+			BucketItemType.Type.BOOKS -> {
+				val bookData: BookData = objectMapper.readValue(jsonString)
+				if (bookData.coverI != null) {
+					try {
+						downloadImage(thumbnailUrl = "https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg")
+					} catch (exception: Exception) {
+						null
+					}
+				} else null
+			}
+			BucketItemType.Type.MOVIES -> null
+			BucketItemType.Type.TVSHOWS -> null
+			BucketItemType.Type.MEDIA -> null
+			BucketItemType.Type.LINKS -> null
+		}
+
+		momento.putBucketItemData(
+			bucketKey = bucketKey,
+			bucketItemKey = bucketItemDbEntry.primaryKey,
+			jsonString = jsonString,
+			thumbnail = thumbnail
+		)
+
+		momento.putThought(
+			bucketKey = bucketKey,
+			bucketItemKey = bucketItemDbEntry.primaryKey,
+			thoughtList = thoughtList
+		)
+
+		return bucketItemDbEntry.primaryKey
 	}
 
 	suspend fun getBucketItemData(
@@ -162,10 +176,25 @@ class BucketRepository(val momento: Momento) {
 	fun getBucketItemThumbnail(
 		bucketKey: String,
 		bucketItemKey: String
-	): String {
+	): String? {
 		return momento.getBucketItemThumbnail(
 			bucketKey = bucketKey,
 			bucketItemKey = bucketItemKey
 		)
+	}
+
+	companion object {
+		private var INSTANCE: BucketRepository? = null
+
+		fun getInstance(momento: Momento): BucketRepository {
+			synchronized(lock = this) {
+				var instance = INSTANCE
+				if (instance == null) {
+					instance = BucketRepository(momento = momento)
+					INSTANCE = instance
+				}
+				return instance
+			}
+		}
 	}
 }

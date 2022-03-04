@@ -31,7 +31,9 @@ import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.mainComponent.MainViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 data class MenuBottomSheetButtonData(val title: String, val imageVector: ImageVector, val highlight: Boolean = false, val onClick: () -> Unit)
@@ -45,9 +47,7 @@ fun MenuBottomSheet() {
 
 	var showArchived by viewModel.activityState.showArchived
 	var showFavourite by viewModel.activityState.showFavourite
-	var showTrash by viewModel.activityState.showTrash
-	val isSelected by viewModel.activityState.isSelected
-	var showDeleteDialog by viewModel.activityState.showDeleteDialog
+	var showLocked by viewModel.activityState.showLocked
 
 	var vaultState by (mainActivity.application as Momento).vaultState
 	val vaultKey by viewModel.activityState.vaultKeyFlow.collectAsState(initial = null)
@@ -79,15 +79,22 @@ fun MenuBottomSheet() {
 				Momento.Companion.VaultState.ERROR -> false
 			}
 		) {
-			when (vaultState) {
-				Momento.Companion.VaultState.NOT_OPENED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
-				Momento.Companion.VaultState.TRY_OPEN -> {
-				}
-				Momento.Companion.VaultState.SETUP -> {
-				}
-				Momento.Companion.VaultState.OPENED -> vaultState = Momento.Companion.VaultState.CLOSED
-				Momento.Companion.VaultState.CLOSED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
-				Momento.Companion.VaultState.ERROR -> {
+			scope.launch {
+				withContext(Dispatchers.IO) {
+					when (vaultState) {
+						Momento.Companion.VaultState.NOT_OPENED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
+						Momento.Companion.VaultState.TRY_OPEN -> {
+						}
+						Momento.Companion.VaultState.SETUP -> {
+						}
+						Momento.Companion.VaultState.OPENED -> {
+							showLocked = false
+							vaultState = Momento.Companion.VaultState.CLOSED
+						}
+						Momento.Companion.VaultState.CLOSED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
+						Momento.Companion.VaultState.ERROR -> {
+						}
+					}
 				}
 			}
 			hideSheet()

@@ -1,10 +1,16 @@
 package com.syncodec.momento.mainComponent.screen
 
 import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FloatTweenSpec
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.*
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,6 +48,7 @@ import com.syncodec.momento.custom.squircle.Squircle
 import com.syncodec.momento.database.diary.DiaryDbEntry
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.mainComponent.MainViewModel
+import com.syncodec.momento.miscellaneous.filterData
 import com.syncodec.momento.miscellaneous.timeStampToPrettyDay
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.todayComponent.TodayActivity
@@ -49,7 +56,7 @@ import org.joda.time.LocalDateTime
 import java.util.*
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @ExperimentalMaterialApi
 @ExperimentalPagerApi
 @Composable
@@ -57,9 +64,10 @@ fun DiaryScreen() {
 	val context = LocalContext.current
 	val viewModel: MainViewModel = viewModel()
 
+	val vaultState by viewModel.activityState.vaultState
 	val showArchived by viewModel.activityState.showArchived
 	val showFavourite by viewModel.activityState.showFavourite
-	val showTrash by viewModel.activityState.showTrash
+	val showLocked by viewModel.activityState.showLocked
 	var isSelected by viewModel.activityState.isSelected
 
 	val diaryList by viewModel.diaryRepository.diaryDbEntryListLiveData.observeAsState()
@@ -67,29 +75,10 @@ fun DiaryScreen() {
 
 	val diaryDbEntryDayMap: MutableMap<Long, MutableList<DiaryDbEntry>> = mutableMapOf()
 
-	val selectedEntryList = viewModel.activityState.selectedEntryList
+	val selectedItemList = viewModel.activityState.selectedItemList
 
 	val calendar = Calendar.getInstance()
 	diaryList
-		?.filter {
-			if (showArchived && showFavourite && showTrash) {
-				it.isArchived && it.isFavourite && it.deletedTimestamp != -1L
-			} else if (showArchived && showFavourite) {
-				it.isArchived && it.isFavourite && it.deletedTimestamp == -1L
-			} else if (showArchived && showTrash) {
-				it.isArchived && it.deletedTimestamp != -1L
-			} else if (showFavourite && showTrash) {
-				it.isFavourite && it.deletedTimestamp != -1L
-			} else if (showArchived) {
-				it.isArchived && it.deletedTimestamp == -1L
-			} else if (showFavourite) {
-				it.isFavourite && it.deletedTimestamp == -1L
-			} else if (showTrash) {
-				it.deletedTimestamp != -1L
-			} else {
-				it.deletedTimestamp == -1L
-			}
-		}
 		?.forEach { diary ->
 			calendar.apply {
 				timeInMillis = diary.userTimestamp
@@ -110,7 +99,7 @@ fun DiaryScreen() {
 			modifier = Modifier
 				.fillMaxSize()
 		) {
-			if (!(showArchived || showFavourite || showTrash)) {
+			if (!(showArchived || showFavourite || showLocked)) {
 				QuoteCard()
 				Spacer(modifier = Modifier.height(36.dp))
 			} else {
@@ -122,46 +111,78 @@ fun DiaryScreen() {
 		LazyColumn(
 			modifier = Modifier
 		) {
-			if (!(showArchived || showFavourite || showTrash)) {
-				item {
-					QuoteCard()
-					Spacer(modifier = Modifier.height(16.dp))
+			item {
+				AnimatedVisibility(
+					visible = !(showArchived || showFavourite || showLocked),
+					enter = expandIn(),
+					exit = shrinkOut()
+				) {
+					Column(modifier = Modifier.fillMaxWidth()) {
+						QuoteCard()
+						Spacer(modifier = Modifier.height(16.dp))
+					}
 				}
 			}
 
 			diaryDbEntryDayMap.forEach { (day, diaryList) ->
-				stickyHeader {
-					EntryHeaderCard(
-						title = timeStampToPrettyDay(day),
-						noEntries = "${diaryList.size} ${if (diaryList.size == 1) "entry" else "entries"}"
+				val filteredEntries = diaryList.filter {
+					filterData(
+						showArchived = showArchived,
+						isArchived = it.isArchived,
+						showFavourite = showFavourite,
+						isFavourite = it.isFavourite,
+						showLocked = showLocked,
+						isLocked = it.isLocked
 					)
 				}
 
-				diaryList.forEachIndexed { index, diaryDbEntry ->
+				val entrySize = filteredEntries.size
+				val lastEntryKey = if (entrySize!=0) filteredEntries.last().primaryKey else null
+
+				stickyHeader {
+					AnimatedVisibility(visible = entrySize != 0) {
+						EntryHeaderCard(
+							title = timeStampToPrettyDay(day),
+							noEntries = "$entrySize ${if (entrySize == 1) "entry" else "entries"}"
+						)
+					}
+				}
+
+				diaryList.forEach { diaryDbEntry ->
 					item {
 						val tint = MaterialTheme.colorScheme.secondaryContainer
+
+						val showEntry: Boolean = filterData(
+							showArchived = showArchived,
+							isArchived = diaryDbEntry.isArchived,
+							showFavourite = showFavourite,
+							isFavourite = diaryDbEntry.isFavourite,
+							showLocked = showLocked,
+							isLocked = diaryDbEntry.isLocked
+						)
 
 						EntryCard(
 							timestamp = diaryDbEntry.userTimestamp,
 							isLocked = diaryDbEntry.isLocked,
-							isSelected = diaryDbEntry.primaryKey in selectedEntryList,
+							isSelected = diaryDbEntry.primaryKey in selectedItemList,
 							isArchived = diaryDbEntry.isArchived,
 							isFavourite = diaryDbEntry.isFavourite,
 							isDeleted = diaryDbEntry.deletedTimestamp != -1L,
-							isLast = index == diaryList.size - 1,
+							isLast = diaryDbEntry.primaryKey == lastEntryKey,
 							title = diaryDbEntry.title,
 							contentThumbnail = diaryDbEntry.contentThumbnail,
 							attachmentCount = diaryDbEntry.attachmentCount,
 							attachmentThumbnail = diaryDbEntry.attachmentThumbnail,
 							address = diaryDbEntry.address,
+							isVisible = showEntry,
 							tint = tint,
 							onClick = {
 								if (isSelected) {
 									isSelected = true
-									if (diaryDbEntry.primaryKey in selectedEntryList) {
-										selectedEntryList.remove(diaryDbEntry.primaryKey)
+									if (diaryDbEntry.primaryKey in selectedItemList) {
+										selectedItemList.remove(diaryDbEntry.primaryKey)
 									} else {
-										selectedEntryList.add(diaryDbEntry.primaryKey)
+										selectedItemList.add(diaryDbEntry.primaryKey)
 									}
 								} else {
 									Intent(context, NoteActivity::class.java).apply {
@@ -173,15 +194,16 @@ fun DiaryScreen() {
 							},
 							onLongClick = {
 								isSelected = true
-								selectedEntryList.add(diaryDbEntry.primaryKey)
+								selectedItemList.add(diaryDbEntry.primaryKey)
 							},
 						).apply {
 							EntryCard(entryCard = this)
 						}
 
-						if (index != diaryList.size - 1) {
-							EntryTimelineSpacer(tint = tint)
-						}
+						EntryTimelineSpacer(
+							tint = tint,
+							isVisible = diaryDbEntry.primaryKey != lastEntryKey && showEntry
+						)
 					}
 				}
 			}

@@ -96,7 +96,7 @@ class Momento : Application() {
 		return "$DIARY_DIR/diary_$diaryKey"
 	}
 
-	fun getDiaryDataPath(diaryKey: String):String {
+	fun getDiaryDataPath(diaryKey: String): String {
 		File("$DIARY_DIR/diary_${diaryKey}").mkdirs()
 		return "${getDiaryDirPath(diaryKey = diaryKey)}/diary_$diaryKey.json"
 	}
@@ -117,7 +117,7 @@ class Momento : Application() {
 
 	fun getDiary(
 		primaryKey: String
-	) : Note {
+	): Note {
 		val file = File(getDiaryDataPath(diaryKey = primaryKey))
 		return objectMapper.readValue(file.readBytes())
 	}
@@ -131,7 +131,7 @@ class Momento : Application() {
 		val bucketItemDataFile = File(getBucketItemDataPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
 		bucketItemDataFile.writeText(jsonString)
 
-		if (thumbnail!=null) {
+		if (thumbnail != null) {
 			val bucketItemThumbnailFile = File(getBucketItemThumbnailPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
 			thumbnail.compress(Bitmap.CompressFormat.PNG, 100, bucketItemThumbnailFile.outputStream())
 		}
@@ -169,20 +169,21 @@ class Momento : Application() {
 	fun getBucketItemThumbnail(
 		bucketKey: String,
 		bucketItemKey: String
-	): String {
-		return getBucketItemThumbnailPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
+	): String? {
+		val file = File(getBucketItemThumbnailPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
+		return if (file.exists()) getBucketItemThumbnailPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey) else null
 	}
 
 	fun deleteBucketItem(
 		bucketKey: String,
 		bucketItemKey: String
 	) {
-//		File(
-//			getBucketItemPath(
-//				bucketKey = bucketKey,
-//				bucketItemKey = bucketItemKey
-//			)
-//		).delete()
+		File(
+			getBucketItemDirPath(
+				bucketKey = bucketKey,
+				bucketItemKey = bucketItemKey
+			)
+		).deleteRecursively()
 	}
 
 	fun downloadMovieData(
@@ -253,7 +254,7 @@ class Momento : Application() {
 		return if (imageFile.exists()) {
 			val imageBytes = imageFile.readBytes()
 			BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size).asImageBitmap()
-		}else {
+		} else {
 			null
 		}
 	}

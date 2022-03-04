@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -23,6 +24,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.bucketItemComponent.miscellaneous.TopBar
 import com.syncodec.momento.bucketItemComponent.modalBottonSheet.MenuBottomSheet
 import com.syncodec.momento.bucketItemComponent.screen.BookItemScreen
+import com.syncodec.momento.bucketItemComponent.screen.MovieItemScreen
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
@@ -33,7 +35,7 @@ import kotlinx.coroutines.launch
 
 class BucketItemActivity : ComponentActivity() {
 
-	val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
+	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
 	val viewModel by viewModels<BucketItemViewModel>()
 
@@ -47,20 +49,23 @@ class BucketItemActivity : ComponentActivity() {
 		viewModel.bucketItemType =
 			BucketItemType.Type.values()[intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.TODO.ordinal)]
 		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_KEY.name)!!
-		viewModel.bucketItemKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
+		viewModel.bucketItemKey.value = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
 
-		if (viewModel.bucketItemKey == null) {
-			when (viewModel.bucketItemType) {
-				BucketItemType.Type.TODO -> null
-				BucketItemType.Type.BOOKS -> {
-					viewModel.bookData.value =
+		if (viewModel.bucketItemKey.value == null) {
+			try {
+				when (viewModel.bucketItemType) {
+					BucketItemType.Type.TODO -> null
+					BucketItemType.Type.BOOKS -> viewModel.bookData.value =
 						objectMapper.readValue(intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name)!!)
-					viewModel.status.value = Status.LOADED
+					BucketItemType.Type.MOVIES -> viewModel.movieData.value =
+						objectMapper.readValue(intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name)!!)
+					BucketItemType.Type.TVSHOWS -> null
+					BucketItemType.Type.MEDIA -> null
+					BucketItemType.Type.LINKS -> null
 				}
-				BucketItemType.Type.MOVIES -> null
-				BucketItemType.Type.TVSHOWS -> null
-				BucketItemType.Type.MEDIA -> null
-				BucketItemType.Type.LINKS -> null
+				viewModel.status.value = Status.LOADED
+			} catch (exception: Exception) {
+				viewModel.status.value = Status.ERROR
 			}
 		} else {
 			viewModel.getItem()
@@ -69,7 +74,7 @@ class BucketItemActivity : ComponentActivity() {
 		setContent {
 			MomentoTheme {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
 				viewModel.activityState = rememberBucketActivityState()
 
 				Screen()
@@ -77,7 +82,7 @@ class BucketItemActivity : ComponentActivity() {
 		}
 	}
 
-	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 	@Composable
 	private fun Screen() {
 		val scope = rememberCoroutineScope()
@@ -90,7 +95,7 @@ class BucketItemActivity : ComponentActivity() {
 		LaunchedEffect(
 			key1 = hash
 		) {
-			if (viewModel.bucketItemKey != null) {
+			if (viewModel.bucketItemKey.value != null) {
 				viewModel.updateThought()
 			}
 		}
@@ -109,12 +114,12 @@ class BucketItemActivity : ComponentActivity() {
 			Scaffold(
 				topBar = {
 					TopBar(
-						isNewItem = viewModel.bucketItemKey == null,
+						primaryKey = viewModel.bucketItemKey.value,
 						onClickMenu = {
 							scope.launch { viewModel.activityState.bottomSheetState.show() }
 						}
 					) {
-						if (viewModel.bucketItemKey == null) {
+						if (viewModel.bucketItemKey.value == null) {
 							viewModel.putItem()
 						} else {
 							finish()
@@ -122,35 +127,33 @@ class BucketItemActivity : ComponentActivity() {
 					}
 				}
 			) {
-				Crossfade(
-					targetState = status,
-					animationSpec = tween(durationMillis = 400)
-				) {
+				AnimatedContent(targetState = status) {
 					when (it) {
 						Status.INIT -> LoadingView()
 						Status.LOADING -> LoadingView()
 						Status.LOADED -> when (viewModel.bucketItemType) {
 							BucketItemType.Type.TODO -> null
-							BucketItemType.Type.BOOKS -> Crossfade(targetState = viewModel.bookData.value != null) {
-								if (it) {
-									BookItemScreen(
-										bookData = viewModel.bookData.value!!,
-										thumbnail = if (viewModel.bucketItemKey == null)
-											"https://covers.openlibrary.org/b/id/${viewModel.bookData.value!!.coverI}-M.jpg"
-										else BitmapFactory.decodeFile(viewModel.thumbnail.value),
-										initialState = viewModel.bucketItemDbEntry.value.state,
-										thoughtList = thoughtList
-									) {
-										viewModel.bucketItemDbEntry.value.state = it
-										viewModel.updateItem()
-									}
-								}
+							BucketItemType.Type.BOOKS -> BookItemScreen(
+								bookData = viewModel.bookData.value!!,
+								thumbnail = if (viewModel.bucketItemKey.value == null)
+									"https://covers.openlibrary.org/b/id/${viewModel.bookData.value!!.coverI}-M.jpg"
+								else BitmapFactory.decodeFile(viewModel.thumbnail.value),
+								initialState = viewModel.bucketItemDbEntry.value.state,
+								thoughtList = thoughtList
+							) {
+								viewModel.bucketItemDbEntry.value.state = it
+								viewModel.updateItem()
 							}
-							BucketItemType.Type.MOVIES -> null
+							BucketItemType.Type.MOVIES -> MovieItemScreen(
+								movieData = viewModel.movieData.value!!,
+								initialState = viewModel.bucketItemDbEntry.value.state,
+								thoughtList = thoughtList
+							)
 							BucketItemType.Type.TVSHOWS -> null
 							BucketItemType.Type.MEDIA -> null
 							BucketItemType.Type.LINKS -> null
 						}
+						else -> {}
 					}
 				}
 			}

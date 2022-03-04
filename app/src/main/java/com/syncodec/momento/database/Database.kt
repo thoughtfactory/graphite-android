@@ -17,7 +17,11 @@ import com.syncodec.momento.database.notebook.NotebookTableDao
 import javax.inject.Singleton
 
 @Singleton
-@Database(entities = [DiaryDbEntry::class, BucketDbEntry::class, BucketItemDbEntry::class, NotebookDbEntry::class, Attachment::class], version = 1, exportSchema = false)
+@Database(
+	entities = [DiaryDbEntry::class, BucketDbEntry::class, BucketItemDbEntry::class, NotebookDbEntry::class, Attachment::class],
+	version = 1,
+	exportSchema = false
+)
 abstract class UserDatabase : RoomDatabase() {
 
 	abstract val diaryTableDao: DiaryTableDao

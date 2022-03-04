@@ -1,5 +1,7 @@
 package com.syncodec.momento.custom.entry
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun EntryHeaderCard(
 	title: String,
@@ -56,11 +59,13 @@ fun EntryHeaderCard(
 
 				Spacer(modifier = Modifier.weight(1f))
 
-				Text(
-					text = noEntries,
-					color = MaterialTheme.colorScheme.onSurface,
-					style = MaterialTheme.typography.bodyMedium,
-				)
+				AnimatedContent(targetState = noEntries) {
+					Text(
+						text = it,
+						color = MaterialTheme.colorScheme.onSurface,
+						style = MaterialTheme.typography.bodyMedium,
+					)
+				}
 			}
 		}
 	}

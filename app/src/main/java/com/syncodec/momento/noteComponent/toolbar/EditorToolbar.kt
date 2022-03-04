@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.richText.RichTextEditor
+import com.syncodec.momento.konstant.Color.Companion.colorList
 import com.syncodec.momento.konstant.ErrorCode
 import com.syncodec.momento.miscellaneous.toHexString
 import com.syncodec.momento.noteComponent.NoteViewModel
@@ -170,7 +171,7 @@ fun EditorToolbar(
 							ToolbarButton.ITALIC -> richTextEditor.exec("editor.chain().focus().toggleItalic().run();")
 							ToolbarButton.UNDERLINE -> richTextEditor.exec("editor.chain().focus().toggleUnderline().run();")
 							ToolbarButton.STRIKE -> richTextEditor.exec("editor.chain().focus().toggleStrike().run();")
-							ToolbarButton.HARD_BREAK -> richTextEditor.exec("editor.chain().focus().setHardBreak().run()")
+							ToolbarButton.HARD_BREAK -> richTextEditor.exec("editor.chain().focus().setHardBreak().run()", false)
 							ToolbarButton.CHECK_LIST -> richTextEditor.exec("editor.commands.toggleTaskList();")
 							ToolbarButton.BULLET_LIST -> richTextEditor.exec("editor.commands.toggleBulletList();")
 							ToolbarButton.ORDERED_LIST -> richTextEditor.exec("editor.commands.toggleOrderedList();")
@@ -720,33 +721,6 @@ private fun ColorToolbar(
 	textFormat: RichTextEditor.TextFormat,
 	onClick: (Color) -> Unit,
 ) {
-	val colorList: List<Color> = listOf(
-		Color(0xFFBB6464),
-		Color(0xFF9ADCFF),
-		Color(0xFFFFB2A6),
-		Color(0xFFB4CFB0),
-		Color(0xFF655D8A),
-		Color(0xFFD885A3),
-		Color(0xFF694E4E),
-		Color(0xFF54BAB9),
-		Color(0xFFE9DAC1),
-		Color(0xFF7897AB),
-		Color(0xFF632626),
-		Color(0xFF6867AC),
-		Color(0xFFA267AC),
-		Color(0xFF92A9BD),
-		Color(0xFFCA965C),
-		Color(0xFFFF865E),
-		Color(0xFF3DB2FF),
-		Color(0xFFBEAEE2),
-		Color(0xFF564A4A),
-		Color(0xFF52734D),
-		Color(0xFF94EBCD),
-		Color(0xFF8A8635),
-		Color(0xFF889EAF),
-		Color(0xFFFFFFFF),
-		Color(0xFF000000),
-	)
 
 	Row(
 		modifier = Modifier

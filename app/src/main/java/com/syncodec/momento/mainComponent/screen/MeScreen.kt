@@ -22,7 +22,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.ExpandableBox
 import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.mainComponent.miscellaneous.ComponentChooser
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -92,7 +91,6 @@ fun MeScreen() {
 				RecentCard()
 
 				Spacer(modifier = Modifier.height(8.dp))
-				ComponentChooser()
 			}
 		}
 	}

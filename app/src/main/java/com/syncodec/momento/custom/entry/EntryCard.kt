@@ -1,5 +1,7 @@
 package com.syncodec.momento.custom.entry
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
@@ -44,260 +46,267 @@ data class EntryCard(
 	val attachmentThumbnail: String?,
 	val tint: Color = Color.LightGray,
 	val address: String?,
+	val isVisible: Boolean = false,
 	val onClick: () -> Unit,
-	val onLongClick: () -> Unit,
+	val onLongClick: (() -> Unit)?,
 )
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun EntryCard(
 	entryCard: EntryCard,
 ) {
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(if (entryCard.isLast) 152.dp else 144.dp)
-			.padding(8.dp, 0.dp, 8.dp, if (entryCard.isLast) 8.dp else 0.dp),
+	AnimatedVisibility(
+		visible = entryCard.isVisible,
+		enter = expandVertically() + scaleIn(),
+		exit = shrinkVertically() + scaleOut()
 	) {
-		EntrySpacer(
-			isLast = entryCard.isLast,
-			tint = entryCard.tint
-		)
-		Spacer(modifier = Modifier.width(4.dp))
-		Card(
-			elevation = 0.dp,
-			shape = RoundedCornerShape(12.dp),
-			backgroundColor = if (entryCard.isSelected) Color.LightGray else Color.Transparent,
-			border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
+		Row(
 			modifier = Modifier
-				.fillMaxSize()
-				.clip(RoundedCornerShape(12.dp))
-				.combinedClickable(
-					onClick = { entryCard.onClick() },
-					onLongClick = { entryCard.onLongClick() }
-				)
+				.fillMaxWidth()
+				.height(if (entryCard.isLast) 152.dp else 144.dp)
+				.padding(8.dp, 0.dp, 8.dp, if (entryCard.isLast) 8.dp else 0.dp),
 		) {
-			Column(
+			EntrySpacer(
+				isLast = entryCard.isLast,
+				tint = entryCard.tint
+			)
+			Spacer(modifier = Modifier.width(4.dp))
+			Card(
+				elevation = 0.dp,
+				shape = RoundedCornerShape(12.dp),
+				backgroundColor = if (entryCard.isSelected) Color.LightGray else Color.Transparent,
+				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
 				modifier = Modifier
 					.fillMaxSize()
-					.padding(12.dp, 8.dp, 12.dp, 8.dp)
+					.clip(RoundedCornerShape(12.dp))
+					.combinedClickable(
+						onClick = { entryCard.onClick() },
+						onLongClick = { entryCard.onLongClick?.invoke() }
+					)
 			) {
-				Row(
-					modifier = Modifier,
-					verticalAlignment = Alignment.CenterVertically
+				Column(
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(12.dp, 8.dp, 12.dp, 8.dp)
 				) {
-
-					Text(
-						text = timeStampToTime(entryCard.timestamp),
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.primary,
-						fontWeight = FontWeight.Bold,
-						maxLines = 1,
-						modifier = Modifier
-					)
-
-					if (entryCard.title!=null) {
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = "·",
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.primary,
-							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							modifier = Modifier
-						)
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = entryCard.title,
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.primary,
-							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							modifier = Modifier
-						)
-					}
-
-					Spacer(modifier = Modifier.weight(1f))
-
-					if (entryCard.isLocked) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_lock_3),
-							contentDescription = "Locked",
-							tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-					}
-
-					if (entryCard.isArchived) {
-						if (entryCard.isLocked) {
-							Spacer(modifier = Modifier.width(2.dp))
-							Text(
-								text = "·",
-								style = MaterialTheme.typography.bodySmall,
-								color = MaterialTheme.colorScheme.primary,
-								fontWeight = FontWeight.Bold,
-								maxLines = 1,
-								modifier = Modifier
-							)
-							Spacer(modifier = Modifier.width(2.dp))
-						}
-						Icon(
-							painter = painterResource(id = R.drawable.ic_archive_3),
-							contentDescription = "Archived",
-							tint = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-					}
-
-					if (entryCard.isFavourite) {
-						if (entryCard.isLocked || entryCard.isArchived) {
-							Spacer(modifier = Modifier.width(2.dp))
-							Text(
-								text = "·",
-								style = MaterialTheme.typography.bodySmall,
-								color = MaterialTheme.colorScheme.primary,
-								fontWeight = FontWeight.Bold,
-								maxLines = 1,
-								modifier = Modifier
-							)
-							Spacer(modifier = Modifier.width(2.dp))
-						}
-
-						Icon(
-							painter = painterResource(id = R.drawable.ic_heart_3),
-							contentDescription = "Favourite",
-							tint = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-					}
-
-					if (entryCard.attachmentCount != 0) {
-						if (entryCard.isLocked || entryCard.isArchived || entryCard.isFavourite) {
-							Spacer(modifier = Modifier.width(2.dp))
-							Text(
-								text = "·",
-								style = MaterialTheme.typography.bodySmall,
-								color = MaterialTheme.colorScheme.primary,
-								fontWeight = FontWeight.Bold,
-								maxLines = 1,
-								modifier = Modifier
-							)
-							Spacer(modifier = Modifier.width(2.dp))
-						}
-
-						Icon(
-							imageVector = TablerIcons.Paperclip,
-							contentDescription = "Attachment",
-							tint = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.requiredSize(14.dp)
-						)
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = "·",
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.primary,
-							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							modifier = Modifier
-						)
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = "${entryCard.attachmentCount}",
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.primary,
-							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							modifier = Modifier
-						)
-					}
-
-				}
-
-				Spacer(modifier = Modifier.height(8.dp))
-
-				if (entryCard.attachmentThumbnail == null) {
-					Text(
-						text = "${entryCard.contentThumbnail}",
-						style = MaterialTheme.typography.bodyMedium,
-						maxLines = 4,
-						modifier = Modifier
-							.height(80.dp)
-					)
-				} else {
 					Row(
-						modifier = Modifier
-							.fillMaxWidth()
+						modifier = Modifier,
+						verticalAlignment = Alignment.CenterVertically
 					) {
+
+						Text(
+							text = timeStampToTime(entryCard.timestamp),
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.primary,
+							fontWeight = FontWeight.Bold,
+							maxLines = 1,
+							modifier = Modifier
+						)
+
+						if (entryCard.title != null) {
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = "·",
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.primary,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1,
+								modifier = Modifier
+							)
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = entryCard.title,
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.primary,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1,
+								modifier = Modifier
+							)
+						}
+
+						Spacer(modifier = Modifier.weight(1f))
+
+						if (entryCard.isLocked) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_lock_3),
+								contentDescription = "Locked",
+								tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
+								modifier = Modifier
+									.requiredSize(14.dp)
+							)
+						}
+
+						if (entryCard.isArchived) {
+							if (entryCard.isLocked) {
+								Spacer(modifier = Modifier.width(2.dp))
+								Text(
+									text = "·",
+									style = MaterialTheme.typography.bodySmall,
+									color = MaterialTheme.colorScheme.primary,
+									fontWeight = FontWeight.Bold,
+									maxLines = 1,
+									modifier = Modifier
+								)
+								Spacer(modifier = Modifier.width(2.dp))
+							}
+							Icon(
+								painter = painterResource(id = R.drawable.ic_archive_3),
+								contentDescription = "Archived",
+								tint = MaterialTheme.colorScheme.primary,
+								modifier = Modifier
+									.requiredSize(14.dp)
+							)
+						}
+
+						if (entryCard.isFavourite) {
+							if (entryCard.isLocked || entryCard.isArchived) {
+								Spacer(modifier = Modifier.width(2.dp))
+								Text(
+									text = "·",
+									style = MaterialTheme.typography.bodySmall,
+									color = MaterialTheme.colorScheme.primary,
+									fontWeight = FontWeight.Bold,
+									maxLines = 1,
+									modifier = Modifier
+								)
+								Spacer(modifier = Modifier.width(2.dp))
+							}
+
+							Icon(
+								painter = painterResource(id = R.drawable.ic_heart_3),
+								contentDescription = "Favourite",
+								tint = MaterialTheme.colorScheme.primary,
+								modifier = Modifier
+									.requiredSize(14.dp)
+							)
+						}
+
+						if (entryCard.attachmentCount != 0) {
+							if (entryCard.isLocked || entryCard.isArchived || entryCard.isFavourite) {
+								Spacer(modifier = Modifier.width(2.dp))
+								Text(
+									text = "·",
+									style = MaterialTheme.typography.bodySmall,
+									color = MaterialTheme.colorScheme.primary,
+									fontWeight = FontWeight.Bold,
+									maxLines = 1,
+									modifier = Modifier
+								)
+								Spacer(modifier = Modifier.width(2.dp))
+							}
+
+							Icon(
+								imageVector = TablerIcons.Paperclip,
+								contentDescription = "Attachment",
+								tint = MaterialTheme.colorScheme.primary,
+								modifier = Modifier
+									.requiredSize(14.dp)
+							)
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = "·",
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.primary,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1,
+								modifier = Modifier
+							)
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = "${entryCard.attachmentCount}",
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.primary,
+								fontWeight = FontWeight.Bold,
+								maxLines = 1,
+								modifier = Modifier
+							)
+						}
+
+					}
+
+					Spacer(modifier = Modifier.height(8.dp))
+
+					if (entryCard.attachmentThumbnail == null) {
 						Text(
 							text = "${entryCard.contentThumbnail}",
 							style = MaterialTheme.typography.bodyMedium,
 							maxLines = 4,
 							modifier = Modifier
 								.height(80.dp)
-								.weight(1f)
 						)
-						Spacer(modifier = Modifier.width(8.dp))
-						Squircle(
-							sizeInDp = 80.dp,
-							smoothing = 4.0
+					} else {
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
 						) {
-							Image(
-								painter = rememberImagePainter(data = entryCard.attachmentThumbnail!!.base64stringToBitmap()),
-								contentDescription = null,
+							Text(
+								text = "${entryCard.contentThumbnail}",
+								style = MaterialTheme.typography.bodyMedium,
+								maxLines = 4,
 								modifier = Modifier
-									.fillMaxSize()
+									.height(80.dp)
+									.weight(1f)
+							)
+							Spacer(modifier = Modifier.width(8.dp))
+							Squircle(
+								sizeInDp = 80.dp,
+								smoothing = 4.0
+							) {
+								Image(
+									painter = rememberImagePainter(data = entryCard.attachmentThumbnail!!.base64stringToBitmap()),
+									contentDescription = null,
+									modifier = Modifier
+										.fillMaxSize()
+								)
+							}
+						}
+					}
+
+					Spacer(modifier = Modifier.weight(1f))
+
+					if (entryCard.address != null) {
+						Row(
+							modifier = Modifier
+								.fillMaxWidth(),
+							verticalAlignment = Alignment.CenterVertically
+						) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_location_pin_3),
+//							imageVector = TablerIcons.MapPin,
+								contentDescription = null,
+//							tint = Color.Unspecified,
+								tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
+								modifier = Modifier
+									.requiredSize(16.dp)
+							)
+							Spacer(modifier = Modifier.width(2.dp))
+							Text(
+								text = "${entryCard.address}",
+								style = MaterialTheme.typography.bodySmall,
+								fontStyle = FontStyle.Italic,
+								color = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
+								maxLines = 1,
+								overflow = TextOverflow.Ellipsis,
+								modifier = Modifier
 							)
 						}
 					}
 				}
 
-				Spacer(modifier = Modifier.weight(1f))
-
-				if (entryCard.address != null) {
-					Row(
-						modifier = Modifier
-							.fillMaxWidth(),
-						verticalAlignment = Alignment.CenterVertically
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_location_pin_3),
-//							imageVector = TablerIcons.MapPin,
-							contentDescription = null,
-//							tint = Color.Unspecified,
-							tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
-							modifier = Modifier
-								.requiredSize(16.dp)
-						)
-						Spacer(modifier = Modifier.width(2.dp))
-						Text(
-							text = "${entryCard.address}",
-							style = MaterialTheme.typography.bodySmall,
-							fontStyle = FontStyle.Italic,
-							color = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
-							maxLines = 1,
-							overflow = TextOverflow.Ellipsis,
-							modifier = Modifier
-						)
-					}
-				}
-			}
-
-			Box(
-				modifier = Modifier
-					.fillMaxSize(),
-				contentAlignment = Alignment.CenterEnd
-			) {
 				Box(
 					modifier = Modifier
-						.width(8.dp)
-						.height(80.dp)
-						.clip(CutCornerShape(16.dp, 0.dp, 0.dp, 16.dp))
-						.background(MaterialTheme.colorScheme.secondaryContainer)
-				)
+						.fillMaxSize(),
+					contentAlignment = Alignment.CenterEnd
+				) {
+					Box(
+						modifier = Modifier
+							.width(8.dp)
+							.height(80.dp)
+							.clip(CutCornerShape(16.dp, 0.dp, 0.dp, 16.dp))
+							.background(MaterialTheme.colorScheme.secondaryContainer)
+					)
+				}
 			}
 		}
 	}

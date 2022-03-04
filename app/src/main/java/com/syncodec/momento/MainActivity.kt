@@ -2,13 +2,13 @@ package com.syncodec.momento
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -31,11 +31,11 @@ import com.google.accompanist.insets.ExperimentalAnimatedInsets
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.syncodec.momento.custom.DeleteDialog
 import com.syncodec.momento.debug.AddDataPopup
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.BottomNavigationBar
 import com.syncodec.momento.mainComponent.miscellaneous.BottomNavigationItem
-import com.syncodec.momento.mainComponent.miscellaneous.DeleteDialog
 import com.syncodec.momento.mainComponent.miscellaneous.MainNavigation
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.mainComponent.modalBottomSheet.SheetLayout
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			viewModel.activityState = rememberMainActivityState()
+			viewModel.activityState = rememberActivityState()
 
 			MomentoTheme {
 				MainScreen()
@@ -73,12 +73,23 @@ class MainActivity : ComponentActivity() {
 	}
 
 	override fun onBackPressed() {
-		if (viewModel.activityState.vaultState.value == Momento.Companion.VaultState.TRY_OPEN) {
-			viewModel.activityState.vaultState.value = Momento.Companion.VaultState.NOT_OPENED
+		var vaultState by viewModel.activityState.vaultState
+		var showArchived by viewModel.activityState.showArchived
+		var showFavourite by viewModel.activityState.showFavourite
+		var showLocked by viewModel.activityState.showLocked
+		var isSelected by viewModel.activityState.isSelected
+
+		if (vaultState == Momento.Companion.VaultState.TRY_OPEN) {
+			vaultState = Momento.Companion.VaultState.NOT_OPENED
 		} else {
-			if (viewModel.activityState.isSelected.value) {
-				viewModel.activityState.isSelected.value = false
-				viewModel.activityState.selectedEntryList.removeAll { true }
+			if (isSelected) {
+				isSelected = false
+				viewModel.activityState.selectedItemList.removeAll { true }
+			} else if (showArchived || showFavourite || showLocked
+			) {
+				showArchived = false
+				showFavourite = false
+				showLocked = false
 			} else {
 				super.onBackPressed()
 			}
@@ -119,14 +130,17 @@ class MainActivity : ComponentActivity() {
 					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
 
 					VaultOpenerScreen(
-						onSuccess = { viewModel.activityState.vaultState.value = Momento.Companion.VaultState.OPENED }
+						onSuccess = {
+							viewModel.activityState.vaultState.value = Momento.Companion.VaultState.OPENED
+							viewModel.activityState.showLocked.value = true
+						}
 					) {}
 				}
 				else -> {
 					if (currentRoute == BottomNavigationItem.Me.route) {
-						systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
+						systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
 					} else {
-						systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primaryContainer)
+						systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
 					}
 
 					ModalBottomSheetLayout(
@@ -138,75 +152,85 @@ class MainActivity : ComponentActivity() {
 							SheetLayout()
 						},
 					) {
-						Box(
-							modifier = Modifier
-								.background(Color.Black)
-						) {
-							Scaffold(
-								bottomBar = { BottomNavigationBar(navController) },
-								floatingActionButtonPosition = FabPosition.End,
-								floatingActionButton = {
-									when (currentRoute) {
-										BottomNavigationItem.Me.route -> Box(modifier = Modifier)
-										else -> {
-											FloatingActionButton(
-												onClick = {
-													when (currentRoute) {
-														BottomNavigationItem.Momento.route -> {
-															when (viewModel.activityState.momentoComponentType.value) {
-																MomentoComponentType.Diary -> startActivity(
-																	Intent(
-																		this@MainActivity,
-																		NoteActivity::class.java
-																	)
+						Scaffold(
+							bottomBar = { BottomNavigationBar(navController) },
+							floatingActionButtonPosition = FabPosition.End,
+							floatingActionButton = {
+								when (currentRoute) {
+									BottomNavigationItem.Me.route -> Box(modifier = Modifier)
+									else -> {
+										FloatingActionButton(
+											onClick = {
+												when (currentRoute) {
+													BottomNavigationItem.Momento.route -> {
+														when (viewModel.activityState.momentoComponentType.value) {
+															MomentoComponentType.Diary -> startActivity(
+																Intent(
+																	this@MainActivity,
+																	NoteActivity::class.java
 																)
-																MomentoComponentType.Notebook -> openSheet(BottomSheetType.NotebookBottomSheet)
-															}
-														}
-														BottomNavigationItem.Bucket.route -> openSheet(BottomSheetType.BucketBottomSheet)
-														BottomNavigationItem.Calendar.route -> startActivity(
-															Intent(
-																this@MainActivity,
-																NoteActivity::class.java
 															)
-														)
-														BottomNavigationItem.Atlas.route -> startActivity(Intent(this@MainActivity, NoteActivity::class.java))
-													}
-												},
-												modifier = Modifier
-													.navigationBarsPadding(),
-											) {
-												Crossfade(targetState = currentRoute) { route ->
-													when (route) {
-														BottomNavigationItem.Momento.route -> when (viewModel.activityState.momentoComponentType.value) {
-															MomentoComponentType.Diary -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
-															MomentoComponentType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
+															MomentoComponentType.Notebook -> openSheet(BottomSheetType.NotebookBottomSheet)
 														}
-														BottomNavigationItem.Bucket.route -> Icon(imageVector = TablerIcons.Plus, contentDescription = null)
-														BottomNavigationItem.Calendar.route -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
-														BottomNavigationItem.Atlas.route -> Icon(
-															imageVector = TablerIcons.ArrowsMinimize,
-															contentDescription = null
-														)
 													}
+													BottomNavigationItem.Bucket.route -> openSheet(BottomSheetType.BucketBottomSheet)
+													BottomNavigationItem.Calendar.route -> startActivity(
+														Intent(
+															this@MainActivity,
+															NoteActivity::class.java
+														)
+													)
+													BottomNavigationItem.Atlas.route -> startActivity(Intent(this@MainActivity, NoteActivity::class.java))
+												}
+											},
+											modifier = Modifier
+												.navigationBarsPadding(),
+										) {
+											Crossfade(targetState = currentRoute) { route ->
+												when (route) {
+													BottomNavigationItem.Momento.route -> when (viewModel.activityState.momentoComponentType.value) {
+														MomentoComponentType.Diary -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
+														MomentoComponentType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
+													}
+													BottomNavigationItem.Bucket.route -> Icon(imageVector = TablerIcons.Plus, contentDescription = null)
+													BottomNavigationItem.Calendar.route -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
+													BottomNavigationItem.Atlas.route -> Icon(imageVector = TablerIcons.World, contentDescription = null)
 												}
 											}
 										}
 									}
-								},
-							) {
-								val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) {
-									"No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
 								}
-
-								CompositionLocalProvider(
-									LocalViewModelStoreOwner provides viewModelStoreOwner
-								) {
-									MainNavigation(navController = navController, viewModelStoreOwner = viewModelStoreOwner)
-								}
+							},
+						) {
+							val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) {
+								"No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
 							}
-							DeleteDialog()
+
+							CompositionLocalProvider(
+								LocalViewModelStoreOwner provides viewModelStoreOwner
+							) {
+								MainNavigation(navController = navController, viewModelStoreOwner = viewModelStoreOwner)
+							}
 						}
+						DeleteDialog(
+							showDeleteDialog = viewModel.activityState.showDeleteDialog.value,
+							selectedItemSize = viewModel.activityState.selectedItemList.size,
+							onDismiss = {viewModel.activityState.showDeleteDialog.value = false},
+							onDelete = {
+								val selectedItemList = viewModel.activityState.selectedItemList
+								selectedItemList.forEach { primaryKey ->
+									viewModel.moveDiaryToTrash(primaryKey)
+								}
+								Toast.makeText(
+									this,
+									"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
+									Toast.LENGTH_SHORT
+								).show()
+								selectedItemList.removeAll { true }
+								viewModel.activityState.isSelected.value = false
+								viewModel.activityState.showDeleteDialog.value = false
+							},
+						)
 					}
 				}
 			}
@@ -221,18 +245,19 @@ class MainActivity : ComponentActivity() {
 		var vaultState = (application as Momento).vaultState
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.MenuBottomSheet)
 		var momentoComponentType: MutableState<MomentoComponentType> = mutableStateOf(MomentoComponentType.Diary)
-		var selectedEntryList: SnapshotStateList<String> = mutableStateListOf()
+		var selectedItemList: SnapshotStateList<String> = mutableStateListOf()
 		var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
 
 		var isSelected = mutableStateOf(false)
 		var showArchived = mutableStateOf(false)
 		var showFavourite = mutableStateOf(false)
+		var showLocked = mutableStateOf(false)
 		var showTrash = mutableStateOf(false)
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
 	@Composable
-	fun rememberMainActivityState(
+	private fun rememberActivityState(
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
 	) = remember {
 		ActivityState(bottomSheetState)

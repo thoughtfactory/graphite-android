@@ -36,7 +36,7 @@ fun NotebookScreen() {
 	val currentRouteName = viewModel.currentRouteName
 
 
-	val selectedEntryList = viewModel.activityState.selectedEntryList
+	val selectedItemList = viewModel.activityState.selectedItemList
 
 	val chapterList = viewModel.chapterList.filter { it.notebookRoute == currentRoute }
 	val noteList = viewModel.noteList.filter { it.notebookRoute == currentRoute }
@@ -88,7 +88,7 @@ fun NotebookScreen() {
 							EntryCard(
 								timestamp = chapter.modifiedTimestamp,
 								isLocked = false,
-								isSelected = chapter.primaryKey in selectedEntryList,
+								isSelected = chapter.primaryKey in selectedItemList,
 								isArchived = false,
 								isFavourite = false,
 								isDeleted = false,
@@ -102,10 +102,10 @@ fun NotebookScreen() {
 								onClick = {
 									if (isSelected) {
 										isSelected = true
-										if (chapter.primaryKey in selectedEntryList) {
-											selectedEntryList.remove(chapter.primaryKey)
+										if (chapter.primaryKey in selectedItemList) {
+											selectedItemList.remove(chapter.primaryKey)
 										} else {
-											selectedEntryList.add(chapter.primaryKey)
+											selectedItemList.add(chapter.primaryKey)
 										}
 									} else {
 										scope.launch {
@@ -122,16 +122,17 @@ fun NotebookScreen() {
 								},
 								onLongClick = {
 									isSelected = true
-									selectedEntryList.add(chapter.primaryKey)
+									selectedItemList.add(chapter.primaryKey)
 								},
 							).apply {
 								EntryCard(entryCard = this)
 							}
 						}
 
-						if (index != chapterList.size - 1) {
-							EntryTimelineSpacer(tint = tint)
-						}
+						EntryTimelineSpacer(
+							tint = tint,
+							isVisible = index != chapterList.size - 1
+						)
 					}
 				}
 
@@ -153,7 +154,7 @@ fun NotebookScreen() {
 							EntryCard(
 								timestamp = note.modifiedTimestamp,
 								isLocked = false,
-								isSelected = note.primaryKey in selectedEntryList,
+								isSelected = note.primaryKey in selectedItemList,
 								isArchived = false,
 								isFavourite = false,
 								isDeleted = false,
@@ -164,20 +165,22 @@ fun NotebookScreen() {
 								attachmentThumbnail = null,
 								address = null,
 								tint = tint,
+								isVisible = showNote,
 								onClick = {
 								},
 								onLongClick = {
 									isSelected = true
-									selectedEntryList.add(note.primaryKey)
+									selectedItemList.add(note.primaryKey)
 								},
 							).apply {
 								EntryCard(entryCard = this)
 							}
 						}
 
-						if (index != noteList.size - 1) {
-							EntryTimelineSpacer(tint = tint)
-						}
+						EntryTimelineSpacer(
+							tint = tint,
+							isVisible = index != noteList.size - 1
+						)
 					}
 				}
 

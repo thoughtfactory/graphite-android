@@ -3,10 +3,8 @@ package com.syncodec.momento.mainComponent.screen
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyColumn
@@ -49,56 +47,26 @@ import kotlinx.coroutines.launch
 @Composable
 fun NotebookScreen() {
 	val viewModel: MainViewModel = viewModel()
-	val scope = rememberCoroutineScope()
 
 	val notebookList = viewModel.notebookRepository.notebookDbEntryListLiveData.observeAsState()
 
-	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-		viewModel.activityState.bottomSheetType.value = bottomSheetType
-		scope.launch {
-			viewModel.activityState.bottomSheetState.show()
-		}
-	}
-
-	val showCardView = true
-
-	Column(
+	Crossfade(
+		targetState = notebookList.value?.isNotEmpty() == true,
 		modifier = Modifier
+			.fillMaxSize()
 	) {
-
-		if (notebookList.value?.isNotEmpty() == true) {
-			if (showCardView) {
-				LazyVerticalGrid(
-					cells = GridCells.Adaptive(144.dp),
-					horizontalArrangement = Arrangement.Center,
-					verticalArrangement = Arrangement.Center,
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(12.dp, 0.dp)
-				) {
-					notebookList.value?.forEach { notebook ->
-						item {
-							NotebookGridCard(
-								notebookDbEntry = notebook
-							)
-						}
-					}
-				}
-			} else {
-				LazyColumn(
-					modifier = Modifier
-						.padding(0.dp, 0.dp, 0.dp, 64.dp)
-				) {
-					notebookList.value?.forEach { notebook ->
-						item {
-							NotebookCard(
-								modifier = Modifier
-									.fillMaxWidth()
-									.height(128.dp)
-									.padding(12.dp, 0.dp, 12.dp, 4.dp),
-								notebookDbEntry = notebook
-							)
-						}
+		if (it) {
+			LazyVerticalGrid(
+				cells = GridCells.Adaptive(144.dp),
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(12.dp, 0.dp)
+			) {
+				notebookList.value?.forEach { notebook ->
+					item {
+						NotebookGridCard(
+							notebookDbEntry = notebook
+						)
 					}
 				}
 			}
@@ -150,47 +118,6 @@ private fun NoNotebookCard() {
 				color = MaterialTheme.colorScheme.primary,
 				modifier = Modifier
 					.fillMaxWidth(0.71f)
-			)
-		}
-	}
-
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun NotebookCard(
-	modifier: Modifier,
-	notebookDbEntry: NotebookDbEntry,
-) {
-	val context = LocalContext.current
-	val activity = rememberLauncherForActivityResult(
-		contract = ActivityResultContracts.StartActivityForResult()
-	) {
-	}
-
-	Card(
-		elevation = 0.dp,
-		shape = RoundedCornerShape(12.dp),
-		backgroundColor = MaterialTheme.colorScheme.background,
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
-		modifier = modifier,
-		onClick = {
-			Intent(context, NotebookActivity::class.java).apply {
-				putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, notebookDbEntry.primaryKey)
-				activity.launch(this)
-			}
-		}
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
-				.padding(12.dp)
-		) {
-			Text(
-				text = notebookDbEntry.title,
-				style = MaterialTheme.typography.bodyLarge,
-				color = MaterialTheme.colorScheme.onPrimaryContainer
 			)
 		}
 	}
@@ -297,20 +224,5 @@ private fun NotebookGridCard(
 				)
 			}
 		}
-	}
-}
-
-@Composable
-private fun BreadCrumb() {
-	Card(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(48.dp)
-			.padding(12.dp, 0.dp)
-			.clip(RoundedCornerShape(12.dp)),
-		backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-		shape = RoundedCornerShape(12.dp)
-	) {
-		Text(text = "Hello world")
 	}
 }

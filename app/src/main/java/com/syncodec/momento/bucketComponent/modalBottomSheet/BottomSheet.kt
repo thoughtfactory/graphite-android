@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 
 sealed class BottomSheetType {
 	object AddBookSheet : BottomSheetType()
-//	object AddMovieSheet : BottomSheetType()
+	object AddMovieSheet : BottomSheetType()
 }
 
 @Composable

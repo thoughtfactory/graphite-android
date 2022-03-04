@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.ResourceMap
@@ -52,13 +53,6 @@ fun BucketBottomSheet(
 	var bucketNameText by rememberSaveable { mutableStateOf("") }
 	var isBucketNameTextFocused by remember { mutableStateOf(false) }
 
-	val createButtonColors = ButtonDefaults.buttonColors(
-		contentColor = MaterialTheme.colorScheme.primaryContainer,
-		disabledContentColor = Color.LightGray,
-		containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
-		disabledContainerColor = Color.LightGray.copy(alpha = 0.13f)
-	)
-
 	val containerColor by animateColorAsState(
 		targetValue = if (selectedBucketType != null && bucketNameText.isNotBlank()) MaterialTheme.colorScheme.onPrimaryContainer else Color.LightGray,
 		animationSpec = tween(
@@ -71,7 +65,6 @@ fun BucketBottomSheet(
 			durationMillis = 400
 		)
 	)
-
 
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
@@ -137,20 +130,14 @@ fun BucketBottomSheet(
 		Row(
 			modifier = Modifier.horizontalScroll(rememberScrollState())
 		) {
-			Box(
-				modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp)
-			) {
-				BucketButton(bucketButtonDataList[0])
-			}
+			Spacer(modifier = Modifier.width(16.dp))
+			BucketButton(bucketButtonDataList[0])
 			BucketButton(bucketButtonDataList[1])
 			BucketButton(bucketButtonDataList[2])
 			BucketButton(bucketButtonDataList[3])
 			BucketButton(bucketButtonDataList[4])
-			Box(
-				modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp)
-			) {
-				BucketButton(bucketButtonDataList[5])
-			}
+			BucketButton(bucketButtonDataList[5])
+			Spacer(modifier = Modifier.width(16.dp))
 		}
 
 		Spacer(modifier = Modifier.height(12.dp))
@@ -165,58 +152,14 @@ fun BucketBottomSheet(
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		BasicTextField(
-			value = bucketNameText,
-			onValueChange = { bucketNameText = it },
-			singleLine = true,
-			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-			textStyle = MaterialTheme.typography.bodyMedium.copy(
-				color = MaterialTheme.colorScheme.primary,
-				fontWeight = FontWeight.Bold
-			),
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(48.dp)
-				.padding(24.dp, 0.dp)
-				.clip(RoundedCornerShape(12.dp))
-				.background(
-					if (bucketNameText.isEmpty() && !isBucketNameTextFocused) {
-						Color.LightGray.copy(alpha = 0.13f)
-					} else {
-						MaterialTheme.colorScheme.background
-					}
-				)
-				.onFocusChanged { focusState ->
-					isBucketNameTextFocused = focusState.isFocused
-				},
-			decorationBox = { innerTextField ->
-				Card(
-					modifier = Modifier
-						.fillMaxWidth(),
-					backgroundColor = Color.Transparent,
-					elevation = 0.dp,
-					shape = RoundedCornerShape(12.dp),
-					border = BorderStroke(2.dp, if (isBucketNameTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray)
-				) {
-					Box(
-						contentAlignment = Alignment.CenterStart,
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(12.dp, 0.dp)
-					) {
-						if (bucketNameText.isEmpty()) {
-							Text(
-								"Umm... Let me think...",
-								style = MaterialTheme.typography.bodyMedium,
-								color = Color.LightGray,
-								fontWeight = FontWeight.Bold
-							)
-						}
-						innerTextField()
-					}
-				}
-			}
-		)
+		LargeTextField(
+			text = bucketNameText,
+			placeholder = "Umm... Let me think...",
+			isFocused = isBucketNameTextFocused,
+			onFocusChanged = { isBucketNameTextFocused = it }
+		) {
+			bucketNameText = it
+		}
 
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -256,7 +199,6 @@ private fun BucketButton(
 			durationMillis = 400
 		)
 	)
-
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,

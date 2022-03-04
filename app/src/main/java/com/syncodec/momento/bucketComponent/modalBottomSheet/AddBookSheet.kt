@@ -1,8 +1,6 @@
 package com.syncodec.momento.bucketComponent.modalBottomSheet
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -83,7 +81,7 @@ data class BookData(
 	val firstPublishYear: Int?
 )
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun AddBookSheet(
 	onClick: (BookData) -> Unit
@@ -102,13 +100,7 @@ fun AddBookSheet(
 	val requestQueue = Volley.newRequestQueue(context)
 	var tag: String = "tag"
 
-	var booksData by remember { mutableStateOf(listOf<BookData>()) }
-
-	val activity = rememberLauncherForActivityResult(
-		contract = ActivityResultContracts.StartActivityForResult()
-	) {
-//		viewModel.openBucket()
-	}
+	var booksData = remember { mutableStateListOf<BookData>() }
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,21 +143,22 @@ fun AddBookSheet(
 						requestUrl,
 						{ requestResult ->
 							val jsonObject = JSONObject(requestResult)
-							val docs = jsonObject.getJSONArray("docs")
-							val length = docs.length()
-							val bookDataList: MutableList<BookData> = mutableListOf()
+							val docs = jsonObject.optJSONArray("docs")
+							val length = docs?.length() ?: 0
+							booksData.removeIf { true }
 							for (i in 0 until length) {
-								val bookData = objectMapper.readValue<BookData>(docs.get(i).toString())
-								bookDataList.add(bookData)
+								val bookData = objectMapper.readValue<BookData>(docs!!.get(i).toString())
+								booksData.add(bookData)
 							}
 							sheetState = if (length > 0) {
 								SheetState.RESULT_FOUND
 							} else {
 								SheetState.RESULT_NOT_FOUND
 							}
-							booksData = bookDataList
 						},
 						{
+							sheetState = SheetState.ERROR
+							it.printStackTrace()
 						}
 					)
 
@@ -220,7 +213,7 @@ fun AddBookSheet(
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		Crossfade(targetState = sheetState) {
+		AnimatedContent(targetState = sheetState) {
 			when(it) {
 				SheetState.INIT -> ClimateChangeMessage()
 				SheetState.SEARCHING -> {
@@ -251,23 +244,21 @@ fun AddBookSheet(
 								bookData = bookData,
 								modifier = Modifier
 									.aspectRatio(0.75f)
-							) {
-								onClick(bookData)
-							}
+							) { onClick(bookData) }
 						}
 					}
 				}
 				SheetState.RESULT_NOT_FOUND -> {
 					Column(
 						modifier = Modifier
-							.fillMaxWidth(0.8f)
+							.height(256.dp)
 					) {
 						Image(
 							painter = painterResource(id = R.drawable.il_result_unavailable_2),
 							contentDescription = "No result found",
 							modifier = Modifier
 								.fillMaxWidth()
-								.height(256.dp)
+								.padding(16.dp)
 						)
 
 						Spacer(modifier = Modifier.height(16.dp))
@@ -282,7 +273,31 @@ fun AddBookSheet(
 						)
 					}
 				}
-				SheetState.ERROR -> {}
+				SheetState.ERROR -> {
+					Column(
+						modifier = Modifier
+							.height(256.dp)
+					) {
+						Image(
+							painter = painterResource(id = R.drawable.il_result_unavailable_2),
+							contentDescription = "Sorry, we cant find that now",
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(16.dp)
+						)
+
+						Spacer(modifier = Modifier.height(16.dp))
+
+						Text(
+							text = "Sorry, we cant find that now",
+							style = MaterialTheme.typography.titleMedium,
+							color = MaterialTheme.colorScheme.secondary,
+							textAlign = TextAlign.Center,
+							modifier = Modifier
+								.fillMaxWidth()
+						)
+					}
+				}
 			}
 		}
 

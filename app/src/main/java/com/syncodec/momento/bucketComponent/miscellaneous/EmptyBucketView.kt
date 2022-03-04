@@ -13,15 +13,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
+import com.syncodec.momento.bucketComponent.BucketActivity
+import com.syncodec.momento.database.bucket.BucketItemType
 
 
 @Composable
-fun EmptyBucketView() {
+fun EmptyBucketView(
+	bucketTitle: String,
+	bucketItemType: BucketItemType.Type,
+	onClick: (BucketActivity.Click) -> Unit
+) {
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
 	) {
-		TopBar()
+		TopBar(
+			bucketTitle = bucketTitle,
+			bucketItemType = bucketItemType,
+			isSelected = false
+		) { onClick(it) }
 		Column(
 			modifier = Modifier
 				.fillMaxSize(),
