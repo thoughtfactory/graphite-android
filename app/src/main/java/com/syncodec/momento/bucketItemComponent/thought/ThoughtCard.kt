@@ -15,12 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun ThoughtCard(
 	thoughtList: SnapshotStateList<String>,
+	onClick: (BucketItemActivity.Click) -> Unit
 ) {
 	var showEditor by remember { mutableStateOf(false) }
 
@@ -55,6 +57,7 @@ fun ThoughtCard(
 					isFirst = thoughtList.isEmpty(),
 					onSave = { thought ->
 						thoughtList.add(thought)
+						onClick(BucketItemActivity.Click.ADD_THOUGHT)
 					},
 					onDiscard = { showEditor = false }
 				)

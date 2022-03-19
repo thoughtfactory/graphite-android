@@ -1,11 +1,10 @@
 package com.syncodec.momento.bucketItemComponent
 
-import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.*
@@ -20,12 +19,12 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.miscellaneous.TopBar
 import com.syncodec.momento.bucketItemComponent.modalBottonSheet.MenuBottomSheet
-import com.syncodec.momento.bucketItemComponent.screen.BookItemScreen
-import com.syncodec.momento.bucketItemComponent.screen.ShowItemScreen
+import com.syncodec.momento.bucketItemComponent.screen.ShowMovieItemScreen
+import com.syncodec.momento.bucketItemComponent.screen.ShowTvItemScreen
 import com.syncodec.momento.custom.LoadingView
+import com.syncodec.momento.database.bucket.BucketItemState
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.ui.theme.MomentoTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -65,24 +64,45 @@ class BucketItemActivity : ComponentActivity() {
 		}
 	}
 
+	@OptIn(ExperimentalMaterialApi::class)
+	private fun onClick(click: Click, data: Any?) {
+		when (click) {
+			Click.TOP_BAR_PRIMARY -> {
+				if (viewModel.bucketItemKey.value == null) {
+					viewModel.putItem()
+				} else {
+					finish()
+				}
+			}
+			Click.TOP_BAR_SECONDARY -> viewModel.activityState.coroutineScope.launch { viewModel.activityState.bottomSheetState.show() }
+			Click.STATE -> {
+				data as Int
+				viewModel.bucketItemDbEntry.value?.state = BucketItemState.values()[data]
+				viewModel.updateItem()
+			}
+			Click.ADD_THOUGHT -> viewModel.updateThought()
+		}
+	}
+
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 	@Composable
 	private fun Screen() {
-		val scope = rememberCoroutineScope()
+		val bucketItemDbEntry by viewModel.bucketItemDbEntry
 
-		val status by viewModel.status
-		val thoughtList = viewModel.thoughtList
+		if (viewModel.bucketItemKey.value == null) Content()
+		else Crossfade(targetState = bucketItemDbEntry) { if (it == null) LoadingView() else Content() }
+	}
+
+	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+	@Composable
+	private fun Content() {
+		val bucketItemDbEntry by viewModel.bucketItemDbEntry
 		val tvData by viewModel.tvData
+		val movieData by viewModel.movieData
+		val thoughtList = viewModel.thoughtList
 
-		var hash = 0
-		thoughtList.forEach { hash = it.hashCode() }
-		LaunchedEffect(
-			key1 = hash
-		) {
-			if (viewModel.bucketItemKey.value != null) {
-				viewModel.updateThought()
-			}
-		}
+		Log.i("npr71", "tvData : $tvData")
+		Log.i("npr71", "movieData : $movieData")
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
@@ -90,49 +110,35 @@ class BucketItemActivity : ComponentActivity() {
 			sheetBackgroundColor = Color.Transparent,
 			sheetContent = {
 				MenuBottomSheet(
-					createdTimestamp = viewModel.bucketItemDbEntry.value.createdTimestamp,
-					modifiedTimestamp = viewModel.bucketItemDbEntry.value.modifiedTimestamp
+					createdTimestamp = bucketItemDbEntry!!.createdTimestamp,
+					modifiedTimestamp = bucketItemDbEntry!!.modifiedTimestamp
 				)
 			},
 		) {
 			Scaffold(
-				topBar = {
-					TopBar(
-						primaryKey = viewModel.bucketItemKey.value,
-						onClickMenu = { scope.launch { viewModel.activityState.bottomSheetState.show() } }
-					) {
-						if (viewModel.bucketItemKey.value == null) {
-							viewModel.putItem()
-						} else {
-							finish()
-						}
-					}
-				}
+				topBar = { TopBar(key = viewModel.bucketItemKey.value) { onClick(it, null) } }
 			) {
 				when (viewModel.bucketItemType) {
 					BucketItemType.Type.TODO -> null
-					BucketItemType.Type.BOOKS -> BookItemScreen(
-						bookData = viewModel.bookData.value!!,
-						thumbnail = viewModel.thumbnail.value,
-						thoughtList = thoughtList,
-						currentBookState = viewModel.bucketItemDbEntry.value.state,
-					) {
-						viewModel.bucketItemDbEntry.value.state = it
-						viewModel.updateItem()
-					}
+					BucketItemType.Type.BOOKS -> null
 					BucketItemType.Type.SHOWS -> {
-						Crossfade(targetState = tvData) {
-							if (it == null) {
+						Crossfade(targetState = tvData == null && movieData == null) {
+							if (it) {
 								LoadingView()
 							} else {
-								when (viewModel.tvData.value!!.showType) {
-									ShowType.TV -> ShowItemScreen(
+								when (viewModel.showData.value!!.showType) {
+									ShowType.TV -> ShowTvItemScreen(
 										tvData = tvData!!,
 										thumbnail = viewModel.thumbnail.value,
 										thoughtList = thoughtList,
-										currentMovieState = viewModel.bucketItemDbEntry.value.state,
-									)
-									ShowType.MOVIE -> null
+										currentState = bucketItemDbEntry!!.state.ordinal,
+									) { click, i -> onClick(click, i) }
+									ShowType.MOVIE -> ShowMovieItemScreen(
+										movieData = movieData!!,
+										thumbnail = viewModel.thumbnail.value,
+										thoughtList = thoughtList,
+										currentState = bucketItemDbEntry!!.state.ordinal,
+									) { click, i -> onClick(click, i) }
 								}
 							}
 						}
@@ -140,41 +146,6 @@ class BucketItemActivity : ComponentActivity() {
 					BucketItemType.Type.MEDIA -> null
 					BucketItemType.Type.LINKS -> null
 				}
-
-//				AnimatedContent(targetState = status) {
-//					when (it) {
-//						Status.INIT -> LoadingView()
-//						Status.LOADING -> LoadingView()
-//						Status.LOADED -> when (viewModel.bucketItemType) {
-//							BucketItemType.Type.TODO -> null
-//							BucketItemType.Type.BOOKS -> BookItemScreen(
-//								bookData = viewModel.bookData.value!!,
-//								thumbnail = if (viewModel.bucketItemKey.value == null)
-//									"https://covers.openlibrary.org/b/id/${viewModel.bookData.value!!.coverI}-M.jpg"
-//								else BitmapFactory.decodeFile(viewModel.thumbnail.value),
-//								thoughtList = thoughtList,
-//								currentBookState = viewModel.bucketItemDbEntry.value.state,
-//							) {
-//								viewModel.bucketItemDbEntry.value.state = it
-//								viewModel.updateItem()
-//							}
-//							BucketItemType.Type.SHOWS -> ShowItemScreen(
-//								showData = viewModel.showData.value!!,
-//								thumbnail = if (viewModel.bucketItemKey.value == null)
-//									"https://image.tmdb.org/t/p/w500${viewModel.showData.value!!.posterPath}"
-//								else BitmapFactory.decodeFile(viewModel.thumbnail.value),
-//								thoughtList = thoughtList,
-//								currentMovieState = viewModel.bucketItemDbEntry.value.state,
-//							) {
-//								viewModel.bucketItemDbEntry.value.state = it
-//								viewModel.updateItem()
-//							}
-//							BucketItemType.Type.MEDIA -> null
-//							BucketItemType.Type.LINKS -> null
-//						}
-//						else -> {}
-//					}
-//				}
 			}
 		}
 	}
@@ -194,5 +165,12 @@ class BucketItemActivity : ComponentActivity() {
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
 	) = remember {
 		ActivityState(coroutineScope, bottomSheetState)
+	}
+
+	enum class Click {
+		TOP_BAR_PRIMARY,
+		TOP_BAR_SECONDARY,
+		STATE,
+		ADD_THOUGHT
 	}
 }

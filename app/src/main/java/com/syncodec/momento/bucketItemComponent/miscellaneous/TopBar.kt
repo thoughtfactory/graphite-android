@@ -11,16 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.room.PrimaryKey
+import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 @OptIn(ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun TopBar(
-	primaryKey: String?,
-	onClickMenu: () -> Unit,
-	onClick: () -> Unit,
+	key: String?,
+	onClick: (BucketItemActivity.Click) -> Unit,
 ) {
 	Box(
 		modifier = Modifier
@@ -35,10 +34,8 @@ fun TopBar(
 				.fillMaxHeight()
 				.padding(8.dp)
 		) {
-			IconButton(
-				onClick = { onClick() },
-			) {
-				AnimatedContent(targetState = primaryKey) {
+			IconButton(onClick = { onClick(BucketItemActivity.Click.TOP_BAR_PRIMARY) }) {
+				AnimatedContent(targetState = key) {
 					if (it == null) {
 						Icon(
 							imageVector = TablerIcons.Check,
@@ -47,7 +44,7 @@ fun TopBar(
 						)
 					} else {
 						Icon(
-							imageVector = TablerIcons.ArrowBack ,
+							imageVector = TablerIcons.ArrowBack,
 							contentDescription = "Back",
 							tint = MaterialTheme.colorScheme.onSecondaryContainer,
 						)
@@ -58,7 +55,7 @@ fun TopBar(
 			Spacer(modifier = Modifier.weight(1f))
 
 			IconButton(
-				onClick = { onClickMenu() },
+				onClick = { onClick(BucketItemActivity.Click.TOP_BAR_SECONDARY) },
 			) {
 				Icon(
 					imageVector = TablerIcons.Dots,

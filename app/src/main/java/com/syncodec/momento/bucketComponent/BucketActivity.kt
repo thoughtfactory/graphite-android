@@ -101,6 +101,7 @@ class BucketActivity : ComponentActivity() {
 		val scope = viewModel.activityState.coroutineScope
 		when (click) {
 			Click.BACK -> finish()
+			Click.SEARCH -> {}
 			Click.MENU -> {}
 			Click.STATE_ALPHA -> scope.launch { viewModel.activityState.pagerState.animateScrollToPage(0, 0f) }
 			Click.STATE_BETA -> scope.launch { viewModel.activityState.pagerState.animateScrollToPage(1, 0f) }
@@ -193,7 +194,7 @@ class BucketActivity : ComponentActivity() {
 	@Composable
 	private fun Screen() {
 		val status by viewModel.status
-		val bucketItemMap = viewModel.bucketItemMap
+		val bucketItemList = viewModel.bucketItemList
 		val isSelected by viewModel.activityState.isSelected
 
 		ModalBottomSheetLayout(
@@ -215,7 +216,7 @@ class BucketActivity : ComponentActivity() {
 					Status.INIT -> LoadingView()
 					Status.LOADING -> LoadingView()
 					Status.LOADED -> {
-						if (bucketItemMap.isEmpty()) {
+						if (bucketItemList.isNullOrEmpty()) {
 							EmptyBucketView(
 								bucketTitle = viewModel.bucketDbEntry.title,
 								bucketItemType = viewModel.bucketItemType
@@ -251,26 +252,13 @@ class BucketActivity : ComponentActivity() {
 									}
 								}
 							) {
-								when (viewModel.bucketItemType) {
-									BucketItemType.Type.TODO -> null
-									BucketItemType.Type.BOOKS -> GridItemScreen(
-										bucketItemMap = bucketItemMap,
-										selectedBucketItemList = viewModel.activityState.selectedItemList,
-										pagerState = viewModel.activityState.pagerState,
-										getThumbnailPath = { viewModel.getThumbnail(bucketItemKey = it) }
-									) { click, key ->
-										onClick(click, key)
-									}
-									BucketItemType.Type.SHOWS -> GridItemScreen(
-										bucketItemMap = bucketItemMap,
-										selectedBucketItemList = viewModel.activityState.selectedItemList,
-										pagerState = viewModel.activityState.pagerState,
-										getThumbnailPath = { viewModel.getThumbnail(bucketItemKey = it) }
-									) { click, key ->
-										onClick(click, key)
-									}
-									BucketItemType.Type.MEDIA -> null
-									BucketItemType.Type.LINKS -> null
+								GridItemScreen(
+									bucketItemList = bucketItemList!!,
+									selectedBucketItemList = viewModel.activityState.selectedItemList,
+									pagerState = viewModel.activityState.pagerState,
+									getThumbnailPath = { viewModel.getThumbnail(bucketItemKey = it) }
+								) { click, key ->
+									onClick(click, key)
 								}
 							}
 

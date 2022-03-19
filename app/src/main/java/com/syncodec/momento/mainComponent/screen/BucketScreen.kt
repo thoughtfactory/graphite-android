@@ -48,7 +48,7 @@ fun BucketScreen() {
 
 	val viewModel: MainViewModel = viewModel()
 
-	val bucketList by viewModel.getBucketList().observeAsState()
+	val bucketList by viewModel.bucketList.observeAsState()
 
 	val chipDataList: MutableList<ChipData> = mutableListOf()
 	val isChipSelected: MutableMap<BucketItemType.Type, Boolean> = mutableMapOf()
@@ -166,7 +166,7 @@ private fun BucketCard(
 			.background(MaterialTheme.colorScheme.secondaryContainer)
 			.clickable {
 				Intent(context, BucketActivity::class.java).apply {
-					putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, bucket.primaryKey)
+					putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, bucket.key)
 					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, bucket.bucketType)
 					context.startActivity(this)
 				}

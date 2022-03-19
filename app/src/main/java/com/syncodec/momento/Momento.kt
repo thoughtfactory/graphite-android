@@ -98,11 +98,16 @@ class Momento : Application() {
 		bucketKey: String,
 		bucketItemKey: String,
 		jsonString: String,
-		thumbnail: Bitmap?
 	) {
 		val bucketItemDataFile = File(getBucketItemDataPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
 		bucketItemDataFile.writeText(jsonString)
+	}
 
+	fun putBucketItemThumbnail(
+		bucketKey: String,
+		bucketItemKey: String,
+		thumbnail: Bitmap?
+	) {
 		if (thumbnail != null) {
 			val bucketItemThumbnailFile = File(getBucketItemThumbnailPath(bucketKey = bucketKey, bucketItemKey = bucketItemKey))
 			thumbnail.compress(Bitmap.CompressFormat.PNG, 100, bucketItemThumbnailFile.outputStream())

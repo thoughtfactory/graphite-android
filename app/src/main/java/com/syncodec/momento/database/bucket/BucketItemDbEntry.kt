@@ -3,6 +3,7 @@ package com.syncodec.momento.database.bucket
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.android.gms.maps.model.LatLng
 import com.google.gson.annotations.Expose
 
 @Entity(tableName = "bucket_item_table")
@@ -18,7 +19,7 @@ data class BucketItemDbEntry(
 
 	@ColumnInfo(name = "bucket_item_type")
 	@Expose
-	val bucketItemType: Int,
+	val bucketItemType: BucketItemType.Type,
 
 	@ColumnInfo(name = "created_timestamp")
 	@Expose
@@ -34,15 +35,10 @@ data class BucketItemDbEntry(
 
 	@ColumnInfo(name = "state")
 	@Expose
-	var state: Int = BucketItemState.ALPHA.ordinal
+	var state: BucketItemState = BucketItemState.ALPHA
 
-	@ColumnInfo(name = "latitude")
-	@Expose
-	var latitude: Double? = null
-
-	@ColumnInfo(name = "longitude")
-	@Expose
-	var longitude: Double? = null
+	@ColumnInfo(name = "latlng")
+	var latLng: LatLng? = null
 
 	@ColumnInfo(name = "address")
 	@Expose
@@ -81,7 +77,6 @@ data class BucketItemDbEntry(
 	override fun hashCode(): Int {
 		var result = key.hashCode()
 		result = 31 * result + bucketKey.hashCode()
-		result = 31 * result + bucketItemType
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
 		result = 31 * result + (title?.hashCode() ?: 0)

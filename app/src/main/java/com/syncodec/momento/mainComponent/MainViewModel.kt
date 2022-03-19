@@ -24,6 +24,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 	lateinit var activityState: MainActivity.ActivityState
 
+	var bucketList: LiveData<List<BucketDbEntry>> = bucketRepository.bucketList
+
 	var defaultNotebookKey: String? = null
 	var defaultNoteList: LiveData<List<NoteDbEntry>> = MutableLiveData()
 
@@ -42,10 +44,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 				dataStore.putDefaultNotebookKey(key)
 			}
 		}
-	}
-
-	fun getBucketList(): LiveData<List<BucketDbEntry>> {
-		return bucketRepository.getBucketListAsLiveData()
 	}
 
 	fun deleteNote(key: String, notebookKey: String) {

@@ -1,12 +1,10 @@
 package com.syncodec.momento.bucketComponent
 
 import android.app.Application
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.BucketDbEntry
@@ -15,11 +13,13 @@ import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.repository.BucketRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class BucketViewModel(application: Application) : AndroidViewModel(application) {
 
-	private val bucketRepository: BucketRepository = BucketRepository.getInstance(momento = application as Momento)
+	val bucketRepository: BucketRepository = BucketRepository.getInstance(momento = application as Momento)
 
 	lateinit var activityState: BucketActivity.ActivityState
 
@@ -30,27 +30,24 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 	lateinit var bucketItemType: BucketItemType.Type
 	lateinit var bucketDbEntry: BucketDbEntry
 
-	val bucketItemMap: SnapshotStateMap<String, Pair<BucketItemDbEntry, Int>> = mutableStateMapOf()
-
+	val bucketItemList: SnapshotStateList<BucketItemDbEntry> = mutableStateListOf()
 
 	fun getBucket() {
 		_status.value = Status.LOADING
 		viewModelScope.launch(Dispatchers.IO) {
-			bucketRepository.getBucket(bucketKey).also {
-				if (it != null) {
-					bucketDbEntry = it
-					_status.value = Status.LOADED
-				} else {
+			bucketRepository.bucketList.value?.find { it.key == bucketKey }.also {
+				if (it == null) {
 					_status.value = Status.ERROR
+				} else {
+					bucketDbEntry = it
+					bucketRepository.getBucketItemListAsLiveData(bucketKey = bucketKey).asFlow().collect{
+						bucketItemList.removeAll { true }
+						bucketItemList.addAll(it)
+						_status.value = Status.LOADED
+					}
 				}
 			}
 
-			bucketRepository.getBucketItemListAsLiveData(bucketKey = bucketKey).collect {
-				bucketItemMap.clear()
-				it.forEach {
-					bucketItemMap[it.key] = Pair(it, it.state)
-				}
-			}
 		}
 	}
 

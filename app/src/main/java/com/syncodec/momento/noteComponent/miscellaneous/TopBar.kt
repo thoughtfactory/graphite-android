@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TopBar() {
-	val activity = LocalContext.current as? Activity
 	val noteViewModel: NoteViewModel = viewModel()
 	val scope = rememberCoroutineScope()
 

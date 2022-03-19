@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.bucketItemComponent.miscellaneous.*
 import com.syncodec.momento.bucketItemComponent.thought.ThoughtCard
 import com.syncodec.momento.custom.button.LargeButton
@@ -25,16 +26,13 @@ import compose.icons.tablericons.Clock
 
 
 @Composable
-fun ShowItemScreen(
+fun ShowTvItemScreen(
 	tvData: TvData,
 	thumbnail: Any? = null,
 	thoughtList: SnapshotStateList<String> = mutableStateListOf(),
-	currentMovieState: Int,
-	onStateChange: (Int) -> Unit = {}
+	currentState: Int,
+	onClick: (BucketItemActivity.Click, Any?) -> Unit
 ) {
-	var currentState by remember { mutableStateOf(currentMovieState) }
-	LaunchedEffect(key1 = currentState) { onStateChange(currentState) }
-
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -72,10 +70,10 @@ fun ShowItemScreen(
 			currentState = currentState,
 			modifier = Modifier
 				.height(48.dp)
-		) { currentState = it }
+		) { onClick(BucketItemActivity.Click.STATE, it) }
 		Spacer(modifier = Modifier.height(12.dp))
 
-		ThoughtCard(thoughtList = thoughtList)
+		ThoughtCard(thoughtList = thoughtList) { onClick(it, null) }
 		Spacer(modifier = Modifier.height(12.dp))
 
 		val tagList: MutableList<String> = mutableListOf()

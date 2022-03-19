@@ -8,10 +8,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.database.attachment.Attachment
 import com.syncodec.momento.database.attachment.AttachmentTableDao
-import com.syncodec.momento.database.bucket.BucketDbEntry
-import com.syncodec.momento.database.bucket.BucketDbTableDao
-import com.syncodec.momento.database.bucket.BucketItemDbEntry
-import com.syncodec.momento.database.bucket.BucketItemTableDao
+import com.syncodec.momento.database.bucket.*
 import com.syncodec.momento.database.chapter.ChapterDbEntry
 import com.syncodec.momento.database.chapter.ChapterTableDao
 import com.syncodec.momento.database.note.Note
@@ -45,13 +42,23 @@ class Converters {
 	}
 
 	@TypeConverter
-	fun fromNoteMapToData(value: MutableMap<String, Note>): String {
-		return objectMapper.writeValueAsString(value)
+	fun fromBucketItemTypeToData(value: BucketItemType.Type): Int {
+		return value.ordinal
 	}
 
 	@TypeConverter
-	fun fromDataToNoteMap(data: String?): MutableMap<String, Note> {
-		return data?.let { objectMapper.readValue(data) } ?: mutableMapOf()
+	fun fromDataToBucketItemType(data: Int): BucketItemType.Type {
+		return BucketItemType.Type.values()[data]
+	}
+
+	@TypeConverter
+	fun fromBucketItemStateToData(value: BucketItemState): Int {
+		return value.ordinal
+	}
+
+	@TypeConverter
+	fun fromDataToBucketItemState(data: Int): BucketItemState {
+		return BucketItemState.values()[data]
 	}
 }
 
@@ -76,7 +83,7 @@ abstract class UserDatabase : RoomDatabase() {
 	abstract val notebookTableDao: NotebookTableDao
 	abstract val attachmentTableDao: AttachmentTableDao
 	abstract val bucketDbTableDao: BucketDbTableDao
-	abstract val bucketItemTableDao: BucketItemTableDao
+	abstract val bucketItemDbTableDao: BucketItemDbTableDao
 
 	companion object {
 		@Volatile

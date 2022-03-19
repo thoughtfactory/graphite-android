@@ -1,6 +1,5 @@
 package com.syncodec.momento.repository
 
-import android.graphics.Bitmap
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
@@ -18,7 +17,6 @@ import com.syncodec.momento.konstant.Secret
 import com.syncodec.momento.miscellaneous.downloadImage
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import javax.inject.Singleton
@@ -29,31 +27,32 @@ class BucketRepository(val momento: Momento) {
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
 	private val bucketDbTableDao: BucketDbTableDao = UserDatabase.getInstance(momento).bucketDbTableDao
-	private val bucketItemTableDao: BucketItemTableDao = UserDatabase.getInstance(momento).bucketItemTableDao
+	val bucketItemDbTableDao: BucketItemDbTableDao = UserDatabase.getInstance(momento).bucketItemDbTableDao
 
-	fun getBucketListAsLiveData(): LiveData<List<BucketDbEntry>> {
-		return bucketDbTableDao.getAllAsLiveData()
-	}
+	var bucketList: LiveData<List<BucketDbEntry>> = bucketDbTableDao.getAllAsLiveData()
 
-	fun getBucketItemListAsLiveData(bucketKey: String): Flow<List<BucketItemDbEntry>> {
-		return bucketItemTableDao.getAllAsLiveData(bucketKey = bucketKey)
+	fun getBucketItemListAsLiveData(bucketKey: String): LiveData<List<BucketItemDbEntry>> {
+		return bucketItemDbTableDao.getFromBucketAsLiveData(bucketKey = bucketKey)
 	}
 
 	suspend fun getAllBucketDbEntry(bucketKey: String): List<BucketItemDbEntry> {
-		return bucketItemTableDao.getAllBucketItem(bucketKey = bucketKey)
+		return bucketItemDbTableDao.getAllBucketItem(bucketKey = bucketKey)
 	}
 
 	suspend fun getBucket(bucketKey: String): BucketDbEntry? {
-		return bucketDbTableDao.get(primaryKey = bucketKey)
+		return bucketDbTableDao.get(key = bucketKey)
 	}
 
-	suspend fun getBucketItem(bucketItemKey: String): BucketItemDbEntry? {
-		return bucketItemTableDao.get(primaryKey = bucketItemKey)
+	suspend fun getBucketItem(bucketKey: String, bucketItemKey: String): Pair<BucketItemDbEntry?, String?> {
+		return Pair(
+			bucketItemDbTableDao.get(key = bucketItemKey),
+			momento.getBucketItemData(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
+		)
 	}
 
 	suspend fun deleteBucketItem(bucketKey: String, keyList: List<String>) {
 		keyList.forEach {
-			bucketItemTableDao.delete(it)
+			bucketItemDbTableDao.delete(it)
 			momento.deleteBucketItem(bucketKey = bucketKey, bucketItemKey = it)
 		}
 	}
@@ -62,7 +61,7 @@ class BucketRepository(val momento: Momento) {
 		withContext(Dispatchers.IO) {
 			val currentTimestamp = System.currentTimeMillis()
 			BucketDbEntry(
-				primaryKey = generatePrimaryKey(),
+				key = generatePrimaryKey(),
 				bucketType = bucketType.ordinal
 			).apply {
 				this.createdTimestamp = currentTimestamp
@@ -80,90 +79,65 @@ class BucketRepository(val momento: Momento) {
 	}
 
 	fun putBucketItem(
-		bucketKey: String,
-		bucketItemKey: String?,
-		bucketItemType: BucketItemType.Type,
-		title: String,
-		state: Int,
+		bucketItemDbEntry: BucketItemDbEntry,
 		thoughtList: List<String>,
-		data: Any
-	): String {
-		val currentTimestamp = System.currentTimeMillis()
-
-		val bucketItemDbEntry = BucketItemDbEntry(
-			key = bucketItemKey ?: generatePrimaryKey(),
-			bucketKey = bucketKey,
-			bucketItemType = bucketItemType.ordinal,
-			createdTimestamp = currentTimestamp
-		).apply {
-			this.modifiedTimestamp = currentTimestamp
-			this.title = title
-			this.state = state
-			this.isFavourite = false
-			this.isArchived = false
-			this.isLocked = false
-		}
-		bucketItemTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
-
-		val thumbnail: Bitmap? = when (bucketItemType) {
-			BucketItemType.Type.TODO -> null
-			BucketItemType.Type.BOOKS -> {
-				try {
-					data as BookData
-					if (data.coverI != null) {
-						downloadImage(thumbnailUrl = "https://covers.openlibrary.org/b/id/${data.coverI}-M.jpg")
-					} else null
-				} catch (exception: Exception) {
-					null
-				}
-			}
-			BucketItemType.Type.SHOWS -> {
-				try {
-					data as TvData
-					if (data.posterPath != null) {
-						downloadImage(thumbnailUrl = "https://image.tmdb.org/t/p/w500${data.posterPath}")
-					} else null
-				} catch (exception: Exception) {
-					null
-				}
-			}
-			BucketItemType.Type.MEDIA -> null
-			BucketItemType.Type.LINKS -> null
-		}
+		downloadThumbnail: Boolean,
+		data: Any?
+	) {
+		bucketItemDbTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
 
 		momento.putBucketItemData(
-			bucketKey = bucketKey,
+			bucketKey = bucketItemDbEntry.bucketKey,
 			bucketItemKey = bucketItemDbEntry.key,
 			jsonString = objectMapper.writeValueAsString(data),
-			thumbnail = thumbnail
 		)
 
 		momento.putThought(
-			bucketKey = bucketKey,
+			bucketKey = bucketItemDbEntry.bucketKey,
 			bucketItemKey = bucketItemDbEntry.key,
 			thoughtList = thoughtList
 		)
 
-		return bucketItemDbEntry.key
-	}
-
-	suspend fun getBucketItemData(
-		bucketKey: String,
-		bucketItemKey: String
-	): Pair<BucketItemDbEntry?, String> {
-		return Pair(
-			getBucketItem(bucketItemKey = bucketItemKey), momento.getBucketItemData(
-				bucketKey = bucketKey,
-				bucketItemKey = bucketItemKey
-			)
-		)
+		if (downloadThumbnail) {
+			when (bucketItemDbEntry.bucketItemType) {
+				BucketItemType.Type.TODO -> null
+				BucketItemType.Type.BOOKS -> {
+					try {
+						data as BookData
+						if (data.coverI != null) {
+							downloadImage(thumbnailUrl = "https://covers.openlibrary.org/b/id/${data.coverI}-M.jpg")
+						} else null
+					} catch (exception: Exception) {
+						null
+					}
+				}
+				BucketItemType.Type.SHOWS -> {
+					try {
+						data as TvData
+						if (data.posterPath != null) {
+							downloadImage(thumbnailUrl = "https://image.tmdb.org/t/p/w500${data.posterPath}")
+						} else null
+					} catch (exception: Exception) {
+						null
+					}
+				}
+				BucketItemType.Type.MEDIA -> null
+				BucketItemType.Type.LINKS -> null
+			}.apply {
+				momento.putBucketItemThumbnail(
+					bucketKey = bucketItemDbEntry.bucketKey,
+					bucketItemKey = bucketItemDbEntry.key,
+					thumbnail = this
+				)
+			}
+		}
 	}
 
 	suspend fun updateBucketItem(
 		bucketItemDbEntry: BucketItemDbEntry
 	) {
 		withContext(Dispatchers.IO) {
-			bucketItemTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
+			bucketItemDbTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
 		}
 	}
 
@@ -198,6 +172,7 @@ class BucketRepository(val momento: Momento) {
 		)
 	}
 
+	//	note    Why tvData is here? So that it value can be updated after downloading data
 	var tvData: MutableState<TvData?> = mutableStateOf(null)
 	fun downloadTvData(id: String) {
 		val requestQueue = Volley.newRequestQueue(momento.applicationContext)
@@ -210,19 +185,6 @@ class BucketRepository(val momento: Momento) {
 			{ requestResult ->
 				val tvDataJson = JSONObject(requestResult)
 				tvDataJson.apply {
-					val creatorDataList: MutableList<CreatorData> = mutableListOf()
-					optJSONArray("created_by")?.apply {
-						for (i in 0 until length()) {
-							optJSONObject(i).apply {
-								CreatorData(
-									id = optString("id"),
-									creditId = optString("credit_id"),
-									name = optString("name")
-								).apply { creatorDataList.add(this) }
-							}
-						}
-					}
-
 					val episodeRunTimeList: MutableList<Int> = mutableListOf()
 					optJSONArray("episode_run_time")?.apply {
 						for (i in 0 until length()) {
@@ -237,27 +199,9 @@ class BucketRepository(val momento: Momento) {
 						}
 					}
 
-					val seasonDataList: MutableList<SeasonData> = mutableListOf()
-					optJSONArray("seasons")?.apply {
-						for (i in 0 until length()) {
-							optJSONObject(i).apply {
-								SeasonData(
-									airDate = optString("air_date"),
-									noEpisode = optInt("episode_count"),
-									id = optString("id"),
-									name = optString("name"),
-									overview = optString("overview"),
-									posterPath = optString("poster_path"),
-									seasonNo = optInt("season_number"),
-								).apply { seasonDataList.add(this) }
-							}
-						}
-					}
-
 					TvData(
 						adult = optBoolean("adult"),
 						backdropPath = optString("backdrop_path"),
-						creatorDataList = creatorDataList,
 						episodeRunTime = episodeRunTimeList,
 						firstAirDate = optString("first_air_date"),
 						genreIds = genreIdList,
@@ -271,7 +215,6 @@ class BucketRepository(val momento: Momento) {
 						overview = optString("overview"),
 						popularity = optDouble("popularity"),
 						posterPath = optString("poster_path"),
-//						seasonDataList = seasonDataList,
 						showType = ShowType.TV,
 						status = optString("statue"),
 						tagline = optString("tagline"),
@@ -279,6 +222,53 @@ class BucketRepository(val momento: Momento) {
 						voteAverage = optDouble("vote_average"),
 						voteCount = optInt("vote_count"),
 					).apply { tvData.value = this }
+				}
+			},
+			{
+				it.printStackTrace()
+			}
+		).apply { requestQueue.add(this) }
+	}
+
+	var movieData: MutableState<MovieData?> = mutableStateOf(null)
+	fun downloadMovieData(id: String) {
+		val requestQueue = Volley.newRequestQueue(momento.applicationContext)
+		val movieDataUrl =
+			"https://api.themoviedb.org/3/movie/$id?api_key=daf55a105cab241cd55fa75413656db4&language=en-US${Secret.TMDB_KEY}&language=en-US&query="
+
+		StringRequest(
+			Request.Method.GET,
+			movieDataUrl,
+			{ requestResult ->
+				val movieDataJson = JSONObject(requestResult)
+				movieDataJson.apply {
+					val genreIdList: MutableList<Int> = mutableListOf()
+					optJSONArray("genres")?.apply {
+						for (i in 0 until length()) {
+							genreIdList.add(getJSONObject(i).getInt("id"))
+						}
+					}
+
+					MovieData(
+						adult = optBoolean("adult"),
+						backdropPath = optString("backdrop_path"),
+						genreIds = genreIdList,
+						homepage = optString("homepage"),
+						id = optString("id"),
+						imdbId = optString("imdb_id"),
+						originalLanguage = optString("original_language"),
+						originalTitle = optString("original_title"),
+						overview = optString("overview"),
+						popularity = optDouble("popularity"),
+						posterPath = optString("poster_path"),
+						releaseDate = optString("release_date"),
+						runtime = optInt("runtime"),
+						status = optString("statue"),
+						tagline = optString("tagline"),
+						title = optString("title"),
+						voteAverage = optDouble("vote_average"),
+						voteCount = optInt("vote_count"),
+					).apply { movieData.value = this }
 				}
 			},
 			{

@@ -37,7 +37,7 @@ import java.io.File
 @OptIn(ExperimentalFoundationApi::class, com.google.accompanist.pager.ExperimentalPagerApi::class)
 @Composable
 fun GridItemScreen(
-	bucketItemMap: SnapshotStateMap<String, Pair<BucketItemDbEntry, Int>>,
+	bucketItemList: List<BucketItemDbEntry>,
 	selectedBucketItemList: SnapshotStateList<String>,
 	pagerState: PagerState,
 	getThumbnailPath: (String) -> String?,
@@ -54,16 +54,16 @@ fun GridItemScreen(
 				.padding(12.dp, 12.dp, 12.dp, 0.dp)
 				.background(Color.Transparent)
 		) {
-			bucketItemMap.forEach { (key, data) ->
-				if (it == 0 || data.second == it - 1) {
+			bucketItemList.forEachIndexed { index, data ->
+				if (it == 0 || data.state.ordinal == it - 1) {
 					item {
 						GridItem(
-							title = data.first.title!!,
-							thumbnail = getThumbnailPath(key),
-							highlight = key in selectedBucketItemList,
-							onLongClick = { onClick(BucketActivity.Click.LONG_CLICK_ITEM, key) }
+							title = data.title ?: "",
+							thumbnail = getThumbnailPath(data.key),
+							highlight = data.key in selectedBucketItemList,
+							onLongClick = { onClick(BucketActivity.Click.LONG_CLICK_ITEM, data.key) }
 						) {
-							onClick(BucketActivity.Click.CLICK_ITEM, key)
+							onClick(BucketActivity.Click.CLICK_ITEM, data.key)
 						}
 					}
 				}

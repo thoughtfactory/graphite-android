@@ -73,7 +73,7 @@ fun ShowHeaderCard(
 					Text(
 						text = "~ $showLength min / ep",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodyMedium,
+						style = MaterialTheme.typography.bodySmall,
 						modifier = Modifier
 					)
 				}
@@ -82,7 +82,7 @@ fun ShowHeaderCard(
 					Text(
 						text = " | ",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodyMedium,
+						style = MaterialTheme.typography.bodySmall,
 						modifier = Modifier
 					)
 				}
@@ -91,7 +91,7 @@ fun ShowHeaderCard(
 					Text(
 						text = "$noSeason seas",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodyMedium,
+						style = MaterialTheme.typography.bodySmall,
 						modifier = Modifier
 					)
 				}
@@ -100,7 +100,7 @@ fun ShowHeaderCard(
 					Text(
 						text = " | ",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodyMedium,
+						style = MaterialTheme.typography.bodySmall,
 						modifier = Modifier
 					)
 				}
@@ -109,7 +109,7 @@ fun ShowHeaderCard(
 					Text(
 						text = "$noEpisode epis",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodyMedium,
+						style = MaterialTheme.typography.bodySmall,
 						modifier = Modifier
 					)
 				}
@@ -119,7 +119,7 @@ fun ShowHeaderCard(
 					Text(
 						text = releaseDate,
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodyMedium,
+						style = MaterialTheme.typography.bodySmall,
 						fontWeight = FontWeight.Bold,
 						modifier = Modifier
 					)
