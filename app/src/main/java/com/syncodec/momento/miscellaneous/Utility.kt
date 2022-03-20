@@ -7,6 +7,7 @@ import android.location.Address
 import android.net.Uri
 import android.text.format.DateFormat
 import android.util.Base64
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.FileProvider
@@ -24,6 +25,8 @@ import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.random.Random
+
+fun logger(msg: String) = Log.i("npr71", msg)
 
 fun timeStampToPrettyDay(timestamp: Long): String = DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()
 

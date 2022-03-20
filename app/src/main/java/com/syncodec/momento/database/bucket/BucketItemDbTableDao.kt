@@ -23,7 +23,7 @@ interface BucketItemDbTableDao {
 	fun getAsLiveData(key: String): Flow<BucketItemDbEntry>
 
 	@Query(value = "SELECT * FROM bucket_item_table WHERE bucket_key = :bucketKey ORDER BY created_timestamp DESC")
-	fun getFromBucketAsLiveData(bucketKey: String) : LiveData<List<BucketItemDbEntry>>
+	fun getFromBucketAsFlow(bucketKey: String) : Flow<List<BucketItemDbEntry>>
 
 	@Query(value = "SELECT * FROM bucket_item_table WHERE bucket_key = :bucketKey ORDER BY created_timestamp DESC")
 	suspend fun getAllBucketItem(bucketKey: String) : List<BucketItemDbEntry>

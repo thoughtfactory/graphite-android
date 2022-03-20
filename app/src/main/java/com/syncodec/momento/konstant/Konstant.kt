@@ -15,7 +15,9 @@ class Konstant {
 			CHAPTER_KEY,
 			TITLE,
 			IS_VIEWER,
-			DIARY_KEY
+			DIARY_KEY,
+			IS_NEW,
+			DO_DELETE
 		}
 
 		val monthName: List<String> = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")

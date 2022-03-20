@@ -1,5 +1,6 @@
 package com.syncodec.momento.bucketComponent.screen
 
+import android.graphics.Bitmap
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -16,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,7 +31,6 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.database.bucket.BucketItemDbEntry
-import java.io.File
 
 
 @OptIn(ExperimentalFoundationApi::class, com.google.accompanist.pager.ExperimentalPagerApi::class)
@@ -40,7 +39,6 @@ fun GridItemScreen(
 	bucketItemList: List<BucketItemDbEntry>,
 	selectedBucketItemList: SnapshotStateList<String>,
 	pagerState: PagerState,
-	getThumbnailPath: (String) -> String?,
 	onClick: (BucketActivity.Click, Any?) -> Unit
 ) {
 	HorizontalPager(
@@ -59,7 +57,7 @@ fun GridItemScreen(
 					item {
 						GridItem(
 							title = data.title ?: "",
-							thumbnail = getThumbnailPath(data.key),
+							thumbnail = data.thumbnail,
 							highlight = data.key in selectedBucketItemList,
 							onLongClick = { onClick(BucketActivity.Click.LONG_CLICK_ITEM, data.key) }
 						) {
@@ -76,7 +74,7 @@ fun GridItemScreen(
 @Composable
 private fun GridItem(
 	title: String,
-	thumbnail: String?,
+	thumbnail: Bitmap?,
 	highlight: Boolean,
 	onLongClick: () -> Unit,
 	onClick: () -> Unit
@@ -119,7 +117,7 @@ private fun GridItem(
 				if (thumbnail != null) {
 					Image(
 						painter = rememberImagePainter(
-							data = File(thumbnail),
+							data = thumbnail,
 							builder = { crossfade(true) }
 						),
 						contentDescription = null,

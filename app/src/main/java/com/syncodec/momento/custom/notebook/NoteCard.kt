@@ -154,7 +154,7 @@ fun NoteCard(
 
 						if (noteCardData.isLocked) {
 							Icon(
-								painter = painterResource(id = R.drawable.ic_lock_3),
+								painter = painterResource(id = R.drawable.ic_security),
 								contentDescription = "Locked",
 								tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
 								modifier = Modifier
@@ -199,7 +199,7 @@ fun NoteCard(
 							}
 
 							Icon(
-								painter = painterResource(id = R.drawable.ic_heart_3),
+								painter = painterResource(id = R.drawable.ic_heart),
 								contentDescription = "Favourite",
 								tint = MaterialTheme.colorScheme.primary,
 								modifier = Modifier

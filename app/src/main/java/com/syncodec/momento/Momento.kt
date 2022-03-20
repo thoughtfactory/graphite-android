@@ -255,5 +255,14 @@ class Momento : Application() {
 			CLOSED,
 			ERROR
 		}
+
+		enum class Click {
+			FAVOURITE,
+			ARCHIVE,
+			LOCK,
+			SHARE,
+			EXPORT,
+			DELETE
+		}
 	}
 }

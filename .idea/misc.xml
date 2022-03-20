@@ -150,7 +150,10 @@
         <entry key="app/src/main/res/drawable/ic_format_superscript.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_format_unlink.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_hashtag.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_heart.xml" value="0.1605" />
+        <entry key="app/src/main/res/drawable/ic_heart_filled.xml" value="0.121" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.1585" />
+        <entry key="app/src/main/res/drawable/ic_locked.xml" value="0.1605" />
         <entry key="app/src/main/res/drawable/ic_tabler_icon_highlight.xml" value="0.1325" />
         <entry key="app/src/main/res/drawable/il_book_screen.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/il_environment.xml" value="0.1" />

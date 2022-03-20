@@ -37,14 +37,14 @@ fun MenuBottomSheet() {
 	}
 
 	val menuBottomSheetButtonDataLists: List<MenuBottomSheetButtonData?> = listOf(
-		MenuBottomSheetButtonData(title = "Pin to top", imageVector = TablerIcons.Pinned) {},
-		MenuBottomSheetButtonData(title = "Pin to notification", imageVector = TablerIcons.Notification) {},
-		MenuBottomSheetButtonData(title = "Add to notebook", imageVector = TablerIcons.Notebook) {},
-		MenuBottomSheetButtonData(title = "Duplicate", imageVector = TablerIcons.Copy) {},
-
-		MenuBottomSheetButtonData(title = "Discard changes", imageVector = TablerIcons.X) {},
-		MenuBottomSheetButtonData(title = "Share", imageVector = TablerIcons.Share) {},
-		MenuBottomSheetButtonData(title = "Export", imageVector = TablerIcons.FileExport) {},
+//		MenuBottomSheetButtonData(title = "Pin to top", imageVector = TablerIcons.Pinned) {},
+//		MenuBottomSheetButtonData(title = "Pin to notification", imageVector = TablerIcons.Notification) {},
+//		MenuBottomSheetButtonData(title = "Add to notebook", imageVector = TablerIcons.Notebook) {},
+//		MenuBottomSheetButtonData(title = "Duplicate", imageVector = TablerIcons.Copy) {},
+//
+//		MenuBottomSheetButtonData(title = "Discard changes", imageVector = TablerIcons.X) {},
+//		MenuBottomSheetButtonData(title = "Share", imageVector = TablerIcons.Share) {},
+//		MenuBottomSheetButtonData(title = "Export", imageVector = TablerIcons.FileExport) {},
 		null
 	)
 

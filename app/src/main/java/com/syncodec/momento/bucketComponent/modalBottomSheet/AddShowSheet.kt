@@ -49,6 +49,7 @@ import com.syncodec.momento.konstant.Secret
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Movie
 import org.json.JSONObject
+import java.io.Serializable
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -305,18 +306,6 @@ enum class ShowType {
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class ShowCharacterData(
-	@JsonProperty("id")
-	val id: String,
-
-	@JsonProperty("name")
-	val name: String,
-
-	@JsonProperty("character")
-	val character: String
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class ShowData(
 	@JsonProperty("id")
 	val id: String,
@@ -332,7 +321,7 @@ data class ShowData(
 
 	@JsonProperty("release_date")
 	val releaseDate: String?,
-) {
+) : Serializable {
 	companion object {
 		val mock = ShowData(
 			id = "342470",

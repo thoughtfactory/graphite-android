@@ -2,6 +2,7 @@ package com.syncodec.momento.database.bucket
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BucketDbTableDao {
@@ -14,6 +15,9 @@ interface BucketDbTableDao {
 
 	@Query(value = "SELECT * FROM bucket_table WHERE `key` = :key")
 	suspend fun get(key: String): BucketDbEntry?
+
+	@Query(value = "SELECT * FROM bucket_table WHERE `key` = :key")
+	fun getAsFlow(key: String): Flow<BucketDbEntry?>
 
 	@Query(value = "SELECT * FROM bucket_table ORDER BY created_timestamp DESC")
 	fun getAllAsLiveData() : LiveData<List<BucketDbEntry>>

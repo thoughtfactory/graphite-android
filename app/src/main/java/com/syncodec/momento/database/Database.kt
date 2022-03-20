@@ -1,6 +1,8 @@
 package com.syncodec.momento.database
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.room.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -11,12 +13,13 @@ import com.syncodec.momento.database.attachment.AttachmentTableDao
 import com.syncodec.momento.database.bucket.*
 import com.syncodec.momento.database.chapter.ChapterDbEntry
 import com.syncodec.momento.database.chapter.ChapterTableDao
-import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.note.NoteTableDao
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.database.notebook.NotebookTableDao
+import java.io.ByteArrayOutputStream
 import javax.inject.Singleton
+
 
 class Converters {
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
@@ -59,6 +62,27 @@ class Converters {
 	@TypeConverter
 	fun fromDataToBucketItemState(data: Int): BucketItemState {
 		return BucketItemState.values()[data]
+	}
+
+	@TypeConverter
+	fun fromBitmapToData(value: Bitmap?) : ByteArray? {
+		return if (value!=null) {
+			val stream = ByteArrayOutputStream()
+			value.compress(Bitmap.CompressFormat.PNG, 100, stream)
+			val byteArray: ByteArray = stream.toByteArray()
+			byteArray
+		} else {
+			null
+		}
+	}
+
+	@TypeConverter
+	fun fromDataToBitmap(data: ByteArray?): Bitmap? {
+		return if (data == null) {
+			null
+		} else {
+			BitmapFactory.decodeByteArray(data, 0, data.size)
+		}
 	}
 }
 

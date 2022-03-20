@@ -9,14 +9,13 @@ import com.android.volley.toolbox.Volley
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.syncodec.momento.Momento
-import com.syncodec.momento.bucketComponent.modalBottomSheet.BookData
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.bucket.*
 import com.syncodec.momento.konstant.Secret
-import com.syncodec.momento.miscellaneous.downloadImage
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import javax.inject.Singleton
@@ -31,21 +30,21 @@ class BucketRepository(val momento: Momento) {
 
 	var bucketList: LiveData<List<BucketDbEntry>> = bucketDbTableDao.getAllAsLiveData()
 
-	fun getBucketItemListAsLiveData(bucketKey: String): LiveData<List<BucketItemDbEntry>> {
-		return bucketItemDbTableDao.getFromBucketAsLiveData(bucketKey = bucketKey)
+	fun getBucketItemListAsFlow(bucketKey: String): Flow<List<BucketItemDbEntry>> {
+		return bucketItemDbTableDao.getFromBucketAsFlow(bucketKey = bucketKey)
 	}
 
 	suspend fun getAllBucketDbEntry(bucketKey: String): List<BucketItemDbEntry> {
 		return bucketItemDbTableDao.getAllBucketItem(bucketKey = bucketKey)
 	}
 
-	suspend fun getBucket(bucketKey: String): BucketDbEntry? {
-		return bucketDbTableDao.get(key = bucketKey)
+	fun getBucket(bucketKey: String): Flow<BucketDbEntry?> {
+		return bucketDbTableDao.getAsFlow(key = bucketKey)
 	}
 
-	suspend fun getBucketItem(bucketKey: String, bucketItemKey: String): Pair<BucketItemDbEntry?, String?> {
+	fun getBucketItem(bucketKey: String, bucketItemKey: String): Pair<Flow<BucketItemDbEntry?>, String?> {
 		return Pair(
-			bucketItemDbTableDao.get(key = bucketItemKey),
+			bucketItemDbTableDao.getAsLiveData(key = bucketItemKey),
 			momento.getBucketItemData(bucketKey = bucketKey, bucketItemKey = bucketItemKey)
 		)
 	}
@@ -57,7 +56,7 @@ class BucketRepository(val momento: Momento) {
 		}
 	}
 
-	suspend fun putBucket(bucketType: BucketItemType.Type, title: String) {
+	suspend fun putNewBucket(bucketType: BucketItemType.Type, title: String) {
 		withContext(Dispatchers.IO) {
 			val currentTimestamp = System.currentTimeMillis()
 			BucketDbEntry(
@@ -78,10 +77,11 @@ class BucketRepository(val momento: Momento) {
 		}
 	}
 
+	fun putBucket(bucketDbEntry: BucketDbEntry) = bucketDbTableDao.update(bucketDbEntry = bucketDbEntry)
+
 	fun putBucketItem(
 		bucketItemDbEntry: BucketItemDbEntry,
 		thoughtList: List<String>,
-		downloadThumbnail: Boolean,
 		data: Any?
 	) {
 		bucketItemDbTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
@@ -97,49 +97,10 @@ class BucketRepository(val momento: Momento) {
 			bucketItemKey = bucketItemDbEntry.key,
 			thoughtList = thoughtList
 		)
-
-		if (downloadThumbnail) {
-			when (bucketItemDbEntry.bucketItemType) {
-				BucketItemType.Type.TODO -> null
-				BucketItemType.Type.BOOKS -> {
-					try {
-						data as BookData
-						if (data.coverI != null) {
-							downloadImage(thumbnailUrl = "https://covers.openlibrary.org/b/id/${data.coverI}-M.jpg")
-						} else null
-					} catch (exception: Exception) {
-						null
-					}
-				}
-				BucketItemType.Type.SHOWS -> {
-					try {
-						data as TvData
-						if (data.posterPath != null) {
-							downloadImage(thumbnailUrl = "https://image.tmdb.org/t/p/w500${data.posterPath}")
-						} else null
-					} catch (exception: Exception) {
-						null
-					}
-				}
-				BucketItemType.Type.MEDIA -> null
-				BucketItemType.Type.LINKS -> null
-			}.apply {
-				momento.putBucketItemThumbnail(
-					bucketKey = bucketItemDbEntry.bucketKey,
-					bucketItemKey = bucketItemDbEntry.key,
-					thumbnail = this
-				)
-			}
-		}
 	}
 
-	suspend fun updateBucketItem(
-		bucketItemDbEntry: BucketItemDbEntry
-	) {
-		withContext(Dispatchers.IO) {
-			bucketItemDbTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
-		}
-	}
+	suspend fun updateBucketItem(bucketItemDbEntry: BucketItemDbEntry) =
+		withContext(Dispatchers.IO) { bucketItemDbTableDao.update(bucketItemDbEntry = bucketItemDbEntry) }
 
 	suspend fun putThought(
 		bucketKey: String,
@@ -263,6 +224,7 @@ class BucketRepository(val momento: Momento) {
 						posterPath = optString("poster_path"),
 						releaseDate = optString("release_date"),
 						runtime = optInt("runtime"),
+						showType = ShowType.MOVIE,
 						status = optString("statue"),
 						tagline = optString("tagline"),
 						title = optString("title"),

@@ -1,7 +1,8 @@
 package com.syncodec.momento.bucketItemComponent
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -16,18 +17,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.miscellaneous.TopBar
 import com.syncodec.momento.bucketItemComponent.modalBottonSheet.MenuBottomSheet
 import com.syncodec.momento.bucketItemComponent.screen.ShowMovieItemScreen
 import com.syncodec.momento.bucketItemComponent.screen.ShowTvItemScreen
 import com.syncodec.momento.custom.LoadingView
+import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.database.bucket.BucketItemState
 import com.syncodec.momento.database.bucket.BucketItemType
 import com.syncodec.momento.konstant.Konstant
+import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.ui.theme.MomentoTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
 
 class BucketItemActivity : ComponentActivity() {
 
@@ -40,16 +45,23 @@ class BucketItemActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, -1).also {
-			if (it == -1) {
-				finish()
+		intent.hasExtra(Konstant.Companion.Konstant.IS_NEW.name).also {
+			if (it) {
+				viewModel.isNew = intent.getBooleanExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
+				viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_KEY.name)!!
+				viewModel.bucketItemKey.value = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
+				intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, -1).also {
+					if (it == -1) {
+						finish()
+					} else {
+						viewModel.bucketItemType = BucketItemType.Type.values()[it]
+					}
+				}
+
 			} else {
-				viewModel.bucketItemType = BucketItemType.Type.values()[it]
+				finish()
 			}
 		}
-
-		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_KEY.name)!!
-		viewModel.bucketItemKey.value = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
 
 		viewModel.getItem(intent = intent)
 
@@ -65,7 +77,9 @@ class BucketItemActivity : ComponentActivity() {
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
-	private fun onClick(click: Click, data: Any?) {
+	private fun onClick(click: Click, data: Any? = null) {
+		val bucketItemDbEntry by viewModel.bucketItemDbEntry
+
 		when (click) {
 			Click.TOP_BAR_PRIMARY -> {
 				if (viewModel.bucketItemKey.value == null) {
@@ -81,16 +95,45 @@ class BucketItemActivity : ComponentActivity() {
 				viewModel.updateItem()
 			}
 			Click.ADD_THOUGHT -> viewModel.updateThought()
+			Click.FAVOURITE -> {
+				bucketItemDbEntry!!.isFavourite = !bucketItemDbEntry!!.isFavourite
+				viewModel.updateItem()
+			}
+			Click.ARCHIVE -> {
+				bucketItemDbEntry!!.isArchived = !bucketItemDbEntry!!.isArchived
+				viewModel.updateItem()
+			}
+			Click.LOCK -> {
+				bucketItemDbEntry!!.isLocked = !bucketItemDbEntry!!.isLocked
+				viewModel.updateItem()
+			}
+			Click.DELETE -> {
+				if (bucketItemDbEntry != null) {
+					Intent().apply {
+						putExtra(Konstant.Companion.Konstant.DO_DELETE.name, true)
+						putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, bucketItemDbEntry!!.key)
+						setResult(Activity.RESULT_OK, this)
+						finish()
+					}
+				}
+			}
+			Click.EXPORT -> viewModel.updateThought()
+			Click.SHARE -> viewModel.updateThought()
 		}
 	}
 
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 	@Composable
 	private fun Screen() {
-		val bucketItemDbEntry by viewModel.bucketItemDbEntry
+		val status by viewModel.status
 
-		if (viewModel.bucketItemKey.value == null) Content()
-		else Crossfade(targetState = bucketItemDbEntry) { if (it == null) LoadingView() else Content() }
+		Crossfade(targetState = status) {
+			when (it) {
+				Status.INIT -> LoadingView()
+				Status.LOADING -> LoadingView()
+				Status.LOADED -> Content()
+			}
+		}
 	}
 
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
@@ -101,8 +144,31 @@ class BucketItemActivity : ComponentActivity() {
 		val movieData by viewModel.movieData
 		val thoughtList = viewModel.thoughtList
 
-		Log.i("npr71", "tvData : $tvData")
-		Log.i("npr71", "movieData : $movieData")
+		val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData?> = if (bucketItemDbEntry == null) listOf()
+		else listOf(
+			MenuBottomSheetButtonData(
+				title = "Favourite",
+				resourceId = if (bucketItemDbEntry!!.isFavourite) R.drawable.ic_heart_filled else R.drawable.ic_heart,
+				highlight = bucketItemDbEntry!!.isFavourite
+			) { onClick(Click.FAVOURITE) },
+			MenuBottomSheetButtonData(
+				title = "Archive",
+				resourceId = R.drawable.ic_box,
+				highlight = bucketItemDbEntry?.isArchived == true
+			) { onClick(Click.ARCHIVE) },
+			MenuBottomSheetButtonData(
+				title = "Lock",
+				resourceId = R.drawable.ic_locked,
+				highlight = bucketItemDbEntry?.isLocked == true
+			) { onClick(Click.LOCK) },
+			MenuBottomSheetButtonData(title = "Delete", resourceId = R.drawable.ic_trash, highlight = false) { onClick(Click.DELETE) },
+
+			MenuBottomSheetButtonData(title = "Export", resourceId = R.drawable.ic_export, highlight = false) { onClick(Click.EXPORT) },
+			MenuBottomSheetButtonData(title = "Share", resourceId = R.drawable.ic_share, highlight = false) { onClick(Click.SHARE) },
+			null,
+			null
+		)
+
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
@@ -110,8 +176,9 @@ class BucketItemActivity : ComponentActivity() {
 			sheetBackgroundColor = Color.Transparent,
 			sheetContent = {
 				MenuBottomSheet(
-					createdTimestamp = bucketItemDbEntry!!.createdTimestamp,
-					modifiedTimestamp = bucketItemDbEntry!!.modifiedTimestamp
+					createdTimestamp = bucketItemDbEntry?.createdTimestamp ?: -1,
+					modifiedTimestamp = bucketItemDbEntry?.modifiedTimestamp ?: -1,
+					menuBottomSheetButtonDataList = menuBottomSheetButtonDataList
 				)
 			},
 		) {
@@ -171,6 +238,12 @@ class BucketItemActivity : ComponentActivity() {
 		TOP_BAR_PRIMARY,
 		TOP_BAR_SECONDARY,
 		STATE,
-		ADD_THOUGHT
+		ADD_THOUGHT,
+		FAVOURITE,
+		ARCHIVE,
+		LOCK,
+		DELETE,
+		EXPORT,
+		SHARE
 	}
 }

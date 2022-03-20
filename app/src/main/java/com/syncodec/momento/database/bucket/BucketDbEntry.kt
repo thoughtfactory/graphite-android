@@ -9,49 +9,38 @@ import com.google.gson.annotations.Expose
 data class BucketDbEntry(
 	@PrimaryKey(autoGenerate = false)
 	@ColumnInfo(name = "key")
-	@Expose
 	val key: String,
 
 	@ColumnInfo(name = "bucket_type")
-	@Expose
 	val bucketType: Int
 ) {
 	@ColumnInfo(name = "created_timestamp")
-	@Expose
 	var createdTimestamp: Long = -1
 
 	@ColumnInfo(name = "modified_timestamp")
-	@Expose
 	var modifiedTimestamp: Long = -1
 
 	@ColumnInfo(name = "content_thumbnail")
-	@Expose
 	var contentThumbnail: String? = null
 
 	@ColumnInfo(name = "title")
-	@Expose
 	lateinit var title: String
 
 	@ColumnInfo(name = "bucket_size")
-	@Expose
 	var containerSize: Int = 0
 
 	@ColumnInfo(name = "is_favourite")
-	@Expose
 	var isFavourite: Boolean = false
 
 	@ColumnInfo(name = "is_archived")
-	@Expose
 	var isArchived: Boolean = false
 
 	@ColumnInfo(name = "is_locked")
-	@Expose
 	var isLocked: Boolean = false
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 
-	@Expose
 	@ColumnInfo(name = "hash")
 	var hash: Long? = null
 

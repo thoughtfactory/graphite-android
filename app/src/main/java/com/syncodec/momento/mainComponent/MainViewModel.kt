@@ -73,7 +73,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		title: String
 	) {
 		viewModelScope.launch {
-			bucketRepository.putBucket(
+			bucketRepository.putNewBucket(
 				bucketType = bucketType,
 				title = title
 			)

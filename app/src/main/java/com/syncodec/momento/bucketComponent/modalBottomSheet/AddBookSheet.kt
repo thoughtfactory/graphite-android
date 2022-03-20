@@ -79,7 +79,7 @@ data class BookData(
 
 	@JsonProperty("first_publish_year")
 	val firstPublishYear: Int?
-)
+) : java.io.Serializable
 
 @OptIn(ExperimentalFoundationApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable

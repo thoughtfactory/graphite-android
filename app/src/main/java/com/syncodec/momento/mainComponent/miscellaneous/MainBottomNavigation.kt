@@ -1,18 +1,22 @@
 package com.syncodec.momento.mainComponent.miscellaneous
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavController
@@ -38,7 +42,6 @@ open class BottomNavigationItem(var route: String, var icon: ImageVector, var ti
 fun BottomNavigationBar(
 	navController: NavController
 ) {
-
 	val items = listOf(
 		BottomNavigationItem.Momento,
 		BottomNavigationItem.Bucket,
@@ -46,35 +49,16 @@ fun BottomNavigationBar(
 		BottomNavigationItem.Atlas,
 		BottomNavigationItem.Me
 	)
-	BottomNavigation(
-		backgroundColor = MaterialTheme.colorScheme.background,
-		elevation = 0.dp
+
+	NavigationBar(
+		modifier = Modifier.fillMaxWidth(),
+		containerColor = MaterialTheme.colorScheme.background,
 	) {
 		val navBackStackEntry by navController.currentBackStackEntryAsState()
 		val currentRoute = navBackStackEntry?.destination?.route
 
 		items.forEach { item ->
-			BottomNavigationItem(
-				icon = {
-					Icon(
-						imageVector = item.icon,
-						tint = if (currentRoute == item.route) MaterialTheme.colorScheme.primary else Color.DarkGray,
-						contentDescription = null
-					)
-				},
-				label = {
-					Text(
-						text = item.title,
-						fontWeight = FontWeight.Bold,
-						color = if (currentRoute == item.route) MaterialTheme.colorScheme.primary else Color.DarkGray,
-						textAlign = TextAlign.Center,
-						style = MaterialTheme.typography.bodySmall,
-						maxLines = 1
-					)
-				},
-				selectedContentColor = Color.White,
-				unselectedContentColor = Color.White.copy(0.4f),
-				alwaysShowLabel = true,
+			NavigationBarItem(
 				selected = currentRoute == item.route,
 				onClick = {
 					if (item.route != currentRoute) {
@@ -88,7 +72,25 @@ fun BottomNavigationBar(
 							restoreState = true
 						}
 					}
-				}
+				},
+				icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
+				modifier = Modifier,
+				label = {
+					Text(
+						text = item.title,
+						textAlign = TextAlign.Center,
+						fontWeight = FontWeight.Bold,
+						style = MaterialTheme.typography.bodySmall,
+						maxLines = 1,
+						lineHeight = 12.sp
+					)
+				},
+				colors = NavigationBarItemDefaults.colors(
+					selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+					unselectedIconColor = MaterialTheme.colorScheme.onBackground,
+					selectedTextColor = MaterialTheme.colorScheme.onBackground,
+					unselectedTextColor = MaterialTheme.colorScheme.onBackground
+				)
 			)
 		}
 	}

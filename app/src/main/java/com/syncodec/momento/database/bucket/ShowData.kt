@@ -40,6 +40,7 @@ data class MovieData(
 	val posterPath: String,
 	val releaseDate: String?,
 	val runtime: Int?,
+	val showType: ShowType,
 	val status: String?,
 	val tagline: String?,
 	val title: String,

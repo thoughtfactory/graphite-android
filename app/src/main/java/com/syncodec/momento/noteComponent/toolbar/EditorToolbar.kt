@@ -1,12 +1,10 @@
 package com.syncodec.momento.noteComponent.toolbar
 
-import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,7 +26,6 @@ import com.syncodec.momento.R
 import com.syncodec.momento.custom.richText.RichTextEditor
 import com.syncodec.momento.konstant.Color.Companion.colorList
 import com.syncodec.momento.konstant.ErrorCode
-import com.syncodec.momento.miscellaneous.toHexString
 import com.syncodec.momento.noteComponent.NoteViewModel
 import java.text.SimpleDateFormat
 
@@ -637,7 +633,7 @@ private fun NoteStateToolbar() {
 			) { viewModel.isArchived = !viewModel.isArchived }
 			ToolbarButton(
 				name = "Favourite",
-				icon = R.drawable.ic_heart_3,
+				icon = R.drawable.ic_heart,
 				highlight = viewModel.isFavourite
 			) { viewModel.isFavourite = !viewModel.isFavourite }
 			ToolbarButton(
