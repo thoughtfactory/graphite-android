@@ -1,40 +1,26 @@
 package com.syncodec.momento.database.attachment
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AttachmentTableDao {
 	//    !!!   TODO    Is conflict strategy correct
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
-	fun insert(attachment: Attachment)
-
-	@Query(value = "UPDATE attachment_table SET g_drive_file_id = :gDriveFileId WHERE primary_key = :primaryKey")
-	fun addGDriveFileId(primaryKey: String, gDriveFileId: String)
+	fun insert(attachmentDbEntry: AttachmentDbEntry)
 
 	@Update
-	fun update(attachment: Attachment)
+	fun update(attachmentDbEntry: AttachmentDbEntry)
 
-	@Query(value = "SELECT * FROM attachment_table WHERE primary_key = :primaryKey")
-	suspend fun get(primaryKey: String): Attachment?
+	@Query(value = "SELECT * FROM attachment_table WHERE `key` = :key")
+	fun getAsFlow(key: String): Flow<AttachmentDbEntry?>
+
+	@Query(value = "SELECT * FROM attachment_table WHERE note_key = :noteKey")
+	fun getForNoteAsFlow(noteKey: String): Flow<List<AttachmentDbEntry>>
 
 	@Query(value = "SELECT * FROM attachment_table ORDER BY created_timestamp DESC")
-	fun getAllAsLiveData() : LiveData<List<Attachment>>
+	fun getAllAsFlow() : Flow<List<AttachmentDbEntry>>
 
-	@Query(value = "SELECT * FROM attachment_table ORDER BY created_timestamp DESC")
-	suspend fun getAll() : List<Attachment>
-
-	@Query(value = "DELETE FROM attachment_table WHERE primary_key = :primaryKey")
-	suspend fun delete(primaryKey: String)
-
-	@Delete
-	suspend fun delete(diaryEntries: List<Attachment>)
-
-	//	TODO REMOVE THIS
-	@Query(value = "DELETE FROM attachment_table")
-	suspend fun deleteAll()
-
-
-//    @Query(value = "SELECT * FROM diary_entry_table ORDER BY modified_timestamp DESC")
-//    fun getAll(): LiveData<List<DiaryEntry>>
+	@Query(value = "DELETE FROM attachment_table WHERE `key` = :key")
+	suspend fun delete(key: String)
 }

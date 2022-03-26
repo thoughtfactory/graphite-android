@@ -1,8 +1,11 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -12,22 +15,35 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
+import com.google.accompanist.flowlayout.FlowRow
+import com.syncodec.momento.R
 import com.syncodec.momento.custom.richText.viewer.*
 import com.syncodec.momento.custom.richText.viewer.string.RichTextString
 import com.syncodec.momento.custom.richText.viewer.string.RichTextStringStyle
 import com.syncodec.momento.custom.richText.viewer.string.Text
 import com.syncodec.momento.custom.richText.viewer.string.richTextString
+import com.syncodec.momento.database.attachment.AttachmentDbEntry
+import com.syncodec.momento.database.attachment.getMimeType
+import com.syncodec.momento.database.note.LocationData
+import com.syncodec.momento.database.note.Note
+import com.syncodec.momento.database.note.NoteDbEntry
+import com.syncodec.momento.database.tag.TagDbEntry
+import com.syncodec.momento.miscellaneous.noteViewerTimestamp
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -59,13 +75,14 @@ private const val STRIKE = "strike"
 private const val SUPERSCRIPT = "superscript"
 private const val SUBSCRIPT = "subscript"
 
-@Preview
 @Composable
 fun ViewerComponent(
-	@PreviewParameter(MockNoteDataList::class)
-	noteData: String
+	noteDbEntry: NoteDbEntry,
+	note: Note,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>,
+	connectedTag: List<String>
 ) {
-	val tiptapData = JSONObject(noteData)
+	val tiptapData = remember { if (note.content != null) JSONObject(note.content!!) else null }
 
 	Column(
 		modifier = Modifier
@@ -75,12 +92,144 @@ fun ViewerComponent(
 			.background(MaterialTheme.colorScheme.background)
 	) {
 		Spacer(modifier = Modifier.height(14.dp))
-		RenderContent(
-			tiptapData = tiptapData,
-			richTextScope = null,
-			nestLevel = 0
+
+		Thumbnail(attachmentMap = attachmentMap)
+
+		Spacer(modifier = Modifier.height(8.dp))
+
+		Header(
+			userTimestamp = noteDbEntry.userTimestamp,
+			location = noteDbEntry.location,
+			address = noteDbEntry.address,
+			connectedTag = connectedTag
 		)
+
+		Spacer(modifier = Modifier.height(8.dp))
+
+		if (tiptapData != null) {
+			RenderContent(
+				tiptapData = tiptapData,
+				richTextScope = null,
+				nestLevel = 0
+			)
+		}
 		Spacer(modifier = Modifier.height(96.dp))
+	}
+}
+
+@Composable
+private fun Thumbnail(
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>
+) {
+	var imageKey: String? = null
+	attachmentMap.forEach {
+		if (it.value.first.getMimeType() == "image") {
+			imageKey = it.key
+			return@forEach
+		}
+	}
+
+	if (imageKey != null) {
+		Card(
+			elevation = 0.dp,
+			shape = RoundedCornerShape(12.dp),
+			backgroundColor = Color.Companion.Transparent,
+			modifier = Modifier
+				.fillMaxWidth()
+				.aspectRatio(1f)
+		) {
+			Image(
+				painter = rememberImagePainter(
+					data = attachmentMap[imageKey]!!.second,
+					builder = { crossfade(400 ) }
+				),
+				contentDescription = "Attachment",
+				modifier = Modifier.fillMaxSize(),
+				contentScale = ContentScale.Crop
+			)
+		}
+	}
+}
+
+@Composable
+private fun Header(
+	userTimestamp: Long,
+	location: LocationData?,
+	address: String?,
+	connectedTag: List<String>
+) {
+	val timestamp = noteViewerTimestamp(userTimestamp)
+	Column(
+		modifier = Modifier.fillMaxWidth()
+	) {
+		Row(
+			modifier = Modifier,
+			verticalAlignment = Alignment.CenterVertically
+		) {
+			Text(
+				text = timestamp[0],
+				style = MaterialTheme.typography.bodyLarge.copy(fontSize = 48.sp),
+				color = MaterialTheme.colorScheme.secondary
+			)
+			Spacer(modifier = Modifier.width(4.dp))
+			Column(
+				modifier = Modifier,
+				verticalArrangement = Arrangement.SpaceBetween
+			) {
+				Text(
+					text = timestamp[1],
+					style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.secondary
+				)
+				Spacer(modifier = Modifier.height(4.dp))
+				Text(
+					text = timestamp[2],
+					style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.secondary
+				)
+			}
+		}
+		if (address != null) {
+			Spacer(modifier = Modifier.height(4.dp))
+			Row(
+				modifier = Modifier,
+				verticalAlignment = Alignment.Top,
+				horizontalArrangement = Arrangement.SpaceBetween
+			) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_location_pin_3),
+					contentDescription = "Location",
+					tint = MaterialTheme.colorScheme.secondary,
+					modifier = Modifier.requiredSize(16.dp)
+				)
+				Spacer(modifier = Modifier.width(4.dp))
+				Text(
+					text = address,
+					style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+					color = MaterialTheme.colorScheme.secondary
+				)
+			}
+		}
+		if (connectedTag.isNotEmpty()) {
+			Spacer(modifier = Modifier.height(6.dp))
+			FlowRow(
+				modifier = Modifier.fillMaxWidth(),
+				mainAxisSpacing = 8.dp,
+				crossAxisSpacing = 0.dp
+			) {
+				connectedTag.forEach {
+					Text(
+						text = "#$it",
+						modifier = Modifier,
+						style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+						color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.47f),
+					)
+				}
+			}
+			Spacer(modifier = Modifier.height(4.dp))
+		}
 	}
 }
 

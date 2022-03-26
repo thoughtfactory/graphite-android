@@ -19,10 +19,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.android.libraries.maps.model.LatLng
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.konstant.ErrorCode
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.DataStore
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.miscellaneous.toHexString
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.noteComponent.NoteViewModel
@@ -34,40 +36,47 @@ import com.syncodec.momento.noteComponent.toolbar.EditorToolbar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
 @Composable
-fun NoteEditorScreen() {
+fun NoteEditorScreen(
+	onClick: (NoteActivity.Click, Any?) -> Unit
+) {
 	val context = LocalContext.current
-	val noteViewModel: NoteViewModel = viewModel()
+	val viewModel: NoteViewModel = viewModel()
 
 	val dataStore = DataStore(context = context)
 	val typography by dataStore.getTypography.collectAsState(initial = null)
 
-	val richTextEditor = noteViewModel.activityState.richTextEditor
-	val locationPermissionState = noteViewModel.activityState.locationPermissionState
+	val activityState = viewModel.activityState
+	val noteDbEntry by viewModel.knotDbEntry.collectAsState()
 
-	val status by noteViewModel.status
+	logger("timestamp : ${noteDbEntry?.userTimestamp}")
+
+	val richTextEditor = viewModel.activityState.richTextEditor
+	val locationPermissionState = viewModel.activityState.locationPermissionState
+
+	val status by viewModel.status
 	val isReady by richTextEditor.isReady
 
 	val textColor = MaterialTheme.colorScheme.onBackground.toHexString()
 
-	LaunchedEffect(key1 = isReady && typography!=null) {
+	LaunchedEffect(key1 = isReady && typography != null) {
 		if (isReady) {
 			when {
 				locationPermissionState.hasPermission -> {
-					noteViewModel.activityState.addressState.value = NoteActivity.AddressState.REQUESTED
-					noteViewModel.getLocation()
+					activityState.addressState.value = NoteActivity.AddressState.REQUESTED
+					viewModel.getLocation()
 				}
 				locationPermissionState.shouldShowRationale -> {
-					noteViewModel.activityState.addressState.value = NoteActivity.AddressState.SHOW_RATIONALE
+					activityState.addressState.value = NoteActivity.AddressState.SHOW_RATIONALE
 				}
 				!locationPermissionState.permissionRequested -> {
-					noteViewModel.activityState.addressState.value = NoteActivity.AddressState.REQUEST_PERMISSION
+					activityState.addressState.value = NoteActivity.AddressState.REQUEST_PERMISSION
 				}
 				else -> {
-					noteViewModel.activityState.addressState.value = NoteActivity.AddressState.NO_PERMISSION
+					activityState.addressState.value = NoteActivity.AddressState.NO_PERMISSION
 				}
 			}
 
-			when(typography) {
+			when (typography) {
 				0 -> richTextEditor.exec("editor.setBaseFontFamily(\"overlock\");")
 				1 -> richTextEditor.exec("editor.setBaseFontFamily(\"source_sans_pro\");")
 				2 -> richTextEditor.exec("editor.setBaseFontFamily(\"ubuntu\");")
@@ -75,23 +84,20 @@ fun NoteEditorScreen() {
 				else -> richTextEditor.exec("editor.setBaseFontFamily(\"source_sans_pro\");")
 			}
 			richTextEditor.exec("editor.setBaseFontColor('$textColor');")
-			noteViewModel.status.value = Status.LOADED
+			viewModel.status.value = Status.LOADED
 		}
 	}
 
 	Crossfade(
 		targetState = status,
-		animationSpec = tween(
-			durationMillis = 400
-		)
+		animationSpec = tween(durationMillis = 400)
 	) {
-		when(it) {
+		when (it) {
 			Status.INIT -> LoadingView()
 			Status.LOADING -> LoadingView()
 			Status.LOADED -> {
 				Column(
-					modifier = Modifier
-						.fillMaxSize()
+					modifier = Modifier.fillMaxSize()
 				) {
 					Box(
 						modifier = Modifier
@@ -100,24 +106,40 @@ fun NoteEditorScreen() {
 					) {
 						AndroidView(
 							factory = { richTextEditor },
-							update = { viewer ->
-							},
+							update = { viewer -> },
 							modifier = Modifier
 								.fillMaxSize()
 								.background(MaterialTheme.colorScheme.background)
 						)
-						AddressCard()
+						AddressCard(
+							addressState = viewModel.activityState.addressState.value,
+							showAddressCard = viewModel.activityState.showAddressCard.value,
+							address = noteDbEntry?.address,
+							locationData = noteDbEntry?.location
+						) { onClick(it, null) }
 						NotificationLayout()
-						MapLocationPopup()
+
+						logger("address : ${noteDbEntry?.address}")
+
+						MapLocationPopup(
+							showMapLocationDialog = activityState.showMapLocationDialog.value,
+							latLng = if (noteDbEntry?.location?.latitude != null && noteDbEntry?.location?.longitude != null)
+								LatLng(noteDbEntry!!.location!!.latitude!!, noteDbEntry!!.location!!.longitude!!) else null,
+							address = noteDbEntry?.address
+						) { click, data ->  onClick(click, data) }
 					}
+
 					EditorToolbar(
-						richTextEditor = richTextEditor
+						richTextEditor = richTextEditor,
+						userTimestamp = noteDbEntry?.userTimestamp ?: -1,
+						tagList = mapOf(),
+						onClick = { onClick(it, null) },
 					) { errorCode ->
 						when (errorCode) {
-							ErrorCode.Companion.ErrorCode.URL_RANGE_SELECTION_ERROR -> noteViewModel.activityState.notificationType.value =
+							ErrorCode.Companion.ErrorCode.URL_RANGE_SELECTION_ERROR -> viewModel.activityState.notificationType.value =
 								NotificationType.UrlSelectionNotification
 						}
-						noteViewModel.activityState.isNotificationVisible.value = true
+						activityState.isNotificationVisible.value = true
 					}
 				}
 			}

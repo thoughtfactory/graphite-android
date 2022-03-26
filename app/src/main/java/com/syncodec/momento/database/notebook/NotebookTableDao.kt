@@ -2,6 +2,7 @@ package com.syncodec.momento.database.notebook
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotebookTableDao {
@@ -18,7 +19,7 @@ interface NotebookTableDao {
 	suspend fun get(key: String): NotebookDbEntry?
 
 	@Query(value = "SELECT * FROM notebook_table ORDER BY created_timestamp DESC")
-	fun getAllAsLiveData() : LiveData<List<NotebookDbEntry>>
+	fun getAllAsFlow() : Flow<List<NotebookDbEntry>>
 
 	@Query(value = "SELECT * FROM notebook_table ORDER BY created_timestamp DESC")
 	suspend fun getAll() : List<NotebookDbEntry>

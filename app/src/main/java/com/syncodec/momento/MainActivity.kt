@@ -49,8 +49,6 @@ import compose.icons.tablericons.Notebook
 import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.Plus
 import compose.icons.tablericons.World
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -64,13 +62,47 @@ class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		CoroutineScope(Dispatchers.IO).launch { viewModel.initDefaultNoteList() }
+		viewModel.initData()
 
 		setContent {
 			viewModel.activityState = rememberActivityState()
 
 			MomentoTheme {
 				MainScreen()
+			}
+		}
+	}
+
+	private fun onClick(click: Click, data: Any? = null) {
+		when(click) {
+			Click.SHOW_DELETE -> viewModel.activityState.showDeleteDialog.value = true
+			Click.CLICK_NOTE -> {
+				data as String
+				var isSelected by viewModel.activityState.isSelected
+				val selectedItemList = viewModel.activityState.selectedItemList
+
+				if (isSelected) {
+					isSelected = true
+					if (data in selectedItemList) {
+						selectedItemList.remove(data)
+					} else {
+						selectedItemList.add(data)
+					}
+				} else {
+					Intent(this, NoteActivity::class.java).apply {
+						putExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name, viewModel.defaultNotebookKey)
+						putStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name, java.util.ArrayList())
+						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, data)
+						putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
+						startActivity(this)
+					}
+				}
+			}
+			Click.LONG_CLICK_NOTE -> {
+				data as String
+				viewModel.activityState.isSelected.value = true
+				val selectedItemList = viewModel.activityState.selectedItemList
+				selectedItemList.add(data)
 			}
 		}
 	}
@@ -141,9 +173,7 @@ class MainActivity : ComponentActivity() {
 						sheetElevation = 0.dp,
 						sheetBackgroundColor = Color.Transparent,
 						sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
-						sheetContent = {
-							SheetLayout()
-						},
+						sheetContent = { SheetLayout() },
 					) {
 						Scaffold(
 							bottomBar = { BottomNavigationBar(navController) },
@@ -155,7 +185,10 @@ class MainActivity : ComponentActivity() {
 							}
 
 							CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
-								MainNavigation(navController = navController, viewModelStoreOwner = viewModelStoreOwner)
+								MainNavigation(
+									navController = navController,
+									viewModelStoreOwner = viewModelStoreOwner
+								) { click, data ->  onClick(click = click, data = data) }
 							}
 						}
 						DeleteDialog(
@@ -202,7 +235,7 @@ class MainActivity : ComponentActivity() {
 						when (currentRoute) {
 							BottomNavigationItem.Momento.route -> {
 								when (viewModel.activityState.momentoComponentType.value) {
-									MomentoComponentType.Diary -> if (viewModel.defaultNotebookKey != null) {
+									MomentoComponentType.Note -> if (viewModel.defaultNotebookKey != null) {
 										startActivity(
 											Intent(this@MainActivity, NoteActivity::class.java).apply {
 												putExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name, viewModel.defaultNotebookKey)
@@ -230,7 +263,7 @@ class MainActivity : ComponentActivity() {
 					Crossfade(targetState = currentRoute) { route ->
 						when (route) {
 							BottomNavigationItem.Momento.route -> when (viewModel.activityState.momentoComponentType.value) {
-								MomentoComponentType.Diary -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
+								MomentoComponentType.Note -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
 								MomentoComponentType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
 							}
 							BottomNavigationItem.Bucket.route -> Icon(imageVector = TablerIcons.Plus, contentDescription = null)
@@ -249,7 +282,7 @@ class MainActivity : ComponentActivity() {
 	) {
 		var vaultState = (application as Momento).vaultState
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.MenuBottomSheet)
-		var momentoComponentType: MutableState<MomentoComponentType> = mutableStateOf(MomentoComponentType.Diary)
+		var momentoComponentType: MutableState<MomentoComponentType> = mutableStateOf(MomentoComponentType.Note)
 		var selectedItemList: SnapshotStateList<String> = mutableStateListOf()
 		var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
 
@@ -266,5 +299,12 @@ class MainActivity : ComponentActivity() {
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
 	) = remember {
 		ActivityState(bottomSheetState)
+	}
+
+	enum class Click {
+		SHOW_DELETE,
+		CLICK_NOTE,
+		LONG_CLICK_NOTE,
+		CLICK_NOTEBOOK,
 	}
 }

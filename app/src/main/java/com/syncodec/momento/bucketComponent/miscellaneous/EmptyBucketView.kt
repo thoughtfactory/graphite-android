@@ -14,13 +14,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.BucketActivity
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemType
 
 
 @Composable
 fun EmptyBucketView(
 	bucketTitle: String,
-	bucketItemType: BucketItemType.Type,
+	bucketItemType: BucketItemType,
 	onClick: (BucketActivity.Click) -> Unit
 ) {
 	Column(
@@ -41,7 +41,7 @@ fun EmptyBucketView(
 			Spacer(modifier = Modifier.height(24.dp))
 			Image(
 				painter = painterResource(id = R.drawable.il_reading),
-				contentDescription = "No diary entries",
+				contentDescription = "No entries found",
 				modifier = Modifier
 					.fillMaxWidth(0.5f)
 			)

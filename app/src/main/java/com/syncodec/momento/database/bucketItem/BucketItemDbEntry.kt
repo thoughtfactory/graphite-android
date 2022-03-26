@@ -1,4 +1,4 @@
-package com.syncodec.momento.database.bucket
+package com.syncodec.momento.database.bucketItem
 
 import android.graphics.Bitmap
 import androidx.room.ColumnInfo
@@ -16,7 +16,7 @@ data class BucketItemDbEntry(
 	val bucketKey: String,
 
 	@ColumnInfo(name = "bucket_item_type")
-	val bucketItemType: BucketItemType.Type,
+	val bucketItemType: BucketItemType,
 
 	@ColumnInfo(name = "created_timestamp")
 	var createdTimestamp: Long = -1
@@ -39,14 +39,8 @@ data class BucketItemDbEntry(
 	@ColumnInfo(name = "address")
 	var address: String? = null
 
-	@ColumnInfo(name = "is_favourite")
-	var isFavourite: Boolean = false
-
-	@ColumnInfo(name = "is_archived")
-	var isArchived: Boolean = false
-
-	@ColumnInfo(name = "is_locked")
-	var isLocked: Boolean = false
+//	@ColumnInfo(name = "tag_list")
+//	val tagList: MutableList<TagDbEntry> = mutableListOf()
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
@@ -74,18 +68,10 @@ data class BucketItemDbEntry(
 		result = 31 * result + state.hashCode()
 		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
-		result = 31 * result + isFavourite.hashCode()
-		result = 31 * result + isArchived.hashCode()
-		result = 31 * result + isLocked.hashCode()
+//		result = 31 * result + tagList.hashCode()
 		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
 		result = 31 * result + (hash?.hashCode() ?: 0)
 		return result
 	}
 
-}
-
-enum class BucketItemState {
-	ALPHA,
-	BETA,
-	GAMMA
 }

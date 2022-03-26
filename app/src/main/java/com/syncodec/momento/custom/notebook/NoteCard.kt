@@ -1,5 +1,6 @@
 package com.syncodec.momento.custom.notebook
 
+import android.graphics.Bitmap
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.squircle.Squircle
-import com.syncodec.momento.miscellaneous.base64stringToBitmap
 import com.syncodec.momento.miscellaneous.entryTimestamp0
 import com.syncodec.momento.miscellaneous.entryTimestamp1
 import com.syncodec.momento.miscellaneous.timeStampToTime
@@ -47,7 +48,7 @@ data class NoteCardData(
 	val title: String?,
 	val contentThumbnail: String?,
 	val attachmentCount: Int,
-	val attachmentThumbnail: String?,
+	val attachmentThumbnail: Bitmap?,
 	val address: String?,
 	val isVisible: Boolean = false,
 	val onClick: () -> Unit,
@@ -72,7 +73,7 @@ fun NoteCard(
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(if (noteCardData.isLast) 152.dp else 144.dp)
+				.height(144.dp)
 				.padding(8.dp, 0.dp, 8.dp, if (noteCardData.isLast) 8.dp else 0.dp),
 		) {
 			NoteSpacer(isLast = noteCardData.isLast)
@@ -83,7 +84,7 @@ fun NoteCard(
 				backgroundColor = containerColor,
 				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
 				modifier = Modifier
-					.fillMaxSize()
+					.fillMaxWidth()
 					.clip(RoundedCornerShape(12.dp))
 					.combinedClickable(
 						onClick = { noteCardData.onClick() },
@@ -92,14 +93,13 @@ fun NoteCard(
 			) {
 				Column(
 					modifier = Modifier
-						.fillMaxSize()
-						.padding(12.dp, 8.dp, 12.dp, 8.dp)
+						.fillMaxWidth()
+						.padding(12.dp, 8.dp)
 				) {
 					Row(
 						modifier = Modifier,
 						verticalAlignment = Alignment.CenterVertically
 					) {
-
 						if (noteCardData.showFullTime) {
 							Text(
 								text = entryTimestamp0(noteCardData.timestamp),
@@ -129,7 +129,7 @@ fun NoteCard(
 							)
 						}
 
-						if (noteCardData.title != null) {
+						if (!noteCardData.title.isNullOrBlank()) {
 							Spacer(modifier = Modifier.width(2.dp))
 							Text(
 								text = "·",
@@ -250,7 +250,7 @@ fun NoteCard(
 
 					}
 
-					Spacer(modifier = Modifier.height(8.dp))
+					Spacer(modifier = Modifier.height(4.dp))
 
 					if (noteCardData.attachmentThumbnail == null) {
 						Text(
@@ -279,10 +279,10 @@ fun NoteCard(
 								smoothing = 4.0
 							) {
 								Image(
-									painter = rememberImagePainter(data = noteCardData.attachmentThumbnail.base64stringToBitmap()),
+									painter = rememberImagePainter(data = noteCardData.attachmentThumbnail),
 									contentDescription = null,
-									modifier = Modifier
-										.fillMaxSize()
+									contentScale = ContentScale.Crop,
+									modifier = Modifier.fillMaxSize(),
 								)
 							}
 						}
@@ -302,8 +302,7 @@ fun NoteCard(
 								contentDescription = null,
 //							tint = Color.Unspecified,
 								tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
-								modifier = Modifier
-									.requiredSize(16.dp)
+								modifier = Modifier.requiredSize(16.dp)
 							)
 							Spacer(modifier = Modifier.width(2.dp))
 							Text(

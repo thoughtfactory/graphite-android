@@ -336,11 +336,11 @@ fun MomentoTheme(
 		}
 	}
 	val appTypography = when (currentTypography) {
-		0 -> OverlockTypography
+		0 -> UbuntuTypography
 		1 -> SourceSansProTypography
-		2 -> UbuntuTypography
+		2 -> OverlockTypography
 		3 -> ATWriterTypography
-		else -> SourceSansProTypography
+		else -> UbuntuTypography
 	}
 
 	androidx.compose.material3.MaterialTheme(

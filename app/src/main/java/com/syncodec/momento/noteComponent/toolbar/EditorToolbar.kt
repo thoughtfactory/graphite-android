@@ -26,6 +26,7 @@ import com.syncodec.momento.R
 import com.syncodec.momento.custom.richText.RichTextEditor
 import com.syncodec.momento.konstant.Color.Companion.colorList
 import com.syncodec.momento.konstant.ErrorCode
+import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.noteComponent.NoteViewModel
 import java.text.SimpleDateFormat
 
@@ -49,6 +50,8 @@ private enum class NoteState {
 
 private enum class ToolbarButton {
 	TIMESTAMP_PICKER,
+	ATTACHMENT,
+	TAG,
 	STATE,
 	OPEN_FORMAT,
 	CLOSE_FORMAT,
@@ -76,8 +79,6 @@ private enum class ToolbarButton {
 	ALIGN_CENTER,
 	ALIGN_RIGHT,
 	ALIGN_JUSTIFY,
-	TEXT_HIGHLIGHT,
-	TEXT_COLOR,
 	INDENT,
 	OUTDENT,
 	LINK,
@@ -87,10 +88,13 @@ private enum class ToolbarButton {
 	CODE_BLOCK,
 }
 
-@OptIn(ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun EditorToolbar(
 	richTextEditor: RichTextEditor,
+	userTimestamp: Long,
+	tagList: Map<String, Boolean>,
+	onClick: (NoteActivity.Click) -> Unit,
 	onError: (ErrorCode.Companion.ErrorCode) -> Unit,
 ) {
 	var showFormatter by remember { mutableStateOf(false) }
@@ -98,12 +102,9 @@ fun EditorToolbar(
 
 	var textFormat by remember { mutableStateOf(RichTextEditor.TextFormat()) }
 
-	var highlightColor by remember { mutableStateOf<Color?>(null) }
-	var textColor by remember { mutableStateOf<Color?>(null) }
-
 	richTextEditor.setOnFormatUpdate(object : RichTextEditor.OnFormatUpdateListener {
 		override fun onFormatUpdate(newTextFormat: RichTextEditor.TextFormat) {
-			textFormat = newTextFormat
+   			textFormat = newTextFormat
 		}
 	})
 
@@ -167,8 +168,6 @@ fun EditorToolbar(
 				if (it) {
 					FormatEditorToolbar(
 						textFormat = textFormat,
-						highlightColor = highlightColor,
-						textColor = textColor,
 					) { toolbarButton ->
 						when (toolbarButton) {
 							ToolbarButton.CLOSE_FORMAT -> {
@@ -202,8 +201,13 @@ fun EditorToolbar(
 						}
 					}
 				} else {
-					StateEditorToolbar { toolbarButton ->
+					StateEditorToolbar(
+						userTimestamp = userTimestamp
+					) { toolbarButton ->
 						when (toolbarButton) {
+							ToolbarButton.TIMESTAMP_PICKER -> onClick(NoteActivity.Click.SELECT_TIME)
+							ToolbarButton.ATTACHMENT -> onClick(NoteActivity.Click.ATTACHMENT_BUTTON)
+							ToolbarButton.TAG -> onClick(NoteActivity.Click.TAG_BUTTON)
 							ToolbarButton.STATE -> toolbarState = if (toolbarState == ToolbarState.STATE) ToolbarState.BASE else ToolbarState.STATE
 							ToolbarButton.OPEN_FORMAT -> {
 								toolbarState = ToolbarState.BASE
@@ -219,10 +223,9 @@ fun EditorToolbar(
 
 @Composable
 private fun StateEditorToolbar(
+	userTimestamp: Long,
 	onClick: (ToolbarButton) -> Unit,
 ) {
-	val viewModel: NoteViewModel = viewModel()
-
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -232,9 +235,7 @@ private fun StateEditorToolbar(
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Spacer(modifier = Modifier.width(8.dp))
-		DateTimeButton(userTimestamp = viewModel.userTimestamp.value) {
-
-		}
+		DateTimeButton(userTimestamp = userTimestamp) { onClick(ToolbarButton.TIMESTAMP_PICKER) }
 
 		ToolbarSpacer()
 
@@ -242,12 +243,12 @@ private fun StateEditorToolbar(
 			name = "Attachment",
 			icon = R.drawable.ic_attachment,
 			highlight = false
-		) {}
+		) { onClick(ToolbarButton.ATTACHMENT) }
 		ToolbarButton(
 			name = "Tag",
 			icon = R.drawable.ic_hashtag,
 			highlight = false
-		) {}
+		) { onClick(ToolbarButton.TAG) }
 		ToolbarButton(
 			name = "State",
 			icon = R.drawable.ic_state,
@@ -264,9 +265,7 @@ private fun StateEditorToolbar(
 @Composable
 private fun FormatEditorToolbar(
 	textFormat: RichTextEditor.TextFormat,
-	highlightColor: Color?,
-	textColor: Color?,
-	onClick: (ToolbarButton) -> Unit,
+	onClick: (ToolbarButton) -> Unit
 ) {
 	Row(
 		modifier = Modifier
@@ -372,33 +371,7 @@ private fun FormatEditorToolbar(
 			},
 			highlight = false,
 		) { onClick(ToolbarButton.ALIGN) }
-//		FontFamilyButton(textFormat = textFormat)
-//		FontSizeButton()
-
 		ToolbarSpacer()
-
-//		ToolbarButton(
-//			name = "Highlight color",
-//			icon = R.drawable.ic_tabler_icon_highlight,
-//			highlight = textFormat.orderedList
-//		) { onClick(ToolbarButton.TEXT_HIGHLIGHT) }
-//		if (highlightColor == null) {
-//			ToolbarRemoveColorButton {}
-//		} else {
-//			ToolbarColorButton(color = highlightColor) {}
-//		}
-//		ToolbarButton(
-//			name = "Text color",
-//			icon = R.drawable.ic_format_text_color,
-//			highlight = textFormat.orderedList
-//		) { onClick(ToolbarButton.TEXT_COLOR) }
-//		if (textColor == null) {
-//			ToolbarRemoveColorButton {}
-//		} else {
-//			ToolbarColorButton(color = textColor) {}
-//		}
-//
-//		ToolbarSpacer()
 
 		ToolbarButton(
 			name = "Ordered list",
@@ -493,6 +466,7 @@ private fun ToolbarSpacer() {
 	}
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun DateTimeButton(
 	userTimestamp: Long,
@@ -502,107 +476,37 @@ private fun DateTimeButton(
 		modifier = Modifier
 			.height(40.dp)
 	) {
-		Box(
-			modifier = Modifier
-				.height(40.dp)
-				.clip(RoundedCornerShape(25))
-				.clickable { onClick() },
-			contentAlignment = Alignment.Center
-		) {
-			Column(
+		AnimatedContent(targetState = userTimestamp) {
+			Box(
 				modifier = Modifier
-					.fillMaxHeight()
-					.padding(8.dp, 0.dp),
-				horizontalAlignment = Alignment.Start,
-				verticalArrangement = Arrangement.Center
+					.height(40.dp)
+					.clip(RoundedCornerShape(25))
+					.clickable { onClick() },
+				contentAlignment = Alignment.Center
 			) {
-				Text(
-					text = SimpleDateFormat("h:mm a, EEE").format(userTimestamp),
-					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onSecondaryContainer
-				)
-				Text(
-					text = SimpleDateFormat("MMM d, yyyy").format(userTimestamp),
-					style = MaterialTheme.typography.bodySmall,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onSecondaryContainer
-				)
+				Column(
+					modifier = Modifier
+						.fillMaxHeight()
+						.padding(8.dp, 0.dp),
+					horizontalAlignment = Alignment.Start,
+					verticalArrangement = Arrangement.Center
+				) {
+					Text(
+						text = SimpleDateFormat("h:mm a, EEE").format(it),
+						style = MaterialTheme.typography.bodyMedium,
+						fontWeight = FontWeight.Bold,
+						color = MaterialTheme.colorScheme.onSecondaryContainer
+					)
+					Text(
+						text = SimpleDateFormat("MMM d, yyyy").format(it),
+						style = MaterialTheme.typography.bodySmall,
+						fontWeight = FontWeight.Bold,
+						color = MaterialTheme.colorScheme.onSecondaryContainer
+					)
+				}
 			}
-		}
-		Spacer(modifier = Modifier.width(4.dp))
-	}
-}
-
-@Composable
-private fun FontFamilyButton(
-	textFormat: RichTextEditor.TextFormat
-) {
-	Row(
-		modifier = Modifier
-			.height(40.dp)
-	) {
-		Row(
-			modifier = Modifier
-				.height(40.dp)
-				.clip(RoundedCornerShape(25))
-				.clickable { },
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_format_font_family),
-				contentDescription = "Font family",
-				tint = MaterialTheme.colorScheme.onSecondaryContainer,
-				modifier = Modifier
-					.requiredSize(24.dp)
-					.padding(8.dp, 0.dp, 0.dp, 0.dp)
-			)
 			Spacer(modifier = Modifier.width(4.dp))
-			Text(
-				text = "Font family",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.onSecondaryContainer,
-				modifier = Modifier
-					.padding(0.dp, 0.dp, 8.dp, 0.dp)
-			)
 		}
-		Spacer(modifier = Modifier.width(4.dp))
-	}
-}
-
-@Composable
-private fun FontSizeButton() {
-	Row(
-		modifier = Modifier,
-		horizontalArrangement = Arrangement.Center,
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		Row(
-			modifier = Modifier
-				.requiredSize(40.dp)
-				.clip(RoundedCornerShape(25))
-				.background(Color.Companion.Transparent)
-				.clickable { },
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.Center
-		) {
-			Text(
-				text = "17",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.onSecondaryContainer,
-				modifier = Modifier
-			)
-			Text(
-				text = "pt",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.onSecondaryContainer,
-				modifier = Modifier
-			)
-		}
-		Spacer(modifier = Modifier.width(4.dp))
 	}
 }
 
@@ -626,21 +530,21 @@ private fun NoteStateToolbar() {
 		) {
 			Spacer(modifier = Modifier.width(8.dp))
 
-			ToolbarButton(
-				name = "Archive",
-				icon = R.drawable.ic_box,
-				highlight = viewModel.isArchived
-			) { viewModel.isArchived = !viewModel.isArchived }
-			ToolbarButton(
-				name = "Favourite",
-				icon = R.drawable.ic_heart,
-				highlight = viewModel.isFavourite
-			) { viewModel.isFavourite = !viewModel.isFavourite }
-			ToolbarButton(
-				name = "Lock",
-				icon = R.drawable.ic_locked,
-				highlight = viewModel.isLocked
-			) { viewModel.isLocked = !viewModel.isLocked }
+//			ToolbarButton(
+//				name = "Archive",
+//				icon = R.drawable.ic_box,
+//				highlight = viewModel.isArchived
+//			) { viewModel.isArchived = !viewModel.isArchived }
+//			ToolbarButton(
+//				name = "Favourite",
+//				icon = R.drawable.ic_heart,
+//				highlight = viewModel.isFavourite
+//			) { viewModel.isFavourite = !viewModel.isFavourite }
+//			ToolbarButton(
+//				name = "Lock",
+//				icon = R.drawable.ic_locked,
+//				highlight = viewModel.isLocked
+//			) { viewModel.isLocked = !viewModel.isLocked }
 
 			Spacer(modifier = Modifier.width(8.dp))
 		}

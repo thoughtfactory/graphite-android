@@ -17,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -111,7 +110,7 @@ class NotebookActivity : ComponentActivity() {
 					if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
 				} else {
 					viewModel.chapterPath.add(data)
-					val chapterName = viewModel.chapterList.value?.find { it.key == data }!!.title
+					val chapterName = viewModel.chapterList.find { it.key == data }!!.title
 					viewModel.chapterNamePath.add(chapterName)
 				}
 			}
@@ -151,8 +150,8 @@ class NotebookActivity : ComponentActivity() {
 		}
 
 		val status by viewModel.status
-		val noteList by viewModel.noteList.observeAsState(initial = listOf())
-		val chapterList by viewModel.chapterList.observeAsState(initial = listOf())
+		val noteList = viewModel.noteList
+		val chapterList = viewModel.chapterList
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,

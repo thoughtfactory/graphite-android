@@ -11,7 +11,7 @@ data class BucketDbEntry(
 	val key: String,
 
 	@ColumnInfo(name = "bucket_type")
-	val bucketType: Int
+	val bucketItemType: Int
 ) {
 	@ColumnInfo(name = "created_timestamp")
 	var createdTimestamp: Long = -1
@@ -19,20 +19,11 @@ data class BucketDbEntry(
 	@ColumnInfo(name = "modified_timestamp")
 	var modifiedTimestamp: Long = -1
 
-	@ColumnInfo(name = "content_thumbnail")
-	var contentThumbnail: String? = null
-
 	@ColumnInfo(name = "title")
 	lateinit var title: String
 
-	@ColumnInfo(name = "is_favourite")
-	var isFavourite: Boolean = false
-
-	@ColumnInfo(name = "is_archived")
-	var isArchived: Boolean = false
-
-	@ColumnInfo(name = "is_locked")
-	var isLocked: Boolean = false
+//	@ColumnInfo(name = "tag_list")
+//	val tagList: MutableList<TagDbEntry> = mutableListOf()
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
@@ -51,14 +42,10 @@ data class BucketDbEntry(
 
 	override fun hashCode(): Int {
 		var result = key.hashCode()
-		result = 31 * result + bucketType
+		result = 31 * result + bucketItemType
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
-		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + title.hashCode()
-		result = 31 * result + isFavourite.hashCode()
-		result = 31 * result + isArchived.hashCode()
-		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
 		result = 31 * result + (hash?.hashCode() ?: 0)
 		return result

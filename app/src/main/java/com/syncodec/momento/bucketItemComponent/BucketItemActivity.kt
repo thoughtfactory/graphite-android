@@ -25,8 +25,8 @@ import com.syncodec.momento.bucketItemComponent.screen.ShowMovieItemScreen
 import com.syncodec.momento.bucketItemComponent.screen.ShowTvItemScreen
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
-import com.syncodec.momento.database.bucket.BucketItemState
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemState
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.ui.theme.MomentoTheme
@@ -54,7 +54,7 @@ class BucketItemActivity : ComponentActivity() {
 					if (it == -1) {
 						finish()
 					} else {
-						viewModel.bucketItemType = BucketItemType.Type.values()[it]
+						viewModel.bucketItemType = BucketItemType.values()[it]
 					}
 				}
 
@@ -96,15 +96,15 @@ class BucketItemActivity : ComponentActivity() {
 			}
 			Click.ADD_THOUGHT -> viewModel.updateThought()
 			Click.FAVOURITE -> {
-				bucketItemDbEntry!!.isFavourite = !bucketItemDbEntry!!.isFavourite
+//				bucketItemDbEntry!!.isFavourite = !bucketItemDbEntry!!.isFavourite
 				viewModel.updateItem()
 			}
 			Click.ARCHIVE -> {
-				bucketItemDbEntry!!.isArchived = !bucketItemDbEntry!!.isArchived
+//				bucketItemDbEntry!!.isArchived = !bucketItemDbEntry!!.isArchived
 				viewModel.updateItem()
 			}
 			Click.LOCK -> {
-				bucketItemDbEntry!!.isLocked = !bucketItemDbEntry!!.isLocked
+//				bucketItemDbEntry!!.isLocked = !bucketItemDbEntry!!.isLocked
 				viewModel.updateItem()
 			}
 			Click.DELETE -> {
@@ -146,21 +146,21 @@ class BucketItemActivity : ComponentActivity() {
 
 		val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData?> = if (bucketItemDbEntry == null) listOf()
 		else listOf(
-			MenuBottomSheetButtonData(
-				title = "Favourite",
-				resourceId = if (bucketItemDbEntry!!.isFavourite) R.drawable.ic_heart_filled else R.drawable.ic_heart,
-				highlight = bucketItemDbEntry!!.isFavourite
-			) { onClick(Click.FAVOURITE) },
-			MenuBottomSheetButtonData(
-				title = "Archive",
-				resourceId = R.drawable.ic_box,
-				highlight = bucketItemDbEntry?.isArchived == true
-			) { onClick(Click.ARCHIVE) },
-			MenuBottomSheetButtonData(
-				title = "Lock",
-				resourceId = R.drawable.ic_locked,
-				highlight = bucketItemDbEntry?.isLocked == true
-			) { onClick(Click.LOCK) },
+//			MenuBottomSheetButtonData(
+//				title = "Favourite",
+//				resourceId = if (bucketItemDbEntry!!.isFavourite) R.drawable.ic_heart_filled else R.drawable.ic_heart,
+//				highlight = bucketItemDbEntry!!.isFavourite
+//			) { onClick(Click.FAVOURITE) },
+//			MenuBottomSheetButtonData(
+//				title = "Archive",
+//				resourceId = R.drawable.ic_box,
+//				highlight = bucketItemDbEntry?.isArchived == true
+//			) { onClick(Click.ARCHIVE) },
+//			MenuBottomSheetButtonData(
+//				title = "Lock",
+//				resourceId = R.drawable.ic_locked,
+//				highlight = bucketItemDbEntry?.isLocked == true
+//			) { onClick(Click.LOCK) },
 			MenuBottomSheetButtonData(title = "Delete", resourceId = R.drawable.ic_trash, highlight = false) { onClick(Click.DELETE) },
 
 			MenuBottomSheetButtonData(title = "Export", resourceId = R.drawable.ic_export, highlight = false) { onClick(Click.EXPORT) },
@@ -186,9 +186,9 @@ class BucketItemActivity : ComponentActivity() {
 				topBar = { TopBar(key = viewModel.bucketItemKey.value) { onClick(it, null) } }
 			) {
 				when (viewModel.bucketItemType) {
-					BucketItemType.Type.TODO -> null
-					BucketItemType.Type.BOOKS -> null
-					BucketItemType.Type.SHOWS -> {
+					BucketItemType.TODO -> null
+					BucketItemType.BOOKS -> null
+					BucketItemType.SHOWS -> {
 						Crossfade(targetState = tvData == null && movieData == null) {
 							if (it) {
 								LoadingView()
@@ -210,8 +210,8 @@ class BucketItemActivity : ComponentActivity() {
 							}
 						}
 					}
-					BucketItemType.Type.MEDIA -> null
-					BucketItemType.Type.LINKS -> null
+					BucketItemType.MEDIA -> null
+					BucketItemType.LINKS -> null
 				}
 			}
 		}

@@ -106,7 +106,10 @@ fun NotebookBottomSheet() {
 			text = notebookTitleText,
 			placeholder = "Give your book a title",
 			isFocused = isNotebookTitleTextFocused,
-			onFocusChanged = { isNotebookTitleTextFocused = it }
+			onFocusChanged = { isNotebookTitleTextFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp)
 		) { notebookTitleText = it }
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -115,7 +118,10 @@ fun NotebookBottomSheet() {
 			text = notebookDescriptionText,
 			placeholder = "And a little description",
 			isFocused = isNotebookDescriptionTextFocused,
-			onFocusChanged = { isNotebookDescriptionTextFocused = it }
+			onFocusChanged = { isNotebookDescriptionTextFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp)
 		) { notebookDescriptionText = it }
 
 		Spacer(modifier = Modifier.height(16.dp))

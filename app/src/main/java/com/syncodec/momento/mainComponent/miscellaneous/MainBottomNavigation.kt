@@ -8,29 +8,29 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.pager.ExperimentalPagerApi
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
+import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.screen.*
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import kotlinx.coroutines.InternalCoroutinesApi
 
 open class BottomNavigationItem(var route: String, var icon: ImageVector, var title: String) {
 	object Momento : BottomNavigationItem("momento", TablerIcons.Signature, "Momento")
@@ -40,11 +40,12 @@ open class BottomNavigationItem(var route: String, var icon: ImageVector, var ti
 	object Me : BottomNavigationItem("me", TablerIcons.User, "Me")
 }
 
+@OptIn(InternalCoroutinesApi::class)
 @Composable
 fun BottomNavigationBar(
 	navController: NavController
 ) {
-	val items = listOf(
+	val screens = listOf(
 		BottomNavigationItem.Momento,
 		BottomNavigationItem.Bucket,
 		BottomNavigationItem.Calendar,
@@ -59,25 +60,23 @@ fun BottomNavigationBar(
 		val navBackStackEntry by navController.currentBackStackEntryAsState()
 		val currentRoute = navBackStackEntry?.destination?.route
 
-		items.forEach { item ->
+		screens.forEach { screen ->
 			NavigationBarItem(
 				onClick = {
-					if (item.route != currentRoute) {
-						navController.navigate(item.route) {
-							navController.graph.startDestinationRoute?.let { route ->
-								popUpTo(route) {
-									saveState = true
-								}
-							}
+					if (currentRoute == screen.route) {
+						return@NavigationBarItem
+					} else {
+						navController.navigate(screen.route) {
+							popUpTo(navController.graph.findStartDestination().id) { saveState = true }
 							launchSingleTop = true
 							restoreState = true
 						}
 					}
 				},
-				icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
+				icon = { Icon(imageVector = screen.icon, contentDescription = screen.title) },
 				label = {
 					Text(
-						text = item.title,
+						text = screen.title,
 						textAlign = TextAlign.Center,
 						fontWeight = FontWeight.Bold,
 						style = MaterialTheme.typography.bodySmall,
@@ -91,7 +90,7 @@ fun BottomNavigationBar(
 					selectedTextColor = MaterialTheme.colorScheme.onBackground,
 					unselectedTextColor = MaterialTheme.colorScheme.onBackground
 				),
-				selected = currentRoute == item.route,
+				selected = currentRoute == screen.route,
 				interactionSource = remember { MutableInteractionSource() },
 				modifier = Modifier,
 			)
@@ -106,8 +105,23 @@ fun BottomNavigationBar(
 fun MainNavigation(
 	navController: NavHostController,
 	viewModelStoreOwner: ViewModelStoreOwner,
+	onClick: (MainActivity.Click, Any?) -> Unit
 ) {
 	val mapView = rememberMapViewWithLifecycle()
+	val viewModel: MainViewModel = viewModel()
+
+	val vaultState by viewModel.activityState.vaultState
+	var showArchived by viewModel.activityState.showArchived
+	var showFavourite by viewModel.activityState.showFavourite
+	var showLocked by viewModel.activityState.showLocked
+	val isSelected by viewModel.activityState.isSelected
+	val selectedItemList = viewModel.activityState.selectedItemList
+
+	val noteList = viewModel.defaultNoteList
+	val notebookList = viewModel.notebookList
+	val bucketMap = viewModel.bucketMap
+
+	val momentoComponentType by viewModel.activityState.momentoComponentType
 
 	NavHost(
 		navController = navController,
@@ -117,28 +131,46 @@ fun MainNavigation(
 			CompositionLocalProvider(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
-				MomentoScreen()
+				MomentoScreen(
+					noteList = noteList,
+					notebookList = notebookList,
+					momentoComponentType = momentoComponentType,
+					isSelected = isSelected,
+					selectedItemList = selectedItemList
+				) { click, data -> onClick(click, data) }
 			}
 		}
 		composable(BottomNavigationItem.Bucket.route) {
 			CompositionLocalProvider(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
-				BucketScreen()
+				BucketScreen(
+					bucketMap = bucketMap,
+					isSelected = isSelected,
+					selectedItemList = selectedItemList
+				) { click, data -> onClick(click, data) }
 			}
 		}
 		composable(BottomNavigationItem.Calendar.route) {
 			CompositionLocalProvider(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
-				CalendarScreen()
+				CalendarScreen(
+					noteList = noteList,
+					isSelected = isSelected,
+					selectedItemList = selectedItemList
+				) { click, data -> onClick(click, data) }
 			}
 		}
 		composable(BottomNavigationItem.Atlas.route) {
 			CompositionLocalProvider(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
-				AtlasScreen(mapView = mapView)
+				AtlasScreen(
+					mapView = mapView,
+					isSelected = isSelected,
+					selectedItemList = selectedItemList
+				) { click, data -> onClick(click, data) }
 			}
 		}
 		composable(BottomNavigationItem.Me.route) {

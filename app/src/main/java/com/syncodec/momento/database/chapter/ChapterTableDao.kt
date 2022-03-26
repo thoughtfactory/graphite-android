@@ -2,6 +2,7 @@ package com.syncodec.momento.database.chapter
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChapterTableDao {
@@ -19,7 +20,7 @@ interface ChapterTableDao {
 	fun getAllAsLiveData() : LiveData<List<ChapterDbEntry>>
 
 	@Query(value = "SELECT * FROM chapter_table WHERE notebook_key = :notebookKey ORDER BY created_timestamp DESC")
-	fun getFromNotebookAsLiveData(notebookKey: String) : LiveData<List<ChapterDbEntry>>
+	fun getFromNotebookAsFlow(notebookKey: String) : Flow<List<ChapterDbEntry>>
 
 	@Query(value = "DELETE FROM chapter_table WHERE `key` = :key")
 	suspend fun delete(key: String)

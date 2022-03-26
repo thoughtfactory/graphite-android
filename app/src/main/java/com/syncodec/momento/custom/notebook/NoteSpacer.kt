@@ -15,37 +15,32 @@ import androidx.compose.ui.unit.dp
 fun NoteSpacer(
 	isLast: Boolean = false,
 ) {
-	Box(
+	Column(
 		modifier = Modifier
 			.width(16.dp)
 			.fillMaxHeight()
-			.background(Color.Transparent)
+			.background(Color.Transparent),
+		horizontalAlignment = Alignment.CenterHorizontally
 	) {
-		Column(
+		Box(
 			modifier = Modifier
-				.fillMaxSize(),
-			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			Box(
-				modifier = Modifier
-					.width(4.dp)
-					.height(33.dp)
-					.background(MaterialTheme.colorScheme.secondaryContainer)
-			)
-			Box(
-				modifier = Modifier
-					.width(16.dp)
-					.height(16.dp)
-					.padding(2.dp)
-					.clip(CircleShape)
-					.background(MaterialTheme.colorScheme.secondaryContainer)
-			)
-			Box(
-				modifier = Modifier
-					.width(4.dp)
-					.fillMaxHeight()
-					.background(if (isLast) Color.Transparent else MaterialTheme.colorScheme.secondaryContainer)
-			)
-		}
+				.width(4.dp)
+				.weight(1f)
+				.background(MaterialTheme.colorScheme.secondaryContainer)
+		)
+		Box(
+			modifier = Modifier
+				.width(16.dp)
+				.height(16.dp)
+				.padding(2.dp)
+				.clip(CircleShape)
+				.background(MaterialTheme.colorScheme.secondaryContainer)
+		)
+		Box(
+			modifier = Modifier
+				.width(4.dp)
+				.weight(4f)
+				.background(if (isLast) Color.Transparent else MaterialTheme.colorScheme.secondaryContainer)
+		)
 	}
 }

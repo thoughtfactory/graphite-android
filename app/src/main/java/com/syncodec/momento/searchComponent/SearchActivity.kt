@@ -91,11 +91,11 @@ class SearchActivity : ComponentActivity() {
 			noteMap.forEach { (key, data) ->
 				val showEntry: Boolean = filterData(
 					showArchived = showArchived,
-					isArchived = data.first.isArchived,
+					isArchived = false,
 					showFavourite = showFavourite,
-					isFavourite = data.first.isFavourite,
+					isFavourite = false,
 					showLocked = showLocked,
-					isLocked = data.first.isLocked
+					isLocked = false
 				) && (data.first.content?.contains(query) == true) && (showDiary || showAllComponent)
 
 				noteMap[key] = Pair(data.first, showEntry)
@@ -130,32 +130,32 @@ class SearchActivity : ComponentActivity() {
 
 				noteMap.forEach { (key, data) ->
 					item {
-						NoteCardData(
-							timestamp = data.first.userTimestamp,
-							showFullTime = true,
-							isLocked = data.first.isLocked,
-							isSelected = false,
-							isArchived = data.first.isArchived,
-							isFavourite = data.first.isFavourite,
-							isDeleted = data.first.deletedTimestamp != -1L,
-							isLast = key == lastVisibleDiaryKey,
-							title = data.first.title,
-							contentThumbnail = data.first.contentThumbnail,
-							attachmentCount = data.first.attachmentCount,
-							attachmentThumbnail = data.first.attachmentThumbnail,
-							address = data.first.address,
-							isVisible = data.second,
-							onClick = {
-								Intent(context, NoteActivity::class.java).apply {
-									putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
-									putExtra(Konstant.Companion.Konstant.DIARY_KEY.name, key)
-									context.startActivity(this)
-								}
-							},
-							onLongClick = null
-						).apply {
-							NoteCard(noteCardData = this)
-						}
+//						NoteCardData(
+//							timestamp = data.first.userTimestamp,
+//							showFullTime = true,
+//							isLocked = false,
+//							isSelected = false,
+//							isArchived = false,
+//							isFavourite = false,
+//							isDeleted = data.first.deletedTimestamp != -1L,
+//							isLast = key == lastVisibleDiaryKey,
+//							title = data.first.title,
+//							contentThumbnail = data.first.contentThumbnail,
+//							attachmentCount = data.first.attachmentCount,
+//							attachmentThumbnail = null,
+//							address = data.first.address,
+//							isVisible = data.second,
+//							onClick = {
+//								Intent(context, NoteActivity::class.java).apply {
+//									putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
+//									putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, key)
+//									context.startActivity(this)
+//								}
+//							},
+//							onLongClick = null
+//						).apply {
+//							NoteCard(noteCardData = this)
+//						}
 
 						NotebookTimelineSpacer(isVisible = data.second && key != lastVisibleDiaryKey)
 					}

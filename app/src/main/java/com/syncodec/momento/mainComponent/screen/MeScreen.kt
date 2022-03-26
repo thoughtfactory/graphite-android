@@ -53,70 +53,70 @@ import kotlin.math.max
 @ExperimentalFoundationApi
 @Composable
 fun MeScreen() {
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
-
-	val viewModel: MainViewModel = viewModel()
-	val diaryListObserver by viewModel.noteRepository.noteDbEntryListLiveData.observeAsState()
-
-	val last5NoteEntry: MutableList<NoteDbEntry> = remember { mutableListOf() }
-	val lastDiarySize: MutableMap<Int, Int> = remember { mutableMapOf(0 to 0, 1 to 0, 2 to 0, 3 to 0, 4 to 0, 5 to 0, 6 to 0) }
-
-	val timeZone = TimeZone.getDefault()
-	val calendar = Calendar.getInstance()
-
-	diaryListObserver?.forEach {
-		if (last5NoteEntry.size < 6 && !it.isLocked) {
-			last5NoteEntry.add(it)
-		}
-		val dayBefore = ((calendar.timeInMillis - it.createdTimestamp + timeZone.rawOffset) / (24 * 60 * 60 * 1000)).toInt()
-		if (lastDiarySize.containsKey(dayBefore)) {
-			lastDiarySize[dayBefore] = lastDiarySize[dayBefore]!! + 1
-		} else {
-			lastDiarySize[dayBefore] = 1
-		}
-	}
-
-	val scrollState = rememberScrollState()
-
-	Box(
-		modifier = Modifier
-			.fillMaxSize()
-	) {
-		Image(
-			painter = painterResource(id = R.drawable.home_background),
-			contentDescription = null,
-			contentScale = ContentScale.Crop,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(screenHeight / 3)
-				.graphicsLayer {
-					this.alpha = 1 - (scrollState.value / (screenHeight / 3).toPx())
-					this.translationY = -(screenHeight / 8).toPx() * scrollState.value / (screenHeight / 3).toPx()
-				},
-		)
-
-		Column(
-			horizontalAlignment = Alignment.CenterHorizontally,
-			modifier = Modifier
-				.fillMaxSize()
-				.verticalScroll(scrollState),
-		) {
-			Spacer(modifier = Modifier.height((screenHeight / 3) - 54.dp))
-
-			ProfileCard()
-
-			StatsCard()
-			Spacer(modifier = Modifier.height(8.dp))
-
-			GraphCard(lastDiarySize = lastDiarySize)
-			Spacer(modifier = Modifier.height(8.dp))
-
-			RecentCard()
-
-			Spacer(modifier = Modifier.height(192.dp))
-		}
-	}
+//	val configuration = LocalConfiguration.current
+//	val screenHeight = configuration.screenHeightDp.dp
+//
+//	val viewModel: MainViewModel = viewModel()
+//	val diaryListObserver by viewModel.noteRepository.noteDbEntryListLiveData.observeAsState()
+//
+//	val last5NoteEntry: MutableList<NoteDbEntry> = remember { mutableListOf() }
+//	val lastDiarySize: MutableMap<Int, Int> = remember { mutableMapOf(0 to 0, 1 to 0, 2 to 0, 3 to 0, 4 to 0, 5 to 0, 6 to 0) }
+//
+//	val timeZone = TimeZone.getDefault()
+//	val calendar = Calendar.getInstance()
+//
+//	diaryListObserver?.forEach {
+//		if (last5NoteEntry.size < 6 && !it.isLocked) {
+//			last5NoteEntry.add(it)
+//		}
+//		val dayBefore = ((calendar.timeInMillis - it.createdTimestamp + timeZone.rawOffset) / (24 * 60 * 60 * 1000)).toInt()
+//		if (lastDiarySize.containsKey(dayBefore)) {
+//			lastDiarySize[dayBefore] = lastDiarySize[dayBefore]!! + 1
+//		} else {
+//			lastDiarySize[dayBefore] = 1
+//		}
+//	}
+//
+//	val scrollState = rememberScrollState()
+//
+//	Box(
+//		modifier = Modifier
+//			.fillMaxSize()
+//	) {
+//		Image(
+//			painter = painterResource(id = R.drawable.home_background),
+//			contentDescription = null,
+//			contentScale = ContentScale.Crop,
+//			modifier = Modifier
+//				.fillMaxWidth()
+//				.height(screenHeight / 3)
+//				.graphicsLayer {
+//					this.alpha = 1 - (scrollState.value / (screenHeight / 3).toPx())
+//					this.translationY = -(screenHeight / 8).toPx() * scrollState.value / (screenHeight / 3).toPx()
+//				},
+//		)
+//
+//		Column(
+//			horizontalAlignment = Alignment.CenterHorizontally,
+//			modifier = Modifier
+//				.fillMaxSize()
+//				.verticalScroll(scrollState),
+//		) {
+//			Spacer(modifier = Modifier.height((screenHeight / 3) - 54.dp))
+//
+//			ProfileCard()
+//
+//			StatsCard()
+//			Spacer(modifier = Modifier.height(8.dp))
+//
+//			GraphCard(lastDiarySize = lastDiarySize)
+//			Spacer(modifier = Modifier.height(8.dp))
+//
+//			RecentCard()
+//
+//			Spacer(modifier = Modifier.height(192.dp))
+//		}
+//	}
 }
 
 @Composable
@@ -342,97 +342,97 @@ private fun GraphCard(lastDiarySize: MutableMap<Int, Int>) {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun RecentCard() {
-	val viewModel: MainViewModel = viewModel()
-
-	var showRecent by remember { mutableStateOf(true) }
-
-	val vaultState by viewModel.activityState.vaultState
-	val diaryList by viewModel.noteRepository.noteDbEntryListLiveData.observeAsState()
-	diaryList?.sortedBy { it.createdTimestamp }
-
-	var currentState by remember { mutableStateOf(0) }
-
-	Column(
-		modifier = Modifier.fillMaxWidth()
-	) {
-		Box(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(8.dp, 0.dp, 6.dp, 0.dp)
-				.clip(RoundedCornerShape(12.dp))
-				.background(MaterialTheme.colorScheme.background)
-				.clickable { showRecent = !showRecent }
-		) {
-			Row(
-				verticalAlignment = Alignment.Bottom,
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(6.dp, 0.dp)
-			) {
-				Box(
-					modifier = Modifier
-						.width(4.dp)
-						.height(40.dp)
-						.clip(RoundedCornerShape(4.dp))
-						.background(MaterialTheme.colorScheme.primary)
-				)
-
-				Spacer(modifier = Modifier.width(8.dp))
-
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(0.dp, 8.dp),
-					contentAlignment = Alignment.BottomStart
-				) {
-					Text(
-						text = "Recently edited",
-						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodyLarge
-					)
-				}
-			}
-		}
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		StateButton(
-			stateList = listOf(
-				StateData(title = "Diary", icon = TablerIcons.Signature, color = MaterialTheme.colorScheme.primary),
-				StateData(title = "Notebook", icon = TablerIcons.Notebook, color = MaterialTheme.colorScheme.primary),
-			),
-			currentState = currentState,
-			modifier = Modifier
-				.height(32.dp)
-				.padding(12.dp, 0.dp)
-		) { currentState = it }
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		diaryList?.forEachIndexed { index, diaryDbEntry ->
-			if (index < 5) {
-				NoteCardData(
-					timestamp = diaryDbEntry.userTimestamp,
-					showFullTime = true,
-					isLocked = diaryDbEntry.isLocked,
-					isSelected = false,
-					isArchived = diaryDbEntry.isArchived,
-					isFavourite = diaryDbEntry.isFavourite,
-					isDeleted = diaryDbEntry.deletedTimestamp != -1L,
-					isLast = index == diaryList!!.size - 1 || index == 4,
-					title = diaryDbEntry.title,
-					contentThumbnail = diaryDbEntry.contentThumbnail,
-					attachmentCount = diaryDbEntry.attachmentCount,
-					attachmentThumbnail = diaryDbEntry.attachmentThumbnail,
-					address = diaryDbEntry.address,
-					isVisible = currentState == 0 && showRecent,
-					onClick = {},
-				).apply {
-					NoteCard(noteCardData = this)
-				}
-
-				NotebookTimelineSpacer(isVisible = index != diaryList!!.size - 1 && index != 4 && currentState == 0 && showRecent)
-			}
-		}
-	}
+//	val viewModel: MainViewModel = viewModel()
+//
+//	var showRecent by remember { mutableStateOf(true) }
+//
+//	val vaultState by viewModel.activityState.vaultState
+//	val diaryList by viewModel.noteRepository.noteDbEntryListLiveData.observeAsState()
+//	diaryList?.sortedBy { it.createdTimestamp }
+//
+//	var currentState by remember { mutableStateOf(0) }
+//
+//	Column(
+//		modifier = Modifier.fillMaxWidth()
+//	) {
+//		Box(
+//			modifier = Modifier
+//				.fillMaxWidth()
+//				.padding(8.dp, 0.dp, 6.dp, 0.dp)
+//				.clip(RoundedCornerShape(12.dp))
+//				.background(MaterialTheme.colorScheme.background)
+//				.clickable { showRecent = !showRecent }
+//		) {
+//			Row(
+//				verticalAlignment = Alignment.Bottom,
+//				modifier = Modifier
+//					.fillMaxWidth()
+//					.padding(6.dp, 0.dp)
+//			) {
+//				Box(
+//					modifier = Modifier
+//						.width(4.dp)
+//						.height(40.dp)
+//						.clip(RoundedCornerShape(4.dp))
+//						.background(MaterialTheme.colorScheme.primary)
+//				)
+//
+//				Spacer(modifier = Modifier.width(8.dp))
+//
+//				Box(
+//					modifier = Modifier
+//						.fillMaxWidth()
+//						.padding(0.dp, 8.dp),
+//					contentAlignment = Alignment.BottomStart
+//				) {
+//					Text(
+//						text = "Recently edited",
+//						color = MaterialTheme.colorScheme.primary,
+//						style = MaterialTheme.typography.bodyLarge
+//					)
+//				}
+//			}
+//		}
+//
+//		Spacer(modifier = Modifier.height(8.dp))
+//
+//		StateButton(
+//			stateList = listOf(
+//				StateData(title = "Diary", icon = TablerIcons.Signature, color = MaterialTheme.colorScheme.primary),
+//				StateData(title = "Notebook", icon = TablerIcons.Notebook, color = MaterialTheme.colorScheme.primary),
+//			),
+//			currentState = currentState,
+//			modifier = Modifier
+//				.height(32.dp)
+//				.padding(12.dp, 0.dp)
+//		) { currentState = it }
+//
+//		Spacer(modifier = Modifier.height(12.dp))
+//
+//		diaryList?.forEachIndexed { index, diaryDbEntry ->
+//			if (index < 5) {
+//				NoteCardData(
+//					timestamp = diaryDbEntry.userTimestamp,
+//					showFullTime = true,
+//					isLocked = diaryDbEntry.isLocked,
+//					isSelected = false,
+//					isArchived = diaryDbEntry.isArchived,
+//					isFavourite = diaryDbEntry.isFavourite,
+//					isDeleted = diaryDbEntry.deletedTimestamp != -1L,
+//					isLast = index == diaryList!!.size - 1 || index == 4,
+//					title = diaryDbEntry.title,
+//					contentThumbnail = diaryDbEntry.contentThumbnail,
+//					attachmentCount = diaryDbEntry.attachmentCount,
+//					attachmentThumbnail = diaryDbEntry.attachmentThumbnail,
+//					address = diaryDbEntry.address,
+//					isVisible = currentState == 0 && showRecent,
+//					onClick = {},
+//				).apply {
+//					NoteCard(noteCardData = this)
+//				}
+//
+//				NotebookTimelineSpacer(isVisible = index != diaryList!!.size - 1 && index != 4 && currentState == 0 && showRecent)
+//			}
+//		}
+//	}
 }

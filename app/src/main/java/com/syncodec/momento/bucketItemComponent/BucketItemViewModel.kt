@@ -7,7 +7,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,8 +19,9 @@ import com.syncodec.momento.Momento
 import com.syncodec.momento.bucketComponent.modalBottomSheet.BookData
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowData
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
-import com.syncodec.momento.database.bucket.BucketItemDbEntry
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItem
+import com.syncodec.momento.database.bucketItem.BucketItemDbEntry
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
@@ -42,11 +42,12 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
 
-	lateinit var bucketItemType: BucketItemType.Type
+	lateinit var bucketItemType: BucketItemType
 	lateinit var bucketKey: String
 	var bucketItemKey = mutableStateOf<String?>(null)
 
 	var bucketItemDbEntry = mutableStateOf<BucketItemDbEntry?>(null)
+	var bucketItem = mutableStateOf<BucketItem?>(null)
 
 	var bookData = mutableStateOf<BookData?>(null)
 	var showData = mutableStateOf<ShowData?>(null)
@@ -57,27 +58,21 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 	var thoughtList: SnapshotStateList<String> = mutableStateListOf()
 
 	fun updateThought() {
-		viewModelScope.launch {
-			bucketRepository.putThought(
-				bucketKey = bucketKey,
-				bucketItemKey = bucketItemKey.value!!,
-				thoughtList = thoughtList
-			)
-		}
-	}
-
-	fun getThought() {
-		viewModelScope.launch(Dispatchers.IO) {
-			thoughtList = bucketRepository.getThought(bucketKey = bucketKey, bucketItemKey = bucketItemKey.value!!).toMutableStateList()
-		}
+//		viewModelScope.launch {
+//			bucketRepository.putThought(
+//				bucketKey = bucketKey,
+//				bucketItemKey = bucketItemKey.value!!,
+//				thoughtList = thoughtList
+//			)
+//		}
 	}
 
 	fun putItem() {
 		viewModelScope.launch(Dispatchers.IO) {
 			when (bucketItemType) {
-				BucketItemType.Type.TODO -> {
+				BucketItemType.TODO -> {
 				}
-				BucketItemType.Type.SHOWS -> {
+				BucketItemType.SHOWS -> {
 					bucketItemKey.value = bucketItemDbEntry.value!!.key
 					bucketItemDbEntry.value!!.apply {
 						this.title = showData.value?.title
@@ -93,9 +88,9 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 					}
 					getFromDatabase()
 				}
-				BucketItemType.Type.MEDIA -> {
+				BucketItemType.MEDIA -> {
 				}
-				BucketItemType.Type.LINKS -> {
+				BucketItemType.LINKS -> {
 				}
 			}
 		}
@@ -107,15 +102,15 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 			if (isNew) {
 				try {
 					when (bucketItemType) {
-						BucketItemType.Type.TODO -> null
-						BucketItemType.Type.BOOKS -> bookData.value = intent.getSerializableExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name) as BookData
-						BucketItemType.Type.SHOWS -> {
+						BucketItemType.TODO -> null
+						BucketItemType.BOOKS -> bookData.value = intent.getSerializableExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name) as BookData
+						BucketItemType.SHOWS -> {
 							showData.value = intent.getSerializableExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name) as ShowData
 							getShowData()
 							getThumbnail()
 						}
-						BucketItemType.Type.MEDIA -> null
-						BucketItemType.Type.LINKS -> null
+						BucketItemType.MEDIA -> null
+						BucketItemType.LINKS -> null
 					}
 
 					bucketItemDbEntry.value = BucketItemDbEntry(
@@ -141,21 +136,21 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 	fun updateItem() {
 		viewModelScope.launch(Dispatchers.IO) {
 			when (bucketItemType) {
-				BucketItemType.Type.TODO -> {
+				BucketItemType.TODO -> {
 				}
-				BucketItemType.Type.BOOKS -> {
+				BucketItemType.BOOKS -> {
 					if (bucketItemDbEntry.value!!.key.isNotEmpty()) {
 						bucketRepository.updateBucketItem(bucketItemDbEntry = bucketItemDbEntry.value!!)
 					}
 				}
-				BucketItemType.Type.SHOWS -> {
+				BucketItemType.SHOWS -> {
 					if (bucketItemDbEntry.value!!.key.isNotEmpty()) {
 						bucketRepository.updateBucketItem(bucketItemDbEntry = bucketItemDbEntry.value!!)
 					}
 				}
-				BucketItemType.Type.MEDIA -> {
+				BucketItemType.MEDIA -> {
 				}
-				BucketItemType.Type.LINKS -> {
+				BucketItemType.LINKS -> {
 				}
 			}
 		}
@@ -163,41 +158,48 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 	private suspend fun getFromDatabase() {
 		try {
-			bucketRepository.getBucketItem(bucketItemKey = bucketItemKey.value!!, bucketKey = bucketKey).apply {
-				first.collect{
+			bucketRepository.getBucketItem(bucketItemKey = bucketItemKey.value!!).apply {
+				first.collect {
 					bucketItemDbEntry.value = it
 
 					if (it != null) {
+						bucketItem.value = second?.let { it1 -> objectMapper.readValue(it1) }
 						getThumbnail()
-						val jsonObject = JSONObject(second)
-						showData.value = when (jsonObject.optString("showType")) {
-							"TV" -> {
-								bucketRepository.tvData.value = this.second?.let { objectMapper.readValue(it) }
-								ShowData(
-									id = tvData.value!!.id,
-									showType = ShowType.TV,
-									title = tvData.value!!.name,
-									posterPath = tvData.value!!.posterPath,
-									releaseDate = tvData.value!!.firstAirDate
-								)
+
+						when (it.bucketItemType) {
+							BucketItemType.SHOWS -> {
+								if (bucketItem.value?.extra != null) {
+									val jsonObject = JSONObject(bucketItem.value?.extra as String)
+									showData.value = when (jsonObject.optString("showType")) {
+										"TV" -> {
+											bucketRepository.tvData.value = bucketItem.value?.extra?.let { objectMapper.readValue(it as String) }
+											ShowData(
+												id = tvData.value!!.id,
+												showType = ShowType.TV,
+												title = tvData.value!!.name,
+												posterPath = tvData.value!!.posterPath,
+												releaseDate = tvData.value!!.firstAirDate
+											)
+										}
+										"MOVIE" -> {
+											bucketRepository.movieData.value = bucketItem.value?.extra?.let { objectMapper.readValue(it as String) }
+											ShowData(
+												id = movieData.value!!.id,
+												showType = ShowType.MOVIE,
+												title = movieData.value!!.title,
+												posterPath = movieData.value!!.posterPath,
+												releaseDate = movieData.value!!.releaseDate
+											)
+										}
+										else -> null
+									}
+								}
 							}
-							"MOVIE" -> {
-								bucketRepository.movieData.value = this.second?.let { objectMapper.readValue(it) }
-								ShowData(
-									id = movieData.value!!.id,
-									showType = ShowType.MOVIE,
-									title = movieData.value!!.title,
-									posterPath = movieData.value!!.posterPath,
-									releaseDate = movieData.value!!.releaseDate
-								)
-							}
-							else -> null
 						}
 
-						thoughtList = bucketRepository.getThought(
-							bucketKey = bucketKey,
-							bucketItemKey = bucketItemKey.value!!
-						).toMutableStateList()
+						if (!bucketItem.value?.thoughtList.isNullOrEmpty()) {
+							thoughtList.addAll(bucketItem.value?.thoughtList!!)
+						}
 
 						status.value = Status.LOADED
 					} else {

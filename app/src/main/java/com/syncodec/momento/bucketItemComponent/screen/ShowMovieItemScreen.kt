@@ -17,8 +17,7 @@ import com.syncodec.momento.bucketItemComponent.thought.ThoughtCard
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.custom.button.StateButton
 import com.syncodec.momento.custom.button.StateData
-import com.syncodec.momento.database.bucket.MovieData
-import com.syncodec.momento.database.bucket.TvData
+import com.syncodec.momento.database.bucketItem.MovieData
 import com.syncodec.momento.konstant.Konstant
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Book

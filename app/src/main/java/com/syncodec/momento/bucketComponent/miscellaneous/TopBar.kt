@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.custom.button.StateButton
 import com.syncodec.momento.custom.button.StateData
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -23,7 +23,7 @@ import compose.icons.tablericons.*
 @Composable
 fun TopBar(
 	bucketTitle: String,
-	bucketItemType: BucketItemType.Type,
+	bucketItemType: BucketItemType,
 	showStateSelector: Boolean,
 	onClick : (BucketActivity.Click) -> Unit
 ) {
@@ -103,37 +103,37 @@ fun TopBar(
 
 @Composable
 private fun StateSelectorCard(
-	bucketItemType: BucketItemType.Type,
+	bucketItemType: BucketItemType,
 	showStateSelector: Boolean,
 	currentState: Int,
 	onClick: (Int) -> Unit
 ) {
 	val stateList = when(bucketItemType) {
-		BucketItemType.Type.TODO -> listOf(
+		BucketItemType.TODO -> listOf(
 			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
 			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
 			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
 			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
 		)
-		BucketItemType.Type.BOOKS -> listOf(
+		BucketItemType.BOOKS -> listOf(
 			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
 			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
 			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
 			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
 		)
-		BucketItemType.Type.SHOWS -> listOf(
+		BucketItemType.SHOWS -> listOf(
 			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
 			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
 			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
 			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
 		)
-		BucketItemType.Type.MEDIA -> listOf(
+		BucketItemType.MEDIA -> listOf(
 			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
 			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
 			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
 			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
 		)
-		BucketItemType.Type.LINKS -> listOf(
+		BucketItemType.LINKS -> listOf(
 			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
 			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
 			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),

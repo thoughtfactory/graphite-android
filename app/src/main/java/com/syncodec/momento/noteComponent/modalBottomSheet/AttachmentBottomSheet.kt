@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,17 +27,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import coil.fetch.VideoFrameUriFetcher
 import coil.request.videoFrameMillis
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.database.attachment.AttachmentDbEntry
+import com.syncodec.momento.database.attachment.getMimeType
 import com.syncodec.momento.miscellaneous.createTempFileToExpose
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
-import com.syncodec.momento.noteComponent.NoteViewModel
-import com.syncodec.momento.noteComponent.TempAttachmentData
+import com.syncodec.momento.noteComponent.NoteActivity
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -45,29 +46,18 @@ data class AttachmentBottomSheetButtonData(val title: String, val imageVector: I
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun AttachmentBottomSheet() {
+fun AttachmentBottomSheet(
+	attachmentMap: SnapshotStateMap<String, Pair<AttachmentDbEntry, Uri>>,
+	onClick: (NoteActivity.Click, Any?) -> Unit
+) {
 	val context = LocalContext.current
-
-	val noteViewModel: NoteViewModel = viewModel()
-
 	var photoUri: Uri? = null
-
 	val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
-		if (isCaptured) {
-			noteViewModel.insertAttachment(
-				uri = photoUri!!,
-				mimeType = context.contentResolver.getType(photoUri!!)
-			)
-		}
+		if (isCaptured) onClick(NoteActivity.Click.INSERT_PICTURE, photoUri)
 	}
 
 	val openMediaPicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
-		uriList.forEach {
-			noteViewModel.insertAttachment(
-				uri = it,
-				mimeType = context.contentResolver.getType(it)
-			)
-		}
+		onClick(NoteActivity.Click.INSERT_MEDIA, uriList)
 	}
 
 	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uriList ->
@@ -123,11 +113,12 @@ fun AttachmentBottomSheet() {
 			modifier = Modifier
 				.padding(24.dp, 0.dp, 24.dp, 32.dp),
 		) {
-			itemsIndexed(noteViewModel.attachmentList) { _, tempAttachmentData ->
-				AttachmentView(
-					tempAttachmentData = tempAttachmentData
-				) {
-
+			attachmentMap.forEach { (_, data) ->
+				item {
+					AttachmentView(
+						attachment = data.first,
+						uri = data.second
+					) { click, data -> onClick(click, data)}
 				}
 			}
 		}
@@ -167,8 +158,7 @@ private fun AttachmentBottomSheetButton(
 			color = MaterialTheme.colorScheme.onBackground,
 			textAlign = TextAlign.Center,
 			maxLines = 2,
-			modifier = Modifier
-				.fillMaxWidth()
+			modifier = Modifier.fillMaxWidth()
 		)
 	}
 }
@@ -176,8 +166,9 @@ private fun AttachmentBottomSheetButton(
 @OptIn(ExperimentalMaterialApi::class, ExperimentalCoilApi::class)
 @Composable
 private fun AttachmentView(
-	tempAttachmentData: TempAttachmentData,
-	onClick: () -> Unit
+	attachment: AttachmentDbEntry,
+	uri: Uri,
+	onClick: (NoteActivity.Click, String) -> Unit
 ) {
 	val context = LocalContext.current
 	Card(
@@ -189,23 +180,26 @@ private fun AttachmentView(
 			.aspectRatio(1f)
 			.padding(4.dp)
 			.focusable(true),
-		onClick = { onClick() }
+		onClick = { onClick(NoteActivity.Click.OPEN_ATTACHMENT, attachment.key) }
 	) {
-		when (tempAttachmentData.mimeType?.split("/")?.first()) {
+		when (attachment.getMimeType()) {
 			"image" -> {
 				Image(
-					painter = rememberImagePainter(tempAttachmentData.uri),
+					painter = rememberImagePainter(
+						data = uri,
+						builder = { crossfade(true) }
+					),
 					contentDescription = null,
 					contentScale = ContentScale.Crop,
-					modifier = Modifier
-						.fillMaxSize()
+					modifier = Modifier.fillMaxSize()
 				)
 			}
 			"video" -> Image(
 				painter = rememberImagePainter(
-					data = tempAttachmentData.uri,
+					data = uri,
 					builder = {
 						fetcher(VideoFrameUriFetcher(context))
+						crossfade(true)
 						// optionally set frame location
 						videoFrameMillis(1000)
 						this.listener(
@@ -217,15 +211,16 @@ private fun AttachmentView(
 				),
 				contentDescription = null,
 				contentScale = ContentScale.Crop,
-				modifier = Modifier
-					.fillMaxSize()
+				modifier = Modifier.fillMaxSize()
 			)
 			else -> Image(
-				painter = rememberImagePainter(tempAttachmentData.uri),
+				painter = rememberImagePainter(
+					data = uri,
+					builder = { crossfade(true) }
+				),
 				contentDescription = null,
 				contentScale = ContentScale.Crop,
-				modifier = Modifier
-					.fillMaxSize()
+				modifier = Modifier.fillMaxSize()
 			)
 		}
 
@@ -234,7 +229,7 @@ private fun AttachmentView(
 				.fillMaxSize(),
 			contentAlignment = Alignment.TopEnd
 		) {
-			IconButton(onClick = { /*TODO*/ }) {
+			IconButton(onClick = { onClick(NoteActivity.Click.REMOVE_ATTACHMENT, attachment.key) }) {
 				Icon(
 					imageVector = TablerIcons.X,
 					contentDescription = "Remove attachment",

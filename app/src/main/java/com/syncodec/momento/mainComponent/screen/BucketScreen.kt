@@ -1,9 +1,6 @@
 package com.syncodec.momento.mainComponent.screen
 
 import android.content.Intent
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,13 +10,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,69 +24,62 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.custom.ChipData
 import com.syncodec.momento.custom.ChipView
 import com.syncodec.momento.database.bucket.BucketDbEntry
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.ResourceMap
-import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.miscellaneous.TopBar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
-fun BucketScreen() {
-	val scope = rememberCoroutineScope()
-	val viewModel: MainViewModel = viewModel()
-
-	val bucketList by viewModel.bucketList.observeAsState()
+fun BucketScreen(
+	bucketMap: Map<String, Pair<BucketDbEntry, Int>>,
+	isSelected: Boolean,
+	selectedItemList: List<String>,
+	onClick: (MainActivity.Click, Any?) -> Unit
+) {
 
 	val chipDataList: MutableList<ChipData> = mutableListOf()
-	val isChipSelected: MutableMap<BucketItemType.Type, Boolean> = mutableMapOf()
+	val isChipSelected: MutableMap<BucketItemType, Boolean> = mutableMapOf()
 
-	val bucketSizeMap: SnapshotStateMap<String, Int> = remember { mutableStateMapOf() }
-	LaunchedEffect(key1 = bucketList.hashCode()) {
-		scope.launch(Dispatchers.IO) {
-			bucketList?.forEach {
-				bucketSizeMap[it.key] = viewModel.bucketRepository.bucketItemDbTableDao.countBucketSize(bucketKey = it.key)
-			}
-		}
-	}
-
-	BucketItemType.Type.values().forEach {
-		var isSelected by remember { mutableStateOf(true) }
+	BucketItemType.values().forEach {
+		var _isSelected by remember { mutableStateOf(true) }
 		ChipData(
 			title = ResourceMap.BucketItemNameMap[it]!!,
 			imageVector = ResourceMap.bucketTypeToIcon[it]!!,
-			isSelected = isSelected
-		) { isSelected = !isSelected }.apply { chipDataList.add(this) }
-		isChipSelected[it] = isSelected
+			isSelected = _isSelected
+		) { _isSelected = !_isSelected }.apply { chipDataList.add(this) }
+		isChipSelected[it] = _isSelected
 	}
 
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
 	) {
-		TopBar()
-		if (bucketList?.isNotEmpty() == true) {
+		TopBar(
+			isSelected = isSelected,
+			selectedItemSize = selectedItemList.size
+		) { click, data -> onClick(click, data) }
+
+		if (bucketMap.isNotEmpty()) {
 			Spacer(modifier = Modifier.height(8.dp))
 			ChipView(chipDataList = chipDataList)
 			LazyVerticalGrid(
 				columns = GridCells.Adaptive(minSize = 144.dp),
 				modifier = Modifier.padding(4.dp),
 			) {
-				bucketList?.forEach { bucket ->
-					if (isChipSelected[BucketItemType.Type.values()[bucket.bucketType]]!!) {
+				bucketMap.forEach { (_, data) ->
+					if (isChipSelected[BucketItemType.values()[data.first.bucketItemType]]!!) {
 						item {
 							BucketCard(
-								bucket = bucket,
-								bucketSize = bucketSizeMap[bucket.key]
+								bucket = data.first,
+								bucketSize = data.second
 							)
 						}
 					}
@@ -107,21 +94,12 @@ fun BucketScreen() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun NoBucketCard() {
-	val viewModel: MainViewModel = viewModel()
-	val scaffoldScale by animateFloatAsState(
-		targetValue = if (viewModel.activityState.bottomSheetState.progress.to == ModalBottomSheetValue.Hidden) 1f else 0.95f,
-		animationSpec = spring(
-			dampingRatio = Spring.DampingRatioHighBouncy,
-			stiffness = Spring.StiffnessMediumLow
-		),
-	)
-
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
 			.graphicsLayer {
-				this.scaleX = scaffoldScale
-				this.scaleY = scaffoldScale
+//				this.scaleX = scaffoldScale
+//				this.scaleY = scaffoldScale
 			},
 		contentAlignment = Alignment.Center
 	) {
@@ -181,7 +159,7 @@ private fun BucketCard(
 			.clickable {
 				Intent(context, BucketActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, bucket.key)
-					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, bucket.bucketType)
+					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, bucket.bucketItemType)
 					context.startActivity(this)
 				}
 			},
@@ -200,7 +178,7 @@ private fun BucketCard(
 				modifier = Modifier.fillMaxWidth()
 			) {
 				Icon(
-					imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.Type.values()[bucket.bucketType]]!!,
+					imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.values()[bucket.bucketItemType]]!!,
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier

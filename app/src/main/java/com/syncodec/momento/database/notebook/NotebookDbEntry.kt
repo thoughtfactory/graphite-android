@@ -1,10 +1,9 @@
 package com.syncodec.momento.database.notebook
 
+import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.google.gson.annotations.Expose
-import com.syncodec.momento.database.note.Note
 
 @Entity(tableName = "notebook_table")
 data class NotebookDbEntry(
@@ -27,14 +26,8 @@ data class NotebookDbEntry(
 	@ColumnInfo(name = "color")
 	var color: Int? = null
 
-	@ColumnInfo(name = "isFavourite")
-	var isFavourite: Boolean = false
-
-	@ColumnInfo(name = "isArchived")
-	var isArchived: Boolean = false
-
-	@ColumnInfo(name = "isLocked")
-	var isLocked: Boolean = false
+	@ColumnInfo(name = "thumbnail")
+	var bitmap: Bitmap? = null
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null

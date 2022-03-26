@@ -7,8 +7,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.bucket.BucketDbEntry
-import com.syncodec.momento.database.bucket.BucketItemDbEntry
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemDbEntry
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.repository.BucketRepository
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +23,7 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
 
 	lateinit var bucketKey: String
-	lateinit var bucketItemType: BucketItemType.Type
+	lateinit var bucketItemType: BucketItemType
 	val bucketDbEntry = mutableStateOf<BucketDbEntry?>(null)
 
 	val bucketItemList: SnapshotStateList<BucketItemDbEntry> = mutableStateListOf()
@@ -54,7 +54,7 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 
 	fun deleteBucketItem(keyList: List<String>) {
 		viewModelScope.launch(Dispatchers.IO) {
-			bucketRepository.deleteBucketItem(bucketKey = bucketKey, keyList = keyList)
+			bucketRepository.deleteBucketItem(keyList = keyList)
 		}
 	}
 }

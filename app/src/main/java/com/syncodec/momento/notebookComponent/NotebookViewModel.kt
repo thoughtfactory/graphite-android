@@ -4,9 +4,8 @@ import android.app.Application
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.chapter.ChapterDbEntry
@@ -14,6 +13,7 @@ import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.repository.NoteRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -25,8 +25,8 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 
 	lateinit var notebookKey: String
 	lateinit var notebookDbEntry: NotebookDbEntry
-	var noteList: LiveData<List<NoteDbEntry>> = MutableLiveData()
-	var chapterList: LiveData<List<ChapterDbEntry>> = MutableLiveData()
+	var noteList: SnapshotStateList<NoteDbEntry> = mutableStateListOf()
+	var chapterList: SnapshotStateList<ChapterDbEntry> = mutableStateListOf()
 
 	var status: MutableState<Status> = mutableStateOf(Status.INIT)
 
@@ -34,19 +34,27 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 	val chapterNamePath = mutableStateListOf<String>()
 
 	suspend fun initData() {
-		if (status.value != Status.ERROR) status.value = Status.LOADING
+		status.value = Status.LOADING
 
-		val tmpNotebookDbEntry = noteRepository.getNotebook(key = notebookKey)
-		if (tmpNotebookDbEntry!=null) {
-			notebookDbEntry = tmpNotebookDbEntry
-		} else {
-			status.value = Status.ERROR
+		noteRepository.getNotebook(key = notebookKey).also {
+			if (it == null) {
+				status.value = Status.ERROR
+			} else {
+				status.value = Status.LOADED
+				viewModelScope.launch(Dispatchers.IO) {
+					noteRepository.getNoteAsFlow(notebookKey = notebookKey).collect {
+						noteList.removeAll { true }
+						noteList.addAll(it)
+					}
+				}
+				viewModelScope.launch(Dispatchers.IO) {
+					noteRepository.getChapterAsFlow(notebookKey = notebookKey).collect {
+						chapterList.removeAll { true }
+						chapterList.addAll(it)
+					}
+				}
+			}
 		}
-
-		noteList = noteRepository.getNoteAsLiveData(notebookKey = notebookKey)
-		chapterList = noteRepository.getChapterAsLiveData(notebookKey = notebookKey)
-
-		if (status.value != Status.ERROR) status.value = Status.LOADED
 	}
 
 	fun putChapter(

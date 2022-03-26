@@ -1,8 +1,5 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
-import android.location.Location
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -18,43 +15,36 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.model.LatLng
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.noteComponent.NoteActivity
-import com.syncodec.momento.noteComponent.NoteViewModel
-import com.syncodec.momento.miscellaneous.locationAddressFilter
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import compose.icons.tablericons.Circle
 import compose.icons.tablericons.CurrentLocation
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun MapLocationPopup() {
-	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-	var map: GoogleMap? = null
+fun MapLocationPopup(
+	showMapLocationDialog: Boolean,
+	latLng: LatLng?,
+	address: String?,
+	onClick: (NoteActivity.Click, Any?) -> Unit
+) {
+	var map: GoogleMap?
 
-	val noteViewModel: NoteViewModel = viewModel()
-	val location = noteViewModel.location
-	var address by remember { mutableStateOf(noteViewModel.address) }
-
-	if (noteViewModel.activityState.showMapLocationDialog.value) {
+	if (showMapLocationDialog) {
 		val mapView = rememberMapViewWithLifecycle()
 		var isLoadedOnce by remember { mutableStateOf(false) }
-
 		var isCameraIdle by remember { mutableStateOf(false) }
 
 		val scaleMarker by animateFloatAsState(
@@ -69,42 +59,28 @@ fun MapLocationPopup() {
 
 		Dialog(
 			properties = DialogProperties(usePlatformDefaultWidth = false),
-			onDismissRequest = { noteViewModel.activityState.showMapLocationDialog.value = false }
+			onDismissRequest = { onClick(NoteActivity.Click.DISMISS_MAP_DIALOG, null) }
 		) {
 			Box(
-				modifier = Modifier
-					.fillMaxSize(0.9f),
+				modifier = Modifier.fillMaxSize(0.9f),
 			) {
 				AndroidView(
 					factory = { mapView },
-					modifier = Modifier
-						.clip(RoundedCornerShape(12.dp))
+					modifier = Modifier.clip(RoundedCornerShape(12.dp))
 				) { mapView ->
 					mapView.getMapAsync {
 						map = it
 						map!!.uiSettings.isZoomControlsEnabled = false
 
-						if (!isLoadedOnce && noteViewModel.location != null) {
-							map!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location!!.latitude, location.longitude), 15f))
+						if (!isLoadedOnce && latLng != null) {
+							map!!.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
 							isLoadedOnce = true
 						}
 
 						map!!.setOnCameraMoveListener { isCameraIdle = false }
 						map!!.setOnCameraIdleListener {
 							isCameraIdle = true
-
-							noteViewModel.reverseGeocode(
-								latitude = map!!.cameraPosition.target.latitude,
-								longitude = map!!.cameraPosition.target.longitude,
-								onAddressAvailable = { _address -> scope.launch { address = locationAddressFilter(_address) } },
-								onIoException = {
-									Log.i("Diary Activity", "Reverse Geocode : IO Exception : Maybe network unavailable")
-								},
-								onException = {
-									Log.e("Diary Activity", "Reverse Geocode : Exception")
-								}
-							)
-
+							onClick(NoteActivity.Click.REVERSE_GEOCODE, LatLng(map!!.cameraPosition.target.latitude, map!!.cameraPosition.target.longitude))
 						}
 					}
 				}
@@ -115,42 +91,26 @@ fun MapLocationPopup() {
 						.align(Alignment.BottomEnd)
 				) {
 					FloatingActionButton(
-						onClick = {
-							if (noteViewModel.gpsLocation.value != null) {
-								map!!.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(noteViewModel.gpsLocation.value!!.latitude, noteViewModel.gpsLocation.value!!.longitude), 15f))
-							} else {
-								Toast.makeText(context, "Location unavailable", Toast.LENGTH_LONG).show()
-							}
-						},
-
+						onClick = { onClick(NoteActivity.Click.REFRESH_LOCATION, null) },
+						containerColor = MaterialTheme.colorScheme.primaryContainer,
 						) {
 						Icon(
 							imageVector = TablerIcons.CurrentLocation,
-							contentDescription = null
+							contentDescription = "Get current location",
+							tint = MaterialTheme.colorScheme.onPrimaryContainer
 						)
 					}
 
 					Spacer(modifier = Modifier.height(16.dp))
 
 					FloatingActionButton(
-						onClick = {
-							Location("").apply {
-								if (map != null) {
-									latitude = map!!.cameraPosition.target.latitude
-									longitude = map!!.cameraPosition.target.longitude
-									noteViewModel.location = this
-								}
-							}
-							noteViewModel.address = address
-							if (noteViewModel.address != null) {
-								noteViewModel.activityState.addressState.value = NoteActivity.AddressState.SUCCESS
-							}
-							noteViewModel.activityState.showMapLocationDialog.value = false
-						},
+						onClick = { onClick(NoteActivity.Click.DISMISS_MAP_DIALOG, null) },
+						containerColor = MaterialTheme.colorScheme.primaryContainer,
 					) {
 						Icon(
 							imageVector = TablerIcons.Check,
-							contentDescription = null
+							contentDescription = "Select location",
+							tint = MaterialTheme.colorScheme.onPrimaryContainer
 						)
 					}
 				}
@@ -167,14 +127,12 @@ fun MapLocationPopup() {
 						style = MaterialTheme.typography.bodySmall,
 						fontWeight = FontWeight.Bold,
 						color = MaterialTheme.colorScheme.onPrimaryContainer,
-						modifier = Modifier
-							.padding(12.dp)
+						modifier = Modifier.padding(12.dp)
 					)
 				}
 
 				Box(
-					modifier = Modifier
-						.fillMaxSize(),
+					modifier = Modifier.fillMaxSize(),
 					contentAlignment = Alignment.Center
 				) {
 					Icon(
@@ -194,11 +152,9 @@ fun MapLocationPopup() {
 						imageVector = TablerIcons.Circle,
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.requiredSize(8.dp)
+						modifier = Modifier.requiredSize(8.dp)
 					)
 				}
-
 			}
 		}
 	}

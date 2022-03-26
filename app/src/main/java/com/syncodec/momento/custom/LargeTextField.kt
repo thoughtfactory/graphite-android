@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun LargeTextField(
+	modifier: Modifier = Modifier,
 	text: String,
 	placeholder: String,
 	keyboardOptions: KeyboardOptions? = null,
@@ -45,10 +46,8 @@ fun LargeTextField(
 			color = MaterialTheme.colorScheme.primary,
 			fontWeight = FontWeight.Bold
 		),
-		modifier = Modifier
-			.fillMaxWidth()
+		modifier = modifier
 			.height(48.dp)
-			.padding(24.dp, 0.dp)
 			.clip(RoundedCornerShape(12.dp))
 			.background(
 				if (text.isEmpty() && !isFocused) {
@@ -60,8 +59,7 @@ fun LargeTextField(
 			.onFocusChanged { onFocusChanged(it.isFocused) },
 		decorationBox = { innerTextField ->
 			Card(
-				modifier = Modifier
-					.fillMaxWidth(),
+				modifier = Modifier.fillMaxWidth(),
 				backgroundColor = Color.Transparent,
 				elevation = 0.dp,
 				shape = RoundedCornerShape(12.dp),

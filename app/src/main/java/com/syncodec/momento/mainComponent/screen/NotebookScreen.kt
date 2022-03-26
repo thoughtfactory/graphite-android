@@ -16,24 +16,21 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.notebookComponent.NotebookActivity
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Pencil
@@ -43,15 +40,16 @@ import compose.icons.tablericons.Pencil
 @ExperimentalMaterialApi
 @ExperimentalPagerApi
 @Composable
-fun NotebookScreen() {
-	val viewModel: MainViewModel = viewModel()
-
-	val notebookList = viewModel.noteRepository.notebookDbEntryListLiveData.observeAsState()
-
+fun NotebookScreen(
+	notebookList: List<NotebookDbEntry>,
+	isSelected: Boolean,
+	selectedItemList: List<String>,
+	filterTag: List<String>,
+	onClick: (MainActivity.Click, Any?) -> Unit
+) {
 	Crossfade(
-		targetState = notebookList.value?.isNotEmpty() == true,
-		modifier = Modifier
-			.fillMaxSize()
+		targetState = notebookList.isNotEmpty(),
+		modifier = Modifier.fillMaxSize()
 	) {
 		if (it) {
 			LazyVerticalGrid(
@@ -59,18 +57,8 @@ fun NotebookScreen() {
 				modifier = Modifier
 					.fillMaxSize()
 					.padding(12.dp, 0.dp),
-			) {
-				notebookList.value?.forEach { notebook ->
-					item {
-						NotebookGridCard(
-							notebookDbEntry = notebook
-						)
-					}
-				}
-			}
-		} else {
-			NoNotebookCard()
-		}
+			) { notebookList.forEach { notebook -> item { NotebookGridCard(notebookDbEntry = notebook){onClick(MainActivity.Click.CLICK_NOTEBOOK, it)} } } }
+		} else { NoNotebookCard() }
 	}
 }
 
@@ -82,8 +70,7 @@ private fun NoNotebookCard() {
 		contentAlignment = Alignment.Center
 	) {
 		Column(
-			modifier = Modifier
-				.fillMaxWidth(),
+			modifier = Modifier.fillMaxWidth(),
 			horizontalAlignment = Alignment.CenterHorizontally,
 			verticalArrangement = Arrangement.Center
 		) {
@@ -126,8 +113,8 @@ private fun NoNotebookCard() {
 @Composable
 private fun NotebookGridCard(
 	notebookDbEntry: NotebookDbEntry,
+	onClick: (String) -> Unit
 ) {
-	val viewModel: MainViewModel = viewModel()
 	val context = LocalContext.current
 	val activity = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.StartActivityForResult()
@@ -150,13 +137,13 @@ private fun NotebookGridCard(
 		}
 	) {
 		if (notebookDbEntry.color == null) {
-			viewModel.getNotebookImage(notebookKey = notebookDbEntry.key)?.let {
-				Image(
-					bitmap = it,
-					contentDescription = null,
-					contentScale = ContentScale.Crop
-				)
-			}
+//			viewModel.getNotebookImage(notebookKey = notebookDbEntry.key)?.let {
+//				Image(
+//					bitmap = it,
+//					contentDescription = null,
+//					contentScale = ContentScale.Crop
+//				)
+//			}
 		}
 
 		Box(

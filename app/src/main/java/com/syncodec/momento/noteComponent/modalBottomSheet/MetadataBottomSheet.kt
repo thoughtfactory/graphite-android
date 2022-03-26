@@ -1,9 +1,5 @@
 package com.syncodec.momento.noteComponent.modalBottomSheet
 
-import android.content.Intent
-import android.location.Location
-import android.net.Uri
-import android.provider.Settings
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -17,11 +13,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -31,27 +27,30 @@ import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
-import com.syncodec.momento.BuildConfig
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
-import com.syncodec.momento.database.note.WeatherData
-import com.syncodec.momento.noteComponent.NoteActivity
-import com.syncodec.momento.noteComponent.NoteViewModel
+import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.miscellaneous.roundTo
 import com.syncodec.momento.miscellaneous.timeStampToPrettyFull
+import com.syncodec.momento.noteComponent.NoteActivity
+import com.syncodec.momento.noteComponent.NoteViewModel
 import compose.icons.TablerIcons
-import compose.icons.WeatherIcons
-import compose.icons.tablericons.*
-import compose.icons.weathericons.Sunrise
-import compose.icons.weathericons.Thermometer
+import compose.icons.tablericons.InfoCircle
+import compose.icons.tablericons.Map
+import compose.icons.tablericons.X
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun MetadataBottomSheet() {
-	val noteViewModel: NoteViewModel = viewModel()
+fun MetadataBottomSheet(
+	onClick: (NoteActivity.Click, Any?) -> Unit
+) {
+	val viewModel: NoteViewModel = viewModel()
+
+	val noteDbEntry by viewModel.knotDbEntry.collectAsState()
+	val note by viewModel.knot.collectAsState()
 
 	Column(
 		modifier = Modifier
@@ -68,39 +67,37 @@ fun MetadataBottomSheet() {
 		)
 
 		TimestampCard(
-			createdTimestamp = noteViewModel.note.createdTimestamp,
-			modifiedTimestamp = noteViewModel.note.modifiedTimestamp
+			createdTimestamp = noteDbEntry?.createdTimestamp ?: -1,
+			modifiedTimestamp = noteDbEntry?.modifiedTimestamp ?: -1
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		LocationCard()
+		LocationCard(
+			addressState = viewModel.activityState.addressState.value,
+			address = noteDbEntry?.address,
+			latLng = if (noteDbEntry != null && noteDbEntry!!.location != null && noteDbEntry!!.location!!.latitude != null && noteDbEntry!!.location!!.longitude != null) {
+				LatLng(noteDbEntry!!.location!!.latitude!!, noteDbEntry!!.location!!.longitude!!)
+			} else {
+				null
+			}
+		) { click, data -> onClick(click, data) }
 
 		AnimatedVisibility(
-			visible = noteViewModel.location != null,
+			visible = noteDbEntry?.location != null,
 			enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 			exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 		) {
 //          WARN    Don't remove from if block or else null pointer exception
-			if (noteViewModel.location!=null) {
+			if (noteDbEntry?.location != null) {
 				Column {
 					Spacer(modifier = Modifier.height(8.dp))
 					MapCard(
-						location = noteViewModel.location!!,
-						mapView = noteViewModel.activityState.mapView
+						location = noteDbEntry!!.location!!,
+						mapView = viewModel.activityState.mapView
 					)
 				}
 			}
-		}
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		AnimatedVisibility(
-			visible = noteViewModel.weatherData != null,
-			enter = expandVertically(tween(600)) + scaleIn(tween(600)),
-			exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
-		) {
-			WeatherCard(weatherData = noteViewModel.weatherData)
 		}
 
 		Spacer(modifier = Modifier.height(32.dp))
@@ -191,12 +188,12 @@ fun TimestampCard(
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
 @Composable
-private fun LocationCard() {
-	val context = LocalContext.current
-	val noteViewModel: NoteViewModel = viewModel()
-
-	val addressState by noteViewModel.activityState.addressState
-
+private fun LocationCard(
+	addressState: NoteActivity.AddressState,
+	address: String?,
+	latLng: LatLng?,
+	onClick: (NoteActivity.Click, Any?) -> Unit
+) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -218,19 +215,7 @@ private fun LocationCard() {
 				NoteActivity.AddressState.REMOVED -> true
 				else -> false
 			},
-			onClick = {
-				when (addressState) {
-					NoteActivity.AddressState.NO_PERMISSION -> {
-						Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-							data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-							context.startActivity(this)
-						}
-					}
-					NoteActivity.AddressState.REQUEST_PERMISSION -> noteViewModel.activityState.locationPermissionState.launchPermissionRequest()
-					NoteActivity.AddressState.SHOW_RATIONALE -> noteViewModel.activityState.locationPermissionState.launchPermissionRequest()
-					NoteActivity.AddressState.REMOVED -> noteViewModel.getLocation()
-				}
-			}
+			onClick = { onClick(NoteActivity.Click.ADDRESS_CARD, null) }
 		) {
 			Column(
 				modifier = Modifier
@@ -246,7 +231,7 @@ private fun LocationCard() {
 						NoteActivity.AddressState.SHOW_RATIONALE -> "Location permission unavailable. Click to provide permission."
 						NoteActivity.AddressState.REQUESTED -> "Getting address..."
 						NoteActivity.AddressState.LOCATION -> "Address unavailable"
-						NoteActivity.AddressState.SUCCESS -> noteViewModel.address!!
+						NoteActivity.AddressState.SUCCESS -> address!!
 						NoteActivity.AddressState.ERROR -> "Error getting address"
 						NoteActivity.AddressState.REMOVED -> "Click to get address"
 					},
@@ -263,8 +248,8 @@ private fun LocationCard() {
 					addressState == NoteActivity.AddressState.SUCCESS
 				) {
 					Text(
-						text = if (noteViewModel.location == null) "Location unavailable"
-						else "${noteViewModel.location!!.latitude.roundTo(6)}, ${noteViewModel.location!!.longitude.roundTo(6)}",
+						text = if (latLng == null) "Location unavailable"
+						else "${latLng.latitude.roundTo(6)}, ${latLng.longitude.roundTo(6)}",
 						style = MaterialTheme.typography.bodySmall.copy(
 							fontWeight = FontWeight.Bold
 						),
@@ -284,9 +269,8 @@ private fun LocationCard() {
 				elevation = 0.dp,
 				shape = RoundedCornerShape(12.dp),
 				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-				modifier = Modifier
-					.requiredSize(60.dp),
-				onClick = { noteViewModel.activityState.showMapLocationDialog.value = true }
+				modifier = Modifier.requiredSize(60.dp),
+				onClick = { onClick(NoteActivity.Click.OPEN_MAP_DIALOG, null) }
 			) {
 				Icon(
 					imageVector = TablerIcons.Map,
@@ -303,9 +287,8 @@ private fun LocationCard() {
 				elevation = 0.dp,
 				shape = RoundedCornerShape(12.dp),
 				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-				modifier = Modifier
-					.requiredSize(60.dp),
-				onClick = { noteViewModel.removeLocationData() }
+				modifier = Modifier.requiredSize(60.dp),
+				onClick = { onClick(NoteActivity.Click.REMOVE_LOCATION, null) }
 			) {
 				Icon(
 					imageVector = TablerIcons.X,
@@ -322,7 +305,7 @@ private fun LocationCard() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun MapCard(
-	location: Location,
+	location: LocationData,
 	mapView: MapView
 ) {
 	Card(
@@ -341,7 +324,7 @@ private fun MapCard(
 				googleMap.uiSettings.isZoomControlsEnabled = false
 				googleMap.uiSettings.setAllGesturesEnabled(false)
 
-				val latLng = LatLng(location.latitude, location.longitude)
+				val latLng = LatLng(location.latitude!!, location.longitude!!)
 				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
 				val markerOptions = MarkerOptions()
 					.position(latLng)
@@ -349,83 +332,5 @@ private fun MapCard(
 			}
 		}
 
-	}
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun WeatherCard(
-	weatherData: WeatherData?
-) {
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
-	) {
-		Card(
-			elevation = 0.dp,
-			shape = RoundedCornerShape(12.dp),
-			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-			modifier = Modifier
-				.height(60.dp)
-				.weight(1f),
-		) {
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(16.dp, 8.dp)
-			) {
-				Icon(
-					imageVector = WeatherIcons.Thermometer,
-					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onSecondaryContainer
-				)
-
-				Spacer(modifier = Modifier.width(8.dp))
-
-				Text(
-					text = "${weatherData?.temperature ?: "Temperature unavailable"}",
-					style = MaterialTheme.typography.bodySmall,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onSecondaryContainer,
-					modifier = Modifier
-				)
-			}
-		}
-
-		Spacer(modifier = Modifier.width(8.dp))
-
-		Card(
-			elevation = 0.dp,
-			shape = RoundedCornerShape(12.dp),
-			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-			modifier = Modifier
-				.height(60.dp)
-				.weight(1f)
-		) {
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(16.dp, 8.dp)
-			) {
-				Icon(
-					imageVector = WeatherIcons.Sunrise,
-					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onSecondaryContainer
-				)
-
-				Spacer(modifier = Modifier.width(8.dp))
-
-				Text(
-					text = weatherData?.description ?: "Weather data unavailable",
-					style = MaterialTheme.typography.bodySmall,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onSecondaryContainer,
-					modifier = Modifier
-				)
-			}
-		}
 	}
 }

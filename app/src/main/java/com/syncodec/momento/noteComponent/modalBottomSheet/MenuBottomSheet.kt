@@ -64,8 +64,8 @@ fun MenuBottomSheet() {
 		)
 
 		TimestampCard(
-			createdTimestamp = noteViewModel.note.createdTimestamp,
-			modifiedTimestamp = noteViewModel.note.modifiedTimestamp
+			createdTimestamp = noteViewModel.noteDbEntry.value?.createdTimestamp ?: -1,
+			modifiedTimestamp = noteViewModel.noteDbEntry.value?.modifiedTimestamp ?: -1
 		)
 
 		Spacer(modifier = Modifier.height(12.dp))

@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
 import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
@@ -31,11 +32,13 @@ import compose.icons.tablericons.Search
 import compose.icons.tablericons.Trash
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun TopBar() {
-	val viewModel: MainViewModel = viewModel()
-
+fun TopBar(
+	isSelected: Boolean,
+	selectedItemSize: Int,
+	onClick: (MainActivity.Click, Any?) -> Unit,
+) {
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -51,11 +54,11 @@ fun TopBar() {
 				.padding(12.dp, 16.dp)
 		) {
 			AnimatedContent(
-				targetState = viewModel.activityState.isSelected.value,
+				targetState = isSelected,
 				transitionSpec = { fadeIn(tween(600)) with fadeOut(tween(600)) }
 			) {
 				if (it) {
-					DeleteCard(selectedItemSize = viewModel.activityState.selectedItemList.size) { viewModel.activityState.showDeleteDialog.value = true }
+					DeleteCard(selectedItemSize = selectedItemSize) { onClick(MainActivity.Click.SHOW_DELETE, null) }
 				} else {
 					ToolBarCard()
 				}

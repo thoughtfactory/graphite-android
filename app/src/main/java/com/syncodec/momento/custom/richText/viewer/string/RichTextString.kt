@@ -259,7 +259,6 @@ data class RichTextString internal constructor(
 			end: Int
 		) {
 			val tag = format.registerTag(formatObjects)
-			Log.i("npr71", "format : $tag")
 			builder.addStringAnnotation(FormatAnnotationScope, tag, start, end)
 		}
 

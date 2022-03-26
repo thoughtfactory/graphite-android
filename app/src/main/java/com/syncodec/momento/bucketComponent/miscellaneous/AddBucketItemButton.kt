@@ -12,12 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.custom.button.LargeButton
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemType
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun AddNewBucketItemButton(
-	bucketItemType: BucketItemType.Type,
+	bucketItemType: BucketItemType,
 	isSelected: Boolean,
 	selectedBucketItemList: List<String>,
 	onClick: () -> Unit
@@ -44,11 +44,11 @@ fun AddNewBucketItemButton(
 			} else {
 				LargeButton(
 					text = when (bucketItemType) {
-						BucketItemType.Type.TODO -> "Add New Task"
-						BucketItemType.Type.BOOKS -> "What did you read?"
-						BucketItemType.Type.SHOWS -> "A new story?"
-						BucketItemType.Type.MEDIA -> "Add media"
-						BucketItemType.Type.LINKS -> "Add link"
+						BucketItemType.TODO -> "Add New Task"
+						BucketItemType.BOOKS -> "What did you read?"
+						BucketItemType.SHOWS -> "A new story?"
+						BucketItemType.MEDIA -> "Add media"
+						BucketItemType.LINKS -> "Add link"
 					},
 					containerColor = MaterialTheme.colorScheme.primaryContainer,
 					contentColor = MaterialTheme.colorScheme.onPrimaryContainer,

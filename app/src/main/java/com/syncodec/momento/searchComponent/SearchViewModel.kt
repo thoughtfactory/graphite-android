@@ -27,7 +27,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 			noteKeyList = noteRepository.getAllKey()
 
 			noteKeyList.forEach {
-				noteMap[it] = Pair(noteRepository.loadDiary(it), true)
+				noteMap[it] = Pair(noteRepository.loadNote(it), true)
 			}
 		}
 	}

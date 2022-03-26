@@ -32,7 +32,7 @@ fun NoEntryCard() {
 		) {
 			Image(
 				painter = painterResource(id = R.drawable.il_reading),
-				contentDescription = "No diary entries",
+				contentDescription = "No entries found",
 				modifier = Modifier
 					.fillMaxWidth(0.5f)
 			)

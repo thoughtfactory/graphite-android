@@ -1,5 +1,6 @@
 package com.syncodec.momento.database.note
 
+import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -27,11 +28,11 @@ data class NoteDbEntry(
 	@ColumnInfo(name = "timezone_offset")
 	val timezoneOffset: Int,
 
+	@ColumnInfo(name = "chapter_path")
+	val chapterPath: MutableList<String>,
+
 	@ColumnInfo(name = "notebook_key")
 	val notebookKey: String,
-
-	@ColumnInfo(name = "chapter_path")
-	val chapterPath: MutableList<String>
 ) {
 	@ColumnInfo(name = "created_timestamp")
 	var createdTimestamp: Long = -1
@@ -48,15 +49,15 @@ data class NoteDbEntry(
 	@ColumnInfo(name = "content_thumbnail")
 	var contentThumbnail: String? = null
 
-	@ColumnInfo(name = "attachment_thumbnail")
+	@ColumnInfo(name = "attachment_thumbnail", typeAffinity = ColumnInfo.BLOB)
 	@Expose
-	var attachmentThumbnail: String? = null
+	var attachmentThumbnail: Bitmap? = null
 
 	@ColumnInfo(name = "attachment_count")
 	var attachmentCount: Int = 0
 
-	@ColumnInfo(name = "latlng")
-	var latLng: LatLng? = null
+	@ColumnInfo(name = "location_data")
+	var location: LocationData? = null
 
 	@ColumnInfo(name = "address")
 	var address: String? = null
@@ -64,36 +65,44 @@ data class NoteDbEntry(
 	@ColumnInfo(name = "mood")
 	var mood: Int = 0
 
-	@ColumnInfo(name = "is_favourite")
-	var isFavourite: Boolean = false
-
-	@ColumnInfo(name = "is_archived")
-	var isArchived: Boolean = false
-
-	@ColumnInfo(name = "is_locked")
-	var isLocked: Boolean = false
-
 	@ColumnInfo(name = "deleted_timestamp")
 	var deletedTimestamp: Long = -1
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 
-	@ColumnInfo(name = "hash")
-	var hash: Long? = null
-
 	override fun hashCode(): Int {
-		return key.hashCode()
+		var result = key.hashCode()
+		result = 31 * result + timezoneOffset
+		result = 31 * result + notebookKey.hashCode()
+		result = 31 * result + chapterPath.hashCode()
+		result = 31 * result + createdTimestamp.hashCode()
+		result = 31 * result + modifiedTimestamp.hashCode()
+		result = 31 * result + userTimestamp.hashCode()
+		result = 31 * result + (title?.hashCode() ?: 0)
+		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
+		result = 31 * result + (attachmentThumbnail?.hashCode() ?: 0)
+		result = 31 * result + attachmentCount
+		result = 31 * result + (location?.hashCode() ?: 0)
+		result = 31 * result + (address?.hashCode() ?: 0)
+		result = 31 * result + mood
+		result = 31 * result + deletedTimestamp.hashCode()
+		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
+		return result
 	}
 
 	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (javaClass != other?.javaClass) return false
-
-		other as NoteDbEntry
-
-		if (key != other.key) return false
-
-		return true
+		return false
 	}
+
+//	override fun equals(other: Any?): Boolean {
+//		if (this.hashCode() != other.hashCode()) return false
+//		if (javaClass != other?.javaClass) return false
+//
+//		other as NoteDbEntry
+//
+//		if (key != other.key) return false
+//
+//		return true
+//	}
 }

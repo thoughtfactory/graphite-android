@@ -30,7 +30,7 @@ import coil.compose.rememberImagePainter
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.syncodec.momento.bucketComponent.BucketActivity
-import com.syncodec.momento.database.bucket.BucketItemDbEntry
+import com.syncodec.momento.database.bucketItem.BucketItemDbEntry
 
 
 @OptIn(ExperimentalFoundationApi::class, com.google.accompanist.pager.ExperimentalPagerApi::class)

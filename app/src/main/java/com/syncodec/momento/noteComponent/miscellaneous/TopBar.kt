@@ -1,34 +1,26 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
-import android.app.Activity
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.syncodec.momento.noteComponent.NoteViewModel
-import com.syncodec.momento.noteComponent.modalBottomSheet.BottomSheetType
+import com.syncodec.momento.noteComponent.NoteActivity
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Check
-import compose.icons.tablericons.Dots
-import compose.icons.tablericons.InfoCircle
-import kotlinx.coroutines.launch
+import compose.icons.tablericons.*
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TopBar() {
-	val noteViewModel: NoteViewModel = viewModel()
-	val scope = rememberCoroutineScope()
-
+fun TopBar(
+	isViewer: Boolean,
+	onClick: (NoteActivity.Click) -> Unit
+) {
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -43,24 +35,33 @@ fun TopBar() {
 				.padding(8.dp)
 		) {
 			IconButton(
-				onClick = { noteViewModel.activityState.richTextEditor.exec("editor.getData();") },
+				onClick = { onClick(NoteActivity.Click.TOP_BAR_PRIMARY) },
 			) {
 				Icon(
-					imageVector = TablerIcons.Check,
-					contentDescription = "Save",
+					imageVector = if (isViewer) TablerIcons.ArrowLeft else TablerIcons.Check,
+					contentDescription = if (isViewer) "Back" else "Save",
 					tint = MaterialTheme.colorScheme.onSecondaryContainer,
 				)
 			}
 
 			Spacer(modifier = Modifier.weight(1f))
 
-			IconButton(
-				onClick = {
-					noteViewModel.activityState.bottomSheetType.value = BottomSheetType.MetadataBottomSheet
-					scope.launch {
-						noteViewModel.activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
+			Crossfade(targetState = isViewer) {
+				if (it) {
+					IconButton(
+						onClick = { onClick(NoteActivity.Click.TOP_BAR_QUATERNARY) },
+					) {
+						Icon(
+							imageVector = TablerIcons.Pencil,
+							contentDescription = "Edit",
+							tint = MaterialTheme.colorScheme.onSecondaryContainer,
+						)
 					}
-				},
+				}
+			}
+
+			IconButton(
+				onClick = { onClick(NoteActivity.Click.TOP_BAR_TERTIARY) },
 			) {
 				Icon(
 					imageVector = TablerIcons.InfoCircle,
@@ -70,12 +71,7 @@ fun TopBar() {
 			}
 
 			IconButton(
-				onClick = {
-					noteViewModel.activityState.bottomSheetType.value = BottomSheetType.MenuBottomSheet
-					scope.launch {
-						noteViewModel.activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
-					}
-				},
+				onClick = { onClick(NoteActivity.Click.TOP_BAR_SECONDARY) },
 			) {
 				Icon(
 					imageVector = TablerIcons.Dots,

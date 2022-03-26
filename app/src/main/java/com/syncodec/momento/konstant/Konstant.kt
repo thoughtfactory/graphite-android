@@ -15,7 +15,7 @@ class Konstant {
 			CHAPTER_KEY,
 			TITLE,
 			IS_VIEWER,
-			DIARY_KEY,
+			NOTE_KEY,
 			IS_NEW,
 			DO_DELETE
 		}

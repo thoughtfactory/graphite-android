@@ -43,20 +43,20 @@ fun NotebookScreen(
 		itemsIndexed(noteList) { index, note ->
 			val showEntry: Boolean = filterData(
 				showArchived = showArchived,
-				isArchived = note.isArchived,
+				isArchived = false,
 				showFavourite = showFavourite,
-				isFavourite = note.isFavourite,
+				isFavourite = false,
 				showLocked = showLocked,
-				isLocked = note.isLocked
+				isLocked = false
 			) and showNotes
 
 			NoteCardData(
 				timestamp = note.userTimestamp,
 				showFullTime = true,
-				isLocked = note.isLocked,
+				isLocked = false,
 				isSelected = note.key in selectedItemList,
-				isArchived = note.isArchived,
-				isFavourite = note.isFavourite,
+				isArchived = false,
+				isFavourite = false,
 				isDeleted = note.deletedTimestamp != -1L,
 				isLast = index == noteList.size - 1,
 				title = note.title,

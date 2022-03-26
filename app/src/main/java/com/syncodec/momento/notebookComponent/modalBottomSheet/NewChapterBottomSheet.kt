@@ -69,6 +69,9 @@ fun NewChapterBottomSheet() {
 			placeholder = "Don't keep chapter name empty",
 			isFocused = isChapterTitleTextFocused,
 			onFocusChanged = { isChapterTitleTextFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp)
 		) {
 			chapterTitleText = it
 		}
@@ -80,6 +83,9 @@ fun NewChapterBottomSheet() {
 			placeholder = "What is it about?",
 			isFocused = isChapterDescriptionTextFocused,
 			onFocusChanged = { isChapterDescriptionTextFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp)
 		) {
 			chapterDescriptionText = it
 		}

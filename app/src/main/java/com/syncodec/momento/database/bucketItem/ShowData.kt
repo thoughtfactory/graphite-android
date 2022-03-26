@@ -1,4 +1,4 @@
-package com.syncodec.momento.database.bucket
+package com.syncodec.momento.database.bucketItem
 
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 

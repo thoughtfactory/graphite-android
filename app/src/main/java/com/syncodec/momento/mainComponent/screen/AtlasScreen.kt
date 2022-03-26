@@ -8,45 +8,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.android.libraries.maps.model.PolylineOptions
-import com.syncodec.momento.mainComponent.MainViewModel
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.mainComponent.miscellaneous.TopBar
-import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
-import kotlinx.coroutines.launch
 
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
 fun AtlasScreen(
-	mapView: MapView
+	mapView: MapView,
+	isSelected: Boolean,
+	selectedItemList: List<String>,
+	onClick: (MainActivity.Click, Any?) -> Unit
 ) {
-	val configuration = LocalConfiguration.current
-
-	val screenHeight = configuration.screenHeightDp.dp
-	val screenWidth = configuration.screenWidthDp.dp
-
-	val viewModel: MainViewModel = viewModel()
-	val scope = rememberCoroutineScope()
-	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-		scope.launch {
-			viewModel.activityState.bottomSheetState.show()
-		}
-	}
-
 	Scaffold(
 		topBar = {
-			TopBar()
+			TopBar(
+				isSelected = isSelected,
+				selectedItemSize = selectedItemList.size
+			) { click, data -> onClick(click, data) }
 		}
 	) {
 		Column(

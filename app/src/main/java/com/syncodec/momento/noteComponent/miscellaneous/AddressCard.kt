@@ -7,43 +7,44 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.syncodec.momento.R
+import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.noteComponent.NoteActivity
-import com.syncodec.momento.noteComponent.NoteViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun AddressCard() {
-	val context = LocalContext.current
-	val noteViewModel: NoteViewModel = viewModel()
-
+fun AddressCard(
+	addressState: NoteActivity.AddressState,
+	showAddressCard: Boolean,
+	address: String?,
+	locationData: LocationData?,
+	onClick: (NoteActivity.Click) -> Unit
+) {
 	val scope = rememberCoroutineScope()
 
 	val showCardPreference = true
 
-	val addressState by noteViewModel.activityState.addressState
-	var showAddressCard by noteViewModel.activityState.showAddressCard
-
 	val animateAlpha by animateFloatAsState(
-		targetValue = if (showAddressCard && showCardPreference != false) 1f else 0f,
+		targetValue = if (showAddressCard && showCardPreference) 1f else 0f,
 		animationSpec = tween(durationMillis = 600),
 		finishedListener = {
 			scope.launch {
 				delay(6400)
-				showAddressCard = false
+				onClick(NoteActivity.Click.HIDE_ADDRESS)
 			}
 		}
 	)
@@ -85,7 +86,7 @@ fun AddressCard() {
 						)
 
 						Button(
-							onClick = { noteViewModel.activityState.locationPermissionState.launchPermissionRequest() },
+							onClick = { onClick(NoteActivity.Click.REQUEST_LOCATION_PERMISSION) },
 							colors = ButtonDefaults.outlinedButtonColors(
 								containerColor = MaterialTheme.colorScheme.primaryContainer
 							),
@@ -133,7 +134,7 @@ fun AddressCard() {
 							.padding(16.dp, 12.dp),
 					) {
 						Text(
-							text = "Address unavailable\nLat : ${noteViewModel.location!!.latitude}, Lng : ${noteViewModel.location!!.longitude}",
+							text = "Address unavailable\nLat : ${locationData?.latitude}, Lng : ${locationData?.longitude}",
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onBackground,
 							fontWeight = FontWeight.Bold,
@@ -156,7 +157,7 @@ fun AddressCard() {
 							.padding(16.dp, 12.dp),
 					) {
 						Text(
-							text = noteViewModel.address!!,
+							text = address!!,
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onBackground,
 							fontWeight = FontWeight.Bold,
@@ -200,7 +201,7 @@ fun AddressCard() {
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(1200)
-						noteViewModel.activityState.showAddressCard.value = true
+						onClick(NoteActivity.Click.SHOW_ADDRESS)
 					}
 				}
 			}
@@ -210,7 +211,7 @@ fun AddressCard() {
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(1200)
-						noteViewModel.activityState.showAddressCard.value = true
+						onClick(NoteActivity.Click.SHOW_ADDRESS)
 					}
 				}
 			}
@@ -218,7 +219,7 @@ fun AddressCard() {
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(1200)
-						noteViewModel.activityState.showAddressCard.value = true
+						onClick(NoteActivity.Click.SHOW_ADDRESS)
 					}
 				}
 			}
@@ -227,7 +228,7 @@ fun AddressCard() {
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(0)
-						noteViewModel.activityState.showAddressCard.value = true
+						onClick(NoteActivity.Click.SHOW_ADDRESS)
 					}
 				}
 			}

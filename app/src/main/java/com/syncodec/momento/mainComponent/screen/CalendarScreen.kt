@@ -17,10 +17,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.custom.calendarView.Calendar
 import com.syncodec.momento.custom.notebook.NoteCard
 import com.syncodec.momento.custom.notebook.NoteCardData
 import com.syncodec.momento.custom.notebook.NotebookHeaderCard
+import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.mainComponent.miscellaneous.TopBar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -29,7 +31,12 @@ import kotlinx.coroutines.launch
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
-fun CalendarScreen() {
+fun CalendarScreen(
+	noteList: List<NoteDbEntry>,
+	isSelected: Boolean,
+	selectedItemList: List<String>,
+	onClick: (MainActivity.Click, Any?) -> Unit
+) {
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
 	val scope = rememberCoroutineScope()
@@ -46,7 +53,12 @@ fun CalendarScreen() {
 		scaffoldState = bottomSheetScaffoldState,
 		sheetContent = { BottomSheetContent() },
 		modifier = Modifier,
-		topBar = { TopBar() },
+		topBar = {
+			TopBar(
+				isSelected = isSelected,
+				selectedItemSize = selectedItemList.size
+			) { click, data -> onClick(click, data) }
+		},
 		sheetElevation = 32.dp,
 		sheetPeekHeight = screenHeight.times(0.2f),
 		sheetBackgroundColor = MaterialTheme.colorScheme.background

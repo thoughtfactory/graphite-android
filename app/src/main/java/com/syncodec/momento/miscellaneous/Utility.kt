@@ -11,12 +11,6 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.FileProvider
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.syncodec.momento.BuildConfig
 import java.io.*
 import java.net.URL
@@ -24,7 +18,8 @@ import java.net.URLConnection
 import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlin.random.Random
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 
 fun logger(msg: String) = Log.i("npr71", msg)
 
@@ -39,58 +34,60 @@ fun timestampToDate(timestamp: Long): String = DateFormat.format("EEE dd MMM, yy
 fun entryTimestamp0(timestamp: Long): String = DateFormat.format("EEE dd MMM", timestamp).toString()
 fun entryTimestamp1(timestamp: Long): String = DateFormat.format(", yyyy, HH:mm aa", timestamp).toString()
 
-fun generatePrimaryKey(keyLength: Int = 20): String {
-//	val chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray()
-//	val stringBuilder = StringBuilder(20)
-//
-//	for (i in 0 until keyLength) {
-//		val c = chars[Random.nextInt(chars.size)]
-//		stringBuilder.append(c)
-//	}
-//	return stringBuilder.toString()
-	return UUID.randomUUID().toString()
-}
+fun noteViewerTimestamp(timestamp: Long): List<String> = listOf(
+	DateFormat.format("dd", timestamp).toString(),
+	DateFormat.format("E, hh:mm a", timestamp).toString(),
+	DateFormat.format("MMMM yyyy", timestamp).toString()
+)
+
+fun generatePrimaryKey(): String = UUID.randomUUID().toString()
 
 @Throws(IOException::class)
-fun createTempFile(primaryKey: String, mimeType: String?): File {
-	return File.createTempFile("attachment_", "_$primaryKey")
-}
+fun createTempFile(primaryKey: String, mimeType: String?): File = File.createTempFile("attachment_", "_$primaryKey")
 
 @Throws(IOException::class)
-fun createTempFileToExpose(context: Context, primaryKey: String, mimeType: String): Uri {
-	return FileProvider.getUriForFile(
-		context,
-		"${BuildConfig.APPLICATION_ID}.provider",
-		createTempFile(primaryKey = primaryKey, mimeType = mimeType)
-	)
+fun createTempFileToExpose(context: Context, primaryKey: String, mimeType: String): Uri = FileProvider.getUriForFile(
+	context,
+	"${BuildConfig.APPLICATION_ID}.provider",
+	createTempFile(primaryKey = primaryKey, mimeType = mimeType)
+)
+
+
+fun copyInputStreamToOutputStream(inputStream: FileInputStream, outputStream: FileOutputStream) = try {
+	val buf = ByteArray(1024)
+	var len: Int
+	while (inputStream.read(buf).also { len = it } > 0) {
+		outputStream.write(buf, 0, len)
+	}
+	outputStream.close()
+	inputStream.close()
+} catch (e: Exception) {
+	e.printStackTrace()
 }
 
-fun copyInputStreamToOutputStream(inputStream: FileInputStream, outputStream: FileOutputStream) {
-	try {
-		val buf = ByteArray(1024)
-		var len: Int
-		while (inputStream.read(buf).also { len = it } > 0) {
-			outputStream.write(buf, 0, len)
-		}
-		outputStream.close()
-		inputStream.close()
-	} catch (e: Exception) {
-		e.printStackTrace()
+
+fun copyInputStreamToOutputStream(inputStream: InputStream, outputStream: FileOutputStream) = try {
+	val buf = ByteArray(1024)
+	var len: Int
+	while (inputStream.read(buf).also { len = it } > 0) {
+		outputStream.write(buf, 0, len)
 	}
+	outputStream.close()
+	inputStream.close()
+} catch (e: Exception) {
+	e.printStackTrace()
 }
 
-fun copyInputStreamToOutputStream(inputStream: InputStream, outputStream: FileOutputStream) {
-	try {
-		val buf = ByteArray(1024)
-		var len: Int
-		while (inputStream.read(buf).also { len = it } > 0) {
-			outputStream.write(buf, 0, len)
-		}
-		outputStream.close()
-		inputStream.close()
-	} catch (e: Exception) {
-		e.printStackTrace()
+fun copyInputStreamToOutputStream(inputStream: InputStream, outputStream: OutputStream) = try {
+	val buf = ByteArray(1024)
+	var len: Int
+	while (inputStream.read(buf).also { len = it } > 0) {
+		outputStream.write(buf, 0, len)
 	}
+	outputStream.close()
+	inputStream.close()
+} catch (e: Exception) {
+	e.printStackTrace()
 }
 
 fun locationAddressFilter(address: Address?): String? {
@@ -122,6 +119,46 @@ fun Bitmap.bitmapToBase64String(): String? {
 fun String.base64stringToBitmap(): Bitmap? {
 	val decodedBytes: ByteArray = Base64.decode(this.substring(this.indexOf(",") + 1), Base64.DEFAULT)
 	return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+}
+
+fun getResizedBitmap(image: Bitmap, maxSize: Int): Bitmap? {
+	var width = image.width
+	var height = image.height
+	val bitmapRatio = width.toFloat() / height.toFloat()
+	if (bitmapRatio > 1) {
+		width = maxSize
+		height = (width / bitmapRatio).toInt()
+	} else {
+		height = maxSize
+		width = (height * bitmapRatio).toInt()
+	}
+	return Bitmap.createScaledBitmap(image, width, height, true)
+}
+
+inline fun <reified T, Y> MutableList<T>.listOfField(property: KMutableProperty1<T, Y?>): MutableList<Y> {
+	val yy = ArrayList<Y>()
+	this.forEach { t: T -> yy.add(property.get(t) as Y) }
+	return yy
+}
+
+inline fun <reified T, Y> MutableList<T>.listOfField(property: KProperty1<T, Y?>): MutableList<Y> {
+	val yy = ArrayList<Y>()
+	this.forEach { t: T -> yy.add(property.get(t) as Y) }
+	return yy
+}
+
+@JvmName("listOfFieldT")
+inline fun <reified T, Y> List<T>.listOfField(property: KMutableProperty1<T, Y?>): List<Y> {
+	val yy = ArrayList<Y>()
+	this.forEach { t: T -> yy.add(property.get(t) as Y) }
+	return yy
+}
+
+@JvmName("listOfFieldT")
+inline fun <reified T, Y> List<T>.listOfField(property: KProperty1<T, Y?>): List<Y> {
+	val yy = ArrayList<Y>()
+	this.forEach { t: T -> yy.add(property.get(t) as Y) }
+	return yy
 }
 
 @Throws(IOException::class)

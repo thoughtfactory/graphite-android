@@ -61,6 +61,9 @@ fun NewNoteBottomSheet() {
 			placeholder = "What is this note about",
 			isFocused = isNoteTitleFocused,
 			onFocusChanged = { isNoteTitleFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp)
 		) {
 			noteTitleText = it
 		}

@@ -16,14 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.button.LargeButton
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.ResourceMap
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Bucket
@@ -31,7 +30,7 @@ import compose.icons.tablericons.Bucket
 
 data class BucketButtonData(
 	val subtitle: String,
-	val bucketItemType: BucketItemType.Type?,
+	val bucketItemType: BucketItemType?,
 	val highlight: Boolean = false,
 	val onClick: () -> Unit
 )
@@ -40,9 +39,9 @@ data class BucketButtonData(
 @Preview
 @Composable
 fun BucketBottomSheet(
-	onCreate: (String, BucketItemType.Type) -> Unit = { _, _ -> }
+	onCreate: (String, BucketItemType) -> Unit = { _, _ -> }
 ) {
-	var selectedBucketType by remember { mutableStateOf<BucketItemType.Type?>(null) }
+	var selectedBucketType by remember { mutableStateOf<BucketItemType?>(null) }
 	var bucketNameText by rememberSaveable { mutableStateOf("") }
 	var isBucketNameTextFocused by remember { mutableStateOf(false) }
 
@@ -62,35 +61,35 @@ fun BucketBottomSheet(
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
 			subtitle = "Have any pending tasks?",
-			bucketItemType = BucketItemType.Type.TODO,
-			highlight = selectedBucketType == BucketItemType.Type.TODO,
+			bucketItemType = BucketItemType.TODO,
+			highlight = selectedBucketType == BucketItemType.TODO,
 		) {
-			selectedBucketType = BucketItemType.Type.TODO
+			selectedBucketType = BucketItemType.TODO
 		},
 		BucketButtonData(
 			subtitle = "A little fiction here, and a little fantasy there",
-			bucketItemType = BucketItemType.Type.BOOKS,
-			highlight = selectedBucketType == BucketItemType.Type.BOOKS,
+			bucketItemType = BucketItemType.BOOKS,
+			highlight = selectedBucketType == BucketItemType.BOOKS,
 		) {
-			selectedBucketType = BucketItemType.Type.BOOKS
+			selectedBucketType = BucketItemType.BOOKS
 		},
 		BucketButtonData(
 			subtitle = "Aren't those characters real!?",
-			bucketItemType = BucketItemType.Type.SHOWS,
-			highlight = selectedBucketType == BucketItemType.Type.SHOWS,
+			bucketItemType = BucketItemType.SHOWS,
+			highlight = selectedBucketType == BucketItemType.SHOWS,
 		) {
-			selectedBucketType = BucketItemType.Type.SHOWS
+			selectedBucketType = BucketItemType.SHOWS
 		},
 		BucketButtonData(
 			subtitle = "Gotta keep them safe",
-			bucketItemType = BucketItemType.Type.MEDIA,
-			highlight = selectedBucketType == BucketItemType.Type.MEDIA,
+			bucketItemType = BucketItemType.MEDIA,
+			highlight = selectedBucketType == BucketItemType.MEDIA,
 		) {
-			selectedBucketType = BucketItemType.Type.MEDIA
+			selectedBucketType = BucketItemType.MEDIA
 		},
 		BucketButtonData(
-			bucketItemType = BucketItemType.Type.LINKS,
-			highlight = selectedBucketType == BucketItemType.Type.LINKS,
+			bucketItemType = BucketItemType.LINKS,
+			highlight = selectedBucketType == BucketItemType.LINKS,
 			subtitle = "Those might be helpful someday",
 		) {}
 	)
@@ -132,7 +131,10 @@ fun BucketBottomSheet(
 			text = bucketNameText,
 			placeholder = "Umm... Let me think...",
 			isFocused = isBucketNameTextFocused,
-			onFocusChanged = { isBucketNameTextFocused = it }
+			onFocusChanged = { isBucketNameTextFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp)
 		) {
 			bucketNameText = it
 		}

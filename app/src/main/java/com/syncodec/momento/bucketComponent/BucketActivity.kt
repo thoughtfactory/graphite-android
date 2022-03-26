@@ -41,7 +41,7 @@ import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.custom.DeleteDialog
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
-import com.syncodec.momento.database.bucket.BucketItemType
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.ui.theme.MomentoTheme
@@ -68,7 +68,7 @@ class BucketActivity : ComponentActivity() {
 		viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
 		intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, -1).also {
 			if (it != -1) {
-				viewModel.bucketItemType = BucketItemType.Type.values()[it]
+				viewModel.bucketItemType = BucketItemType.values()[it]
 				viewModel.getBucket()
 			} else {
 				finish()
@@ -163,11 +163,11 @@ class BucketActivity : ComponentActivity() {
 			}
 			Click.OPEN_ADD_SHEET -> {
 				viewModel.activityState.bottomSheetType.value = when (viewModel.bucketItemType) {
-					BucketItemType.Type.TODO -> BottomSheetType.AddBookSheet
-					BucketItemType.Type.BOOKS -> BottomSheetType.AddBookSheet
-					BucketItemType.Type.SHOWS -> BottomSheetType.AddMovieSheet
-					BucketItemType.Type.MEDIA -> BottomSheetType.AddBookSheet
-					BucketItemType.Type.LINKS -> BottomSheetType.AddBookSheet
+					BucketItemType.TODO -> BottomSheetType.AddBookSheet
+					BucketItemType.BOOKS -> BottomSheetType.AddBookSheet
+					BucketItemType.SHOWS -> BottomSheetType.AddMovieSheet
+					BucketItemType.MEDIA -> BottomSheetType.AddBookSheet
+					BucketItemType.LINKS -> BottomSheetType.AddBookSheet
 				}
 
 				viewModel.activityState.coroutineScope.launch {
@@ -179,7 +179,7 @@ class BucketActivity : ComponentActivity() {
 				Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.IS_NEW.name, true)
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
-					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.BOOKS.ordinal)
+					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.BOOKS.ordinal)
 					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, data as BookData)
 					startActivity(this)
 				}
@@ -189,7 +189,7 @@ class BucketActivity : ComponentActivity() {
 				Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.IS_NEW.name, true)
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
-					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.Type.SHOWS.ordinal)
+					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, BucketItemType.SHOWS.ordinal)
 					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, data as ShowData)
 					startActivity(this)
 				}
@@ -231,15 +231,15 @@ class BucketActivity : ComponentActivity() {
 			}
 			Click.ON_DISMISS_DELETE -> viewModel.activityState.showDeleteDialog.value = false
 			Click.FAVOURITE -> if (bucketDbEntry != null) {
-				bucketDbEntry!!.isFavourite = !bucketDbEntry!!.isFavourite
+//				bucketDbEntry!!.isFavourite = !bucketDbEntry!!.isFavourite
 				viewModel.updateItem()
 			}
 			Click.ARCHIVE -> if (bucketDbEntry != null) {
-				bucketDbEntry!!.isArchived = !bucketDbEntry!!.isArchived
+//				bucketDbEntry!!.isArchived = !bucketDbEntry!!.isArchived
 				viewModel.updateItem()
 			}
 			Click.LOCK -> if (bucketDbEntry != null) {
-				bucketDbEntry!!.isLocked = !bucketDbEntry!!.isLocked
+//				bucketDbEntry!!.isLocked = !bucketDbEntry!!.isLocked
 				viewModel.updateItem()
 			}
 			Click.DELETE -> null
@@ -259,21 +259,21 @@ class BucketActivity : ComponentActivity() {
 
 		val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData?> = if (bucketDbEntry == null) listOf()
 		else listOf(
-			MenuBottomSheetButtonData(
-				title = "Favourite",
-				resourceId = if (bucketDbEntry!!.isFavourite) R.drawable.ic_heart_filled else R.drawable.ic_heart,
-				highlight = bucketDbEntry!!.isFavourite
-			) { },
-			MenuBottomSheetButtonData(
-				title = "Archive",
-				resourceId = R.drawable.ic_box,
-				highlight = bucketDbEntry!!.isArchived
-			) { },
-			MenuBottomSheetButtonData(
-				title = "Lock",
-				resourceId = R.drawable.ic_locked,
-				highlight = bucketDbEntry!!.isLocked
-			) { },
+//			MenuBottomSheetButtonData(
+//				title = "Favourite",
+//				resourceId = if (bucketDbEntry!!.isFavourite) R.drawable.ic_heart_filled else R.drawable.ic_heart,
+//				highlight = bucketDbEntry!!.isFavourite
+//			) { },
+//			MenuBottomSheetButtonData(
+//				title = "Archive",
+//				resourceId = R.drawable.ic_box,
+//				highlight = bucketDbEntry!!.isArchived
+//			) { },
+//			MenuBottomSheetButtonData(
+//				title = "Lock",
+//				resourceId = R.drawable.ic_locked,
+//				highlight = bucketDbEntry!!.isLocked
+//			) { },
 			MenuBottomSheetButtonData(title = "Delete", resourceId = R.drawable.ic_trash, highlight = false) { },
 
 			MenuBottomSheetButtonData(title = "Export", resourceId = R.drawable.ic_export, highlight = false) { },

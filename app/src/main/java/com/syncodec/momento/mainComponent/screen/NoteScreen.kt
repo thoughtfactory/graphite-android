@@ -13,8 +13,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -31,18 +30,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
+import com.syncodec.momento.MainActivity
+import com.syncodec.momento.Momento
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.notebook.*
 import com.syncodec.momento.custom.squircle.Squircle
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.mainComponent.MainViewModel
 import com.syncodec.momento.miscellaneous.DataStore
 import com.syncodec.momento.miscellaneous.filterData
 import com.syncodec.momento.miscellaneous.timeStampToPrettyDay
-import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.todayComponent.TodayActivity
 import java.util.*
 
@@ -51,45 +48,42 @@ import java.util.*
 @ExperimentalMaterialApi
 @ExperimentalPagerApi
 @Composable
-fun DiaryScreen() {
+fun NoteScreen(
+	noteList: List<NoteDbEntry>,
+	isSelected: Boolean,
+	selectedItemList: List<String>,
+	filterTag: List<String>,
+	onClick: (MainActivity.Click, Any?) -> Unit
+) {
 	val context = LocalContext.current
-	val viewModel: MainViewModel = viewModel()
 	val dataStore = DataStore(context = context)
 
-	val vaultState by viewModel.activityState.vaultState
-	val showArchived by viewModel.activityState.showArchived
-	val showFavourite by viewModel.activityState.showFavourite
-	val showLocked by viewModel.activityState.showLocked
-	var isSelected by viewModel.activityState.isSelected
-
-	val diaryList by viewModel.defaultNoteList.observeAsState()
-	val isDiaryEmpty: Boolean = diaryList?.isEmpty() ?: true
+	val vaultState = Momento.Companion.VaultState.OPENED
+	val showArchived = false
+	val showFavourite = false
+	val showLocked = false
 
 	val noteDbEntryDayMap: MutableMap<Long, MutableList<NoteDbEntry>> = mutableMapOf()
 
-	val selectedItemList = viewModel.activityState.selectedItemList
-
 	val calendar = Calendar.getInstance()
-	diaryList
-		?.forEach { diary ->
+	noteList.forEach { note ->
 			calendar.apply {
-				timeInMillis = diary.userTimestamp
+				timeInMillis = note.userTimestamp
 				set(Calendar.MILLISECOND, 0)
 				set(Calendar.SECOND, 0)
 				set(Calendar.MINUTE, 0)
 				set(Calendar.HOUR, 0)
 			}
 			if (noteDbEntryDayMap.containsKey(calendar.timeInMillis)) {
-				noteDbEntryDayMap[calendar.timeInMillis]!!.add(diary)
+				noteDbEntryDayMap[calendar.timeInMillis]!!.add(note)
 			} else {
-				noteDbEntryDayMap[calendar.timeInMillis] = mutableListOf(diary)
+				noteDbEntryDayMap[calendar.timeInMillis] = mutableListOf(note)
 			}
 		}
 
-	if (isDiaryEmpty) {
+	if (noteList.isEmpty()) {
 		Column(
-			modifier = Modifier
-				.fillMaxSize()
+			modifier = Modifier.fillMaxSize()
 		) {
 			if (!(showArchived || showFavourite || showLocked)) {
 				QuoteCard()
@@ -116,15 +110,15 @@ fun DiaryScreen() {
 				}
 			}
 
-			noteDbEntryDayMap.forEach { (day, diaryList) ->
-				val filteredEntries = diaryList.filter {
+			noteDbEntryDayMap.forEach { (day, noteList) ->
+				val filteredEntries = noteList.filter {
 					filterData(
 						showArchived = showArchived,
-						isArchived = it.isArchived,
+						isArchived = false,
 						showFavourite = showFavourite,
-						isFavourite = it.isFavourite,
+						isFavourite = false,
 						showLocked = showLocked,
-						isLocked = it.isLocked
+						isLocked = false
 					)
 				}
 
@@ -140,57 +134,39 @@ fun DiaryScreen() {
 					}
 				}
 
-				diaryList.forEach { diaryDbEntry ->
+				noteList.forEach { noteDbEntry ->
 					item {
 						val showEntry: Boolean = filterData(
 							showArchived = showArchived,
-							isArchived = diaryDbEntry.isArchived,
+							isArchived = false,
 							showFavourite = showFavourite,
-							isFavourite = diaryDbEntry.isFavourite,
+							isFavourite = false,
 							showLocked = showLocked,
-							isLocked = diaryDbEntry.isLocked
+							isLocked = false
 						)
 
 						NoteCardData(
-							timestamp = diaryDbEntry.userTimestamp,
+							timestamp = noteDbEntry.userTimestamp,
 							showFullTime = false,
-							isLocked = diaryDbEntry.isLocked,
-							isSelected = diaryDbEntry.key in selectedItemList,
-							isArchived = diaryDbEntry.isArchived,
-							isFavourite = diaryDbEntry.isFavourite,
-							isDeleted = diaryDbEntry.deletedTimestamp != -1L,
-							isLast = diaryDbEntry.key == lastEntryKey,
-							title = diaryDbEntry.title,
-							contentThumbnail = diaryDbEntry.contentThumbnail,
-							attachmentCount = diaryDbEntry.attachmentCount,
-							attachmentThumbnail = diaryDbEntry.attachmentThumbnail,
-							address = diaryDbEntry.address,
+							isLocked = false,
+							isSelected = noteDbEntry.key in selectedItemList,
+							isArchived = false,
+							isFavourite = false,
+							isDeleted = noteDbEntry.deletedTimestamp != -1L,
+							isLast = noteDbEntry.key == lastEntryKey,
+							title = noteDbEntry.title,
+							contentThumbnail = noteDbEntry.contentThumbnail,
+							attachmentCount = noteDbEntry.attachmentCount,
+							attachmentThumbnail = noteDbEntry.attachmentThumbnail,
+							address = noteDbEntry.address,
 							isVisible = showEntry,
-							onClick = {
-								if (isSelected) {
-									isSelected = true
-									if (diaryDbEntry.key in selectedItemList) {
-										selectedItemList.remove(diaryDbEntry.key)
-									} else {
-										selectedItemList.add(diaryDbEntry.key)
-									}
-								} else {
-									Intent(context, NoteActivity::class.java).apply {
-										putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
-										putExtra(Konstant.Companion.Konstant.DIARY_KEY.name, diaryDbEntry.key)
-										context.startActivity(this)
-									}
-								}
-							},
-							onLongClick = {
-								isSelected = true
-								selectedItemList.add(diaryDbEntry.key)
-							},
+							onClick = { onClick(MainActivity.Click.CLICK_NOTE, noteDbEntry.key) },
+							onLongClick = { onClick(MainActivity.Click.LONG_CLICK_NOTE, noteDbEntry.key) },
 						).apply {
 							NoteCard(noteCardData = this)
 						}
 
-						NotebookTimelineSpacer(isVisible = diaryDbEntry.key != lastEntryKey && showEntry)
+						NotebookTimelineSpacer(isVisible = noteDbEntry.key != lastEntryKey && showEntry)
 					}
 				}
 			}
