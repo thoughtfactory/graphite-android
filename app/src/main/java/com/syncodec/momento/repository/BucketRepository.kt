@@ -23,9 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import javax.inject.Singleton
 
-@Singleton
 class BucketRepository(val momento: Momento) {
 
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())

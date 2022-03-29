@@ -157,7 +157,7 @@ fun AddressCard(
 							.padding(16.dp, 12.dp),
 					) {
 						Text(
-							text = address!!,
+							text = address ?: "",
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onBackground,
 							fontWeight = FontWeight.Bold,

@@ -13,22 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.settings.SettingsActivity
 import com.syncodec.momento.settings.miscellaneous.SettingButton
 
 
 @Composable
 fun PreferenceScreen(
-	onClick: (SettingsActivity.Click) -> Unit
+	onClick: (SettingsActivity.Click, SettingsActivity.Companion.Path) -> Unit
 ) {
 	LazyColumn(
-		modifier = Modifier
-			.fillMaxSize()
+		modifier = Modifier.fillMaxSize()
 	) {
-		item { ThemeButton(title = "Theme", subTitle = "Material you") { onClick(SettingsActivity.Click.THEME) } }
-		item { SettingButton(title = "Font Family", subTitle = "Roboto") { onClick(SettingsActivity.Click.FONT_FAMILY) } }
-		item { SettingButton(title = "Font Size", subTitle = "13pt") { onClick(SettingsActivity.Click.ABOUT_US) } }
-		item { SettingButton(title = "Dark theme", "System") { onClick(SettingsActivity.Click.ABOUT_US) } }
+		item { ThemeButton(title = "Theme", subTitle = "Material you") { onClick(SettingsActivity.Click.NAVIGATION, SettingsActivity.Companion.Path.THEME) } }
+		item { SettingButton(title = "Font Family", subTitle = "Roboto") { onClick(SettingsActivity.Click.NAVIGATION, SettingsActivity.Companion.Path.FONT_FAMILY) } }
+		item { SettingButton(title = "Font Size", subTitle = "13pt") { logger("TODO") } }
+		item { SettingButton(title = "Dark theme", "System") { logger("TODO") } }
 	}
 }
 

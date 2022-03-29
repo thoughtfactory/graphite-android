@@ -16,24 +16,25 @@ import com.syncodec.momento.settings.miscellaneous.SettingButton
 
 @Composable
 fun SecurityScreen(
-	onClick: (SettingsActivity.Click) -> Unit
+	onClick: (SettingsActivity.Click, Any?) -> Unit
 ) {
 	val context = LocalContext.current
 	val dataStore = DataStore(context = context)
 	val passcode by dataStore.getPasscode.collectAsState(initial = null)
 
-	Log.i("npr71", "passcode : $passcode")
-
 	Crossfade(targetState = passcode != null) {
 		if (it) {
 			LazyColumn(
-				modifier = Modifier
-					.fillMaxSize()
+				modifier = Modifier.fillMaxSize()
 			) {
-				item { SettingButton(title = "Add Passcode", enabled = passcode == "") { onClick(SettingsActivity.Click.ADD_PASSCODE) } }
-				item { SettingButton(title = "Change Passcode", enabled = passcode != "") { onClick(SettingsActivity.Click.CHANGE_PASSCODE) } }
-				item { SettingButton(title = "Remove Passcode", enabled = passcode != "") { onClick(SettingsActivity.Click.REMOVE_PASSCODE) } }
-				item { SettingButton(title = "Biometric Unlock", subTitle = "Unlock vault with biometric", enabled = passcode != "") { onClick(SettingsActivity.Click.BIOMETRIC_UNLOCK) } }
+				item { SettingButton(title = "Add Passcode", enabled = passcode == "") { onClick(SettingsActivity.Click.ADD_PASSCODE, null) } }
+				item { SettingButton(title = "Change Passcode", enabled = passcode != "") { onClick(SettingsActivity.Click.CHANGE_PASSCODE, null) } }
+				item { SettingButton(title = "Remove Passcode", enabled = passcode != "") { onClick(SettingsActivity.Click.REMOVE_PASSCODE, null) } }
+				item {
+					SettingButton(title = "Biometric Unlock", subTitle = "Unlock vault with biometric", enabled = passcode != "") {
+						onClick(SettingsActivity.Click.BIOMETRIC_UNLOCK, null)
+					}
+				}
 			}
 		}
 	}

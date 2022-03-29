@@ -23,9 +23,7 @@ import com.syncodec.momento.konstant.Konstant
 @Composable
 fun CalendarWeek() {
 	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.secondaryContainer)
+		modifier = Modifier.fillMaxWidth()
 	) {
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(7),
@@ -33,7 +31,7 @@ fun CalendarWeek() {
 				.fillMaxWidth()
 				.padding(12.dp)
 				.clip(RoundedCornerShape(12.dp))
-				.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f)),
+				.background(MaterialTheme.colorScheme.primary),
 		) {
 			for (i in 0 until 7) {
 				item {

@@ -1,6 +1,5 @@
 package com.syncodec.momento.searchComponent
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -20,12 +19,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.Momento
-import com.syncodec.momento.custom.notebook.NoteCard
-import com.syncodec.momento.custom.notebook.NoteCardData
 import com.syncodec.momento.custom.notebook.NotebookHeaderCard
 import com.syncodec.momento.custom.notebook.NotebookTimelineSpacer
-import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.searchComponent.miscellaneous.SearchBar
 import com.syncodec.momento.searchComponent.miscellaneous.filterData
 import com.syncodec.momento.ui.theme.MomentoTheme

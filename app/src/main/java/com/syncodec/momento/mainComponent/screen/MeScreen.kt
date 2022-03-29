@@ -1,6 +1,5 @@
 package com.syncodec.momento.mainComponent.screen
 
-import android.content.Intent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -11,8 +10,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,30 +19,25 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
-import com.syncodec.momento.custom.button.StateButton
-import com.syncodec.momento.custom.button.StateData
-import com.syncodec.momento.custom.notebook.NoteCard
-import com.syncodec.momento.custom.notebook.NoteCardData
-import com.syncodec.momento.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.mainComponent.MainViewModel
-import com.syncodec.momento.settings.SettingsActivity
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.Bucket
+import compose.icons.tablericons.Notes
+import compose.icons.tablericons.Settings
+import compose.icons.tablericons.Signature
 import java.util.*
 import kotlin.math.max
 
@@ -52,80 +46,78 @@ import kotlin.math.max
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
-fun MeScreen() {
-//	val configuration = LocalConfiguration.current
-//	val screenHeight = configuration.screenHeightDp.dp
-//
-//	val viewModel: MainViewModel = viewModel()
-//	val diaryListObserver by viewModel.noteRepository.noteDbEntryListLiveData.observeAsState()
-//
-//	val last5NoteEntry: MutableList<NoteDbEntry> = remember { mutableListOf() }
-//	val lastDiarySize: MutableMap<Int, Int> = remember { mutableMapOf(0 to 0, 1 to 0, 2 to 0, 3 to 0, 4 to 0, 5 to 0, 6 to 0) }
-//
-//	val timeZone = TimeZone.getDefault()
-//	val calendar = Calendar.getInstance()
-//
-//	diaryListObserver?.forEach {
-//		if (last5NoteEntry.size < 6 && !it.isLocked) {
-//			last5NoteEntry.add(it)
-//		}
-//		val dayBefore = ((calendar.timeInMillis - it.createdTimestamp + timeZone.rawOffset) / (24 * 60 * 60 * 1000)).toInt()
-//		if (lastDiarySize.containsKey(dayBefore)) {
-//			lastDiarySize[dayBefore] = lastDiarySize[dayBefore]!! + 1
-//		} else {
-//			lastDiarySize[dayBefore] = 1
-//		}
-//	}
-//
-//	val scrollState = rememberScrollState()
-//
-//	Box(
-//		modifier = Modifier
-//			.fillMaxSize()
-//	) {
-//		Image(
-//			painter = painterResource(id = R.drawable.home_background),
-//			contentDescription = null,
-//			contentScale = ContentScale.Crop,
-//			modifier = Modifier
-//				.fillMaxWidth()
-//				.height(screenHeight / 3)
-//				.graphicsLayer {
-//					this.alpha = 1 - (scrollState.value / (screenHeight / 3).toPx())
-//					this.translationY = -(screenHeight / 8).toPx() * scrollState.value / (screenHeight / 3).toPx()
-//				},
-//		)
-//
-//		Column(
-//			horizontalAlignment = Alignment.CenterHorizontally,
-//			modifier = Modifier
-//				.fillMaxSize()
-//				.verticalScroll(scrollState),
-//		) {
-//			Spacer(modifier = Modifier.height((screenHeight / 3) - 54.dp))
-//
-//			ProfileCard()
-//
-//			StatsCard()
-//			Spacer(modifier = Modifier.height(8.dp))
-//
-//			GraphCard(lastDiarySize = lastDiarySize)
-//			Spacer(modifier = Modifier.height(8.dp))
-//
-//			RecentCard()
-//
-//			Spacer(modifier = Modifier.height(192.dp))
-//		}
-//	}
+fun MeScreen(
+	noteList: List<NoteDbEntry>,
+	onClick: (MainActivity.Click, Any?) -> Unit
+) {
+	val configuration = LocalConfiguration.current
+	val screenHeight = configuration.screenHeightDp.dp
+
+	val last5NoteEntry: MutableList<NoteDbEntry> = remember { mutableListOf() }
+	val lastDiarySize: MutableMap<Int, Int> = remember { mutableMapOf(0 to 0, 1 to 0, 2 to 0, 3 to 0, 4 to 0, 5 to 0, 6 to 0) }
+
+	val calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"))
+
+	noteList.forEach {
+		if (last5NoteEntry.size < 6) {
+			last5NoteEntry.add(it)
+		}
+		val dayBefore = ((calendar.timeInMillis - it.createdTimestamp )).toInt()
+		if (lastDiarySize.containsKey(dayBefore)) {
+			lastDiarySize[dayBefore] = lastDiarySize[dayBefore]!! + 1
+		} else {
+			lastDiarySize[dayBefore] = 1
+		}
+	}
+
+	val scrollState = rememberScrollState()
+
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+	) {
+		Image(
+			painter = painterResource(id = R.drawable.home_background),
+			contentDescription = null,
+			contentScale = ContentScale.Crop,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(screenHeight / 3)
+				.graphicsLayer {
+					this.alpha = 1 - (scrollState.value / (screenHeight / 3).toPx())
+					this.translationY = -(screenHeight / 8).toPx() * scrollState.value / (screenHeight / 3).toPx()
+				},
+		)
+
+		Column(
+			horizontalAlignment = Alignment.CenterHorizontally,
+			modifier = Modifier
+				.fillMaxSize()
+				.verticalScroll(scrollState),
+		) {
+			Spacer(modifier = Modifier.height((screenHeight / 3) - 54.dp))
+
+			ProfileCard { click, data -> onClick(click, data) }
+
+			StatsCard()
+			Spacer(modifier = Modifier.height(8.dp))
+
+			GraphCard(lastDiarySize = lastDiarySize)
+			Spacer(modifier = Modifier.height(8.dp))
+
+			RecentCard()
+
+			Spacer(modifier = Modifier.height(192.dp))
+		}
+	}
 }
 
 @Composable
-private fun ProfileCard() {
-	val context = LocalContext.current
-
+private fun ProfileCard(
+	onClick: (MainActivity.Click, Any?) -> Unit
+) {
 	Column(
-		modifier = Modifier
-			.fillMaxWidth(),
+		modifier = Modifier.fillMaxWidth(),
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Box(
@@ -151,7 +143,7 @@ private fun ProfileCard() {
 					.padding(12.dp, 0.dp),
 				contentAlignment = Alignment.BottomEnd
 			) {
-				IconButton(onClick = { context.startActivity(Intent(context, SettingsActivity::class.java)) }) {
+				IconButton(onClick = { onClick(MainActivity.Click.SETTINGS, null) }) {
 					Icon(imageVector = TablerIcons.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground)
 				}
 			}

@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.android.libraries.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.konstant.ErrorCode
 import com.syncodec.momento.konstant.Status
@@ -47,8 +47,6 @@ fun NoteEditorScreen(
 
 	val activityState = viewModel.activityState
 	val noteDbEntry by viewModel.knotDbEntry.collectAsState()
-
-	logger("timestamp : ${noteDbEntry?.userTimestamp}")
 
 	val richTextEditor = viewModel.activityState.richTextEditor
 	val locationPermissionState = viewModel.activityState.locationPermissionState
@@ -90,7 +88,8 @@ fun NoteEditorScreen(
 
 	Crossfade(
 		targetState = status,
-		animationSpec = tween(durationMillis = 400)
+		animationSpec = tween(durationMillis = 400),
+		modifier = Modifier.fillMaxSize()
 	) {
 		when (it) {
 			Status.INIT -> LoadingView()
@@ -143,9 +142,6 @@ fun NoteEditorScreen(
 					}
 				}
 			}
-			Status.SAVING -> {}
-			Status.SAVED -> {}
-			Status.SUCCESS -> {}
 			Status.ERROR -> {}
 		}
 	}

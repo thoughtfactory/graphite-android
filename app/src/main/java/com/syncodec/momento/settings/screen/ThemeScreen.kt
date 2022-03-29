@@ -17,21 +17,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.momento.miscellaneous.DataStore
+import com.syncodec.momento.settings.SettingsActivity
 import com.syncodec.momento.ui.theme.*
 import kotlin.random.Random
 
 
 @OptIn(ExperimentalFoundationApi::class)
-@Preview
 @Composable
-fun ThemeScreen() {
-	val context = LocalContext.current
-	val dataStore = DataStore(context = context)
-
+fun ThemeScreen(
+	onClick: (SettingsActivity.Click, Int) -> Unit
+) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -45,16 +42,15 @@ fun ThemeScreen() {
 
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(4),
-			modifier = Modifier
-				.padding(16.dp, 0.dp),
+			modifier = Modifier.padding(16.dp, 0.dp),
 		) {
-			item { ThemeCard(colorScheme = lightColorScheme1) { dataStore.putTheme(1) } }
-			item { ThemeCard(colorScheme = lightColorScheme2) { dataStore.putTheme(2) } }
-			item { ThemeCard(colorScheme = lightColorScheme3) { dataStore.putTheme(3) } }
-			item { ThemeCard(colorScheme = lightColorScheme4) { dataStore.putTheme(4) } }
-			item { ThemeCard(colorScheme = lightColorScheme5) { dataStore.putTheme(5) } }
-			item { ThemeCard(colorScheme = lightColorScheme6) { dataStore.putTheme(6) } }
-			item { ThemeCard(colorScheme = lightColorScheme7) { dataStore.putTheme(7) } }
+			item { ThemeCard(colorScheme = lightColorScheme1) { onClick(SettingsActivity.Click.CHANGE_THEME, 0) } }
+			item { ThemeCard(colorScheme = lightColorScheme2) { onClick(SettingsActivity.Click.CHANGE_THEME, 1) } }
+			item { ThemeCard(colorScheme = lightColorScheme3) { onClick(SettingsActivity.Click.CHANGE_THEME, 2) } }
+			item { ThemeCard(colorScheme = lightColorScheme4) { onClick(SettingsActivity.Click.CHANGE_THEME, 3) } }
+			item { ThemeCard(colorScheme = lightColorScheme5) { onClick(SettingsActivity.Click.CHANGE_THEME, 4) } }
+			item { ThemeCard(colorScheme = lightColorScheme6) { onClick(SettingsActivity.Click.CHANGE_THEME, 5) } }
+			item { ThemeCard(colorScheme = lightColorScheme7) { onClick(SettingsActivity.Click.CHANGE_THEME, 6) } }
 		}
 	}
 }
@@ -80,8 +76,7 @@ private fun ThemeView() {
 				.fillMaxHeight(),
 		) {
 			Column(
-				modifier = Modifier
-					.fillMaxSize()
+				modifier = Modifier.fillMaxSize()
 			) {
 				Box(
 					modifier = Modifier

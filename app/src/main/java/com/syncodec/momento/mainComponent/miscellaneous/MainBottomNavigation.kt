@@ -13,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,8 +56,9 @@ fun BottomNavigationBar(
 	)
 
 	NavigationBar(
-		modifier = Modifier.fillMaxWidth(),
-		containerColor = MaterialTheme.colorScheme.background,
+		containerColor = MaterialTheme.colorScheme.surface,
+		tonalElevation = 0.dp,
+		modifier = Modifier.fillMaxWidth()
 	) {
 		val navBackStackEntry by navController.currentBackStackEntryAsState()
 		val currentRoute = navBackStackEntry?.destination?.route
@@ -168,6 +171,7 @@ fun MainNavigation(
 			) {
 				AtlasScreen(
 					mapView = mapView,
+					noteList = noteList,
 					isSelected = isSelected,
 					selectedItemList = selectedItemList
 				) { click, data -> onClick(click, data) }
@@ -177,7 +181,7 @@ fun MainNavigation(
 			CompositionLocalProvider(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
-				MeScreen()
+				MeScreen(noteList = noteList) { click, data -> onClick(click, data) }
 			}
 		}
 	}

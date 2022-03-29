@@ -93,12 +93,6 @@ private fun Viewer(
 					attachmentMap = attachmentMap,
 					connectedTag = connectedTag
 				)
-			Status.SAVING -> {
-			}
-			Status.SAVED -> {
-			}
-			Status.SUCCESS -> {
-			}
 			Status.ERROR -> {
 			}
 		}

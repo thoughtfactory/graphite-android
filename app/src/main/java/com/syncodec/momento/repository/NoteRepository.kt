@@ -15,9 +15,7 @@ import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import javax.inject.Singleton
 
-@Singleton
 class NoteRepository(val momento: Momento) {
 	private var noteTableDao: NoteTableDao = UserDatabase.getInstance(momento).noteTableDao
 	private var notebookTableDao: NotebookTableDao = UserDatabase.getInstance(momento).notebookTableDao

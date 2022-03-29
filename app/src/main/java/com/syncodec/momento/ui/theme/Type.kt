@@ -39,22 +39,22 @@ val OverlockTypography = Typography(
 	bodyLarge = TextStyle(
 		fontFamily = OverlockFontFamily,
 		fontWeight = FontWeight.Bold,
-		fontSize = 18.sp,
-		lineHeight = 24.sp,
+		fontSize = 16.sp,
+		lineHeight = 20.sp,
 		letterSpacing = 0.8.sp
 	),
 	bodyMedium = TextStyle(
 		fontFamily = OverlockFontFamily,
 		fontWeight = FontWeight.Normal,
-		fontSize = 16.sp,
-		lineHeight = 20.sp,
+		fontSize = 14.sp,
+		lineHeight = 16.sp,
 		letterSpacing = 0.4.sp
 	),
 	bodySmall = TextStyle(
 		fontFamily = OverlockFontFamily,
 		fontWeight = FontWeight.Medium,
-		fontSize = 14.sp,
-		lineHeight = 16.sp,
+		fontSize = 12.sp,
+		lineHeight = 14.sp,
 		letterSpacing = 0.2.sp
 	)
 )
@@ -70,22 +70,22 @@ val SourceSansProTypography = Typography(
 	bodyLarge = TextStyle(
 		fontFamily = SourceSansProFontFamily,
 		fontWeight = FontWeight.Bold,
-		fontSize = 18.sp,
-		lineHeight = 24.sp,
+		fontSize = 16.sp,
+		lineHeight = 18.sp,
 		letterSpacing = 0.8.sp
 	),
 	bodyMedium = TextStyle(
 		fontFamily = SourceSansProFontFamily,
 		fontWeight = FontWeight.Normal,
-		fontSize = 16.sp,
-		lineHeight = 20.sp,
+		fontSize = 14.sp,
+		lineHeight = 16.sp,
 		letterSpacing = 0.4.sp
 	),
 	bodySmall = TextStyle(
 		fontFamily = SourceSansProFontFamily,
 		fontWeight = FontWeight.Medium,
-		fontSize = 14.sp,
-		lineHeight = 16.sp,
+		fontSize = 12.sp,
+		lineHeight = 14.sp,
 		letterSpacing = 0.2.sp
 	)
 )
@@ -101,22 +101,22 @@ val UbuntuTypography = Typography(
 	titleSmall = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Bold,
-		fontSize = 20.sp,
-		lineHeight = 24.sp,
+		fontSize = 16.sp,
+		lineHeight = 18.sp,
 		letterSpacing = 1.sp
 	),
 	bodyLarge = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Bold,
-		fontSize = 18.sp,
-		lineHeight = 24.sp,
+		fontSize = 14.sp,
+		lineHeight = 16.sp,
 		letterSpacing = 0.8.sp
 	),
 	bodyMedium = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Normal,
-		fontSize = 14.sp,
-		lineHeight = 18.sp,
+		fontSize = 12.sp,
+		lineHeight = 14.sp,
 		letterSpacing = 0.4.sp
 	),
 	bodySmall = TextStyle(

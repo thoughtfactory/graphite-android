@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.momento.custom.notebook.*
 import com.syncodec.momento.database.chapter.ChapterDbEntry
 import com.syncodec.momento.database.note.NoteDbEntry
+import com.syncodec.momento.database.note.locationDataToLatLng
 import com.syncodec.momento.miscellaneous.filterData
 import com.syncodec.momento.notebookComponent.NotebookActivity
 
@@ -51,6 +52,7 @@ fun NotebookScreen(
 			) and showNotes
 
 			NoteCardData(
+				key = note.key,
 				timestamp = note.userTimestamp,
 				showFullTime = true,
 				isLocked = false,
@@ -64,6 +66,7 @@ fun NotebookScreen(
 				attachmentCount = note.attachmentCount,
 				attachmentThumbnail = note.attachmentThumbnail,
 				address = note.address,
+				latLng = locationDataToLatLng(note.location),
 				isVisible = showEntry,
 				onClick = { onClick(NotebookActivity.Click.CLICK_NOTE, note.key) },
 				onLongClick = { onClick(NotebookActivity.Click.LONG_CLICK_NOTE, note.key) },

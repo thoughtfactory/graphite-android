@@ -55,6 +55,8 @@ private enum class ToolbarButton {
 	STATE,
 	OPEN_FORMAT,
 	CLOSE_FORMAT,
+	METADATA,
+	MENU,
 	UNDO,
 	REDO,
 	BOLD,
@@ -104,7 +106,7 @@ fun EditorToolbar(
 
 	richTextEditor.setOnFormatUpdate(object : RichTextEditor.OnFormatUpdateListener {
 		override fun onFormatUpdate(newTextFormat: RichTextEditor.TextFormat) {
-   			textFormat = newTextFormat
+			textFormat = newTextFormat
 		}
 	})
 
@@ -136,19 +138,23 @@ fun EditorToolbar(
 				) { toolbarButton ->
 					when (toolbarButton) {
 						ToolbarButton.ALIGN_LEFT ->
-							if (textFormat.alignLeft) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec("editor.commands.setTextAlign('left');")
+							if (textFormat.alignLeft) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
+								"editor.commands.setTextAlign('left');"
+							)
 						ToolbarButton.ALIGN_CENTER ->
-							if (textFormat.alignCenter) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec("editor.commands.setTextAlign('center');")
+							if (textFormat.alignCenter) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
+								"editor.commands.setTextAlign('center');"
+							)
 						ToolbarButton.ALIGN_RIGHT ->
-							if (textFormat.alignRight) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec("editor.commands.setTextAlign('right');")
+							if (textFormat.alignRight) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
+								"editor.commands.setTextAlign('right');"
+							)
 						ToolbarButton.ALIGN_JUSTIFY ->
-							if (textFormat.alignJustify) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec("editor.commands.setTextAlign('justify');")
+							if (textFormat.alignJustify) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
+								"editor.commands.setTextAlign('justify');"
+							)
 					}
 				}
-//				ToolbarState.TEXT_HIGHLIGHT -> ColorToolbar(textFormat = textFormat) { color -> richTextEditor.exec("editor.commands.setColor('${color.toHexString()}');") }
-//				ToolbarState.TEXT_COLOR -> ColorToolbar(textFormat = textFormat) {
-//					Log.i("npr71", "color : ${it.toHexString()}")
-//				}
 			}
 		}
 
@@ -161,7 +167,8 @@ fun EditorToolbar(
 			AnimatedContent(
 				targetState = showFormatter,
 				transitionSpec = {
-					(slideInHorizontally(tween(600)) { width -> -width } + fadeIn() with slideOutHorizontally(tween(600)) { width -> width } + fadeOut())
+					(slideInHorizontally(tween(600)) { width -> -width } + fadeIn()
+							with slideOutHorizontally(tween(600)) { width -> width } + fadeOut())
 						.using(SizeTransform(clip = false))
 				}
 			) {
@@ -180,17 +187,18 @@ fun EditorToolbar(
 							ToolbarButton.ITALIC -> richTextEditor.exec("editor.chain().focus().toggleItalic().run();")
 							ToolbarButton.UNDERLINE -> richTextEditor.exec("editor.chain().focus().toggleUnderline().run();")
 							ToolbarButton.STRIKE -> richTextEditor.exec("editor.chain().focus().toggleStrike().run();")
-							ToolbarButton.HARD_BREAK -> richTextEditor.exec("editor.chain().focus().setHardBreak().run()", false)
+							ToolbarButton.HARD_BREAK -> richTextEditor.exec(
+								"editor.chain().focus().setHardBreak().run()",
+								false
+							)
 							ToolbarButton.CHECK_LIST -> richTextEditor.exec("editor.commands.toggleTaskList();")
 							ToolbarButton.BULLET_LIST -> richTextEditor.exec("editor.commands.toggleBulletList();")
 							ToolbarButton.ORDERED_LIST -> richTextEditor.exec("editor.commands.toggleOrderedList();")
 							ToolbarButton.BLOCKQUOTE -> richTextEditor.exec("editor.chain().focus().toggleBlockquote().run();")
-							ToolbarButton.HEADING -> toolbarState = if (toolbarState == ToolbarState.HEADING) ToolbarState.BASE else ToolbarState.HEADING
-							ToolbarButton.ALIGN -> toolbarState = if (toolbarState == ToolbarState.ALIGN) ToolbarState.BASE else ToolbarState.ALIGN
-//							ToolbarButton.TEXT_HIGHLIGHT -> toolbarState =
-//								if (toolbarState == ToolbarState.TEXT_HIGHLIGHT) ToolbarState.BASE else ToolbarState.TEXT_HIGHLIGHT
-//							ToolbarButton.TEXT_COLOR -> toolbarState =
-//								if (toolbarState == ToolbarState.TEXT_COLOR) ToolbarState.BASE else ToolbarState.TEXT_COLOR
+							ToolbarButton.HEADING -> toolbarState =
+								if (toolbarState == ToolbarState.HEADING) ToolbarState.BASE else ToolbarState.HEADING
+							ToolbarButton.ALIGN -> toolbarState =
+								if (toolbarState == ToolbarState.ALIGN) ToolbarState.BASE else ToolbarState.ALIGN
 							ToolbarButton.INDENT -> richTextEditor.exec("editor.chain().focus().sinkListItem('listItem').run()")
 							ToolbarButton.OUTDENT -> richTextEditor.exec("editor.chain().focus().liftListItem('listItem').run()")
 							ToolbarButton.LINK -> toolbarState = ToolbarState.LINK
@@ -208,11 +216,14 @@ fun EditorToolbar(
 							ToolbarButton.TIMESTAMP_PICKER -> onClick(NoteActivity.Click.SELECT_TIME)
 							ToolbarButton.ATTACHMENT -> onClick(NoteActivity.Click.ATTACHMENT_BUTTON)
 							ToolbarButton.TAG -> onClick(NoteActivity.Click.TAG_BUTTON)
-							ToolbarButton.STATE -> toolbarState = if (toolbarState == ToolbarState.STATE) ToolbarState.BASE else ToolbarState.STATE
+							ToolbarButton.STATE -> toolbarState =
+								if (toolbarState == ToolbarState.STATE) ToolbarState.BASE else ToolbarState.STATE
 							ToolbarButton.OPEN_FORMAT -> {
 								toolbarState = ToolbarState.BASE
 								showFormatter = true
 							}
+							ToolbarButton.METADATA -> onClick(NoteActivity.Click.METADATA)
+							ToolbarButton.MENU -> onClick(NoteActivity.Click.MENU)
 						}
 					}
 				}
@@ -259,6 +270,16 @@ private fun StateEditorToolbar(
 			icon = R.drawable.ic_text_format,
 			highlight = false
 		) { onClick(ToolbarButton.OPEN_FORMAT) }
+		ToolbarButton(
+			name = "Metadata",
+			icon = R.drawable.ic_info,
+			highlight = false
+		) { onClick(ToolbarButton.METADATA) }
+		ToolbarButton(
+			name = "Menu",
+			icon = R.drawable.ic_menu,
+			highlight = false
+		) { onClick(ToolbarButton.MENU) }
 	}
 }
 

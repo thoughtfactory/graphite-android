@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -19,12 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
@@ -37,13 +38,13 @@ import com.syncodec.momento.custom.richText.viewer.string.RichTextString
 import com.syncodec.momento.custom.richText.viewer.string.RichTextStringStyle
 import com.syncodec.momento.custom.richText.viewer.string.Text
 import com.syncodec.momento.custom.richText.viewer.string.richTextString
+import com.syncodec.momento.custom.squircle.SquircleShape
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.attachment.getMimeType
 import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.database.tag.TagDbEntry
-import com.syncodec.momento.miscellaneous.noteViewerTimestamp
+import com.syncodec.momento.miscellaneous.TimeUtils.Companion.noteViewerTimestamp
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -91,9 +92,10 @@ fun ViewerComponent(
 			.verticalScroll(rememberScrollState())
 			.background(MaterialTheme.colorScheme.background)
 	) {
-		Spacer(modifier = Modifier.height(14.dp))
-
-		Thumbnail(attachmentMap = attachmentMap)
+		if (attachmentMap.isNotEmpty()) {
+			Spacer(modifier = Modifier.height(14.dp))
+			Thumbnail(attachmentMap = attachmentMap)
+		}
 
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -104,7 +106,7 @@ fun ViewerComponent(
 			connectedTag = connectedTag
 		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(16.dp))
 
 		if (tiptapData != null) {
 			RenderContent(
@@ -121,6 +123,9 @@ fun ViewerComponent(
 private fun Thumbnail(
 	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>
 ) {
+	val configuration = LocalConfiguration.current
+	val screenWidth = configuration.screenWidthDp.dp
+
 	var imageKey: String? = null
 	attachmentMap.forEach {
 		if (it.value.first.getMimeType() == "image") {
@@ -132,7 +137,7 @@ private fun Thumbnail(
 	if (imageKey != null) {
 		Card(
 			elevation = 0.dp,
-			shape = RoundedCornerShape(12.dp),
+			shape = SquircleShape(12.0),
 			backgroundColor = Color.Companion.Transparent,
 			modifier = Modifier
 				.fillMaxWidth()
@@ -168,7 +173,7 @@ private fun Header(
 		) {
 			Text(
 				text = timestamp[0],
-				style = MaterialTheme.typography.bodyLarge.copy(fontSize = 48.sp),
+				style = MaterialTheme.typography.bodyMedium.copy(fontSize = 48.sp),
 				color = MaterialTheme.colorScheme.secondary
 			)
 			Spacer(modifier = Modifier.width(4.dp))
@@ -191,24 +196,26 @@ private fun Header(
 				)
 			}
 		}
-		if (address != null) {
+		if (!address.isNullOrBlank()) {
 			Spacer(modifier = Modifier.height(4.dp))
 			Row(
 				modifier = Modifier,
-				verticalAlignment = Alignment.Top,
+				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.SpaceBetween
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_location_pin_3),
 					contentDescription = "Location",
 					tint = MaterialTheme.colorScheme.secondary,
-					modifier = Modifier.requiredSize(16.dp)
+					modifier = Modifier.requiredSize(12.dp)
 				)
 				Spacer(modifier = Modifier.width(4.dp))
 				Text(
 					text = address,
-					style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
-					color = MaterialTheme.colorScheme.secondary
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.secondary,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis
 				)
 			}
 		}

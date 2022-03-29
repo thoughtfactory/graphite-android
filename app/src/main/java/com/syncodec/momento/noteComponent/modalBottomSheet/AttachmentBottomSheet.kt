@@ -35,7 +35,7 @@ import com.syncodec.momento.custom.BottomSheetHeader
 import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.attachment.getMimeType
-import com.syncodec.momento.miscellaneous.createTempFileToExpose
+import com.syncodec.momento.miscellaneous.FileUtils.Companion.createTempFileToExpose
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.noteComponent.NoteActivity
 import compose.icons.TablerIcons

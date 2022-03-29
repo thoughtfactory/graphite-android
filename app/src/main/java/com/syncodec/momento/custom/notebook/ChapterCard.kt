@@ -26,8 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
-import com.syncodec.momento.miscellaneous.entryTimestamp0
-import com.syncodec.momento.miscellaneous.entryTimestamp1
+import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp0
+import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp1
 import dev.jorgecastillo.androidcolorx.library.tints
 
 data class ChapterCardData(

@@ -12,18 +12,15 @@ import com.syncodec.momento.settings.miscellaneous.SettingButton
 
 
 @Composable
-fun FontFamilyScreen() {
-	val context = LocalContext.current
-	val dataStore = DataStore(context = context)
-	dataStore.getTypography.collectAsState(initial = 0)
-
+fun FontFamilyScreen(
+	onClick: (SettingsActivity.Click, Int) -> Unit
+) {
 	LazyColumn(
-		modifier = Modifier
-			.fillMaxSize()
+		modifier = Modifier.fillMaxSize()
 	) {
-		item { SettingButton(title = "Overlock") { dataStore.putTypography(0) } }
-		item { SettingButton(title = "Source Sans Pro") { dataStore.putTypography(1) } }
-		item { SettingButton(title = "Ubuntu") { dataStore.putTypography(2) } }
-		item { SettingButton(title = "ATWriter") { dataStore.putTypography(3) } }
+		item { SettingButton(title = "Overlock") { onClick(SettingsActivity.Click.CHANGE_FONT_FAMILY, 0) } }
+		item { SettingButton(title = "Source Sans Pro") { onClick(SettingsActivity.Click.CHANGE_FONT_FAMILY, 1) } }
+		item { SettingButton(title = "Ubuntu") { onClick(SettingsActivity.Click.CHANGE_FONT_FAMILY, 2) } }
+		item { SettingButton(title = "ATWriter") { onClick(SettingsActivity.Click.CHANGE_FONT_FAMILY, 3) } }
 	}
 }

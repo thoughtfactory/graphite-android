@@ -57,8 +57,10 @@ fun NotebookScreen(
 				modifier = Modifier
 					.fillMaxSize()
 					.padding(12.dp, 0.dp),
-			) { notebookList.forEach { notebook -> item { NotebookGridCard(notebookDbEntry = notebook){onClick(MainActivity.Click.CLICK_NOTEBOOK, it)} } } }
-		} else { NoNotebookCard() }
+			) { notebookList.forEach { notebook -> item { NotebookGridCard(notebookDbEntry = notebook) { onClick(MainActivity.Click.CLICK_NOTEBOOK, it) } } } }
+		} else {
+			NoNotebookCard()
+		}
 	}
 }
 

@@ -8,7 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.google.android.libraries.maps.MapView
+import com.google.android.gms.maps.MapView
 
 @Composable
 fun rememberMapViewWithLifecycle(): MapView {

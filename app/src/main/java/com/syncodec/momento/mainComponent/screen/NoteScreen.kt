@@ -37,14 +37,19 @@ import com.syncodec.momento.R
 import com.syncodec.momento.custom.notebook.*
 import com.syncodec.momento.custom.squircle.Squircle
 import com.syncodec.momento.database.note.NoteDbEntry
+import com.syncodec.momento.database.note.locationDataToLatLng
 import com.syncodec.momento.miscellaneous.DataStore
+import com.syncodec.momento.miscellaneous.TimeUtils
+import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToPrettyDay
 import com.syncodec.momento.miscellaneous.filterData
-import com.syncodec.momento.miscellaneous.timeStampToPrettyDay
 import com.syncodec.momento.todayComponent.TodayActivity
-import java.util.*
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(
+	ExperimentalMaterial3Api::class,
+	ExperimentalFoundationApi::class,
+	ExperimentalAnimationApi::class
+)
 @ExperimentalMaterialApi
 @ExperimentalPagerApi
 @Composable
@@ -65,21 +70,11 @@ fun NoteScreen(
 
 	val noteDbEntryDayMap: MutableMap<Long, MutableList<NoteDbEntry>> = mutableMapOf()
 
-	val calendar = Calendar.getInstance()
 	noteList.forEach { note ->
-			calendar.apply {
-				timeInMillis = note.userTimestamp
-				set(Calendar.MILLISECOND, 0)
-				set(Calendar.SECOND, 0)
-				set(Calendar.MINUTE, 0)
-				set(Calendar.HOUR, 0)
-			}
-			if (noteDbEntryDayMap.containsKey(calendar.timeInMillis)) {
-				noteDbEntryDayMap[calendar.timeInMillis]!!.add(note)
-			} else {
-				noteDbEntryDayMap[calendar.timeInMillis] = mutableListOf(note)
-			}
-		}
+		val timestamp = TimeUtils.timestampToCalendarDay(note.userTimestamp)
+		if (noteDbEntryDayMap.containsKey(timestamp)) noteDbEntryDayMap[timestamp]!!.add(note)
+		else noteDbEntryDayMap[timestamp] = mutableListOf(note)
+	}
 
 	if (noteList.isEmpty()) {
 		Column(
@@ -110,7 +105,8 @@ fun NoteScreen(
 				}
 			}
 
-			noteDbEntryDayMap.forEach { (day, noteList) ->
+			noteDbEntryDayMap.toSortedMap(Comparator.reverseOrder()).forEach { (day, noteList) ->
+				noteList.sortBy { it.userTimestamp }
 				val filteredEntries = noteList.filter {
 					filterData(
 						showArchived = showArchived,
@@ -123,7 +119,7 @@ fun NoteScreen(
 				}
 
 				val entrySize = filteredEntries.size
-				val lastEntryKey = if (entrySize!=0) filteredEntries.last().key else null
+				val lastEntryKey = if (entrySize != 0) filteredEntries.last().key else null
 
 				stickyHeader {
 					AnimatedVisibility(visible = entrySize != 0) {
@@ -146,6 +142,7 @@ fun NoteScreen(
 						)
 
 						NoteCardData(
+							key = noteDbEntry.key,
 							timestamp = noteDbEntry.userTimestamp,
 							showFullTime = false,
 							isLocked = false,
@@ -159,9 +156,15 @@ fun NoteScreen(
 							attachmentCount = noteDbEntry.attachmentCount,
 							attachmentThumbnail = noteDbEntry.attachmentThumbnail,
 							address = noteDbEntry.address,
+							latLng = locationDataToLatLng(noteDbEntry.location),
 							isVisible = showEntry,
 							onClick = { onClick(MainActivity.Click.CLICK_NOTE, noteDbEntry.key) },
-							onLongClick = { onClick(MainActivity.Click.LONG_CLICK_NOTE, noteDbEntry.key) },
+							onLongClick = {
+								onClick(
+									MainActivity.Click.LONG_CLICK_NOTE,
+									noteDbEntry.key
+								)
+							},
 						).apply {
 							NoteCard(noteCardData = this)
 						}
@@ -221,7 +224,10 @@ private fun QuoteCard() {
 						painter = painterResource(id = R.drawable.background),
 						contentDescription = null,
 						contentScale = ContentScale.Crop,
-						colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.31f), BlendMode.SrcOver)
+						colorFilter = ColorFilter.tint(
+							Color.Black.copy(alpha = 0.31f),
+							BlendMode.SrcOver
+						)
 					)
 
 					Column(

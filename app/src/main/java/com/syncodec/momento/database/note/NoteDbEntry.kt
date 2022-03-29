@@ -5,8 +5,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import com.google.android.gms.maps.model.LatLng
-import com.google.gson.annotations.Expose
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 
 @Entity(
@@ -26,7 +24,7 @@ data class NoteDbEntry(
 	val key: String,
 
 	@ColumnInfo(name = "timezone_offset")
-	val timezoneOffset: Int,
+	val timezone: String,
 
 	@ColumnInfo(name = "chapter_path")
 	val chapterPath: MutableList<String>,
@@ -50,7 +48,6 @@ data class NoteDbEntry(
 	var contentThumbnail: String? = null
 
 	@ColumnInfo(name = "attachment_thumbnail", typeAffinity = ColumnInfo.BLOB)
-	@Expose
 	var attachmentThumbnail: Bitmap? = null
 
 	@ColumnInfo(name = "attachment_count")
@@ -73,7 +70,7 @@ data class NoteDbEntry(
 
 	override fun hashCode(): Int {
 		var result = key.hashCode()
-		result = 31 * result + timezoneOffset
+		result = 31 * result + timezone.hashCode()
 		result = 31 * result + notebookKey.hashCode()
 		result = 31 * result + chapterPath.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()

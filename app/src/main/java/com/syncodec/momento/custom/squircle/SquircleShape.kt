@@ -17,7 +17,7 @@ import kotlin.math.pow
  * Squircle Shape
  * @param smoothing for squircle radius
  */
-internal class SquircleShape(
+class SquircleShape(
     private val smoothing: Double
 ) : Shape {
 
@@ -43,10 +43,7 @@ internal class SquircleShape(
 
                 // generate Y coordinates for path
                 val yCoordinates = (-squircleRadius..squircleRadius).map { x ->
-                    Pair(
-                        x.toFloat(),
-                        evalSquircleFun(x, poweredRadius, smoothing)
-                    )
+                    Pair(x.toFloat(), evalSquircleFun(x, poweredRadius, smoothing))
                 }
 
                 // generate Y coordinates for mirror half of squircle shape
@@ -66,19 +63,11 @@ internal class SquircleShape(
 
                 // scale down to original size - for better corners without anti-alias
                 transform(
-                    scaleMatrix(
-                        sx = 1 / OVERSAMPLING_MULTIPLIER,
-                        sy = 1 / OVERSAMPLING_MULTIPLIER
-                    )
+                    scaleMatrix(sx = 1 / OVERSAMPLING_MULTIPLIER, sy = 1 / OVERSAMPLING_MULTIPLIER)
                 )
 
                 // translate path to center
-                transform(
-                    translationMatrix(
-                        tx = size.width / 2,
-                        ty = size.height / 2
-                    )
-                )
+                transform(translationMatrix(tx = size.width / 2, ty = size.height / 2))
             }.asComposePath()
 
         // squircle formula: | (r^smoothing) - |x|^5 | ^ (1 / smoothing)

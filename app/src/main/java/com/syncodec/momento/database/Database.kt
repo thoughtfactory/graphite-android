@@ -28,7 +28,6 @@ import com.syncodec.momento.database.tag.TagKeyDbEntry
 import com.syncodec.momento.database.tag.TagKeyDbTableDao
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
-import javax.inject.Singleton
 
 
 class Converters {
@@ -115,7 +114,6 @@ class Converters {
 	fun fromDataToTaList(value: String?): MutableList<TagDbEntry> = value?.let { objectMapper.readValue(it) } ?: mutableListOf()
 }
 
-@Singleton
 @Database(
 	entities = [
 		NoteDbEntry::class,

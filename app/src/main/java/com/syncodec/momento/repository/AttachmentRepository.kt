@@ -6,14 +6,8 @@ import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.attachment.AttachmentTableDao
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
-import javax.inject.Singleton
 
-@Singleton
 class AttachmentRepository(val momento: Momento) {
 	private var attachmentTableDao: AttachmentTableDao = UserDatabase.getInstance(momento).attachmentTableDao
 

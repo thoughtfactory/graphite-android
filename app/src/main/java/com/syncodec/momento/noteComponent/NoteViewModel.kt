@@ -27,10 +27,10 @@ import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.database.tag.TagDbEntry
 import com.syncodec.momento.database.tag.TagKeyDbEntry
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.*
+import com.syncodec.momento.miscellaneous.CollectionUtils.Companion.listOfField
 import com.syncodec.momento.repository.AttachmentRepository
 import com.syncodec.momento.repository.NoteRepository
 import com.syncodec.momento.repository.TagRepository
@@ -69,7 +69,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	fun createNewNote(title: String?) {
 		NoteDbEntry(
 			key = generatePrimaryKey(),
-			timezoneOffset = 0,
+			timezone = TimeZone.getDefault().id,
 			notebookKey = this.notebookKey,
 			chapterPath = this.chapterPath,
 		).apply {
@@ -102,7 +102,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun putNote() {
-		viewModelScope.launch {
+		viewModelScope.launch(Dispatchers.IO) {
 			this@NoteViewModel.noteDbEntry.value?.let {
 				var bitmap: Bitmap? = null
 				attachmentMap.forEach { (_, data) ->
@@ -122,8 +122,10 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 				it.attachmentThumbnail = bitmap?.let { it1 -> getResizedBitmap(it1, 100) }
 
 				noteRepository.putNote(noteDbEntry = it, note = note.value!!)
-				attachmentRepository.putAttachment(attachmentList = attachmentMap.values.toList())
 				tagRepository.connectTag(key = noteDbEntry.value!!.key, connectedTag)
+				attachmentRepository.putAttachment(attachmentList = attachmentMap.values.toList())
+				activityState.isSaving.value = false
+				activityState.isSaved.value = true
 			}
 		}
 	}

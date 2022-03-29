@@ -294,8 +294,16 @@ editor.setBaseFontColor = (fontColor) => {
     document.getElementById("base").style.color = fontColor;
 };
 
-editor.tryFocus = () => {
-    
+editor.importData = (importData) => {
+    editor.commands.setContent(importData.text);
+    importData.text = {};
+
+    data = {};
+    data.dataJson = editor.getJSON();
+    data.dataText = editor.getText();
+    data.importData = importData
+
+    bridge.getData(JSON.stringify(data));
 }
 
 module.exports = editor;

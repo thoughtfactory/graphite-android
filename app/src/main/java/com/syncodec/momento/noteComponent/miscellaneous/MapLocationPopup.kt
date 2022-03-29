@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.google.android.libraries.maps.CameraUpdateFactory
-import com.google.android.libraries.maps.GoogleMap
-import com.google.android.libraries.maps.model.LatLng
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.noteComponent.NoteActivity

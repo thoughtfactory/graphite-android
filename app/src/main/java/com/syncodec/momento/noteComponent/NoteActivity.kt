@@ -8,20 +8,33 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
@@ -29,15 +42,15 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.libraries.maps.MapView
-import com.google.android.libraries.maps.model.LatLng
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.BuildConfig
+import com.syncodec.momento.R
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.custom.richText.RichTextEditor
 import com.syncodec.momento.custom.richText.rememberRichTextEditorWithLifecycle
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.miscellaneous.locationAddressFilter
-import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.noteComponent.miscellaneous.NotificationType
 import com.syncodec.momento.noteComponent.miscellaneous.TopBar
 import com.syncodec.momento.noteComponent.modalBottomSheet.BottomSheetType
@@ -46,6 +59,7 @@ import com.syncodec.momento.noteComponent.screen.NoteEditorScreen
 import com.syncodec.momento.noteComponent.screen.NoteViewerScreen
 import com.syncodec.momento.ui.theme.MomentoTheme
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.*
@@ -56,14 +70,20 @@ class NoteActivity : ComponentActivity() {
 	private val viewModel by viewModels<NoteViewModel>()
 
 	@OptIn(
-		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
-		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class
+		ExperimentalPagerApi::class,
+		ExperimentalMaterialApi::class,
+		ExperimentalFoundationApi::class,
+		ExperimentalMaterial3Api::class,
+		ExperimentalPermissionsApi::class
 	)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		viewModel.notebookKey = intent.getStringExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name)!!
-		viewModel.chapterPath = intent.getStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name)!!.toMutableStateList()
+		viewModel.notebookKey =
+			intent.getStringExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name)!!
+		viewModel.chapterPath =
+			intent.getStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name)!!
+				.toMutableStateList()
 		viewModel.viewerKey.value = intent.getStringExtra(Konstant.Companion.Konstant.NOTE_KEY.name)
 		val title = intent.getStringExtra(Konstant.Companion.Konstant.TITLE.name)
 		if (viewModel.viewerKey.value == null) viewModel.createNewNote(title)
@@ -84,7 +104,8 @@ class NoteActivity : ComponentActivity() {
 							val dataText = dataObject.getString("dataText")
 
 							viewModel.note.value?.content = dataJson
-							viewModel.noteDbEntry.value?.contentThumbnail = dataText
+							viewModel.noteDbEntry.value?.contentThumbnail =
+								dataText.substring(0, minOf(128, dataText.length))
 
 							viewModel.putNote()
 						}
@@ -96,48 +117,73 @@ class NoteActivity : ComponentActivity() {
 		}
 	}
 
+	override fun onBackPressed() {
+		if (viewModel.activityState.isSaving.value) {
+			Toast.makeText(this, "Please wait while saving data", Toast.LENGTH_SHORT).show()
+		} else {
+			super.onBackPressed()
+		}
+	}
+
+
 	@OptIn(
 		ExperimentalPagerApi::class, ExperimentalPermissionsApi::class,
 		ExperimentalMaterialApi::class
 	)
 	private fun onClick(click: Click, data: Any? = null) {
 		val scope = viewModel.activityState.coroutineScope
+		val activityState = viewModel.activityState
 		val noteDbEntry = viewModel.knotDbEntry.value
 
 		when (click) {
-			Click.TOP_BAR_PRIMARY -> {
-				if (viewModel.viewerKey.value == null) viewModel.activityState.richTextEditor.exec("editor.getData();") else finish()
-			}
-			Click.TOP_BAR_SECONDARY -> {
-				viewModel.activityState.bottomSheetType.value = BottomSheetType.MenuBottomSheet
-				scope.launch {
-					viewModel.activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
+			Click.FINISH -> {
+				if (activityState.isSaving.value) {
+					Toast.makeText(this, "Please wait while saving data", Toast.LENGTH_SHORT).show()
+				} else {
+					finish()
 				}
 			}
-			Click.TOP_BAR_TERTIARY -> {
-				viewModel.activityState.bottomSheetType.value = BottomSheetType.MetadataBottomSheet
+			Click.SAVE -> {
+				if (!activityState.isSaving.value) {
+					Toast.makeText(this, "Saving data...", Toast.LENGTH_SHORT).show()
+					activityState.isSaving.value = true
+					activityState.richTextEditor.exec("editor.getData();")
+				}
+			}
+			Click.METADATA -> {
+				activityState.bottomSheetType.value = BottomSheetType.MetadataBottomSheet
 				scope.launch {
-					viewModel.activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
+					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
+				}
+			}
+			Click.MENU -> {
+				activityState.bottomSheetType.value = BottomSheetType.MenuBottomSheet
+				scope.launch {
+					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
 				}
 			}
 			Click.TOP_BAR_QUATERNARY -> {
-				viewModel.activityState.richTextEditor.exec("editor.commands.setContent(${viewModel.note.value!!.content});")
+				activityState.richTextEditor.exec("editor.commands.setContent(${viewModel.note.value!!.content});")
 				viewModel.viewerKey.value = null
 			}
 			Click.NEXT_PAGE -> {
 				data as Int
 				scope.launch {
-					viewModel.activityState.pagerState.animateScrollToPage(minOf(data - 1, viewModel.activityState.pagerState.currentPage + 1))
+					activityState.pagerState.animateScrollToPage(
+						minOf(data - 1, activityState.pagerState.currentPage + 1)
+					)
 				}
 			}
 			Click.PREV_PAGE -> scope.launch {
-				viewModel.activityState.pagerState.animateScrollToPage(maxOf(0, viewModel.activityState.pagerState.currentPage - 1))
+				activityState.pagerState.animateScrollToPage(
+					maxOf(0, activityState.pagerState.currentPage - 1)
+				)
 			}
-			Click.SHOW_ADDRESS -> viewModel.activityState.showAddressCard.value = true
-			Click.HIDE_ADDRESS -> viewModel.activityState.showAddressCard.value = false
-			Click.REQUEST_LOCATION_PERMISSION -> viewModel.activityState.locationPermissionState.launchPermissionRequest()
+			Click.SHOW_ADDRESS -> activityState.showAddressCard.value = true
+			Click.HIDE_ADDRESS -> activityState.showAddressCard.value = false
+			Click.REQUEST_LOCATION_PERMISSION -> activityState.locationPermissionState.launchPermissionRequest()
 			Click.SELECT_TIME -> {
-				val calendar = Calendar.getInstance()
+				val calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"))
 				calendar.timeInMillis = noteDbEntry?.userTimestamp ?: 0
 				DatePickerDialog(
 					this,
@@ -151,7 +197,7 @@ class NoteActivity : ComponentActivity() {
 
 						TimePickerDialog(
 							this,
-							{_, hour, minute ->
+							{ _, hour, minute ->
 								calendar.set(Calendar.HOUR_OF_DAY, hour)
 								calendar.set(Calendar.MINUTE, minute)
 
@@ -169,12 +215,19 @@ class NoteActivity : ComponentActivity() {
 				).show()
 			}
 			Click.ATTACHMENT_BUTTON -> {
-				viewModel.activityState.bottomSheetType.value = BottomSheetType.AttachmentBottomSheet
-				scope.launch { viewModel.activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded) }
+				activityState.bottomSheetType.value =
+					BottomSheetType.AttachmentBottomSheet
+				scope.launch {
+					activityState.bottomSheetState.animateTo(
+						ModalBottomSheetValue.Expanded
+					)
+				}
 			}
 			Click.INSERT_PICTURE -> {
 				data as Uri?
-				if (data != null) { viewModel.insertAttachment(uri = data) }
+				if (data != null) {
+					viewModel.insertAttachment(uri = data)
+				}
 			}
 			Click.INSERT_MEDIA -> {
 				data as List<*>
@@ -186,11 +239,15 @@ class NoteActivity : ComponentActivity() {
 			Click.OPEN_ATTACHMENT -> null
 			Click.REMOVE_ATTACHMENT -> viewModel.attachmentMap.remove(data as String)
 			Click.TAG_BUTTON -> {
-				viewModel.activityState.bottomSheetType.value = BottomSheetType.TagBottomSheet
-				scope.launch { viewModel.activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded) }
+				activityState.bottomSheetType.value = BottomSheetType.TagBottomSheet
+				scope.launch {
+					activityState.bottomSheetState.animateTo(
+						ModalBottomSheetValue.Expanded
+					)
+				}
 			}
 			Click.ADDRESS_CARD -> {
-				val addressState by viewModel.activityState.addressState
+				val addressState by activityState.addressState
 				when (addressState) {
 					AddressState.NO_PERMISSION -> {
 						Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -198,40 +255,49 @@ class NoteActivity : ComponentActivity() {
 							startActivity(this)
 						}
 					}
-					AddressState.REQUEST_PERMISSION -> viewModel.activityState.locationPermissionState.launchPermissionRequest()
-					AddressState.SHOW_RATIONALE -> viewModel.activityState.locationPermissionState.launchPermissionRequest()
+					AddressState.REQUEST_PERMISSION -> activityState.locationPermissionState.launchPermissionRequest()
+					AddressState.SHOW_RATIONALE -> activityState.locationPermissionState.launchPermissionRequest()
 					AddressState.REMOVED -> viewModel.getLocation()
 				}
 			}
 			Click.REFRESH_LOCATION -> viewModel.getLocation()
-			Click.OPEN_MAP_DIALOG -> viewModel.activityState.showMapLocationDialog.value = true
+			Click.OPEN_MAP_DIALOG -> activityState.showMapLocationDialog.value = true
 			Click.REMOVE_LOCATION -> viewModel.removeLocationData()
-			Click.DISMISS_MAP_DIALOG -> viewModel.activityState.showMapLocationDialog.value = false
+			Click.DISMISS_MAP_DIALOG -> activityState.showMapLocationDialog.value = false
 			Click.REVERSE_GEOCODE -> {
 				data as LatLng
 				viewModel.reverseGeocode(
 					latitude = data.latitude,
 					longitude = data.longitude,
-					onAddressAvailable = { _address -> scope.launch {
-						noteDbEntry?.location?.latitude = data.latitude
-						noteDbEntry?.location?.longitude = data.longitude
-						noteDbEntry?.address = locationAddressFilter(_address)
-						viewModel.emitNote()
-					} },
+					onAddressAvailable = { _address ->
+						scope.launch {
+							noteDbEntry?.location?.latitude = data.latitude
+							noteDbEntry?.location?.longitude = data.longitude
+							noteDbEntry?.address = locationAddressFilter(_address)
+							viewModel.emitNote()
+						}
+					},
 					onIoException = {
-						Log.i("Diary Activity", "Reverse Geocode : IO Exception : Maybe network unavailable")
+						Log.i(
+							"Diary Activity",
+							"Reverse Geocode : IO Exception : Maybe network unavailable"
+						)
 					},
 					onException = {
 						Log.e("Diary Activity", "Reverse Geocode : Exception")
 					}
 				)
 			}
-			Click.ADD_TAG -> viewModel.addTag(tag =  data as String)
-			Click.CONNECT_TAG -> viewModel.connectTag(tag =  data as String)
+			Click.ADD_TAG -> viewModel.addTag(tag = data as String)
+			Click.CONNECT_TAG -> viewModel.connectTag(tag = data as String)
 		}
 	}
 
-	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, ExperimentalPagerApi::class)
+	@OptIn(
+		ExperimentalMaterialApi::class,
+		ExperimentalMaterial3Api::class,
+		ExperimentalPagerApi::class
+	)
 	@Composable
 	private fun Screen() {
 		ModalBottomSheetLayout(
@@ -242,7 +308,12 @@ class NoteActivity : ComponentActivity() {
 			sheetContent = { SheetLayout { click, data -> onClick(click = click, data = data) } },
 		) {
 			Scaffold(
-				topBar = { TopBar(isViewer = viewModel.viewerKey.value != null) { onClick(it) } }
+				topBar = {
+					TopBar(
+						isViewer = viewModel.viewerKey.value != null,
+						isSaving = viewModel.activityState.isSaving.value
+					) { onClick(it) }
+				}
 			) {
 				Crossfade(
 					targetState = viewModel.viewerKey.value == null,
@@ -254,7 +325,40 @@ class NoteActivity : ComponentActivity() {
 
 	@Composable
 	private fun EditorScreen() {
-		NoteEditorScreen { click, data ->  onClick(click = click, data = data) }
+		val scope = rememberCoroutineScope()
+		val configuration = LocalConfiguration.current
+		val screenWidth = configuration.screenWidthDp.dp
+
+		var isSaved by viewModel.activityState.isSaved
+		val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_saved))
+
+		LaunchedEffect(key1 = isSaved) {
+			if (isSaved) {
+				scope.launch {
+					delay(1200)
+					isSaved = false
+					viewModel.viewerKey.value = viewModel.noteDbEntry.value!!.key
+				}
+			}
+		}
+
+		Box(modifier = Modifier.fillMaxSize()) {
+			NoteEditorScreen { click, data -> onClick(click = click, data = data) }
+
+			AnimatedVisibility(
+				visible = isSaved,
+				enter = fadeIn(tween(600)),
+				exit = fadeOut(tween(600)),
+				modifier = Modifier.fillMaxSize()
+			) {
+				LottieAnimation(
+					composition = lottieComposition,
+					isPlaying = isSaved,
+					iterations = LottieConstants.IterateForever,
+					modifier = Modifier.requiredSize(screenWidth / 3)
+				)
+			}
+		}
 	}
 
 	@OptIn(ExperimentalPagerApi::class)
@@ -271,11 +375,13 @@ class NoteActivity : ComponentActivity() {
 		LaunchedEffect(key1 = noteKeyList.hashCode() + pagerState.pageCount.hashCode()) {
 			scope.launch {
 				val index = noteKeyList.indexOf(viewModel.viewerKey.value)
-				if (index != -1 && pagerState.pageCount == noteKeyList.size) pagerState.scrollToPage(page = index)
+				if (index != -1 && pagerState.pageCount == noteKeyList.size) pagerState.scrollToPage(
+					page = index
+				)
 			}
 		}
 
-		LaunchedEffect(key1 = pagerState.hashCode() + noteKeyList.hashCode()) {
+		LaunchedEffect(key1 = pagerState.currentPage + noteKeyList.size) {
 			snapshotFlow { pagerState.currentPage }.collect {
 				if (noteKeyList.size > it) viewModel.loadNote(noteKeyList[it])
 			}
@@ -293,7 +399,10 @@ class NoteActivity : ComponentActivity() {
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
-	inner class ActivityState @OptIn(ExperimentalPermissionsApi::class, ExperimentalPagerApi::class) constructor(
+	inner class ActivityState @OptIn(
+		ExperimentalPermissionsApi::class,
+		ExperimentalPagerApi::class
+	) constructor(
 		val coroutineScope: CoroutineScope,
 		val richTextEditor: RichTextEditor,
 		val bottomSheetState: ModalBottomSheetState,
@@ -306,9 +415,15 @@ class NoteActivity : ComponentActivity() {
 		var addressState: MutableState<AddressState> = mutableStateOf(AddressState.INIT),
 		var showAddressCard: MutableState<Boolean> = mutableStateOf(false),
 		var showMapLocationDialog: MutableState<Boolean> = mutableStateOf(false),
+		var isSaving: MutableState<Boolean> = mutableStateOf(false),
+		var isSaved: MutableState<Boolean> = mutableStateOf(false)
 	)
 
-	@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class, ExperimentalPagerApi::class)
+	@OptIn(
+		ExperimentalMaterialApi::class,
+		ExperimentalPermissionsApi::class,
+		ExperimentalPagerApi::class
+	)
 	@Composable
 	fun rememberActivityState(
 		coroutineScope: CoroutineScope = rememberCoroutineScope(),
@@ -342,9 +457,10 @@ class NoteActivity : ComponentActivity() {
 	}
 
 	enum class Click {
-		TOP_BAR_PRIMARY,
-		TOP_BAR_SECONDARY,
-		TOP_BAR_TERTIARY,
+		FINISH,
+		SAVE,
+		METADATA,
+		MENU,
 		TOP_BAR_QUATERNARY,
 		NEXT_PAGE,
 		PREV_PAGE,

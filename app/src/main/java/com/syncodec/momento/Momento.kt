@@ -7,11 +7,9 @@ import androidx.core.net.toUri
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.bucketItem.BucketItem
 import com.syncodec.momento.database.note.Note
-import com.syncodec.momento.miscellaneous.copyInputStreamToOutputStream
-import java.io.ByteArrayOutputStream
+import com.syncodec.momento.miscellaneous.FileUtils.Companion.copyInputStreamToOutputStream
 import java.io.File
 
 

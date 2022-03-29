@@ -240,7 +240,7 @@ val lightColorScheme6 = lightColorScheme(
 	surface = Color(0xFF98CCD3),
 	onSurface = Color(0xFF155B65),
 	background = Color(0xFFEBF0F6),
-	onBackground = Color(0xFF416086)
+	onBackground = Color(0xFF010E1F)
 )
 
 val darkColorScheme6 = darkColorScheme(
@@ -270,7 +270,7 @@ val lightColorScheme7 = lightColorScheme(
 	surface = Color(0xFFC9D6DF),
 	onSurface = Color(0xFF254C68),
 	background = Color(0xFFF0F5F9),
-	onBackground = Color(0xFF466C8B)
+	onBackground = Color(0xFF011525)
 )
 
 val darkColorScheme7 = darkColorScheme(

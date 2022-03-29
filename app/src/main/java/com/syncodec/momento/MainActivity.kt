@@ -41,6 +41,7 @@ import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.mainComponent.modalBottomSheet.SheetLayout
 import com.syncodec.momento.mainComponent.screen.MomentoComponentType
 import com.syncodec.momento.noteComponent.NoteActivity
+import com.syncodec.momento.settings.SettingsActivity
 import com.syncodec.momento.ui.theme.MomentoTheme
 import com.syncodec.momento.vaultComponent.EvokeReason
 import com.syncodec.momento.vaultComponent.VaultScreen
@@ -48,7 +49,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Notebook
 import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.Plus
-import compose.icons.tablericons.World
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
 	}
 
 	private fun onClick(click: Click, data: Any? = null) {
-		when(click) {
+		when (click) {
 			Click.SHOW_DELETE -> viewModel.activityState.showDeleteDialog.value = true
 			Click.CLICK_NOTE -> {
 				data as String
@@ -104,6 +104,8 @@ class MainActivity : ComponentActivity() {
 				val selectedItemList = viewModel.activityState.selectedItemList
 				selectedItemList.add(data)
 			}
+			Click.CLICK_NOTEBOOK -> TODO("note implemented")
+			Click.SETTINGS -> startActivity(Intent(this, SettingsActivity::class.java))
 		}
 	}
 
@@ -140,6 +142,7 @@ class MainActivity : ComponentActivity() {
 	@Composable
 	fun MainScreen() {
 		val systemUiController = rememberSystemUiController()
+		systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
 
 		val navController = rememberNavController()
 		val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -188,7 +191,7 @@ class MainActivity : ComponentActivity() {
 								MainNavigation(
 									navController = navController,
 									viewModelStoreOwner = viewModelStoreOwner
-								) { click, data ->  onClick(click = click, data = data) }
+								) { click, data -> onClick(click = click, data = data) }
 							}
 						}
 						DeleteDialog(
@@ -228,6 +231,8 @@ class MainActivity : ComponentActivity() {
 		}
 
 		when (currentRoute) {
+			BottomNavigationItem.Calendar.route -> Box(modifier = Modifier)
+			BottomNavigationItem.Atlas.route -> Box(modifier = Modifier)
 			BottomNavigationItem.Me.route -> Box(modifier = Modifier)
 			else -> {
 				FloatingActionButton(
@@ -248,13 +253,6 @@ class MainActivity : ComponentActivity() {
 								}
 							}
 							BottomNavigationItem.Bucket.route -> openSheet(BottomSheetType.BucketBottomSheet)
-							BottomNavigationItem.Calendar.route -> startActivity(
-								Intent(
-									this@MainActivity,
-									NoteActivity::class.java
-								)
-							)
-							BottomNavigationItem.Atlas.route -> startActivity(Intent(this@MainActivity, NoteActivity::class.java))
 						}
 					},
 					modifier = Modifier
@@ -267,8 +265,6 @@ class MainActivity : ComponentActivity() {
 								MomentoComponentType.Notebook -> Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
 							}
 							BottomNavigationItem.Bucket.route -> Icon(imageVector = TablerIcons.Plus, contentDescription = null)
-							BottomNavigationItem.Calendar.route -> Icon(imageVector = TablerIcons.Pencil, contentDescription = null)
-							BottomNavigationItem.Atlas.route -> Icon(imageVector = TablerIcons.World, contentDescription = null)
 						}
 					}
 				}
@@ -306,5 +302,6 @@ class MainActivity : ComponentActivity() {
 		CLICK_NOTE,
 		LONG_CLICK_NOTE,
 		CLICK_NOTEBOOK,
+		SETTINGS
 	}
 }

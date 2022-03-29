@@ -9,11 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import javax.inject.Singleton
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-@Singleton
 class DataStore(private val context: Context) {
 
 	companion object {

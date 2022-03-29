@@ -137,7 +137,12 @@ fun AddBookSheet(
 
 					requestQueue.cancelAll(tag)
 
-					val requestUrl = "${baseUrl}${URLEncoder.encode(bookNameText, StandardCharsets.UTF_8.toString())}$endUrl"
+					val requestUrl = "${baseUrl}${
+						URLEncoder.encode(
+							bookNameText,
+							StandardCharsets.UTF_8.toString()
+						)
+					}$endUrl"
 					val stringRequest = StringRequest(
 						Request.Method.GET,
 						requestUrl,
@@ -147,7 +152,8 @@ fun AddBookSheet(
 							val length = docs?.length() ?: 0
 							booksData.removeIf { true }
 							for (i in 0 until length) {
-								val bookData = objectMapper.readValue<BookData>(docs!!.get(i).toString())
+								val bookData =
+									objectMapper.readValue<BookData>(docs!!.get(i).toString())
 								booksData.add(bookData)
 							}
 							sheetState = if (length > 0) {
@@ -184,12 +190,14 @@ fun AddBookSheet(
 				},
 			decorationBox = { innerTextField ->
 				Card(
-					modifier = Modifier
-						.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth(),
 					backgroundColor = Color.Transparent,
 					elevation = 0.dp,
 					shape = RoundedCornerShape(12.dp),
-					border = BorderStroke(2.dp, if (isBookNameTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray)
+					border = BorderStroke(
+						2.dp,
+						if (isBookNameTextFocused) MaterialTheme.colorScheme.primary else Color.LightGray
+					)
 				) {
 					Box(
 						contentAlignment = Alignment.CenterStart,
@@ -223,35 +231,33 @@ fun AddBookSheet(
 							.fillMaxWidth()
 							.height(256.dp),
 					) {
-						val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
+						val lottieComposition by rememberLottieComposition(
+							LottieCompositionSpec.RawRes(R.raw.lottie_loading)
+						)
 
 						LottieAnimation(
 							composition = lottieComposition,
 							iterations = LottieConstants.IterateForever,
-							modifier = Modifier
-								.requiredSize(64.dp)
+							modifier = Modifier.requiredSize(64.dp)
 						)
 					}
 				}
 				SheetState.RESULT_FOUND -> {
 					LazyVerticalGrid(
 						columns = GridCells.Adaptive(96.dp),
-						modifier = Modifier
-							.padding(8.dp)
+						modifier = Modifier.padding(8.dp)
 					) {
 						items(booksData) { bookData ->
 							BookButton(
 								bookData = bookData,
-								modifier = Modifier
-									.aspectRatio(0.75f)
+								modifier = Modifier.aspectRatio(0.75f)
 							) { onClick(bookData) }
 						}
 					}
 				}
 				SheetState.RESULT_NOT_FOUND -> {
 					Column(
-						modifier = Modifier
-							.height(256.dp)
+						modifier = Modifier.height(256.dp)
 					) {
 						Image(
 							painter = painterResource(id = R.drawable.il_result_unavailable_2),
@@ -268,15 +274,13 @@ fun AddBookSheet(
 							style = MaterialTheme.typography.titleMedium,
 							color = MaterialTheme.colorScheme.secondary,
 							textAlign = TextAlign.Center,
-							modifier = Modifier
-								.fillMaxWidth()
+							modifier = Modifier.fillMaxWidth()
 						)
 					}
 				}
 				SheetState.ERROR -> {
 					Column(
-						modifier = Modifier
-							.height(256.dp)
+						modifier = Modifier.height(256.dp)
 					) {
 						Image(
 							painter = painterResource(id = R.drawable.il_result_unavailable_2),
@@ -293,8 +297,7 @@ fun AddBookSheet(
 							style = MaterialTheme.typography.titleMedium,
 							color = MaterialTheme.colorScheme.secondary,
 							textAlign = TextAlign.Center,
-							modifier = Modifier
-								.fillMaxWidth()
+							modifier = Modifier.fillMaxWidth()
 						)
 					}
 				}
@@ -315,8 +318,7 @@ private fun BookButton(
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.padding(8.dp),
+		modifier = Modifier.padding(8.dp),
 	) {
 		Card(
 			elevation = 0.dp,
@@ -330,6 +332,7 @@ private fun BookButton(
 				Image(
 					painter = rememberImagePainter(
 						data = "https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg",
+						builder = { crossfade(true) }
 					),
 					contentDescription = null,
 					modifier = Modifier.fillMaxSize(),
@@ -342,8 +345,7 @@ private fun BookButton(
 			text = bookData.title,
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier
-				.padding(0.dp, 4.dp, 0.dp, 0.dp)
+			modifier = Modifier.padding(0.dp, 4.dp, 0.dp, 0.dp)
 		)
 
 		if (bookData.authorName != null) {
@@ -353,8 +355,7 @@ private fun BookButton(
 				text = "~ $author",
 				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onBackground,
-				modifier = Modifier
-					.padding(0.dp, 4.dp, 0.dp, 0.dp)
+				modifier = Modifier.padding(0.dp, 4.dp, 0.dp, 0.dp)
 			)
 		}
 	}

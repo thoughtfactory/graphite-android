@@ -26,17 +26,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.squircle.Squircle
-import com.syncodec.momento.miscellaneous.entryTimestamp0
-import com.syncodec.momento.miscellaneous.entryTimestamp1
-import com.syncodec.momento.miscellaneous.timeStampToTime
+import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp0
+import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp1
+import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToTime
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Paperclip
 import dev.jorgecastillo.androidcolorx.library.tints
 
 
 data class NoteCardData(
+	val key: String,
 	val timestamp: Long,
 	val showFullTime:Boolean,
 	val isLocked: Boolean,
@@ -50,7 +52,8 @@ data class NoteCardData(
 	val attachmentCount: Int,
 	val attachmentThumbnail: Bitmap?,
 	val address: String?,
-	val isVisible: Boolean = false,
+	val latLng: LatLng?,
+	var isVisible: Boolean = false,
 	val onClick: () -> Unit,
 	val onLongClick: (() -> Unit)? = null,
 )
@@ -290,7 +293,7 @@ fun NoteCard(
 
 					Spacer(modifier = Modifier.weight(1f))
 
-					if (noteCardData.address != null) {
+					if (!noteCardData.address.isNullOrBlank()) {
 						Row(
 							modifier = Modifier
 								.fillMaxWidth(),

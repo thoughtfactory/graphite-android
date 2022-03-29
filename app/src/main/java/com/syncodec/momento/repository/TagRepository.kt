@@ -12,9 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import javax.inject.Singleton
 
-@Singleton
 class TagRepository(val momento: Momento) {
 
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
