@@ -6,10 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.database.bucketItem.BucketItem
-import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.miscellaneous.FileUtils.Companion.copyInputStreamToOutputStream
+import com.syncodec.momento.miscellaneous.logger
 import java.io.File
 
 
@@ -33,6 +32,9 @@ class Momento : Application() {
 	private val ATTACHMENT_DIR = "attachment"
 		get() = "$DATA/$field"
 
+	private val EXPORT_DIR = "export"
+		get() = "$DATA/$field"
+
 	override fun onCreate() {
 		super.onCreate()
 
@@ -44,11 +46,9 @@ class Momento : Application() {
 		File(ATTACHMENT_DIR).mkdirs()
 	}
 
-	fun putNote(note: Note) = objectMapper.writeValue(File("$NOTE_DIR/${note.key}.json"), note)
-	fun getNote(key: String): Note = objectMapper.readValue(File("$NOTE_DIR/$key.json"))
-	fun deleteNote(key: String) = File("$NOTE_DIR/$key.json").delete()
+	fun putBucketItem(bucketItem: BucketItem) =
+		objectMapper.writeValue(File("$BUCKET_DIR/${bucketItem.key}.json"), bucketItem)
 
-	fun putBucketItem(bucketItem: BucketItem) = objectMapper.writeValue(File("$BUCKET_DIR/${bucketItem.key}.json"), bucketItem)
 	fun getBucketItem(key: String): String = File("$BUCKET_DIR/$key.json").readText()
 	fun deleteBucketItem(key: String) = File("$BUCKET_DIR/$key.json").delete()
 
@@ -57,7 +57,10 @@ class Momento : Application() {
 		val outputStream = File("$ATTACHMENT_DIR/$key").outputStream()
 		return if (inputStream != null) {
 			try {
-				copyInputStreamToOutputStream(inputStream = inputStream, outputStream = outputStream)
+				copyInputStreamToOutputStream(
+					inputStream = inputStream,
+					outputStream = outputStream
+				)
 				true
 			} catch (exception: Exception) {
 				false
@@ -65,7 +68,22 @@ class Momento : Application() {
 		} else false
 	}
 
-	fun getAttachment(key: String): Uri = File("$ATTACHMENT_DIR/$key").toUri()
+	fun getAttachment(key: String): Uri = Uri.fromFile(File("$ATTACHMENT_DIR/$key"))
+
+	fun getAttachment(keyList: List<String>): Map<String, Uri> {
+		val uriMap: MutableMap<String, Uri> = mutableMapOf()
+		keyList.forEach {
+			try {
+				uriMap[it] = File("$ATTACHMENT_DIR/$it").toUri()
+			} catch (exception: Exception) {
+			}
+		}
+
+		return uriMap
+	}
+
+	fun deleteAttachment(keyList: List<String>) =
+		keyList.forEach { File("$ATTACHMENT_DIR/$it").delete() }
 
 	companion object {
 		enum class VaultState {

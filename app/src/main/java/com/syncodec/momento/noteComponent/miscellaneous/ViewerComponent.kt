@@ -1,24 +1,20 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
-import android.net.Uri
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -39,12 +35,11 @@ import com.syncodec.momento.custom.richText.viewer.string.RichTextStringStyle
 import com.syncodec.momento.custom.richText.viewer.string.Text
 import com.syncodec.momento.custom.richText.viewer.string.richTextString
 import com.syncodec.momento.custom.squircle.SquircleShape
-import com.syncodec.momento.database.attachment.AttachmentDbEntry
-import com.syncodec.momento.database.attachment.getMimeType
 import com.syncodec.momento.database.note.LocationData
-import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.noteViewerTimestamp
+import com.syncodec.momento.noteComponent.NoteActivity
+import com.syncodec.momento.notebookComponent.NotebookActivity
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -79,22 +74,20 @@ private const val SUBSCRIPT = "subscript"
 @Composable
 fun ViewerComponent(
 	noteDbEntry: NoteDbEntry,
-	note: Note,
-	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>,
-	connectedTag: List<String>
+	connectedTag: List<String>,
+	onAction: (NoteActivity.Action) -> Unit
 ) {
-	val tiptapData = remember { if (note.content != null) JSONObject(note.content!!) else null }
+	val tiptapData = remember { if (noteDbEntry.content != null) noteDbEntry.content!! else null }
 
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
 			.padding(16.dp, 0.dp)
 			.verticalScroll(rememberScrollState())
-			.background(MaterialTheme.colorScheme.background)
 	) {
-		if (attachmentMap.isNotEmpty()) {
+		if (noteDbEntry.attachmentKeyList.isNotEmpty()) {
 			Spacer(modifier = Modifier.height(14.dp))
-			Thumbnail(attachmentMap = attachmentMap)
+			Thumbnail(bitmap = noteDbEntry.attachmentThumbnail) { onAction(it) }
 		}
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -119,34 +112,24 @@ fun ViewerComponent(
 	}
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Thumbnail(
-	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>
+	bitmap: Bitmap?,
+	onAction: (NoteActivity.Action) -> Unit
 ) {
-	val configuration = LocalConfiguration.current
-	val screenWidth = configuration.screenWidthDp.dp
-
-	var imageKey: String? = null
-	attachmentMap.forEach {
-		if (it.value.first.getMimeType() == "image") {
-			imageKey = it.key
-			return@forEach
-		}
-	}
-
-	if (imageKey != null) {
-		Card(
-			elevation = 0.dp,
-			shape = SquircleShape(12.0),
-			backgroundColor = Color.Companion.Transparent,
+	if (bitmap != null) {
+		Box(
 			modifier = Modifier
 				.fillMaxWidth()
 				.aspectRatio(1f)
+				.clip(SquircleShape(12.0))
+				.clickable { onAction(NoteActivity.Action.OPEN_ATTACHMENT) }
 		) {
 			Image(
 				painter = rememberImagePainter(
-					data = attachmentMap[imageKey]!!.second,
-					builder = { crossfade(400 ) }
+					data = bitmap,
+					builder = { crossfade(300) }
 				),
 				contentDescription = "Attachment",
 				modifier = Modifier.fillMaxSize(),
@@ -174,7 +157,7 @@ private fun Header(
 			Text(
 				text = timestamp[0],
 				style = MaterialTheme.typography.bodyMedium.copy(fontSize = 48.sp),
-				color = MaterialTheme.colorScheme.secondary
+				color = MaterialTheme.colorScheme.primary
 			)
 			Spacer(modifier = Modifier.width(4.dp))
 			Column(
@@ -185,14 +168,14 @@ private fun Header(
 					text = timestamp[1],
 					style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
 					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.secondary
+					color = MaterialTheme.colorScheme.primary
 				)
 				Spacer(modifier = Modifier.height(4.dp))
 				Text(
 					text = timestamp[2],
 					style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
 					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.secondary
+					color = MaterialTheme.colorScheme.primary
 				)
 			}
 		}
@@ -263,17 +246,21 @@ private fun RenderDoc(
 ) {
 	val colorScheme = MaterialTheme.colorScheme
 	val typography = MaterialTheme.typography
-	val richTextStyle by remember { mutableStateOf(viewerTextStyle(colorScheme = colorScheme, typography = typography)) }
+	val richTextStyle by remember {
+		mutableStateOf(
+			viewerTextStyle(
+				colorScheme = colorScheme,
+				typography = typography
+			)
+		)
+	}
 
 	val textSelectionColors = TextSelectionColors(
 		handleColor = colorScheme.secondary,
 		backgroundColor = colorScheme.secondary.copy(0.47f)
 	)
 
-	Surface(
-		color = MaterialTheme.colorScheme.background,
-		contentColor = MaterialTheme.colorScheme.onBackground,
-	) {
+	Surface {
 		CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
 			SelectionContainer {
 				MaterialRichText(
@@ -440,7 +427,8 @@ private fun RichTextScope.RenderList(
 	listType: ListType,
 	nestLevel: Int,
 ) {
-	val itemList: MutableList<Pair<@Composable (RichTextScope.() -> Unit), Boolean?>> = mutableListOf()
+	val itemList: MutableList<Pair<@Composable (RichTextScope.() -> Unit), Boolean?>> =
+		mutableListOf()
 
 	for (i in 0 until (contentList?.length() ?: 0)) {
 		val content = contentList!!.optJSONObject(i)
@@ -576,6 +564,7 @@ private fun viewerTextStyle(
 	return RichTextStyle(
 		stringStyle = RichTextStringStyle(
 			unFormatStyle = SpanStyle(
+				fontWeight = FontWeight.Normal,
 				fontFamily = typography.bodyMedium.fontFamily,
 				fontSize = typography.bodyMedium.fontSize,
 			),
@@ -585,6 +574,7 @@ private fun viewerTextStyle(
 				fontSize = typography.bodyMedium.fontSize,
 			),
 			italicStyle = SpanStyle(
+				fontWeight = null,
 				fontStyle = FontStyle.Italic,
 				fontFamily = typography.bodyMedium.fontFamily,
 				fontSize = typography.bodyMedium.fontSize,

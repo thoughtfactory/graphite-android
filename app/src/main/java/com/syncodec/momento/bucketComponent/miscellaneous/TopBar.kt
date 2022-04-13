@@ -108,50 +108,50 @@ private fun StateSelectorCard(
 	currentState: Int,
 	onClick: (Int) -> Unit
 ) {
-	val stateList = when(bucketItemType) {
-		BucketItemType.TODO -> listOf(
-			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
-			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-		)
-		BucketItemType.BOOKS -> listOf(
-			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
-			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-		)
-		BucketItemType.SHOWS -> listOf(
-			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
-			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-		)
-		BucketItemType.MEDIA -> listOf(
-			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
-			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-		)
-		BucketItemType.LINKS -> listOf(
-			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
-			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-		)
-	}
-
-	AnimatedVisibility(visible = showStateSelector) {
-		Column(modifier = Modifier.fillMaxWidth()) {
-			StateButton(
-				stateList = stateList,
-				currentState = currentState,
-				modifier = Modifier
-					.padding(8.dp, 0.dp)
-					.height(32.dp)
-			) { onClick(it) }
-
-			Spacer(modifier = Modifier.height(8.dp))
-		}
-	}
+//	val stateList = when(bucketItemType) {
+//		BucketItemType.TODO -> listOf(
+//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
+//			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
+//			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
+//			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
+//		)
+//		BucketItemType.BOOKS -> listOf(
+//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
+//			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
+//			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
+//			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
+//		)
+//		BucketItemType.SHOWS -> listOf(
+//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
+//			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
+//			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
+//			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
+//		)
+//		BucketItemType.MEDIA -> listOf(
+//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
+//			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
+//			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
+//			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
+//		)
+//		BucketItemType.LINKS -> listOf(
+//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
+//			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
+//			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
+//			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
+//		)
+//	}
+//
+//	AnimatedVisibility(visible = showStateSelector) {
+//		Column(modifier = Modifier.fillMaxWidth()) {
+//			StateButton(
+//				stateList = stateList,
+//				currentState = currentState,
+//				modifier = Modifier
+//					.padding(8.dp, 0.dp)
+//					.height(32.dp)
+//			) { onClick(it) }
+//
+//			Spacer(modifier = Modifier.height(8.dp))
+//		}
+//	}
 }

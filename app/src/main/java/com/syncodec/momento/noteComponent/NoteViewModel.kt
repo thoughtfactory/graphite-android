@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.webkit.MimeTypeMap
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -25,30 +26,33 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.note.LocationData
-import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.database.tag.TagKeyDbEntry
 import com.syncodec.momento.konstant.Status
-import com.syncodec.momento.miscellaneous.*
-import com.syncodec.momento.miscellaneous.CollectionUtils.Companion.listOfField
+import com.syncodec.momento.miscellaneous.FileUtils
+import com.syncodec.momento.miscellaneous.generatePrimaryKey
+import com.syncodec.momento.miscellaneous.getResizedBitmap
+import com.syncodec.momento.miscellaneous.locationAddressFilter
 import com.syncodec.momento.repository.AttachmentRepository
 import com.syncodec.momento.repository.NoteRepository
 import com.syncodec.momento.repository.TagRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.IOException
 import java.util.*
 
 
 class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
-	private val noteRepository: NoteRepository = NoteRepository.getInstance(momento = application as Momento)
-	private val attachmentRepository: AttachmentRepository = AttachmentRepository(momento = application as Momento)
-	private val tagRepository: TagRepository = TagRepository.getInstance(momento = application as Momento)
+	private val noteRepository: NoteRepository =
+		NoteRepository.getInstance(momento = application as Momento)
+	private val attachmentRepository: AttachmentRepository =
+		AttachmentRepository.getInstance(momento = application as Momento)
+	private val tagRepository: TagRepository =
+		TagRepository.getInstance(momento = application as Momento)
 
-	val noteKeyListLiveData: Flow<List<String>> = noteRepository.noteKeyListFlow
+	val noteKeyList: SnapshotStateList<String> = mutableStateListOf()
 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
 
@@ -58,8 +62,6 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	lateinit var chapterPath: MutableList<String>
 	val noteDbEntry = mutableStateOf<NoteDbEntry?>(null)
 	val knotDbEntry = MutableStateFlow<NoteDbEntry?>(null)
-	val note = mutableStateOf<Note?>(null)
-	val knot = MutableStateFlow<Note?>(null)
 	val attachmentMap: SnapshotStateMap<String, Pair<AttachmentDbEntry, Uri>> = mutableStateMapOf()
 	val tagList = tagRepository.tags
 	val connectedTag: SnapshotStateList<String> = mutableStateListOf()
@@ -79,24 +81,24 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 			this.title = title
 
 			this@NoteViewModel.noteDbEntry.value = this
-			this@NoteViewModel.note.value = Note(key = this.key)
 			emitNote()
 		}
 	}
 
-	fun emitNote() = viewModelScope.launch(Dispatchers.IO) {
-		knotDbEntry.emit(noteDbEntry.value)
-		knot.emit(note.value)
-	}
+	fun emitNote() = viewModelScope.launch(Dispatchers.IO) { knotDbEntry.emit(noteDbEntry.value) }
 
 	fun insertAttachment(uri: Uri) {
-		note.value?.key?.let {
+		val key = generatePrimaryKey()
+		val mimeType = getApplication<Momento>().contentResolver.getType(uri)
+
+		noteDbEntry.value?.key?.let {
 			AttachmentDbEntry(
 				key = generatePrimaryKey(),
 				createdTimestamp = System.currentTimeMillis(),
-				timezoneOffset = 0,
 				noteKey = it,
-				mimeType = getApplication<Momento>().contentResolver.getType(uri)
+				mimeType = mimeType,
+				chapterPath = chapterPath,
+				notebookKey = notebookKey
 			).apply { attachmentMap[key] = Pair(this, uri) }
 		}
 	}
@@ -108,7 +110,9 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 				attachmentMap.forEach { (_, data) ->
 					when (data.first.mimeType?.split("/")?.first()) {
 						"image" -> {
-							bitmap = BitmapFactory.decodeStream(getApplication<Momento>().contentResolver.openInputStream(data.second))
+							bitmap = BitmapFactory.decodeStream(
+								getApplication<Momento>().contentResolver.openInputStream(data.second)
+							)
 							return@forEach
 						}
 						"video" -> {
@@ -117,11 +121,12 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 					}
 				}
 
-				note.value!!.attachmentKeyList = attachmentMap.keys.toMutableList()
+				noteDbEntry.value!!.attachmentKeyList.clear()
+				noteDbEntry.value!!.attachmentKeyList.addAll(attachmentMap.keys.toMutableList())
 
-				it.attachmentThumbnail = bitmap?.let { it1 -> getResizedBitmap(it1, 100) }
+				it.attachmentThumbnail = bitmap?.let { it1 -> getResizedBitmap(it1, 256) }
 
-				noteRepository.putNote(noteDbEntry = it, note = note.value!!)
+				noteRepository.putNote(noteDbEntry = it)
 				tagRepository.connectTag(key = noteDbEntry.value!!.key, connectedTag)
 				attachmentRepository.putAttachment(attachmentList = attachmentMap.values.toList())
 				activityState.isSaving.value = false
@@ -134,30 +139,39 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		viewModelScope.launch(Dispatchers.IO) {
 			status.value = Status.LOADING
 			noteDbEntry.value = noteRepository.getNote(key = key)
-			note.value = noteRepository.loadNote(key = key)
 			emitNote()
 			status.value = Status.LOADED
 		}
+	}
+
+	fun loadAttachment(key: String) {
 		viewModelScope.launch(Dispatchers.IO) {
-			attachmentRepository.getAttachment(noteKey = key).collect {
-				attachmentMap.clear()
-				it.forEach { attachmentMap[it.key] = Pair(it, attachmentRepository.getAttachmentUri(it.key)) }
+			status.value = Status.LOADING
+			attachmentRepository.getAttachment(noteKey = key).forEach {
+				attachmentMap[it.key] = Pair(it, attachmentRepository.getAttachmentUri(it.noteKey))
 			}
+			status.value = Status.LOADED
 		}
+	}
+
+	fun openNotebook() {
 		viewModelScope.launch(Dispatchers.IO) {
-			tagRepository.getTagsForEntryAsFlow(key = key).collect {
-				connectedTag.clear()
-				connectedTag.addAll(it.listOfField(TagKeyDbEntry::tag))
+			noteRepository.openNotebookAsFlow(notebookKey = notebookKey).collect {
+				noteKeyList.clear()
+				noteKeyList.addAll(it)
 			}
 		}
 	}
 
-	fun addTag(tag: String) = viewModelScope.launch(Dispatchers.IO) { tagRepository.putTag(tag = tag) }
+	fun addTag(tag: String) =
+		viewModelScope.launch(Dispatchers.IO) { tagRepository.putTag(tag = tag) }
 
-	fun connectTag(tag: String) = if (tag in connectedTag) connectedTag.remove(tag) else connectedTag.add(tag)
+	fun connectTag(tag: String) =
+		if (tag in connectedTag) connectedTag.remove(tag) else connectedTag.add(tag)
 
 
-	private val fusedLocationClient: FusedLocationProviderClient = FusedLocationProviderClient(application.applicationContext)
+	private val fusedLocationClient: FusedLocationProviderClient =
+		FusedLocationProviderClient(application.applicationContext)
 	private val cancellationToken = CancellationTokenSource().token
 
 	private val addressHandler = Handler(Looper.myLooper()!!)
@@ -169,7 +183,10 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 	@SuppressLint("MissingPermission")
 	fun getLocation() {
-		fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken)
+		fusedLocationClient.getCurrentLocation(
+			LocationRequest.PRIORITY_HIGH_ACCURACY,
+			cancellationToken
+		)
 			.addOnSuccessListener { location: Location? ->
 				if (location == null) {
 					this.knotDbEntry.value?.location = null
@@ -192,12 +209,17 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 						longitude = location.longitude,
 						onAddressAvailable = { address ->
 							viewModelScope.launch(Dispatchers.Main) {
-								this@NoteViewModel.knotDbEntry.value?.address = locationAddressFilter(address = address)
-								if (this@NoteViewModel.knotDbEntry.value?.address != null) activityState.addressState.value = NoteActivity.AddressState.SUCCESS
+								this@NoteViewModel.knotDbEntry.value?.address =
+									locationAddressFilter(address = address)
+								if (this@NoteViewModel.knotDbEntry.value?.address != null) activityState.addressState.value =
+									NoteActivity.AddressState.SUCCESS
 							}
 						},
 						onIoException = {
-							Log.i("Diary Activity", "Reverse Geocode : IO Exception : Maybe network unavailable")
+							Log.i(
+								"Diary Activity",
+								"Reverse Geocode : IO Exception : Maybe network unavailable"
+							)
 						},
 						onException = {
 							Log.e("Diary Activity", "Reverse Geocode : Exception")

@@ -2,7 +2,6 @@
 
 package com.syncodec.momento.custom.richText.viewer.string
 
-import android.util.Log
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -18,15 +17,8 @@ import androidx.compose.ui.unit.sp
 import com.syncodec.momento.custom.richText.viewer.DefaultCodeBlockBackground
 import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Builder
 import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Bold
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Code
+import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.*
 import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Companion.FormatAnnotationScope
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Italic
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Link
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Strikethrough
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Subscript
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Superscript
-import com.syncodec.momento.custom.richText.viewer.string.RichTextString.Format.Underline
 import com.syncodec.momento.custom.richText.viewer.util.randomUUID
 import kotlin.LazyThreadSafetyMode.NONE
 

@@ -16,7 +16,6 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
-import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.logger
@@ -29,12 +28,10 @@ import com.syncodec.momento.noteComponent.miscellaneous.ViewerComponent
 fun NoteViewerScreen(
 	noteKeyList: List<String>,
 	noteDbEntry: NoteDbEntry?,
-	note: Note?,
-	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>,
 	connectedTag: List<String>,
 	pagerState: PagerState,
 	status: Status,
-	onClick: (NoteActivity.Click) -> Unit
+	onClick: (NoteActivity.Action) -> Unit
 ) {
 	Crossfade(targetState = noteKeyList.isEmpty()) {
 		if (it) {
@@ -56,8 +53,6 @@ fun NoteViewerScreen(
 						Viewer(
 							status = status,
 							noteDbEntry = noteDbEntry,
-							note = note,
-							attachmentMap = attachmentMap,
 							connectedTag = connectedTag
 						) { onClick(it) }
 					} else {
@@ -74,25 +69,24 @@ fun NoteViewerScreen(
 private fun Viewer(
 	status: Status,
 	noteDbEntry: NoteDbEntry?,
-	note: Note?,
-	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>,
 	connectedTag: List<String>,
-	onClick: (NoteActivity.Click) -> Unit
+	onAction: (NoteActivity.Action) -> Unit
 ) {
 	Crossfade(
 		targetState = status,
-		animationSpec = tween(durationMillis = 400)
+		animationSpec = tween(durationMillis = 600),
+		modifier = Modifier
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.surface)
 	) {
 		when (it) {
 			Status.INIT -> LoadingView()
 			Status.LOADING -> LoadingView()
-			Status.LOADED -> if (noteDbEntry != null && note != null)
+			Status.LOADED -> if (noteDbEntry?.content != null)
 				ViewerComponent(
 					noteDbEntry = noteDbEntry,
-					note = note,
-					attachmentMap = attachmentMap,
 					connectedTag = connectedTag
-				)
+				) { onAction(it) }
 			Status.ERROR -> {
 			}
 		}

@@ -18,6 +18,9 @@ interface NotebookTableDao {
 	@Query(value = "SELECT * FROM notebook_table WHERE `key` = :key")
 	suspend fun get(key: String): NotebookDbEntry?
 
+	@Query(value = "SELECT * FROM notebook_table WHERE `key` = :key")
+	fun getAsFlow(key: String): Flow<NotebookDbEntry>
+
 	@Query(value = "SELECT * FROM notebook_table ORDER BY created_timestamp DESC")
 	fun getAllAsFlow() : Flow<List<NotebookDbEntry>>
 
@@ -26,6 +29,9 @@ interface NotebookTableDao {
 
 	@Query(value = "DELETE FROM notebook_table WHERE `key` = :key")
 	suspend fun delete(key: String)
+
+	@Query("DELETE FROM notebook_table WHERE `key` IN (:keyList)")
+	fun delete(keyList: List<String>)
 
 	@Delete
 	suspend fun delete(diaryEntries: List<NotebookDbEntry>)

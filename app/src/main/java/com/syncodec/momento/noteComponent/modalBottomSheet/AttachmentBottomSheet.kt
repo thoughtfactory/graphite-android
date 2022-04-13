@@ -4,162 +4,124 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import coil.fetch.VideoFrameUriFetcher
 import coil.request.videoFrameMillis
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.R
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
+import com.syncodec.momento.custom.button.MenuBottomSheetButton
+import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.attachment.getMimeType
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.FileUtils.Companion.createTempFileToExpose
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.noteComponent.NoteActivity
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.X
 
-
-data class AttachmentBottomSheetButtonData(val title: String, val imageVector: ImageVector, val onClick: () -> Unit)
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun AttachmentBottomSheet(
 	attachmentMap: SnapshotStateMap<String, Pair<AttachmentDbEntry, Uri>>,
-	onClick: (NoteActivity.Click, Any?) -> Unit
+	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
 	var photoUri: Uri? = null
-	val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
-		if (isCaptured) onClick(NoteActivity.Click.INSERT_PICTURE, photoUri)
-	}
+	val takePicture =
+		rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
+			if (isCaptured) onAction(NoteActivity.Action.INSERT_PICTURE, photoUri)
+		}
 
-	val openMediaPicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
-		onClick(NoteActivity.Click.INSERT_MEDIA, uriList)
-	}
+	val openMediaPicker =
+		rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
+			onAction(NoteActivity.Action.INSERT_MEDIA, uriList)
+		}
 
-	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uriList ->
-		Log.i("npr71", "uri : $uriList")
-	}
+	val openFilePicker =
+		rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uriList ->
+			Log.i("npr71", "uri : $uriList")
+		}
 
-	val attachmentBottomSheetButtonDataLists: List<AttachmentBottomSheetButtonData> = listOf(
-		AttachmentBottomSheetButtonData(title = "Camera", imageVector = TablerIcons.Camera) {
+	val buttonDataList: List<MenuBottomSheetButtonData> = listOf(
+		MenuBottomSheetButtonData(title = "Camera", icon = R.drawable.ic_camera) {
 			photoUri = createTempFileToExpose(
 				context = context,
-				primaryKey = generatePrimaryKey(),
-				mimeType = "image/*"
+				key = generatePrimaryKey(),
+				extension = ".jpg"
 			)
 			takePicture.launch(photoUri)
 		},
-		AttachmentBottomSheetButtonData(title = "Gallery", imageVector = TablerIcons.Photo) {
+		MenuBottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
 			openMediaPicker.launch(arrayOf("image/*", "video/*", "audio/*"))
 		},
-		AttachmentBottomSheetButtonData(title = "Audio", imageVector = TablerIcons.Microphone) {},
-		AttachmentBottomSheetButtonData(title = "File", imageVector = TablerIcons.File) {
+		MenuBottomSheetButtonData(title = "File", icon = R.drawable.ic_file) {
 			openFilePicker.launch(arrayOf("*/*"))
 		},
 	)
 
-	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.background),
-		horizontalAlignment = Alignment.CenterHorizontally
+	Surface(
+		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+		color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2)
 	) {
-
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Attachment",
-			imageVector = TablerIcons.Paperclip
-		)
-
-		LazyVerticalGrid(
-			columns = GridCells.Fixed(4),
-			modifier = Modifier
-				.padding(24.dp, 0.dp),
+		Column(
+			modifier = Modifier,
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
-			itemsIndexed(attachmentBottomSheetButtonDataLists) { _, attachmentBottomSheetButtonData ->
-				AttachmentBottomSheetButton(attachmentBottomSheetButtonData)
-			}
-		}
 
-		Spacer(modifier = Modifier.height(12.dp))
+			BottomSheetStrip()
 
-		LazyVerticalGrid(
-			columns = GridCells.Adaptive(144.dp),
-			modifier = Modifier
-				.padding(24.dp, 0.dp, 24.dp, 32.dp),
-		) {
-			attachmentMap.forEach { (_, data) ->
-				item {
-					AttachmentView(
-						attachment = data.first,
-						uri = data.second
-					) { click, data -> onClick(click, data)}
+			BottomSheetHeader(
+				title = "Attachment",
+				icon = R.drawable.ic_attachment
+			)
+
+			LazyVerticalGrid(
+				columns = GridCells.Fixed(4),
+				modifier = Modifier.padding(24.dp, 0.dp),
+			) { buttonDataList.forEach { item { MenuBottomSheetButton(it) } } }
+
+			Spacer(modifier = Modifier.height(12.dp))
+
+			LazyVerticalGrid(
+				columns = GridCells.Adaptive(144.dp),
+				modifier = Modifier.padding(24.dp, 0.dp, 24.dp, 32.dp),
+			) {
+				attachmentMap.forEach { (_, data) ->
+					item {
+						AttachmentView(
+							attachment = data.first,
+							uri = data.second
+						) { click, data -> onAction(click, data) }
+					}
 				}
 			}
 		}
-	}
-}
-
-@Composable
-private fun AttachmentBottomSheetButton(
-	attachmentBottomSheetButtonData: AttachmentBottomSheetButtonData
-) {
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally
-	) {
-		Card(
-			elevation = 0.dp,
-			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-			shape = RoundedCornerShape(8.dp),
-			modifier = Modifier
-				.fillMaxWidth()
-				.aspectRatio(1f)
-				.padding(6.dp)
-				.focusable(true)
-				.clip(RoundedCornerShape(8.dp))
-				.clickable(true) { attachmentBottomSheetButtonData.onClick() },
-		) {
-			Icon(
-				imageVector = attachmentBottomSheetButtonData.imageVector,
-				contentDescription = null,
-				tint = MaterialTheme.colorScheme.onSecondaryContainer,
-				modifier = Modifier
-					.requiredSize(24.dp)
-			)
-		}
-		Text(
-			text = attachmentBottomSheetButtonData.title,
-			style = MaterialTheme.typography.bodySmall,
-			color = MaterialTheme.colorScheme.onBackground,
-			textAlign = TextAlign.Center,
-			maxLines = 2,
-			modifier = Modifier.fillMaxWidth()
-		)
 	}
 }
 
@@ -168,7 +130,7 @@ private fun AttachmentBottomSheetButton(
 private fun AttachmentView(
 	attachment: AttachmentDbEntry,
 	uri: Uri,
-	onClick: (NoteActivity.Click, String) -> Unit
+	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
 	Card(
@@ -180,7 +142,7 @@ private fun AttachmentView(
 			.aspectRatio(1f)
 			.padding(4.dp)
 			.focusable(true),
-		onClick = { onClick(NoteActivity.Click.OPEN_ATTACHMENT, attachment.key) }
+//		onClick = { onAction(NoteActivity.Action.OPEN_ATTACHMENT, uri) }
 	) {
 		when (attachment.getMimeType()) {
 			"image" -> {
@@ -204,7 +166,6 @@ private fun AttachmentView(
 						videoFrameMillis(1000)
 						this.listener(
 							onError = { request, exception ->
-								Log.d("npr71", "error : ${exception.message}")
 							}
 						)
 					}
@@ -229,7 +190,9 @@ private fun AttachmentView(
 				.fillMaxSize(),
 			contentAlignment = Alignment.TopEnd
 		) {
-			IconButton(onClick = { onClick(NoteActivity.Click.REMOVE_ATTACHMENT, attachment.key) }) {
+			IconButton(onClick = {
+				onAction(NoteActivity.Action.REMOVE_ATTACHMENT, attachment.key)
+			}) {
 				Icon(
 					imageVector = TablerIcons.X,
 					contentDescription = "Remove attachment",

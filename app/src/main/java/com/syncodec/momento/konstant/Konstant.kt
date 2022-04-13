@@ -17,6 +17,7 @@ class Konstant {
 			IS_VIEWER,
 			NOTE_KEY,
 			IS_NEW,
+			IS_NOTE,
 			DO_DELETE
 		}
 

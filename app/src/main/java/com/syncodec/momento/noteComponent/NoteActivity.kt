@@ -18,7 +18,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,10 +46,13 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.BuildConfig
 import com.syncodec.momento.R
+import com.syncodec.momento.attachmentComponent.AttachmentActivity
 import com.syncodec.momento.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.momento.custom.richText.RichTextEditor
 import com.syncodec.momento.custom.richText.rememberRichTextEditorWithLifecycle
 import com.syncodec.momento.konstant.Konstant
+import com.syncodec.momento.konstant.Status
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.locationAddressFilter
 import com.syncodec.momento.noteComponent.miscellaneous.NotificationType
 import com.syncodec.momento.noteComponent.miscellaneous.TopBar
@@ -79,20 +82,26 @@ class NoteActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		viewModel.notebookKey =
-			intent.getStringExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name)!!
-		viewModel.chapterPath =
-			intent.getStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name)!!
-				.toMutableStateList()
+		intent.getStringExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name).also {
+			if (it == null) finish() else viewModel.notebookKey = it
+		}
+		intent.getStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name).also {
+			if (it == null) finish() else viewModel.chapterPath = it.toMutableStateList()
+		}
+
 		viewModel.viewerKey.value = intent.getStringExtra(Konstant.Companion.Konstant.NOTE_KEY.name)
 		val title = intent.getStringExtra(Konstant.Companion.Konstant.TITLE.name)
-		if (viewModel.viewerKey.value == null) viewModel.createNewNote(title)
+		if (viewModel.viewerKey.value == null) viewModel.createNewNote(title) else viewModel.openNotebook()
 
 		setContent {
 			MomentoTheme {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.secondaryContainer)
+				systemUiController.setStatusBarColor(
+					MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+				)
+				systemUiController.setNavigationBarColor(
+					MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+				)
 
 				viewModel.activityState = rememberActivityState()
 
@@ -100,10 +109,10 @@ class NoteActivity : ComponentActivity() {
 					object : RichTextEditor.OnSaveDataListener {
 						override fun onSaveData(data: String) {
 							val dataObject = JSONObject(data)
-							val dataJson = dataObject.getString("dataJson")
+							val dataJson = dataObject.getJSONObject("dataJson")
 							val dataText = dataObject.getString("dataText")
 
-							viewModel.note.value?.content = dataJson
+							viewModel.noteDbEntry.value?.content = dataJson
 							viewModel.noteDbEntry.value?.contentThumbnail =
 								dataText.substring(0, minOf(128, dataText.length))
 
@@ -130,43 +139,48 @@ class NoteActivity : ComponentActivity() {
 		ExperimentalPagerApi::class, ExperimentalPermissionsApi::class,
 		ExperimentalMaterialApi::class
 	)
-	private fun onClick(click: Click, data: Any? = null) {
+	private fun onPerformAction(action: Action, data: Any? = null) {
 		val scope = viewModel.activityState.coroutineScope
 		val activityState = viewModel.activityState
-		val noteDbEntry = viewModel.knotDbEntry.value
+		val noteDbEntry = viewModel.noteDbEntry.value
 
-		when (click) {
-			Click.FINISH -> {
+		when (action) {
+			Action.FINISH -> {
 				if (activityState.isSaving.value) {
 					Toast.makeText(this, "Please wait while saving data", Toast.LENGTH_SHORT).show()
 				} else {
 					finish()
 				}
 			}
-			Click.SAVE -> {
+			Action.SAVE_NOTE -> {
 				if (!activityState.isSaving.value) {
 					Toast.makeText(this, "Saving data...", Toast.LENGTH_SHORT).show()
 					activityState.isSaving.value = true
 					activityState.richTextEditor.exec("editor.getData();")
+					viewModel.openNotebook()
 				}
 			}
-			Click.METADATA -> {
+			Action.EDITOR_READY -> viewModel.status.value = Status.LOADED
+			Action.OPEN_METADATA -> {
 				activityState.bottomSheetType.value = BottomSheetType.MetadataBottomSheet
 				scope.launch {
 					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
 				}
 			}
-			Click.MENU -> {
+			Action.OPEN_MENU -> {
 				activityState.bottomSheetType.value = BottomSheetType.MenuBottomSheet
 				scope.launch {
 					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
 				}
 			}
-			Click.TOP_BAR_QUATERNARY -> {
-				activityState.richTextEditor.exec("editor.commands.setContent(${viewModel.note.value!!.content});")
-				viewModel.viewerKey.value = null
+			Action.EDIT_NOTE -> {
+				if (noteDbEntry != null) {
+					viewModel.loadAttachment(noteDbEntry.key)
+					activityState.richTextEditor.exec("editor.commands.setContent(${viewModel.noteDbEntry.value!!.content});")
+					viewModel.viewerKey.value = null
+				}
 			}
-			Click.NEXT_PAGE -> {
+			Action.NEXT_PAGE -> {
 				data as Int
 				scope.launch {
 					activityState.pagerState.animateScrollToPage(
@@ -174,15 +188,15 @@ class NoteActivity : ComponentActivity() {
 					)
 				}
 			}
-			Click.PREV_PAGE -> scope.launch {
+			Action.PREV_PAGE -> scope.launch {
 				activityState.pagerState.animateScrollToPage(
 					maxOf(0, activityState.pagerState.currentPage - 1)
 				)
 			}
-			Click.SHOW_ADDRESS -> activityState.showAddressCard.value = true
-			Click.HIDE_ADDRESS -> activityState.showAddressCard.value = false
-			Click.REQUEST_LOCATION_PERMISSION -> activityState.locationPermissionState.launchPermissionRequest()
-			Click.SELECT_TIME -> {
+			Action.SHOW_ADDRESS -> activityState.showAddressCard.value = true
+			Action.HIDE_ADDRESS -> activityState.showAddressCard.value = false
+			Action.REQUEST_LOCATION_PERMISSION -> activityState.locationPermissionState.launchPermissionRequest()
+			Action.SELECT_TIME -> {
 				val calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"))
 				calendar.timeInMillis = noteDbEntry?.userTimestamp ?: 0
 				DatePickerDialog(
@@ -214,39 +228,61 @@ class NoteActivity : ComponentActivity() {
 					calendar.get(Calendar.DAY_OF_MONTH)
 				).show()
 			}
-			Click.ATTACHMENT_BUTTON -> {
-				activityState.bottomSheetType.value =
-					BottomSheetType.AttachmentBottomSheet
+			Action.ATTACHMENT_BUTTON -> {
+				activityState.bottomSheetType.value = BottomSheetType.AttachmentBottomSheet
 				scope.launch {
-					activityState.bottomSheetState.animateTo(
-						ModalBottomSheetValue.Expanded
-					)
+					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
 				}
 			}
-			Click.INSERT_PICTURE -> {
+			Action.TOGGLE_FAVOURITE -> {
+				if (noteDbEntry != null) {
+					noteDbEntry.isFavourite = !noteDbEntry.isFavourite
+					viewModel.emitNote()
+				}
+			}
+			Action.TOGGLE_ARCHIVE -> {
+				if (noteDbEntry != null) {
+					noteDbEntry.isArchived = !noteDbEntry.isArchived
+					viewModel.emitNote()
+				}
+			}
+			Action.TOGGLE_LOCKED -> {
+				if (noteDbEntry != null) {
+					noteDbEntry.isLocked = !noteDbEntry.isLocked
+					viewModel.emitNote()
+				}
+			}
+			Action.INSERT_PICTURE -> {
 				data as Uri?
-				if (data != null) {
-					viewModel.insertAttachment(uri = data)
-				}
+				if (data != null) viewModel.insertAttachment(uri = data)
 			}
-			Click.INSERT_MEDIA -> {
+			Action.INSERT_MEDIA -> {
 				data as List<*>
 				data.forEach {
 					it as Uri
 					viewModel.insertAttachment(uri = it)
 				}
 			}
-			Click.OPEN_ATTACHMENT -> null
-			Click.REMOVE_ATTACHMENT -> viewModel.attachmentMap.remove(data as String)
-			Click.TAG_BUTTON -> {
-				activityState.bottomSheetType.value = BottomSheetType.TagBottomSheet
-				scope.launch {
-					activityState.bottomSheetState.animateTo(
-						ModalBottomSheetValue.Expanded
-					)
+			Action.OPEN_ATTACHMENT -> {
+//				Intent(Intent.ACTION_VIEW, data as Uri).apply {
+//					startActivity(this)
+//				}
+				if (noteDbEntry != null) {
+					Intent(this, AttachmentActivity::class.java).apply {
+						putExtra(Konstant.Companion.Konstant.IS_NOTE.name, true)
+						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, noteDbEntry.key)
+						startActivity(this)
+					}
 				}
 			}
-			Click.ADDRESS_CARD -> {
+			Action.REMOVE_ATTACHMENT -> viewModel.attachmentMap.remove(data as String)
+			Action.TAG_BUTTON -> {
+				activityState.bottomSheetType.value = BottomSheetType.TagBottomSheet
+				scope.launch {
+					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
+				}
+			}
+			Action.ADDRESS_CARD -> {
 				val addressState by activityState.addressState
 				when (addressState) {
 					AddressState.NO_PERMISSION -> {
@@ -260,11 +296,29 @@ class NoteActivity : ComponentActivity() {
 					AddressState.REMOVED -> viewModel.getLocation()
 				}
 			}
-			Click.REFRESH_LOCATION -> viewModel.getLocation()
-			Click.OPEN_MAP_DIALOG -> activityState.showMapLocationDialog.value = true
-			Click.REMOVE_LOCATION -> viewModel.removeLocationData()
-			Click.DISMISS_MAP_DIALOG -> activityState.showMapLocationDialog.value = false
-			Click.REVERSE_GEOCODE -> {
+			Action.TRY_GET_LOCATION -> {
+				val locationPermissionState = activityState.locationPermissionState
+				when {
+					locationPermissionState.hasPermission -> {
+						activityState.addressState.value = AddressState.REQUESTED
+						viewModel.getLocation()
+					}
+					locationPermissionState.shouldShowRationale -> {
+						activityState.addressState.value = AddressState.SHOW_RATIONALE
+					}
+					!locationPermissionState.permissionRequested -> {
+						activityState.addressState.value = AddressState.REQUEST_PERMISSION
+					}
+					else -> {
+						activityState.addressState.value = AddressState.NO_PERMISSION
+					}
+				}
+			}
+			Action.REFRESH_LOCATION -> viewModel.getLocation()
+			Action.OPEN_MAP_DIALOG -> activityState.showMapLocationDialog.value = true
+			Action.REMOVE_LOCATION -> viewModel.removeLocationData()
+			Action.DISMISS_MAP_DIALOG -> activityState.showMapLocationDialog.value = false
+			Action.REVERSE_GEOCODE -> {
 				data as LatLng
 				viewModel.reverseGeocode(
 					latitude = data.latitude,
@@ -288,8 +342,8 @@ class NoteActivity : ComponentActivity() {
 					}
 				)
 			}
-			Click.ADD_TAG -> viewModel.addTag(tag = data as String)
-			Click.CONNECT_TAG -> viewModel.connectTag(tag = data as String)
+			Action.ADD_TAG -> viewModel.addTag(tag = data as String)
+			Action.CONNECT_TAG -> viewModel.connectTag(tag = data as String)
 		}
 	}
 
@@ -300,19 +354,22 @@ class NoteActivity : ComponentActivity() {
 	)
 	@Composable
 	private fun Screen() {
+
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
 			sheetElevation = 0.dp,
 			sheetBackgroundColor = Color.Transparent,
 			sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
-			sheetContent = { SheetLayout { click, data -> onClick(click = click, data = data) } },
+			sheetContent = {
+				SheetLayout { click, data -> onPerformAction(action = click, data = data) }
+			},
 		) {
 			Scaffold(
 				topBar = {
 					TopBar(
 						isViewer = viewModel.viewerKey.value != null,
 						isSaving = viewModel.activityState.isSaving.value
-					) { onClick(it) }
+					) { action, data -> onPerformAction(action, data) }
 				}
 			) {
 				Crossfade(
@@ -323,13 +380,17 @@ class NoteActivity : ComponentActivity() {
 		}
 	}
 
+	@OptIn(ExperimentalPermissionsApi::class)
 	@Composable
 	private fun EditorScreen() {
 		val scope = rememberCoroutineScope()
 		val configuration = LocalConfiguration.current
 		val screenWidth = configuration.screenWidthDp.dp
 
-		var isSaved by viewModel.activityState.isSaved
+		val activityState = viewModel.activityState
+		val noteDbEntry by viewModel.knotDbEntry.collectAsState()
+
+		var isSaved by activityState.isSaved
 		val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_saved))
 
 		LaunchedEffect(key1 = isSaved) {
@@ -342,22 +403,25 @@ class NoteActivity : ComponentActivity() {
 			}
 		}
 
-		Box(modifier = Modifier.fillMaxSize()) {
-			NoteEditorScreen { click, data -> onClick(click = click, data = data) }
+		NoteEditorScreen(
+			richTextEditor = activityState.richTextEditor,
+			noteDbEntry = noteDbEntry,
+			locationPermissionState = activityState.locationPermissionState,
+			status = viewModel.status.value,
+		) { click, data -> onPerformAction(action = click, data = data) }
 
-			AnimatedVisibility(
-				visible = isSaved,
-				enter = fadeIn(tween(600)),
-				exit = fadeOut(tween(600)),
-				modifier = Modifier.fillMaxSize()
-			) {
-				LottieAnimation(
-					composition = lottieComposition,
-					isPlaying = isSaved,
-					iterations = LottieConstants.IterateForever,
-					modifier = Modifier.requiredSize(screenWidth / 3)
-				)
-			}
+		AnimatedVisibility(
+			visible = isSaved,
+			enter = fadeIn(tween(600)),
+			exit = fadeOut(tween(600)),
+			modifier = Modifier.fillMaxSize()
+		) {
+			LottieAnimation(
+				composition = lottieComposition,
+				isPlaying = isSaved,
+				iterations = LottieConstants.IterateForever,
+				modifier = Modifier.requiredSize(screenWidth / 3)
+			)
 		}
 	}
 
@@ -365,12 +429,11 @@ class NoteActivity : ComponentActivity() {
 	@Composable
 	private fun ViewerScreen() {
 		val scope = rememberCoroutineScope()
-		val noteKeyList by viewModel.noteKeyListLiveData.collectAsState(initial = listOf())
+		val noteKeyList = viewModel.noteKeyList
 		val pagerState = viewModel.activityState.pagerState
 		val status by viewModel.status
 
 		val noteDbEntry by viewModel.knotDbEntry.collectAsState()
-		val note by viewModel.knot.collectAsState()
 
 		LaunchedEffect(key1 = noteKeyList.hashCode() + pagerState.pageCount.hashCode()) {
 			scope.launch {
@@ -391,11 +454,9 @@ class NoteActivity : ComponentActivity() {
 			noteKeyList = noteKeyList,
 			pagerState = viewModel.activityState.pagerState,
 			noteDbEntry = noteDbEntry,
-			note = note,
-			attachmentMap = viewModel.attachmentMap,
 			connectedTag = viewModel.connectedTag,
 			status = status
-		) { onClick(it, noteKeyList.size) }
+		) { onPerformAction(it, noteKeyList.size) }
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
@@ -456,12 +517,13 @@ class NoteActivity : ComponentActivity() {
 		REMOVED
 	}
 
-	enum class Click {
+	enum class Action {
 		FINISH,
-		SAVE,
-		METADATA,
-		MENU,
-		TOP_BAR_QUATERNARY,
+		SAVE_NOTE,
+		EDIT_NOTE,
+		EDITOR_READY,
+		OPEN_METADATA,
+		OPEN_MENU,
 		NEXT_PAGE,
 		PREV_PAGE,
 		SHOW_ADDRESS,
@@ -469,12 +531,16 @@ class NoteActivity : ComponentActivity() {
 		REQUEST_LOCATION_PERMISSION,
 		SELECT_TIME,
 		ATTACHMENT_BUTTON,
+		TOGGLE_FAVOURITE,
+		TOGGLE_ARCHIVE,
+		TOGGLE_LOCKED,
 		INSERT_PICTURE,
 		INSERT_MEDIA,
 		OPEN_ATTACHMENT,
 		REMOVE_ATTACHMENT,
 		TAG_BUTTON,
 		ADDRESS_CARD,
+		TRY_GET_LOCATION,
 		REFRESH_LOCATION,
 		OPEN_MAP_DIALOG,
 		REMOVE_LOCATION,

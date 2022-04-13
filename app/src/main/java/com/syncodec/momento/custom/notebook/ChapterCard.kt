@@ -2,10 +2,7 @@ package com.syncodec.momento.custom.notebook
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,49 +23,47 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp0
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp1
 import dev.jorgecastillo.androidcolorx.library.tints
 
-data class ChapterCardData(
-	val timestamp: Long,
-	val isLocked: Boolean,
-	val isSelected: Boolean,
-	val isArchived: Boolean,
-	val isFavourite: Boolean,
-	val isDeleted: Boolean,
-	val isLast: Boolean,
-	val title: String,
-	val description: String?,
-	val noteCount: Int,
-	val chapterCount: Int,
-	val isVisible: Boolean = false,
-	val onClick: () -> Unit,
-	val onLongClick: (() -> Unit)? = null,
-)
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun ChapterCard(
-	chapterCardData: ChapterCardData,
+	timestamp: Long,
+	isLocked: Boolean,
+	isSelected: Boolean,
+	isArchived: Boolean,
+	isFavourite: Boolean,
+	isDeleted: Boolean,
+	isLast: Boolean,
+	title: String,
+	description: String?,
+	noteCount: Int,
+	chapterCount: Int,
+	isVisible: Boolean = false,
+	onClick: () -> Unit,
+	onLongClick: (() -> Unit)? = null,
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (chapterCardData.isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
-		animationSpec = tween(600)
+		if (isSelected) MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+		else MaterialTheme.colorScheme.surface
 	)
 
 	AnimatedVisibility(
-		visible = chapterCardData.isVisible,
+		visible = isVisible,
 		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(if (chapterCardData.isLast) 64.dp else 56.dp)
-				.padding(8.dp, 0.dp, 8.dp, if (chapterCardData.isLast) 8.dp else 0.dp),
+				.height(if (isLast) 64.dp else 56.dp)
+				.padding(8.dp, 0.dp, 8.dp, if (isLast) 8.dp else 0.dp),
 		) {
-			NoteSpacer(isLast = chapterCardData.isLast)
+			NoteSpacer(isLast = isLast)
 			Spacer(modifier = Modifier.width(4.dp))
 			Card(
 				elevation = 0.dp,
@@ -79,8 +74,8 @@ fun ChapterCard(
 					.fillMaxSize()
 					.clip(RoundedCornerShape(12.dp))
 					.combinedClickable(
-						onClick = { chapterCardData.onClick() },
-						onLongClick = { chapterCardData.onLongClick?.invoke() }
+						onClick = { onClick() },
+						onLongClick = { onLongClick?.invoke() }
 					)
 			) {
 				Column(
@@ -93,7 +88,7 @@ fun ChapterCard(
 						verticalAlignment = Alignment.CenterVertically
 					) {
 						Text(
-							text = entryTimestamp0(chapterCardData.timestamp),
+							text = entryTimestamp0(timestamp),
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.primary,
 							fontWeight = FontWeight.Bold,
@@ -101,7 +96,7 @@ fun ChapterCard(
 							modifier = Modifier
 						)
 						Text(
-							text = entryTimestamp1(chapterCardData.timestamp),
+							text = entryTimestamp1(timestamp),
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.primary.copy(0.31f),
 							fontWeight = FontWeight.Bold,
@@ -112,7 +107,7 @@ fun ChapterCard(
 
 						Spacer(modifier = Modifier.weight(1f))
 
-						if (chapterCardData.isLocked) {
+						if (isLocked) {
 							Icon(
 								painter = painterResource(id = R.drawable.ic_security),
 								contentDescription = "Locked",
@@ -122,8 +117,8 @@ fun ChapterCard(
 							)
 						}
 
-						if (chapterCardData.isArchived) {
-							if (chapterCardData.isLocked) {
+						if (isArchived) {
+							if (isLocked) {
 								Spacer(modifier = Modifier.width(2.dp))
 								Text(
 									text = "·",
@@ -136,7 +131,7 @@ fun ChapterCard(
 								Spacer(modifier = Modifier.width(2.dp))
 							}
 							Icon(
-								painter = painterResource(id = R.drawable.ic_archive_3),
+								painter = painterResource(id = R.drawable.ic_archive),
 								contentDescription = "Archived",
 								tint = MaterialTheme.colorScheme.primary,
 								modifier = Modifier
@@ -144,8 +139,8 @@ fun ChapterCard(
 							)
 						}
 
-						if (chapterCardData.isFavourite) {
-							if (chapterCardData.isLocked || chapterCardData.isArchived) {
+						if (isFavourite) {
+							if (isLocked || isArchived) {
 								Spacer(modifier = Modifier.width(2.dp))
 								Text(
 									text = "·",
@@ -159,7 +154,7 @@ fun ChapterCard(
 							}
 
 							Icon(
-								painter = painterResource(id = R.drawable.ic_heart),
+								painter = painterResource(id = R.drawable.ic_favourite),
 								contentDescription = "Favourite",
 								tint = MaterialTheme.colorScheme.primary,
 								modifier = Modifier
@@ -168,7 +163,7 @@ fun ChapterCard(
 						}
 					}
 					Text(
-						text = chapterCardData.title,
+						text = title,
 						style = MaterialTheme.typography.titleSmall,
 						color = MaterialTheme.colorScheme.onBackground,
 						maxLines = 1,

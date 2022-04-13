@@ -14,30 +14,49 @@ fun DeleteDialog(
 ) {
 	if (showDeleteDialog) {
 		AlertDialog(
-			containerColor = MaterialTheme.colorScheme.background,
+			containerColor = MaterialTheme.colorScheme.surface,
 			onDismissRequest = { onDismiss() },
 			title = {
 				Text(
-					text = "Are you sure you want to delete ${if (selectedItemSize == 1) "1 entry" else "$selectedItemSize entries"}?",
+					text = "Delete",
 					style = MaterialTheme.typography.titleMedium,
-					color = MaterialTheme.colorScheme.onPrimaryContainer
+					color = MaterialTheme.colorScheme.onSurface
+				)
+			},
+			text = {
+				Text(
+					text = "Are you sure you want to delete ${if (selectedItemSize == 1) "1 entry" else "$selectedItemSize entries"}?",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurface
 				)
 			},
 			confirmButton = {
-				Button(
+				OutlinedButton(
 					colors = ButtonDefaults.buttonColors(
-						containerColor = MaterialTheme.colorScheme.primaryContainer
+						containerColor = MaterialTheme.colorScheme.primary,
+						contentColor = MaterialTheme.colorScheme.onPrimary
 					),
-					onClick = {onDelete()}
+					onClick = { onDelete() }
 				) {
 					Text(
 						"Delete",
 						style = MaterialTheme.typography.bodyMedium,
 						fontWeight = FontWeight.Bold,
-						color = MaterialTheme.colorScheme.onPrimaryContainer
 					)
 				}
 			},
+			dismissButton = {
+				OutlinedButton(
+					colors = ButtonDefaults.outlinedButtonColors(),
+					onClick = { onDismiss() }
+				) {
+					Text(
+						"Dismiss",
+						style = MaterialTheme.typography.bodyMedium,
+						fontWeight = FontWeight.Bold,
+					)
+				}
+			}
 		)
 	}
 }

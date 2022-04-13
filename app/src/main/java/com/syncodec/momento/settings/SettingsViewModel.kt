@@ -1,25 +1,40 @@
 package com.syncodec.momento.settings
 
 import android.app.Application
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.AndroidViewModel
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.syncodec.momento.Momento
+import com.syncodec.momento.database.attachment.AttachmentDbEntry
+import com.syncodec.momento.database.export.NoteExport
 import com.syncodec.momento.database.note.LocationData
-import com.syncodec.momento.database.note.Note
 import com.syncodec.momento.database.note.NoteDbEntry
+import com.syncodec.momento.database.notebook.NotebookDbEntry
+import com.syncodec.momento.miscellaneous.CollectionUtils.Companion.listOfField
+import com.syncodec.momento.miscellaneous.FileUtils
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.repository.AttachmentRepository
 import com.syncodec.momento.repository.NoteRepository
 import com.syncodec.momento.repository.TagRepository
 import org.json.JSONObject
-import kotlin.math.min
+import java.io.File
+
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
-	private val noteRepository: NoteRepository = NoteRepository.getInstance(momento = application as Momento)
-	private val attachmentRepository: AttachmentRepository = AttachmentRepository(momento = application as Momento)
-	private val tagRepository: TagRepository = TagRepository.getInstance(momento = application as Momento)
+	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
+
+	private val noteRepository: NoteRepository =
+		NoteRepository.getInstance(momento = application as Momento)
+	private val attachmentRepository: AttachmentRepository =
+		AttachmentRepository.getInstance(momento = application as Momento)
+	private val tagRepository: TagRepository =
+		TagRepository.getInstance(momento = application as Momento)
 
 	lateinit var activityState: SettingsActivity.ActivityState
+
+	val notebookMap: SnapshotStateMap<String, Pair<NotebookDbEntry, Int>> = noteRepository.notebookMap
 
 	suspend fun insertNote(notebookKey: String, data: String) {
 		val dataObject = JSONObject(data)
@@ -41,7 +56,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 			this.title = null
 			this.contentThumbnail = dataText.substring(0, minOf(128, dataText.length))
 			this.attachmentThumbnail = null
-			importData.optDouble("lat").also {lat ->
+			this.content = JSONObject(dataJson)
+			importData.optDouble("lat").also { lat ->
 				if (!lat.isNaN()) {
 					importData.optDouble("lon").also { lon ->
 						if (!lon.isNaN()) {
@@ -54,12 +70,51 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 			this.mood = importData.optInt("sentiment")
 		}
 
-		val note = Note(
-			key = noteDbEntry.key
-		).apply {
-			this.content = dataJson
+		noteRepository.putNote(noteDbEntry = noteDbEntry)
+	}
+
+	suspend fun exportNotes(notebookKey: String): String? {
+		val cacheDir: File = getApplication<Momento>().cacheDir
+		val exportDir = File("${cacheDir.path}/export/export_notes_${System.currentTimeMillis()}")
+		exportDir.mkdirs()
+
+		val noteKeyList = noteRepository.openNotebook(notebookKey)
+		noteKeyList.forEach { key ->
+			try {
+				val noteDbEntry = noteRepository.getNote(key = key)
+
+				if (noteDbEntry?.content != null) {
+					val attachmentDataList =
+						attachmentRepository.getAttachment(noteKey = noteDbEntry.key)
+					val attachmentList = attachmentRepository.getAttachmentUri(
+						keyList = attachmentDataList.listOfField(AttachmentDbEntry::key)
+					)
+
+					NoteExport(
+						key = noteDbEntry.key,
+						createdTimestamp = noteDbEntry.createdTimestamp,
+						modifiedTimestamp = noteDbEntry.modifiedTimestamp,
+						userTimestamp = noteDbEntry.userTimestamp,
+						timezone = noteDbEntry.timezone,
+						chapterPath = noteDbEntry.chapterPath,
+						notebookKey = noteDbEntry.notebookKey,
+						title = noteDbEntry.title,
+						content = noteDbEntry.content.toString(),
+						location = noteDbEntry.location,
+						address = noteDbEntry.address,
+						attachmentKey = attachmentList.keys.toList()
+					).apply {
+						File("${exportDir.path}/${noteDbEntry.key}.json")
+							.writeText(objectMapper.writeValueAsString(this))
+					}
+				}
+			} catch (exception: Exception) {
+			}
 		}
 
-		noteRepository.putNote(noteDbEntry = noteDbEntry, note = note)
+		activityState.dataExchange.value = SettingsActivity.DataExchange.NONE
+		FileUtils.zipFolder(exportDir.path, "${exportDir.path}.zip")
+
+		return if (exportDir.exists()) "${exportDir.path}.zip" else null
 	}
 }

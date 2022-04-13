@@ -161,10 +161,10 @@ class BucketItemActivity : ComponentActivity() {
 //				resourceId = R.drawable.ic_locked,
 //				highlight = bucketItemDbEntry?.isLocked == true
 //			) { onClick(Click.LOCK) },
-			MenuBottomSheetButtonData(title = "Delete", resourceId = R.drawable.ic_trash, highlight = false) { onClick(Click.DELETE) },
+			MenuBottomSheetButtonData(title = "Delete", icon = R.drawable.ic_trash, highlight = false) { onClick(Click.DELETE) },
 
-			MenuBottomSheetButtonData(title = "Export", resourceId = R.drawable.ic_export, highlight = false) { onClick(Click.EXPORT) },
-			MenuBottomSheetButtonData(title = "Share", resourceId = R.drawable.ic_share, highlight = false) { onClick(Click.SHARE) },
+			MenuBottomSheetButtonData(title = "Export", icon = R.drawable.ic_export, highlight = false) { onClick(Click.EXPORT) },
+			MenuBottomSheetButtonData(title = "Share", icon = R.drawable.ic_share, highlight = false) { onClick(Click.SHARE) },
 			null,
 			null
 		)

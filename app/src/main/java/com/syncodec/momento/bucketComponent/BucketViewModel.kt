@@ -43,7 +43,7 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 		viewModelScope.launch(Dispatchers.IO) {
 			bucketRepository.getBucketItemListAsFlow(bucketKey = bucketKey).collect {
 				status.value = Status.LOADING
-				bucketItemList.removeAll { true }
+				bucketItemList.clear()
 				bucketItemList.addAll(it)
 				status.value = Status.LOADED
 			}

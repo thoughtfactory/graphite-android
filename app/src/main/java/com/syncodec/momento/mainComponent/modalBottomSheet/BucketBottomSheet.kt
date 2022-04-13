@@ -18,8 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.database.bucketItem.BucketItemType
@@ -28,7 +28,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Bucket
 
 
-data class BucketButtonData(
+private data class BucketButtonData(
 	val subtitle: String,
 	val bucketItemType: BucketItemType?,
 	val highlight: Boolean = false,
@@ -143,10 +143,7 @@ fun BucketBottomSheet(
 
 		LargeButton(
 			text = "Create",
-			containerColor = containerColor,
-			contentColor = contentColor,
-			isElevated = selectedBucketType != null && bucketNameText.isNotBlank(),
-			isClickable = selectedBucketType != null && bucketNameText.isNotBlank(),
+			enabled = selectedBucketType != null && bucketNameText.isNotBlank(),
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(24.dp, 0.dp)

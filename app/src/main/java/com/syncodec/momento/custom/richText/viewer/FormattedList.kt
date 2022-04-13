@@ -2,7 +2,6 @@
 
 package com.syncodec.momento.custom.richText.viewer
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material3.Icon
@@ -19,7 +18,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.unit.R
 import com.syncodec.momento.custom.richText.viewer.*
 import com.syncodec.momento.custom.richText.viewer.ListType.*
 import kotlin.math.max

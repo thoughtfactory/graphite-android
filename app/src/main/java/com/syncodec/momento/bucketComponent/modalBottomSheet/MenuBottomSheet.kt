@@ -11,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.noteComponent.modalBottomSheet.TimestampCard

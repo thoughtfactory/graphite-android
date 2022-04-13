@@ -13,8 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.noteComponent.NoteViewModel
@@ -36,7 +36,7 @@ fun MenuBottomSheet() {
 		}
 	}
 
-	val menuBottomSheetButtonDataLists: List<MenuBottomSheetButtonData?> = listOf(
+	val buttonDataList: List<MenuBottomSheetButtonData?> = listOf(
 //		MenuBottomSheetButtonData(title = "Pin to top", imageVector = TablerIcons.Pinned) {},
 //		MenuBottomSheetButtonData(title = "Pin to notification", imageVector = TablerIcons.Notification) {},
 //		MenuBottomSheetButtonData(title = "Add to notebook", imageVector = TablerIcons.Notebook) {},
@@ -76,12 +76,8 @@ fun MenuBottomSheet() {
 				.padding(24.dp, 0.dp),
 			mainAxisAlignment = MainAxisAlignment.SpaceBetween,
 		) {
-			menuBottomSheetButtonDataLists.forEach {
-				MenuBottomSheetButton(
-					menuBottomSheetButtonData = it,
-					modifier = Modifier
-						.width(80.dp)
-				)
+			buttonDataList.forEach {
+				MenuBottomSheetButton(buttonData = it,)
 			}
 		}
 

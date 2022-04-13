@@ -47,8 +47,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.momento.R
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.ClimateChangeMessage
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Notebook

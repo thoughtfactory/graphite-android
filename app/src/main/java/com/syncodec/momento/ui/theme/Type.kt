@@ -21,7 +21,6 @@ private val SourceSansProFontFamily = FontFamily(
 
 private val UbuntuFontFamily = FontFamily(
 	Font(R.font.ubuntu_regular, FontWeight.Normal),
-	Font(R.font.ubuntu_bold, FontWeight.Bold),
 )
 
 private val ATWriter = FontFamily(
@@ -101,29 +100,29 @@ val UbuntuTypography = Typography(
 	titleSmall = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Bold,
-		fontSize = 16.sp,
-		lineHeight = 18.sp,
+		fontSize = 20.sp,
+		lineHeight = 24.sp,
 		letterSpacing = 1.sp
 	),
 	bodyLarge = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Bold,
-		fontSize = 14.sp,
-		lineHeight = 16.sp,
+		fontSize = 16.sp,
+		lineHeight = 18.sp,
 		letterSpacing = 0.8.sp
 	),
 	bodyMedium = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Normal,
-		fontSize = 12.sp,
-		lineHeight = 14.sp,
+		fontSize = 14.sp,
+		lineHeight = 16.sp,
 		letterSpacing = 0.4.sp
 	),
 	bodySmall = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Medium,
 		fontSize = 12.sp,
-		lineHeight = 16.sp,
+		lineHeight = 14.sp,
 		letterSpacing = 0.2.sp
 	)
 )

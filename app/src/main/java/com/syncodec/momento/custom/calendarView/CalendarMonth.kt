@@ -3,12 +3,14 @@ package com.syncodec.momento.custom.calendarView
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import org.joda.time.LocalDate
 import java.util.*
 
@@ -105,9 +108,11 @@ private fun DayButton(
 	onClick: (Long) -> Unit
 ) {
 	val dayOfMonthBackground = if (highlight) MaterialTheme.colorScheme.primary
-	else MaterialTheme.colorScheme.onPrimary.copy(0.31f)
+	else MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
 	val dayOfMonthForeground = if (highlight) MaterialTheme.colorScheme.onPrimary
-	else MaterialTheme.colorScheme.primary
+	else contentColorFor(
+		backgroundColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+	)
 
 	Box(
 		modifier = Modifier
@@ -134,7 +139,7 @@ private fun DayButton(
 				.padding(0.dp, 0.dp, 0.dp, 4.dp),
 		) {
 			Spacer(modifier = Modifier.width(2.dp))
-			repeat(minOf(totalEntries, 3)) {
+			repeat((minOf(totalEntries, 3)+1)/2) {
 				Box(
 					modifier = Modifier
 						.requiredSize(6.dp)

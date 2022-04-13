@@ -27,14 +27,12 @@ import com.google.maps.android.clustering.ClusterManager
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.notebook.NoteCard
-import com.syncodec.momento.custom.notebook.NoteCardData
 import com.syncodec.momento.custom.notebook.NotebookHeaderCard
 import com.syncodec.momento.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.note.locationDataToLatLng
 import com.syncodec.momento.mainComponent.miscellaneous.AtlasClusterItem
 import com.syncodec.momento.mainComponent.miscellaneous.ClusterRenderer
-import com.syncodec.momento.mainComponent.miscellaneous.TopBar
 import com.syncodec.momento.miscellaneous.GoogleMapUtils.Companion.isMarkerVisible
 
 
@@ -44,17 +42,17 @@ import com.syncodec.momento.miscellaneous.GoogleMapUtils.Companion.isMarkerVisib
 @Composable
 fun AtlasScreen(
 	mapView: MapView,
-	noteList: List<NoteDbEntry>,
+	noteMap: Map<String, NoteDbEntry>,
 	isSelected: Boolean,
 	selectedItemList: List<String>,
-	onClick: (MainActivity.Click, Any?) -> Unit
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
 	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
 
-	val markerMap: SnapshotStateList<NoteCardData> = remember { mutableStateListOf() }
+	val markerMap: SnapshotStateList<NoteDbEntry> = remember { mutableStateListOf() }
 
 	var swLatLng by remember { mutableStateOf(LatLng(-90.0, -180.0)) }
 	var neLatLng by remember { mutableStateOf(LatLng(90.0, 180.0)) }
@@ -64,8 +62,8 @@ fun AtlasScreen(
 		var maxLat = -90.0
 		var minLng = 180.0
 		var maxLng = -180.0
-		noteList.forEach {
-			val latLng = locationDataToLatLng(it.location)
+		noteMap.forEach { (_, note) ->
+			val latLng = locationDataToLatLng(note.location)
 			if (latLng != null && latLng.latitude != 90.0 && latLng.longitude != 180.0) {
 				minLat = minOf(latLng.latitude, minLat)
 				maxLat = maxOf(latLng.latitude, maxLat)
@@ -79,17 +77,11 @@ fun AtlasScreen(
 
 	BottomSheetScaffold(
 		scaffoldState = bottomSheetScaffoldState,
-		sheetContent = { BottomSheetContent(markerMap) },
+		sheetContent = { BottomSheetContent(markerMap) { action, key -> onAction(action, key) } },
 		modifier = Modifier,
-		topBar = {
-			TopBar(
-				isSelected = isSelected,
-				selectedItemSize = selectedItemList.size
-			) { click, data -> onClick(click, data) }
-		},
 		sheetElevation = 32.dp,
 		sheetPeekHeight = screenHeight.times(0.2f),
-		sheetBackgroundColor = MaterialTheme.colorScheme.background
+		sheetBackgroundColor = MaterialTheme.colorScheme.surface
 	) {
 		AndroidView(
 			factory = { mapView },
@@ -130,52 +122,19 @@ fun AtlasScreen(
 
 				clusterManager.renderer = clusterRenderer
 
-				noteList.forEach {
-					locationDataToLatLng(it.location)?.let { it1 ->
+				noteMap.forEach { (_, note) ->
+					locationDataToLatLng(note.location)?.let { it1 ->
 						AtlasClusterItem(latLng = it1, itemTitle = null)
-					}?.also {
-						clusterManager.addItem(it)
-					}
+					}?.also { clusterManager.addItem(it) }
 				}
 
 				map.setOnCameraMoveListener { clusterManager.cluster() }
 
 				map.setOnCameraIdleListener {
 					markerMap.clear()
-					noteList.forEach { noteDbEntry ->
-						val latLng = locationDataToLatLng(noteDbEntry.location)
-						if (latLng != null && map.isMarkerVisible(latLng)) {
-							NoteCardData(
-								key = noteDbEntry.key,
-								timestamp = noteDbEntry.userTimestamp,
-								showFullTime = false,
-								isLocked = false,
-								isSelected = noteDbEntry.key in selectedItemList,
-								isArchived = false,
-								isFavourite = false,
-								isDeleted = noteDbEntry.deletedTimestamp != -1L,
-								isLast = false,
-								title = noteDbEntry.title,
-								contentThumbnail = noteDbEntry.contentThumbnail,
-								attachmentCount = noteDbEntry.attachmentCount,
-								attachmentThumbnail = noteDbEntry.attachmentThumbnail,
-								address = noteDbEntry.address,
-								latLng = locationDataToLatLng(noteDbEntry.location),
-								isVisible = true,
-								onClick = {
-									onClick(
-										MainActivity.Click.CLICK_NOTE,
-										noteDbEntry.key
-									)
-								},
-								onLongClick = {
-									onClick(
-										MainActivity.Click.LONG_CLICK_NOTE,
-										noteDbEntry.key
-									)
-								},
-							).apply { markerMap.add(this) }
-						}
+					noteMap.forEach { (_, note) ->
+						val latLng = locationDataToLatLng(note.location)
+						if (latLng != null && map.isMarkerVisible(latLng)) { markerMap.add(note) }
 					}
 				}
 			}
@@ -184,7 +143,10 @@ fun AtlasScreen(
 }
 
 @Composable
-private fun BottomSheetContent(markerMap: SnapshotStateList<NoteCardData>) {
+private fun BottomSheetContent(
+	markerMap: SnapshotStateList<NoteDbEntry>,
+	onAction: (MainActivity.Action, String) -> Unit
+) {
 	val lastEntryKey = if (markerMap.size != 0) markerMap.last().key else null
 
 	LazyColumn {
@@ -195,10 +157,30 @@ private fun BottomSheetContent(markerMap: SnapshotStateList<NoteCardData>) {
 				noEntries = if (markerMap.isEmpty()) "No entries" else if (markerMap.size == 1) "1 entry" else "${markerMap.size} entries"
 			)
 		}
-		markerMap.forEachIndexed { index, noteCardData ->
+		markerMap.forEachIndexed { index, note ->
 			item {
-				NoteCard(noteCardData = noteCardData.copy(isLast = index == markerMap.size - 1))
-				NotebookTimelineSpacer(isVisible = noteCardData.key != lastEntryKey)
+				NoteCard(
+					key = note.key,
+					timestamp = note.userTimestamp,
+					showFullTime = true,
+					isLocked = false,
+					isSelected = false,
+					isArchived = false,
+					isFavourite = false,
+					isDeleted = note.deletedTimestamp != -1L,
+					isLast = index == markerMap.size - 1,
+					title = note.title,
+					contentThumbnail = note.contentThumbnail,
+					attachmentCount = note.attachmentKeyList.size,
+					attachmentThumbnail = note.attachmentThumbnail,
+					address = note.address,
+					latLng = locationDataToLatLng(note.location),
+					isVisible = true,
+					onClick = { onAction(MainActivity.Action.CLICK_NOTE, note.key) },
+					onLongClick = null,
+				)
+
+				NotebookTimelineSpacer(isVisible = note.key != lastEntryKey)
 			}
 		}
 		item { Spacer(modifier = Modifier.height(194.dp)) }

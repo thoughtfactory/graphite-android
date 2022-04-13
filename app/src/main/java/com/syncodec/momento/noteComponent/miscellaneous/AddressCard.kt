@@ -32,7 +32,7 @@ fun AddressCard(
 	showAddressCard: Boolean,
 	address: String?,
 	locationData: LocationData?,
-	onClick: (NoteActivity.Click) -> Unit
+	onClick: (NoteActivity.Action) -> Unit
 ) {
 	val scope = rememberCoroutineScope()
 
@@ -44,7 +44,7 @@ fun AddressCard(
 		finishedListener = {
 			scope.launch {
 				delay(6400)
-				onClick(NoteActivity.Click.HIDE_ADDRESS)
+				onClick(NoteActivity.Action.HIDE_ADDRESS)
 			}
 		}
 	)
@@ -86,7 +86,7 @@ fun AddressCard(
 						)
 
 						Button(
-							onClick = { onClick(NoteActivity.Click.REQUEST_LOCATION_PERMISSION) },
+							onClick = { onClick(NoteActivity.Action.REQUEST_LOCATION_PERMISSION) },
 							colors = ButtonDefaults.outlinedButtonColors(
 								containerColor = MaterialTheme.colorScheme.primaryContainer
 							),
@@ -201,7 +201,7 @@ fun AddressCard(
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(1200)
-						onClick(NoteActivity.Click.SHOW_ADDRESS)
+						onClick(NoteActivity.Action.SHOW_ADDRESS)
 					}
 				}
 			}
@@ -211,7 +211,7 @@ fun AddressCard(
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(1200)
-						onClick(NoteActivity.Click.SHOW_ADDRESS)
+						onClick(NoteActivity.Action.SHOW_ADDRESS)
 					}
 				}
 			}
@@ -219,7 +219,7 @@ fun AddressCard(
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(1200)
-						onClick(NoteActivity.Click.SHOW_ADDRESS)
+						onClick(NoteActivity.Action.SHOW_ADDRESS)
 					}
 				}
 			}
@@ -228,7 +228,7 @@ fun AddressCard(
 				LaunchedEffect(key1 = Unit) {
 					scope.launch {
 						delay(0)
-						onClick(NoteActivity.Click.SHOW_ADDRESS)
+						onClick(NoteActivity.Action.SHOW_ADDRESS)
 					}
 				}
 			}

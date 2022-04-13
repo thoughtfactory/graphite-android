@@ -4,6 +4,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.mainComponent.MainViewModel
 import kotlinx.coroutines.launch
 
@@ -16,16 +17,23 @@ sealed class BottomSheetType {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun SheetLayout() {
+fun SheetLayout(
+	onAction: (MainActivity.Action, Any?) -> Unit
+) {
 	val scope = rememberCoroutineScope()
 	val viewModel: MainViewModel = viewModel()
 
 	when (viewModel.activityState.bottomSheetType.value) {
-		BottomSheetType.MenuBottomSheet -> MenuBottomSheet()
+		BottomSheetType.MenuBottomSheet -> MenuBottomSheet(
+			isLoggedIn = viewModel.firebaseAuth.currentUser != null,
+			email = viewModel.firebaseAuth.currentUser?.email
+		) { onAction(it, null) }
 		BottomSheetType.BucketBottomSheet -> BucketBottomSheet { bucketName, bucketType ->
 			viewModel.createNewBucket(bucketType = bucketType, title = bucketName)
 			scope.launch { viewModel.activityState.bottomSheetState.hide() }
 		}
-		BottomSheetType.NotebookBottomSheet -> NotebookBottomSheet()
+		BottomSheetType.NotebookBottomSheet -> NotebookBottomSheet { action, notebookDbEntry ->
+			onAction(action, notebookDbEntry)
+		}
 	}
 }

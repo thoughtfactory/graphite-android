@@ -1,67 +1,74 @@
 package com.syncodec.momento.notebookComponent
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.google.accompanist.insets.navigationBarsPadding
-import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.syncodec.momento.R
+import com.syncodec.momento.attachmentComponent.AttachmentActivity
+import com.syncodec.momento.custom.DeleteDialog
 import com.syncodec.momento.custom.LoadingView
+import com.syncodec.momento.database.chapter.ChapterDbEntry
+import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
+import com.syncodec.momento.miscellaneous.DataStore
+import com.syncodec.momento.miscellaneous.logger
+import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.notebookComponent.miscellaneous.TopBar
 import com.syncodec.momento.notebookComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.momento.notebookComponent.modalBottomSheet.SheetLayout
 import com.syncodec.momento.notebookComponent.screen.NotebookScreen
 import com.syncodec.momento.ui.theme.MomentoTheme
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Notebook
-import compose.icons.tablericons.Notes
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class NotebookActivity : ComponentActivity() {
+
 	private val viewModel by viewModels<NotebookViewModel>()
 
-	@OptIn(
-		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
-		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class
-	)
+	@OptIn(ExperimentalMaterialApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		viewModel.notebookKey = intent.getStringExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name)!!
-		CoroutineScope(Dispatchers.IO).launch { viewModel.initData() }
+		intent.getStringExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name).also {
+			if (it == null) {
+				finish()
+			} else {
+				viewModel.notebookKey = it
+				viewModel.initData()
+			}
+		}
 
 		setContent {
-			viewModel.activityState = rememberNotebookActivityState()
+			viewModel.activityState = rememberActivityState()
 
 			MomentoTheme {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
 
 				Screen()
 			}
@@ -69,227 +76,297 @@ class NotebookActivity : ComponentActivity() {
 	}
 
 	override fun onBackPressed() {
+		val activityState = viewModel.activityState
 		when {
-			viewModel.activityState.isSelected.value -> {
-				viewModel.activityState.selectedItemList.removeAll { true }
-				viewModel.activityState.isSelected.value = false
+			activityState.isSelected.value -> {
+				activityState.isSelected.value = false
+				activityState.selectedItemList.clear()
+			}
+			activityState.showFavourite.value || activityState.showArchived.value || activityState.showLocked.value -> {
+				activityState.showFavourite.value = false
+				activityState.showArchived.value = false
+				activityState.showLocked.value = false
 			}
 			viewModel.chapterPath.isNotEmpty() -> {
 				viewModel.chapterPath.removeLast()
 				viewModel.chapterNamePath.removeLast()
-				viewModel.activityState.showNotes.value = true
-				viewModel.activityState.showChapters.value = true
 			}
-			else -> {
-				super.onBackPressed()
-			}
+			else -> super.onBackPressed()
 		}
 	}
 
-	private fun onClick(click: Click, data: Any? = null) {
-		when (click) {
-			Click.CLICK_NOTE -> {
+	@OptIn(ExperimentalMaterialApi::class)
+	private fun onPerformAction(action: Action, data: Any?) {
+		val activityState = viewModel.activityState
+		when (action) {
+			Action.BACK -> onBackPressed()
+			Action.MENU -> {
+				activityState.bottomSheetType.value = BottomSheetType.MenuBottomSheet
+				activityState.scope.launch { activityState.bottomSheetState.show() }
+			}
+			Action.SHOW_DELETE -> activityState.showDeleteDialog.value = true
+			Action.CLICK_NEW_CHAPTER -> {
+				activityState.bottomSheetType.value = BottomSheetType.NewChapterBottomSheet
+				activityState.scope.launch { activityState.bottomSheetState.show() }
+			}
+			Action.ON_NEW_CHAPTER -> {
+				data as Pair<*, *>
+				viewModel.putChapter(data.first as String, data.second as String)
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
+			}
+			Action.CLICK_NEW_NOTE -> {
+				activityState.bottomSheetType.value = BottomSheetType.NewNoteBottomSheet
+				activityState.scope.launch { activityState.bottomSheetState.show() }
+			}
+			Action.ON_NEW_NOTE -> {
 				data as String
-				val selectedItemList = viewModel.activityState.selectedItemList
-				if (viewModel.activityState.isSelected.value) {
-					if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
-				} else {
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
 
+				Intent(this, NoteActivity::class.java).apply {
+					putExtra(
+						Konstant.Companion.Konstant.NOTEBOOK_KEY.name,
+						viewModel.notebookKey
+					)
+					putStringArrayListExtra(
+						Konstant.Companion.Konstant.CHAPTER_KEY.name,
+						ArrayList(viewModel.chapterPath)
+					)
+					putExtra(Konstant.Companion.Konstant.TITLE.name, data)
+
+					startActivity(this)
 				}
 			}
-			Click.LONG_CLICK_NOTE -> {
+			Action.CLICK_NOTE_HEADER ->
+				activityState.showNotes.value = !activityState.showNotes.value
+			Action.CLICK_NOTE -> {
 				data as String
-				val selectedItemList = viewModel.activityState.selectedItemList
-				viewModel.activityState.isSelected.value = true
-				if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
-			}
-			Click.CLICK_CHAPTER -> {
-				data as String
-				val selectedItemList = viewModel.activityState.selectedItemList
-				if (viewModel.activityState.isSelected.value) {
-					if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
+				val selectedItemList = activityState.selectedItemList
+
+				if (activityState.isSelected.value) {
+					if (data in selectedItemList) {
+						selectedItemList.remove(data)
+					} else {
+						selectedItemList.add(data)
+					}
 				} else {
-					viewModel.chapterPath.add(data)
-					val chapterName = viewModel.chapterList.find { it.key == data }!!.title
-					viewModel.chapterNamePath.add(chapterName)
+					Intent(this, NoteActivity::class.java).apply {
+						putExtra(
+							Konstant.Companion.Konstant.NOTEBOOK_KEY.name,
+							viewModel.notebookKey
+						)
+						putStringArrayListExtra(
+							Konstant.Companion.Konstant.CHAPTER_KEY.name,
+							ArrayList(viewModel.chapterPath)
+						)
+						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, data)
+						putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
+						startActivity(this)
+					}
 				}
 			}
-			Click.LONG_CLICK_CHAPTER -> {
+			Action.LONG_CLICK_NOTE -> {
 				data as String
-				val selectedItemList = viewModel.activityState.selectedItemList
-				viewModel.activityState.isSelected.value = true
-				if (data in selectedItemList) selectedItemList.remove(data) else selectedItemList.add(data)
+				val selectedItemList = activityState.selectedItemList
+
+				if (activityState.isSelected.value) {
+					if (data in selectedItemList) {
+						selectedItemList.remove(data)
+					} else {
+						selectedItemList.add(data)
+					}
+				} else {
+					activityState.isSelected.value = true
+					if (activityState.selectedItemList.contains(data)) {
+						activityState.selectedItemList.remove(data)
+					} else {
+						activityState.selectedItemList.add(data)
+					}
+				}
 			}
-			Click.NOTE_HEADER -> viewModel.activityState.showNotes.value = !viewModel.activityState.showNotes.value
-			Click.CHAPTER_HEADER -> viewModel.activityState.showChapters.value = !viewModel.activityState.showChapters.value
-			Click.BREAD_CRUMB -> {
+			Action.CLICK_CHAPTER_HEADER ->
+				activityState.showChapters.value = !activityState.showChapters.value
+			Action.CLICK_CHAPTER -> {
+				data as ChapterDbEntry
+				val selectedItemList = activityState.selectedItemList
+
+				if (activityState.isSelected.value) {
+					if (data.key in selectedItemList) {
+						selectedItemList.remove(data.key)
+					} else {
+						selectedItemList.add(data.key)
+					}
+				} else {
+					viewModel.chapterPath.add(data.key)
+					viewModel.chapterNamePath.add(data.title)
+				}
+			}
+			Action.LONG_CLICK_CHAPTER -> {
+				data as String
+				activityState.isSelected.value = true
+				if (activityState.selectedItemList.contains(data)) {
+					activityState.selectedItemList.remove(data)
+				} else {
+					activityState.selectedItemList.add(data)
+				}
+			}
+			Action.NAVIGATE_CHAPTER -> {
 				data as Int
-				Log.i("npr71", "dropper : ${viewModel.chapterPath.size - data}")
-
-				for (i in 0 until viewModel.chapterPath.size - data) {
-					viewModel.chapterPath.removeLast()
-					viewModel.chapterNamePath.removeLast()
+				logger("data : $data")
+				for (i in 0 until data) {
+					viewModel.chapterPath.removeLastOrNull()
+					viewModel.chapterNamePath.removeLastOrNull()
 				}
 			}
+			Action.ATTACHMENT -> {
+				Intent(this, AttachmentActivity::class.java).apply {
+					putExtra(Konstant.Companion.Konstant.IS_NOTE.name, false)
+					putExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name, viewModel.notebookKey)
+					startActivity(this)
+				}
+			}
+			Action.SET_AS_DEFAULT -> {
+				val dataStore = DataStore(this)
+				dataStore.putDefaultNotebookKey(notebookKey = viewModel.notebookKey)
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
+				Toast.makeText(
+					this,
+					"${viewModel.notebookDbEntry.value?.title} set as default notebook",
+					Toast.LENGTH_SHORT
+				).show()
+			}
+			Action.ATLAS -> null
+			Action.EDIT_NOTEBOOK -> {
+				activityState.bottomSheetType.value = BottomSheetType.EditBottomSheet
+				activityState.scope.launch { activityState.bottomSheetState.show() }
+			}
+			Action.UPDATE_NOTEBOOK -> {
+				data as NotebookDbEntry
+				viewModel.updateNotebook(notebook = data)
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
+			}
+			Action.TOGGLE_FAVOURITE -> {
+				activityState.showFavourite.value = !activityState.showFavourite.value
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
+			}
+			Action.TOGGLE_ARCHIVED -> {
+				activityState.showArchived.value = !activityState.showArchived.value
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
+			}
+			Action.LOCKED -> null
 		}
 	}
 
 	@OptIn(
-		ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class, ExperimentalMaterialApi::class,
-		androidx.compose.animation.ExperimentalAnimationApi::class
+		ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
+		ExperimentalMaterialApi::class, ExperimentalAnimationApi::class
 	)
 	@Composable
 	private fun Screen() {
-
-		val scope = rememberCoroutineScope()
-		val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-			viewModel.activityState.bottomSheetType.value = bottomSheetType
-			scope.launch {
-				viewModel.activityState.bottomSheetState.show()
-			}
-		}
-
+		val activityState = viewModel.activityState
 		val status by viewModel.status
-		val noteList = viewModel.noteList
-		val chapterList = viewModel.chapterList
 
 		ModalBottomSheetLayout(
-			sheetState = viewModel.activityState.bottomSheetState,
+			sheetState = activityState.bottomSheetState,
 			sheetElevation = 0.dp,
 			sheetBackgroundColor = Color.Transparent,
-			sheetContent = {
-				SheetLayout()
-			},
+			sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
+			sheetContent = { SheetLayout { action, data -> onPerformAction(action, data) } },
 		) {
 			Scaffold(
+				containerColor = MaterialTheme.colorScheme.surface,
 				topBar = {
-					TopBar(
-						status = status,
-						title = viewModel.notebookDbEntry.title,
-						chapterRoute = viewModel.chapterNamePath
-					) { click, index -> onClick(click, index) }
+					if (status == Status.LOADED) {
+						TopBar(
+							notebookDbEntry = viewModel.notebookDbEntry.value!!,
+							chapterNamePath = viewModel.chapterNamePath,
+							isSelected = activityState.isSelected.value,
+							selectedItemSize = activityState.selectedItemList.size,
+							showFavorite = activityState.showFavourite.value,
+							showArchived = activityState.showArchived.value,
+							showLocked = activityState.showLocked.value
+						) { action, data -> onPerformAction(action, data) }
+					}
 				},
-			) {
-				AnimatedContent(
-					targetState = status
-				) {
-					when (it) {
-						Status.INIT -> LoadingView()
-						Status.LOADING -> LoadingView()
-						Status.LOADED -> {
-							Box(
-								modifier = Modifier
-									.fillMaxSize()
-							) {
-								NotebookScreen(
-									noteList = noteList.filter { it.chapterPath == viewModel.chapterPath },
-									chapterList = chapterList.filter { it.chapterPath == viewModel.chapterPath },
-									selectedItemList = viewModel.activityState.selectedItemList,
-									showNotes = viewModel.activityState.showNotes.value,
-									showChapters = viewModel.activityState.showChapters.value,
-									showArchived = viewModel.activityState.showArchived.value,
-									showFavourite = viewModel.activityState.showFavourite.value,
-									showLocked = viewModel.activityState.showLocked.value
-								) { click, data -> onClick(click = click, data = data) }
-								FloatingActionButton(
-									onClickAddNote = { openSheet(BottomSheetType.NewNoteBottomSheet) },
-									onClickAddChapter = { openSheet(BottomSheetType.NewChapterBottomSheet) }
-								)
-							}
+				floatingActionButton = {
+					Column {
+						FloatingActionButton(
+							onClick = { onPerformAction(Action.CLICK_NEW_CHAPTER, null) }
+						) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_notebook),
+								contentDescription = "New chapter",
+								modifier = Modifier.requiredSize(24.dp)
+							)
 						}
-						Status.ERROR -> {
-						}
-					}
-				}
-			}
-		}
-	}
 
-	@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
-	@Composable
-	private fun FloatingActionButton(
-		onClickAddNote: () -> Unit,
-		onClickAddChapter: () -> Unit
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxSize(),
-			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			Spacer(modifier = Modifier.weight(1f))
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(16.dp, 0.dp),
-				horizontalArrangement = Arrangement.Center,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Box(modifier = Modifier.requiredSize(56.dp))
-				Card(
-					modifier = Modifier
-						.height(56.dp),
-					backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-					elevation = 0.dp,
-					enabled = true,
-					shape = RoundedCornerShape(16.dp),
-					onClick = { onClickAddNote() }
-				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						horizontalArrangement = Arrangement.Center,
-						modifier = Modifier
-							.fillMaxHeight()
-							.padding(16.dp, 0.dp),
-					) {
-						Icon(
-							imageVector = TablerIcons.Notes,
-							contentDescription = null,
-							tint = MaterialTheme.colorScheme.onPrimaryContainer,
-							modifier = Modifier
-								.requiredSize(24.dp)
-						)
-						Spacer(modifier = Modifier.width(8.dp))
-						androidx.compose.material3.Text(
-							text = "Add new note",
-							style = MaterialTheme.typography.bodyLarge,
-							color = MaterialTheme.colorScheme.onPrimaryContainer,
-							textAlign = TextAlign.Center,
-							lineHeight = 0.sp,
-							maxLines = 1,
-						)
+						Spacer(modifier = Modifier.height(16.dp))
+
+						FloatingActionButton(
+							onClick = { onPerformAction(Action.CLICK_NEW_NOTE, null) }
+						) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_note),
+								contentDescription = "New note",
+								modifier = Modifier.requiredSize(24.dp)
+							)
+						}
 					}
+				},
+				floatingActionButtonPosition = FabPosition.End
+			) {
+				when (status) {
+					Status.INIT -> LoadingView()
+					Status.LOADING -> LoadingView()
+					Status.LOADED -> {
+						NotebookScreen(
+							noteList = viewModel.noteList.filter { it.chapterPath == viewModel.chapterPath },
+							chapterList = viewModel.chapterList.filter { it.chapterPath == viewModel.chapterPath },
+							selectedItemList = activityState.selectedItemList,
+							showNotes = activityState.showNotes.value,
+							showChapters = activityState.showChapters.value,
+							showFavourite = activityState.showFavourite.value,
+							showArchived = activityState.showArchived.value,
+							showLocked = activityState.showLocked.value,
+						) { action, data -> onPerformAction(action, data) }
+					}
+					Status.ERROR -> null
 				}
-				Box(
-					modifier = Modifier
-						.width(3.dp)
-						.height(28.dp)
-						.clip(RoundedCornerShape(4.dp))
-						.background(MaterialTheme.colorScheme.primary)
-				)
-				FloatingActionButton(
-					onClick = {
-						onClickAddChapter()
+
+				DeleteDialog(
+					showDeleteDialog = activityState.showDeleteDialog.value,
+					selectedItemSize = activityState.selectedItemList.size,
+					onDismiss = { activityState.showDeleteDialog.value = false },
+					onDelete = {
+						val selectedItemList = activityState.selectedItemList.toList()
+						viewModel.deleteNote(selectedItemList)
+						viewModel.deleteChapter(selectedItemList)
+
+						Toast.makeText(
+							this,
+							"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
+							Toast.LENGTH_SHORT
+						).show()
+						activityState.selectedItemList.clear()
+						activityState.isSelected.value = false
+						activityState.showDeleteDialog.value = false
 					},
-					modifier = Modifier
-						.navigationBarsPadding(),
-				) {
-					Icon(imageVector = TablerIcons.Notebook, contentDescription = null)
-				}
-			}
+				)
 
-			Spacer(modifier = Modifier.height(16.dp))
+			}
 		}
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
 	inner class ActivityState(
+		val scope: CoroutineScope,
 		val bottomSheetState: ModalBottomSheetState,
 	) {
-		var notebookComponentType: MutableState<ComponentType> = mutableStateOf(ComponentType.ALL)
-		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.NewNoteBottomSheet)
+		var bottomSheetType: MutableState<BottomSheetType> =
+			mutableStateOf(BottomSheetType.NewNoteBottomSheet)
 		var selectedItemList: SnapshotStateList<String> = mutableStateListOf()
 
 		var isSelected = mutableStateOf(false)
+		var showDeleteDialog = mutableStateOf(false)
 		var showNotes = mutableStateOf(true)
 		var showChapters = mutableStateOf(true)
 		var showArchived = mutableStateOf(false)
@@ -299,29 +376,34 @@ class NotebookActivity : ComponentActivity() {
 
 	@OptIn(ExperimentalMaterialApi::class)
 	@Composable
-	fun rememberNotebookActivityState(
+	private fun rememberActivityState(
+		coroutineScope: CoroutineScope = rememberCoroutineScope(),
 		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
-	) = remember {
-		ActivityState(bottomSheetState)
-	}
+	) = remember { ActivityState(coroutineScope, bottomSheetState) }
 
-	enum class Click {
+	enum class Action {
+		BACK,
+		MENU,
+		SHOW_DELETE,
+		CLICK_NEW_CHAPTER,
+		ON_NEW_CHAPTER,
+		CLICK_NEW_NOTE,
+		ON_NEW_NOTE,
+		CLICK_NOTE_HEADER,
 		CLICK_NOTE,
 		LONG_CLICK_NOTE,
+		CLICK_CHAPTER_HEADER,
 		CLICK_CHAPTER,
 		LONG_CLICK_CHAPTER,
-		NOTE_HEADER,
-		CHAPTER_HEADER,
-		BREAD_CRUMB
-	}
-
-	enum class ComponentType {
-		ALL,
-		CHAPTER,
-		NOTE
-	}
-
-	companion object {
-		const val ANIMATION_DURATION = 600
+		NAVIGATE_CHAPTER,
+		ATTACHMENT,
+		SET_AS_DEFAULT,
+		ATLAS,
+		EDIT_NOTEBOOK,
+		VAULT,
+		TOGGLE_FAVOURITE,
+		TOGGLE_ARCHIVED,
+		LOCKED,
+		UPDATE_NOTEBOOK,
 	}
 }

@@ -54,11 +54,11 @@ import com.syncodec.momento.todayComponent.TodayActivity
 @ExperimentalPagerApi
 @Composable
 fun NoteScreen(
-	noteList: List<NoteDbEntry>,
+	noteMap: Map<String, NoteDbEntry>,
 	isSelected: Boolean,
 	selectedItemList: List<String>,
 	filterTag: List<String>,
-	onClick: (MainActivity.Click, Any?) -> Unit
+	onClick: (MainActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
 	val dataStore = DataStore(context = context)
@@ -69,14 +69,13 @@ fun NoteScreen(
 	val showLocked = false
 
 	val noteDbEntryDayMap: MutableMap<Long, MutableList<NoteDbEntry>> = mutableMapOf()
-
-	noteList.forEach { note ->
+	noteMap.forEach { (_, note) ->
 		val timestamp = TimeUtils.timestampToCalendarDay(note.userTimestamp)
 		if (noteDbEntryDayMap.containsKey(timestamp)) noteDbEntryDayMap[timestamp]!!.add(note)
 		else noteDbEntryDayMap[timestamp] = mutableListOf(note)
 	}
 
-	if (noteList.isEmpty()) {
+	if (noteMap.isEmpty()) {
 		Column(
 			modifier = Modifier.fillMaxSize()
 		) {
@@ -106,7 +105,6 @@ fun NoteScreen(
 			}
 
 			noteDbEntryDayMap.toSortedMap(Comparator.reverseOrder()).forEach { (day, noteList) ->
-				noteList.sortBy { it.userTimestamp }
 				val filteredEntries = noteList.filter {
 					filterData(
 						showArchived = showArchived,
@@ -141,7 +139,7 @@ fun NoteScreen(
 							isLocked = false
 						)
 
-						NoteCardData(
+						NoteCard(
 							key = noteDbEntry.key,
 							timestamp = noteDbEntry.userTimestamp,
 							showFullTime = false,
@@ -153,21 +151,16 @@ fun NoteScreen(
 							isLast = noteDbEntry.key == lastEntryKey,
 							title = noteDbEntry.title,
 							contentThumbnail = noteDbEntry.contentThumbnail,
-							attachmentCount = noteDbEntry.attachmentCount,
+							attachmentCount = noteDbEntry.attachmentKeyList.size,
 							attachmentThumbnail = noteDbEntry.attachmentThumbnail,
 							address = noteDbEntry.address,
 							latLng = locationDataToLatLng(noteDbEntry.location),
 							isVisible = showEntry,
-							onClick = { onClick(MainActivity.Click.CLICK_NOTE, noteDbEntry.key) },
+							onClick = { onClick(MainActivity.Action.CLICK_NOTE, noteDbEntry.key) },
 							onLongClick = {
-								onClick(
-									MainActivity.Click.LONG_CLICK_NOTE,
-									noteDbEntry.key
-								)
+								onClick(MainActivity.Action.LONG_CLICK_NOTE, noteDbEntry.key)
 							},
-						).apply {
-							NoteCard(noteCardData = this)
-						}
+						)
 
 						NotebookTimelineSpacer(isVisible = noteDbEntry.key != lastEntryKey && showEntry)
 					}

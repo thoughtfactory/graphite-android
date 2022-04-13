@@ -2,8 +2,8 @@ package com.syncodec.momento.custom.richText
 
 import android.content.Context
 import android.util.Log
-import android.view.MotionEvent
 import android.webkit.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -13,9 +13,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.syncodec.momento.miscellaneous.toHexString
 
 
-class RichTextEditor(context: Context) : WebView(context) {
+class RichTextEditor(context: Context, val textColor: String) : WebView(context) {
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	interface OnFormatUpdateListener {
@@ -60,6 +61,7 @@ class RichTextEditor(context: Context) : WebView(context) {
 		addJavascriptInterface(this, "bridge")
 
 		loadUrl(INDEX_PATH)
+		exec("editor.setBaseFontColor('$textColor');")
 	}
 
 	private fun load(trigger: String) {
@@ -88,15 +90,6 @@ class RichTextEditor(context: Context) : WebView(context) {
 	@JavascriptInterface
 	fun onCreate() {
 		isReady.value = true
-//		setOnTouchListener { v, event ->
-//			if (event.action == MotionEvent.ACTION_UP) {
-//				Log.i("npr71", "focus")
-//				exec("editor.commands.focus('end')")
-//				false
-//			} else {
-//				false
-//			}
-//		}
 	}
 
 	@JavascriptInterface
@@ -162,7 +155,9 @@ class RichTextEditor(context: Context) : WebView(context) {
 @Composable
 fun rememberRichTextEditorWithLifecycle(): RichTextEditor {
 	val context = LocalContext.current
-	val richTextEditor = remember { RichTextEditor(context) }
+	val textColor = MaterialTheme.colorScheme.onBackground.toHexString()
+
+	val richTextEditor = remember { RichTextEditor(context, textColor) }
 
 	val lifecycleObserver = rememberRichTextEditorLifecycleObserver(richTextEditor)
 	val lifecycle = LocalLifecycleOwner.current.lifecycle

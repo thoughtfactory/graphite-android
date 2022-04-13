@@ -2,6 +2,7 @@ package com.syncodec.momento.custom
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -10,18 +11,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 
 
 @Composable
@@ -51,19 +52,20 @@ fun LargeTextField(
 			.clip(RoundedCornerShape(12.dp))
 			.background(
 				if (text.isEmpty() && !isFocused) {
-					Color.LightGray.copy(alpha = 0.13f)
+					MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
 				} else {
-					MaterialTheme.colorScheme.background
+					MaterialTheme.colorScheme.surface
 				}
 			)
 			.onFocusChanged { onFocusChanged(it.isFocused) },
 		decorationBox = { innerTextField ->
-			Card(
-				modifier = Modifier.fillMaxWidth(),
-				backgroundColor = Color.Transparent,
-				elevation = 0.dp,
+			Surface(
+				border = BorderStroke(
+					2.dp, if (isFocused) MaterialTheme.colorScheme.primary
+					else MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 3)
+				),
 				shape = RoundedCornerShape(12.dp),
-				border = BorderStroke(2.dp, if (isFocused) MaterialTheme.colorScheme.primary else Color.LightGray)
+				modifier = Modifier.fillMaxWidth()
 			) {
 				Box(
 					contentAlignment = Alignment.CenterStart,
@@ -75,7 +77,7 @@ fun LargeTextField(
 						Text(
 							text = placeholder,
 							style = MaterialTheme.typography.bodyMedium,
-							color = Color.LightGray,
+							color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 3),
 							fontWeight = FontWeight.Bold
 						)
 					}

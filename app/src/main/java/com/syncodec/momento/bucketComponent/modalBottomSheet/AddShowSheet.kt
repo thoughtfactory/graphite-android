@@ -42,8 +42,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.bucketComponent.miscellaneous.ShowSearchLargeTextField
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.ClimateChangeMessage
 import com.syncodec.momento.konstant.Secret
 import compose.icons.TablerIcons

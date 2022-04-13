@@ -6,7 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,19 +17,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NotebookHeaderCard(
 	title: String,
 	noEntries: String,
 	onClick: (() -> Unit)? = null
 ) {
-	Box(
+	Surface(
+		onClick = {onClick?.invoke()},
+		enabled = onClick!=null,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
-			.clip(RoundedCornerShape(12.dp))
-			.background(MaterialTheme.colorScheme.background)
-			.clickable(enabled = onClick != null) { onClick?.invoke() },
+			.background(MaterialTheme.colorScheme.surface)
 	) {
 		Row(
 			verticalAlignment = Alignment.Bottom,

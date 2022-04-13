@@ -16,6 +16,7 @@ class DataStore(private val context: Context) {
 
 	companion object {
 		private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("dataStore")
+		private val IS_FIRST_TIME = booleanPreferencesKey("isFirstTime")
 		private val PREFERENCE_THEME = intPreferencesKey("theme")
 		private val PREFERENCE_TYPOGRAPHY = intPreferencesKey("typography")
 		private val PREFERENCE_VAULT_KEY = stringPreferencesKey("vault_key")
@@ -23,6 +24,9 @@ class DataStore(private val context: Context) {
 		private val PREFERENCE_DEFAULT_NOTE_KEY = stringPreferencesKey("default_notebook_key")
 		private val PREFERENCE_NOTE_SHOW_LOCATION_PERMISSION = booleanPreferencesKey("show_location_permission_card")
 	}
+
+	val getIsFirstTime: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[IS_FIRST_TIME] ?: true }
+	fun putIsFirstTime(isFirstTime: Boolean) = CoroutineScope(Dispatchers.IO).launch { context.dataStore.edit { pref -> pref[IS_FIRST_TIME] = isFirstTime } }
 
 	val getTheme: Flow<Int> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_THEME] ?: 0 }
 	fun putTheme(theme: Int) = CoroutineScope(Dispatchers.IO).launch { context.dataStore.edit { pref -> pref[PREFERENCE_THEME] = theme } }

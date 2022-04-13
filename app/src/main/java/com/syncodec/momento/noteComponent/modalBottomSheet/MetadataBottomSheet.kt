@@ -27,8 +27,8 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToPrettyFull
 import com.syncodec.momento.miscellaneous.roundTo
@@ -45,12 +45,11 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun MetadataBottomSheet(
-	onClick: (NoteActivity.Click, Any?) -> Unit
+	onClick: (NoteActivity.Action, Any?) -> Unit
 ) {
 	val viewModel: NoteViewModel = viewModel()
 
 	val noteDbEntry by viewModel.knotDbEntry.collectAsState()
-	val note by viewModel.knot.collectAsState()
 
 	Column(
 		modifier = Modifier
@@ -192,7 +191,7 @@ private fun LocationCard(
 	addressState: NoteActivity.AddressState,
 	address: String?,
 	latLng: LatLng?,
-	onClick: (NoteActivity.Click, Any?) -> Unit
+	onClick: (NoteActivity.Action, Any?) -> Unit
 ) {
 	Row(
 		modifier = Modifier
@@ -215,7 +214,7 @@ private fun LocationCard(
 				NoteActivity.AddressState.REMOVED -> true
 				else -> false
 			},
-			onClick = { onClick(NoteActivity.Click.ADDRESS_CARD, null) }
+			onClick = { onClick(NoteActivity.Action.ADDRESS_CARD, null) }
 		) {
 			Column(
 				modifier = Modifier
@@ -270,7 +269,7 @@ private fun LocationCard(
 				shape = RoundedCornerShape(12.dp),
 				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 				modifier = Modifier.requiredSize(60.dp),
-				onClick = { onClick(NoteActivity.Click.OPEN_MAP_DIALOG, null) }
+				onClick = { onClick(NoteActivity.Action.OPEN_MAP_DIALOG, null) }
 			) {
 				Icon(
 					imageVector = TablerIcons.Map,
@@ -288,7 +287,7 @@ private fun LocationCard(
 				shape = RoundedCornerShape(12.dp),
 				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
 				modifier = Modifier.requiredSize(60.dp),
-				onClick = { onClick(NoteActivity.Click.REMOVE_LOCATION, null) }
+				onClick = { onClick(NoteActivity.Action.REMOVE_LOCATION, null) }
 			) {
 				Icon(
 					imageVector = TablerIcons.X,

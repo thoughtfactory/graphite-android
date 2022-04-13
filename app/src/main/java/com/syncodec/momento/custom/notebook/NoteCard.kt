@@ -7,13 +7,9 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +25,7 @@ import coil.compose.rememberImagePainter
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.squircle.Squircle
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp0
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp1
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToTime
@@ -37,39 +34,40 @@ import compose.icons.tablericons.Paperclip
 import dev.jorgecastillo.androidcolorx.library.tints
 
 
-data class NoteCardData(
-	val key: String,
-	val timestamp: Long,
-	val showFullTime:Boolean,
-	val isLocked: Boolean,
-	val isSelected: Boolean,
-	val isArchived: Boolean,
-	val isFavourite: Boolean,
-	val isDeleted: Boolean,
-	val isLast: Boolean,
-	val title: String?,
-	val contentThumbnail: String?,
-	val attachmentCount: Int,
-	val attachmentThumbnail: Bitmap?,
-	val address: String?,
-	val latLng: LatLng?,
-	var isVisible: Boolean = false,
-	val onClick: () -> Unit,
-	val onLongClick: (() -> Unit)? = null,
+@OptIn(
+	ExperimentalMaterialApi::class,
+	ExperimentalFoundationApi::class,
+	ExperimentalAnimationApi::class,
+	ExperimentalMaterial3Api::class
 )
-
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun NoteCard(
-	noteCardData: NoteCardData,
+	key: String,
+	timestamp: Long,
+	showFullTime: Boolean,
+	isLocked: Boolean,
+	isSelected: Boolean,
+	isArchived: Boolean,
+	isFavourite: Boolean,
+	isDeleted: Boolean,
+	isLast: Boolean,
+	title: String?,
+	contentThumbnail: String?,
+	attachmentCount: Int,
+	attachmentThumbnail: Bitmap?,
+	address: String?,
+	latLng: LatLng?,
+	isVisible: Boolean = false,
+	onClick: () -> Unit,
+	onLongClick: (() -> Unit)? = null,
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (noteCardData.isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
-		animationSpec = tween(600)
+		if (isSelected) MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+		else MaterialTheme.colorScheme.surface
 	)
 
 	AnimatedVisibility(
-		visible = noteCardData.isVisible,
+		visible = isVisible,
 		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
@@ -77,21 +75,21 @@ fun NoteCard(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(144.dp)
-				.padding(8.dp, 0.dp, 8.dp, if (noteCardData.isLast) 8.dp else 0.dp),
+				.padding(8.dp, 0.dp, 8.dp, if (isLast) 8.dp else 0.dp),
 		) {
-			NoteSpacer(isLast = noteCardData.isLast)
+			NoteSpacer(isLast = isLast)
 			Spacer(modifier = Modifier.width(4.dp))
-			Card(
-				elevation = 0.dp,
+			OutlinedCard(
 				shape = RoundedCornerShape(12.dp),
-				backgroundColor = containerColor,
-				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
+				border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+				containerColor = containerColor,
+				elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 				modifier = Modifier
 					.fillMaxWidth()
 					.clip(RoundedCornerShape(12.dp))
 					.combinedClickable(
-						onClick = { noteCardData.onClick() },
-						onLongClick = { noteCardData.onLongClick?.invoke() }
+						onClick = { onClick() },
+						onLongClick = { onLongClick?.invoke() }
 					)
 			) {
 				Column(
@@ -103,9 +101,9 @@ fun NoteCard(
 						modifier = Modifier,
 						verticalAlignment = Alignment.CenterVertically
 					) {
-						if (noteCardData.showFullTime) {
+						if (showFullTime) {
 							Text(
-								text = entryTimestamp0(noteCardData.timestamp),
+								text = entryTimestamp0(timestamp),
 								style = MaterialTheme.typography.bodySmall,
 								color = MaterialTheme.colorScheme.primary,
 								fontWeight = FontWeight.Bold,
@@ -113,7 +111,7 @@ fun NoteCard(
 								modifier = Modifier
 							)
 							Text(
-								text = entryTimestamp1(noteCardData.timestamp),
+								text = entryTimestamp1(timestamp),
 								style = MaterialTheme.typography.bodySmall,
 								color = MaterialTheme.colorScheme.primary.copy(0.31f),
 								fontWeight = FontWeight.Bold,
@@ -123,7 +121,7 @@ fun NoteCard(
 							)
 						} else {
 							Text(
-								text = timeStampToTime(noteCardData.timestamp),
+								text = timeStampToTime(timestamp),
 								style = MaterialTheme.typography.bodySmall,
 								color = MaterialTheme.colorScheme.primary,
 								fontWeight = FontWeight.Bold,
@@ -132,7 +130,7 @@ fun NoteCard(
 							)
 						}
 
-						if (!noteCardData.title.isNullOrBlank()) {
+						if (!title.isNullOrBlank()) {
 							Spacer(modifier = Modifier.width(2.dp))
 							Text(
 								text = "·",
@@ -144,7 +142,7 @@ fun NoteCard(
 							)
 							Spacer(modifier = Modifier.width(2.dp))
 							Text(
-								text = noteCardData.title,
+								text = title,
 								style = MaterialTheme.typography.bodySmall,
 								color = MaterialTheme.colorScheme.primary,
 								fontWeight = FontWeight.Bold,
@@ -155,18 +153,20 @@ fun NoteCard(
 
 						Spacer(modifier = Modifier.weight(1f))
 
-						if (noteCardData.isLocked) {
+						if (isLocked) {
 							Icon(
 								painter = painterResource(id = R.drawable.ic_security),
 								contentDescription = "Locked",
-								tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
+								tint = Color(
+									MaterialTheme.colorScheme.primary.toArgb().tints()[1]
+								),
 								modifier = Modifier
 									.requiredSize(14.dp)
 							)
 						}
 
-						if (noteCardData.isArchived) {
-							if (noteCardData.isLocked) {
+						if (isArchived) {
+							if (isLocked) {
 								Spacer(modifier = Modifier.width(2.dp))
 								Text(
 									text = "·",
@@ -179,7 +179,7 @@ fun NoteCard(
 								Spacer(modifier = Modifier.width(2.dp))
 							}
 							Icon(
-								painter = painterResource(id = R.drawable.ic_archive_3),
+								painter = painterResource(id = R.drawable.ic_archive),
 								contentDescription = "Archived",
 								tint = MaterialTheme.colorScheme.primary,
 								modifier = Modifier
@@ -187,8 +187,8 @@ fun NoteCard(
 							)
 						}
 
-						if (noteCardData.isFavourite) {
-							if (noteCardData.isLocked || noteCardData.isArchived) {
+						if (isFavourite) {
+							if (isLocked || isArchived) {
 								Spacer(modifier = Modifier.width(2.dp))
 								Text(
 									text = "·",
@@ -202,7 +202,7 @@ fun NoteCard(
 							}
 
 							Icon(
-								painter = painterResource(id = R.drawable.ic_heart),
+								painter = painterResource(id = R.drawable.ic_favourite),
 								contentDescription = "Favourite",
 								tint = MaterialTheme.colorScheme.primary,
 								modifier = Modifier
@@ -210,8 +210,8 @@ fun NoteCard(
 							)
 						}
 
-						if (noteCardData.attachmentCount != 0) {
-							if (noteCardData.isLocked || noteCardData.isArchived || noteCardData.isFavourite) {
+						if (attachmentCount != 0) {
+							if (isLocked || isArchived || isFavourite) {
 								Spacer(modifier = Modifier.width(2.dp))
 								Text(
 									text = "·",
@@ -242,7 +242,7 @@ fun NoteCard(
 							)
 							Spacer(modifier = Modifier.width(2.dp))
 							Text(
-								text = "${noteCardData.attachmentCount}",
+								text = "${attachmentCount}",
 								style = MaterialTheme.typography.bodySmall,
 								color = MaterialTheme.colorScheme.primary,
 								fontWeight = FontWeight.Bold,
@@ -255,9 +255,9 @@ fun NoteCard(
 
 					Spacer(modifier = Modifier.height(4.dp))
 
-					if (noteCardData.attachmentThumbnail == null) {
+					if (attachmentThumbnail == null) {
 						Text(
-							text = "${noteCardData.contentThumbnail}",
+							text = "${contentThumbnail}",
 							style = MaterialTheme.typography.bodyMedium,
 							maxLines = 4,
 							modifier = Modifier
@@ -269,7 +269,7 @@ fun NoteCard(
 								.fillMaxWidth()
 						) {
 							Text(
-								text = "${noteCardData.contentThumbnail}",
+								text = "${contentThumbnail}",
 								style = MaterialTheme.typography.bodyMedium,
 								maxLines = 4,
 								modifier = Modifier
@@ -282,7 +282,7 @@ fun NoteCard(
 								smoothing = 4.0
 							) {
 								Image(
-									painter = rememberImagePainter(data = noteCardData.attachmentThumbnail),
+									painter = rememberImagePainter(data = attachmentThumbnail),
 									contentDescription = null,
 									contentScale = ContentScale.Crop,
 									modifier = Modifier.fillMaxSize(),
@@ -293,7 +293,7 @@ fun NoteCard(
 
 					Spacer(modifier = Modifier.weight(1f))
 
-					if (!noteCardData.address.isNullOrBlank()) {
+					if (!address.isNullOrBlank()) {
 						Row(
 							modifier = Modifier
 								.fillMaxWidth(),
@@ -301,18 +301,20 @@ fun NoteCard(
 						) {
 							Icon(
 								painter = painterResource(id = R.drawable.ic_location_pin_3),
-//							imageVector = TablerIcons.MapPin,
 								contentDescription = null,
-//							tint = Color.Unspecified,
-								tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
+								tint = Color(
+									MaterialTheme.colorScheme.primary.toArgb().tints()[1]
+								),
 								modifier = Modifier.requiredSize(16.dp)
 							)
 							Spacer(modifier = Modifier.width(2.dp))
 							Text(
-								text = "${noteCardData.address}",
+								text = "${address}",
 								style = MaterialTheme.typography.bodySmall,
 								fontStyle = FontStyle.Italic,
-								color = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
+								color = Color(
+									MaterialTheme.colorScheme.primary.toArgb().tints()[1]
+								),
 								maxLines = 1,
 								overflow = TextOverflow.Ellipsis,
 								modifier = Modifier

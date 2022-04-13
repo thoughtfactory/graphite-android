@@ -12,6 +12,7 @@ import com.syncodec.momento.database.chapter.ChapterDbEntry
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.konstant.Status
+import com.syncodec.momento.miscellaneous.CollectionUtils.Companion.listOfField
 import com.syncodec.momento.repository.NoteRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,7 +25,7 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 	lateinit var activityState: NotebookActivity.ActivityState
 
 	lateinit var notebookKey: String
-	lateinit var notebookDbEntry: NotebookDbEntry
+	var notebookDbEntry: MutableState<NotebookDbEntry?> = mutableStateOf(null)
 	var noteList: SnapshotStateList<NoteDbEntry> = mutableStateListOf()
 	var chapterList: SnapshotStateList<ChapterDbEntry> = mutableStateListOf()
 
@@ -33,28 +34,28 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 	val chapterPath = mutableStateListOf<String>()
 	val chapterNamePath = mutableStateListOf<String>()
 
-	suspend fun initData() {
+	fun initData() {
 		status.value = Status.LOADING
 
-		noteRepository.getNotebook(key = notebookKey).also {
-			if (it == null) {
-				status.value = Status.ERROR
-			} else {
+		viewModelScope.launch(Dispatchers.IO) {
+			noteRepository.getNotebookAsFlow(key = notebookKey).collect {
+				notebookDbEntry.value = it
 				status.value = Status.LOADED
-				viewModelScope.launch(Dispatchers.IO) {
-					noteRepository.getNoteAsFlow(notebookKey = notebookKey).collect {
-						noteList.removeAll { true }
-						noteList.addAll(it)
-					}
-				}
-				viewModelScope.launch(Dispatchers.IO) {
-					noteRepository.getChapterAsFlow(notebookKey = notebookKey).collect {
-						chapterList.removeAll { true }
-						chapterList.addAll(it)
-					}
-				}
 			}
 		}
+		viewModelScope.launch(Dispatchers.IO) {
+			noteRepository.getNoteAsFlow(notebookKey = notebookKey).collect {
+				noteList.clear()
+				noteList.addAll(it)
+			}
+		}
+		viewModelScope.launch(Dispatchers.IO) {
+			noteRepository.getChapterAsFlow(notebookKey = notebookKey).collect {
+				chapterList.clear()
+				chapterList.addAll(it)
+			}
+		}
+
 	}
 
 	fun putChapter(
@@ -70,4 +71,27 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 			)
 		}
 	}
+
+	fun updateNotebook(notebook: NotebookDbEntry) =
+		viewModelScope.launch { noteRepository.putNotebook(notebook = notebook) }
+
+	fun deleteNote(keyList: List<String>) =
+		viewModelScope.launch(Dispatchers.IO) { noteRepository.deleteNote(keyList = keyList) }
+
+	fun deleteChapter(keyList: List<String>) =
+		viewModelScope.launch(Dispatchers.IO) {
+			chapterList.filter { it.key in keyList }.forEach { chapterDbEntry ->
+				val chapterPath = chapterDbEntry.chapterPath.toMutableList()
+				chapterPath.add(chapterDbEntry.key)
+				noteRepository.deleteNote(
+					noteList.filter { it.chapterPath.containsAll(chapterPath) }
+						.listOfField(NoteDbEntry::key)
+				)
+				noteRepository.deleteChapter(
+					chapterList.filter { it.chapterPath.containsAll(chapterPath) }
+						.listOfField(ChapterDbEntry::key)
+				)
+				noteRepository.deleteChapter(keyList = keyList)
+			}
+		}
 }

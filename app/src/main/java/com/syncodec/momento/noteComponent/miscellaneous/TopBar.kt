@@ -1,113 +1,89 @@
 package com.syncodec.momento.noteComponent.miscellaneous
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.syncodec.momento.R
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
+import com.syncodec.momento.miscellaneous.toHexString
 import com.syncodec.momento.noteComponent.NoteActivity
-import compose.icons.TablerIcons
-import compose.icons.tablericons.*
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TopBar(
 	isViewer: Boolean,
 	isSaving: Boolean,
-	onClick: (NoteActivity.Click) -> Unit
+	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(64.dp)
-			.background(MaterialTheme.colorScheme.secondaryContainer)
-	) {
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
-				.padding(0.dp, 8.dp)
-		) {
-			Spacer(modifier = Modifier.width(8.dp))
-			IconButton(
-				onClick = { onClick(NoteActivity.Click.FINISH) },
-			) {
+	SmallTopAppBar(
+		navigationIcon = {
+			IconButton(onClick = { onAction(NoteActivity.Action.FINISH, null) }) {
 				Crossfade(targetState = isViewer) {
 					if (it) {
 						Icon(
-							imageVector = TablerIcons.ArrowLeft,
+							painter = painterResource(id = R.drawable.ic_back),
 							contentDescription = "Back",
-							tint = MaterialTheme.colorScheme.onSecondaryContainer,
+							tint = MaterialTheme.colorScheme.primary,
+							modifier = Modifier
+								.requiredSize(32.dp)
+								.padding(6.dp)
 						)
 					} else {
 						Icon(
-							imageVector = TablerIcons.X,
+							painter = painterResource(id = R.drawable.ic_discard),
 							contentDescription = "Discard",
-							tint = MaterialTheme.colorScheme.onSecondaryContainer,
+							tint = MaterialTheme.colorScheme.primary,
+							modifier = Modifier
+								.requiredSize(32.dp)
+								.padding(6.dp)
 						)
 					}
 				}
 			}
-
-			Spacer(modifier = Modifier.weight(1f))
-
+		},
+		title = {},
+		actions = {
 			Crossfade(targetState = isViewer) {
 				if (it) {
-					IconButton(
-						onClick = { onClick(NoteActivity.Click.TOP_BAR_QUATERNARY) },
+					Button(
+						onClick = { onAction(NoteActivity.Action.EDIT_NOTE, null) },
+						colors = ButtonDefaults.filledTonalButtonColors(
+							containerColor = MaterialTheme.colorScheme.primary,
+							contentColor = MaterialTheme.colorScheme.onPrimary
+						)
 					) {
-						Icon(
-							imageVector = TablerIcons.Pencil,
-							contentDescription = "Edit",
-							tint = MaterialTheme.colorScheme.onSecondaryContainer,
+						Text(
+							text = "Edit",
+							style = MaterialTheme.typography.bodyMedium,
+							modifier = Modifier.width(32.dp)
+						)
+					}
+				} else {
+					Button(
+						onClick = { onAction(NoteActivity.Action.SAVE_NOTE, null) },
+						colors = ButtonDefaults.filledTonalButtonColors(
+							containerColor = MaterialTheme.colorScheme.primary,
+							contentColor = MaterialTheme.colorScheme.onPrimary
+						)
+					) {
+						Text(
+							text = "Save",
+							style = MaterialTheme.typography.bodyMedium,
+							modifier = Modifier.width(32.dp)
 						)
 					}
 				}
 			}
-
-			AnimatedVisibility(visible = !isViewer) {
-				Button(
-					onClick = { onClick(NoteActivity.Click.SAVE) },
-					colors = ButtonDefaults.textButtonColors(
-						containerColor = MaterialTheme.colorScheme.primaryContainer,
-						contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-					),
-				) {
-					Crossfade(targetState = isSaving) {
-						if (it) {
-							val lottieComposition by rememberLottieComposition(
-								LottieCompositionSpec.RawRes(R.raw.lottie_loading)
-							)
-
-							LottieAnimation(
-								composition = lottieComposition,
-								iterations = LottieConstants.IterateForever,
-								modifier = Modifier.requiredSize(24.dp)
-							)
-						} else {
-							Text(
-								text = "Save",
-								style = MaterialTheme.typography.bodyMedium,
-								fontWeight = FontWeight.Bold
-							)
-						}
-					}
-				}
-			}
-			Spacer(modifier = Modifier.width(12.dp))
-		}
-	}
+			Spacer(modifier = Modifier.width(4.dp))
+		},
+		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+			containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
+		),
+	)
 }

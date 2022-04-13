@@ -13,9 +13,13 @@ fun ImportScreen(
 	onClick: (SettingsActivity.Click, Any?) -> Unit
 ) {
 	LazyColumn(
-		modifier = Modifier
-			.fillMaxSize()
+		modifier = Modifier.fillMaxSize()
 	) {
-		item { SettingButton(title = "Journey", subTitle = "Import your entries from Journey™") { onClick(SettingsActivity.Click.JOURNEY, null) } }
+		item {
+			SettingButton(
+				title = "Journey",
+				subTitle = "Import your entries from Journey™"
+			) { onClick(SettingsActivity.Click.JOURNEY, null) }
+		}
 	}
 }

@@ -1,69 +1,43 @@
 package com.syncodec.momento.custom.button
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class,
+	ExperimentalMaterial3Api::class
+)
 @Composable
 fun LargeButton(
 	text: String,
-	containerColor: Color,
-	contentColor: Color,
-	isElevated: Boolean = false,
-	isClickable: Boolean,
+	enabled: Boolean,
 	modifier: Modifier,
 	onClick: () -> Unit
 ) {
-	Card(
-		modifier = modifier
-			.height(48.dp)
-			.focusable(),
-		backgroundColor = containerColor,
-		elevation = if (isElevated) 8.dp else 0.dp,
-		enabled = isClickable,
-		shape = RoundedCornerShape(12.dp),
-		onClick = { onClick() }
+	Button(
+		onClick = { onClick() },
+		colors = ButtonDefaults.buttonColors(
+			containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 4),
+			contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 4),
+			disabledContainerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
+			disabledContentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
+		),
+		enabled = enabled,
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(24.dp, 0.dp)
 	) {
-		Box(
-			modifier = Modifier
-				.fillMaxSize(),
-			contentAlignment = Alignment.Center
-		) {
-			AnimatedContent(
-				targetState = text,
-				transitionSpec = {
-					if (targetState > initialState) {
-						slideInVertically { height -> height } + fadeIn() with slideOutVertically { height -> -height } + fadeOut()
-					} else {
-						slideInVertically { height -> -height } + fadeIn() with slideOutVertically { height -> height } + fadeOut()
-					}.using(
-						SizeTransform(clip = false)
-					)
-				}
-			) { text ->
-				Text(
-					text = text,
-					style = MaterialTheme.typography.bodyLarge,
-					color = contentColor,
-					textAlign = TextAlign.Center,
-					lineHeight = 0.sp,
-					maxLines = 1,
-				)
-			}
-		}
+		Text(
+			text = text,
+			style = MaterialTheme.typography.bodyLarge
+		)
 	}
 }

@@ -219,7 +219,7 @@ class BucketActivity : ComponentActivity() {
 				viewModel.deleteBucketItem(selectedItemList.toList())
 				val selectedItemSize: Int = selectedItemList.size
 
-				selectedItemList.removeAll { true }
+				selectedItemList.clear()
 				viewModel.activityState.isSelected.value = false
 				viewModel.activityState.showDeleteDialog.value = false
 
@@ -274,10 +274,10 @@ class BucketActivity : ComponentActivity() {
 //				resourceId = R.drawable.ic_locked,
 //				highlight = bucketDbEntry!!.isLocked
 //			) { },
-			MenuBottomSheetButtonData(title = "Delete", resourceId = R.drawable.ic_trash, highlight = false) { },
+			MenuBottomSheetButtonData(title = "Delete", icon = R.drawable.ic_trash, highlight = false) { },
 
-			MenuBottomSheetButtonData(title = "Export", resourceId = R.drawable.ic_export, highlight = false) { },
-			MenuBottomSheetButtonData(title = "Share", resourceId = R.drawable.ic_share, highlight = false) { },
+			MenuBottomSheetButtonData(title = "Export", icon = R.drawable.ic_export, highlight = false) { },
+			MenuBottomSheetButtonData(title = "Share", icon = R.drawable.ic_share, highlight = false) { },
 			null,
 			null
 		)

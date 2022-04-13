@@ -9,16 +9,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.settings.SettingsActivity
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImportDialog(
-	isImportingData: Boolean,
-	importFileSize: Int,
+	dataExchange: SettingsActivity.DataExchange,
+	dataExchangeSize: Int,
 	currentImportFileIndex: Int
 ) {
-	if (isImportingData) {
+	if (dataExchange != SettingsActivity.DataExchange.NONE) {
 		AlertDialog(
 			onDismissRequest = {},
 			title = {
@@ -40,14 +41,14 @@ fun ImportDialog(
 						)
 					} else {
 						LinearProgressIndicator(
-							progress = currentImportFileIndex.toFloat() / importFileSize,
+							progress = currentImportFileIndex.toFloat() / dataExchangeSize,
 							color = MaterialTheme.colorScheme.primaryContainer,
 							trackColor = MaterialTheme.colorScheme.onPrimaryContainer
 						)
 					}
 					Spacer(modifier = Modifier.height(8.dp))
 					Text(
-						text = "$currentImportFileIndex/$importFileSize",
+						text = "$currentImportFileIndex/$dataExchangeSize",
 						style = MaterialTheme.typography.bodyMedium,
 						color = MaterialTheme.colorScheme.onPrimaryContainer
 					)

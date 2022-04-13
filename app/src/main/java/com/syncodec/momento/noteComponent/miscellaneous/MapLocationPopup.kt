@@ -38,7 +38,7 @@ fun MapLocationPopup(
 	showMapLocationDialog: Boolean,
 	latLng: LatLng?,
 	address: String?,
-	onClick: (NoteActivity.Click, Any?) -> Unit
+	onClick: (NoteActivity.Action, Any?) -> Unit
 ) {
 	var map: GoogleMap?
 
@@ -59,7 +59,7 @@ fun MapLocationPopup(
 
 		Dialog(
 			properties = DialogProperties(usePlatformDefaultWidth = false),
-			onDismissRequest = { onClick(NoteActivity.Click.DISMISS_MAP_DIALOG, null) }
+			onDismissRequest = { onClick(NoteActivity.Action.DISMISS_MAP_DIALOG, null) }
 		) {
 			Box(
 				modifier = Modifier.fillMaxSize(0.9f),
@@ -80,7 +80,7 @@ fun MapLocationPopup(
 						map!!.setOnCameraMoveListener { isCameraIdle = false }
 						map!!.setOnCameraIdleListener {
 							isCameraIdle = true
-							onClick(NoteActivity.Click.REVERSE_GEOCODE, LatLng(map!!.cameraPosition.target.latitude, map!!.cameraPosition.target.longitude))
+							onClick(NoteActivity.Action.REVERSE_GEOCODE, LatLng(map!!.cameraPosition.target.latitude, map!!.cameraPosition.target.longitude))
 						}
 					}
 				}
@@ -91,7 +91,7 @@ fun MapLocationPopup(
 						.align(Alignment.BottomEnd)
 				) {
 					FloatingActionButton(
-						onClick = { onClick(NoteActivity.Click.REFRESH_LOCATION, null) },
+						onClick = { onClick(NoteActivity.Action.REFRESH_LOCATION, null) },
 						containerColor = MaterialTheme.colorScheme.primaryContainer,
 						) {
 						Icon(
@@ -104,7 +104,7 @@ fun MapLocationPopup(
 					Spacer(modifier = Modifier.height(16.dp))
 
 					FloatingActionButton(
-						onClick = { onClick(NoteActivity.Click.DISMISS_MAP_DIALOG, null) },
+						onClick = { onClick(NoteActivity.Action.DISMISS_MAP_DIALOG, null) },
 						containerColor = MaterialTheme.colorScheme.primaryContainer,
 					) {
 						Icon(

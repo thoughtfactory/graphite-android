@@ -44,7 +44,7 @@ fun CalendarWeek() {
 						Text(
 							text = Konstant.weekName[i],
 							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.onSecondaryContainer,
+							color = MaterialTheme.colorScheme.onPrimary,
 							fontWeight = FontWeight.Bold
 						)
 					}

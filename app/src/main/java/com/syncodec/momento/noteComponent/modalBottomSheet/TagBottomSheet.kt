@@ -1,101 +1,100 @@
 package com.syncodec.momento.noteComponent.modalBottomSheet
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.ChipDefaults
+import androidx.compose.material.FilterChip
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.momento.R
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
 import com.syncodec.momento.custom.LargeTextField
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.database.tag.TagDbEntry
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.noteComponent.NoteActivity
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Plus
 
 
 @Composable
 fun TagBottomSheet(
 	tagList: List<TagDbEntry>,
 	connectedTag: List<String>,
-	onClick: (NoteActivity.Click, Any) -> Unit
+	onClick: (NoteActivity.Action, Any) -> Unit
 ) {
-	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.heightIn(360.dp)
-			.background(MaterialTheme.colorScheme.background),
-		horizontalAlignment = Alignment.CenterHorizontally
+	Surface(
+		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+		color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2)
 	) {
-
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Tag",
-			painter = painterResource(id = R.drawable.ic_hashtag)
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		SearchBar { click, data -> onClick(click, data) }
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		ConnectedTagCard(connectedTag = connectedTag) { click, tag -> onClick(click, tag) }
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		LazyColumn(
-			modifier = Modifier.fillMaxWidth(),
+		Column(
+			modifier = Modifier
+				.fillMaxWidth()
+				.heightIn(360.dp),
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 
-			item {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(8.dp, 0.dp)
-						.height(1.dp)
-						.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.31f)),
-				)
-			}
-			tagList.forEach {
-				item { Tag(tag = it.tag) { click, tag -> onClick(click, tag) } }
+			BottomSheetStrip()
+
+			BottomSheetHeader(title = "Tag", icon = R.drawable.ic_hashtag)
+
+			Spacer(modifier = Modifier.height(8.dp))
+
+			SearchBar { click, data -> onClick(click, data) }
+
+			if (connectedTag.isEmpty()) Spacer(modifier = Modifier.height(6.dp))
+			ConnectedTagCard(connectedTag = connectedTag) { click, tag -> onClick(click, tag) }
+
+			Spacer(modifier = Modifier.height(6.dp))
+
+			LazyColumn(modifier = Modifier.fillMaxWidth()) {
 				item {
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
 							.padding(8.dp, 0.dp)
 							.height(1.dp)
-							.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.31f)),
+							.background(
+								MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
+							),
 					)
 				}
+				tagList.forEach {
+					item { Tag(tag = it.tag) { click, tag -> onClick(click, tag) } }
+					item {
+						Box(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(8.dp, 0.dp)
+								.height(1.dp)
+								.background(
+									MaterialTheme.colorScheme.onSurface.tone(
+										isSystemInDarkTheme(),
+										1
+									)
+								),
+						)
+					}
+				}
+
+				item { Spacer(modifier = Modifier.height(128.dp)) }
 			}
 
-			item { Spacer(modifier = Modifier.height(128.dp)) }
+			Spacer(modifier = Modifier.height(32.dp))
 		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
 @Composable
 private fun SearchBar(
-	onClick: (NoteActivity.Click, Any) -> Unit
+	onClick: (NoteActivity.Action, Any) -> Unit
 ) {
 	var tag by remember { mutableStateOf("") }
 	var isFocused by remember { mutableStateOf(false) }
@@ -115,11 +114,11 @@ private fun SearchBar(
 		) { tag = it }
 
 		Row(modifier = Modifier) {
-			IconButton(onClick = { onClick(NoteActivity.Click.ADD_TAG, tag) }) {
+			IconButton(onClick = { onClick(NoteActivity.Action.ADD_TAG, tag) }) {
 				Icon(
-					imageVector = TablerIcons.Plus,
+					painter = painterResource(id = R.drawable.ic_add),
 					contentDescription = "Add tag",
-					tint = MaterialTheme.colorScheme.onBackground,
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 2),
 					modifier = Modifier.requiredSize(20.dp)
 				)
 			}
@@ -131,7 +130,7 @@ private fun SearchBar(
 @Composable
 private fun ConnectedTagCard(
 	connectedTag: List<String>,
-	onClick: (NoteActivity.Click, String) -> Unit
+	onClick: (NoteActivity.Action, String) -> Unit
 ) {
 	FlowRow(
 		modifier = Modifier
@@ -146,36 +145,48 @@ private fun ConnectedTagCard(
 @Composable
 private fun ConnectedTag(
 	tag: String,
-	onClick: (NoteActivity.Click, String) -> Unit
+	onClick: (NoteActivity.Action, String) -> Unit
 ) {
-	Card(
-		modifier = Modifier,
-		elevation = 0.dp,
-		backgroundColor = Color.Companion.Transparent,
-		shape = RoundedCornerShape(50),
-		border = BorderStroke(1.dp, MaterialTheme.colorScheme.primaryContainer),
-		onClick = { onClick(NoteActivity.Click.CONNECT_TAG, tag) }
+	FilterChip(
+		selected = true,
+		onClick = { onClick(NoteActivity.Action.CONNECT_TAG, tag) },
+		colors = ChipDefaults.filterChipColors(
+			backgroundColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5))
 	) {
 		Text(
 			text = tag,
 			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier.padding(16.dp, 8.dp),
+			color = MaterialTheme.colorScheme.onSurface.tone(!isSystemInDarkTheme(), 5)
 		)
 	}
+//	Card(
+//		modifier = Modifier,
+//		elevation = 0.dp,
+//		backgroundColor = Color.Companion.Transparent,
+//		shape = RoundedCornerShape(50),
+//		border = BorderStroke(1.dp, MaterialTheme.colorScheme.primaryContainer),
+//		onClick = { onClick(NoteActivity.Action.CONNECT_TAG, tag) }
+//	) {
+//		Text(
+//			text = tag,
+//			style = MaterialTheme.typography.bodyMedium,
+//			color = MaterialTheme.colorScheme.onBackground,
+//			modifier = Modifier.padding(16.dp, 8.dp),
+//		)
+//	}
 }
 
 @Composable
 private fun Tag(
 	tag: String,
-	onClick: (NoteActivity.Click, String) -> Unit
+	onClick: (NoteActivity.Action, String) -> Unit
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(54.dp)
-			.clickable { onClick(NoteActivity.Click.CONNECT_TAG, tag) },
+			.clickable { onClick(NoteActivity.Action.CONNECT_TAG, tag) },
 	) {
 		Spacer(modifier = Modifier.width(32.dp))
 

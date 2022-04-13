@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +31,7 @@ fun AddNewBucketItemButton(
 			if (it) {
 				LargeButton(
 					text = if (selectedBucketItemList.isEmpty()) "Select item to delete" else "Delete ${if (selectedBucketItemList.size == 1) "1 item" else "${selectedBucketItemList.size} items"}?",
-					containerColor = MaterialTheme.colorScheme.onBackground,
-					contentColor = MaterialTheme.colorScheme.background,
-					isClickable = true,
+					enabled = true,
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(12.dp, 0.dp)
@@ -50,9 +47,7 @@ fun AddNewBucketItemButton(
 						BucketItemType.MEDIA -> "Add media"
 						BucketItemType.LINKS -> "Add link"
 					},
-					containerColor = MaterialTheme.colorScheme.primaryContainer,
-					contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-					isClickable = true,
+					enabled = true,
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(12.dp, 0.dp)

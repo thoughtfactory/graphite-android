@@ -7,7 +7,7 @@
 
 	<application
 		android:name=".Momento"
-		android:allowBackup="true"
+		android:allowBackup="false"
 		android:icon="@mipmap/ic_launcher"
 		android:label="@string/app_name"
 		android:roundIcon="@mipmap/ic_launcher"
@@ -23,7 +23,7 @@
 
 		<provider
 			android:name="androidx.core.content.FileProvider"
-			android:authorities="com.syncodec.momento.provider"
+			android:authorities="com.syncodec.fileprovider"
 			android:exported="false"
 			android:grantUriPermissions="true">
 			<meta-data
@@ -79,6 +79,13 @@
 
 		<activity
 			android:name=".notebookComponent.NotebookActivity"
+			android:exported="false"
+			android:windowSoftInputMode="adjustResize"
+			android:theme="@style/Theme.Momento.NoActionBar">
+		</activity>
+
+		<activity
+			android:name=".attachmentComponent.AttachmentActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
 			android:theme="@style/Theme.Momento.NoActionBar">

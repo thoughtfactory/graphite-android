@@ -42,7 +42,7 @@ fun BucketScreen(
 	bucketMap: Map<String, Pair<BucketDbEntry, Int>>,
 	isSelected: Boolean,
 	selectedItemList: List<String>,
-	onClick: (MainActivity.Click, Any?) -> Unit
+	onClick: (MainActivity.Action, Any?) -> Unit
 ) {
 
 	val chipDataList: MutableList<ChipData> = mutableListOf()
@@ -62,11 +62,6 @@ fun BucketScreen(
 		modifier = Modifier
 			.fillMaxSize()
 	) {
-		TopBar(
-			isSelected = isSelected,
-			selectedItemSize = selectedItemList.size
-		) { click, data -> onClick(click, data) }
-
 		if (bucketMap.isNotEmpty()) {
 			Spacer(modifier = Modifier.height(8.dp))
 			ChipView(chipDataList = chipDataList)
@@ -76,12 +71,7 @@ fun BucketScreen(
 			) {
 				bucketMap.forEach { (_, data) ->
 					if (isChipSelected[BucketItemType.values()[data.first.bucketItemType]]!!) {
-						item {
-							BucketCard(
-								bucket = data.first,
-								bucketSize = data.second
-							)
-						}
+						item { BucketCard(bucket = data.first, bucketSize = data.second) }
 					}
 				}
 			}

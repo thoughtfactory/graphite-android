@@ -9,20 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.bucketItemComponent.miscellaneous.*
 import com.syncodec.momento.bucketItemComponent.thought.ThoughtCard
 import com.syncodec.momento.custom.button.LargeButton
-import com.syncodec.momento.custom.button.StateButton
-import com.syncodec.momento.custom.button.StateData
 import com.syncodec.momento.database.bucketItem.MovieData
 import com.syncodec.momento.konstant.Konstant
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Book
-import compose.icons.tablericons.Check
-import compose.icons.tablericons.Clock
 
 
 @Composable
@@ -62,16 +55,16 @@ fun ShowMovieItemScreen(
 		)
 		Spacer(modifier = Modifier.height(12.dp))
 
-		StateButton(
-			stateList = listOf(
-				StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-				StateData(title = "Watching", icon = TablerIcons.Book, color = Color(245, 118, 26)),
-				StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-			),
-			currentState = currentState,
-			modifier = Modifier
-				.height(48.dp)
-		) { onClick(BucketItemActivity.Click.STATE, it) }
+//		StateButton(
+//			stateList = listOf(
+//				StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
+//				StateData(title = "Watching", icon = TablerIcons.Book, color = Color(245, 118, 26)),
+//				StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
+//			),
+//			currentState = currentState,
+//			modifier = Modifier
+//				.height(48.dp)
+//		) { onClick(BucketItemActivity.Click.STATE, it) }
 		Spacer(modifier = Modifier.height(12.dp))
 
 		ThoughtCard(thoughtList = thoughtList) { onClick(it, null) }
@@ -89,9 +82,7 @@ fun ShowMovieItemScreen(
 
 		LargeButton(
 			text = "View in TMDB",
-			containerColor = MaterialTheme.colorScheme.secondaryContainer,
-			contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-			isClickable = true,
+			enabled = true,
 			modifier = Modifier
 				.fillMaxWidth()
 		) {

@@ -25,6 +25,9 @@ interface ChapterTableDao {
 	@Query(value = "DELETE FROM chapter_table WHERE `key` = :key")
 	suspend fun delete(key: String)
 
+	@Query("DELETE FROM chapter_table WHERE `key` IN (:keyList)")
+	fun delete(keyList: List<String>)
+
 	@Delete
 	suspend fun delete(chapterDbEntries: List<ChapterDbEntry>)
 }

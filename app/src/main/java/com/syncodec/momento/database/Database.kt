@@ -26,8 +26,10 @@ import com.syncodec.momento.database.tag.TagDbEntry
 import com.syncodec.momento.database.tag.TagDbTableDao
 import com.syncodec.momento.database.tag.TagKeyDbEntry
 import com.syncodec.momento.database.tag.TagKeyDbTableDao
+import com.syncodec.momento.miscellaneous.logger
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
 
 
 class Converters {
@@ -108,10 +110,18 @@ class Converters {
 	}
 
 	@TypeConverter
-	fun fromTagListToData(value: MutableList<TagDbEntry>): String = objectMapper.writeValueAsString(value)
+	fun fromJsonObjectToData(value: JSONObject?): ByteArray? {
+		return objectMapper.writeValueAsBytes(value?.toString())
+	}
 
 	@TypeConverter
-	fun fromDataToTaList(value: String?): MutableList<TagDbEntry> = value?.let { objectMapper.readValue(it) } ?: mutableListOf()
+	fun fromDataToJsonObject(data: ByteArray?): JSONObject? {
+		return if (data == null) {
+			null
+		} else {
+			objectMapper.readValue(data)
+		}
+	}
 }
 
 @Database(

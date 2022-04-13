@@ -1,11 +1,9 @@
 package com.syncodec.momento.database.note
 
 import android.graphics.Bitmap
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.*
 import com.syncodec.momento.database.notebook.NotebookDbEntry
+import org.json.JSONObject
 
 @Entity(
 	tableName = "note_table",
@@ -16,7 +14,8 @@ import com.syncodec.momento.database.notebook.NotebookDbEntry
 			childColumns = ["notebook_key"],
 			onDelete = ForeignKey.NO_ACTION
 		)
-	]
+	],
+	indices = [Index("key")]
 )
 data class NoteDbEntry(
 	@PrimaryKey(autoGenerate = false)
@@ -50,8 +49,11 @@ data class NoteDbEntry(
 	@ColumnInfo(name = "attachment_thumbnail", typeAffinity = ColumnInfo.BLOB)
 	var attachmentThumbnail: Bitmap? = null
 
-	@ColumnInfo(name = "attachment_count")
-	var attachmentCount: Int = 0
+	@ColumnInfo(name = "content", typeAffinity = ColumnInfo.BLOB)
+	var content: JSONObject? = null
+
+	@ColumnInfo(name = "attachment_key_list")
+	var attachmentKeyList: MutableList<String> = mutableListOf()
 
 	@ColumnInfo(name = "location_data")
 	var location: LocationData? = null
@@ -62,34 +64,47 @@ data class NoteDbEntry(
 	@ColumnInfo(name = "mood")
 	var mood: Int = 0
 
+	@ColumnInfo(name = "is_favourite")
+	var isFavourite: Boolean = false
+
+	@ColumnInfo(name = "is_archived")
+	var isArchived: Boolean = false
+
+	@ColumnInfo(name = "is_locked")
+	var isLocked: Boolean = false
+
 	@ColumnInfo(name = "deleted_timestamp")
 	var deletedTimestamp: Long = -1
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 
+	override fun equals(other: Any?): Boolean {
+		return false
+	}
+
 	override fun hashCode(): Int {
 		var result = key.hashCode()
 		result = 31 * result + timezone.hashCode()
-		result = 31 * result + notebookKey.hashCode()
 		result = 31 * result + chapterPath.hashCode()
+		result = 31 * result + notebookKey.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
 		result = 31 * result + userTimestamp.hashCode()
 		result = 31 * result + (title?.hashCode() ?: 0)
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (attachmentThumbnail?.hashCode() ?: 0)
-		result = 31 * result + attachmentCount
+		result = 31 * result + (content?.hashCode() ?: 0)
+		result = 31 * result + attachmentKeyList.hashCode()
 		result = 31 * result + (location?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
 		result = 31 * result + mood
+		result = 31 * result + isFavourite.hashCode()
+		result = 31 * result + isArchived.hashCode()
+		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + deletedTimestamp.hashCode()
 		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
 		return result
-	}
-
-	override fun equals(other: Any?): Boolean {
-		return false
 	}
 
 //	override fun equals(other: Any?): Boolean {
@@ -103,3 +118,5 @@ data class NoteDbEntry(
 //		return true
 //	}
 }
+
+data class NoteForChapter(val key: String, val notebookKey: String, val chapterPath: MutableList<String>)

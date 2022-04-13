@@ -16,4 +16,4 @@ import androidx.compose.runtime.State
  * this scope carries information that should not be passed down as a state.
  */
 @Immutable
-public object RichTextScope
+object RichTextScope

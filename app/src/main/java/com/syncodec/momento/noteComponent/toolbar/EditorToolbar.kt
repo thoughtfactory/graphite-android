@@ -2,50 +2,32 @@ package com.syncodec.momento.noteComponent.toolbar
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.richText.RichTextEditor
-import com.syncodec.momento.konstant.Color.Companion.colorList
-import com.syncodec.momento.konstant.ErrorCode
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.noteComponent.NoteActivity
-import com.syncodec.momento.noteComponent.NoteViewModel
 import java.text.SimpleDateFormat
 
 private enum class ToolbarState {
 	BASE,
 	STATE,
-	TAG,
-	ALIGN,
 	HEADING,
-
-	//	TEXT_HIGHLIGHT,
-//	TEXT_COLOR,
 	LINK
-}
-
-private enum class NoteState {
-	ARCHIVE,
-	FAVOURITE,
-	LOCKED
 }
 
 private enum class ToolbarButton {
@@ -76,11 +58,6 @@ private enum class ToolbarButton {
 	H5,
 	H6,
 	BLOCKQUOTE,
-	ALIGN,
-	ALIGN_LEFT,
-	ALIGN_CENTER,
-	ALIGN_RIGHT,
-	ALIGN_JUSTIFY,
 	INDENT,
 	OUTDENT,
 	LINK,
@@ -95,9 +72,10 @@ private enum class ToolbarButton {
 fun EditorToolbar(
 	richTextEditor: RichTextEditor,
 	userTimestamp: Long,
-	tagList: Map<String, Boolean>,
-	onClick: (NoteActivity.Click) -> Unit,
-	onError: (ErrorCode.Companion.ErrorCode) -> Unit,
+	isFavourite: Boolean,
+	isArchive: Boolean,
+	isLocked: Boolean,
+	onAction: (NoteActivity.Action) -> Unit,
 ) {
 	var showFormatter by remember { mutableStateOf(false) }
 	var toolbarState by remember { mutableStateOf(ToolbarState.BASE) }
@@ -111,17 +89,18 @@ fun EditorToolbar(
 	})
 
 	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.secondaryContainer)
+		modifier = Modifier.fillMaxWidth()
 	) {
 		AnimatedContent(
 			targetState = toolbarState
 		) {
 			when (it) {
 				ToolbarState.BASE -> null
-				ToolbarState.STATE -> NoteStateToolbar()
-				ToolbarState.TAG -> null
+				ToolbarState.STATE -> NoteStateToolbar(
+					isFavourite = isFavourite,
+					isArchive = isArchive,
+					isLocked = isLocked
+				) { onAction(it) }
 				ToolbarState.HEADING -> TextHeadingToolbar(textFormat = textFormat) { toolbarButton ->
 					when (toolbarButton) {
 						ToolbarButton.PARAGRAPH -> richTextEditor.exec("editor.commands.toggleHeading({ level: 3 });")
@@ -133,28 +112,6 @@ fun EditorToolbar(
 						ToolbarButton.H6 -> richTextEditor.exec("editor.commands.toggleHeading({ level: 6 });")
 					}
 				}
-				ToolbarState.ALIGN -> TextAlignToolbar(
-					textFormat = textFormat
-				) { toolbarButton ->
-					when (toolbarButton) {
-						ToolbarButton.ALIGN_LEFT ->
-							if (textFormat.alignLeft) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
-								"editor.commands.setTextAlign('left');"
-							)
-						ToolbarButton.ALIGN_CENTER ->
-							if (textFormat.alignCenter) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
-								"editor.commands.setTextAlign('center');"
-							)
-						ToolbarButton.ALIGN_RIGHT ->
-							if (textFormat.alignRight) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
-								"editor.commands.setTextAlign('right');"
-							)
-						ToolbarButton.ALIGN_JUSTIFY ->
-							if (textFormat.alignJustify) richTextEditor.exec("editor.commands.unsetTextAlign();") else richTextEditor.exec(
-								"editor.commands.setTextAlign('justify');"
-							)
-					}
-				}
 			}
 		}
 
@@ -162,7 +119,7 @@ fun EditorToolbar(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(56.dp)
-				.background(MaterialTheme.colorScheme.secondaryContainer)
+				.background(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
 		) {
 			AnimatedContent(
 				targetState = showFormatter,
@@ -197,8 +154,6 @@ fun EditorToolbar(
 							ToolbarButton.BLOCKQUOTE -> richTextEditor.exec("editor.chain().focus().toggleBlockquote().run();")
 							ToolbarButton.HEADING -> toolbarState =
 								if (toolbarState == ToolbarState.HEADING) ToolbarState.BASE else ToolbarState.HEADING
-							ToolbarButton.ALIGN -> toolbarState =
-								if (toolbarState == ToolbarState.ALIGN) ToolbarState.BASE else ToolbarState.ALIGN
 							ToolbarButton.INDENT -> richTextEditor.exec("editor.chain().focus().sinkListItem('listItem').run()")
 							ToolbarButton.OUTDENT -> richTextEditor.exec("editor.chain().focus().liftListItem('listItem').run()")
 							ToolbarButton.LINK -> toolbarState = ToolbarState.LINK
@@ -213,17 +168,17 @@ fun EditorToolbar(
 						userTimestamp = userTimestamp
 					) { toolbarButton ->
 						when (toolbarButton) {
-							ToolbarButton.TIMESTAMP_PICKER -> onClick(NoteActivity.Click.SELECT_TIME)
-							ToolbarButton.ATTACHMENT -> onClick(NoteActivity.Click.ATTACHMENT_BUTTON)
-							ToolbarButton.TAG -> onClick(NoteActivity.Click.TAG_BUTTON)
+							ToolbarButton.TIMESTAMP_PICKER -> onAction(NoteActivity.Action.SELECT_TIME)
+							ToolbarButton.ATTACHMENT -> onAction(NoteActivity.Action.ATTACHMENT_BUTTON)
+							ToolbarButton.TAG -> onAction(NoteActivity.Action.TAG_BUTTON)
 							ToolbarButton.STATE -> toolbarState =
 								if (toolbarState == ToolbarState.STATE) ToolbarState.BASE else ToolbarState.STATE
 							ToolbarButton.OPEN_FORMAT -> {
 								toolbarState = ToolbarState.BASE
 								showFormatter = true
 							}
-							ToolbarButton.METADATA -> onClick(NoteActivity.Click.METADATA)
-							ToolbarButton.MENU -> onClick(NoteActivity.Click.MENU)
+							ToolbarButton.METADATA -> onAction(NoteActivity.Action.OPEN_METADATA)
+							ToolbarButton.MENU -> onAction(NoteActivity.Action.OPEN_MENU)
 						}
 					}
 				}
@@ -241,7 +196,6 @@ private fun StateEditorToolbar(
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(56.dp)
-			.background(MaterialTheme.colorScheme.secondaryContainer)
 			.horizontalScroll(rememberScrollState()),
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -292,7 +246,6 @@ private fun FormatEditorToolbar(
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(56.dp)
-			.background(MaterialTheme.colorScheme.secondaryContainer)
 			.horizontalScroll(rememberScrollState()),
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -381,17 +334,6 @@ private fun FormatEditorToolbar(
 			icon = R.drawable.ic_format_blockquote,
 			highlight = textFormat.blockquote
 		) { onClick(ToolbarButton.BLOCKQUOTE) }
-		ToolbarButton(
-			name = "Text alignment",
-			icon = when {
-				textFormat.alignLeft -> R.drawable.ic_format_align_left
-				textFormat.alignCenter -> R.drawable.ic_format_align_center
-				textFormat.alignRight -> R.drawable.ic_format_align_right
-				textFormat.alignJustify -> R.drawable.ic_format_align_justify
-				else -> R.drawable.ic_format_align_left
-			},
-			highlight = false,
-		) { onClick(ToolbarButton.ALIGN) }
 		ToolbarSpacer()
 
 		ToolbarButton(
@@ -442,11 +384,20 @@ private fun ToolbarButton(
 	onClick: () -> Unit
 ) {
 	Row(
-		modifier = Modifier
-			.height(40.dp)
+		modifier = Modifier.height(40.dp)
 	) {
-		val containerColor by animateColorAsState(targetValue = if (highlight) MaterialTheme.colorScheme.onSecondaryContainer else Color.Companion.Transparent)
-		val contentColor by animateColorAsState(targetValue = if (highlight) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.onSecondaryContainer)
+		val containerColor by animateColorAsState(
+			if (highlight)
+				contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
+			else
+				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+		)
+		val contentColor by animateColorAsState(
+			if (highlight)
+				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+			else
+				contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
+		)
 
 		Box(
 			contentAlignment = Alignment.Center,
@@ -471,8 +422,7 @@ private fun ToolbarButton(
 @Composable
 private fun ToolbarSpacer() {
 	Row(
-		modifier = Modifier
-			.height(56.dp),
+		modifier = Modifier.height(56.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Spacer(modifier = Modifier.width(4.dp))
@@ -481,7 +431,11 @@ private fun ToolbarSpacer() {
 				.width(2.dp)
 				.height(24.dp)
 				.clip(RoundedCornerShape(50))
-				.background(MaterialTheme.colorScheme.onSecondaryContainer)
+				.background(
+					contentColorFor(
+						MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+					)
+				)
 		)
 		Spacer(modifier = Modifier.width(4.dp))
 	}
@@ -493,95 +447,62 @@ private fun DateTimeButton(
 	userTimestamp: Long,
 	onClick: () -> Unit
 ) {
-	Row(
-		modifier = Modifier
-			.height(40.dp)
-	) {
-		AnimatedContent(targetState = userTimestamp) {
-			Box(
-				modifier = Modifier
-					.height(40.dp)
-					.clip(RoundedCornerShape(25))
-					.clickable { onClick() },
-				contentAlignment = Alignment.Center
-			) {
-				Column(
-					modifier = Modifier
-						.fillMaxHeight()
-						.padding(8.dp, 0.dp),
-					horizontalAlignment = Alignment.Start,
-					verticalArrangement = Arrangement.Center
-				) {
-					Text(
-						text = SimpleDateFormat("h:mm a, EEE").format(it),
-						style = MaterialTheme.typography.bodyMedium,
-						fontWeight = FontWeight.Bold,
-						color = MaterialTheme.colorScheme.onSecondaryContainer
-					)
-					Text(
-						text = SimpleDateFormat("MMM d, yyyy").format(it),
-						style = MaterialTheme.typography.bodySmall,
-						fontWeight = FontWeight.Bold,
-						color = MaterialTheme.colorScheme.onSecondaryContainer
-					)
-				}
-			}
-			Spacer(modifier = Modifier.width(4.dp))
-		}
-	}
-}
-
-@Composable
-private fun NoteStateToolbar() {
-	val viewModel: NoteViewModel = viewModel()
-
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(48.dp)
-			.padding(0.dp, 0.dp, 8.dp, 0.dp),
-		horizontalArrangement = Arrangement.SpaceBetween,
-		verticalAlignment = Alignment.CenterVertically
-	) {
+	AnimatedContent(targetState = userTimestamp) {
 		Row(
 			modifier = Modifier
-				.height(48.dp)
-				.horizontalScroll(rememberScrollState()),
-			verticalAlignment = Alignment.Bottom,
+				.height(40.dp)
+				.clip(RoundedCornerShape(25))
+				.clickable { onClick() },
+			verticalAlignment = Alignment.CenterVertically
 		) {
-			Spacer(modifier = Modifier.width(8.dp))
-
-//			ToolbarButton(
-//				name = "Archive",
-//				icon = R.drawable.ic_box,
-//				highlight = viewModel.isArchived
-//			) { viewModel.isArchived = !viewModel.isArchived }
-//			ToolbarButton(
-//				name = "Favourite",
-//				icon = R.drawable.ic_heart,
-//				highlight = viewModel.isFavourite
-//			) { viewModel.isFavourite = !viewModel.isFavourite }
-//			ToolbarButton(
-//				name = "Lock",
-//				icon = R.drawable.ic_locked,
-//				highlight = viewModel.isLocked
-//			) { viewModel.isLocked = !viewModel.isLocked }
-
-			Spacer(modifier = Modifier.width(8.dp))
+			Icon(
+				painter = painterResource(id = R.drawable.ic_clock),
+				contentDescription = null,
+				tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+				modifier = Modifier.requiredSize(28.dp)
+			)
+			Column(
+				modifier = Modifier
+					.fillMaxHeight()
+					.padding(8.dp, 0.dp),
+				horizontalAlignment = Alignment.Start,
+				verticalArrangement = Arrangement.Center
+			) {
+				Text(
+					text = SimpleDateFormat("h:mm a, EEE").format(it),
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold,
+					color = contentColorFor(
+						MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+					)
+				)
+				Text(
+					text = SimpleDateFormat("MMM d, yyyy").format(it),
+					style = MaterialTheme.typography.bodySmall,
+					fontWeight = FontWeight.Bold,
+					color =
+					contentColorFor(
+						MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+					)
+				)
+			}
 		}
+		Spacer(modifier = Modifier.width(4.dp))
 	}
 }
 
 @Composable
-private fun TextAlignToolbar(
-	textFormat: RichTextEditor.TextFormat,
-	onClick: (ToolbarButton) -> Unit,
+private fun NoteStateToolbar(
+	isFavourite: Boolean,
+	isArchive: Boolean,
+	isLocked: Boolean,
+	onAction: (NoteActivity.Action) -> Unit
 ) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(48.dp)
-			.padding(0.dp, 0.dp, 8.dp, 0.dp),
+			.background(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)),
 		horizontalArrangement = Arrangement.SpaceBetween,
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -594,43 +515,23 @@ private fun TextAlignToolbar(
 			Spacer(modifier = Modifier.width(8.dp))
 
 			ToolbarButton(
-				name = "Align left",
-				icon = R.drawable.ic_format_align_left,
-				highlight = textFormat.alignLeft
-			) { onClick(ToolbarButton.ALIGN_LEFT) }
+				name = "Favourite",
+				icon = R.drawable.ic_favourite,
+				highlight = isFavourite
+			) { onAction(NoteActivity.Action.TOGGLE_FAVOURITE) }
 			ToolbarButton(
-				name = "Align center",
-				icon = R.drawable.ic_format_align_center,
-				highlight = textFormat.alignCenter
-			) { onClick(ToolbarButton.ALIGN_CENTER) }
+				name = "Archive",
+				icon = R.drawable.ic_archive,
+				highlight = isArchive
+			) { onAction(NoteActivity.Action.TOGGLE_ARCHIVE) }
 			ToolbarButton(
-				name = "Align right",
-				icon = R.drawable.ic_format_align_right,
-				highlight = textFormat.alignRight
-			) { onClick(ToolbarButton.ALIGN_RIGHT) }
-			ToolbarButton(
-				name = "Align justify",
-				icon = R.drawable.ic_format_align_justify,
-				highlight = textFormat.alignJustify
-			) { onClick(ToolbarButton.ALIGN_JUSTIFY) }
+				name = "Lock",
+				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
+				highlight = isLocked
+			) { onAction(NoteActivity.Action.TOGGLE_LOCKED) }
 
 			Spacer(modifier = Modifier.width(8.dp))
 		}
-
-		Text(
-			text = when {
-				textFormat.alignLeft -> "Align left"
-				textFormat.alignCenter -> "Align center"
-				textFormat.alignRight -> "Align right"
-				textFormat.alignJustify -> "Align justify"
-				else -> ""
-			},
-			style = MaterialTheme.typography.bodyLarge,
-			color = MaterialTheme.colorScheme.onSecondaryContainer,
-			maxLines = 1,
-			textAlign = TextAlign.Center,
-			modifier = Modifier
-		)
 	}
 }
 
@@ -643,7 +544,7 @@ private fun TextHeadingToolbar(
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(48.dp)
-			.padding(0.dp, 0.dp, 8.dp, 0.dp),
+			.background(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)),
 		horizontalArrangement = Arrangement.SpaceBetween,
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -693,81 +594,5 @@ private fun TextHeadingToolbar(
 
 			Spacer(modifier = Modifier.width(8.dp))
 		}
-	}
-}
-
-@Composable
-private fun ColorToolbar(
-	textFormat: RichTextEditor.TextFormat,
-	onClick: (Color) -> Unit,
-) {
-
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(48.dp)
-			.padding(0.dp, 0.dp, 8.dp, 0.dp),
-		horizontalArrangement = Arrangement.SpaceBetween,
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		Row(
-			modifier = Modifier
-				.height(32.dp)
-				.horizontalScroll(rememberScrollState()),
-			verticalAlignment = Alignment.Bottom,
-		) {
-			Spacer(modifier = Modifier.width(8.dp))
-
-			colorList.forEach { ToolbarColorButton(color = it) { onClick(it) } }
-
-			Spacer(modifier = Modifier.width(4.dp))
-		}
-	}
-}
-
-@Composable
-private fun ToolbarColorButton(
-	color: Color,
-	onClick: () -> Unit
-) {
-	Row(
-		modifier = Modifier
-			.height(32.dp)
-	) {
-		Box(
-			modifier = Modifier
-				.requiredSize(32.dp)
-				.clip(RoundedCornerShape(25))
-				.background(color = color)
-				.clickable { onClick() },
-		)
-		Spacer(modifier = Modifier.width(4.dp))
-	}
-}
-
-@Composable
-private fun ToolbarRemoveColorButton(
-	onClick: () -> Unit
-) {
-	Row(
-		modifier = Modifier
-			.height(40.dp)
-	) {
-		Box(
-			modifier = Modifier
-				.requiredSize(40.dp)
-				.clip(RoundedCornerShape(25))
-				.clickable { onClick() },
-			contentAlignment = Alignment.Center
-		) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_format_remove_color),
-				contentDescription = "Remove color",
-				modifier = Modifier
-					.requiredSize(32.dp)
-					.padding(4.dp)
-			)
-		}
-		Spacer(modifier = Modifier.width(4.dp))
 	}
 }

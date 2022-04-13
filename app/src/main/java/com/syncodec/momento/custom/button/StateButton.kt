@@ -6,27 +6,30 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 
 
 data class StateData(
 	val title: String,
-	val icon: ImageVector,
-	val color: Color
+	val icon: Int,
+	val stateTint: Color,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -40,19 +43,14 @@ fun StateButton(
 	val interactionSource = remember { MutableInteractionSource() }
 	val spacerWeight by animateFloatAsState(targetValue = currentState.toFloat())
 
-	val stateColor by animateColorAsState(
-		targetValue = stateList[currentState].color
-	)
-
-	Box(
-		modifier = modifier
-			.fillMaxWidth()
-			.clip(RoundedCornerShape(50))
-			.background(MaterialTheme.colorScheme.secondaryContainer)
+	Surface(
+		modifier = modifier.fillMaxWidth(),
+		color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
+		tonalElevation = 0.dp,
+		shape = RoundedCornerShape(50)
 	) {
 		Row(
-			modifier = Modifier
-				.fillMaxSize()
+			modifier = Modifier.fillMaxSize()
 		) {
 			Spacer(modifier = Modifier.weight((spacerWeight + 0.00001).toFloat()))
 			Box(
@@ -60,7 +58,7 @@ fun StateButton(
 					.fillMaxHeight()
 					.weight(1f)
 					.clip(RoundedCornerShape(50))
-					.background(stateColor)
+					.background(stateList[currentState].stateTint)
 			)
 			Spacer(modifier = Modifier.weight((stateList.size - spacerWeight - 1 + 0.00001).toFloat()))
 		}
@@ -72,7 +70,7 @@ fun StateButton(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			stateList.forEachIndexed { index, state ->
-				val textColor by animateColorAsState(targetValue = if (index == currentState) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer)
+				val textColor by animateColorAsState(targetValue = if (index == currentState) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
 				Row(
 					modifier = Modifier
 						.weight(1f)
@@ -81,18 +79,15 @@ fun StateButton(
 						.clickable(
 							interactionSource = interactionSource,
 							indication = null
-						) {
-							onStateChange(index)
-						},
+						) { onStateChange(index) },
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center
 				) {
 					Icon(
-						imageVector = state.icon,
+						painter = painterResource(id = state.icon),
 						contentDescription = state.title,
 						tint = textColor,
-						modifier = Modifier
-							.requiredSize(20.dp)
+						modifier = Modifier.requiredSize(20.dp)
 					)
 					Spacer(modifier = Modifier.width(6.dp))
 					Text(

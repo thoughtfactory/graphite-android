@@ -53,110 +53,110 @@ class SearchActivity : ComponentActivity() {
 	@OptIn(ExperimentalFoundationApi::class)
 	@Composable
 	private fun Screen() {
-		val context = LocalContext.current
-
-		val query by viewModel.activityState.query
-		val noteMap = viewModel.noteMap
-
-		val vaultState by viewModel.activityState.vaultState
-		var showArchived by viewModel.activityState.showArchived
-		var showFavourite by viewModel.activityState.showFavourite
-		var showLocked by viewModel.activityState.showLocked
-		var showDiary by viewModel.activityState.showDiary
-		var showNotebook by viewModel.activityState.showNotebook
-		var showChapter by viewModel.activityState.showChapter
-		var showNote by viewModel.activityState.showNote
-		var showBucket by viewModel.activityState.showBucket
-		val allState = !showArchived && !showFavourite && !showLocked
-		val showAllComponent = !showDiary && !showNotebook && !showChapter && !showNote && !showBucket
-
-		var visibleDiarySize by remember { mutableStateOf(noteMap.size) }
-		var lastVisibleDiaryKey by remember { mutableStateOf<String?>(null) }
-
-		LaunchedEffect(
-			key1 = vaultState.hashCode() +
-					showArchived.hashCode() +
-					showFavourite.hashCode() +
-					showLocked.hashCode() +
-					showDiary.hashCode() +
-					query.hashCode()
-		) {
-			Log.i("npr71", "refresh : ${showArchived.hashCode()}")
-			visibleDiarySize = 0
-			noteMap.forEach { (key, data) ->
-				val showEntry: Boolean = filterData(
-					showArchived = showArchived,
-					isArchived = false,
-					showFavourite = showFavourite,
-					isFavourite = false,
-					showLocked = showLocked,
-					isLocked = false
-				) && (data.first.content?.contains(query) == true) && (showDiary || showAllComponent)
-
-				noteMap[key] = Pair(data.first, showEntry)
-				if (showEntry) {
-					visibleDiarySize++
-					lastVisibleDiaryKey = key
-				}
-			}
-		}
-
-		Scaffold(
-			modifier = Modifier
-				.fillMaxSize(),
-			backgroundColor = MaterialTheme.colorScheme.background,
-			topBar = { SearchBar() },
-		) {
-			LazyColumn(
-				modifier = Modifier
-					.fillMaxSize(),
-				horizontalAlignment = Alignment.CenterHorizontally
-			) {
-				item { Spacer(modifier = Modifier.height(12.dp)) }
-
-				stickyHeader {
-					NotebookHeaderCard(
-						title = "Diary",
-						noEntries = if (visibleDiarySize == 0) "No entries" else if (visibleDiarySize == 1) "1 entry" else "$visibleDiarySize entries"
-					) {
-						showDiary = !showDiary
-					}
-				}
-
-				noteMap.forEach { (key, data) ->
-					item {
-//						NoteCardData(
-//							timestamp = data.first.userTimestamp,
-//							showFullTime = true,
-//							isLocked = false,
-//							isSelected = false,
-//							isArchived = false,
-//							isFavourite = false,
-//							isDeleted = data.first.deletedTimestamp != -1L,
-//							isLast = key == lastVisibleDiaryKey,
-//							title = data.first.title,
-//							contentThumbnail = data.first.contentThumbnail,
-//							attachmentCount = data.first.attachmentCount,
-//							attachmentThumbnail = null,
-//							address = data.first.address,
-//							isVisible = data.second,
-//							onClick = {
-//								Intent(context, NoteActivity::class.java).apply {
-//									putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
-//									putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, key)
-//									context.startActivity(this)
-//								}
-//							},
-//							onLongClick = null
-//						).apply {
-//							NoteCard(noteCardData = this)
-//						}
-
-						NotebookTimelineSpacer(isVisible = data.second && key != lastVisibleDiaryKey)
-					}
-				}
-			}
-		}
+//		val context = LocalContext.current
+//
+//		val query by viewModel.activityState.query
+//		val noteMap = viewModel.noteMap
+//
+//		val vaultState by viewModel.activityState.vaultState
+//		var showArchived by viewModel.activityState.showArchived
+//		var showFavourite by viewModel.activityState.showFavourite
+//		var showLocked by viewModel.activityState.showLocked
+//		var showDiary by viewModel.activityState.showDiary
+//		var showNotebook by viewModel.activityState.showNotebook
+//		var showChapter by viewModel.activityState.showChapter
+//		var showNote by viewModel.activityState.showNote
+//		var showBucket by viewModel.activityState.showBucket
+//		val allState = !showArchived && !showFavourite && !showLocked
+//		val showAllComponent = !showDiary && !showNotebook && !showChapter && !showNote && !showBucket
+//
+//		var visibleDiarySize by remember { mutableStateOf(noteMap.size) }
+//		var lastVisibleDiaryKey by remember { mutableStateOf<String?>(null) }
+//
+//		LaunchedEffect(
+//			key1 = vaultState.hashCode() +
+//					showArchived.hashCode() +
+//					showFavourite.hashCode() +
+//					showLocked.hashCode() +
+//					showDiary.hashCode() +
+//					query.hashCode()
+//		) {
+//			Log.i("npr71", "refresh : ${showArchived.hashCode()}")
+//			visibleDiarySize = 0
+//			noteMap.forEach { (key, data) ->
+//				val showEntry: Boolean = filterData(
+//					showArchived = showArchived,
+//					isArchived = false,
+//					showFavourite = showFavourite,
+//					isFavourite = false,
+//					showLocked = showLocked,
+//					isLocked = false
+//				) && (data.first.content?.contains(query) == true) && (showDiary || showAllComponent)
+//
+//				noteMap[key] = Pair(data.first, showEntry)
+//				if (showEntry) {
+//					visibleDiarySize++
+//					lastVisibleDiaryKey = key
+//				}
+//			}
+//		}
+//
+//		Scaffold(
+//			modifier = Modifier
+//				.fillMaxSize(),
+//			backgroundColor = MaterialTheme.colorScheme.background,
+//			topBar = { SearchBar() },
+//		) {
+//			LazyColumn(
+//				modifier = Modifier
+//					.fillMaxSize(),
+//				horizontalAlignment = Alignment.CenterHorizontally
+//			) {
+//				item { Spacer(modifier = Modifier.height(12.dp)) }
+//
+//				stickyHeader {
+//					NotebookHeaderCard(
+//						title = "Diary",
+//						noEntries = if (visibleDiarySize == 0) "No entries" else if (visibleDiarySize == 1) "1 entry" else "$visibleDiarySize entries"
+//					) {
+//						showDiary = !showDiary
+//					}
+//				}
+//
+//				noteMap.forEach { (key, data) ->
+//					item {
+////						NoteCardData(
+////							timestamp = data.first.userTimestamp,
+////							showFullTime = true,
+////							isLocked = false,
+////							isSelected = false,
+////							isArchived = false,
+////							isFavourite = false,
+////							isDeleted = data.first.deletedTimestamp != -1L,
+////							isLast = key == lastVisibleDiaryKey,
+////							title = data.first.title,
+////							contentThumbnail = data.first.contentThumbnail,
+////							attachmentCount = data.first.attachmentCount,
+////							attachmentThumbnail = null,
+////							address = data.first.address,
+////							isVisible = data.second,
+////							onClick = {
+////								Intent(context, NoteActivity::class.java).apply {
+////									putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
+////									putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, key)
+////									context.startActivity(this)
+////								}
+////							},
+////							onLongClick = null
+////						).apply {
+////							NoteCard(noteCardData = this)
+////						}
+//
+//						NotebookTimelineSpacer(isVisible = data.second && key != lastVisibleDiaryKey)
+//					}
+//				}
+//			}
+//		}
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)

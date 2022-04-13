@@ -16,19 +16,22 @@ sealed class BottomSheetType {
 
 @Composable
 fun SheetLayout(
-	onClick: (NoteActivity.Click, Any?) -> Unit
+	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
-
 	val viewModel: NoteViewModel = viewModel()
 	val tagList by viewModel.tagList.collectAsState(listOf())
 
 	when (viewModel.activityState.bottomSheetType.value) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet()
-		BottomSheetType.MetadataBottomSheet -> MetadataBottomSheet { click, data -> onClick(click, data) }
-		BottomSheetType.AttachmentBottomSheet -> AttachmentBottomSheet(attachmentMap = viewModel.attachmentMap) { click, data -> onClick(click, data) }
+		BottomSheetType.MetadataBottomSheet -> MetadataBottomSheet { click, data ->
+			onAction(click, data)
+		}
+		BottomSheetType.AttachmentBottomSheet -> AttachmentBottomSheet(
+			attachmentMap = viewModel.attachmentMap
+		) { click, data -> onAction(click, data) }
 		BottomSheetType.TagBottomSheet -> TagBottomSheet(
 			tagList = tagList,
 			connectedTag = viewModel.connectedTag
-		) { click, data -> onClick(click, data) }
+		) { click, data -> onAction(click, data) }
 	}
 }

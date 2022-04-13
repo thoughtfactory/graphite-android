@@ -1,216 +1,149 @@
 package com.syncodec.momento.mainComponent.modalBottomSheet
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.MainActivity
-import com.syncodec.momento.Momento
-import com.syncodec.momento.custom.BottomSheetHeader
-import com.syncodec.momento.custom.BottomSheetStrip
-import com.syncodec.momento.mainComponent.MainViewModel
-import compose.icons.TablerIcons
-import compose.icons.tablericons.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.syncodec.momento.R
+import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
+import com.syncodec.momento.custom.button.MenuBottomSheetButton
+import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 
-
-data class MenuBottomSheetButtonData(val title: String, val imageVector: ImageVector, val highlight: Boolean = false, val onClick: () -> Unit)
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun MenuBottomSheet() {
-	val viewModel: MainViewModel = viewModel()
-	val scope = rememberCoroutineScope()
-	val mainActivity = LocalContext.current as MainActivity
-
-	var showArchived by viewModel.activityState.showArchived
-	var showFavourite by viewModel.activityState.showFavourite
-	var showLocked by viewModel.activityState.showLocked
-
-	var vaultState by (mainActivity.application as Momento).vaultState
-
-	val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
-		viewModel.activityState.bottomSheetType.value = bottomSheetType
-		scope.launch {
-			viewModel.activityState.bottomSheetState.show()
-		}
-	}
-
-	val hideSheet: () -> Unit = {
-		scope.launch {
-			viewModel.activityState.bottomSheetState.hide()
-		}
-	}
-
-	val menuBottomSheetButtonDataLists: List<MenuBottomSheetButtonData?> = listOf(
-		MenuBottomSheetButtonData(title = "Media", imageVector = TablerIcons.Photo) {},
-		MenuBottomSheetButtonData(
-			title = "Vault",
-			imageVector = TablerIcons.Container,
-			highlight = when (vaultState) {
-				Momento.Companion.VaultState.NOT_OPENED -> false
-				Momento.Companion.VaultState.TRY_OPEN -> false
-				Momento.Companion.VaultState.SETUP -> false
-				Momento.Companion.VaultState.OPENED -> true
-				Momento.Companion.VaultState.CLOSED -> false
-				Momento.Companion.VaultState.ERROR -> false
-			}
-		) {
-			scope.launch {
-				withContext(Dispatchers.IO) {
-					when (vaultState) {
-						Momento.Companion.VaultState.NOT_OPENED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
-						Momento.Companion.VaultState.TRY_OPEN -> {
-						}
-						Momento.Companion.VaultState.SETUP -> {
-						}
-						Momento.Companion.VaultState.OPENED -> {
-							showLocked = false
-							vaultState = Momento.Companion.VaultState.CLOSED
-						}
-						Momento.Companion.VaultState.CLOSED -> vaultState = Momento.Companion.VaultState.TRY_OPEN
-						Momento.Companion.VaultState.ERROR -> {
-						}
-					}
-				}
-			}
-			hideSheet()
+fun MenuBottomSheet(
+	isLoggedIn: Boolean,
+	email: String?,
+	onAction: (MainActivity.Action) -> Unit
+) {
+	val buttonDataList: List<MenuBottomSheetButtonData?> = listOf(
+		MenuBottomSheetButtonData(title = "Attachment", icon = R.drawable.ic_attachment) {
+			onAction(MainActivity.Action.ATTACHMENT)
 		},
-		MenuBottomSheetButtonData(title = "Life in Weeks", imageVector = TablerIcons.CalendarMinus) {},
-		MenuBottomSheetButtonData(title = "Settings", imageVector = TablerIcons.Settings) {},
+		MenuBottomSheetButtonData(title = "Tags", icon = R.drawable.ic_hashtag) {
+			onAction(MainActivity.Action.TAGS)
+		},
+		MenuBottomSheetButtonData(title = "Vault", icon = R.drawable.ic_vault) {
+			onAction(MainActivity.Action.VAULT)
+		},
+		MenuBottomSheetButtonData(title = "Settings", icon = R.drawable.ic_settings) {
+			onAction(MainActivity.Action.SETTINGS)
+		},
 
-		MenuBottomSheetButtonData(title = "Archived", imageVector = TablerIcons.Archive, highlight = showArchived) { showArchived = !showArchived },
-		MenuBottomSheetButtonData(title = "Favourite", imageVector = TablerIcons.Heart, highlight = showFavourite) { showFavourite = !showFavourite },
-//		MenuBottomSheetButtonData(title = "Trash", imageVector = TablerIcons.Trash, highlight = showTrash) { showTrash = !showTrash }
+		MenuBottomSheetButtonData(title = "Favourite", icon = R.drawable.ic_favourite) {
+			onAction(MainActivity.Action.TOGGLE_FAVOURITE)
+		},
+		MenuBottomSheetButtonData(title = "Archived", icon = R.drawable.ic_archive) {
+			onAction(MainActivity.Action.TOGGLE_ARCHIVED)
+		},
 	)
 
-	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.heightIn(360.dp)
-			.background(MaterialTheme.colorScheme.background),
-		horizontalAlignment = Alignment.CenterHorizontally
+	Surface(
+		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+		color= MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2),
+		modifier = Modifier.heightIn(360.dp),
 	) {
-
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Menu",
-			imageVector = TablerIcons.Dots
-		)
-
-		LazyVerticalGrid(
-			columns = GridCells.Fixed(4),
-			modifier = Modifier
-				.padding(24.dp, 0.dp),
+		Column(
+			modifier = Modifier,
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
-			itemsIndexed(menuBottomSheetButtonDataLists) { _, menuBottomSheetButtonData ->
-				MenuBottomSheetButton(menuBottomSheetButtonData)
+			BottomSheetStrip()
+
+			BottomSheetHeader(
+				title = "Menu",
+				icon = R.drawable.ic_menu
+			)
+
+			LazyVerticalGrid(
+				columns = GridCells.Fixed(4),
+				modifier = Modifier.padding(24.dp, 0.dp),
+			) {
+				buttonDataList.forEach { item { MenuBottomSheetButton(it) } }
 			}
+
+			Spacer(modifier = Modifier.height(16.dp))
+
+			UserCard(
+				isLoggedIn = isLoggedIn,
+				email = email,
+			) { onAction(it) }
+
+			Spacer(modifier = Modifier.height(24.dp))
 		}
-
-		Spacer(modifier = Modifier.height(24.dp))
-
-		Card(
-			backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-			elevation = 0.dp,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(64.dp)
-				.padding(24.dp, 0.dp),
-			onClick = { /*TODO*/ }
-		) {
-
-		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MenuBottomSheetButton(
-	menuBottomSheetButtonData: MenuBottomSheetButtonData?
+private fun UserCard(
+	isLoggedIn: Boolean,
+	email: String?,
+	onAction: (MainActivity.Action) -> Unit
 ) {
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally
+	Surface(
+		shape = RoundedCornerShape(24.dp),
+		color = MaterialTheme.colorScheme.primary,
+		border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(24.dp, 0.dp),
 	) {
-		if (menuBottomSheetButtonData != null) {
-			Crossfade(targetState = menuBottomSheetButtonData.highlight) { highlight ->
-				if (highlight) {
-					Card(
-						elevation = 0.dp,
-						backgroundColor = MaterialTheme.colorScheme.onSecondaryContainer,
-						shape = RoundedCornerShape(8.dp),
-						modifier = Modifier
-							.fillMaxWidth()
-							.aspectRatio(1f)
-							.padding(6.dp)
-							.focusable(true)
-							.clip(RoundedCornerShape(8.dp))
-							.clickable(true) { menuBottomSheetButtonData.onClick() },
-					) {
-						Icon(
-							imageVector = menuBottomSheetButtonData.imageVector,
-							contentDescription = null,
-							tint = MaterialTheme.colorScheme.secondaryContainer,
-							modifier = Modifier
-								.requiredSize(24.dp)
-						)
-					}
-				} else {
-					Card(
-						elevation = 0.dp,
-						backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-						shape = RoundedCornerShape(8.dp),
-						modifier = Modifier
-							.fillMaxWidth()
-							.aspectRatio(1f)
-							.padding(6.dp)
-							.focusable(true)
-							.clip(RoundedCornerShape(8.dp))
-							.clickable(true) { menuBottomSheetButtonData.onClick() },
-					) {
-						Icon(
-							imageVector = menuBottomSheetButtonData.imageVector,
-							contentDescription = null,
-							tint = MaterialTheme.colorScheme.onSecondaryContainer,
-							modifier = Modifier
-								.requiredSize(24.dp)
-						)
-					}
-				}
-			}
-			Text(
-				text = menuBottomSheetButtonData.title,
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onBackground,
-				textAlign = TextAlign.Center,
-				maxLines = 2,
+		if (isLoggedIn) {
+			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-			)
+					.padding(24.dp, 12.dp),
+				contentAlignment = Alignment.CenterStart
+			) {
+				Text(
+					text = email ?: "",
+					style = MaterialTheme.typography.titleSmall,
+					modifier = Modifier,
+				)
+			}
+		} else {
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(24.dp, 12.dp),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Text(
+					text = "Login to unlock formatting options",
+					style = MaterialTheme.typography.titleSmall,
+					modifier = Modifier.weight(1f),
+				)
+
+				Spacer(modifier = Modifier.width(16.dp))
+
+				Button(
+					onClick = { onAction(MainActivity.Action.OPEN_LOGIN_SCREEN) },
+					modifier = Modifier,
+					colors = ButtonDefaults.buttonColors(
+						containerColor = MaterialTheme.colorScheme.onPrimary,
+						contentColor = MaterialTheme.colorScheme.primary
+					)
+				) {
+					Text(
+						text = "Login",
+						modifier = Modifier,
+						style = MaterialTheme.typography.bodyMedium,
+					)
+				}
+			}
 		}
 	}
 }

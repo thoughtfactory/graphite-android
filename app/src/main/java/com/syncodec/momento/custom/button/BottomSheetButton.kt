@@ -1,75 +1,65 @@
 package com.syncodec.momento.custom.button
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.custom.squircle.SquircleShape
 
 
 data class MenuBottomSheetButtonData(
 	val title: String,
-	val resourceId: Int,
+	val icon: Int,
 	val highlight: Boolean = false,
 	val onClick: () -> Unit
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuBottomSheetButton(
-	menuBottomSheetButtonData: MenuBottomSheetButtonData?,
-	modifier: Modifier = Modifier
+	buttonData: MenuBottomSheetButtonData?
 ) {
 	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = modifier
+		horizontalAlignment = Alignment.CenterHorizontally
 	) {
-		if (menuBottomSheetButtonData != null) {
-			val containerColor by animateColorAsState(targetValue = if (menuBottomSheetButtonData.highlight) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.onSecondaryContainer)
-			val contentColor by animateColorAsState(targetValue = if (menuBottomSheetButtonData.highlight) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.secondaryContainer)
+		if (buttonData != null) {
 			Box(
 				modifier = Modifier
-					.requiredSize(72.dp)
-					.clip(RoundedCornerShape(12.dp))
-					.background(containerColor)
+					.fillMaxWidth()
+					.aspectRatio(1f)
+					.padding(6.dp)
+					.clip(SquircleShape(4.0))
+					.background(MaterialTheme.colorScheme.secondaryContainer)
 					.focusable(true)
-					.clickable(true) { menuBottomSheetButtonData.onClick() },
+					.clickable(true) { buttonData.onClick() },
 				contentAlignment = Alignment.Center
 			) {
 				Icon(
-					painter = painterResource(id = menuBottomSheetButtonData.resourceId),
+					painter = painterResource(id = buttonData.icon),
 					contentDescription = null,
-					tint = contentColor,
-					modifier = Modifier
-						.requiredSize(24.dp)
+					tint = contentColorFor(backgroundColor = MaterialTheme.colorScheme.secondaryContainer),
+					modifier = Modifier.requiredSize(24.dp)
 				)
 			}
 
-			Spacer(modifier = Modifier.height(4.dp))
-
 			Text(
-				text = menuBottomSheetButtonData.title,
+				text = buttonData.title,
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onBackground,
+				color = MaterialTheme.colorScheme.onSurface,
 				textAlign = TextAlign.Center,
 				maxLines = 2,
-				modifier = Modifier
-					.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth()
 			)
-		} else {
-			Spacer(modifier = Modifier.requiredSize(84.dp))
+
+			Spacer(modifier = Modifier.height(4.dp))
 		}
-		Spacer(modifier = Modifier.height(12.dp))
 	}
 }

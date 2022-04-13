@@ -4,7 +4,25 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../../../../layout/compose-model-1648557977205.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1649067327139.xml" value="0.1" />
+        <entry key="../../../../../../../layout/compose-model-1649840820991.xml" value="0.10925925925925926" />
+        <entry key="app/src/main/res/drawable/ic_attachment.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_edit.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_export.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_heart.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_icons8_document.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_information.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_locked.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_me_background.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_menu.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_menu_vertical.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_notebook.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_notes.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_notes_2.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_search.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_trash.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_write.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/il_me_background.xml" value="0.1" />
       </map>
     </option>
   </component>
