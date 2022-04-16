@@ -15,7 +15,6 @@ import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.miscellaneous.DataStore
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
-import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.repository.AttachmentRepository
 import com.syncodec.momento.repository.BucketRepository
 import com.syncodec.momento.repository.NoteRepository
@@ -44,7 +43,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	var defaultNoteMap: SnapshotStateMap<String, NoteDbEntry> = mutableStateMapOf()
 	val notebookMap: SnapshotStateMap<String, Pair<NotebookDbEntry, Int>> =
 		noteRepository.notebookMap
-	val bucketMap = bucketRepository.bucketMap
+	val bucketList = bucketRepository.bucketList
 
 	init {
 		viewModelScope.launch(Dispatchers.IO) {
@@ -83,14 +82,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		}
 	}
 
-	fun deleteNote(keyList: List<String>) {
+	fun delete(keyList: List<String>) {
 		viewModelScope.launch(Dispatchers.IO) {
 			keyList.forEach {
-				logger("key : $it")
-				defaultNoteMap[it]?.attachmentKeyList?.let { it1 ->
-					attachmentRepository.delete(it1) }
+				defaultNoteMap[it]?.attachmentKeyList?.let { it1 -> attachmentRepository.delete(it1) }
 			}
 			noteRepository.deleteNote(keyList = keyList)
+			bucketRepository.deleteBucket(keyList = keyList)
 		}
 	}
 

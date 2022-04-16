@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -17,14 +18,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.miscellaneous.TopBar
 import com.syncodec.momento.bucketItemComponent.modalBottonSheet.MenuBottomSheet
 import com.syncodec.momento.bucketItemComponent.screen.ShowMovieItemScreen
 import com.syncodec.momento.bucketItemComponent.screen.ShowTvItemScreen
 import com.syncodec.momento.custom.LoadingView
-import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.database.bucketItem.BucketItemState
 import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Konstant
@@ -47,9 +46,12 @@ class BucketItemActivity : ComponentActivity() {
 
 		intent.hasExtra(Konstant.Companion.Konstant.IS_NEW.name).also {
 			if (it) {
-				viewModel.isNew = intent.getBooleanExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
-				viewModel.bucketKey = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_KEY.name)!!
-				viewModel.bucketItemKey.value = intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
+				viewModel.isNew =
+					intent.getBooleanExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
+				viewModel.bucketKey =
+					intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_KEY.name)!!
+				viewModel.bucketItemKey.value =
+					intent.getStringExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name)
 				intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, -1).also {
 					if (it == -1) {
 						finish()
@@ -68,7 +70,9 @@ class BucketItemActivity : ComponentActivity() {
 		setContent {
 			MomentoTheme {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.secondaryContainer)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
+
 				viewModel.activityState = rememberBucketActivityState()
 
 				Screen()
@@ -77,52 +81,62 @@ class BucketItemActivity : ComponentActivity() {
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
-	private fun onClick(click: Click, data: Any? = null) {
+	private fun onPerformAction(action: Action, data: Any? = null) {
 		val bucketItemDbEntry by viewModel.bucketItemDbEntry
 
-		when (click) {
-			Click.TOP_BAR_PRIMARY -> {
+		when (action) {
+			Action.TOP_BAR_PRIMARY -> {
 				if (viewModel.bucketItemKey.value == null) {
 					viewModel.putItem()
 				} else {
 					finish()
 				}
 			}
-			Click.TOP_BAR_SECONDARY -> viewModel.activityState.coroutineScope.launch { viewModel.activityState.bottomSheetState.show() }
-			Click.STATE -> {
+			Action.MENU -> viewModel.activityState.coroutineScope.launch { viewModel.activityState.bottomSheetState.show() }
+			Action.STATE -> {
+//				WARN    Cant update state before saving and reloading
 				data as Int
 				viewModel.bucketItemDbEntry.value?.state = BucketItemState.values()[data]
 				viewModel.updateItem()
 			}
-			Click.ADD_THOUGHT -> viewModel.updateThought()
-			Click.FAVOURITE -> {
+			Action.ADD_THOUGHT -> {
+				viewModel.updateItem()
+			}
+			Action.FAVOURITE -> {
 //				bucketItemDbEntry!!.isFavourite = !bucketItemDbEntry!!.isFavourite
 				viewModel.updateItem()
 			}
-			Click.ARCHIVE -> {
+			Action.ARCHIVE -> {
 //				bucketItemDbEntry!!.isArchived = !bucketItemDbEntry!!.isArchived
 				viewModel.updateItem()
 			}
-			Click.LOCK -> {
+			Action.LOCK -> {
 //				bucketItemDbEntry!!.isLocked = !bucketItemDbEntry!!.isLocked
 				viewModel.updateItem()
 			}
-			Click.DELETE -> {
+			Action.DELETE -> {
 				if (bucketItemDbEntry != null) {
 					Intent().apply {
 						putExtra(Konstant.Companion.Konstant.DO_DELETE.name, true)
-						putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, bucketItemDbEntry!!.key)
+						putExtra(
+							Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name,
+							bucketItemDbEntry!!.key
+						)
 						setResult(Activity.RESULT_OK, this)
 						finish()
 					}
 				}
 			}
-			Click.EXPORT -> viewModel.updateThought()
-			Click.SHARE -> viewModel.updateThought()
+			Action.EXPORT -> null
+			Action.SHARE -> null
 		}
 	}
 
-	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+	@OptIn(
+		ExperimentalMaterialApi::class,
+		ExperimentalMaterial3Api::class,
+		androidx.compose.animation.ExperimentalAnimationApi::class
+	)
 	@Composable
 	private fun Screen() {
 		val status by viewModel.status
@@ -132,6 +146,7 @@ class BucketItemActivity : ComponentActivity() {
 				Status.INIT -> LoadingView()
 				Status.LOADING -> LoadingView()
 				Status.LOADED -> Content()
+				else -> null
 			}
 		}
 	}
@@ -139,79 +154,56 @@ class BucketItemActivity : ComponentActivity() {
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 	@Composable
 	private fun Content() {
-		val bucketItemDbEntry by viewModel.bucketItemDbEntry
+		val bucketItemDbEntry by viewModel.bucketItemDbEntryFlow.collectAsState()
 		val tvData by viewModel.tvData
 		val movieData by viewModel.movieData
 		val thoughtList = viewModel.thoughtList
-
-		val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData?> = if (bucketItemDbEntry == null) listOf()
-		else listOf(
-//			MenuBottomSheetButtonData(
-//				title = "Favourite",
-//				resourceId = if (bucketItemDbEntry!!.isFavourite) R.drawable.ic_heart_filled else R.drawable.ic_heart,
-//				highlight = bucketItemDbEntry!!.isFavourite
-//			) { onClick(Click.FAVOURITE) },
-//			MenuBottomSheetButtonData(
-//				title = "Archive",
-//				resourceId = R.drawable.ic_box,
-//				highlight = bucketItemDbEntry?.isArchived == true
-//			) { onClick(Click.ARCHIVE) },
-//			MenuBottomSheetButtonData(
-//				title = "Lock",
-//				resourceId = R.drawable.ic_locked,
-//				highlight = bucketItemDbEntry?.isLocked == true
-//			) { onClick(Click.LOCK) },
-			MenuBottomSheetButtonData(title = "Delete", icon = R.drawable.ic_trash, highlight = false) { onClick(Click.DELETE) },
-
-			MenuBottomSheetButtonData(title = "Export", icon = R.drawable.ic_export, highlight = false) { onClick(Click.EXPORT) },
-			MenuBottomSheetButtonData(title = "Share", icon = R.drawable.ic_share, highlight = false) { onClick(Click.SHARE) },
-			null,
-			null
-		)
-
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
 			sheetElevation = 0.dp,
 			sheetBackgroundColor = Color.Transparent,
+			sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
 			sheetContent = {
 				MenuBottomSheet(
 					createdTimestamp = bucketItemDbEntry?.createdTimestamp ?: -1,
 					modifiedTimestamp = bucketItemDbEntry?.modifiedTimestamp ?: -1,
-					menuBottomSheetButtonDataList = menuBottomSheetButtonDataList
 				)
 			},
 		) {
 			Scaffold(
-				topBar = { TopBar(key = viewModel.bucketItemKey.value) { onClick(it, null) } }
+				containerColor = MaterialTheme.colorScheme.background,
+				topBar = {
+					TopBar(
+						isNew = viewModel.bucketItemKey.value == null,
+					) { action, data -> onPerformAction(action, data) }
+				}
 			) {
 				when (viewModel.bucketItemType) {
 					BucketItemType.TODO -> null
 					BucketItemType.BOOKS -> null
 					BucketItemType.SHOWS -> {
-						Crossfade(targetState = tvData == null && movieData == null) {
+						Crossfade(targetState = tvData == null || movieData == null) {
 							if (it) {
-								LoadingView()
-							} else {
 								when (viewModel.showData.value!!.showType) {
 									ShowType.TV -> ShowTvItemScreen(
 										tvData = tvData!!,
 										thumbnail = viewModel.thumbnail.value,
 										thoughtList = thoughtList,
 										currentState = bucketItemDbEntry!!.state.ordinal,
-									) { click, i -> onClick(click, i) }
+									) { click, i -> onPerformAction(click, i) }
 									ShowType.MOVIE -> ShowMovieItemScreen(
 										movieData = movieData!!,
 										thumbnail = viewModel.thumbnail.value,
-										thoughtList = thoughtList,
 										currentState = bucketItemDbEntry!!.state.ordinal,
-									) { click, i -> onClick(click, i) }
+										thoughtList = thoughtList,
+									) { click, i -> onPerformAction(click, i) }
 								}
+							} else {
+								LoadingView()
 							}
 						}
 					}
-					BucketItemType.MEDIA -> null
-					BucketItemType.LINKS -> null
 				}
 			}
 		}
@@ -234,9 +226,9 @@ class BucketItemActivity : ComponentActivity() {
 		ActivityState(coroutineScope, bottomSheetState)
 	}
 
-	enum class Click {
+	enum class Action {
 		TOP_BAR_PRIMARY,
-		TOP_BAR_SECONDARY,
+		MENU,
 		STATE,
 		ADD_THOUGHT,
 		FAVOURITE,

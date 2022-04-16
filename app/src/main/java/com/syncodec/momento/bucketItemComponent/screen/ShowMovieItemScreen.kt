@@ -9,22 +9,29 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.R
+import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.bucketItemComponent.miscellaneous.*
 import com.syncodec.momento.bucketItemComponent.thought.ThoughtCard
 import com.syncodec.momento.custom.button.LargeButton
+import com.syncodec.momento.custom.button.StateButton
+import com.syncodec.momento.custom.button.StateData
+import com.syncodec.momento.database.bucketItem.BucketItemDbEntry
 import com.syncodec.momento.database.bucketItem.MovieData
 import com.syncodec.momento.konstant.Konstant
+import com.syncodec.momento.miscellaneous.logger
 
 
 @Composable
 fun ShowMovieItemScreen(
 	movieData: MovieData,
 	thumbnail: Any? = null,
-	thoughtList: SnapshotStateList<String> = mutableStateListOf(),
 	currentState: Int,
-	onClick: (BucketItemActivity.Click, Any?) -> Unit
+	thoughtList: SnapshotStateList<String> = mutableStateListOf(),
+	onAction: (BucketItemActivity.Action, Any?) -> Unit
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -41,13 +48,15 @@ fun ShowMovieItemScreen(
 
 		if (!movieData.tagline.isNullOrBlank()) {
 			TaglineCard(tagline = movieData.tagline)
-			Spacer(modifier = Modifier.height(12.dp))
+			Spacer(modifier = Modifier.height(16.dp))
 		}
 
 		ShowHeaderCard(
 			title = movieData.title,
-//			releaseDate = if ((tvData.firstAirDate?.length ?: 0) > 4) tvData.firstAirDate?.substring(0, 4) else null,
-			releaseDate = null,
+			releaseDate =
+			if (movieData.releaseDate != null && movieData.releaseDate.length > 3)
+				movieData.releaseDate.substring(0, 4) else null,
+			showType = ShowType.MOVIE,
 			showLength = movieData.runtime,
 			inProduction = null,
 			noSeason = null,
@@ -55,19 +64,33 @@ fun ShowMovieItemScreen(
 		)
 		Spacer(modifier = Modifier.height(12.dp))
 
-//		StateButton(
-//			stateList = listOf(
-//				StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-//				StateData(title = "Watching", icon = TablerIcons.Book, color = Color(245, 118, 26)),
-//				StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-//			),
-//			currentState = currentState,
-//			modifier = Modifier
-//				.height(48.dp)
-//		) { onClick(BucketItemActivity.Click.STATE, it) }
+		StateButton(
+			stateList = listOf(
+				StateData(
+					title = "To Watch",
+					icon = R.drawable.ic_clock,
+					stateTint = MaterialTheme.colorScheme.primary
+				),
+				StateData(
+					title = "Watching",
+					icon = R.drawable.ic_show,
+					stateTint = Color(245, 118, 26)
+				),
+				StateData(
+					title = "Watched",
+					icon = R.drawable.ic_done,
+					stateTint = Color(81, 146, 89)
+				),
+			),
+			currentState = currentState,
+			modifier = Modifier.height(32.dp)
+		) { onAction(BucketItemActivity.Action.STATE, it) }
 		Spacer(modifier = Modifier.height(12.dp))
 
-		ThoughtCard(thoughtList = thoughtList) { onClick(it, null) }
+		ThoughtCard(
+			thoughtList = thoughtList,
+			onAction = onAction
+		)
 		Spacer(modifier = Modifier.height(12.dp))
 
 		val tagList: MutableList<String> = mutableListOf()
@@ -83,8 +106,7 @@ fun ShowMovieItemScreen(
 		LargeButton(
 			text = "View in TMDB",
 			enabled = true,
-			modifier = Modifier
-				.fillMaxWidth()
+			modifier = Modifier.fillMaxWidth()
 		) {
 
 		}

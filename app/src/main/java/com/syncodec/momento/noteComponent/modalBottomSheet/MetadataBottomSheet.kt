@@ -29,7 +29,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToPrettyFull
 import com.syncodec.momento.miscellaneous.roundTo
 import com.syncodec.momento.noteComponent.NoteActivity
@@ -75,24 +74,24 @@ fun MetadataBottomSheet(
 		LocationCard(
 			addressState = viewModel.activityState.addressState.value,
 			address = noteDbEntry?.address,
-			latLng = if (noteDbEntry != null && noteDbEntry!!.location != null && noteDbEntry!!.location!!.latitude != null && noteDbEntry!!.location!!.longitude != null) {
-				LatLng(noteDbEntry!!.location!!.latitude!!, noteDbEntry!!.location!!.longitude!!)
+			latLng = if (noteDbEntry != null && noteDbEntry!!.latLng != null && noteDbEntry!!.latLng!!.latitude != null && noteDbEntry!!.latLng!!.longitude != null) {
+				LatLng(noteDbEntry!!.latLng!!.latitude!!, noteDbEntry!!.latLng!!.longitude!!)
 			} else {
 				null
 			}
 		) { click, data -> onClick(click, data) }
 
 		AnimatedVisibility(
-			visible = noteDbEntry?.location != null,
+			visible = noteDbEntry?.latLng != null,
 			enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 			exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 		) {
 //          WARN    Don't remove from if block or else null pointer exception
-			if (noteDbEntry?.location != null) {
+			if (noteDbEntry?.latLng != null) {
 				Column {
 					Spacer(modifier = Modifier.height(8.dp))
 					MapCard(
-						location = noteDbEntry!!.location!!,
+						latLng = noteDbEntry!!.latLng!!,
 						mapView = viewModel.activityState.mapView
 					)
 				}
@@ -304,7 +303,7 @@ private fun LocationCard(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun MapCard(
-	location: LocationData,
+	latLng: LatLng,
 	mapView: MapView
 ) {
 	Card(
@@ -323,7 +322,6 @@ private fun MapCard(
 				googleMap.uiSettings.isZoomControlsEnabled = false
 				googleMap.uiSettings.setAllGesturesEnabled(false)
 
-				val latLng = LatLng(location.latitude!!, location.longitude!!)
 				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
 				val markerOptions = MarkerOptions()
 					.position(latLng)

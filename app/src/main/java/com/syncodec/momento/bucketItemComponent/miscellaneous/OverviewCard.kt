@@ -5,32 +5,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewCard(
 	overview: String
 ) {
 	Card(
-		modifier = Modifier
-			.fillMaxWidth(),
-		elevation = 0.dp,
+		modifier = Modifier.fillMaxWidth(),
+		containerColor = Color.Transparent,
+		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+		border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
 		shape = RoundedCornerShape(12.dp),
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),
-		backgroundColor = Color.Transparent,
 	) {
 		Column(
-			modifier = Modifier
-				.padding(16.dp)
+			modifier = Modifier.padding(16.dp)
 		) {
 			Text(
 				text = overview,

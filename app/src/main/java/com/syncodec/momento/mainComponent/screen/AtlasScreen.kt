@@ -30,7 +30,6 @@ import com.syncodec.momento.custom.notebook.NoteCard
 import com.syncodec.momento.custom.notebook.NotebookHeaderCard
 import com.syncodec.momento.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.database.note.locationDataToLatLng
 import com.syncodec.momento.mainComponent.miscellaneous.AtlasClusterItem
 import com.syncodec.momento.mainComponent.miscellaneous.ClusterRenderer
 import com.syncodec.momento.miscellaneous.GoogleMapUtils.Companion.isMarkerVisible
@@ -43,7 +42,6 @@ import com.syncodec.momento.miscellaneous.GoogleMapUtils.Companion.isMarkerVisib
 fun AtlasScreen(
 	mapView: MapView,
 	noteMap: Map<String, NoteDbEntry>,
-	isSelected: Boolean,
 	selectedItemList: List<String>,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
@@ -63,7 +61,7 @@ fun AtlasScreen(
 		var minLng = 180.0
 		var maxLng = -180.0
 		noteMap.forEach { (_, note) ->
-			val latLng = locationDataToLatLng(note.location)
+			val latLng = note.latLng
 			if (latLng != null && latLng.latitude != 90.0 && latLng.longitude != 180.0) {
 				minLat = minOf(latLng.latitude, minLat)
 				maxLat = maxOf(latLng.latitude, maxLat)
@@ -77,7 +75,13 @@ fun AtlasScreen(
 
 	BottomSheetScaffold(
 		scaffoldState = bottomSheetScaffoldState,
-		sheetContent = { BottomSheetContent(markerMap) { action, key -> onAction(action, key) } },
+		sheetContent = {
+			BottomSheetContent(
+				markerMap = markerMap,
+				selectedItemList = selectedItemList,
+				onAction = onAction
+			)
+		},
 		modifier = Modifier,
 		sheetElevation = 32.dp,
 		sheetPeekHeight = screenHeight.times(0.2f),
@@ -123,7 +127,7 @@ fun AtlasScreen(
 				clusterManager.renderer = clusterRenderer
 
 				noteMap.forEach { (_, note) ->
-					locationDataToLatLng(note.location)?.let { it1 ->
+					note.latLng?.let { it1 ->
 						AtlasClusterItem(latLng = it1, itemTitle = null)
 					}?.also { clusterManager.addItem(it) }
 				}
@@ -133,8 +137,10 @@ fun AtlasScreen(
 				map.setOnCameraIdleListener {
 					markerMap.clear()
 					noteMap.forEach { (_, note) ->
-						val latLng = locationDataToLatLng(note.location)
-						if (latLng != null && map.isMarkerVisible(latLng)) { markerMap.add(note) }
+						val latLng = note.latLng
+						if (latLng != null && map.isMarkerVisible(latLng)) {
+							markerMap.add(note)
+						}
 					}
 				}
 			}
@@ -145,6 +151,7 @@ fun AtlasScreen(
 @Composable
 private fun BottomSheetContent(
 	markerMap: SnapshotStateList<NoteDbEntry>,
+	selectedItemList: List<String>,
 	onAction: (MainActivity.Action, String) -> Unit
 ) {
 	val lastEntryKey = if (markerMap.size != 0) markerMap.last().key else null
@@ -154,7 +161,8 @@ private fun BottomSheetContent(
 		item {
 			NotebookHeaderCard(
 				title = "In Visible In Region",
-				noEntries = if (markerMap.isEmpty()) "No entries" else if (markerMap.size == 1) "1 entry" else "${markerMap.size} entries"
+				noEntries = if (markerMap.isEmpty()) "No entries" else if (markerMap.size == 1) "1 entry" else "${markerMap.size} entries",
+				color = MaterialTheme.colorScheme.surface,
 			)
 		}
 		markerMap.forEachIndexed { index, note ->
@@ -164,7 +172,7 @@ private fun BottomSheetContent(
 					timestamp = note.userTimestamp,
 					showFullTime = true,
 					isLocked = false,
-					isSelected = false,
+					isSelected = note.key in selectedItemList,
 					isArchived = false,
 					isFavourite = false,
 					isDeleted = note.deletedTimestamp != -1L,
@@ -174,10 +182,11 @@ private fun BottomSheetContent(
 					attachmentCount = note.attachmentKeyList.size,
 					attachmentThumbnail = note.attachmentThumbnail,
 					address = note.address,
-					latLng = locationDataToLatLng(note.location),
+					latLng = note.latLng,
 					isVisible = true,
+					selectedColor = MaterialTheme.colorScheme.background,
 					onClick = { onAction(MainActivity.Action.CLICK_NOTE, note.key) },
-					onLongClick = null,
+					onLongClick = { onAction(MainActivity.Action.LONG_CLICK_NOTE, note.key) },
 				)
 
 				NotebookTimelineSpacer(isVisible = note.key != lastEntryKey)

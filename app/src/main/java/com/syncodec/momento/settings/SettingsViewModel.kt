@@ -5,10 +5,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.AndroidViewModel
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.export.NoteExport
-import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.miscellaneous.CollectionUtils.Companion.listOfField
@@ -60,9 +60,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 			importData.optDouble("lat").also { lat ->
 				if (!lat.isNaN()) {
 					importData.optDouble("lon").also { lon ->
-						if (!lon.isNaN()) {
-							this.location = LocationData(latitude = lat, longitude = lon)
-						}
+						if (!lon.isNaN()) this.latLng = LatLng(lat, lon)
 					}
 				}
 			}
@@ -100,7 +98,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 						notebookKey = noteDbEntry.notebookKey,
 						title = noteDbEntry.title,
 						content = noteDbEntry.content.toString(),
-						location = noteDbEntry.location,
+						latLng = noteDbEntry.latLng,
 						address = noteDbEntry.address,
 						attachmentKey = attachmentList.keys.toList()
 					).apply {

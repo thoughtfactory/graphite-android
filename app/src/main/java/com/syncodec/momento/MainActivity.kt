@@ -9,8 +9,10 @@ import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -24,6 +26,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,8 +43,10 @@ import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.attachmentComponent.AttachmentActivity
+import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.custom.DeleteDialog
 import com.syncodec.momento.custom.SplashScreen
+import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.mainComponent.MainViewModel
@@ -145,24 +150,25 @@ class MainActivity : ComponentActivity() {
 				data as String
 				val navController = activityState.navController
 				val currentRoute = navController.currentBackStackEntry?.destination?.route
-				if (currentRoute == data) {
-					if (currentRoute == "momento") {
-						val currentComponent = activityState.componentType.value.ordinal
-						onPerformAction(
-							Action.CHANGE_COMPONENT,
-							if (currentComponent == 0) 1 else 0
-						)
-					}
-				} else {
-					navController.navigate(data) {
-						popUpTo(navController.graph.findStartDestination().id) {
-							saveState = true
+				if (!activityState.isSelected.value || activityState.selectedItemList.size == 0) {
+					if (currentRoute == data) {
+						if (currentRoute == "momento") {
+							val currentComponent = activityState.componentType.value.ordinal
+							onPerformAction(
+								Action.CHANGE_COMPONENT,
+								if (currentComponent == 0) 1 else 0
+							)
 						}
-						launchSingleTop = true
-						restoreState = true
+					} else {
+						navController.navigate(data) {
+							popUpTo(navController.graph.findStartDestination().id) {
+								saveState = true
+							}
+							launchSingleTop = true
+							restoreState = true
+						}
 					}
 				}
-
 			}
 			Action.SHOW_DELETE -> activityState.showDeleteDialog.value = true
 			Action.CLICK_NOTE -> {
@@ -171,11 +177,8 @@ class MainActivity : ComponentActivity() {
 
 				if (activityState.isSelected.value) {
 					activityState.isSelected.value = true
-					if (data in selectedItemList) {
-						selectedItemList.remove(data)
-					} else {
-						selectedItemList.add(data)
-					}
+					if (data in selectedItemList) selectedItemList.remove(data)
+					else selectedItemList.add(data)
 				} else {
 					Intent(this, NoteActivity::class.java).apply {
 						putExtra(
@@ -196,7 +199,8 @@ class MainActivity : ComponentActivity() {
 				data as String
 				activityState.isSelected.value = true
 				val selectedItemList = activityState.selectedItemList
-				selectedItemList.add(data)
+				if (data in selectedItemList) selectedItemList.remove(data)
+				else selectedItemList.add(data)
 			}
 			Action.CLICK_NOTEBOOK -> {
 				data as String
@@ -205,12 +209,48 @@ class MainActivity : ComponentActivity() {
 					startActivity(this)
 				}
 			}
+			Action.LONG_CLICK_NOTEBOOK -> {
+				data as String
+				activityState.isSelected.value = true
+				val selectedItemList = activityState.selectedItemList
+				if (data in selectedItemList) selectedItemList.remove(data)
+				else selectedItemList.add(data)
+			}
+			Action.CLICK_BUCKET -> {
+				data as String
+				val selectedItemList = activityState.selectedItemList
+
+				if (activityState.isSelected.value) {
+					activityState.isSelected.value = true
+					if (data in selectedItemList) selectedItemList.remove(data)
+					else selectedItemList.add(data)
+				} else {
+					Intent(this, BucketActivity::class.java).apply {
+						putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, data as String)
+						startActivity(this)
+					}
+				}
+			}
+			Action.LONG_CLICK_BUCKET -> {
+				data as String
+				activityState.isSelected.value = true
+				val selectedItemList = activityState.selectedItemList
+				selectedItemList.add(data)
+			}
 			Action.NEW_NOTEBOOK -> {
 				viewModel.insertNotebook(data as NotebookDbEntry)
 				activityState.scope.launch { activityState.bottomSheetState.hide() }
 			}
-			Action.CHANGE_COMPONENT -> activityState.componentType.value =
-				ComponentType.values()[data as Int]
+			Action.CHANGE_COMPONENT -> {
+				if (!activityState.isSelected.value) {
+					activityState.componentType.value = ComponentType.values()[data as Int]
+				}
+			}
+			Action.BUCKET_FILTER_CHIP -> {
+				data as BucketItemType
+				if (data in activityState.bucketFilter) activityState.bucketFilter.remove(data)
+				else activityState.bucketFilter.add(data)
+			}
 			Action.FAB -> {
 				val openSheet: (BottomSheetType) -> Unit = { bottomSheetType ->
 					activityState.bottomSheetType.value = bottomSheetType
@@ -252,7 +292,10 @@ class MainActivity : ComponentActivity() {
 			Action.ATTACHMENT -> {
 				Intent(this, AttachmentActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.IS_NOTE.name, false)
-					putExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name, viewModel.defaultNotebookKey)
+					putExtra(
+						Konstant.Companion.Konstant.NOTEBOOK_KEY.name,
+						viewModel.defaultNotebookKey
+					)
 					startActivity(this)
 				}
 				activityState.scope.launch { activityState.bottomSheetState.hide() }
@@ -327,7 +370,18 @@ class MainActivity : ComponentActivity() {
 					) {}
 				}
 				else -> {
-					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
+					when (currentRoute) {
+						"momento" -> systemUiController
+							.setStatusBarColor(MaterialTheme.colorScheme.background)
+						"bucket" -> systemUiController
+							.setStatusBarColor(MaterialTheme.colorScheme.background)
+						"calendar" -> systemUiController
+							.setStatusBarColor(MaterialTheme.colorScheme.surface)
+						"atlas" -> systemUiController
+							.setStatusBarColor(MaterialTheme.colorScheme.surface)
+						else -> systemUiController
+							.setStatusBarColor(MaterialTheme.colorScheme.surface)
+					}
 
 					ModalBottomSheetLayout(
 						sheetState = activityState.bottomSheetState,
@@ -338,26 +392,32 @@ class MainActivity : ComponentActivity() {
 							SheetLayout { action, data -> onPerformAction(action, data) }
 						},
 					) {
+						Image(
+							painter = painterResource(id = R.drawable.background_1),
+							contentDescription = null,
+							contentScale = ContentScale.Crop,
+							modifier = Modifier.fillMaxSize()
+						)
+
 						Scaffold(
 							bottomBar = {
 								BottomNavigationBar(
-									currentRoute = currentRoute
-								) { action, data ->
-									onPerformAction(action, data)
-								}
+									currentRoute = currentRoute,
+								) { action, data -> onPerformAction(action, data) }
 							},
 							floatingActionButtonPosition = FabPosition.End,
 							floatingActionButton = { FloatingActionButton(currentRoute = currentRoute) },
-							containerColor = MaterialTheme.colorScheme.surface,
+							containerColor = MaterialTheme.colorScheme.background,
 							topBar = {
 								TopBar(
 									isSelected = activityState.isSelected.value,
 									selectedItemSize = activityState.selectedItemList.size,
 									componentType = activityState.componentType.value,
-									showComponentChooser = currentRoute == "momento",
+									currentRoute = currentRoute,
 									showFavorite = activityState.showFavourite.value,
 									showArchived = activityState.showArchived.value,
-									showLocked = false
+									showLocked = false,
+									bucketFilter = activityState.bucketFilter
 								) { action, data -> onPerformAction(action, data) }
 							}
 						) {
@@ -369,7 +429,7 @@ class MainActivity : ComponentActivity() {
 							CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
 								MainNavigation(
 									navController = activityState.navController,
-									viewModelStoreOwner = viewModelStoreOwner
+									viewModelStoreOwner = viewModelStoreOwner,
 								) { click, data -> onPerformAction(action = click, data = data) }
 							}
 						}
@@ -379,7 +439,7 @@ class MainActivity : ComponentActivity() {
 							onDismiss = { activityState.showDeleteDialog.value = false },
 							onDelete = {
 								val selectedItemList = activityState.selectedItemList.toList()
-								viewModel.deleteNote(keyList = selectedItemList)
+								viewModel.delete(keyList = selectedItemList)
 								Toast.makeText(
 									this,
 									"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
@@ -451,6 +511,8 @@ class MainActivity : ComponentActivity() {
 		var showFavourite = mutableStateOf(false)
 		var showLocked = mutableStateOf(false)
 		var showTrash = mutableStateOf(false)
+		val bucketFilter: SnapshotStateList<BucketItemType> =
+			mutableStateListOf(BucketItemType.TODO, BucketItemType.BOOKS, BucketItemType.SHOWS)
 	}
 
 	@OptIn(ExperimentalMaterialApi::class)
@@ -472,8 +534,12 @@ class MainActivity : ComponentActivity() {
 		CLICK_NOTE,
 		LONG_CLICK_NOTE,
 		CLICK_NOTEBOOK,
+		LONG_CLICK_NOTEBOOK,
+		CLICK_BUCKET,
+		LONG_CLICK_BUCKET,
 		NEW_NOTEBOOK,
 		CHANGE_COMPONENT,
+		BUCKET_FILTER_CHIP,
 		FAB,
 		MENU,
 		SEARCH,

@@ -73,7 +73,7 @@ fun BottomSheetHeader(
 		Text(
 			text = title,
 			style = MaterialTheme.typography.titleSmall,
-			color = MaterialTheme.colorScheme.onSurface
+			color = MaterialTheme.colorScheme.primary
 		)
 
 		Spacer(modifier = Modifier.weight(1f))
@@ -81,8 +81,8 @@ fun BottomSheetHeader(
 		Icon(
 			painter = painterResource(id = icon),
 			contentDescription = null,
-			tint = MaterialTheme.colorScheme.onSurface,
-			modifier = Modifier.requiredSize(20.dp)
+			tint = MaterialTheme.colorScheme.primary,
+			modifier = Modifier.requiredSize(24.dp)
 		)
 	}
 
@@ -90,7 +90,7 @@ fun BottomSheetHeader(
 		Text(
 			text = subTitle,
 			style = MaterialTheme.typography.bodySmall,
-			color = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+			color = MaterialTheme.colorScheme.onSurface,
 			maxLines = 2,
 			modifier = Modifier
 				.fillMaxWidth()

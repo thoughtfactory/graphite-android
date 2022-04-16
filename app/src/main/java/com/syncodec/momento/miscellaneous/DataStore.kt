@@ -18,6 +18,7 @@ class DataStore(private val context: Context) {
 		private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("dataStore")
 		private val IS_FIRST_TIME = booleanPreferencesKey("isFirstTime")
 		private val PREFERENCE_THEME = intPreferencesKey("theme")
+		private val PREFERENCE_BACKGROUND = intPreferencesKey("background")
 		private val PREFERENCE_TYPOGRAPHY = intPreferencesKey("typography")
 		private val PREFERENCE_VAULT_KEY = stringPreferencesKey("vault_key")
 		private val PREFERENCE_ACTIVE_COMPONENT = intPreferencesKey("component")
@@ -30,6 +31,9 @@ class DataStore(private val context: Context) {
 
 	val getTheme: Flow<Int> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_THEME] ?: 0 }
 	fun putTheme(theme: Int) = CoroutineScope(Dispatchers.IO).launch { context.dataStore.edit { pref -> pref[PREFERENCE_THEME] = theme } }
+
+	val getBackground: Flow<Int> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_BACKGROUND] ?: 0 }
+	fun putBackground(background: Int) = CoroutineScope(Dispatchers.IO).launch { context.dataStore.edit { pref -> pref[PREFERENCE_BACKGROUND] = background } }
 
 	val getTypography: Flow<Int> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_TYPOGRAPHY] ?: 0 }
 	fun putTypography(typography: Int) = CoroutineScope(Dispatchers.IO).launch { context.dataStore.edit { pref -> pref[PREFERENCE_TYPOGRAPHY] = typography } }

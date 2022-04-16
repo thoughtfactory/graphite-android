@@ -23,7 +23,7 @@ fun TaglineCard(
 		Text(
 			text = tagline,
 			color = MaterialTheme.colorScheme.onBackground,
-			style = MaterialTheme.typography.bodyLarge,
+			style = MaterialTheme.typography.titleSmall,
 			fontWeight = FontWeight.Bold,
 			textAlign = TextAlign.Center,
 			modifier = Modifier,

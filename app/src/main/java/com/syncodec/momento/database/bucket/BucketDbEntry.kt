@@ -1,8 +1,11 @@
 package com.syncodec.momento.database.bucket
 
+import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.syncodec.momento.database.bucketItem.BucketItem
+import com.syncodec.momento.database.bucketItem.BucketItemType
 
 @Entity(tableName = "bucket_table")
 data class BucketDbEntry(
@@ -11,7 +14,7 @@ data class BucketDbEntry(
 	val key: String,
 
 	@ColumnInfo(name = "bucket_type")
-	val bucketItemType: Int
+	val bucketItemType: BucketItemType
 ) {
 	@ColumnInfo(name = "created_timestamp")
 	var createdTimestamp: Long = -1
@@ -22,8 +25,17 @@ data class BucketDbEntry(
 	@ColumnInfo(name = "title")
 	lateinit var title: String
 
-//	@ColumnInfo(name = "tag_list")
-//	val tagList: MutableList<TagDbEntry> = mutableListOf()
+	@ColumnInfo(name = "bucket_size")
+	var bucketSize = 0
+
+	@ColumnInfo(name = "is_favourite")
+	var isFavourite = false
+
+	@ColumnInfo(name = "is_archived")
+	var isArchived = false
+
+	@ColumnInfo(name = "is_locked")
+	var isLocked = false
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
@@ -32,17 +44,19 @@ data class BucketDbEntry(
 	var hash: Long? = null
 
 	override fun equals(other: Any?): Boolean {
-		if (this.hashCode() != other.hashCode()) return false
-		if (javaClass != other?.javaClass) return false
+//		if (this.hashCode() != other.hashCode()) return false
+//		if (javaClass != other?.javaClass) return false
+//
+//		other as BucketDbEntry
+//		if (key != other.key) return false
+//		return true
 
-		other as BucketDbEntry
-		if (key != other.key) return false
-		return true
+		return false
 	}
 
 	override fun hashCode(): Int {
 		var result = key.hashCode()
-		result = 31 * result + bucketItemType
+		result = 31 * result + bucketItemType.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
 		result = 31 * result + title.hashCode()

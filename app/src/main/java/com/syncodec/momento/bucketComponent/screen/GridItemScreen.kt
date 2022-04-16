@@ -30,27 +30,26 @@ import coil.compose.rememberImagePainter
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.syncodec.momento.bucketComponent.BucketActivity
-import com.syncodec.momento.database.bucketItem.BucketItemDbEntry
+import com.syncodec.momento.database.bucketItem.BucketItemPreviewDbEntry
 
 
 @OptIn(ExperimentalFoundationApi::class, com.google.accompanist.pager.ExperimentalPagerApi::class)
 @Composable
 fun GridItemScreen(
-	bucketItemList: List<BucketItemDbEntry>,
+	bucketItemList: List<BucketItemPreviewDbEntry>,
 	selectedBucketItemList: SnapshotStateList<String>,
 	pagerState: PagerState,
-	onClick: (BucketActivity.Click, Any?) -> Unit
+	onClick: (BucketActivity.Action, Any?) -> Unit
 ) {
 	HorizontalPager(
 		count = 4,
 		state = pagerState,
-		userScrollEnabled = false
+		userScrollEnabled = false,
+		verticalAlignment = Alignment.Top
 	) {
 		LazyVerticalGrid(
 			columns = GridCells.Adaptive(96.dp),
-			Modifier
-				.padding(12.dp, 12.dp, 12.dp, 0.dp)
-				.background(Color.Transparent)
+			Modifier.padding(12.dp, 12.dp, 12.dp, 0.dp)
 		) {
 			bucketItemList.forEachIndexed { index, data ->
 				if (it == 0 || data.state.ordinal == it - 1) {
@@ -59,9 +58,9 @@ fun GridItemScreen(
 							title = data.title ?: "",
 							thumbnail = data.thumbnail,
 							highlight = data.key in selectedBucketItemList,
-							onLongClick = { onClick(BucketActivity.Click.LONG_CLICK_ITEM, data.key) }
+							onLongClick = { onClick(BucketActivity.Action.LONG_CLICK_ITEM, data.key) }
 						) {
-							onClick(BucketActivity.Click.CLICK_ITEM, data.key)
+							onClick(BucketActivity.Action.CLICK_ITEM, data.key)
 						}
 					}
 				}

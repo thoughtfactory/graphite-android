@@ -22,7 +22,7 @@ fun BookItemScreen(
 	thumbnail: Any? = null,
 	thoughtList: SnapshotStateList<String> = mutableStateListOf(),
 	currentBookState: Int,
-	onClick: (BucketItemActivity.Click, Int) -> Unit
+	onAction: (BucketItemActivity.Action, Any?) -> Unit
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -44,7 +44,10 @@ fun BookItemScreen(
 		)
 		Spacer(modifier = Modifier.height(12.dp))
 
-		ThoughtCard(thoughtList = thoughtList) {}
+		ThoughtCard(
+			thoughtList = thoughtList,
+			onAction = onAction
+		)
 		Spacer(modifier = Modifier.height(12.dp))
 
 //		StateButton(

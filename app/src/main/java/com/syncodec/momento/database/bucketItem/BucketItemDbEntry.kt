@@ -39,8 +39,8 @@ data class BucketItemDbEntry(
 	@ColumnInfo(name = "address")
 	var address: String? = null
 
-//	@ColumnInfo(name = "tag_list")
-//	val tagList: MutableList<TagDbEntry> = mutableListOf()
+	@ColumnInfo(name = "data", typeAffinity = ColumnInfo.BLOB)
+	var data: BucketItem? = null
 
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
@@ -49,12 +49,14 @@ data class BucketItemDbEntry(
 	var hash: Long? = null
 
 	override fun equals(other: Any?): Boolean {
-		if (this.hashCode() != other.hashCode()) return false
-		if (javaClass != other?.javaClass) return false
+//		if (this.hashCode() != other.hashCode()) return false
+//		if (javaClass != other?.javaClass) return false
+//
+//		other as BucketItemDbEntry
+//		if (key != other.key) return false
+//		return true
 
-		other as BucketItemDbEntry
-		if (key != other.key) return false
-		return true
+		return false
 	}
 
 	override fun hashCode(): Int {
@@ -68,10 +70,22 @@ data class BucketItemDbEntry(
 		result = 31 * result + state.hashCode()
 		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
-//		result = 31 * result + tagList.hashCode()
+		result = 31 * result + (data?.hashCode() ?: 0)
 		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
 		result = 31 * result + (hash?.hashCode() ?: 0)
 		return result
 	}
 
+}
+
+enum class BucketItemType {
+	TODO,
+	BOOKS,
+	SHOWS,
+}
+
+enum class BucketItemState {
+	ALPHA,
+	BETA,
+	GAMMA
 }

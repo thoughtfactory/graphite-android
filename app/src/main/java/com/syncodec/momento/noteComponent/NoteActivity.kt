@@ -114,7 +114,7 @@ class NoteActivity : ComponentActivity() {
 
 							viewModel.noteDbEntry.value?.content = dataJson
 							viewModel.noteDbEntry.value?.contentThumbnail =
-								dataText.substring(0, minOf(128, dataText.length))
+								dataText.substring(0, minOf(256, dataText.length))
 
 							viewModel.putNote()
 						}
@@ -325,8 +325,7 @@ class NoteActivity : ComponentActivity() {
 					longitude = data.longitude,
 					onAddressAvailable = { _address ->
 						scope.launch {
-							noteDbEntry?.location?.latitude = data.latitude
-							noteDbEntry?.location?.longitude = data.longitude
+							noteDbEntry?.latLng = LatLng(data.latitude, data.longitude)
 							noteDbEntry?.address = locationAddressFilter(_address)
 							viewModel.emitNote()
 						}

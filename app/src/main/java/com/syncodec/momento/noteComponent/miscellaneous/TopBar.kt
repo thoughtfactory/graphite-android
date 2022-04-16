@@ -11,7 +11,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
 import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
-import com.syncodec.momento.miscellaneous.toHexString
 import com.syncodec.momento.noteComponent.NoteActivity
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -61,7 +60,7 @@ fun TopBar(
 						Text(
 							text = "Edit",
 							style = MaterialTheme.typography.bodyMedium,
-							modifier = Modifier.width(32.dp)
+							modifier = Modifier.width(40.dp)
 						)
 					}
 				} else {
@@ -75,7 +74,7 @@ fun TopBar(
 						Text(
 							text = "Save",
 							style = MaterialTheme.typography.bodyMedium,
-							modifier = Modifier.width(32.dp)
+							modifier = Modifier.width(40.dp)
 						)
 					}
 				}

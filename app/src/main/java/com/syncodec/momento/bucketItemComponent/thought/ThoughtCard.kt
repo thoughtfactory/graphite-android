@@ -6,8 +6,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -18,21 +20,22 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class,
+	ExperimentalMaterial3Api::class
+)
 @Composable
 fun ThoughtCard(
 	thoughtList: SnapshotStateList<String>,
-	onClick: (BucketItemActivity.Click) -> Unit
+	onAction: (BucketItemActivity.Action, Any?) -> Unit
 ) {
 	var showEditor by remember { mutableStateOf(false) }
 
 	Card(
-		modifier = Modifier
-			.fillMaxWidth(),
-		elevation = 0.dp,
+		modifier = Modifier.fillMaxWidth(),
+		containerColor = Color.Transparent,
+		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+		border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
 		shape = RoundedCornerShape(12.dp),
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),
-		backgroundColor = Color.Transparent,
 	) {
 		Column(
 			modifier = Modifier,
@@ -46,7 +49,7 @@ fun ThoughtCard(
 				Box(
 					modifier = Modifier
 						.fillMaxWidth(0.71f)
-						.height(2.dp)
+						.height(1.dp)
 						.padding(16.dp, 0.dp)
 						.background(MaterialTheme.colorScheme.secondaryContainer)
 				)
@@ -57,7 +60,7 @@ fun ThoughtCard(
 					isFirst = thoughtList.isEmpty(),
 					onSave = { thought ->
 						thoughtList.add(thought)
-						onClick(BucketItemActivity.Click.ADD_THOUGHT)
+						onAction(BucketItemActivity.Action.ADD_THOUGHT, null)
 					},
 					onDiscard = { showEditor = false }
 				)

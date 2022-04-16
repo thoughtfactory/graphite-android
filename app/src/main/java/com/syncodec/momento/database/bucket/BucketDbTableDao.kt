@@ -26,4 +26,7 @@ interface BucketDbTableDao {
 
 	@Query(value = "DELETE FROM bucket_table WHERE `key` = :key")
 	suspend fun delete(key: String)
+
+	@Query(value = "DELETE FROM bucket_table WHERE `key` IN (:keyList)")
+	suspend fun delete(keyList: List<String>)
 }

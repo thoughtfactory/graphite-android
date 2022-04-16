@@ -68,16 +68,14 @@ fun NotebookBottomSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2),
+		color= MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(180.dp),
+			.heightIn(420.dp),
 	) {
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally,
-			modifier = Modifier
-				.fillMaxWidth()
-				.heightIn(420.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
 
 			BottomSheetStrip()

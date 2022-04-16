@@ -2,7 +2,6 @@ package com.syncodec.momento.mainComponent.modalBottomSheet
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -19,7 +18,6 @@ import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
-import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
@@ -53,7 +51,7 @@ fun MenuBottomSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2),
+		color= MaterialTheme.colorScheme.surface,
 		modifier = Modifier.heightIn(360.dp),
 	) {
 		Column(
@@ -70,9 +68,7 @@ fun MenuBottomSheet(
 			LazyVerticalGrid(
 				columns = GridCells.Fixed(4),
 				modifier = Modifier.padding(24.dp, 0.dp),
-			) {
-				buttonDataList.forEach { item { MenuBottomSheetButton(it) } }
-			}
+			) { buttonDataList.forEach { item { MenuBottomSheetButton(it) } } }
 
 			Spacer(modifier = Modifier.height(16.dp))
 

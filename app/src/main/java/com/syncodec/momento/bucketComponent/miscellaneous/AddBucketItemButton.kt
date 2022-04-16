@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.database.bucketItem.BucketItemType
 
@@ -19,7 +20,7 @@ fun AddNewBucketItemButton(
 	bucketItemType: BucketItemType,
 	isSelected: Boolean,
 	selectedBucketItemList: List<String>,
-	onClick: () -> Unit
+	onAction: (BucketActivity.Action) -> Unit
 ) {
 	Box(
 		modifier = Modifier
@@ -35,25 +36,19 @@ fun AddNewBucketItemButton(
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(12.dp, 0.dp)
-				) {
-					onClick()
-				}
+				) { onAction(BucketActivity.Action.DELETE_ITEM) }
 			} else {
 				LargeButton(
 					text = when (bucketItemType) {
-						BucketItemType.TODO -> "Add New Task"
-						BucketItemType.BOOKS -> "What did you read?"
-						BucketItemType.SHOWS -> "A new story?"
-						BucketItemType.MEDIA -> "Add media"
-						BucketItemType.LINKS -> "Add link"
+						BucketItemType.TODO -> "Add a new Task"
+						BucketItemType.BOOKS -> "A new story?"
+						BucketItemType.SHOWS -> "What did you watch?"
 					},
 					enabled = true,
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(12.dp, 0.dp)
-				) {
-					onClick()
-				}
+				) { onAction(BucketActivity.Action.OPEN_ADD_SHEET) }
 			}
 		}
 	}

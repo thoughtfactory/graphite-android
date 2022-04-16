@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.webkit.MimeTypeMap
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -22,13 +21,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
-import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.konstant.Status
-import com.syncodec.momento.miscellaneous.FileUtils
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.miscellaneous.getResizedBitmap
 import com.syncodec.momento.miscellaneous.locationAddressFilter
@@ -38,7 +36,6 @@ import com.syncodec.momento.repository.TagRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 import java.io.IOException
 import java.util.*
 
@@ -188,17 +185,10 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 			cancellationToken
 		)
 			.addOnSuccessListener { location: Location? ->
-				if (location == null) {
-					this.knotDbEntry.value?.location = null
-				} else {
-					this.knotDbEntry.value?.location = LocationData(
-						latitude = location.latitude,
-						longitude = location.longitude,
-						bearing = location.bearing,
-						altitude = location.altitude,
-						speed = location.speed
-					)
-				}
+				if (location == null)
+					this.knotDbEntry.value?.latLng = null
+				else
+					this.knotDbEntry.value?.latLng = LatLng(location.latitude, location.longitude)
 
 				activityState.addressState.value = NoteActivity.AddressState.LOCATION
 				addressHandler.postDelayed(addressRunnable, 10000)
@@ -235,7 +225,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 	fun removeLocationData() {
 		activityState.addressState.value = NoteActivity.AddressState.REMOVED
-		knotDbEntry.value?.location = null
+		knotDbEntry.value?.latLng = null
 		knotDbEntry.value?.address = null
 	}
 

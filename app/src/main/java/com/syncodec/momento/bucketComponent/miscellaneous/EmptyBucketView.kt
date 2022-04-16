@@ -1,6 +1,7 @@
 package com.syncodec.momento.bucketComponent.miscellaneous
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,17 +22,20 @@ import com.syncodec.momento.database.bucketItem.BucketItemType
 fun EmptyBucketView(
 	bucketTitle: String,
 	bucketItemType: BucketItemType,
-	onClick: (BucketActivity.Click) -> Unit
+	onAction: (BucketActivity.Action, Any?) -> Unit
 ) {
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.background)
 	) {
 		TopBar(
-			bucketTitle = bucketTitle,
+			title = bucketTitle,
 			bucketItemType = bucketItemType,
-			showStateSelector = false
-		) { onClick(it) }
+			showStateSelector = false,
+			currentState = 0,
+			onAction = onAction
+		)
 		Column(
 			modifier = Modifier
 				.fillMaxSize(),

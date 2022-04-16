@@ -25,8 +25,8 @@ fun LargeButton(
 	Button(
 		onClick = { onClick() },
 		colors = ButtonDefaults.buttonColors(
-			containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 4),
-			contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 4),
+			containerColor = MaterialTheme.colorScheme.primaryContainer,
+			contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
 			disabledContainerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
 			disabledContentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
 		),
@@ -37,7 +37,7 @@ fun LargeButton(
 	) {
 		Text(
 			text = text,
-			style = MaterialTheme.typography.bodyLarge
+			style = MaterialTheme.typography.bodyLarge,
 		)
 	}
 }

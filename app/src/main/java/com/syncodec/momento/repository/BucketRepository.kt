@@ -1,75 +1,70 @@
 package com.syncodec.momento.repository
 
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.syncodec.momento.Momento
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.database.UserDatabase
-import com.syncodec.momento.database.bucket.*
+import com.syncodec.momento.database.bucket.BucketDbEntry
+import com.syncodec.momento.database.bucket.BucketDbTableDao
 import com.syncodec.momento.database.bucketItem.*
 import com.syncodec.momento.konstant.Secret
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class BucketRepository(val momento: Momento) {
 
-	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
+	private val bucketDbTableDao: BucketDbTableDao =
+		UserDatabase.getInstance(momento).bucketDbTableDao
+	private val bucketItemDbTableDao: BucketItemDbTableDao =
+		UserDatabase.getInstance(momento).bucketItemDbTableDao
 
-	private val bucketDbTableDao: BucketDbTableDao = UserDatabase.getInstance(momento).bucketDbTableDao
-	private val bucketItemDbTableDao: BucketItemDbTableDao = UserDatabase.getInstance(momento).bucketItemDbTableDao
-
-	var bucketMap: SnapshotStateMap<String, Pair<BucketDbEntry, Int>> = mutableStateMapOf()
+	var bucketList: SnapshotStateList<BucketDbEntry> = mutableStateListOf()
 
 	init {
 		CoroutineScope(Dispatchers.IO).launch {
-			bucketDbTableDao.getAllAsFlow().collect {
-				it.forEach { bucketDbEntry ->
-					bucketItemDbTableDao.countBucketSize(bucketDbEntry.key).collectLatest {
-						bucketMap[bucketDbEntry.key] = Pair(bucketDbEntry, it)
-					}
-				}
+			bucketDbTableDao.getAllAsFlow().collectLatest {
+				bucketList.clear()
+				bucketList.addAll(it)
 			}
 		}
 	}
 
-	fun getBucketItemListAsFlow(bucketKey: String): Flow<List<BucketItemDbEntry>> {
-		return bucketItemDbTableDao.getFromBucketAsFlow(bucketKey = bucketKey)
+	fun getBucketItemPreviewListAsFlow(bucketKey: String): Flow<List<BucketItemPreviewDbEntry>> {
+		return bucketItemDbTableDao.getForPreviewAsFlow(bucketKey = bucketKey)
 	}
 
 	fun getBucket(bucketKey: String): Flow<BucketDbEntry?> {
 		return bucketDbTableDao.getAsFlow(key = bucketKey)
 	}
 
-	fun getBucketItem(bucketItemKey: String): Pair<Flow<BucketItemDbEntry?>, String?> = Pair(
-		bucketItemDbTableDao.getAsFlow(key = bucketItemKey),
-		momento.getBucketItem(key = bucketItemKey)
-	)
+	fun getBucketItem(bucketItemKey: String): Flow<BucketItemDbEntry?> =
+		bucketItemDbTableDao.getAsFlow(key = bucketItemKey)
 
 
-	suspend fun deleteBucketItem(keyList: List<String>) = keyList.forEach {
-		bucketItemDbTableDao.delete(it)
-		momento.deleteBucketItem(key = it)
+	suspend fun deleteBucketItem(bucketKey: String, keyList: List<String>)  {
+		withContext(Dispatchers.IO) {
+			bucketItemDbTableDao.delete(keyList)
+			updateBucketSize(bucketKey)
+		}
 	}
+	suspend fun deleteBucket(keyList: List<String>) = bucketDbTableDao.delete(keyList)
 
 	suspend fun putNewBucket(bucketType: BucketItemType, title: String) {
 		withContext(Dispatchers.IO) {
 			val currentTimestamp = System.currentTimeMillis()
 			BucketDbEntry(
 				key = generatePrimaryKey(),
-				bucketItemType = bucketType.ordinal
+				bucketItemType = bucketType
 			).apply {
 				this.createdTimestamp = currentTimestamp
 				this.modifiedTimestamp = currentTimestamp
@@ -80,20 +75,23 @@ class BucketRepository(val momento: Momento) {
 		}
 	}
 
-	fun putBucket(bucketDbEntry: BucketDbEntry) = bucketDbTableDao.update(bucketDbEntry = bucketDbEntry)
+	fun putBucket(bucketDbEntry: BucketDbEntry) =
+		bucketDbTableDao.update(bucketDbEntry = bucketDbEntry)
 
-	fun putBucketItem(
-		bucketItemDbEntry: BucketItemDbEntry,
-		thoughtList: List<String>,
-		data: Any?
-	) {
-		bucketItemDbTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
-		val extra = objectMapper.writeValueAsString(data)
-		BucketItem(
-			key = bucketItemDbEntry.key,
-			thoughtList = thoughtList.toMutableList(),
-			extra = extra,
-		).apply { momento.putBucketItem(bucketItem = this) }
+	suspend fun putBucketItem(bucketItemDbEntry: BucketItemDbEntry) =
+		withContext(Dispatchers.IO) {
+			bucketItemDbTableDao.insert(bucketItemDbEntry = bucketItemDbEntry)
+			updateBucketSize(bucketItemDbEntry.bucketKey)
+		}
+
+	suspend fun updateBucketSize(key: String) {
+		bucketDbTableDao.get(key).apply {
+			if (this != null) {
+				this.bucketSize = bucketItemDbTableDao.countBucketSize(key)
+				bucketDbTableDao.insert(this)
+			}
+		}
+
 	}
 
 	suspend fun updateBucketItem(bucketItemDbEntry: BucketItemDbEntry) =

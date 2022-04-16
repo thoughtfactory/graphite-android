@@ -1,7 +1,6 @@
 package com.syncodec.momento.custom
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,19 +49,12 @@ fun LargeTextField(
 		modifier = modifier
 			.height(48.dp)
 			.clip(RoundedCornerShape(12.dp))
-			.background(
-				if (text.isEmpty() && !isFocused) {
-					MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-				} else {
-					MaterialTheme.colorScheme.surface
-				}
-			)
 			.onFocusChanged { onFocusChanged(it.isFocused) },
 		decorationBox = { innerTextField ->
 			Surface(
 				border = BorderStroke(
 					2.dp, if (isFocused) MaterialTheme.colorScheme.primary
-					else MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 3)
+					else MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5)
 				),
 				shape = RoundedCornerShape(12.dp),
 				modifier = Modifier.fillMaxWidth()
@@ -77,7 +69,7 @@ fun LargeTextField(
 						Text(
 							text = placeholder,
 							style = MaterialTheme.typography.bodyMedium,
-							color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 3),
+							color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5),
 							fontWeight = FontWeight.Bold
 						)
 					}

@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.momento.R
 import com.syncodec.momento.custom.ChipData
 import com.syncodec.momento.custom.ChipView
 import com.syncodec.momento.searchComponent.SearchViewModel
@@ -45,29 +46,29 @@ fun SearchBar() {
 	var showBucket by viewModel.activityState.showBucket
 
 	val stateFilterChipDataList: MutableList<ChipData> = mutableListOf(
-		ChipData(title = "All", imageVector = TablerIcons.Notes, isSelected = !showArchived && !showFavourite && !showLocked) {
+		ChipData(title = "All", icon = R.drawable.ic_write, isSelected = !showArchived && !showFavourite && !showLocked) {
 			showArchived = false
 			showFavourite = false
 			showLocked = false
 		},
-		ChipData(title = "Archived", imageVector = TablerIcons.Archive, isSelected = showArchived) { showArchived = !showArchived },
-		ChipData(title = "Favourite", imageVector = TablerIcons.Heart, isSelected = showFavourite) { showFavourite = !showFavourite },
-		ChipData(title = "Locked", imageVector = TablerIcons.Lock, isSelected = showLocked) { showLocked = !showLocked },
+		ChipData(title = "Archived", icon = R.drawable.ic_archive, isSelected = showArchived) { showArchived = !showArchived },
+		ChipData(title = "Favourite", icon = R.drawable.ic_favourite, isSelected = showFavourite) { showFavourite = !showFavourite },
+		ChipData(title = "Locked", icon = R.drawable.ic_lock_close, isSelected = showLocked) { showLocked = !showLocked },
 	)
 
 	val componentFilterChipDataList: MutableList<ChipData> = mutableListOf(
-		ChipData(title = "All", imageVector = TablerIcons.Notes, isSelected = !showDiary && !showNotebook && !showChapter && !showNote && !showBucket) {
+		ChipData(title = "All", icon = R.drawable.ic_note, isSelected = !showDiary && !showNotebook && !showChapter && !showNote && !showBucket) {
 			showDiary = false
 			showNotebook = false
 			showChapter = false
 			showNote = false
 			showBucket = false
 		},
-		ChipData(title = "Diary", imageVector = TablerIcons.Signature, isSelected = showDiary) { showDiary = !showDiary },
-		ChipData(title = "Notebook", imageVector = TablerIcons.Book, isSelected = showNotebook) { showNotebook = !showNotebook },
-		ChipData(title = "Chapter", imageVector = TablerIcons.Notebook, isSelected = showChapter) { showChapter = !showChapter },
-		ChipData(title = "Note", imageVector = TablerIcons.Note, isSelected = showNote) { showNote = !showNote },
-		ChipData(title = "Bucket", imageVector = TablerIcons.Bucket, isSelected = showBucket) { showBucket = !showBucket },
+//		ChipData(title = "Diary", icon = TablerIcons.Signature, isSelected = showDiary) { showDiary = !showDiary },
+//		ChipData(title = "Notebook", icon = TablerIcons.Book, isSelected = showNotebook) { showNotebook = !showNotebook },
+//		ChipData(title = "Chapter", icon = TablerIcons.Notebook, isSelected = showChapter) { showChapter = !showChapter },
+//		ChipData(title = "Note", icon = TablerIcons.Note, isSelected = showNote) { showNote = !showNote },
+//		ChipData(title = "Bucket", icon = TablerIcons.Bucket, isSelected = showBucket) { showBucket = !showBucket },
 	)
 
 	Column(

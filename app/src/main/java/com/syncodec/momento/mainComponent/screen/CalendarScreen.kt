@@ -24,7 +24,6 @@ import com.syncodec.momento.custom.notebook.NoteCard
 import com.syncodec.momento.custom.notebook.NotebookHeaderCard
 import com.syncodec.momento.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.database.note.locationDataToLatLng
 import com.syncodec.momento.miscellaneous.TimeUtils
 
 
@@ -34,9 +33,8 @@ import com.syncodec.momento.miscellaneous.TimeUtils
 @Composable
 fun CalendarScreen(
 	noteMap: Map<String, NoteDbEntry>,
-	isSelected: Boolean,
 	selectedItemList: List<String>,
-	onClick: (MainActivity.Action, Any?) -> Unit
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
@@ -67,8 +65,10 @@ fun CalendarScreen(
 			AnimatedContent(targetState = selectedTimestamp) {
 				BottomSheetContent(
 					noteDbEntryDayMap = noteDbEntryDayMap[it],
-					selectedTimestamp = selectedTimestamp
-				) { click, data -> onClick(click, data) }
+					selectedTimestamp = selectedTimestamp,
+					selectedItemList = selectedItemList,
+					onAction = onAction
+				)
 			}
 		},
 		modifier = Modifier,
@@ -79,9 +79,11 @@ fun CalendarScreen(
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.surface)
+				.background(MaterialTheme.colorScheme.background)
 		) {
-			Calendar(timestampSizeMap = timestampSizeMap) { timestamp -> selectedTimestamp = timestamp }
+			Calendar(timestampSizeMap = timestampSizeMap) { timestamp ->
+				selectedTimestamp = timestamp
+			}
 		}
 	}
 }
@@ -90,44 +92,47 @@ fun CalendarScreen(
 private fun BottomSheetContent(
 	noteDbEntryDayMap: List<NoteDbEntry>?,
 	selectedTimestamp: Long,
-	onClick: (MainActivity.Action, Any?) -> Unit
+	selectedItemList: List<String>,
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	LazyColumn {
 		item { Spacer(modifier = Modifier.height(16.dp)) }
 		item {
 			NotebookHeaderCard(
 				title = TimeUtils.timestampToDate(selectedTimestamp),
-				noEntries = if (noteDbEntryDayMap.isNullOrEmpty()) "No entries" else if (noteDbEntryDayMap.size == 1) "1 entry" else "${noteDbEntryDayMap.size} entries"
+				noEntries = if (noteDbEntryDayMap.isNullOrEmpty()) "No entries" else if (noteDbEntryDayMap.size == 1) "1 entry" else "${noteDbEntryDayMap.size} entries",
+				color = MaterialTheme.colorScheme.surface
 			)
 		}
 
-		noteDbEntryDayMap?.forEach { noteDbEntry ->
+		noteDbEntryDayMap?.forEach { note ->
 			val lastEntryKey =
 				if (noteDbEntryDayMap.isNotEmpty()) noteDbEntryDayMap.last().key else null
 
 			item {
 				NoteCard(
-					key = noteDbEntry.key,
-					timestamp = noteDbEntry.userTimestamp,
+					key = note.key,
+					timestamp = note.userTimestamp,
 					showFullTime = false,
 					isLocked = false,
-					isSelected = false,
+					isSelected = note.key in selectedItemList,
 					isArchived = false,
 					isFavourite = false,
-					isDeleted = noteDbEntry.deletedTimestamp != -1L,
-					isLast = noteDbEntry.key == lastEntryKey,
-					title = noteDbEntry.title,
-					contentThumbnail = noteDbEntry.contentThumbnail,
-					attachmentCount = noteDbEntry.attachmentKeyList.size,
-					attachmentThumbnail = noteDbEntry.attachmentThumbnail,
-					address = noteDbEntry.address,
-					latLng = locationDataToLatLng(noteDbEntry.location),
+					isDeleted = note.deletedTimestamp != -1L,
+					isLast = note.key == lastEntryKey,
+					title = note.title,
+					contentThumbnail = note.contentThumbnail,
+					attachmentCount = note.attachmentKeyList.size,
+					attachmentThumbnail = note.attachmentThumbnail,
+					address = note.address,
+					latLng = note.latLng,
 					isVisible = true,
-					onClick = { onClick(MainActivity.Action.CLICK_NOTE, noteDbEntry.key) },
-					onLongClick = { },
+					selectedColor = MaterialTheme.colorScheme.background,
+					onClick = { onAction(MainActivity.Action.CLICK_NOTE, note.key) },
+					onLongClick = { onAction(MainActivity.Action.LONG_CLICK_NOTE, note.key) },
 				)
 
-				NotebookTimelineSpacer(isVisible = noteDbEntry.key != lastEntryKey)
+				NotebookTimelineSpacer(isVisible = note.key != lastEntryKey)
 			}
 		}
 

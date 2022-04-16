@@ -4,9 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,22 +27,20 @@ fun TagCard(
 	}
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Tag(tag: String) {
 	Card(
-		modifier = Modifier,
-		elevation = 0.dp,
+		containerColor = Color.Transparent,
+		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+		border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
 		shape = RoundedCornerShape(50),
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),
-		backgroundColor = Color.Transparent,
 	) {
 		Text(
-			text = "#$tag",
+			text = "# $tag",
 			color = MaterialTheme.colorScheme.onBackground,
 			style = MaterialTheme.typography.bodyMedium,
-			fontWeight = FontWeight.Bold,
-			modifier = Modifier
-				.padding(12.dp),
+			modifier = Modifier.padding(12.dp),
 		)
 	}
 }

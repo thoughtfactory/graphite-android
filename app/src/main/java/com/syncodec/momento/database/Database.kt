@@ -11,13 +11,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.attachment.AttachmentTableDao
 import com.syncodec.momento.database.bucket.*
-import com.syncodec.momento.database.bucketItem.BucketItemDbEntry
-import com.syncodec.momento.database.bucketItem.BucketItemDbTableDao
-import com.syncodec.momento.database.bucketItem.BucketItemState
-import com.syncodec.momento.database.bucketItem.BucketItemType
+import com.syncodec.momento.database.bucketItem.*
 import com.syncodec.momento.database.chapter.ChapterDbEntry
 import com.syncodec.momento.database.chapter.ChapterTableDao
-import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.note.NoteTableDao
 import com.syncodec.momento.database.notebook.NotebookDbEntry
@@ -26,10 +22,8 @@ import com.syncodec.momento.database.tag.TagDbEntry
 import com.syncodec.momento.database.tag.TagDbTableDao
 import com.syncodec.momento.database.tag.TagKeyDbEntry
 import com.syncodec.momento.database.tag.TagKeyDbTableDao
-import com.syncodec.momento.miscellaneous.logger
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
-import java.nio.charset.Charset
 
 
 class Converters {
@@ -59,15 +53,15 @@ class Converters {
 	}
 
 	@TypeConverter
-	fun fromLocationDataToData(value: LocationData?): String? {
-		return value?.let { objectMapper.writeValueAsString(it) }
+	fun fromBucketItemToData(value: BucketItem?): ByteArray? {
+		return value?.let { objectMapper.writeValueAsBytes(it) }
 	}
 
 	@TypeConverter
-	fun fromDataToLocationData(data: String?): LocationData? {
+	fun fromDataToBucketItem(data: ByteArray?): BucketItem? {
 		return data?.let { objectMapper.readValue(it) }
 	}
-
+	
 	@TypeConverter
 	fun fromBucketItemTypeToData(value: BucketItemType): Int {
 		return value.ordinal

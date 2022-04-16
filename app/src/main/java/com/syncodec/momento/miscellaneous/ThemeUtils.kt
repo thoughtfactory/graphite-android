@@ -12,7 +12,7 @@ class ThemeUtils {
 
 		val bookCoverImageList: List<Int> = listOf(
 			R.drawable.book_cover_1,
-			R.drawable.background,
+			R.drawable.background_1,
 			R.drawable.book_cover_1,
 			R.drawable.book_cover_1,
 			R.drawable.book_cover_1,

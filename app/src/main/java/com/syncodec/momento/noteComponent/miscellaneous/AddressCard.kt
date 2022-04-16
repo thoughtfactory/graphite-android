@@ -18,8 +18,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.R
-import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.noteComponent.NoteActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -31,7 +31,7 @@ fun AddressCard(
 	addressState: NoteActivity.AddressState,
 	showAddressCard: Boolean,
 	address: String?,
-	locationData: LocationData?,
+	latLng: LatLng?,
 	onClick: (NoteActivity.Action) -> Unit
 ) {
 	val scope = rememberCoroutineScope()
@@ -134,7 +134,7 @@ fun AddressCard(
 							.padding(16.dp, 12.dp),
 					) {
 						Text(
-							text = "Address unavailable\nLat : ${locationData?.latitude}, Lng : ${locationData?.longitude}",
+							text = "Address unavailable\nLat : ${latLng?.latitude}, Lng : ${latLng?.longitude}",
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onBackground,
 							fontWeight = FontWeight.Bold,

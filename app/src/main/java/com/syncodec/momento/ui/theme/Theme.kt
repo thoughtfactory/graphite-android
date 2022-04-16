@@ -258,35 +258,65 @@ val darkColorScheme6 = darkColorScheme(
 	onBackground = Color(0xFFA4B0B1)
 )
 
-val lightColorScheme7 = lightColorScheme(
+val lightColorScheme0 = lightColorScheme(
 	primary = Color(0xFF1E2022),
-	onPrimary = Color(0xFFD5D6D6),
+	onPrimary = Color(0xFFC0CEDD),
 	primaryContainer = Color(0xFF0F1316),
-	onPrimaryContainer = Color(0xFF7E848A),
-	secondary = Color(0xFF52616B),
-	onSecondary = Color(0xFFF4F4F5),
-	secondaryContainer = Color(0xFF2D3D48),
-	onSecondaryContainer = Color(0xFFB1B9BE),
+	onPrimaryContainer = Color(0xFF9BAEC3),
+	secondary = Color(0xFF242D34),
+	onSecondary = Color(0xFFA2A9AE),
+	secondaryContainer = Color(0xFF1C3648),
+	onSecondaryContainer = Color(0xFFCED8DF),
 	surface = Color(0xFFC9D6DF),
-	onSurface = Color(0xFF354A5A),
+	onSurface = Color(0xFF1E2A34),
 	background = Color(0xFFECF1F4),
-	onBackground = Color(0xFF011525)
+	onBackground = Color(0xFF02060A)
 )
 
-val darkColorScheme7 = darkColorScheme(
-	primary = Color(0xFFD5D6D6),
+val darkColorScheme0 = darkColorScheme(
+	primary = Color(0xFFC0CEDD),
 	onPrimary = Color(0xFF1E2022),
-	primaryContainer = Color(0xFF7E848A),
+	primaryContainer = Color(0xFF9BAEC3),
 	onPrimaryContainer = Color(0xFF0F1316),
-	secondary = Color(0xFF414549),
-	onSecondary = Color(0xFFD4D4D5),
-	secondaryContainer = Color(0xFF353E48),
-	onSecondaryContainer = Color(0xFFB2B5B9),
-	surface = Color(0xFF202326),
-	onSurface = Color(0xFF9EA2A5),
+	secondary = Color(0xFFA2A9AE),
+	onSecondary = Color(0xFF242D34),
+	secondaryContainer = Color(0xFFCED8DF),
+	onSecondaryContainer = Color(0xFF1C3648),
+	surface = Color(0xFF1E2A34),
+	onSurface = Color(0xFFC9D6DF),
 	background = Color(0xFF02060A),
 	onBackground = Color(0xFFCEDBE6)
 )
+
+val lightBackground0 = Color(0xFFECF1F4)
+val darkBackground0 = Color(0xFF02060A)
+
+val lightBackground1 = Color(0xFFF4F3F3)
+val darkBackground1 = Color(0xFF02060A)
+
+val lightBackground2 = Color(0xFFFBF0F0)
+val darkBackground2 = Color(0xFF02060A)
+
+val lightBackground3 = Color(0xFFE3FDFD)
+val darkBackground3 = Color(0xFF02060A)
+
+val lightBackground4 = Color(0xFFEBEBE3)
+val darkBackground4 = Color(0xFF02060A)
+
+val lightBackground5 = Color(0xFFD7F2F7)
+val darkBackground5 = Color(0xFF02060A)
+
+val lightBackground6 = Color(0xFFDDDDDD)
+val darkBackground6 = Color(0xFF02060A)
+
+val lightBackground7 = Color(0xFFF1FDF3)
+val darkBackground7 = Color(0xFF02060A)
+
+val lightBackground8 = Color(0xFFFBF8F1)
+val darkBackground8 = Color(0xFF02060A)
+
+val lightBackground9 = Color(0xFFD3E0DC)
+val darkBackground9 = Color(0xFF02060A)
 
 @SuppressLint("NewApi")
 @Composable
@@ -299,6 +329,7 @@ fun MomentoTheme(
 
 	val dataStore = DataStore(context = context)
 	val currentTheme by dataStore.getTheme.collectAsState(initial = null)
+	val currentBackground by dataStore.getBackground.collectAsState(initial = null)
 	val currentTypography by dataStore.getTypography.collectAsState(initial = null)
 
 	val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -312,25 +343,105 @@ fun MomentoTheme(
 		else -> {
 			if (isDarkTheme) {
 				when (currentTheme) {
-					1 -> darkColorScheme1
-					2 -> darkColorScheme2
-					3 -> darkColorScheme3
-					4 -> darkColorScheme4
-					5 -> darkColorScheme5
-					6 -> darkColorScheme6
-					7 -> darkColorScheme7
-					else -> darkColorScheme7
+					1 -> darkColorScheme1.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
+					2 -> darkColorScheme2.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
+					3 -> darkColorScheme3.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
+					4 -> darkColorScheme4.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
+					5 -> darkColorScheme5.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
+					6 -> darkColorScheme6.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
+					7 -> darkColorScheme0.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
+					else -> darkColorScheme0.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = true
+						)
+					)
 				}
 			} else {
 				when (currentTheme) {
-					1 -> lightColorScheme1
-					2 -> lightColorScheme2
-					3 -> lightColorScheme3
-					4 -> lightColorScheme4
-					5 -> lightColorScheme5
-					6 -> lightColorScheme6
-					7 -> lightColorScheme7
-					else -> lightColorScheme7
+					1 -> lightColorScheme1.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
+					2 -> lightColorScheme2.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
+					3 -> lightColorScheme3.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
+					4 -> lightColorScheme4.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
+					5 -> lightColorScheme5.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
+					6 -> lightColorScheme6.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
+					7 -> lightColorScheme0.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
+					else -> lightColorScheme0.copy(
+						background = getBackground(
+							currentBackground = currentBackground,
+							isDarkTheme = false
+						)
+					)
 				}
 			}
 		}
@@ -358,6 +469,41 @@ fun MomentoTheme(
 			} else {
 				LoadingView()
 			}
+		}
+	}
+}
+
+private fun getBackground(
+	currentBackground: Int?,
+	isDarkTheme: Boolean
+): Color {
+	return if (isDarkTheme) {
+		when (currentBackground) {
+			0 -> darkBackground0
+			1 -> darkBackground1
+			2 -> darkBackground2
+			3 -> darkBackground3
+			4 -> darkBackground4
+			5 -> darkBackground5
+			6 -> darkBackground6
+			7 -> darkBackground7
+			8 -> darkBackground8
+			9 -> darkBackground9
+			else -> darkBackground0
+		}
+	} else {
+		when (currentBackground) {
+			0 -> lightBackground0
+			1 -> lightBackground1
+			2 -> lightBackground2
+			3 -> lightBackground3
+			4 -> lightBackground4
+			5 -> lightBackground5
+			6 -> lightBackground6
+			7 -> lightBackground7
+			8 -> lightBackground8
+			9 -> lightBackground9
+			else -> lightBackground0
 		}
 	}
 }

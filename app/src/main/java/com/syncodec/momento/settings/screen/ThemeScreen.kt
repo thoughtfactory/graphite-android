@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.custom.squircle.SquircleShape
 import com.syncodec.momento.settings.SettingsActivity
 import com.syncodec.momento.ui.theme.*
 import kotlin.random.Random
@@ -29,6 +31,29 @@ import kotlin.random.Random
 fun ThemeScreen(
 	onClick: (SettingsActivity.Click, Int) -> Unit
 ) {
+	val backgroundColorList : List<Pair<Color, Color>> = listOf(
+		Pair(lightBackground0, darkBackground0),
+		Pair(lightBackground1, darkBackground1),
+		Pair(lightBackground2, darkBackground2),
+		Pair(lightBackground3, darkBackground3),
+		Pair(lightBackground4, darkBackground4),
+		Pair(lightBackground5, darkBackground5),
+		Pair(lightBackground6, darkBackground6),
+		Pair(lightBackground7, darkBackground7),
+		Pair(lightBackground8, darkBackground8),
+		Pair(lightBackground9, darkBackground9),
+	)
+
+	val themeList : List<Pair<ColorScheme, ColorScheme>> = listOf(
+		Pair(lightColorScheme0, darkColorScheme0),
+		Pair(lightColorScheme1, darkColorScheme1),
+		Pair(lightColorScheme2, darkColorScheme2),
+		Pair(lightColorScheme3, darkColorScheme3),
+		Pair(lightColorScheme4, darkColorScheme4),
+		Pair(lightColorScheme5, darkColorScheme5),
+		Pair(lightColorScheme6, darkColorScheme6),
+	)
+
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -40,17 +65,36 @@ fun ThemeScreen(
 
 		Spacer(modifier = Modifier.height(16.dp))
 
+		LazyRow(
+			modifier = Modifier.fillMaxWidth(),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			item { Spacer(modifier = Modifier.width(16.dp)) }
+			backgroundColorList.forEachIndexed { index, data ->
+				item {
+					BackgroundCard(
+						lightBackground = data.first,
+						darkBackground = data.second
+					) { onClick(SettingsActivity.Click.CHANGE_BACKGROUND, index) }
+				}
+				item { Spacer(modifier = Modifier.width(8.dp)) }
+			}
+			item { Spacer(modifier = Modifier.width(8.dp)) }
+		}
+
+		Spacer(modifier = Modifier.height(16.dp))
+
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(4),
 			modifier = Modifier.padding(16.dp, 0.dp),
 		) {
-			item { ThemeCard(colorScheme = lightColorScheme1) { onClick(SettingsActivity.Click.CHANGE_THEME, 0) } }
-			item { ThemeCard(colorScheme = lightColorScheme2) { onClick(SettingsActivity.Click.CHANGE_THEME, 1) } }
-			item { ThemeCard(colorScheme = lightColorScheme3) { onClick(SettingsActivity.Click.CHANGE_THEME, 2) } }
-			item { ThemeCard(colorScheme = lightColorScheme4) { onClick(SettingsActivity.Click.CHANGE_THEME, 3) } }
-			item { ThemeCard(colorScheme = lightColorScheme5) { onClick(SettingsActivity.Click.CHANGE_THEME, 4) } }
-			item { ThemeCard(colorScheme = lightColorScheme6) { onClick(SettingsActivity.Click.CHANGE_THEME, 5) } }
-			item { ThemeCard(colorScheme = lightColorScheme7) { onClick(SettingsActivity.Click.CHANGE_THEME, 6) } }
+			themeList.forEachIndexed { index, data ->
+				item {
+					ThemeCard(colorScheme = data.first) {
+						onClick(SettingsActivity.Click.CHANGE_THEME, index)
+					}
+				}
+			}
 		}
 	}
 }
@@ -121,11 +165,23 @@ private fun ThemeView() {
 						Row(modifier = Modifier.fillMaxWidth()) { repeat(6) { RandomTitleText(Random.nextBoolean()) } }
 						Spacer(modifier = Modifier.height(8.dp))
 						repeat(6) {
-							Row(modifier = Modifier.fillMaxWidth()) { repeat(13) { RandomContentText(Random.nextBoolean()) } }
+							Row(modifier = Modifier.fillMaxWidth()) {
+								repeat(13) {
+									RandomContentText(
+										Random.nextBoolean()
+									)
+								}
+							}
 							Spacer(modifier = Modifier.height(4.dp))
 						}
 						Spacer(modifier = Modifier.height(4.dp))
-						Row(modifier = Modifier.fillMaxWidth()) { repeat(13) { RandomTitleText(Random.nextBoolean()) } }
+						Row(modifier = Modifier.fillMaxWidth()) {
+							repeat(13) {
+								RandomTitleText(
+									Random.nextBoolean()
+								)
+							}
+						}
 					}
 				}
 
@@ -180,19 +236,41 @@ private fun RandomContentText(isLong: Boolean) {
 }
 
 @Composable
+private fun BackgroundCard(
+	lightBackground: Color,
+	darkBackground: Color,
+	onClick: () -> Unit
+) {
+	Box(
+		modifier = Modifier
+			.requiredSize(48.dp)
+			.clip(RoundedCornerShape(25))
+			.clickable { onClick() }
+	) {
+		Column(
+			modifier = Modifier.fillMaxSize()
+		) {
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.background(lightBackground)
+			)
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.background(darkBackground)
+			)
+		}
+	}
+}
+
+@Composable
 private fun ThemeCard(
 	colorScheme: ColorScheme,
 	onClick: () -> Unit
 ) {
-//	Canvas(
-//		modifier = Modifier
-//		.fillMaxWidth()
-//		.aspectRatio(0.85f)
-//		.padding(12.dp)
-//		.clip(RoundedCornerShape(8.dp))
-//		.clickable { onClick() }
-//	) {
-//	}
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()

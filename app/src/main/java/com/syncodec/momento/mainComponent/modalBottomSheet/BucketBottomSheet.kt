@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
@@ -45,115 +47,89 @@ fun BucketBottomSheet(
 	var bucketNameText by rememberSaveable { mutableStateOf("") }
 	var isBucketNameTextFocused by remember { mutableStateOf(false) }
 
-	val containerColor by animateColorAsState(
-		targetValue = if (selectedBucketType != null && bucketNameText.isNotBlank()) MaterialTheme.colorScheme.onPrimaryContainer else Color.LightGray,
-		animationSpec = tween(
-			durationMillis = 600
-		)
-	)
-	val contentColor by animateColorAsState(
-		targetValue = if (selectedBucketType != null && bucketNameText.isNotBlank()) MaterialTheme.colorScheme.primaryContainer else Color.DarkGray,
-		animationSpec = tween(
-			durationMillis = 600
-		)
-	)
-
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
 			subtitle = "Have any pending tasks?",
 			bucketItemType = BucketItemType.TODO,
 			highlight = selectedBucketType == BucketItemType.TODO,
-		) {
-			selectedBucketType = BucketItemType.TODO
-		},
+		) { selectedBucketType = BucketItemType.TODO },
 		BucketButtonData(
 			subtitle = "A little fiction here, and a little fantasy there",
 			bucketItemType = BucketItemType.BOOKS,
 			highlight = selectedBucketType == BucketItemType.BOOKS,
-		) {
-			selectedBucketType = BucketItemType.BOOKS
-		},
+		) { selectedBucketType = BucketItemType.BOOKS },
 		BucketButtonData(
 			subtitle = "Aren't those characters real!?",
 			bucketItemType = BucketItemType.SHOWS,
 			highlight = selectedBucketType == BucketItemType.SHOWS,
-		) {
-			selectedBucketType = BucketItemType.SHOWS
-		},
-		BucketButtonData(
-			subtitle = "Gotta keep them safe",
-			bucketItemType = BucketItemType.MEDIA,
-			highlight = selectedBucketType == BucketItemType.MEDIA,
-		) {
-			selectedBucketType = BucketItemType.MEDIA
-		},
-		BucketButtonData(
-			bucketItemType = BucketItemType.LINKS,
-			highlight = selectedBucketType == BucketItemType.LINKS,
-			subtitle = "Those might be helpful someday",
-		) {}
+		) { selectedBucketType = BucketItemType.SHOWS }
 	)
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
+	Surface(
+		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+		color= MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(360.dp)
-			.background(MaterialTheme.colorScheme.background),
+			.heightIn(360.dp),
 	) {
-
-		BottomSheetStrip()
-
-		BottomSheetHeader(title = "Pick a bucket", imageVector = TablerIcons.Bucket)
-
-		Row(
-			modifier = Modifier.horizontalScroll(rememberScrollState())
+		Column(
+			horizontalAlignment = Alignment.CenterHorizontally,
+			modifier = Modifier.fillMaxWidth()
 		) {
-			Spacer(modifier = Modifier.width(16.dp))
-			bucketButtonDataList.forEach { BucketButton(it) }
-			Spacer(modifier = Modifier.width(16.dp))
+
+			BottomSheetStrip()
+
+			BottomSheetHeader(title = "Pick a bucket", imageVector = TablerIcons.Bucket)
+
+			Row(
+				modifier = Modifier.horizontalScroll(rememberScrollState())
+			) {
+				Spacer(modifier = Modifier.width(16.dp))
+				bucketButtonDataList.forEach { BucketButton(it) }
+				Spacer(modifier = Modifier.width(16.dp))
+			}
+
+			Spacer(modifier = Modifier.height(12.dp))
+
+			Text(
+				text = "And name it",
+				style = MaterialTheme.typography.titleSmall,
+				color = MaterialTheme.colorScheme.onBackground,
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(24.dp, 0.dp)
+			)
+
+			Spacer(modifier = Modifier.height(8.dp))
+
+			LargeTextField(
+				text = bucketNameText,
+				placeholder = "Umm... Let me think...",
+				isFocused = isBucketNameTextFocused,
+				onFocusChanged = { isBucketNameTextFocused = it },
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(24.dp, 0.dp)
+			) {
+				bucketNameText = it
+			}
+
+			Spacer(modifier = Modifier.height(8.dp))
+
+			LargeButton(
+				text = "Create",
+				enabled = selectedBucketType != null && bucketNameText.isNotBlank(),
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(24.dp, 0.dp)
+			) {
+				onCreate(bucketNameText, selectedBucketType!!)
+				bucketNameText = ""
+				selectedBucketType = null
+			}
+
+			Spacer(modifier = Modifier.height(32.dp))
 		}
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		Text(
-			text = "And name it",
-			style = MaterialTheme.typography.titleSmall,
-			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		LargeTextField(
-			text = bucketNameText,
-			placeholder = "Umm... Let me think...",
-			isFocused = isBucketNameTextFocused,
-			onFocusChanged = { isBucketNameTextFocused = it },
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
-		) {
-			bucketNameText = it
-		}
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		LargeButton(
-			text = "Create",
-			enabled = selectedBucketType != null && bucketNameText.isNotBlank(),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
-		) {
-			onCreate(bucketNameText, selectedBucketType!!)
-			bucketNameText = ""
-			selectedBucketType = null
-		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
@@ -197,7 +173,7 @@ private fun BucketButton(
 				horizontalAlignment = Alignment.Start
 			) {
 				Icon(
-					imageVector = ResourceMap.bucketTypeToIcon[bucketButtonData.bucketItemType]!!,
+					painter = painterResource(id = ResourceMap.bucketTypeToIcon[bucketButtonData.bucketItemType]!!),
 					contentDescription = null,
 					tint = contentColor,
 					modifier = Modifier

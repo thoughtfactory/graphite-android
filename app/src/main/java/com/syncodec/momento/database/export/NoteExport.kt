@@ -1,6 +1,6 @@
 package com.syncodec.momento.database.export
 
-import com.syncodec.momento.database.note.LocationData
+import com.google.android.gms.maps.model.LatLng
 
 data class NoteExport(
 	val key: String,
@@ -12,7 +12,7 @@ data class NoteExport(
 	val notebookKey: String,
 	val title: String?,
 	val content: String?,
-	val location: LocationData?,
+	val latLng: LatLng?,
 	val address: String?,
 	val attachmentKey: List<String>
 )

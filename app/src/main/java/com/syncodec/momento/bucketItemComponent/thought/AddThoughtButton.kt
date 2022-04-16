@@ -8,10 +8,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Bulb
+import com.syncodec.momento.R
 
 @Preview
 @Composable
@@ -30,14 +30,15 @@ fun AddThoughtButton(
 				.padding(16.dp)
 		) {
 			Icon(
-				imageVector = TablerIcons.Bulb,
-				contentDescription = null,
-				tint = MaterialTheme.colorScheme.primary
+				painter = painterResource(id = R.drawable.ic_bulb),
+				contentDescription = "Add your thought",
+				tint = MaterialTheme.colorScheme.onBackground,
+				modifier = Modifier.requiredSize(24.dp)
 			)
 			Spacer(modifier = Modifier.width(16.dp))
 			Text(
 				text = "Add your thoughts",
-				color = MaterialTheme.colorScheme.primary,
+				color = MaterialTheme.colorScheme.onBackground,
 				style = MaterialTheme.typography.bodyLarge,
 			)
 		}

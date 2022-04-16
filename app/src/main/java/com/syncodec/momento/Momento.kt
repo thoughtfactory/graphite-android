@@ -6,9 +6,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.syncodec.momento.database.bucketItem.BucketItem
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import com.syncodec.momento.miscellaneous.FileUtils.Companion.copyInputStreamToOutputStream
 import com.syncodec.momento.miscellaneous.logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 
@@ -35,6 +39,9 @@ class Momento : Application() {
 	private val EXPORT_DIR = "export"
 		get() = "$DATA/$field"
 
+	private val QUOTE = "quote"
+		get() = "$DATA/$field"
+
 	override fun onCreate() {
 		super.onCreate()
 
@@ -44,13 +51,9 @@ class Momento : Application() {
 		File(BUCKET_DIR).mkdirs()
 		File(NOTE_DIR).mkdirs()
 		File(ATTACHMENT_DIR).mkdirs()
+
+		downloadQuote()
 	}
-
-	fun putBucketItem(bucketItem: BucketItem) =
-		objectMapper.writeValue(File("$BUCKET_DIR/${bucketItem.key}.json"), bucketItem)
-
-	fun getBucketItem(key: String): String = File("$BUCKET_DIR/$key.json").readText()
-	fun deleteBucketItem(key: String) = File("$BUCKET_DIR/$key.json").delete()
 
 	fun putAttachment(key: String, uri: Uri): Boolean {
 		val inputStream = contentResolver.openInputStream(uri)
@@ -85,6 +88,24 @@ class Momento : Application() {
 	fun deleteAttachment(keyList: List<String>) =
 		keyList.forEach { File("$ATTACHMENT_DIR/$it").delete() }
 
+	fun downloadQuote() {
+//		CoroutineScope(Dispatchers.IO).launch {
+//			val storage = Firebase.storage("gs://the-life-cycle.appspot.com")
+//
+//			val storageRef = storage.reference
+//			val quoteRef = storageRef.child("server/enQuote")
+//
+//			quoteRef.listAll()
+//				.addOnSuccessListener {
+//					it.prefixes.forEach {
+//						logger("item : ${it.name}")
+//					}
+//				}
+//
+//			val destFile = File("$QUOTE/")
+//		}
+	}
+
 	companion object {
 		enum class VaultState {
 			NOT_OPENED,
@@ -93,15 +114,6 @@ class Momento : Application() {
 			OPENED,
 			CLOSED,
 			ERROR
-		}
-
-		enum class Click {
-			FAVOURITE,
-			ARCHIVE,
-			LOCK,
-			SHARE,
-			EXPORT,
-			DELETE
 		}
 	}
 }

@@ -1,24 +1,22 @@
 package com.syncodec.momento.mainComponent.screen
 
-import android.content.Intent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,52 +24,37 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
-import com.syncodec.momento.bucketComponent.BucketActivity
-import com.syncodec.momento.custom.ChipData
-import com.syncodec.momento.custom.ChipView
 import com.syncodec.momento.database.bucket.BucketDbEntry
 import com.syncodec.momento.database.bucketItem.BucketItemType
-import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.ResourceMap
-import com.syncodec.momento.mainComponent.miscellaneous.TopBar
 
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
 fun BucketScreen(
-	bucketMap: Map<String, Pair<BucketDbEntry, Int>>,
-	isSelected: Boolean,
+	bucketList: List<BucketDbEntry>,
 	selectedItemList: List<String>,
-	onClick: (MainActivity.Action, Any?) -> Unit
+	bucketFilter: List<BucketItemType>,
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
-
-	val chipDataList: MutableList<ChipData> = mutableListOf()
-	val isChipSelected: MutableMap<BucketItemType, Boolean> = mutableMapOf()
-
-	BucketItemType.values().forEach {
-		var _isSelected by remember { mutableStateOf(true) }
-		ChipData(
-			title = ResourceMap.BucketItemNameMap[it]!!,
-			imageVector = ResourceMap.bucketTypeToIcon[it]!!,
-			isSelected = _isSelected
-		) { _isSelected = !_isSelected }.apply { chipDataList.add(this) }
-		isChipSelected[it] = _isSelected
-	}
-
 	Column(
-		modifier = Modifier
-			.fillMaxSize()
+		modifier = Modifier.fillMaxSize()
 	) {
-		if (bucketMap.isNotEmpty()) {
+		if (bucketList.isNotEmpty()) {
 			Spacer(modifier = Modifier.height(8.dp))
-			ChipView(chipDataList = chipDataList)
 			LazyVerticalGrid(
 				columns = GridCells.Adaptive(minSize = 144.dp),
 				modifier = Modifier.padding(4.dp),
 			) {
-				bucketMap.forEach { (_, data) ->
-					if (isChipSelected[BucketItemType.values()[data.first.bucketItemType]]!!) {
-						item { BucketCard(bucket = data.first, bucketSize = data.second) }
+				bucketList.forEach {
+					if (it.bucketItemType in bucketFilter) {
+						item {
+							BucketCard(
+								bucket = it,
+								isSelected = it.key in selectedItemList,
+								onAction = onAction
+							)
+						}
 					}
 				}
 			}
@@ -85,12 +68,7 @@ fun BucketScreen(
 @Composable
 private fun NoBucketCard() {
 	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.graphicsLayer {
-//				this.scaleX = scaffoldScale
-//				this.scaleY = scaffoldScale
-			},
+		modifier = Modifier.fillMaxSize(),
 		contentAlignment = Alignment.Center
 	) {
 		Column(
@@ -125,34 +103,38 @@ private fun NoBucketCard() {
 				fontStyle = FontStyle.Italic,
 				textAlign = TextAlign.End,
 				color = MaterialTheme.colorScheme.primary,
-				modifier = Modifier
-					.fillMaxWidth(0.71f)
+				modifier = Modifier.fillMaxWidth(0.71f)
 			)
 		}
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class,
+	ExperimentalMaterial3Api::class
+)
 @Composable
 private fun BucketCard(
 	bucket: BucketDbEntry,
-	bucketSize: Int?
+	isSelected: Boolean,
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
-	val context = LocalContext.current
+	val containerColor by animateColorAsState(
+		if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent
+	)
 
-	Box(
+	OutlinedCard(
+		shape = RoundedCornerShape(12.dp),
+		border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
+		containerColor = containerColor,
+		elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 		modifier = Modifier
-			.padding(4.dp)
 			.height(96.dp)
+			.padding(4.dp)
 			.clip(RoundedCornerShape(12.dp))
-			.background(MaterialTheme.colorScheme.secondaryContainer)
-			.clickable {
-				Intent(context, BucketActivity::class.java).apply {
-					putExtra(Konstant.Companion.Konstant.PRIMARY_KEY.name, bucket.key)
-					putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, bucket.bucketItemType)
-					context.startActivity(this)
-				}
-			},
+			.combinedClickable(
+				onClick = { onAction(MainActivity.Action.CLICK_BUCKET, bucket.key) },
+				onLongClick = { onAction(MainActivity.Action.LONG_CLICK_BUCKET, bucket.key) }
+			),
 	) {
 		Column(
 			modifier = Modifier
@@ -168,22 +150,21 @@ private fun BucketCard(
 				modifier = Modifier.fillMaxWidth()
 			) {
 				Icon(
-					imageVector = ResourceMap.bucketTypeToIcon[BucketItemType.values()[bucket.bucketItemType]]!!,
+					painter = painterResource(id = ResourceMap.bucketTypeToIcon[bucket.bucketItemType]!!),
 					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
-					modifier = Modifier
-						.size(24.dp)
+					tint = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier.size(24.dp)
 				)
 				Text(
-					text = "$bucketSize",
+					text = "${bucket.bucketSize}",
 					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSecondaryContainer,
+					color = MaterialTheme.colorScheme.onBackground,
 				)
 			}
 			Text(
 				text = bucket.title,
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSecondaryContainer,
+				color = MaterialTheme.colorScheme.onBackground,
 				fontWeight = FontWeight.ExtraBold
 			)
 		}

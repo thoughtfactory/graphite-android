@@ -1,68 +1,80 @@
 package com.syncodec.momento.bucketItemComponent.miscellaneous
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.R
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
-import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 @OptIn(ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun TopBar(
-	key: String?,
-	onClick: (BucketItemActivity.Click) -> Unit,
+	isNew: Boolean,
+	onAction: (BucketItemActivity.Action, Any?) -> Unit,
 ) {
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(64.dp)
-			.background(MaterialTheme.colorScheme.secondaryContainer)
-	) {
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
-				.padding(8.dp)
-		) {
-			IconButton(onClick = { onClick(BucketItemActivity.Click.TOP_BAR_PRIMARY) }) {
-				AnimatedContent(targetState = key) {
-					if (it == null) {
+	Bar(
+		isNew = isNew,
+		onAction = onAction
+	)
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun Bar(
+	isNew: Boolean,
+	onAction: (BucketItemActivity.Action, Any?) -> Unit
+) {
+	SmallTopAppBar(
+		navigationIcon = {
+			IconButton(onClick = { onAction(BucketItemActivity.Action.TOP_BAR_PRIMARY, null) }) {
+				AnimatedContent(
+					targetState = isNew,
+					transitionSpec = {
+						(scaleIn(tween(600), 0f) with scaleOut(tween(600), 1f)).using(SizeTransform(clip = false))
+					}
+				) {
+					if (isNew) {
 						Icon(
-							imageVector = TablerIcons.Check,
+							painter = painterResource(id = R.drawable.ic_done),
 							contentDescription = "Save",
-							tint = MaterialTheme.colorScheme.onSecondaryContainer,
+							tint = MaterialTheme.colorScheme.onSurface,
+							modifier = Modifier
+								.requiredSize(32.dp)
+								.padding(4.dp)
 						)
 					} else {
 						Icon(
-							imageVector = TablerIcons.ArrowBack,
+							painter = painterResource(id = R.drawable.ic_back),
 							contentDescription = "Back",
-							tint = MaterialTheme.colorScheme.onSecondaryContainer,
+							tint = MaterialTheme.colorScheme.onSurface,
+							modifier = Modifier
+								.requiredSize(32.dp)
+								.padding(4.dp)
 						)
 					}
 				}
 			}
-
-			Spacer(modifier = Modifier.weight(1f))
-
-			IconButton(
-				onClick = { onClick(BucketItemActivity.Click.TOP_BAR_SECONDARY) },
-			) {
+		},
+		title = {},
+		actions = {
+			IconButton(onClick = { onAction(BucketItemActivity.Action.MENU, null) }) {
 				Icon(
-					imageVector = TablerIcons.Dots,
+					painter = painterResource(id = R.drawable.ic_menu),
 					contentDescription = "Menu",
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
+					tint = MaterialTheme.colorScheme.onSurface,
+					modifier = Modifier
+						.requiredSize(32.dp)
+						.padding(4.dp)
 				)
 			}
-		}
-	}
+		},
+		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+	)
 }

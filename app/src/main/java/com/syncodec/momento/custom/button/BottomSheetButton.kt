@@ -45,7 +45,7 @@ fun MenuBottomSheetButton(
 				Icon(
 					painter = painterResource(id = buttonData.icon),
 					contentDescription = null,
-					tint = contentColorFor(backgroundColor = MaterialTheme.colorScheme.secondaryContainer),
+					tint = MaterialTheme.colorScheme.onSecondaryContainer,
 					modifier = Modifier.requiredSize(24.dp)
 				)
 			}

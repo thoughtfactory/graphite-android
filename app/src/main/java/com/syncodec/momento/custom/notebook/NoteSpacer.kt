@@ -16,10 +16,7 @@ fun NoteSpacer(
 	isLast: Boolean = false,
 ) {
 	Column(
-		modifier = Modifier
-			.width(16.dp)
-			.fillMaxHeight()
-			.background(Color.Transparent),
+		modifier = Modifier.width(16.dp),
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Box(

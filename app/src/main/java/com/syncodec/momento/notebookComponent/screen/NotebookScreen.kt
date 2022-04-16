@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
@@ -16,7 +17,6 @@ import com.syncodec.momento.custom.notebook.NotebookHeaderCard
 import com.syncodec.momento.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.momento.database.chapter.ChapterDbEntry
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.database.note.locationDataToLatLng
 import com.syncodec.momento.notebookComponent.NotebookActivity
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
@@ -36,7 +36,8 @@ fun NotebookScreen(
 		stickyHeader {
 			NotebookHeaderCard(
 				title = "Notes",
-				noEntries = if (noteList.isEmpty()) "No notes" else if (noteList.size == 1) "1 note" else "${noteList.size} notes"
+				noEntries = if (noteList.isEmpty()) "No notes" else if (noteList.size == 1) "1 note" else "${noteList.size} notes",
+				color = MaterialTheme.colorScheme.background
 			) { onAction(NotebookActivity.Action.CLICK_NOTE_HEADER, null) }
 		}
 
@@ -58,8 +59,9 @@ fun NotebookScreen(
 						attachmentCount = noteDbEntry.attachmentKeyList.size,
 						attachmentThumbnail = noteDbEntry.attachmentThumbnail,
 						address = noteDbEntry.address,
-						latLng = locationDataToLatLng(noteDbEntry.location),
+						latLng = noteDbEntry.latLng,
 						isVisible = true,
+						selectedColor = MaterialTheme.colorScheme.surface,
 						onClick = { onAction(NotebookActivity.Action.CLICK_NOTE, noteDbEntry.key) },
 						onLongClick = {
 							onAction(NotebookActivity.Action.LONG_CLICK_NOTE, noteDbEntry.key)
@@ -75,7 +77,8 @@ fun NotebookScreen(
 		stickyHeader {
 			NotebookHeaderCard(
 				title = "Chapters",
-				noEntries = if (chapterList.isEmpty()) "No chapters" else if (chapterList.size == 1) "1 chapter" else "${chapterList.size} chapters"
+				noEntries = if (chapterList.isEmpty()) "No chapters" else if (chapterList.size == 1) "1 chapter" else "${chapterList.size} chapters",
+				color = MaterialTheme.colorScheme.background
 			) { onAction(NotebookActivity.Action.CLICK_CHAPTER_HEADER, null) }
 		}
 

@@ -163,6 +163,7 @@ class SettingsActivity : ComponentActivity() {
 			Click.NAVIGATION -> activityState.currentPath.add(data as Path)
 			Click.CHANGE_FONT_FAMILY -> DataStore(context = this).putTypography(data as Int)
 			Click.CHANGE_THEME -> DataStore(context = this).putTheme(data as Int)
+			Click.CHANGE_BACKGROUND -> DataStore(context = this).putBackground(data as Int)
 			Click.ADD_PASSCODE -> {
 				activityState.evokeReason.value = EvokeReason.NEW_PASSCODE
 				showVaultScreen.value = true
@@ -290,6 +291,7 @@ class SettingsActivity : ComponentActivity() {
 		NAVIGATION,
 		CHANGE_FONT_FAMILY,
 		CHANGE_THEME,
+		CHANGE_BACKGROUND,
 		JOURNEY,
 		EXPORT_NOTEBOOK,
 		EXPORT_BUCKET,

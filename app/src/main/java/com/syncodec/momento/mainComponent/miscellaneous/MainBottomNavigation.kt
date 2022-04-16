@@ -100,7 +100,7 @@ fun BottomNavigationBar(
 fun MainNavigation(
 	navController: NavHostController,
 	viewModelStoreOwner: ViewModelStoreOwner,
-	onClick: (MainActivity.Action, Any?) -> Unit
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	val mapView = rememberMapViewWithLifecycle()
 	val viewModel: MainViewModel = viewModel()
@@ -114,9 +114,10 @@ fun MainNavigation(
 
 	val noteMap = viewModel.defaultNoteMap
 	val notebookMap = viewModel.notebookMap
-	val bucketMap = viewModel.bucketMap
+	val bucketList = viewModel.bucketList
 
 	val componentType by viewModel.activityState.componentType
+	val bucketFilter = viewModel.activityState.bucketFilter
 
 	NavHost(
 		navController = navController,
@@ -131,8 +132,9 @@ fun MainNavigation(
 					notebookMap = notebookMap,
 					componentType = componentType,
 					isSelected = isSelected,
-					selectedItemList = selectedItemList
-				) { click, data -> onClick(click, data) }
+					selectedItemList = selectedItemList,
+					onAction = onAction
+				)
 			}
 		}
 		composable(BottomNavigationItem.Bucket.route) {
@@ -140,10 +142,11 @@ fun MainNavigation(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
 				BucketScreen(
-					bucketMap = bucketMap,
-					isSelected = isSelected,
-					selectedItemList = selectedItemList
-				) { click, data -> onClick(click, data) }
+					bucketList = bucketList,
+					selectedItemList = selectedItemList,
+					bucketFilter = bucketFilter,
+					onAction = onAction
+				)
 			}
 		}
 		composable(BottomNavigationItem.Calendar.route) {
@@ -152,9 +155,9 @@ fun MainNavigation(
 			) {
 				CalendarScreen(
 					noteMap = noteMap,
-					isSelected = isSelected,
-					selectedItemList = selectedItemList
-				) { click, data -> onClick(click, data) }
+					selectedItemList = selectedItemList,
+					onAction = onAction
+				)
 			}
 		}
 		composable(BottomNavigationItem.Atlas.route) {
@@ -164,9 +167,9 @@ fun MainNavigation(
 				AtlasScreen(
 					mapView = mapView,
 					noteMap = noteMap,
-					isSelected = isSelected,
-					selectedItemList = selectedItemList
-				) { click, data -> onClick(click, data) }
+					selectedItemList = selectedItemList,
+					onAction = onAction
+				)
 			}
 		}
 	}

@@ -1,157 +1,171 @@
 package com.syncodec.momento.bucketComponent.miscellaneous
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.custom.button.StateButton
 import com.syncodec.momento.custom.button.StateData
 import com.syncodec.momento.database.bucketItem.BucketItemType
-import compose.icons.TablerIcons
-import compose.icons.tablericons.*
 
 
 @Composable
 fun TopBar(
-	bucketTitle: String,
+	title: String,
 	bucketItemType: BucketItemType,
 	showStateSelector: Boolean,
-	onClick : (BucketActivity.Click) -> Unit
+	currentState: Int,
+	onAction: (BucketActivity.Action, Any?) -> Unit
 ) {
-	var currentState by remember { mutableStateOf(0) }
-	LaunchedEffect(key1 = currentState) {
-		onClick(
-			when(currentState)  {
-				0 -> BucketActivity.Click.STATE_ALPHA
-				1 -> BucketActivity.Click.STATE_BETA
-				2 -> BucketActivity.Click.STATE_GAMMA
-				3 -> BucketActivity.Click.STATE_DELTA
-				else ->BucketActivity.Click.STATE_ALPHA
-			}
-		)
-	}
-
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.secondaryContainer)
+			.background(MaterialTheme.colorScheme.surface)
 	) {
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(64.dp)
-				.padding(8.dp)
-		) {
-			IconButton(
-				onClick = { onClick(BucketActivity.Click.BACK) },
-			) {
-				Icon(
-					imageVector = TablerIcons.ArrowBack,
-					contentDescription = "Back",
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
-				)
-			}
+		Bar(
+			title = title,
+			onAction = onAction
+		)
 
-			Spacer(modifier = Modifier.width(8.dp))
-
-			Text(
-				text = bucketTitle,
-				style = MaterialTheme.typography.titleMedium,
-				color = MaterialTheme.colorScheme.onSecondaryContainer
-			)
-
-			Spacer(modifier = Modifier.weight(1f))
-
-			IconButton(
-				onClick = { onClick(BucketActivity.Click.SEARCH) },
-			) {
-				Icon(
-					imageVector = TablerIcons.Search,
-					contentDescription = "Search",
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
-				)
-			}
-
-			IconButton(
-				onClick = { onClick(BucketActivity.Click.MENU) },
-			) {
-				Icon(
-					imageVector = TablerIcons.Dots,
-					contentDescription = "Menu",
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
-				)
-			}
-		}
-
-		StateSelectorCard(
-			bucketItemType = bucketItemType,
+		StateSelector(
 			showStateSelector = showStateSelector,
-			currentState = currentState
-		) { currentState = it }
+			currentState = currentState,
+			bucketItemType = bucketItemType,
+			onAction = onAction
+		)
 	}
 }
 
 @Composable
-private fun StateSelectorCard(
-	bucketItemType: BucketItemType,
+private fun Bar(
+	title: String,
+	onAction: (BucketActivity.Action, Any?) -> Unit
+) {
+	SmallTopAppBar(
+		navigationIcon = {
+			IconButton(onClick = { onAction(BucketActivity.Action.BACK, null) }) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_back),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onSurface,
+					modifier = Modifier
+						.requiredSize(32.dp)
+						.padding(4.dp)
+				)
+			}
+		},
+		title = {
+			Text(
+				text = title,
+				color = MaterialTheme.colorScheme.onSurface,
+				style = MaterialTheme.typography.titleMedium
+			)
+		},
+		actions = {
+			IconButton(onClick = { onAction(BucketActivity.Action.SEARCH, null) }) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_search),
+					contentDescription = "Search",
+					tint = Color(0xFF2978B5),
+					modifier = Modifier
+						.requiredSize(32.dp)
+						.padding(4.dp)
+				)
+			}
+			IconButton(onClick = { onAction(BucketActivity.Action.MENU, null) }) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_menu),
+					contentDescription = "Menu",
+					tint = MaterialTheme.colorScheme.onSurface,
+					modifier = Modifier
+						.requiredSize(32.dp)
+						.padding(4.dp)
+				)
+			}
+		},
+		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+	)
+}
+
+@Composable
+private fun StateSelector(
 	showStateSelector: Boolean,
 	currentState: Int,
-	onClick: (Int) -> Unit
+	bucketItemType: BucketItemType,
+	onAction: (BucketActivity.Action, Any?) -> Unit
 ) {
-//	val stateList = when(bucketItemType) {
-//		BucketItemType.TODO -> listOf(
-//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-//			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-//			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
-//			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-//		)
-//		BucketItemType.BOOKS -> listOf(
-//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-//			StateData(title = "To Read", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-//			StateData(title = "Reading", icon = TablerIcons.Book, color = Color(245, 118, 26)),
-//			StateData(title = "Read", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-//		)
-//		BucketItemType.SHOWS -> listOf(
-//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-//			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-//			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
-//			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-//		)
-//		BucketItemType.MEDIA -> listOf(
-//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-//			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-//			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
-//			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-//		)
-//		BucketItemType.LINKS -> listOf(
-//			StateData(title = "All", icon = TablerIcons.Notes, color = MaterialTheme.colorScheme.onBackground),
-//			StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-//			StateData(title = "Watching", icon = TablerIcons.DeviceTv, color = Color(245, 118, 26)),
-//			StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-//		)
-//	}
-//
-//	AnimatedVisibility(visible = showStateSelector) {
-//		Column(modifier = Modifier.fillMaxWidth()) {
-//			StateButton(
-//				stateList = stateList,
-//				currentState = currentState,
-//				modifier = Modifier
-//					.padding(8.dp, 0.dp)
-//					.height(32.dp)
-//			) { onClick(it) }
-//
-//			Spacer(modifier = Modifier.height(8.dp))
-//		}
-//	}
+	val stateNameList: List<String> = when (bucketItemType) {
+		BucketItemType.TODO -> listOf("All", "To Do", "Doing", "Done")
+		BucketItemType.BOOKS -> listOf("All", "To Read", "Reading", "Read")
+		BucketItemType.SHOWS -> listOf("All", "To Watch", "Watching", "Watched")
+	}
+	val stateIconList: List<Int> = when (bucketItemType) {
+		BucketItemType.TODO -> listOf(
+			R.drawable.ic_state,
+			R.drawable.ic_clock,
+			R.drawable.ic_todo,
+			R.drawable.ic_done
+		)
+		BucketItemType.BOOKS -> listOf(
+			R.drawable.ic_state,
+			R.drawable.ic_clock,
+			R.drawable.ic_book,
+			R.drawable.ic_done
+		)
+		BucketItemType.SHOWS -> listOf(
+			R.drawable.ic_state,
+			R.drawable.ic_clock,
+			R.drawable.ic_show,
+			R.drawable.ic_done
+		)
+	}
+
+	AnimatedVisibility(
+		visible = showStateSelector,
+		enter = expandVertically(tween(600)) + fadeIn(tween(300)),
+		exit = shrinkVertically(tween(600)) + fadeOut(tween(300)),
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(12.dp, 0.dp),
+	) {
+		Column(
+			modifier = Modifier.fillMaxWidth()
+		) {
+			StateButton(
+				stateList = listOf(
+					StateData(
+						title = stateNameList[0],
+						icon = stateIconList[0],
+						stateTint = MaterialTheme.colorScheme.primary
+					),
+					StateData(
+						title = stateNameList[1],
+						icon = stateIconList[1],
+						stateTint = MaterialTheme.colorScheme.primary
+					),
+					StateData(
+						title = stateNameList[2],
+						icon = stateIconList[2],
+						stateTint = MaterialTheme.colorScheme.primary
+					),
+					StateData(
+						title = stateNameList[3],
+						icon = stateIconList[3],
+						stateTint = MaterialTheme.colorScheme.primary
+					)
+				),
+				currentState = currentState,
+				modifier = Modifier.height(32.dp)
+			) { onAction(BucketActivity.Action.CHANGE_STATE, it) }
+			Spacer(modifier = Modifier.height(8.dp))
+		}
+	}
 }

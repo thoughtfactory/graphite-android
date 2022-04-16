@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.google.accompanist.flowlayout.FlowRow
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.richText.viewer.*
 import com.syncodec.momento.custom.richText.viewer.string.RichTextString
@@ -35,11 +36,9 @@ import com.syncodec.momento.custom.richText.viewer.string.RichTextStringStyle
 import com.syncodec.momento.custom.richText.viewer.string.Text
 import com.syncodec.momento.custom.richText.viewer.string.richTextString
 import com.syncodec.momento.custom.squircle.SquircleShape
-import com.syncodec.momento.database.note.LocationData
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.noteViewerTimestamp
 import com.syncodec.momento.noteComponent.NoteActivity
-import com.syncodec.momento.notebookComponent.NotebookActivity
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -94,7 +93,7 @@ fun ViewerComponent(
 
 		Header(
 			userTimestamp = noteDbEntry.userTimestamp,
-			location = noteDbEntry.location,
+			latlng = noteDbEntry.latLng,
 			address = noteDbEntry.address,
 			connectedTag = connectedTag
 		)
@@ -142,7 +141,7 @@ private fun Thumbnail(
 @Composable
 private fun Header(
 	userTimestamp: Long,
-	location: LocationData?,
+	latlng: LatLng?,
 	address: String?,
 	connectedTag: List<String>
 ) {

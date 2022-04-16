@@ -26,7 +26,6 @@ import compose.icons.tablericons.Pencil
 fun ThumbnailCard(
 	thumbnail: Any?
 ) {
-	Log.i("npr71", "thumbnail : $thumbnail")
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
 
@@ -45,34 +44,7 @@ fun ThumbnailCard(
 			),
 			contentDescription = null,
 			contentScale = ContentScale.Crop,
-			modifier = Modifier
-				.fillMaxSize()
+			modifier = Modifier.fillMaxSize()
 		)
-
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(5.dp),
-			contentAlignment = Alignment.BottomEnd
-		) {
-			Card(
-				modifier = Modifier
-					.requiredSize(40.dp)
-					.clip(CircleShape)
-					.clickable { },
-				shape = CircleShape,
-				elevation = 0.dp,
-				backgroundColor = Color.Black.copy(alpha = 0.47f)
-			) {
-				Icon(
-					imageVector = TablerIcons.Pencil,
-					contentDescription = null,
-					tint = MaterialTheme.colorScheme.primaryContainer,
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(10.dp)
-				)
-			}
-		}
 	}
 }

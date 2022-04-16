@@ -10,6 +10,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.bucketItemComponent.miscellaneous.*
 import com.syncodec.momento.bucketItemComponent.thought.ThoughtCard
@@ -24,7 +25,7 @@ fun ShowTvItemScreen(
 	thumbnail: Any? = null,
 	thoughtList: SnapshotStateList<String> = mutableStateListOf(),
 	currentState: Int,
-	onClick: (BucketItemActivity.Click, Any?) -> Unit
+	onAction: (BucketItemActivity.Action, Any?) -> Unit
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -48,6 +49,7 @@ fun ShowTvItemScreen(
 			title = tvData.name,
 			releaseDate = if ((tvData.firstAirDate?.length ?: 0) > 4) tvData.firstAirDate?.substring(0, 4) else null,
 			showLength = tvData.episodeRunTime.firstOrNull(),
+			showType = ShowType.TV,
 			inProduction = tvData.inProduction,
 			noSeason = tvData.noSeason,
 			noEpisode = tvData.noEpisode
@@ -66,7 +68,10 @@ fun ShowTvItemScreen(
 //		) { onClick(BucketItemActivity.Click.STATE, it) }
 		Spacer(modifier = Modifier.height(12.dp))
 
-		ThoughtCard(thoughtList = thoughtList) { onClick(it, null) }
+		ThoughtCard(
+			thoughtList = thoughtList,
+			onAction = onAction
+		)
 		Spacer(modifier = Modifier.height(12.dp))
 
 		val tagList: MutableList<String> = mutableListOf()

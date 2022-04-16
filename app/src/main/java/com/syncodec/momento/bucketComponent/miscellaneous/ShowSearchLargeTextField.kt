@@ -6,14 +6,17 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Card
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.bucketComponent.BucketActivity
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import compose.icons.TablerIcons
 import compose.icons.tablericons.DeviceTv
 import compose.icons.tablericons.Movie
@@ -40,7 +44,7 @@ fun ShowSearchLargeTextField(
 	isFocused: Boolean,
 	onFocusChanged: (Boolean) -> Unit,
 	onValueChanged: (String) -> Unit,
-	onClick: (BucketActivity.Click) -> Unit
+	onAction: (BucketActivity.Action) -> Unit
 ) {
 	BasicTextField(
 		value = text,
@@ -67,38 +71,36 @@ fun ShowSearchLargeTextField(
 			)
 			.onFocusChanged { onFocusChanged(it.isFocused) },
 		decorationBox = { innerTextField ->
-			Card(
-				modifier = Modifier
-					.fillMaxWidth(),
-				backgroundColor = Color.Transparent,
-				elevation = 0.dp,
+			Surface(
+				border = BorderStroke(
+					2.dp, if (isFocused) MaterialTheme.colorScheme.primary
+					else MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5)
+				),
 				shape = RoundedCornerShape(12.dp),
-				border = BorderStroke(2.dp, if (isFocused) MaterialTheme.colorScheme.primary else Color.LightGray)
+				modifier = Modifier.fillMaxWidth()
 			) {
 				Row(
-					modifier = Modifier
-						.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth(),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.SpaceBetween
 				) {
 					Spacer(modifier = Modifier.width(12.dp))
 					Box(
-						modifier = Modifier
-							.weight(1f)
+						modifier = Modifier.weight(1f)
 					) {
 						Crossfade(targetState = text.isEmpty()) {
 							if (it) {
 								Text(
 									text = placeholder,
 									style = MaterialTheme.typography.bodyMedium,
-									color = Color.LightGray,
+									color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5),
 									fontWeight = FontWeight.Bold
 								)
 							}
 						}
 						innerTextField()
 					}
-					DataTypeCard(dataType = dataType) { onClick(it) }
+					DataTypeCard(dataType = dataType) { onAction(it) }
 				}
 			}
 		}
@@ -109,14 +111,14 @@ fun ShowSearchLargeTextField(
 @Composable
 private fun DataTypeCard(
 	dataType: BucketActivity.DataType,
-	onClick: (BucketActivity.Click) -> Unit
+	onClick: (BucketActivity.Action) -> Unit
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.SpaceBetween,
 		modifier = Modifier
 			.fillMaxHeight()
-			.clickable { onClick(BucketActivity.Click.DATA_TYPE_SELECT) },
+			.clickable { onClick(BucketActivity.Action.DATA_TYPE_SELECT) },
 	) {
 		Spacer(modifier = Modifier.width(12.dp))
 		AnimatedContent(targetState = dataType) {

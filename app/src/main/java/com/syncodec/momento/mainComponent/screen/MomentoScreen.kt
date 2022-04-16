@@ -24,7 +24,9 @@ fun MomentoScreen(
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	Box(
-		modifier = Modifier.fillMaxSize().padding(0.dp, 0.dp, 0.dp, 64.dp)
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(0.dp, 0.dp, 0.dp, 64.dp)
 	) {
 		Crossfade(
 			targetState = componentType,
@@ -36,13 +38,13 @@ fun MomentoScreen(
 					isSelected = false,
 					selectedItemList = selectedItemList,
 					filterTag = listOf()
-				) { click, data ->  onAction(click, data) }
+				) { click, data -> onAction(click, data) }
 				MainActivity.ComponentType.NOTEBOOK -> NotebookScreen(
 					notebookMap = notebookMap,
 					isSelected = isSelected,
 					selectedItemList = selectedItemList,
 					filterTag = listOf()
-				) {click, data ->  onAction(click, data)}
+				) { click, data -> onAction(click, data) }
 			}
 		}
 	}

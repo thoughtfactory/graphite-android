@@ -70,7 +70,7 @@ class TodayActivity : ComponentActivity() {
 				.background(Color.Black),
 		) { page ->
 			Image(
-				painter = painterResource(id = R.drawable.background),
+				painter = painterResource(id = R.drawable.background_1),
 				contentDescription = null,
 				contentScale = ContentScale.Crop,
 				modifier = Modifier

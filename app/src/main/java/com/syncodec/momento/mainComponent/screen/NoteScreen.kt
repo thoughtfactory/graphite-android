@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,15 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,11 +26,9 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.Momento
-import com.syncodec.momento.R
 import com.syncodec.momento.custom.notebook.*
 import com.syncodec.momento.custom.squircle.Squircle
 import com.syncodec.momento.database.note.NoteDbEntry
-import com.syncodec.momento.database.note.locationDataToLatLng
 import com.syncodec.momento.miscellaneous.DataStore
 import com.syncodec.momento.miscellaneous.TimeUtils
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToPrettyDay
@@ -123,7 +114,8 @@ fun NoteScreen(
 					AnimatedVisibility(visible = entrySize != 0) {
 						NotebookHeaderCard(
 							title = timeStampToPrettyDay(day),
-							noEntries = "$entrySize ${if (entrySize == 1) "entry" else "entries"}"
+							noEntries = "$entrySize ${if (entrySize == 1) "entry" else "entries"}",
+							color = MaterialTheme.colorScheme.background
 						)
 					}
 				}
@@ -143,10 +135,10 @@ fun NoteScreen(
 							key = noteDbEntry.key,
 							timestamp = noteDbEntry.userTimestamp,
 							showFullTime = false,
-							isLocked = false,
+							isLocked = noteDbEntry.isLocked,
 							isSelected = noteDbEntry.key in selectedItemList,
-							isArchived = false,
-							isFavourite = false,
+							isArchived = noteDbEntry.isArchived,
+							isFavourite = noteDbEntry.isFavourite,
 							isDeleted = noteDbEntry.deletedTimestamp != -1L,
 							isLast = noteDbEntry.key == lastEntryKey,
 							title = noteDbEntry.title,
@@ -154,8 +146,9 @@ fun NoteScreen(
 							attachmentCount = noteDbEntry.attachmentKeyList.size,
 							attachmentThumbnail = noteDbEntry.attachmentThumbnail,
 							address = noteDbEntry.address,
-							latLng = locationDataToLatLng(noteDbEntry.location),
+							latLng = noteDbEntry.latLng,
 							isVisible = showEntry,
+							selectedColor = MaterialTheme.colorScheme.surface,
 							onClick = { onClick(MainActivity.Action.CLICK_NOTE, noteDbEntry.key) },
 							onLongClick = {
 								onClick(MainActivity.Action.LONG_CLICK_NOTE, noteDbEntry.key)
@@ -192,15 +185,15 @@ private fun QuoteCard() {
 				.fillMaxWidth()
 				.fillMaxHeight()
 		) {
-			Image(
-				painter = painterResource(id = R.drawable.background),
-				contentDescription = null,
-				contentScale = ContentScale.Crop,
-				modifier = Modifier
-					.fillMaxWidth()
-					.fillMaxHeight()
-					.blur(8.dp, BlurredEdgeTreatment.Rectangle),
-			)
+//			Image(
+//				painter = painterResource(id = R.drawable.background_1),
+//				contentDescription = null,
+//				contentScale = ContentScale.Crop,
+//				modifier = Modifier
+//					.fillMaxWidth()
+//					.fillMaxHeight()
+//					.blur(8.dp, BlurredEdgeTreatment.Rectangle),
+//			)
 
 			Row(
 				modifier = Modifier
@@ -213,15 +206,15 @@ private fun QuoteCard() {
 					sizeInDp = 56.dp,
 					smoothing = 6.0,
 				) {
-					Image(
-						painter = painterResource(id = R.drawable.background),
-						contentDescription = null,
-						contentScale = ContentScale.Crop,
-						colorFilter = ColorFilter.tint(
-							Color.Black.copy(alpha = 0.31f),
-							BlendMode.SrcOver
-						)
-					)
+//					Image(
+//						painter = painterResource(id = R.drawable.background_1),
+//						contentDescription = null,
+//						contentScale = ContentScale.Crop,
+//						colorFilter = ColorFilter.tint(
+//							Color.Black.copy(alpha = 0.31f),
+//							BlendMode.SrcOver
+//						)
+//					)
 
 					Column(
 						modifier = Modifier

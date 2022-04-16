@@ -2,6 +2,7 @@ package com.syncodec.momento.database.note
 
 import android.graphics.Bitmap
 import androidx.room.*
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import org.json.JSONObject
 
@@ -55,8 +56,8 @@ data class NoteDbEntry(
 	@ColumnInfo(name = "attachment_key_list")
 	var attachmentKeyList: MutableList<String> = mutableListOf()
 
-	@ColumnInfo(name = "location_data")
-	var location: LocationData? = null
+	@ColumnInfo(name = "latlng")
+	var latLng: LatLng? = null
 
 	@ColumnInfo(name = "address")
 	var address: String? = null
@@ -96,7 +97,7 @@ data class NoteDbEntry(
 		result = 31 * result + (attachmentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (content?.hashCode() ?: 0)
 		result = 31 * result + attachmentKeyList.hashCode()
-		result = 31 * result + (location?.hashCode() ?: 0)
+		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
 		result = 31 * result + mood
 		result = 31 * result + isFavourite.hashCode()
