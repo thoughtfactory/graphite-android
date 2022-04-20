@@ -70,7 +70,7 @@ fun NoteCard(
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(8.dp, 0.dp, 8.dp, if (isLast) 8.dp else 0.dp),
+				.padding(8.dp, 0.dp, 12.dp, if (isLast) 8.dp else 0.dp),
 		) {
 			NoteSpacer(isLast = isLast)
 			Spacer(modifier = Modifier.width(4.dp))

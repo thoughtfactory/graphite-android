@@ -18,6 +18,8 @@ import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.note.NoteTableDao
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.database.notebook.NotebookTableDao
+import com.syncodec.momento.database.quote.QuoteDbEntry
+import com.syncodec.momento.database.quote.QuoteTableDao
 import com.syncodec.momento.database.tag.TagDbEntry
 import com.syncodec.momento.database.tag.TagDbTableDao
 import com.syncodec.momento.database.tag.TagKeyDbEntry
@@ -61,7 +63,7 @@ class Converters {
 	fun fromDataToBucketItem(data: ByteArray?): BucketItem? {
 		return data?.let { objectMapper.readValue(it) }
 	}
-	
+
 	@TypeConverter
 	fun fromBucketItemTypeToData(value: BucketItemType): Int {
 		return value.ordinal
@@ -127,7 +129,8 @@ class Converters {
 		BucketItemDbEntry::class,
 		AttachmentDbEntry::class,
 		TagDbEntry::class,
-		TagKeyDbEntry::class
+		TagKeyDbEntry::class,
+		QuoteDbEntry::class
 	],
 	version = 1,
 	exportSchema = false
@@ -143,6 +146,7 @@ abstract class UserDatabase : RoomDatabase() {
 	abstract val attachmentTableDao: AttachmentTableDao
 	abstract val tagDbTableDao: TagDbTableDao
 	abstract val tagKeyDbTableDao: TagKeyDbTableDao
+	abstract val quoteTableDao: QuoteTableDao
 
 	companion object {
 		@Volatile

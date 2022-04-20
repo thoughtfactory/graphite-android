@@ -39,13 +39,9 @@ interface BucketItemDbTableDao {
 	@Query(value = "DELETE FROM bucket_item_table WHERE `key` = :key")
 	suspend fun delete(key: String)
 
-//	@Delete
-//	suspend fun delete(diaryEntries: List<BucketItemDbEntry>)
-
 	@Query("DELETE FROM bucket_item_table WHERE `key` IN (:keyList)")
 	suspend fun delete(keyList: List<String>)
 
-
-//    @Query(value = "SELECT * FROM diary_entry_table ORDER BY modified_timestamp DESC")
-//    fun getAll(): LiveData<List<DiaryEntry>>
+	@Query("DELETE FROM bucket_item_table WHERE bucket_key IN (:bucketKeyList)")
+	suspend fun deleteWithBucket(bucketKeyList: List<String>)
 }

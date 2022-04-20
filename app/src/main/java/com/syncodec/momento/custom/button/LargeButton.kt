@@ -31,9 +31,7 @@ fun LargeButton(
 			disabledContentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
 		),
 		enabled = enabled,
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
+		modifier = modifier
 	) {
 		Text(
 			text = text,

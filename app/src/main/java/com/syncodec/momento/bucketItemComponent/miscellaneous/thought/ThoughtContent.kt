@@ -1,4 +1,4 @@
-package com.syncodec.momento.bucketItemComponent.thought
+package com.syncodec.momento.bucketItemComponent.miscellaneous.thought
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -20,7 +20,8 @@ import androidx.compose.ui.unit.dp
 fun ThoughtContent(
 	thought: String,
 	isFirst: Boolean,
-	onSave: (String) -> Unit
+	onSave: (String) -> Unit,
+	onDelete: () -> Unit
 ) {
 	var showEditor by remember { mutableStateOf(false) }
 
@@ -44,7 +45,11 @@ fun ThoughtContent(
 							onSave(it)
 							showEditor = false
 						},
-						onDiscard = { showEditor = false }
+						onDiscard = { showEditor = false },
+						onDelete = {
+							onDelete()
+							showEditor = false
+						}
 					)
 				}
 			} else {

@@ -94,7 +94,9 @@ fun NewChapterBottomSheet(
 			LargeButton(
 				text = "Add new chapter",
 				enabled = chapterTitleText.isNotBlank(),
-				modifier = Modifier.padding(24.dp, 0.dp)
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(24.dp, 0.dp)
 			) {
 				focusManager.clearFocus()
 				onAction(

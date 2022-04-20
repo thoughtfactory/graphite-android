@@ -32,12 +32,10 @@ fun NotebookHeaderCard(
 			.clickable(enabled = onClick != null) { onClick?.invoke() }
 	) {
 		Row(
-			verticalAlignment = Alignment.Bottom,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(6.dp, 0.dp)
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier.fillMaxWidth()
 		) {
-			Spacer(modifier = Modifier.width(8.dp))
+			Spacer(modifier = Modifier.width(14.dp))
 			Box(
 				modifier = Modifier
 					.width(4.dp)
@@ -46,33 +44,27 @@ fun NotebookHeaderCard(
 					.background(MaterialTheme.colorScheme.primary)
 			)
 
-			Spacer(modifier = Modifier.width(8.dp))
+			Spacer(modifier = Modifier.width(12.dp))
 
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(0.dp, 8.dp),
-				verticalAlignment = Alignment.Bottom
-			) {
+			Text(
+				text = title,
+				color = MaterialTheme.colorScheme.primary,
+				style = MaterialTheme.typography.bodyLarge,
+				fontWeight = FontWeight.Bold
+			)
+
+			Spacer(modifier = Modifier.weight(1f))
+
+			AnimatedContent(targetState = noEntries) {
 				Text(
-					text = title,
-					color = MaterialTheme.colorScheme.primary,
-					style = MaterialTheme.typography.bodyLarge
+					text = it,
+					color = MaterialTheme.colorScheme.onBackground,
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold
 				)
-
-				Spacer(modifier = Modifier.weight(1f))
-
-				AnimatedContent(targetState = noEntries) {
-					Text(
-						text = it,
-						color = MaterialTheme.colorScheme.onBackground,
-						style = MaterialTheme.typography.bodyMedium,
-						fontWeight = FontWeight.Bold
-					)
-				}
 			}
 
-			Spacer(modifier = Modifier.width(8.dp))
+			Spacer(modifier = Modifier.width(12.dp))
 		}
 	}
 }

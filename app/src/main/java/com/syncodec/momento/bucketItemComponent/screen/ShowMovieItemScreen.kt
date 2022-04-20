@@ -15,14 +15,12 @@ import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.bucketItemComponent.miscellaneous.*
-import com.syncodec.momento.bucketItemComponent.thought.ThoughtCard
+import com.syncodec.momento.bucketItemComponent.miscellaneous.thought.ThoughtCard
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.custom.button.StateButton
 import com.syncodec.momento.custom.button.StateData
-import com.syncodec.momento.database.bucketItem.BucketItemDbEntry
 import com.syncodec.momento.database.bucketItem.MovieData
 import com.syncodec.momento.konstant.Konstant
-import com.syncodec.momento.miscellaneous.logger
 
 
 @Composable
@@ -53,12 +51,12 @@ fun ShowMovieItemScreen(
 
 		ShowHeaderCard(
 			title = movieData.title,
+			inProduction = null,
 			releaseDate =
 			if (movieData.releaseDate != null && movieData.releaseDate.length > 3)
 				movieData.releaseDate.substring(0, 4) else null,
 			showType = ShowType.MOVIE,
 			showLength = movieData.runtime,
-			inProduction = null,
 			noSeason = null,
 			noEpisode = null
 		)
@@ -108,7 +106,8 @@ fun ShowMovieItemScreen(
 			enabled = true,
 			modifier = Modifier.fillMaxWidth()
 		) {
-
+			val url = "https://www.themoviedb.org/movie/${movieData.id}"
+			onAction(BucketItemActivity.Action.OPEN_LINK, url)
 		}
 
 		Spacer(modifier = Modifier.height(32.dp))

@@ -2,6 +2,7 @@ package com.syncodec.momento.bucketItemComponent
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +22,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.miscellaneous.TopBar
 import com.syncodec.momento.bucketItemComponent.modalBottonSheet.MenuBottomSheet
+import com.syncodec.momento.bucketItemComponent.screen.BookItemScreen
 import com.syncodec.momento.bucketItemComponent.screen.ShowMovieItemScreen
 import com.syncodec.momento.bucketItemComponent.screen.ShowTvItemScreen
 import com.syncodec.momento.custom.LoadingView
@@ -28,6 +30,7 @@ import com.syncodec.momento.database.bucketItem.BucketItemState
 import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.ui.theme.MomentoTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -99,8 +102,11 @@ class BucketItemActivity : ComponentActivity() {
 				viewModel.bucketItemDbEntry.value?.state = BucketItemState.values()[data]
 				viewModel.updateItem()
 			}
-			Action.ADD_THOUGHT -> {
-				viewModel.updateItem()
+			Action.ADD_THOUGHT -> { viewModel.updateItem() }
+			Action.OPEN_LINK -> {
+				Intent(Intent.ACTION_VIEW, Uri.parse(data as String)).apply {
+					startActivity(this)
+				}
 			}
 			Action.FAVOURITE -> {
 //				bucketItemDbEntry!!.isFavourite = !bucketItemDbEntry!!.isFavourite
@@ -155,6 +161,7 @@ class BucketItemActivity : ComponentActivity() {
 	@Composable
 	private fun Content() {
 		val bucketItemDbEntry by viewModel.bucketItemDbEntryFlow.collectAsState()
+		val bookData by viewModel.bookData
 		val tvData by viewModel.tvData
 		val movieData by viewModel.movieData
 		val thoughtList = viewModel.thoughtList
@@ -181,9 +188,20 @@ class BucketItemActivity : ComponentActivity() {
 			) {
 				when (viewModel.bucketItemType) {
 					BucketItemType.TODO -> null
-					BucketItemType.BOOKS -> null
+					BucketItemType.BOOKS -> Crossfade(targetState = bookData != null) {
+						if (it) {
+							BookItemScreen(
+								bookData = bookData!!,
+								thumbnail = viewModel.thumbnail.value,
+								thoughtList = thoughtList,
+								currentState = bucketItemDbEntry!!.state.ordinal,
+							) {action, data -> onPerformAction(action, data) }
+						} else {
+							LoadingView()
+						}
+					}
 					BucketItemType.SHOWS -> {
-						Crossfade(targetState = tvData == null || movieData == null) {
+						Crossfade(targetState = tvData != null || movieData != null) {
 							if (it) {
 								when (viewModel.showData.value!!.showType) {
 									ShowType.TV -> ShowTvItemScreen(
@@ -191,13 +209,13 @@ class BucketItemActivity : ComponentActivity() {
 										thumbnail = viewModel.thumbnail.value,
 										thoughtList = thoughtList,
 										currentState = bucketItemDbEntry!!.state.ordinal,
-									) { click, i -> onPerformAction(click, i) }
+									) { action, data -> onPerformAction(action, data) }
 									ShowType.MOVIE -> ShowMovieItemScreen(
 										movieData = movieData!!,
 										thumbnail = viewModel.thumbnail.value,
 										currentState = bucketItemDbEntry!!.state.ordinal,
 										thoughtList = thoughtList,
-									) { click, i -> onPerformAction(click, i) }
+									) { action, data -> onPerformAction(action, data) }
 								}
 							} else {
 								LoadingView()
@@ -231,6 +249,7 @@ class BucketItemActivity : ComponentActivity() {
 		MENU,
 		STATE,
 		ADD_THOUGHT,
+		OPEN_LINK,
 		FAVOURITE,
 		ARCHIVE,
 		LOCK,

@@ -9,12 +9,16 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.R
 import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.bucketItemComponent.miscellaneous.*
-import com.syncodec.momento.bucketItemComponent.thought.ThoughtCard
+import com.syncodec.momento.bucketItemComponent.miscellaneous.thought.ThoughtCard
 import com.syncodec.momento.custom.button.LargeButton
+import com.syncodec.momento.custom.button.StateButton
+import com.syncodec.momento.custom.button.StateData
 import com.syncodec.momento.database.bucketItem.TvData
 import com.syncodec.momento.konstant.Konstant
 
@@ -23,8 +27,8 @@ import com.syncodec.momento.konstant.Konstant
 fun ShowTvItemScreen(
 	tvData: TvData,
 	thumbnail: Any? = null,
-	thoughtList: SnapshotStateList<String> = mutableStateListOf(),
 	currentState: Int,
+	thoughtList: SnapshotStateList<String> = mutableStateListOf(),
 	onAction: (BucketItemActivity.Action, Any?) -> Unit
 ) {
 	Column(
@@ -47,25 +51,37 @@ fun ShowTvItemScreen(
 
 		ShowHeaderCard(
 			title = tvData.name,
-			releaseDate = if ((tvData.firstAirDate?.length ?: 0) > 4) tvData.firstAirDate?.substring(0, 4) else null,
-			showLength = tvData.episodeRunTime.firstOrNull(),
-			showType = ShowType.TV,
 			inProduction = tvData.inProduction,
+			releaseDate = if ((tvData.firstAirDate?.length ?: 0) > 4)
+				tvData.firstAirDate?.substring(0, 4) else null,
+			showType = ShowType.TV,
+			showLength = tvData.episodeRunTime.firstOrNull(),
 			noSeason = tvData.noSeason,
 			noEpisode = tvData.noEpisode
 		)
 		Spacer(modifier = Modifier.height(12.dp))
 
-//		StateButton(
-//			stateList = listOf(
-//				StateData(title = "To Watch", icon = TablerIcons.Clock, color = MaterialTheme.colorScheme.primary),
-//				StateData(title = "Watching", icon = TablerIcons.Book, color = Color(245, 118, 26)),
-//				StateData(title = "Watched", icon = TablerIcons.Check, color = Color(81, 146, 89)),
-//			),
-//			currentState = currentState,
-//			modifier = Modifier
-//				.height(48.dp)
-//		) { onClick(BucketItemActivity.Click.STATE, it) }
+		StateButton(
+			stateList = listOf(
+				StateData(
+					title = "To Watch",
+					icon = R.drawable.ic_clock,
+					stateTint = MaterialTheme.colorScheme.primary
+				),
+				StateData(
+					title = "Watching",
+					icon = R.drawable.ic_show,
+					stateTint = Color(245, 118, 26)
+				),
+				StateData(
+					title = "Watched",
+					icon = R.drawable.ic_done,
+					stateTint = Color(81, 146, 89)
+				),
+			),
+			currentState = currentState,
+			modifier = Modifier.height(32.dp)
+		) { onAction(BucketItemActivity.Action.STATE, it) }
 		Spacer(modifier = Modifier.height(12.dp))
 
 		ThoughtCard(
@@ -85,12 +101,12 @@ fun ShowTvItemScreen(
 		}
 
 		LargeButton(
-			text = "View in TMDB",
+			text = "Open in TMDB",
 			enabled = true,
-			modifier = Modifier
-				.fillMaxWidth()
+			modifier = Modifier.fillMaxWidth()
 		) {
-
+			val url = "https://www.themoviedb.org/tv/${tvData.id}"
+			onAction(BucketItemActivity.Action.OPEN_LINK, url)
 		}
 
 		Spacer(modifier = Modifier.height(32.dp))

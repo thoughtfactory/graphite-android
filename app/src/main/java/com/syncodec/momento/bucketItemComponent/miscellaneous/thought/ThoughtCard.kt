@@ -1,4 +1,4 @@
-package com.syncodec.momento.bucketItemComponent.thought
+package com.syncodec.momento.bucketItemComponent.miscellaneous.thought
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -20,7 +20,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class,
+@OptIn(
+	ExperimentalMaterialApi::class, ExperimentalAnimationApi::class,
 	ExperimentalMaterial3Api::class
 )
 @Composable
@@ -44,8 +45,16 @@ fun ThoughtCard(
 			thoughtList.forEachIndexed { index, thought ->
 				ThoughtContent(
 					thought = thought,
-					isFirst = index == 0
-				) { thoughtList[index] = it }
+					isFirst = index == 0,
+					onDelete = {
+						thoughtList.removeAt(index)
+						onAction(BucketItemActivity.Action.ADD_THOUGHT, null)
+					},
+					onSave = {
+						thoughtList[index] = it
+						onAction(BucketItemActivity.Action.ADD_THOUGHT, null)
+					}
+				)
 				Box(
 					modifier = Modifier
 						.fillMaxWidth(0.71f)
@@ -62,7 +71,8 @@ fun ThoughtCard(
 						thoughtList.add(thought)
 						onAction(BucketItemActivity.Action.ADD_THOUGHT, null)
 					},
-					onDiscard = { showEditor = false }
+					onDiscard = { showEditor = false },
+					onDelete = null
 				)
 				else AddThoughtButton { showEditor = true }
 			}

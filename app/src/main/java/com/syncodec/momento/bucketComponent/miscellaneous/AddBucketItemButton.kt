@@ -35,7 +35,7 @@ fun AddNewBucketItemButton(
 					enabled = true,
 					modifier = Modifier
 						.fillMaxWidth()
-						.padding(12.dp, 0.dp)
+						.padding(24.dp, 0.dp)
 				) { onAction(BucketActivity.Action.DELETE_ITEM) }
 			} else {
 				LargeButton(
@@ -47,7 +47,7 @@ fun AddNewBucketItemButton(
 					enabled = true,
 					modifier = Modifier
 						.fillMaxWidth()
-						.padding(12.dp, 0.dp)
+						.padding(24.dp, 0.dp)
 				) { onAction(BucketActivity.Action.OPEN_ADD_SHEET) }
 			}
 		}

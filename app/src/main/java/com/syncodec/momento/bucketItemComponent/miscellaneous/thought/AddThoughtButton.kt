@@ -1,4 +1,4 @@
-package com.syncodec.momento.bucketItemComponent.thought
+package com.syncodec.momento.bucketItemComponent.miscellaneous.thought
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -33,7 +33,7 @@ fun AddThoughtButton(
 				painter = painterResource(id = R.drawable.ic_bulb),
 				contentDescription = "Add your thought",
 				tint = MaterialTheme.colorScheme.onBackground,
-				modifier = Modifier.requiredSize(24.dp)
+				modifier = Modifier.requiredSize(20.dp)
 			)
 			Spacer(modifier = Modifier.width(16.dp))
 			Text(

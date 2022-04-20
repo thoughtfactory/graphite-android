@@ -38,10 +38,9 @@ private data class BucketButtonData(
 )
 
 @OptIn(ExperimentalFoundationApi::class)
-@Preview
 @Composable
 fun BucketBottomSheet(
-	onCreate: (String, BucketItemType) -> Unit = { _, _ -> }
+	onCreate: (String, BucketItemType) -> Unit
 ) {
 	var selectedBucketType by remember { mutableStateOf<BucketItemType?>(null) }
 	var bucketNameText by rememberSaveable { mutableStateOf("") }

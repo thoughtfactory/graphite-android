@@ -11,6 +11,8 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.database.notebook.NotebookDbEntry
+import com.syncodec.momento.database.quote.QuoteDbEntry
+import java.io.File
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class, ExperimentalAnimationApi::class)
@@ -21,6 +23,8 @@ fun MomentoScreen(
 	componentType: MainActivity.ComponentType,
 	isSelected: Boolean,
 	selectedItemList: List<String>,
+	quote: QuoteDbEntry?,
+	quoteBg: File?,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	Box(
@@ -35,9 +39,10 @@ fun MomentoScreen(
 			when (it) {
 				MainActivity.ComponentType.NOTE -> NoteScreen(
 					noteMap = noteMap,
-					isSelected = false,
 					selectedItemList = selectedItemList,
-					filterTag = listOf()
+					filterTag = listOf(),
+					quote = quote,
+					quoteBg = quoteBg,
 				) { click, data -> onAction(click, data) }
 				MainActivity.ComponentType.NOTEBOOK -> NotebookScreen(
 					notebookMap = notebookMap,

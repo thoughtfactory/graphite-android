@@ -68,6 +68,7 @@ fun NewNoteBottomSheet(
 				text = "Add new note",
 				enabled = noteTitleText.isNotBlank(),
 				modifier = Modifier
+					.fillMaxWidth()
 					.padding(24.dp, 0.dp)
 			) {
 				focusManager.clearFocus()

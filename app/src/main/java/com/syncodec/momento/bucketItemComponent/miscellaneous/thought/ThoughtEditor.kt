@@ -1,4 +1,4 @@
-package com.syncodec.momento.bucketItemComponent.thought
+package com.syncodec.momento.bucketItemComponent.miscellaneous.thought
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -16,13 +16,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 
-@Preview
 @Composable
 fun ThoughtEditor(
 	text: String = "",
 	isFirst: Boolean = false,
-	onSave: (String) -> Unit = {},
-	onDiscard: () -> Unit = {}
+	onSave: (String) -> Unit,
+	onDiscard: () -> Unit,
+	onDelete: (() -> Unit)?
 ) {
 	val context = LocalContext.current
 	var thought by remember { mutableStateOf(text) }
@@ -63,7 +63,8 @@ fun ThoughtEditor(
 					.makeText(context, "Don't keep the field empty", Toast.LENGTH_SHORT)
 					.show()
 			},
-			onDiscard = onDiscard
+			onDiscard = onDiscard,
+			onDelete = onDelete
 		)
 	}
 }

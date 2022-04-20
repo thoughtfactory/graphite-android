@@ -20,7 +20,36 @@ class Konstant {
 			DO_DELETE
 		}
 
-		val monthName: List<String> = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+		val monthName: List<String> = listOf(
+			"January",
+			"February",
+			"March",
+			"April",
+			"May",
+			"June",
+			"July",
+			"August",
+			"September",
+			"October",
+			"November",
+			"December"
+		)
+
+		val monthNameShort: List<String> = listOf(
+			"Jan",
+			"Feb",
+			"Mar",
+			"Apr",
+			"May",
+			"Jun",
+			"Jul",
+			"Aug",
+			"Sep",
+			"Oct",
+			"Nov",
+			"Dec"
+		)
+
 		val weekName: List<String> = listOf("S", "M", "T", "W", "T", "F", "S")
 
 		val genreIdMap: Map<Int, String> = mapOf(

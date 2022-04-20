@@ -1,6 +1,5 @@
 package com.syncodec.momento.database.note
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 

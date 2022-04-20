@@ -3,37 +3,50 @@ package com.syncodec.momento.mainComponent.screen
 import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.Momento
 import com.syncodec.momento.custom.notebook.*
 import com.syncodec.momento.custom.squircle.Squircle
 import com.syncodec.momento.database.note.NoteDbEntry
+import com.syncodec.momento.database.quote.QuoteDbEntry
+import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.miscellaneous.DataStore
 import com.syncodec.momento.miscellaneous.TimeUtils
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToPrettyDay
 import com.syncodec.momento.miscellaneous.filterData
 import com.syncodec.momento.todayComponent.TodayActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import org.joda.time.DateTime
+import java.io.File
+import kotlin.random.Random
 
 
 @OptIn(
@@ -46,10 +59,11 @@ import com.syncodec.momento.todayComponent.TodayActivity
 @Composable
 fun NoteScreen(
 	noteMap: Map<String, NoteDbEntry>,
-	isSelected: Boolean,
 	selectedItemList: List<String>,
 	filterTag: List<String>,
-	onClick: (MainActivity.Action, Any?) -> Unit
+	quote: QuoteDbEntry?,
+	quoteBg: File?,
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
 	val dataStore = DataStore(context = context)
@@ -58,6 +72,20 @@ fun NoteScreen(
 	val showArchived = false
 	val showFavourite = false
 	val showLocked = false
+
+	val showMembershipCardProb = remember { Random.nextDouble() }
+	var showMembershipCard by remember { mutableStateOf(false) }
+	var showQuoteCard by remember { mutableStateOf(false) }
+	LaunchedEffect(key1 = null) {
+		withContext(Dispatchers.IO) {
+			delay(1600)
+			showMembershipCard = showMembershipCardProb > 0.5
+		}
+		withContext(Dispatchers.IO) {
+			delay(1200)
+			showQuoteCard = true
+		}
+	}
 
 	val noteDbEntryDayMap: MutableMap<Long, MutableList<NoteDbEntry>> = mutableMapOf()
 	noteMap.forEach { (_, note) ->
@@ -70,12 +98,16 @@ fun NoteScreen(
 		Column(
 			modifier = Modifier.fillMaxSize()
 		) {
-			if (!(showArchived || showFavourite || showLocked)) {
-				QuoteCard()
-				Spacer(modifier = Modifier.height(36.dp))
-			} else {
-				Spacer(modifier = Modifier.height(76.dp))
-			}
+			Spacer(modifier = Modifier.height(8.dp))
+			QuoteCard(
+				quote = quote,
+				quoteBg = quoteBg,
+				showCard = showQuoteCard && !(showArchived || showFavourite || showLocked)
+			)
+			Spacer(modifier = Modifier.height(8.dp))
+			MembershipCard(showCard = showMembershipCard && !(showArchived || showFavourite || showLocked))
+			Spacer(modifier = Modifier.height(36.dp))
+
 			NoEntryCard()
 		}
 	} else {
@@ -83,15 +115,18 @@ fun NoteScreen(
 			modifier = Modifier
 		) {
 			item {
-				AnimatedVisibility(
-					visible = !(showArchived || showFavourite || showLocked),
-					enter = expandVertically(tween(600)) + scaleIn(tween(600)),
-					exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
-				) {
-					Column(modifier = Modifier.fillMaxWidth()) {
-						QuoteCard()
-						Spacer(modifier = Modifier.height(16.dp))
+				Column(modifier = Modifier.fillMaxWidth()) {
+					Spacer(modifier = Modifier.height(8.dp))
+					QuoteCard(
+						quote = quote,
+						quoteBg = quoteBg,
+						showCard = showQuoteCard && !(showArchived || showFavourite || showLocked)
+					)
+					if (showMembershipCard && !(showArchived || showFavourite || showLocked)){
+						Spacer(modifier = Modifier.height(8.dp))
 					}
+					MembershipCard(showCard = showMembershipCard && !(showArchived || showFavourite || showLocked))
+					Spacer(modifier = Modifier.height(8.dp))
 				}
 			}
 
@@ -149,9 +184,9 @@ fun NoteScreen(
 							latLng = noteDbEntry.latLng,
 							isVisible = showEntry,
 							selectedColor = MaterialTheme.colorScheme.surface,
-							onClick = { onClick(MainActivity.Action.CLICK_NOTE, noteDbEntry.key) },
+							onClick = { onAction(MainActivity.Action.CLICK_NOTE, noteDbEntry.key) },
 							onLongClick = {
-								onClick(MainActivity.Action.LONG_CLICK_NOTE, noteDbEntry.key)
+								onAction(MainActivity.Action.LONG_CLICK_NOTE, noteDbEntry.key)
 							},
 						)
 
@@ -167,104 +202,168 @@ fun NoteScreen(
 	}
 }
 
-@Preview
+@OptIn(ExperimentalAnimationApi::class)
 @ExperimentalMaterialApi
 @Composable
-private fun QuoteCard() {
+private fun QuoteCard(
+	quote: QuoteDbEntry?,
+	quoteBg: File?,
+	showCard: Boolean
+) {
 	val context = LocalContext.current
-	Box(
-		modifier = Modifier
-			.height(80.dp)
-			.fillMaxWidth()
-			.padding(12.dp, 0.dp)
-			.clip(RoundedCornerShape(12.dp))
-			.clickable { context.startActivity(Intent(context, TodayActivity::class.java)) },
+
+	val date = remember { DateTime.now() }
+	val d = remember { date.dayOfMonth }
+	val m = remember { date.monthOfYear }
+
+	AnimatedVisibility(
+		visible = showCard && quote != null,
+		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
 		Box(
 			modifier = Modifier
+				.height(80.dp)
 				.fillMaxWidth()
-				.fillMaxHeight()
+				.padding(12.dp, 0.dp)
+				.clip(RoundedCornerShape(12.dp))
+				.clickable { context.startActivity(Intent(context, TodayActivity::class.java)) },
 		) {
-//			Image(
-//				painter = painterResource(id = R.drawable.background_1),
-//				contentDescription = null,
-//				contentScale = ContentScale.Crop,
-//				modifier = Modifier
-//					.fillMaxWidth()
-//					.fillMaxHeight()
-//					.blur(8.dp, BlurredEdgeTreatment.Rectangle),
-//			)
-
-			Row(
+			Box(
 				modifier = Modifier
 					.fillMaxWidth()
 					.fillMaxHeight()
-					.padding(12.dp),
-				verticalAlignment = Alignment.CenterVertically
 			) {
-				Squircle(
-					sizeInDp = 56.dp,
-					smoothing = 6.0,
+				Image(
+					painter = rememberImagePainter(
+						data = quoteBg,
+						builder = { crossfade(300) }
+					),
+					contentDescription = null,
+					contentScale = ContentScale.Crop,
+					modifier = Modifier
+						.fillMaxWidth()
+						.fillMaxHeight()
+						.blur(8.dp, BlurredEdgeTreatment.Rectangle),
+				)
+
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.fillMaxHeight()
+						.padding(12.dp),
+					verticalAlignment = Alignment.CenterVertically
 				) {
-//					Image(
-//						painter = painterResource(id = R.drawable.background_1),
-//						contentDescription = null,
-//						contentScale = ContentScale.Crop,
-//						colorFilter = ColorFilter.tint(
-//							Color.Black.copy(alpha = 0.31f),
-//							BlendMode.SrcOver
-//						)
-//					)
+					Squircle(
+						sizeInDp = 56.dp,
+						smoothing = 6.0,
+					) {
+						Image(
+							painter = rememberImagePainter(
+								data = quoteBg,
+								builder = { crossfade(300) }
+							),
+							contentDescription = null,
+							contentScale = ContentScale.Crop,
+							colorFilter = ColorFilter.tint(
+								Color.Black.copy(alpha = 0.31f),
+								BlendMode.SrcOver
+							)
+						)
+
+						Column(
+							modifier = Modifier
+								.fillMaxSize(),
+							horizontalAlignment = Alignment.CenterHorizontally,
+							verticalArrangement = Arrangement.Center
+						) {
+							Text(
+								text = d.toString().padStart(2, '0'),
+								style = MaterialTheme.typography.bodyMedium,
+								fontWeight = FontWeight.Bold,
+								color = Color.White,
+								overflow = TextOverflow.Ellipsis,
+								maxLines = 1
+							)
+
+							Text(
+								text = Konstant.monthNameShort[m - 1],
+								style = MaterialTheme.typography.bodySmall,
+								color = Color.White,
+								overflow = TextOverflow.Ellipsis,
+								maxLines = 1
+							)
+						}
+
+					}
+
+					Spacer(modifier = Modifier.padding(8.dp))
 
 					Column(
 						modifier = Modifier
-							.fillMaxSize(),
-						horizontalAlignment = Alignment.CenterHorizontally,
+							.height(48.dp)
+							.padding(0.dp, 0.dp, 16.dp, 0.dp),
 						verticalArrangement = Arrangement.Center
 					) {
 						Text(
-							text = "04",
-							style = MaterialTheme.typography.bodyMedium,
-							fontWeight = FontWeight.Bold,
+							text = "En Quote",
+							style = MaterialTheme.typography.bodyLarge,
 							color = Color.White,
 							overflow = TextOverflow.Ellipsis,
 							maxLines = 1
 						)
 
 						Text(
-							text = "May",
+							text = "${quote?.quote}",
 							style = MaterialTheme.typography.bodySmall,
+							fontStyle = FontStyle.Italic,
 							color = Color.White,
 							overflow = TextOverflow.Ellipsis,
 							maxLines = 1
 						)
 					}
-
 				}
+			}
+		}
+	}
+}
 
-				Spacer(modifier = Modifier.padding(8.dp))
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@Composable
+private fun MembershipCard(
+	showCard: Boolean
+) {
+	AnimatedVisibility(
+		visible = showCard,
+		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
+	) {
+		Card(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(12.dp, 0.dp),
+			border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
+			containerColor = Color.Transparent
+		) {
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(12.dp),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Text(
+					text = "Want to add style to your notes?",
+					style = MaterialTheme.typography.bodyLarge,
+					color = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier.weight(1f)
+				)
 
-				Column(
-					modifier = Modifier
-						.height(48.dp)
-						.padding(0.dp, 0.dp, 16.dp, 0.dp),
-					verticalArrangement = Arrangement.Center
+				Button(
+					onClick = { /*TODO*/ }
 				) {
 					Text(
-						text = "En Quote",
+						text = "Try premium",
 						style = MaterialTheme.typography.bodyLarge,
-						color = Color.White,
-						overflow = TextOverflow.Ellipsis,
-						maxLines = 1
-					)
-
-					Text(
-						text = "Looking down the misty path to uncertain destinations",
-						style = MaterialTheme.typography.bodySmall,
-						fontStyle = FontStyle.Italic,
-						color = Color.White,
-						overflow = TextOverflow.Ellipsis,
-						maxLines = 1
 					)
 				}
 			}

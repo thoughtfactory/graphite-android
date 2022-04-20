@@ -18,19 +18,13 @@ sealed class BottomSheetType {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SheetLayout(
+	bottomSheetType: BottomSheetType,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
-	val scope = rememberCoroutineScope()
-	val viewModel: MainViewModel = viewModel()
-
-	when (viewModel.activityState.bottomSheetType.value) {
-		BottomSheetType.MenuBottomSheet -> MenuBottomSheet(
-			isLoggedIn = viewModel.firebaseAuth.currentUser != null,
-			email = viewModel.firebaseAuth.currentUser?.email
-		) { onAction(it, null) }
+	when (bottomSheetType) {
+		BottomSheetType.MenuBottomSheet -> MenuBottomSheet { onAction(it, null) }
 		BottomSheetType.BucketBottomSheet -> BucketBottomSheet { bucketName, bucketType ->
-			viewModel.createNewBucket(bucketType = bucketType, title = bucketName)
-			scope.launch { viewModel.activityState.bottomSheetState.hide() }
+			onAction(MainActivity.Action.NEW_BUCKET, Pair(bucketName, bucketType))
 		}
 		BottomSheetType.NotebookBottomSheet -> NotebookBottomSheet { action, notebookDbEntry ->
 			onAction(action, notebookDbEntry)

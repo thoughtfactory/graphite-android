@@ -23,6 +23,7 @@ import com.syncodec.momento.custom.button.StateButton
 import com.syncodec.momento.custom.button.StateData
 import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.ResourceMap
+import com.syncodec.momento.mainComponent.modalBottomSheet.BottomSheetType
 
 
 @OptIn(
@@ -129,7 +130,12 @@ private fun Bar(
 		} else {
 			CenterAlignedTopAppBar(
 				navigationIcon = {
-					IconButton(onClick = { onAction(MainActivity.Action.MENU, null) }) {
+					IconButton(onClick = {
+						onAction(
+							MainActivity.Action.OPEN_BOTTOM_SHEET,
+							BottomSheetType.MenuBottomSheet
+						)
+					}) {
 						Icon(
 							painter = painterResource(id = R.drawable.ic_icon),
 							contentDescription = null,

@@ -1,24 +1,25 @@
 package com.syncodec.momento
 
 import android.app.Application
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import com.syncodec.momento.database.UserDatabase
+import com.syncodec.momento.database.quote.QuoteDbEntry
 import com.syncodec.momento.miscellaneous.FileUtils.Companion.copyInputStreamToOutputStream
 import com.syncodec.momento.miscellaneous.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.io.File
+import java.nio.charset.Charset
 
 
 class Momento : Application() {
-
-	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
 
 	var vaultState = mutableStateOf(VaultState.NOT_OPENED)
 
@@ -88,22 +89,77 @@ class Momento : Application() {
 	fun deleteAttachment(keyList: List<String>) =
 		keyList.forEach { File("$ATTACHMENT_DIR/$it").delete() }
 
+	fun getQuoteBg(date: String): File? {
+		val file = File("$QUOTE/${date}.jpeg")
+		return if (file.exists()) file else null
+	}
+
 	fun downloadQuote() {
-//		CoroutineScope(Dispatchers.IO).launch {
-//			val storage = Firebase.storage("gs://the-life-cycle.appspot.com")
-//
-//			val storageRef = storage.reference
-//			val quoteRef = storageRef.child("server/enQuote")
-//
-//			quoteRef.listAll()
-//				.addOnSuccessListener {
-//					it.prefixes.forEach {
-//						logger("item : ${it.name}")
-//					}
-//				}
-//
-//			val destFile = File("$QUOTE/")
-//		}
+		CoroutineScope(Dispatchers.IO).launch {
+			val storage = Firebase.storage("gs://the-life-cycle.appspot.com")
+			val storageRef = storage.reference
+			val quoteDirRef = storageRef.child("server/enQuote")
+
+			val quoteTableDao = UserDatabase.getInstance(this@Momento).quoteTableDao
+			val quoteKeyList = quoteTableDao.getAllKeys()
+
+			quoteDirRef.listAll()
+				.addOnSuccessListener { dateList ->
+					dateList.prefixes.forEach { date ->
+						if (date.name !in quoteKeyList) {
+							logger("downloading")
+							date.child("${date.name}.json")
+								.getBytes(1024 * 1024)
+								.addOnSuccessListener { byteArray ->
+									File("$QUOTE/").mkdirs()
+									File("$QUOTE/${date.name}.jpeg").createNewFile()
+									val fileUri = Uri.fromFile(File("$QUOTE/${date.name}.jpeg"))
+									date.child("${date.name}.jpg")
+										.getFile(fileUri)
+										.addOnSuccessListener {
+											val jsonObject =
+												JSONObject(byteArray.toString(Charset.defaultCharset()))
+											QuoteDbEntry(
+												date = date.name,
+												quote = jsonObject.getString("quote"),
+												author = jsonObject.getString("author"),
+												special = jsonObject.getString("special"),
+												isFavourite = false,
+												authorLink = jsonObject.optString("authorLink"),
+												bgLink = jsonObject.optString("bgLink"),
+												bgCred = jsonObject.optString("bgCred"),
+												bgCredLink = jsonObject.optString("bgCredLink")
+											).apply {
+												CoroutineScope(Dispatchers.IO).launch {
+													quoteTableDao.insert(this@apply)
+												}
+											}
+										}
+										.addOnFailureListener {
+											val jsonObject =
+												JSONObject(byteArray.toString(Charset.defaultCharset()))
+											QuoteDbEntry(
+												date = date.name,
+												quote = jsonObject.getString("quote"),
+												author = jsonObject.getString("author"),
+												special = jsonObject.getString("special"),
+												isFavourite = false,
+												authorLink = jsonObject.optString("authorLink"),
+												bgLink = jsonObject.optString("bgLink"),
+												bgCred = jsonObject.optString("bgCred"),
+												bgCredLink = jsonObject.optString("bgCredLink")
+											).apply {
+												CoroutineScope(Dispatchers.IO).launch {
+													quoteTableDao.insert(this@apply)
+												}
+											}
+										}
+								}
+						}
+					}
+				}
+
+		}
 	}
 
 	companion object {

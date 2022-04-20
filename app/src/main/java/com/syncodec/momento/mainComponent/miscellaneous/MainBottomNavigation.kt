@@ -43,7 +43,7 @@ open class BottomNavigationItem(var route: String, var icon: Int, var title: Str
 @Composable
 fun BottomNavigationBar(
 	currentRoute: String?,
-	onAction: (MainActivity.Action, Any?) -> Unit
+	onNavigation: (String) -> Unit
 ) {
 	val screens = listOf(
 		BottomNavigationItem.Momento,
@@ -59,7 +59,7 @@ fun BottomNavigationBar(
 	) {
 		screens.forEach { screen ->
 			NavigationBarItem(
-				onClick = { onAction(MainActivity.Action.NAVIGATION, screen.route) },
+				onClick = { onNavigation(screen.route) },
 				icon = {
 					Icon(
 						painter = painterResource(id = screen.icon),
@@ -105,19 +105,21 @@ fun MainNavigation(
 	val mapView = rememberMapViewWithLifecycle()
 	val viewModel: MainViewModel = viewModel()
 
-	val vaultState by viewModel.activityState.vaultState
-	var showArchived by viewModel.activityState.showArchived
-	var showFavourite by viewModel.activityState.showFavourite
-	var showLocked by viewModel.activityState.showLocked
-	val isSelected by viewModel.activityState.isSelected
-	val selectedItemList = viewModel.activityState.selectedItemList
+	val vaultState by viewModel.vaultState
+	var showArchived by viewModel.showArchived
+	var showFavourite by viewModel.showFavourite
+	var showLocked by viewModel.showLocked
+	val isSelected by viewModel.isSelected
+	val selectedItemList = viewModel.selectedItemList
 
 	val noteMap = viewModel.defaultNoteMap
 	val notebookMap = viewModel.notebookMap
 	val bucketList = viewModel.bucketList
+	val quote by viewModel.quote
+	val quoteBg by viewModel.quoteBg
 
-	val componentType by viewModel.activityState.componentType
-	val bucketFilter = viewModel.activityState.bucketFilter
+	val componentType by viewModel.componentType
+	val bucketFilter = viewModel.bucketFilter
 
 	NavHost(
 		navController = navController,
@@ -133,6 +135,8 @@ fun MainNavigation(
 					componentType = componentType,
 					isSelected = isSelected,
 					selectedItemList = selectedItemList,
+					quote = quote,
+					quoteBg = quoteBg,
 					onAction = onAction
 				)
 			}
