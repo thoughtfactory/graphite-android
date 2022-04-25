@@ -1,7 +1,10 @@
 package com.syncodec.momento.attachmentComponent
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.Environment
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -29,13 +32,19 @@ import com.syncodec.momento.attachmentComponent.screen.AttachmentScreen
 import com.syncodec.momento.attachmentComponent.screen.AttachmentViewerScreen
 import com.syncodec.momento.custom.DeleteDialog
 import com.syncodec.momento.custom.LoadingView
+import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.ui.theme.MomentoTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+
 
 class AttachmentActivity : ComponentActivity() {
 	private val viewModel by viewModels<AttachmentViewModel>()
@@ -87,6 +96,7 @@ class AttachmentActivity : ComponentActivity() {
 
 	override fun onBackPressed() {
 		if (viewModel.activityState.isSelected.value) {
+			viewModel.activityState.selectedItemList.clear()
 			viewModel.activityState.isSelected.value = false
 		} else if (viewModel.activityState.isViewer.value) {
 			viewModel.activityState.isViewer.value = false
@@ -95,9 +105,31 @@ class AttachmentActivity : ComponentActivity() {
 		}
 	}
 
+	fun saveImageToDownloadFolder(imageFile: String, ibitmap: Bitmap) {
+		try {
+			val filePath = File(
+				getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),
+				imageFile
+			)
+			val outputStream: OutputStream = FileOutputStream(filePath)
+			ibitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+			outputStream.flush()
+			outputStream.close()
+			Toast.makeText(
+				this@AttachmentActivity,
+				imageFile + "Sucessfully saved in Download Folder",
+				Toast.LENGTH_SHORT
+			).show()
+		} catch (e: Exception) {
+			e.printStackTrace()
+		}
+	}
+
 	@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
 	private fun onPerformAction(action: Action, data: Any?) {
 		val activityState = viewModel.activityState
+
+		logger("action : $action")
 
 		when (action) {
 			Action.BACK -> onBackPressed()
@@ -106,7 +138,6 @@ class AttachmentActivity : ComponentActivity() {
 				activityState.scope.launch { activityState.bottomSheetState.show() }
 			}
 			Action.OPEN_NOTE -> {
-
 				Intent(this, NoteActivity::class.java).apply {
 					putExtra(
 						Konstant.Companion.Konstant.NOTEBOOK_KEY.name,
@@ -121,23 +152,18 @@ class AttachmentActivity : ComponentActivity() {
 						viewModel.attachmentList[activityState.pagerState.currentPage].first.noteKey
 					)
 					putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
+					putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
 					startActivity(this)
 				}
 			}
 			Action.SHOW_DELETE -> null
-			Action.ON_PREVIOUS -> {
-
-			}
-			Action.ON_NEXT -> {
-
-			}
 			Action.CLICK_ATTACHMENT -> {
 				data as Pair<*, *>
 				if (activityState.isSelected.value) {
-					if (data.second as String in activityState.selectedItemList) {
-						activityState.selectedItemList.remove(data.second)
+					if ((data.second as AttachmentDbEntry).key in activityState.selectedItemList) {
+						activityState.selectedItemList.remove((data.second as AttachmentDbEntry).key)
 					} else {
-						activityState.selectedItemList.add(data.second as String)
+						activityState.selectedItemList.add((data.second as AttachmentDbEntry).key)
 					}
 				} else {
 					activityState.isViewer.value = true
@@ -154,22 +180,30 @@ class AttachmentActivity : ComponentActivity() {
 					}
 				}
 			}
+			Action.LONG_CLICK_ATTACHMENT -> {
+				data as AttachmentDbEntry
+
+				activityState.isSelected.value = true
+				if (data.key in activityState.selectedItemList) {
+					activityState.selectedItemList.remove(data.key)
+				} else {
+					activityState.selectedItemList.add(data.key)
+				}
+			}
 			Action.CLICK_PREVIEW -> {
 				data as Int
 				activityState.scope.launch {
 					activityState.pagerState.animateScrollToPage(data)
 				}
 			}
-			Action.LONG_CLICK_ATTACHMENT -> {
-				data as String
+			Action.ON_PREVIOUS -> {
 
-				activityState.isSelected.value = true
-				if (data in activityState.selectedItemList) {
-					activityState.selectedItemList.remove(data)
-				} else {
-					activityState.selectedItemList.add(data)
-				}
 			}
+			Action.ON_NEXT -> {
+
+			}
+			Action.DELETE -> null
+			Action.SHARE -> null
 		}
 	}
 
@@ -198,7 +232,7 @@ class AttachmentActivity : ComponentActivity() {
 			sheetContent = { SheetLayout { action, data -> onPerformAction(action, data) } },
 		) {
 			Scaffold(
-				containerColor = MaterialTheme.colorScheme.surface,
+				containerColor = MaterialTheme.colorScheme.background,
 				topBar = {
 					if (status == Status.LOADED) {
 						TopBar(
@@ -223,7 +257,8 @@ class AttachmentActivity : ComponentActivity() {
 								) { action, data -> onPerformAction(action, data) }
 							} else {
 								AttachmentScreen(
-									attachmentList = attachmentList
+									attachmentList = attachmentList,
+									selectedItemList = activityState.selectedItemList
 								) { action, data -> onPerformAction(action, data) }
 							}
 						}
@@ -290,12 +325,11 @@ class AttachmentActivity : ComponentActivity() {
 		OPEN_NOTE,
 		SHOW_DELETE,
 		CLICK_ATTACHMENT,
+		LONG_CLICK_ATTACHMENT,
 		CLICK_PREVIEW,
 		ON_PREVIOUS,
 		ON_NEXT,
-		LONG_CLICK_ATTACHMENT,
 		DELETE,
-		SAVE,
 		SHARE
 	}
 }

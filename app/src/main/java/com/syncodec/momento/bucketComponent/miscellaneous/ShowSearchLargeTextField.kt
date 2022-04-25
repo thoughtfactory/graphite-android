@@ -28,9 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.bucketComponent.BucketActivity
 import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
-import compose.icons.TablerIcons
-import compose.icons.tablericons.DeviceTv
-import compose.icons.tablericons.Movie
+import com.syncodec.momento.R
 
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -124,13 +122,13 @@ private fun DataTypeCard(
 		AnimatedContent(targetState = dataType) {
 			when (it) {
 				BucketActivity.DataType.TV -> Icon(
-					imageVector = TablerIcons.DeviceTv,
+					painter = painterResource(id = R.drawable.ic_tv),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.requiredSize(20.dp)
 				)
 				BucketActivity.DataType.MOVIE -> Icon(
-					imageVector = TablerIcons.Movie,
+					painter = painterResource(R.drawable.ic_show),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.requiredSize(20.dp)

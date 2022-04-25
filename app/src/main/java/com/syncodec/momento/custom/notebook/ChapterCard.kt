@@ -8,9 +8,7 @@ import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,7 +27,9 @@ import com.syncodec.momento.miscellaneous.TimeUtils.Companion.entryTimestamp1
 import dev.jorgecastillo.androidcolorx.library.tints
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class,
+	ExperimentalMaterial3Api::class
+)
 @Composable
 fun ChapterCard(
 	timestamp: Long,
@@ -44,12 +44,12 @@ fun ChapterCard(
 	noteCount: Int,
 	chapterCount: Int,
 	isVisible: Boolean = false,
+	selectedColor: Color,
 	onClick: () -> Unit,
 	onLongClick: (() -> Unit)? = null,
 ) {
 	val containerColor by animateColorAsState(
-		if (isSelected) MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-		else MaterialTheme.colorScheme.surface
+		if (isSelected) selectedColor else Color.Transparent
 	)
 
 	AnimatedVisibility(
@@ -65,11 +65,11 @@ fun ChapterCard(
 		) {
 			NoteSpacer(isLast = isLast)
 			Spacer(modifier = Modifier.width(4.dp))
-			Card(
-				elevation = 0.dp,
+			OutlinedCard(
 				shape = RoundedCornerShape(12.dp),
-				backgroundColor = containerColor,
-				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
+				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.31f)),
+				containerColor = containerColor,
+				elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 				modifier = Modifier
 					.fillMaxSize()
 					.clip(RoundedCornerShape(12.dp))
@@ -170,20 +170,6 @@ fun ChapterCard(
 						overflow = TextOverflow.Ellipsis,
 						modifier = Modifier
 							.height(80.dp)
-					)
-				}
-
-				Box(
-					modifier = Modifier
-						.fillMaxSize(),
-					contentAlignment = Alignment.CenterEnd
-				) {
-					Box(
-						modifier = Modifier
-							.width(8.dp)
-							.height(80.dp)
-							.clip(CutCornerShape(16.dp, 0.dp, 0.dp, 16.dp))
-							.background(MaterialTheme.colorScheme.secondaryContainer)
 					)
 				}
 			}

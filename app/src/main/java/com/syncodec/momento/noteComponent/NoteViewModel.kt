@@ -30,6 +30,7 @@ import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
 import com.syncodec.momento.miscellaneous.getResizedBitmap
 import com.syncodec.momento.miscellaneous.locationAddressFilter
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.repository.AttachmentRepository
 import com.syncodec.momento.repository.NoteRepository
 import com.syncodec.momento.repository.TagRepository
@@ -53,6 +54,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
 
+	var isNew: Boolean? = null
 	var viewerKey: MutableState<String?> = mutableStateOf(null)
 
 	lateinit var notebookKey: String
@@ -90,7 +92,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 		noteDbEntry.value?.key?.let {
 			AttachmentDbEntry(
-				key = generatePrimaryKey(),
+				key = key,
 				createdTimestamp = System.currentTimeMillis(),
 				noteKey = it,
 				mimeType = mimeType,
@@ -103,6 +105,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	fun putNote() {
 		viewModelScope.launch(Dispatchers.IO) {
 			this@NoteViewModel.noteDbEntry.value?.let {
+				it.modifiedTimestamp = System.currentTimeMillis()
 				var bitmap: Bitmap? = null
 				attachmentMap.forEach { (_, data) ->
 					when (data.first.mimeType?.split("/")?.first()) {
@@ -125,7 +128,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 				noteRepository.putNote(noteDbEntry = it)
 				tagRepository.connectTag(key = noteDbEntry.value!!.key, connectedTag)
-				attachmentRepository.putAttachment(attachmentList = attachmentMap.values.toList())
+				attachmentRepository.putAttachment(attachmentList = attachmentMap.values.toList(), noteKey = noteDbEntry.value!!.key)
 				activityState.isSaving.value = false
 				activityState.isSaved.value = true
 			}
@@ -145,7 +148,8 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		viewModelScope.launch(Dispatchers.IO) {
 			status.value = Status.LOADING
 			attachmentRepository.getAttachment(noteKey = key).forEach {
-				attachmentMap[it.key] = Pair(it, attachmentRepository.getAttachmentUri(it.noteKey))
+				logger("key : ${it.key}")
+				attachmentMap[it.key] = Pair(it, attachmentRepository.getAttachmentUri(it.key))
 			}
 			status.value = Status.LOADED
 		}
@@ -153,7 +157,10 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 	fun openNotebook() {
 		viewModelScope.launch(Dispatchers.IO) {
-			noteRepository.openNotebookAsFlow(notebookKey = notebookKey).collect {
+			noteRepository.openNotebookChapterAsFlow(
+				notebookKey = notebookKey,
+				chapterPath = chapterPath
+			).collect {
 				noteKeyList.clear()
 				noteKeyList.addAll(it)
 			}
@@ -181,8 +188,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	@SuppressLint("MissingPermission")
 	fun getLocation() {
 		fusedLocationClient.getCurrentLocation(
-			LocationRequest.PRIORITY_HIGH_ACCURACY,
-			cancellationToken
+			LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken
 		)
 			.addOnSuccessListener { location: Location? ->
 				if (location == null)

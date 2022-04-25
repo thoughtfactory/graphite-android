@@ -35,15 +35,19 @@ import com.syncodec.momento.bucketComponent.miscellaneous.AddNewBucketItemButton
 import com.syncodec.momento.bucketComponent.miscellaneous.DataTypeSelectDropdownDemo
 import com.syncodec.momento.bucketComponent.miscellaneous.EmptyBucketView
 import com.syncodec.momento.bucketComponent.miscellaneous.TopBar
-import com.syncodec.momento.bucketComponent.modalBottomSheet.*
+import com.syncodec.momento.bucketComponent.modalBottomSheet.BookData
+import com.syncodec.momento.bucketComponent.modalBottomSheet.BottomSheetType
+import com.syncodec.momento.bucketComponent.modalBottomSheet.SheetLayout
+import com.syncodec.momento.bucketComponent.modalBottomSheet.ShowData
 import com.syncodec.momento.bucketComponent.screen.GridItemScreen
+import com.syncodec.momento.bucketComponent.screen.TodoScreen
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
 import com.syncodec.momento.custom.DeleteDialog
 import com.syncodec.momento.custom.LoadingView
-import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.database.bucketItem.BucketItemType
 import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.ui.theme.MomentoTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +57,7 @@ import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.CollapsingToolbarScaffoldState
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
+import kotlin.random.Random
 
 
 class BucketActivity : ComponentActivity() {
@@ -145,19 +150,49 @@ class BucketActivity : ComponentActivity() {
 					}
 				} else {
 					if (bucketDbEntry != null) {
-						Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
-							putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
-							putExtra(
-								Konstant.Companion.Konstant.BUCKET_KEY.name,
-								viewModel.bucketKey
-							)
-							putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, data)
-							putExtra(
-								Konstant.Companion.Konstant.BUCKET_TYPE.name,
-								bucketDbEntry!!.bucketItemType.ordinal
-							)
+ 						viewModel.bucketItemDbEntry.value = viewModel.bucketItemList.find { it.key == data }
+						when (bucketDbEntry?.bucketItemType) {
+							BucketItemType.TODO -> {
+								scope.launch {
+									activityState.bottomSheetType.value =
+										BottomSheetType.AddTodoSheet
+									activityState.bottomSheetState.show()
+								}
+							}
+							BucketItemType.BOOKS -> Intent(
+								this@BucketActivity,
+								BucketItemActivity::class.java
+							).apply {
+								putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
+								putExtra(
+									Konstant.Companion.Konstant.BUCKET_KEY.name,
+									viewModel.bucketKey
+								)
+								putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, data)
+								putExtra(
+									Konstant.Companion.Konstant.BUCKET_TYPE.name,
+									bucketDbEntry!!.bucketItemType.ordinal
+								)
 
-							startForResult.launch(this)
+								startForResult.launch(this)
+							}
+							BucketItemType.SHOWS -> Intent(
+								this@BucketActivity,
+								BucketItemActivity::class.java
+							).apply {
+								putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
+								putExtra(
+									Konstant.Companion.Konstant.BUCKET_KEY.name,
+									viewModel.bucketKey
+								)
+								putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_KEY.name, data)
+								putExtra(
+									Konstant.Companion.Konstant.BUCKET_TYPE.name,
+									bucketDbEntry!!.bucketItemType.ordinal
+								)
+
+								startForResult.launch(this)
+							}
 						}
 					}
 				}
@@ -175,11 +210,13 @@ class BucketActivity : ComponentActivity() {
 			Action.OPEN_ADD_SHEET -> {
 				activityState.bottomSheetType.value =
 					when (bucketDbEntry?.bucketItemType) {
-						BucketItemType.TODO -> BottomSheetType.AddBookSheet
+						BucketItemType.TODO -> BottomSheetType.AddTodoSheet
 						BucketItemType.BOOKS -> BottomSheetType.AddBookSheet
 						BucketItemType.SHOWS -> BottomSheetType.AddMovieSheet
 						else -> BottomSheetType.MenuBottomSheet
 					}
+
+				viewModel.bucketItemDbEntry.value = null
 
 				activityState.coroutineScope.launch {
 					activityState.bottomSheetState.show()
@@ -210,6 +247,15 @@ class BucketActivity : ComponentActivity() {
 					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, data as ShowData)
 					startActivity(this)
 				}
+			}
+			Action.ADD_TODO -> {
+				data as Triple<*, *, *>
+				viewModel.addTodo(
+					key = data.first as String?,
+					title = data.second as String,
+					state = data.third as Int
+				)
+				scope.launch { activityState.bottomSheetState.hide() }
 			}
 			Action.DATA_TYPE_SELECT -> {
 				activityState.isSelectionCardVisible.value = true
@@ -275,15 +321,25 @@ class BucketActivity : ComponentActivity() {
 		val status by viewModel.status
 		val activityState = viewModel.activityState
 		val bucketDbEntry by viewModel.bucketDbEntry
+		val bucketItemDbEntry by viewModel.bucketItemDbEntry
 		val bucketItemList = viewModel.bucketItemList
-		val isSelected by viewModel.activityState.isSelected
+		val isSelected by activityState.isSelected
+		val bottomSheetType by activityState.bottomSheetType
+		val dataType by activityState.dataType
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
 			sheetElevation = 0.dp,
 			sheetBackgroundColor = Color.Transparent,
 			sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
-			sheetContent = { SheetLayout { action, data -> onPerformAction(action, data) } }
+			sheetContent = {
+				SheetLayout(
+					bucketDbEntry = bucketDbEntry,
+					bucketItemDbEntry = bucketItemDbEntry,
+					bottomSheetType = bottomSheetType,
+					dataType = dataType,
+				) { action, data -> onPerformAction(action, data) }
+			}
 		) {
 			if (bucketItemList.isNullOrEmpty()) {
 				EmptyBucketView(
@@ -333,11 +389,24 @@ class BucketActivity : ComponentActivity() {
 							Status.INIT -> LoadingView()
 							Status.LOADING -> LoadingView()
 							Status.LOADED -> {
-								GridItemScreen(
-									bucketItemList = bucketItemList,
-									selectedBucketItemList = viewModel.activityState.selectedItemList,
-									pagerState = viewModel.activityState.pagerState,
-								) { click, key -> onPerformAction(click, key) }
+								when (bucketDbEntry?.bucketItemType) {
+									BucketItemType.TODO -> TodoScreen(
+										bucketItemList = bucketItemList,
+										selectedBucketItemList = activityState.selectedItemList,
+										pagerState = activityState.pagerState,
+									) { action, key -> onPerformAction(action, key) }
+									BucketItemType.BOOKS -> GridItemScreen(
+										bucketItemList = bucketItemList,
+										selectedBucketItemList = activityState.selectedItemList,
+										pagerState = activityState.pagerState,
+									) { action, key -> onPerformAction(action, key) }
+									BucketItemType.SHOWS -> GridItemScreen(
+										bucketItemList = bucketItemList,
+										selectedBucketItemList = activityState.selectedItemList,
+										pagerState = activityState.pagerState,
+									) { action, key -> onPerformAction(action, key) }
+									else -> LoadingView()
+								}
 							}
 							Status.ERROR -> {
 							}
@@ -415,6 +484,7 @@ class BucketActivity : ComponentActivity() {
 		OPEN_ADD_SHEET,
 		ADD_BOOK,
 		ADD_SHOW,
+		ADD_TODO,
 		DATA_TYPE_SELECT,
 		DATA_TYPE,
 		SHOW_DELETE,

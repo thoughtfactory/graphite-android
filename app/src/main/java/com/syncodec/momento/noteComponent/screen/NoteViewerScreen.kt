@@ -77,7 +77,7 @@ private fun Viewer(
 		animationSpec = tween(durationMillis = 600),
 		modifier = Modifier
 			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.surface)
+			.background(MaterialTheme.colorScheme.background)
 	) {
 		when (it) {
 			Status.INIT -> LoadingView()

@@ -4,102 +4,104 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Surface
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.syncodec.momento.R
 import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
+import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.timeStampToPrettyFull
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.miscellaneous.roundTo
 import com.syncodec.momento.noteComponent.NoteActivity
-import com.syncodec.momento.noteComponent.NoteViewModel
 import compose.icons.TablerIcons
-import compose.icons.tablericons.InfoCircle
 import compose.icons.tablericons.Map
 import compose.icons.tablericons.X
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
+@OptIn(
+	ExperimentalFoundationApi::class,
+	ExperimentalMaterialApi::class,
+	ExperimentalAnimationApi::class
+)
 @Composable
 fun MetadataBottomSheet(
-	onClick: (NoteActivity.Action, Any?) -> Unit
+	note: NoteDbEntry?,
+	addressState: NoteActivity.AddressState,
+	mapView: MapView,
+	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
-	val viewModel: NoteViewModel = viewModel()
-
-	val noteDbEntry by viewModel.knotDbEntry.collectAsState()
-
-	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.background),
-		horizontalAlignment = Alignment.CenterHorizontally
+	Surface(
+		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+		color = MaterialTheme.colorScheme.surface,
+		modifier = Modifier.heightIn(360.dp),
 	) {
-
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Metadata",
-			imageVector = TablerIcons.InfoCircle
-		)
-
-		TimestampCard(
-			createdTimestamp = noteDbEntry?.createdTimestamp ?: -1,
-			modifiedTimestamp = noteDbEntry?.modifiedTimestamp ?: -1
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		LocationCard(
-			addressState = viewModel.activityState.addressState.value,
-			address = noteDbEntry?.address,
-			latLng = if (noteDbEntry != null && noteDbEntry!!.latLng != null && noteDbEntry!!.latLng!!.latitude != null && noteDbEntry!!.latLng!!.longitude != null) {
-				LatLng(noteDbEntry!!.latLng!!.latitude!!, noteDbEntry!!.latLng!!.longitude!!)
-			} else {
-				null
-			}
-		) { click, data -> onClick(click, data) }
-
-		AnimatedVisibility(
-			visible = noteDbEntry?.latLng != null,
-			enter = expandVertically(tween(600)) + scaleIn(tween(600)),
-			exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
+		Column(
+			modifier = Modifier,
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
+			BottomSheetStrip()
+
+			BottomSheetHeader(
+				title = "Metadata",
+				icon = R.drawable.ic_info
+			)
+
+			TimestampCard(
+				createdTimestamp = note?.createdTimestamp ?: -1,
+				modifiedTimestamp = note?.modifiedTimestamp ?: -1
+			)
+
+			Spacer(modifier = Modifier.height(8.dp))
+
+			LocationCard(
+				addressState = addressState,
+				address = note?.address,
+				latLng = if (note?.latLng != null)
+					LatLng(note.latLng!!.latitude, note.latLng!!.longitude)
+				else null,
+				onAction = onAction
+			)
+
+			AnimatedVisibility(
+				visible = note?.latLng != null,
+				enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+				exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
+			) {
 //          WARN    Don't remove from if block or else null pointer exception
-			if (noteDbEntry?.latLng != null) {
-				Column {
-					Spacer(modifier = Modifier.height(8.dp))
-					MapCard(
-						latLng = noteDbEntry!!.latLng!!,
-						mapView = viewModel.activityState.mapView
-					)
+				if (note?.latLng != null) {
+					Column {
+						Spacer(modifier = Modifier.height(8.dp))
+						MapCard(
+							latLng = note.latLng!!,
+							mapView = mapView
+						)
+					}
 				}
 			}
+
+			Spacer(modifier = Modifier.height(32.dp))
 		}
-
-		Spacer(modifier = Modifier.height(32.dp))
-
 	}
 }
 
@@ -112,7 +114,6 @@ fun TimestampCard(
 	Card(
 		elevation = 0.dp,
 		backgroundColor = MaterialTheme.colorScheme.background,
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),
 		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier
 			.fillMaxWidth()
@@ -155,7 +156,8 @@ fun TimestampCard(
 				val calendar = Calendar.getInstance()
 				val days = TimeUnit.MILLISECONDS.toDays(calendar.timeInMillis - modifiedTimestamp)
 				val hours = TimeUnit.MILLISECONDS.toHours(calendar.timeInMillis - modifiedTimestamp)
-				val minutes = TimeUnit.MILLISECONDS.toMinutes(calendar.timeInMillis - modifiedTimestamp)
+				val minutes =
+					TimeUnit.MILLISECONDS.toMinutes(calendar.timeInMillis - modifiedTimestamp)
 
 				val modifiedTimestampPretty = if (days in 1..7) {
 					"About $days days ago"
@@ -190,7 +192,7 @@ private fun LocationCard(
 	addressState: NoteActivity.AddressState,
 	address: String?,
 	latLng: LatLng?,
-	onClick: (NoteActivity.Action, Any?) -> Unit
+	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
 	Row(
 		modifier = Modifier
@@ -200,7 +202,7 @@ private fun LocationCard(
 	) {
 		Card(
 			elevation = 0.dp,
-			backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+			backgroundColor = MaterialTheme.colorScheme.background,
 			shape = RoundedCornerShape(12.dp),
 			modifier = Modifier
 				.height(128.dp)
@@ -213,7 +215,7 @@ private fun LocationCard(
 				NoteActivity.AddressState.REMOVED -> true
 				else -> false
 			},
-			onClick = { onClick(NoteActivity.Action.ADDRESS_CARD, null) }
+			onClick = { onAction(NoteActivity.Action.ADDRESS_CARD, null) }
 		) {
 			Column(
 				modifier = Modifier
@@ -227,21 +229,21 @@ private fun LocationCard(
 						NoteActivity.AddressState.NO_PERMISSION -> "Location permission unavailable. Click to open settings."
 						NoteActivity.AddressState.REQUEST_PERMISSION -> "Location permission unavailable. Click to provide permission."
 						NoteActivity.AddressState.SHOW_RATIONALE -> "Location permission unavailable. Click to provide permission."
-						NoteActivity.AddressState.REQUESTED -> "Getting address..."
+						NoteActivity.AddressState.PERMISSION_REQUESTED -> "Getting location..."
+						NoteActivity.AddressState.LOCATION_REQUESTED -> "Getting location..."
 						NoteActivity.AddressState.LOCATION -> "Address unavailable"
-						NoteActivity.AddressState.SUCCESS -> address!!
+						NoteActivity.AddressState.SUCCESS -> address ?: "Error getting location..."
 						NoteActivity.AddressState.ERROR -> "Error getting address"
 						NoteActivity.AddressState.REMOVED -> "Click to get address"
 					},
 					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSecondaryContainer,
-					modifier = Modifier
-						.weight(1f)
+					color = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier.weight(1f)
 				)
 
 				Spacer(modifier = Modifier.height(8.dp))
 
-				if (addressState == NoteActivity.AddressState.REQUESTED ||
+				if (addressState == NoteActivity.AddressState.PERMISSION_REQUESTED ||
 					addressState == NoteActivity.AddressState.LOCATION ||
 					addressState == NoteActivity.AddressState.SUCCESS
 				) {
@@ -251,31 +253,28 @@ private fun LocationCard(
 						style = MaterialTheme.typography.bodySmall.copy(
 							fontWeight = FontWeight.Bold
 						),
-						color = MaterialTheme.colorScheme.onSecondaryContainer,
-						modifier = Modifier
-							.fillMaxWidth()
+						color = MaterialTheme.colorScheme.onBackground,
+						modifier = Modifier.fillMaxWidth()
 					)
 				}
 			}
 		}
 
 		Column(
-			modifier = Modifier
-				.padding(4.dp, 0.dp, 0.dp, 0.dp)
+			modifier = Modifier.padding(4.dp, 0.dp, 0.dp, 0.dp)
 		) {
 			Card(
 				elevation = 0.dp,
 				shape = RoundedCornerShape(12.dp),
-				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+				backgroundColor = MaterialTheme.colorScheme.background,
 				modifier = Modifier.requiredSize(60.dp),
-				onClick = { onClick(NoteActivity.Action.OPEN_MAP_DIALOG, null) }
+				onClick = { onAction(NoteActivity.Action.OPEN_MAP_DIALOG, null) }
 			) {
 				Icon(
 					imageVector = TablerIcons.Map,
 					contentDescription = "Pick location",
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
-					modifier = Modifier
-						.requiredSize(20.dp)
+					tint = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier.requiredSize(20.dp)
 				)
 			}
 
@@ -284,16 +283,15 @@ private fun LocationCard(
 			Card(
 				elevation = 0.dp,
 				shape = RoundedCornerShape(12.dp),
-				backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+				backgroundColor = MaterialTheme.colorScheme.background,
 				modifier = Modifier.requiredSize(60.dp),
-				onClick = { onClick(NoteActivity.Action.REMOVE_LOCATION, null) }
+				onClick = { onAction(NoteActivity.Action.REMOVE_LOCATION, null) }
 			) {
 				Icon(
 					imageVector = TablerIcons.X,
 					contentDescription = "Remove Location",
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
-					modifier = Modifier
-						.requiredSize(20.dp)
+					tint = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier.requiredSize(20.dp)
 				)
 			}
 		}
@@ -323,8 +321,7 @@ private fun MapCard(
 				googleMap.uiSettings.setAllGesturesEnabled(false)
 
 				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-				val markerOptions = MarkerOptions()
-					.position(latLng)
+				val markerOptions = MarkerOptions().position(latLng)
 				googleMap.addMarker(markerOptions)
 			}
 		}

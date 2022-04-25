@@ -62,8 +62,10 @@ fun AddShowSheet(
 
 	var sheetState by remember { mutableStateOf(SheetState.INIT) }
 
-	val tvBaseUrl = "https://api.themoviedb.org/3/search/tv?api_key=${Secret.TMDB_KEY}&language=en-US&query="
-	val movieBaseUrl = "https://api.themoviedb.org/3/search/movie?api_key=${Secret.TMDB_KEY}&language=en-US&query="
+	val tvBaseUrl =
+		"https://api.themoviedb.org/3/search/tv?api_key=${Secret.TMDB_KEY}&language=en-US&query="
+	val movieBaseUrl =
+		"https://api.themoviedb.org/3/search/movie?api_key=${Secret.TMDB_KEY}&language=en-US&query="
 	val endUrl = "&page=1"
 	val requestQueue = Volley.newRequestQueue(context)
 
@@ -74,7 +76,7 @@ fun AddShowSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier.heightIn(360.dp),
 	) {
 		Column(
@@ -126,9 +128,13 @@ fun AddShowSheet(
 										ShowData(
 											id = getString("id"),
 											showType = if (dataType == BucketActivity.DataType.TV) ShowType.TV else ShowType.MOVIE,
-											title = if (dataType == BucketActivity.DataType.TV) getString("name") else getString("title"),
+											title = if (dataType == BucketActivity.DataType.TV) getString(
+												"name"
+											) else getString("title"),
 											posterPath = getString("poster_path"),
-											releaseDate = if (dataType == BucketActivity.DataType.TV) optString("first_air_date") else optString("release_date")
+											releaseDate = if (dataType == BucketActivity.DataType.TV) optString(
+												"first_air_date"
+											) else optString("release_date")
 										).apply { showDataList.add(this) }
 									}
 								}
@@ -168,7 +174,11 @@ fun AddShowSheet(
 								.fillMaxWidth()
 								.height(256.dp),
 						) {
-							val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
+							val lottieComposition by rememberLottieComposition(
+								LottieCompositionSpec.RawRes(
+									R.raw.lottie_loading
+								)
+							)
 
 							LottieAnimation(
 								composition = lottieComposition,

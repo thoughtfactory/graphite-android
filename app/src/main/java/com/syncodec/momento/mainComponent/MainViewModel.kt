@@ -52,7 +52,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	var vaultState = (application as Momento).vaultState
 	var bottomSheetType: MutableState<BottomSheetType> =
 		mutableStateOf(BottomSheetType.MenuBottomSheet)
-	var componentType: MutableState<MainActivity.ComponentType> = mutableStateOf(MainActivity.ComponentType.NOTE)
+	var componentType: MutableState<MainActivity.ComponentType> =
+		mutableStateOf(MainActivity.ComponentType.NOTE)
 	var selectedItemList: SnapshotStateList<String> = mutableStateListOf()
 	var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
 
@@ -109,16 +110,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun getQuote() {
-		viewModelScope.launch(Dispatchers.IO) {
-			val date = DateTime.now()
-			val d = date.dayOfMonth.toString().padStart(2, '0')
-			val m = date.monthOfYear.toString().padStart(2, '0')
-			val y = date.year.toString().padStart(2, '0')
-			val dateString = "${d}_${m}_${y}"
+		val date = DateTime.now()
+		val d = date.dayOfMonth.toString().padStart(2, '0')
+		val m = date.monthOfYear.toString().padStart(2, '0')
+		val y = date.year.toString().padStart(2, '0')
+		val dateString = "${d}_${m}_${y}"
 
-			quote.value = UserDatabase.getInstance(getApplication()).quoteTableDao.get(dateString)
-			quoteBg.value = getApplication<Momento>().getQuoteBg(date = dateString)
+		viewModelScope.launch(Dispatchers.IO) {
+			UserDatabase.getInstance(getApplication()).quoteTableDao.getAsFlow(dateString)
+				.collect {
+					quote.value = it
+					quoteBg.value = getApplication<Momento>().getQuoteBg(date = dateString)
+				}
 		}
+
 	}
 
 	fun delete(keyList: List<String>) {

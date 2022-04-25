@@ -63,7 +63,7 @@ fun MenuBottomSheet(
 
 		BottomSheetHeader(
 			title = "Menu",
-			imageVector = TablerIcons.Dots
+			icon = R.drawable.ic_menu
 		)
 
 		TimestampCard(

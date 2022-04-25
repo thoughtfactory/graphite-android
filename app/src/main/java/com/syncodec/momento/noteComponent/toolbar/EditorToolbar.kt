@@ -92,7 +92,12 @@ fun EditorToolbar(
 		modifier = Modifier.fillMaxWidth()
 	) {
 		AnimatedContent(
-			targetState = toolbarState
+			targetState = toolbarState,
+			transitionSpec = {
+				(scaleIn(tween(600), 0f)
+						with scaleOut(tween(600), 1f))
+					.using(SizeTransform(clip = false))
+			}
 		) {
 			when (it) {
 				ToolbarState.BASE -> null
@@ -229,11 +234,6 @@ private fun StateEditorToolbar(
 			icon = R.drawable.ic_info,
 			highlight = false
 		) { onClick(ToolbarButton.METADATA) }
-		ToolbarButton(
-			name = "Menu",
-			icon = R.drawable.ic_menu,
-			highlight = false
-		) { onClick(ToolbarButton.MENU) }
 	}
 }
 

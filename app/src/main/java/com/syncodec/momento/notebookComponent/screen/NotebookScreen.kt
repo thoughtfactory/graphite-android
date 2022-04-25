@@ -47,7 +47,7 @@ fun NotebookScreen(
 					NoteCard(
 						key = noteDbEntry.key,
 						timestamp = noteDbEntry.userTimestamp,
-						showFullTime = false,
+						showFullTime = true,
 						isLocked = false,
 						isSelected = noteDbEntry.key in selectedItemList,
 						isArchived = false,
@@ -98,6 +98,7 @@ fun NotebookScreen(
 						noteCount = 0,
 						chapterCount = 0,
 						isVisible = true,
+						selectedColor = MaterialTheme.colorScheme.surface,
 						onClick = {
 							onAction(NotebookActivity.Action.CLICK_CHAPTER, chapterDbEntry)
 						},

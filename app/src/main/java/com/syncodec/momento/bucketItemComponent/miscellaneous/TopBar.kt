@@ -11,9 +11,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
 import com.syncodec.momento.bucketItemComponent.BucketItemActivity
-import compose.icons.tablericons.*
 
-@OptIn(ExperimentalMaterialApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun TopBar(
 	isNew: Boolean,
@@ -56,7 +55,7 @@ private fun Bar(
 							tint = MaterialTheme.colorScheme.onSurface,
 							modifier = Modifier
 								.requiredSize(32.dp)
-								.padding(4.dp)
+								.padding(6.dp)
 						)
 					}
 				}

@@ -6,7 +6,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +27,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
+import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.button.LargeButton
 import com.syncodec.momento.custom.button.StateButton
 import com.syncodec.momento.custom.button.StateData
@@ -38,10 +37,7 @@ import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.database.notebook.NotebookTheme
 import com.syncodec.momento.konstant.Color.Companion.colorList
 import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.bookCoverImageList
-import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Notebook
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

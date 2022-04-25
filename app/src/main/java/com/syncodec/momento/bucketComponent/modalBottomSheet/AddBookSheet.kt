@@ -43,8 +43,6 @@ import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Notebook
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -77,7 +75,7 @@ data class BookData(
 @OptIn(ExperimentalFoundationApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun AddBookSheet(
-	onClick: (BookData) -> Unit
+	onAction: (BookData) -> Unit
 ) {
 	val context = LocalContext.current
 
@@ -107,7 +105,10 @@ fun AddBookSheet(
 
 			BottomSheetStrip()
 
-			BottomSheetHeader(title = "Umm... What was that book", imageVector = TablerIcons.Notebook)
+			BottomSheetHeader(
+				title = "Umm... What was that book",
+				icon = R.drawable.ic_book
+			)
 
 			Spacer(modifier = Modifier.height(8.dp))
 
@@ -200,7 +201,7 @@ fun AddBookSheet(
 								BookCard(
 									bookData = bookData,
 									modifier = Modifier.aspectRatio(0.75f)
-								) { onClick(bookData) }
+								) { onAction(bookData) }
 							}
 						}
 					}

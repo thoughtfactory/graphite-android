@@ -11,21 +11,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.custom.richText.RichTextEditor
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.konstant.Status
-import com.syncodec.momento.miscellaneous.DataStore
-import com.syncodec.momento.miscellaneous.logger
-import com.syncodec.momento.miscellaneous.toHexString
 import com.syncodec.momento.noteComponent.NoteActivity
+import com.syncodec.momento.noteComponent.miscellaneous.AddressCard
 import com.syncodec.momento.noteComponent.toolbar.EditorToolbar
 
 @OptIn(
@@ -37,27 +32,15 @@ import com.syncodec.momento.noteComponent.toolbar.EditorToolbar
 fun NoteEditorScreen(
 	richTextEditor: RichTextEditor,
 	noteDbEntry: NoteDbEntry?,
-	locationPermissionState: PermissionState,
+	addressState: NoteActivity.AddressState,
+	showAddressCard: Boolean,
 	status: Status,
 	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
-	val context = LocalContext.current
-	val typography by DataStore(context).getTypography.collectAsState(initial = null)
-
-	val textColor = MaterialTheme.colorScheme.onBackground.toHexString()
 	val isReady by richTextEditor.isReady
 
-	LaunchedEffect(key1 = isReady && typography != null) {
-		if (status != Status.LOADED) {
-			when (typography) {
-				0 -> richTextEditor.exec("editor.setBaseFontFamily(\"overlock\");")
-				1 -> richTextEditor.exec("editor.setBaseFontFamily(\"source_sans_pro\");")
-				2 -> richTextEditor.exec("editor.setBaseFontFamily(\"ubuntu\");")
-				3 -> richTextEditor.exec("editor.setBaseFontFamily('atwriter');")
-				else -> richTextEditor.exec("editor.setBaseFontFamily(\"source_sans_pro\");")
-			}
-			onAction(NoteActivity.Action.EDITOR_READY, null)
-		}
+	LaunchedEffect(key1 = isReady) {
+		if (status != Status.LOADED) onAction(NoteActivity.Action.EDITOR_READY, null)
 	}
 
 	Crossfade(
@@ -69,14 +52,26 @@ fun NoteEditorScreen(
 			Status.INIT -> LoadingView()
 			Status.LOADING -> LoadingView()
 			Status.LOADED -> {
-				Surface(modifier = Modifier.fillMaxSize()) {
-					Column(modifier = Modifier.fillMaxSize()) {
+				Surface(
+					modifier = Modifier.fillMaxSize(),
+					color = MaterialTheme.colorScheme.background
+				) {
+					Column(
+						modifier = Modifier.fillMaxSize()
+					) {
 						AndroidView(
 							factory = { richTextEditor },
 							update = { viewer -> },
 							modifier = Modifier
 								.fillMaxWidth()
 								.weight(1f)
+						)
+						AddressCard(
+							addressState = addressState,
+							showAddressCard = showAddressCard,
+							address = noteDbEntry?.address,
+							latLng = noteDbEntry?.latLng,
+							onAction = onAction
 						)
 						EditorToolbar(
 							richTextEditor = richTextEditor,

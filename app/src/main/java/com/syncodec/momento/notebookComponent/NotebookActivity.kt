@@ -132,6 +132,8 @@ class NotebookActivity : ComponentActivity() {
 						ArrayList(viewModel.chapterPath)
 					)
 					putExtra(Konstant.Companion.Konstant.TITLE.name, data)
+					putExtra(Konstant.Companion.Konstant.IS_NEW.name, true)
+					putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, false)
 
 					startActivity(this)
 				}
@@ -160,6 +162,7 @@ class NotebookActivity : ComponentActivity() {
 						)
 						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, data)
 						putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
+						putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
 						startActivity(this)
 					}
 				}
@@ -273,7 +276,7 @@ class NotebookActivity : ComponentActivity() {
 			sheetContent = { SheetLayout { action, data -> onPerformAction(action, data) } },
 		) {
 			Scaffold(
-				containerColor = MaterialTheme.colorScheme.surface,
+				containerColor = MaterialTheme.colorScheme.background,
 				topBar = {
 					if (status == Status.LOADED) {
 						TopBar(

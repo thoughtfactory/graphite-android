@@ -6,6 +6,7 @@ import com.syncodec.momento.database.UserDatabase
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.attachment.AttachmentTableDao
 import com.syncodec.momento.database.note.NoteTableDao
+import com.syncodec.momento.miscellaneous.CollectionUtils.Companion.listOfField
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -14,12 +15,19 @@ class AttachmentRepository(val momento: Momento) {
 		UserDatabase.getInstance(momento).attachmentTableDao
 	private var noteTableDao: NoteTableDao = UserDatabase.getInstance(momento).noteTableDao
 
-	suspend fun putAttachment(attachmentList: List<Pair<AttachmentDbEntry, Uri>>) {
+	suspend fun putAttachment(attachmentList: List<Pair<AttachmentDbEntry, Uri>>, noteKey: String) {
 		withContext(Dispatchers.IO) {
+			val attachmentKeyList: MutableList<String> = mutableListOf()
+			attachmentList.forEach { attachmentKeyList.add(it.first.key) }
+			attachmentTableDao.getForNote(noteKey = noteKey).forEach {
+				if (it.key !in attachmentKeyList) delete(it.key)
+			}
 			attachmentList.forEach {
-				val isCopied = momento.putAttachment(key = it.first.key, uri = it.second)
-				if (isCopied) {
-					attachmentTableDao.insert(it.first)
+				if (attachmentTableDao.isAttachmentPresent(it.first.key) == null) {
+					val isCopied = momento.putAttachment(key = it.first.key, uri = it.second)
+					if (isCopied) {
+						attachmentTableDao.insert(it.first)
+					}
 				}
 			}
 		}

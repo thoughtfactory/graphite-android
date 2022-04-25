@@ -62,8 +62,14 @@ class NoteRepository(val momento: Momento) {
 
 	fun getNotebookAsFlow(key: String) = notebookTableDao.getAsFlow(key = key)
 
-	fun openNotebookAsFlow(notebookKey: String): Flow<List<String>> =
-		noteTableDao.getAllKeyFromNotebookAsFlow(notebookKey = notebookKey)
+	fun openNotebookChapterAsFlow(
+		notebookKey: String,
+		chapterPath: List<String>
+	): Flow<List<String>> =
+		noteTableDao.getAllKeyFromNotebookAsFlow(
+			notebookKey = notebookKey,
+			chapterPath = chapterPath
+		)
 
 	suspend fun openNotebook(notebookKey: String): List<String> =
 		noteTableDao.getAllKeyFromNotebook(notebookKey = notebookKey)

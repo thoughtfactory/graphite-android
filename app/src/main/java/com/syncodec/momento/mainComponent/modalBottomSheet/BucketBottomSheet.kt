@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.R
 import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.LargeTextField
@@ -78,7 +79,10 @@ fun BucketBottomSheet(
 
 			BottomSheetStrip()
 
-			BottomSheetHeader(title = "Pick a bucket", imageVector = TablerIcons.Bucket)
+			BottomSheetHeader(
+				title = "Pick a bucket",
+				icon = R.drawable.ic_bucket
+			)
 
 			Row(
 				modifier = Modifier.horizontalScroll(rememberScrollState())

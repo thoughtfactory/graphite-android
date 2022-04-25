@@ -73,6 +73,7 @@ fun TopBar(
 		BucketFilter(
 			showBucketFilter = currentRoute == "bucket",
 			bucketFilter = bucketFilter,
+			isSelected = isSelected,
 			onAction = onAction
 		)
 
@@ -110,7 +111,7 @@ private fun Bar(
 						text = if (selectedItemSize == 0) "Select items to delete" else if (selectedItemSize == 1) "1 item selected" else "$selectedItemSize items selected",
 						modifier = Modifier,
 						style = MaterialTheme.typography.titleMedium,
-						color = MaterialTheme.colorScheme.onSurface
+						color = MaterialTheme.colorScheme.onBackground
 					)
 				},
 				actions = {
@@ -220,6 +221,7 @@ private fun ComponentType(
 private fun BucketFilter(
 	showBucketFilter: Boolean,
 	bucketFilter: List<BucketItemType>,
+	isSelected: Boolean,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	val chipDataList: MutableList<ChipData> = mutableListOf()
@@ -233,7 +235,7 @@ private fun BucketFilter(
 	}
 
 	AnimatedVisibility(
-		visible = showBucketFilter,
+		visible = showBucketFilter && !isSelected,
 		enter = expandVertically(tween(600)) + fadeIn(tween(300)),
 		exit = shrinkVertically(tween(600)) + fadeOut(tween(300)),
 		modifier = Modifier.fillMaxWidth()

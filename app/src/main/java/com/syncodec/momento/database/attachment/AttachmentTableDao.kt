@@ -12,6 +12,9 @@ interface AttachmentTableDao {
 	@Update
 	fun update(attachmentDbEntry: AttachmentDbEntry)
 
+	@Query(value = "SELECT `key` FROM attachment_table WHERE `key` = :key")
+	fun isAttachmentPresent(key: String) : String?
+
 	@Query(value = "SELECT * FROM attachment_table WHERE `key` = :key")
 	fun getAsFlow(key: String): Flow<AttachmentDbEntry?>
 

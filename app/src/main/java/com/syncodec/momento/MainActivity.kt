@@ -60,6 +60,7 @@ import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.notebookComponent.NotebookActivity
+import com.syncodec.momento.premiumComponent.PremiumActivity
 import com.syncodec.momento.searchComponent.SearchActivity
 import com.syncodec.momento.settings.SettingsActivity
 import com.syncodec.momento.ui.theme.MomentoTheme
@@ -144,6 +145,11 @@ class MainActivity : ComponentActivity() {
 				showLoginScreen.value = false
 				viewModel.getQuote()
 			}
+			Action.TRY_PREMIUM -> {
+				Intent(this, PremiumActivity::class.java).apply {
+					startActivity(this)
+				}
+			}
 			Action.SHOW_DELETE -> viewModel.showDeleteDialog.value = true
 			Action.CLICK_NOTE -> {
 				data as String
@@ -165,6 +171,7 @@ class MainActivity : ComponentActivity() {
 						)
 						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, data)
 						putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
+						putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
 						startActivity(this)
 					}
 				}
@@ -243,6 +250,7 @@ class MainActivity : ComponentActivity() {
 							ArrayList()
 						)
 						putExtra(Konstant.Companion.Konstant.TITLE.name, "")
+						putExtra(Konstant.Companion.Konstant.IS_NEW.name, true)
 					}
 				)
 
@@ -357,6 +365,7 @@ class MainActivity : ComponentActivity() {
 						sheetContent = {
 							SheetLayout(bottomSheetType = viewModel.bottomSheetType.value) { action, data ->
 								onPerformAction(action, data)
+								scope.launch { bottomSheetState.hide() }
 							}
 						},
 					) {
@@ -403,6 +412,7 @@ class MainActivity : ComponentActivity() {
 										scope.launch { bottomSheetState.show() }
 									} else {
 										scope.launch { bottomSheetState.hide() }
+										onPerformAction(action, data)
 									}
 								}
 							},
@@ -444,6 +454,7 @@ class MainActivity : ComponentActivity() {
 									} else {
 										scope.launch { bottomSheetState.hide() }
 									}
+									logger("action : $action")
 									onPerformAction(action = action, data = data)
 								}
 							}
@@ -532,6 +543,7 @@ class MainActivity : ComponentActivity() {
 		OPEN_LOGIN_SCREEN,
 		LOGIN,
 		TRY_FIRST,
+		TRY_PREMIUM,
 		SHOW_DELETE,
 		CLICK_NOTE,
 		LONG_CLICK_NOTE,

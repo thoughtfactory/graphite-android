@@ -45,6 +45,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
+import com.syncodec.momento.Momento
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.LoadingView
 import com.syncodec.momento.custom.revealTextView.RevealText
@@ -142,16 +143,9 @@ class TodayActivity : ComponentActivity() {
 		storageRef: StorageReference,
 		dmy: String,
 	) {
-		val backgroundRef = storageRef.child("server/enQuote/$dmy/$dmy.jpg")
-		var backgroundUri by remember { mutableStateOf<Uri?>(null) }
-
-		LaunchedEffect(key1 = null) {
-			backgroundRef.downloadUrl.addOnSuccessListener { backgroundUri = it }
-		}
-
 		Image(
 			painter = rememberImagePainter(
-				data = backgroundUri,
+				data = (application as Momento).getQuoteBg(date = dmy),
 				builder = { crossfade(600) }
 			),
 			contentDescription = null,

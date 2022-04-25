@@ -16,7 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
+import com.syncodec.momento.custom.ChipData
+import com.syncodec.momento.custom.ChipView
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.notebookComponent.NotebookActivity
@@ -40,17 +43,20 @@ fun TopBar(
 			selectedItemSize = selectedItemSize
 		) { action, data -> onAction(action, data) }
 
+
+		Spacer(modifier = Modifier.height(6.dp))
+
+		Breadcrumb(chapterNamePath = chapterNamePath) {
+			onAction(NotebookActivity.Action.NAVIGATE_CHAPTER, it)
+		}
+
 		Filter(
 			showFavorite = showFavorite,
 			showArchived = showArchived,
 			showLocked = showLocked,
 		) { action, data -> onAction(action, data) }
 
-		Breadcrumb(chapterNamePath = chapterNamePath) {
-			onAction(NotebookActivity.Action.NAVIGATE_CHAPTER, it)
-		}
-
-		Spacer(modifier = Modifier.height(4.dp))
+		Spacer(modifier = Modifier.height(6.dp))
 	}
 }
 
@@ -144,133 +150,35 @@ private fun Filter(
 	showLocked: Boolean,
 	onAction: (NotebookActivity.Action, Any?) -> Unit
 ) {
+	val chipDataList: List<ChipData> = listOf(
+		ChipData(
+			title = "Favourite",
+			icon = R.drawable.ic_favourite,
+			isSelected = showFavorite
+		) { onAction(NotebookActivity.Action.TOGGLE_FAVOURITE, null) },
+		ChipData(
+			title = "Archive",
+			icon = R.drawable.ic_archive,
+			isSelected = showArchived
+		) { onAction(NotebookActivity.Action.TOGGLE_ARCHIVED, null) },
+		ChipData(
+			title = "Locked",
+			icon = R.drawable.ic_lock_open,
+			isSelected = showLocked
+		) { onAction(NotebookActivity.Action.LOCKED, null) }
+	)
+
 	AnimatedVisibility(
 		visible = showFavorite || showArchived || showLocked,
 		enter = expandVertically(tween(600)) + fadeIn(tween(300)),
-		exit = shrinkVertically(tween(600)) + fadeOut(tween(300))
+		exit = shrinkVertically(tween(600)) + fadeOut(tween(300)),
+		modifier = Modifier.fillMaxWidth()
 	) {
-		Spacer(modifier = Modifier.height(6.dp))
-
-		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.horizontalScroll(rememberScrollState())
+		Column(
+			modifier = Modifier.fillMaxWidth()
 		) {
-			Spacer(modifier = Modifier.width(12.dp))
-			FilterChip(
-				selected = showFavorite,
-				onClick = { onAction(NotebookActivity.Action.TOGGLE_FAVOURITE, null) },
-				colors = ChipDefaults.filterChipColors(
-					backgroundColor = MaterialTheme.colorScheme.surface.tone(
-						isSystemInDarkTheme(),
-						1
-					),
-					selectedBackgroundColor = MaterialTheme.colorScheme.primary,
-				),
-				leadingIcon = {
-					Row {
-						Spacer(modifier = Modifier.width(4.dp))
-						Icon(
-							painter = painterResource(id = R.drawable.ic_favourite),
-							contentDescription = null,
-							tint = if (showFavorite) MaterialTheme.colorScheme.onPrimary
-							else MaterialTheme.colorScheme.onSurface.tone(
-								isSystemInDarkTheme(),
-								1
-							),
-							modifier = Modifier.requiredSize(20.dp)
-						)
-					}
-				}
-			) {
-				Text(
-					text = "Favourite",
-					style = MaterialTheme.typography.bodyMedium,
-					color = if (showFavorite) MaterialTheme.colorScheme.onPrimary
-					else MaterialTheme.colorScheme.onSurface.tone(
-						isSystemInDarkTheme(),
-						1
-					)
-				)
-			}
-
-			Spacer(modifier = Modifier.width(8.dp))
-
-			FilterChip(
-				selected = showArchived,
-				onClick = { onAction(NotebookActivity.Action.TOGGLE_ARCHIVED, null) },
-				colors = ChipDefaults.filterChipColors(
-					backgroundColor = MaterialTheme.colorScheme.surface.tone(
-						isSystemInDarkTheme(),
-						1
-					),
-					selectedBackgroundColor = MaterialTheme.colorScheme.primary
-				),
-				leadingIcon = {
-					Row {
-						Spacer(modifier = Modifier.width(4.dp))
-						Icon(
-							painter = painterResource(id = R.drawable.ic_archive),
-							contentDescription = null,
-							tint = if (showArchived) MaterialTheme.colorScheme.onPrimary
-							else MaterialTheme.colorScheme.onSurface.tone(
-								isSystemInDarkTheme(),
-								1
-							),
-							modifier = Modifier.requiredSize(20.dp)
-						)
-					}
-				}
-			) {
-				Text(
-					text = "Archived",
-					style = MaterialTheme.typography.bodyMedium,
-					color = if (showArchived) MaterialTheme.colorScheme.onPrimary
-					else MaterialTheme.colorScheme.onSurface.tone(
-						isSystemInDarkTheme(),
-						1
-					)
-				)
-			}
-
-			Spacer(modifier = Modifier.width(8.dp))
-
-			FilterChip(
-				selected = showLocked,
-				onClick = { onAction(NotebookActivity.Action.LOCKED, null) },
-				colors = ChipDefaults.filterChipColors(
-					backgroundColor = MaterialTheme.colorScheme.surface.tone(
-						isSystemInDarkTheme(),
-						1
-					),
-					selectedBackgroundColor = MaterialTheme.colorScheme.primary
-				),
-				leadingIcon = {
-					Row {
-						Spacer(modifier = Modifier.width(4.dp))
-						Icon(
-							painter = painterResource(id = R.drawable.ic_lock_close),
-							contentDescription = null,
-							tint = if (showLocked) MaterialTheme.colorScheme.onPrimary
-							else MaterialTheme.colorScheme.onSurface.tone(
-								isSystemInDarkTheme(),
-								1
-							),
-							modifier = Modifier.requiredSize(20.dp)
-						)
-					}
-				}
-			) {
-				Text(
-					text = "Locked",
-					style = MaterialTheme.typography.bodyMedium,
-					color = if (showLocked) MaterialTheme.colorScheme.onPrimary
-					else MaterialTheme.colorScheme.onSurface.tone(
-						isSystemInDarkTheme(),
-						1
-					)
-				)
-			}
+			Spacer(modifier = Modifier.height(6.dp))
+			ChipView(chipDataList = chipDataList)
 		}
 	}
 }

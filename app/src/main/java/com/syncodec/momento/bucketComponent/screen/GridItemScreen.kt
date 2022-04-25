@@ -39,7 +39,7 @@ fun GridItemScreen(
 	bucketItemList: List<BucketItemPreviewDbEntry>,
 	selectedBucketItemList: SnapshotStateList<String>,
 	pagerState: PagerState,
-	onClick: (BucketActivity.Action, Any?) -> Unit
+	onAction: (BucketActivity.Action, Any?) -> Unit
 ) {
 	HorizontalPager(
 		count = 4,
@@ -58,9 +58,9 @@ fun GridItemScreen(
 							title = data.title ?: "",
 							thumbnail = data.thumbnail,
 							highlight = data.key in selectedBucketItemList,
-							onLongClick = { onClick(BucketActivity.Action.LONG_CLICK_ITEM, data.key) }
+							onLongClick = { onAction(BucketActivity.Action.LONG_CLICK_ITEM, data.key) }
 						) {
-							onClick(BucketActivity.Action.CLICK_ITEM, data.key)
+							onAction(BucketActivity.Action.CLICK_ITEM, data.key)
 						}
 					}
 				}

@@ -28,7 +28,7 @@ fun TopBar(
 				SmallTopAppBar(
 					title = {
 						Text(
-							text = if (selectedItemSize == 0) "Select items to delete" else if (selectedItemSize == 1) "1 item selected" else "$selectedItemSize items selected",
+							text = if (selectedItemSize == 0) "Select items" else if (selectedItemSize == 1) "1 item selected" else "$selectedItemSize items selected",
 							modifier = Modifier,
 							style = MaterialTheme.typography.titleMedium,
 							color = MaterialTheme.colorScheme.onSurface
@@ -36,12 +36,12 @@ fun TopBar(
 					},
 					actions = {
 						IconButton(
-							onClick = { onAction(AttachmentActivity.Action.SHOW_DELETE, null) }
+							onClick = { onAction(AttachmentActivity.Action.MENU, null) }
 						) {
 							Icon(
-								painter = painterResource(id = R.drawable.ic_trash),
-								contentDescription = "Delete items",
-								tint = Color(0xFFF05945),
+								painter = painterResource(id = R.drawable.ic_menu),
+								contentDescription = "Menu",
+								tint = MaterialTheme.colorScheme.onSurface,
 								modifier = Modifier
 									.requiredSize(32.dp)
 									.padding(4.dp)
@@ -94,18 +94,6 @@ fun TopBar(
 										.padding(4.dp)
 								)
 							}
-						}
-						IconButton(
-							onClick = { onAction(AttachmentActivity.Action.MENU, null) }
-						) {
-							Icon(
-								painter = painterResource(id = R.drawable.ic_menu),
-								contentDescription = "Menu",
-								tint = MaterialTheme.colorScheme.onSurface,
-								modifier = Modifier
-									.requiredSize(32.dp)
-									.padding(4.dp)
-							)
 						}
 					},
 					colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

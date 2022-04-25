@@ -8,13 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.bucketComponent.BucketActivity
-import compose.icons.TablerIcons
-import compose.icons.tablericons.DeviceTv
-import compose.icons.tablericons.Movie
+import com.syncodec.momento.R
+
 
 @Composable
 fun DataTypeSelectDropdownDemo(
@@ -39,7 +39,7 @@ fun DataTypeSelectDropdownDemo(
 				onClick = { onClick(BucketActivity.DataType.TV) },
 				leadingIcon = {
 					Icon(
-						imageVector = TablerIcons.DeviceTv,
+						painter = painterResource(id = R.drawable.ic_tv),
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onBackground,
 						modifier = Modifier.requiredSize(20.dp)
@@ -59,7 +59,7 @@ fun DataTypeSelectDropdownDemo(
 				onClick = { onClick(BucketActivity.DataType.MOVIE) },
 				leadingIcon = {
 					Icon(
-						imageVector = TablerIcons.Movie,
+						painter = painterResource(id = R.drawable.ic_show),
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onBackground,
 						modifier = Modifier.requiredSize(20.dp)

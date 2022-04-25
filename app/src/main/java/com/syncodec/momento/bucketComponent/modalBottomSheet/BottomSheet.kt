@@ -2,15 +2,15 @@ package com.syncodec.momento.bucketComponent.modalBottomSheet
 
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.momento.bucketComponent.BucketActivity
-import com.syncodec.momento.bucketComponent.BucketViewModel
+import com.syncodec.momento.database.bucket.BucketDbEntry
+import com.syncodec.momento.database.bucketItem.BucketItemPreviewDbEntry
+import com.syncodec.momento.miscellaneous.logger
 
 
 sealed class BottomSheetType {
 	object MenuBottomSheet : BottomSheetType()
+	object AddTodoSheet : BottomSheetType()
 	object AddBookSheet : BottomSheetType()
 	object AddMovieSheet : BottomSheetType()
 }
@@ -18,22 +18,30 @@ sealed class BottomSheetType {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SheetLayout(
+	bucketDbEntry: BucketDbEntry?,
+	bucketItemDbEntry: BucketItemPreviewDbEntry?,
+	bottomSheetType: BottomSheetType,
+	dataType: BucketActivity.DataType,
 	onAction: (BucketActivity.Action, Any?) -> Unit
 ) {
-	val viewModel: BucketViewModel = viewModel()
-
-	val bucketDbEntry by viewModel.bucketDbEntry
-
-	when (viewModel.activityState.bottomSheetType.value) {
+	when (bottomSheetType) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet(
 			createdTimestamp = bucketDbEntry?.createdTimestamp ?: -1,
 			modifiedTimestamp = bucketDbEntry?.modifiedTimestamp ?: -1,
 		)
+		BottomSheetType.AddTodoSheet -> AddTodoSheet(
+			key = bucketItemDbEntry?.key,
+			title = bucketItemDbEntry?.title ?: "",
+			state = bucketItemDbEntry?.state?.ordinal ?: 0,
+			hashCode = bucketItemDbEntry.hashCode(),
+		) { key, title, state ->
+			onAction(BucketActivity.Action.ADD_TODO, Triple(key, title, state))
+		}
 		BottomSheetType.AddBookSheet -> AddBookSheet {
 			onAction(BucketActivity.Action.ADD_BOOK, it)
 		}
 		BottomSheetType.AddMovieSheet -> AddShowSheet(
-			dataType = viewModel.activityState.dataType.value,
+			dataType = dataType,
 			onAction = onAction
 		)
 	}

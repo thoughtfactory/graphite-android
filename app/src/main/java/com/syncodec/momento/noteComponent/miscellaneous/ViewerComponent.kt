@@ -38,6 +38,7 @@ import com.syncodec.momento.custom.richText.viewer.string.richTextString
 import com.syncodec.momento.custom.squircle.SquircleShape
 import com.syncodec.momento.database.note.NoteDbEntry
 import com.syncodec.momento.miscellaneous.TimeUtils.Companion.noteViewerTimestamp
+import com.syncodec.momento.miscellaneous.roundTo
 import com.syncodec.momento.noteComponent.NoteActivity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -178,7 +179,7 @@ private fun Header(
 				)
 			}
 		}
-		if (!address.isNullOrBlank()) {
+		if (!address.isNullOrBlank() || latlng != null) {
 			Spacer(modifier = Modifier.height(4.dp))
 			Row(
 				modifier = Modifier,
@@ -188,14 +189,15 @@ private fun Header(
 				Icon(
 					painter = painterResource(id = R.drawable.ic_location_pin_3),
 					contentDescription = "Location",
-					tint = MaterialTheme.colorScheme.secondary,
-					modifier = Modifier.requiredSize(12.dp)
+					tint = MaterialTheme.colorScheme.onSurface,
+					modifier = Modifier.requiredSize(16.dp)
 				)
 				Spacer(modifier = Modifier.width(4.dp))
 				Text(
-					text = address,
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.secondary,
+					text = address ?: "Lat : ${latlng?.latitude?.roundTo(6)}, " +
+					"Lng : ${latlng?.longitude?.roundTo(6)}",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurface,
 					maxLines = 1,
 					overflow = TextOverflow.Ellipsis
 				)
@@ -259,13 +261,14 @@ private fun RenderDoc(
 		backgroundColor = colorScheme.secondary.copy(0.47f)
 	)
 
-	Surface {
+	Surface(
+		color = MaterialTheme.colorScheme.background
+	) {
 		CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
 			SelectionContainer {
 				MaterialRichText(
 					style = richTextStyle,
-					modifier = Modifier
-						.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth(),
 				) {
 					for (i in 0 until (contentList?.length() ?: 0)) {
 						val content = contentList!!.optJSONObject(i)
@@ -632,7 +635,7 @@ private fun SetupMaterialRichText(
 	if (!isApplied) {
 		RichTextThemeIntegration(
 			textStyle = { LocalTextStyle.current },
-			contentColor = { LocalContentColor.current },
+			contentColor = { MaterialTheme.colorScheme.onBackground },
 			ProvideTextStyle = { textStyle, content ->
 				ProvideTextStyle(textStyle, content)
 			},

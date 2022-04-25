@@ -13,10 +13,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.syncodec.momento.miscellaneous.DataStore
 import com.syncodec.momento.miscellaneous.toHexString
 
 
-class RichTextEditor(context: Context, val textColor: String) : WebView(context) {
+class RichTextEditor(context: Context, val textColor: String, typography: Int?) : WebView(context) {
 	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	interface OnFormatUpdateListener {
@@ -48,7 +49,6 @@ class RichTextEditor(context: Context, val textColor: String) : WebView(context)
 
 		webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-				Log.d(TAG, consoleMessage.message())
 				return true
 			}
 		}
@@ -62,6 +62,13 @@ class RichTextEditor(context: Context, val textColor: String) : WebView(context)
 
 		loadUrl(INDEX_PATH)
 		exec("editor.setBaseFontColor('$textColor');")
+		when (typography) {
+			0 -> exec("editor.setBaseFontFamily(\"overlock\");")
+			1 -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
+			2 -> exec("editor.setBaseFontFamily(\"ubuntu\");")
+			3 -> exec("editor.setBaseFontFamily('atwriter');")
+			else -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
+		}
 	}
 
 	private fun load(trigger: String) {
@@ -156,8 +163,9 @@ class RichTextEditor(context: Context, val textColor: String) : WebView(context)
 fun rememberRichTextEditorWithLifecycle(): RichTextEditor {
 	val context = LocalContext.current
 	val textColor = MaterialTheme.colorScheme.onBackground.toHexString()
+	val typography by DataStore(context).getTypography.collectAsState(initial = null)
 
-	val richTextEditor = remember { RichTextEditor(context, textColor) }
+	val richTextEditor = remember { RichTextEditor(context, textColor, typography) }
 
 	val lifecycleObserver = rememberRichTextEditorLifecycleObserver(richTextEditor)
 	val lifecycle = LocalLifecycleOwner.current.lifecycle

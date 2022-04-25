@@ -1,10 +1,8 @@
 package com.syncodec.momento.database.bucket
 
-import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.syncodec.momento.database.bucketItem.BucketItem
 import com.syncodec.momento.database.bucketItem.BucketItemType
 
 @Entity(tableName = "bucket_table")

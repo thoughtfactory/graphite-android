@@ -9,15 +9,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun NoteSpacer(
 	isLast: Boolean = false,
+	height: Int = 0,
 ) {
 	Column(
-		modifier = Modifier.width(16.dp),
-		horizontalAlignment = Alignment.CenterHorizontally
+		horizontalAlignment = Alignment.CenterHorizontally,
+		modifier = Modifier
+			.width(16.dp)
+			.height(with(LocalDensity.current) { height.toDp() }),
 	) {
 		Box(
 			modifier = Modifier

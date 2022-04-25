@@ -1,23 +1,19 @@
 package com.syncodec.momento.noteComponent.modalBottomSheet
 
 import android.net.Uri
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.IconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -25,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
@@ -35,20 +32,19 @@ import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
+import com.syncodec.momento.custom.squircle.SquircleShape
 import com.syncodec.momento.database.attachment.AttachmentDbEntry
 import com.syncodec.momento.database.attachment.getMimeType
-import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.FileUtils.Companion.createTempFileToExpose
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.noteComponent.NoteActivity
-import compose.icons.TablerIcons
-import compose.icons.tablericons.X
 
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun AttachmentBottomSheet(
-	attachmentMap: SnapshotStateMap<String, Pair<AttachmentDbEntry, Uri>>,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>,
 	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
@@ -65,7 +61,7 @@ fun AttachmentBottomSheet(
 
 	val openFilePicker =
 		rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uriList ->
-			Log.i("npr71", "uri : $uriList")
+			onAction(NoteActivity.Action.INSERT_FILE, uriList)
 		}
 
 	val buttonDataList: List<MenuBottomSheetButtonData> = listOf(
@@ -80,6 +76,9 @@ fun AttachmentBottomSheet(
 		MenuBottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
 			openMediaPicker.launch(arrayOf("image/*", "video/*", "audio/*"))
 		},
+		MenuBottomSheetButtonData(title = "Audio", icon = R.drawable.ic_mic) {
+			Toast.makeText(context, "Coming soon...", Toast.LENGTH_SHORT).show()
+		},
 		MenuBottomSheetButtonData(title = "File", icon = R.drawable.ic_file) {
 			openFilePicker.launch(arrayOf("*/*"))
 		},
@@ -87,13 +86,13 @@ fun AttachmentBottomSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2)
+		color = MaterialTheme.colorScheme.surface,
+		modifier = Modifier.heightIn(128.dp),
 	) {
 		Column(
 			modifier = Modifier,
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
-
 			BottomSheetStrip()
 
 			BottomSheetHeader(
@@ -116,8 +115,9 @@ fun AttachmentBottomSheet(
 					item {
 						AttachmentView(
 							attachment = data.first,
-							uri = data.second
-						) { click, data -> onAction(click, data) }
+							uri = data.second,
+							onAction = onAction
+						)
 					}
 				}
 			}
@@ -125,28 +125,59 @@ fun AttachmentBottomSheet(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalCoilApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalCoilApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun AttachmentView(
 	attachment: AttachmentDbEntry,
 	uri: Uri,
 	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
+	logger("attachment : ${attachment.mimeType} : ${attachment.getMimeType()} : ${uri.toString()}")
 	val context = LocalContext.current
 	Card(
-		elevation = 0.dp,
-		backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-		shape = RoundedCornerShape(12.dp),
+		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+		containerColor = MaterialTheme.colorScheme.surface,
+		shape = SquircleShape(6.0),
 		modifier = Modifier
 			.fillMaxWidth()
 			.aspectRatio(1f)
 			.padding(4.dp)
 			.focusable(true),
-//		onClick = { onAction(NoteActivity.Action.OPEN_ATTACHMENT, uri) }
 	) {
-		when (attachment.getMimeType()) {
-			"image" -> {
-				Image(
+		Box(
+			modifier = Modifier.fillMaxSize()
+		) {
+			when (attachment.getMimeType()) {
+				"image" -> {
+					Image(
+						painter = rememberImagePainter(
+							data = uri,
+							builder = { crossfade(true) }
+						),
+						contentDescription = null,
+						contentScale = ContentScale.Crop,
+						modifier = Modifier.fillMaxSize()
+					)
+				}
+				"video" -> Image(
+					painter = rememberImagePainter(
+						data = uri,
+						builder = {
+							fetcher(VideoFrameUriFetcher(context))
+							crossfade(true)
+							// optionally set frame location
+							videoFrameMillis(1000)
+							this.listener(
+								onError = { request, exception ->
+								}
+							)
+						}
+					),
+					contentDescription = null,
+					contentScale = ContentScale.Crop,
+					modifier = Modifier.fillMaxSize()
+				)
+				else -> Image(
 					painter = rememberImagePainter(
 						data = uri,
 						builder = { crossfade(true) }
@@ -156,48 +187,27 @@ private fun AttachmentView(
 					modifier = Modifier.fillMaxSize()
 				)
 			}
-			"video" -> Image(
-				painter = rememberImagePainter(
-					data = uri,
-					builder = {
-						fetcher(VideoFrameUriFetcher(context))
-						crossfade(true)
-						// optionally set frame location
-						videoFrameMillis(1000)
-						this.listener(
-							onError = { request, exception ->
-							}
-						)
-					}
-				),
-				contentDescription = null,
-				contentScale = ContentScale.Crop,
-				modifier = Modifier.fillMaxSize()
-			)
-			else -> Image(
-				painter = rememberImagePainter(
-					data = uri,
-					builder = { crossfade(true) }
-				),
-				contentDescription = null,
-				contentScale = ContentScale.Crop,
-				modifier = Modifier.fillMaxSize()
-			)
-		}
 
-		Box(
-			modifier = Modifier
-				.fillMaxSize(),
-			contentAlignment = Alignment.TopEnd
-		) {
-			IconButton(onClick = {
-				onAction(NoteActivity.Action.REMOVE_ATTACHMENT, attachment.key)
-			}) {
-				Icon(
-					imageVector = TablerIcons.X,
-					contentDescription = "Remove attachment",
-					tint = Color.Companion.White
-				)
+			Box(
+				contentAlignment = Alignment.TopEnd,
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(0.dp),
+			) {
+				IconButton(
+					onClick = {
+						onAction(NoteActivity.Action.REMOVE_ATTACHMENT, attachment.key)
+					}
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_close),
+						contentDescription = "Remove attachment",
+						tint = Color.Companion.White,
+						modifier = Modifier
+							.requiredSize(32.dp)
+							.padding(4.dp)
+					)
+				}
 			}
 		}
 	}

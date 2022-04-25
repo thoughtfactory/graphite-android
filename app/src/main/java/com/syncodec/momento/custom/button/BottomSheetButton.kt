@@ -3,6 +3,7 @@ package com.syncodec.momento.custom.button
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.custom.squircle.SquircleShape
+import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 
 
 data class MenuBottomSheetButtonData(
@@ -37,7 +39,7 @@ fun MenuBottomSheetButton(
 					.aspectRatio(1f)
 					.padding(6.dp)
 					.clip(SquircleShape(4.0))
-					.background(MaterialTheme.colorScheme.secondaryContainer)
+					.background(MaterialTheme.colorScheme.background)
 					.focusable(true)
 					.clickable(true) { buttonData.onClick() },
 				contentAlignment = Alignment.Center
@@ -45,7 +47,7 @@ fun MenuBottomSheetButton(
 				Icon(
 					painter = painterResource(id = buttonData.icon),
 					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onSecondaryContainer,
+					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.requiredSize(24.dp)
 				)
 			}

@@ -36,18 +36,9 @@ fun NewChapterBottomSheet(
 	var isChapterTitleTextFocused by remember { mutableStateOf(false) }
 	var isChapterDescriptionTextFocused by remember { mutableStateOf(false) }
 
-	val containerColor by animateColorAsState(
-		targetValue = if (chapterTitleText.isNotEmpty()) MaterialTheme.colorScheme.onPrimaryContainer else Color.LightGray,
-		animationSpec = tween(durationMillis = 600)
-	)
-	val contentColor by animateColorAsState(
-		targetValue = if (chapterTitleText.isNotEmpty()) MaterialTheme.colorScheme.primaryContainer else Color.DarkGray,
-		animationSpec = tween(durationMillis = 600)
-	)
-
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2),
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
 			.heightIn(240.dp),

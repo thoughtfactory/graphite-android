@@ -18,8 +18,8 @@ fun BottomSheetStrip() {
 
 	Box(
 		modifier = Modifier
-			.width(48.dp)
-			.height(6.dp)
+			.width(96.dp)
+			.height(3.dp)
 			.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
 	)
 

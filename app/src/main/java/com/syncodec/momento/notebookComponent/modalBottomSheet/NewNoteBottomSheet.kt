@@ -1,6 +1,5 @@
 package com.syncodec.momento.notebookComponent.modalBottomSheet
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -13,12 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.syncodec.momento.R
+import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.momento.custom.LargeTextField
 import com.syncodec.momento.custom.button.LargeButton
-import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.notebookComponent.NotebookActivity
+
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -32,7 +31,7 @@ fun NewNoteBottomSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2),
+		color= MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
 			.heightIn(180.dp),

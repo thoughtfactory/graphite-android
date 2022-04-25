@@ -17,8 +17,6 @@ import com.syncodec.momento.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.momento.custom.button.MenuBottomSheetButton
 import com.syncodec.momento.custom.button.MenuBottomSheetButtonData
 import com.syncodec.momento.noteComponent.modalBottomSheet.TimestampCard
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Dots
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -62,7 +60,7 @@ fun MenuBottomSheet(
 
 		BottomSheetHeader(
 			title = "Menu",
-			imageVector = TablerIcons.Dots
+			icon = R.drawable.ic_menu
 		)
 
 		TimestampCard(

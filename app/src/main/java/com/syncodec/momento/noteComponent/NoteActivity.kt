@@ -54,6 +54,7 @@ import com.syncodec.momento.konstant.Konstant
 import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.momento.miscellaneous.locationAddressFilter
+import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.noteComponent.miscellaneous.NotificationType
 import com.syncodec.momento.noteComponent.miscellaneous.TopBar
 import com.syncodec.momento.noteComponent.modalBottomSheet.BottomSheetType
@@ -87,6 +88,14 @@ class NoteActivity : ComponentActivity() {
 		}
 		intent.getStringArrayListExtra(Konstant.Companion.Konstant.CHAPTER_KEY.name).also {
 			if (it == null) finish() else viewModel.chapterPath = it.toMutableStateList()
+		}
+
+		intent.hasExtra(Konstant.Companion.Konstant.IS_NEW.name).also {
+			if (it) {
+				intent.getBooleanExtra(Konstant.Companion.Konstant.IS_NEW.name, false).also {
+					viewModel.isNew = it
+				}
+			} else finish()
 		}
 
 		viewModel.viewerKey.value = intent.getStringExtra(Konstant.Companion.Konstant.NOTE_KEY.name)
@@ -142,7 +151,7 @@ class NoteActivity : ComponentActivity() {
 	private fun onPerformAction(action: Action, data: Any? = null) {
 		val scope = viewModel.activityState.coroutineScope
 		val activityState = viewModel.activityState
-		val noteDbEntry = viewModel.noteDbEntry.value
+		val note = viewModel.noteDbEntry.value
 
 		when (action) {
 			Action.FINISH -> {
@@ -158,6 +167,8 @@ class NoteActivity : ComponentActivity() {
 					activityState.isSaving.value = true
 					activityState.richTextEditor.exec("editor.getData();")
 					viewModel.openNotebook()
+					viewModel.isNew = true
+					activityState.showAddressCard.value = false
 				}
 			}
 			Action.EDITOR_READY -> viewModel.status.value = Status.LOADED
@@ -174,8 +185,8 @@ class NoteActivity : ComponentActivity() {
 				}
 			}
 			Action.EDIT_NOTE -> {
-				if (noteDbEntry != null) {
-					viewModel.loadAttachment(noteDbEntry.key)
+				if (note != null) {
+					viewModel.loadAttachment(note.key)
 					activityState.richTextEditor.exec("editor.commands.setContent(${viewModel.noteDbEntry.value!!.content});")
 					viewModel.viewerKey.value = null
 				}
@@ -198,7 +209,7 @@ class NoteActivity : ComponentActivity() {
 			Action.REQUEST_LOCATION_PERMISSION -> activityState.locationPermissionState.launchPermissionRequest()
 			Action.SELECT_TIME -> {
 				val calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"))
-				calendar.timeInMillis = noteDbEntry?.userTimestamp ?: 0
+				calendar.timeInMillis = note?.userTimestamp ?: 0
 				DatePickerDialog(
 					this,
 					{ _, year, month, day ->
@@ -206,7 +217,7 @@ class NoteActivity : ComponentActivity() {
 						calendar.set(Calendar.MONTH, month)
 						calendar.set(Calendar.DAY_OF_MONTH, day)
 
-						noteDbEntry?.userTimestamp = calendar.timeInMillis
+						note?.userTimestamp = calendar.timeInMillis
 						viewModel.emitNote()
 
 						TimePickerDialog(
@@ -215,7 +226,7 @@ class NoteActivity : ComponentActivity() {
 								calendar.set(Calendar.HOUR_OF_DAY, hour)
 								calendar.set(Calendar.MINUTE, minute)
 
-								noteDbEntry?.userTimestamp = calendar.timeInMillis
+								note?.userTimestamp = calendar.timeInMillis
 								viewModel.emitNote()
 							},
 							calendar.get(Calendar.HOUR_OF_DAY),
@@ -235,20 +246,20 @@ class NoteActivity : ComponentActivity() {
 				}
 			}
 			Action.TOGGLE_FAVOURITE -> {
-				if (noteDbEntry != null) {
-					noteDbEntry.isFavourite = !noteDbEntry.isFavourite
+				if (note != null) {
+					note.isFavourite = !note.isFavourite
 					viewModel.emitNote()
 				}
 			}
 			Action.TOGGLE_ARCHIVE -> {
-				if (noteDbEntry != null) {
-					noteDbEntry.isArchived = !noteDbEntry.isArchived
+				if (note != null) {
+					note.isArchived = !note.isArchived
 					viewModel.emitNote()
 				}
 			}
 			Action.TOGGLE_LOCKED -> {
-				if (noteDbEntry != null) {
-					noteDbEntry.isLocked = !noteDbEntry.isLocked
+				if (note != null) {
+					note.isLocked = !note.isLocked
 					viewModel.emitNote()
 				}
 			}
@@ -258,19 +269,17 @@ class NoteActivity : ComponentActivity() {
 			}
 			Action.INSERT_MEDIA -> {
 				data as List<*>
-				data.forEach {
-					it as Uri
-					viewModel.insertAttachment(uri = it)
-				}
+				data.forEach { viewModel.insertAttachment(uri = it as Uri) }
+			}
+			Action.INSERT_FILE -> {
+				data as List<*>
+				data.forEach { viewModel.insertAttachment(uri = it as Uri) }
 			}
 			Action.OPEN_ATTACHMENT -> {
-//				Intent(Intent.ACTION_VIEW, data as Uri).apply {
-//					startActivity(this)
-//				}
-				if (noteDbEntry != null) {
+				if (note != null) {
 					Intent(this, AttachmentActivity::class.java).apply {
 						putExtra(Konstant.Companion.Konstant.IS_NOTE.name, true)
-						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, noteDbEntry.key)
+						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, note.key)
 						startActivity(this)
 					}
 				}
@@ -293,25 +302,36 @@ class NoteActivity : ComponentActivity() {
 					}
 					AddressState.REQUEST_PERMISSION -> activityState.locationPermissionState.launchPermissionRequest()
 					AddressState.SHOW_RATIONALE -> activityState.locationPermissionState.launchPermissionRequest()
-					AddressState.REMOVED -> viewModel.getLocation()
+					AddressState.LOCATION_REQUESTED ->
+						onPerformAction(Action.TRY_GET_LOCATION, null)
+					AddressState.REMOVED -> onPerformAction(Action.TRY_GET_LOCATION, null)
 				}
 			}
 			Action.TRY_GET_LOCATION -> {
+				logger("tryGetLocation")
 				val locationPermissionState = activityState.locationPermissionState
-				when {
-					locationPermissionState.hasPermission -> {
-						activityState.addressState.value = AddressState.REQUESTED
-						viewModel.getLocation()
+				if (note?.address != null) {
+					activityState.addressState.value = AddressState.SUCCESS
+				} else if (note?.address == null && note?.latLng!=null) {
+					activityState.addressState.value = AddressState.LOCATION
+				} else if (viewModel.isNew == true) {
+					when {
+						locationPermissionState.hasPermission -> {
+							activityState.addressState.value = AddressState.PERMISSION_REQUESTED
+							viewModel.getLocation()
+						}
+						locationPermissionState.shouldShowRationale -> {
+							activityState.addressState.value = AddressState.SHOW_RATIONALE
+						}
+						!locationPermissionState.permissionRequested -> {
+							activityState.addressState.value = AddressState.REQUEST_PERMISSION
+						}
+						else -> {
+							activityState.addressState.value = AddressState.NO_PERMISSION
+						}
 					}
-					locationPermissionState.shouldShowRationale -> {
-						activityState.addressState.value = AddressState.SHOW_RATIONALE
-					}
-					!locationPermissionState.permissionRequested -> {
-						activityState.addressState.value = AddressState.REQUEST_PERMISSION
-					}
-					else -> {
-						activityState.addressState.value = AddressState.NO_PERMISSION
-					}
+				} else {
+					activityState.addressState.value = AddressState.REMOVED
 				}
 			}
 			Action.REFRESH_LOCATION -> viewModel.getLocation()
@@ -325,8 +345,8 @@ class NoteActivity : ComponentActivity() {
 					longitude = data.longitude,
 					onAddressAvailable = { _address ->
 						scope.launch {
-							noteDbEntry?.latLng = LatLng(data.latitude, data.longitude)
-							noteDbEntry?.address = locationAddressFilter(_address)
+							note?.latLng = LatLng(data.latitude, data.longitude)
+							note?.address = locationAddressFilter(_address)
 							viewModel.emitNote()
 						}
 					},
@@ -353,6 +373,21 @@ class NoteActivity : ComponentActivity() {
 	)
 	@Composable
 	private fun Screen() {
+		val viewerKey by viewModel.viewerKey
+		val activityState = viewModel.activityState
+		val bottomSheetType by activityState.bottomSheetType
+		val note by viewModel.knotDbEntry.collectAsState()
+		val tagList by viewModel.tagList.collectAsState(listOf())
+		val connectedTag = viewModel.connectedTag
+		val attachmentMap = viewModel.attachmentMap
+		var addressState by activityState.addressState
+		val mapView = activityState.mapView
+
+		LaunchedEffect(key1 = viewerKey) {
+			if (viewerKey == null) {
+				onPerformAction(Action.TRY_GET_LOCATION, null)
+			}
+		}
 
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
@@ -360,7 +395,15 @@ class NoteActivity : ComponentActivity() {
 			sheetBackgroundColor = Color.Transparent,
 			sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
 			sheetContent = {
-				SheetLayout { click, data -> onPerformAction(action = click, data = data) }
+				SheetLayout(
+					bottomSheetType = bottomSheetType,
+					note = note,
+					tagList = tagList,
+					connectedTag = connectedTag,
+					attachmentMap = attachmentMap,
+					addressState = addressState,
+					mapView = mapView
+				) { action, data -> onPerformAction(action = action, data = data) }
 			},
 		) {
 			Scaffold(
@@ -388,6 +431,9 @@ class NoteActivity : ComponentActivity() {
 
 		val activityState = viewModel.activityState
 		val noteDbEntry by viewModel.knotDbEntry.collectAsState()
+		val addressState by activityState.addressState
+		val showAddressCard by activityState.showAddressCard
+		val status by viewModel.status
 
 		var isSaved by activityState.isSaved
 		val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_saved))
@@ -405,9 +451,10 @@ class NoteActivity : ComponentActivity() {
 		NoteEditorScreen(
 			richTextEditor = activityState.richTextEditor,
 			noteDbEntry = noteDbEntry,
-			locationPermissionState = activityState.locationPermissionState,
-			status = viewModel.status.value,
-		) { click, data -> onPerformAction(action = click, data = data) }
+			addressState = addressState,
+			showAddressCard = showAddressCard,
+			status = status,
+		) { action, data -> onPerformAction(action = action, data = data) }
 
 		AnimatedVisibility(
 			visible = isSaved,
@@ -509,7 +556,8 @@ class NoteActivity : ComponentActivity() {
 		NO_PERMISSION,
 		REQUEST_PERMISSION,
 		SHOW_RATIONALE,
-		REQUESTED,
+		PERMISSION_REQUESTED,
+		LOCATION_REQUESTED,
 		LOCATION,
 		SUCCESS,
 		ERROR,
@@ -535,6 +583,7 @@ class NoteActivity : ComponentActivity() {
 		TOGGLE_LOCKED,
 		INSERT_PICTURE,
 		INSERT_MEDIA,
+		INSERT_FILE,
 		OPEN_ATTACHMENT,
 		REMOVE_ATTACHMENT,
 		TAG_BUTTON,

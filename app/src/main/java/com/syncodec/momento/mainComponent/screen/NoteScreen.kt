@@ -79,7 +79,7 @@ fun NoteScreen(
 	LaunchedEffect(key1 = null) {
 		withContext(Dispatchers.IO) {
 			delay(1600)
-			showMembershipCard = showMembershipCardProb > 0.5
+			showMembershipCard = showMembershipCardProb > 0
 		}
 		withContext(Dispatchers.IO) {
 			delay(1200)
@@ -105,7 +105,10 @@ fun NoteScreen(
 				showCard = showQuoteCard && !(showArchived || showFavourite || showLocked)
 			)
 			Spacer(modifier = Modifier.height(8.dp))
-			MembershipCard(showCard = showMembershipCard && !(showArchived || showFavourite || showLocked))
+			MembershipCard(
+				showCard = showMembershipCard && !(showArchived || showFavourite || showLocked),
+				onAction = onAction
+			)
 			Spacer(modifier = Modifier.height(36.dp))
 
 			NoEntryCard()
@@ -116,16 +119,21 @@ fun NoteScreen(
 		) {
 			item {
 				Column(modifier = Modifier.fillMaxWidth()) {
-					Spacer(modifier = Modifier.height(8.dp))
+					if (showQuoteCard && quote != null && !(showArchived || showFavourite || showLocked)) {
+						Spacer(modifier = Modifier.height(8.dp))
+					}
 					QuoteCard(
 						quote = quote,
 						quoteBg = quoteBg,
 						showCard = showQuoteCard && !(showArchived || showFavourite || showLocked)
 					)
-					if (showMembershipCard && !(showArchived || showFavourite || showLocked)){
+					if (showMembershipCard && !(showArchived || showFavourite || showLocked)) {
 						Spacer(modifier = Modifier.height(8.dp))
 					}
-					MembershipCard(showCard = showMembershipCard && !(showArchived || showFavourite || showLocked))
+					MembershipCard(
+						showCard = showMembershipCard && !(showArchived || showFavourite || showLocked),
+						onAction = onAction
+					)
 					Spacer(modifier = Modifier.height(8.dp))
 				}
 			}
@@ -331,7 +339,8 @@ private fun QuoteCard(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun MembershipCard(
-	showCard: Boolean
+	showCard: Boolean,
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	AnimatedVisibility(
 		visible = showCard,
@@ -359,7 +368,7 @@ private fun MembershipCard(
 				)
 
 				Button(
-					onClick = { /*TODO*/ }
+					onClick = { onAction(MainActivity.Action.TRY_PREMIUM, null) }
 				) {
 					Text(
 						text = "Try premium",

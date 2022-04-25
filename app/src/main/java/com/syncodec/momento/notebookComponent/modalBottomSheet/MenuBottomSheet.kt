@@ -26,7 +26,6 @@ import com.syncodec.momento.notebookComponent.NotebookActivity
 fun MenuBottomSheet(
 	onAction: (NotebookActivity.Action) -> Unit
 ) {
-
 	val buttonDataList: List<MenuBottomSheetButtonData?> = listOf(
 		MenuBottomSheetButtonData(title = "Attachment", icon = R.drawable.ic_attachment) {
 			onAction(NotebookActivity.Action.ATTACHMENT)
@@ -53,10 +52,8 @@ fun MenuBottomSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 2),
-		modifier = Modifier
-			.fillMaxWidth()
-			.heightIn(180.dp),
+		color= MaterialTheme.colorScheme.surface,
+		modifier = Modifier.heightIn(360.dp),
 	) {
 		Column(
 			modifier = Modifier,
