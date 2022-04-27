@@ -31,8 +31,6 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import java.io.File
-import kotlin.collections.List
-import kotlin.collections.forEach
 import kotlin.collections.set
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -67,8 +65,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 	var defaultNotebookKey: String? = null
 	var defaultNoteMap: SnapshotStateMap<String, NoteDbEntry> = mutableStateMapOf()
-	val notebookMap: SnapshotStateMap<String, Pair<NotebookDbEntry, Int>> =
-		noteRepository.notebookMap
+	val notebookListFlow = noteRepository.notebookListFlow
 	val bucketList = bucketRepository.bucketList
 
 	init {
@@ -126,12 +123,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 	}
 
-	fun delete(keyList: List<String>) {
+	fun delete(keyList: MutableList<String>) {
 		viewModelScope.launch(Dispatchers.IO) {
 			keyList.forEach {
 				defaultNoteMap[it]?.attachmentKeyList?.let { it1 -> attachmentRepository.delete(it1) }
 			}
+
 			noteRepository.deleteNote(keyList = keyList)
+			noteRepository.deleteNotebook(keyList = keyList)
 			bucketRepository.deleteBucket(keyList = keyList)
 		}
 	}

@@ -42,7 +42,7 @@ fun NotebookScreen(
 		}
 
 		if (showNotes) {
-			noteList.forEach { noteDbEntry ->
+			noteList.sortedBy { it.userTimestamp }.reversed().forEach { noteDbEntry ->
 				item {
 					NoteCard(
 						key = noteDbEntry.key,

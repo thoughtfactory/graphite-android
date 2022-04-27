@@ -121,7 +121,7 @@ class NoteActivity : ComponentActivity() {
 							val dataJson = dataObject.getJSONObject("dataJson")
 							val dataText = dataObject.getString("dataText")
 
-							viewModel.noteDbEntry.value?.content = dataJson
+							viewModel.noteContent.value = dataJson
 							viewModel.noteDbEntry.value?.contentThumbnail =
 								dataText.substring(0, minOf(256, dataText.length))
 
@@ -187,7 +187,7 @@ class NoteActivity : ComponentActivity() {
 			Action.EDIT_NOTE -> {
 				if (note != null) {
 					viewModel.loadAttachment(note.key)
-					activityState.richTextEditor.exec("editor.commands.setContent(${viewModel.noteDbEntry.value!!.content});")
+					activityState.richTextEditor.exec("editor.commands.setContent(${viewModel.noteContent.value!!});")
 					viewModel.viewerKey.value = null
 				}
 			}
@@ -291,30 +291,10 @@ class NoteActivity : ComponentActivity() {
 					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
 				}
 			}
-			Action.ADDRESS_CARD -> {
-				val addressState by activityState.addressState
-				when (addressState) {
-					AddressState.NO_PERMISSION -> {
-						Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-							this.data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-							startActivity(this)
-						}
-					}
-					AddressState.REQUEST_PERMISSION -> activityState.locationPermissionState.launchPermissionRequest()
-					AddressState.SHOW_RATIONALE -> activityState.locationPermissionState.launchPermissionRequest()
-					AddressState.LOCATION_REQUESTED ->
-						onPerformAction(Action.TRY_GET_LOCATION, null)
-					AddressState.REMOVED -> onPerformAction(Action.TRY_GET_LOCATION, null)
-				}
-			}
 			Action.TRY_GET_LOCATION -> {
-				logger("tryGetLocation")
+				data as Boolean?
 				val locationPermissionState = activityState.locationPermissionState
-				if (note?.address != null) {
-					activityState.addressState.value = AddressState.SUCCESS
-				} else if (note?.address == null && note?.latLng!=null) {
-					activityState.addressState.value = AddressState.LOCATION
-				} else if (viewModel.isNew == true) {
+				if (viewModel.isNew == true || data == true) {
 					when {
 						locationPermissionState.hasPermission -> {
 							activityState.addressState.value = AddressState.PERMISSION_REQUESTED
@@ -331,7 +311,13 @@ class NoteActivity : ComponentActivity() {
 						}
 					}
 				} else {
-					activityState.addressState.value = AddressState.REMOVED
+					if (note?.address != null) {
+						activityState.addressState.value = AddressState.SUCCESS
+					} else if (note?.address == null && note?.latLng!=null) {
+						activityState.addressState.value = AddressState.LOCATION
+					} else {
+						activityState.addressState.value = AddressState.REMOVED
+					}
 				}
 			}
 			Action.REFRESH_LOCATION -> viewModel.getLocation()
@@ -480,6 +466,7 @@ class NoteActivity : ComponentActivity() {
 		val status by viewModel.status
 
 		val noteDbEntry by viewModel.knotDbEntry.collectAsState()
+		val noteContent by viewModel.noteContent
 
 		LaunchedEffect(key1 = noteKeyList.hashCode() + pagerState.pageCount.hashCode()) {
 			scope.launch {
@@ -500,6 +487,7 @@ class NoteActivity : ComponentActivity() {
 			noteKeyList = noteKeyList,
 			pagerState = viewModel.activityState.pagerState,
 			noteDbEntry = noteDbEntry,
+			noteContent = noteContent,
 			connectedTag = viewModel.connectedTag,
 			status = status
 		) { onPerformAction(it, noteKeyList.size) }
@@ -587,7 +575,6 @@ class NoteActivity : ComponentActivity() {
 		OPEN_ATTACHMENT,
 		REMOVE_ATTACHMENT,
 		TAG_BUTTON,
-		ADDRESS_CARD,
 		TRY_GET_LOCATION,
 		REFRESH_LOCATION,
 		OPEN_MAP_DIALOG,

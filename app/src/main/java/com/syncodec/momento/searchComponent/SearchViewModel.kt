@@ -11,20 +11,10 @@ import kotlinx.coroutines.launch
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
 
-	val noteRepository: NoteRepository = NoteRepository.getInstance(momento = application as Momento)
+	private val noteRepository: NoteRepository = NoteRepository.getInstance(momento = application as Momento)
 	val bucketRepository: BucketRepository = BucketRepository.getInstance(momento = application as Momento)
 
 	lateinit var activityState: SearchActivity.ActivityState
 
-	var noteKeyList: List<String> = listOf()
-
-	fun readData() {
-		viewModelScope.launch(Dispatchers.IO) {
-			noteKeyList = noteRepository.getAllKey()
-
-			noteKeyList.forEach {
-//				noteMap[it] = Pair(noteRepository.loadNote(it), true)
-			}
-		}
-	}
+	var noteKeyList = noteRepository.getAllKey()
 }

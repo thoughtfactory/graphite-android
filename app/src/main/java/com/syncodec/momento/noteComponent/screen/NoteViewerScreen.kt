@@ -21,6 +21,7 @@ import com.syncodec.momento.konstant.Status
 import com.syncodec.momento.miscellaneous.logger
 import com.syncodec.momento.noteComponent.NoteActivity
 import com.syncodec.momento.noteComponent.miscellaneous.ViewerComponent
+import org.json.JSONObject
 
 
 @OptIn(ExperimentalPagerApi::class, kotlinx.coroutines.InternalCoroutinesApi::class)
@@ -28,6 +29,7 @@ import com.syncodec.momento.noteComponent.miscellaneous.ViewerComponent
 fun NoteViewerScreen(
 	noteKeyList: List<String>,
 	noteDbEntry: NoteDbEntry?,
+	noteContent: JSONObject?,
 	connectedTag: List<String>,
 	pagerState: PagerState,
 	status: Status,
@@ -53,6 +55,7 @@ fun NoteViewerScreen(
 						Viewer(
 							status = status,
 							noteDbEntry = noteDbEntry,
+							noteContent = noteContent,
 							connectedTag = connectedTag
 						) { onClick(it) }
 					} else {
@@ -69,6 +72,7 @@ fun NoteViewerScreen(
 private fun Viewer(
 	status: Status,
 	noteDbEntry: NoteDbEntry?,
+	noteContent: JSONObject?,
 	connectedTag: List<String>,
 	onAction: (NoteActivity.Action) -> Unit
 ) {
@@ -82,9 +86,10 @@ private fun Viewer(
 		when (it) {
 			Status.INIT -> LoadingView()
 			Status.LOADING -> LoadingView()
-			Status.LOADED -> if (noteDbEntry?.content != null)
+			Status.LOADED -> if (noteDbEntry != null && noteContent != null)
 				ViewerComponent(
 					noteDbEntry = noteDbEntry,
+					noteContent = noteContent,
 					connectedTag = connectedTag
 				) { onAction(it) }
 			Status.ERROR -> {

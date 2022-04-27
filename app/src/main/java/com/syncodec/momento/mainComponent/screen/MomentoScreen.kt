@@ -19,7 +19,7 @@ import java.io.File
 @Composable
 fun MomentoScreen(
 	noteMap: Map<String, NoteDbEntry>,
-	notebookMap: Map<String, Pair<NotebookDbEntry, Int>>,
+	notebookListFlow: List<NotebookDbEntry>,
 	componentType: MainActivity.ComponentType,
 	isSelected: Boolean,
 	selectedItemList: List<String>,
@@ -45,7 +45,7 @@ fun MomentoScreen(
 					quoteBg = quoteBg,
 				) { click, data -> onAction(click, data) }
 				MainActivity.ComponentType.NOTEBOOK -> NotebookScreen(
-					notebookMap = notebookMap,
+					notebookListFlow = notebookListFlow,
 					isSelected = isSelected,
 					selectedItemList = selectedItemList,
 					filterTag = listOf()

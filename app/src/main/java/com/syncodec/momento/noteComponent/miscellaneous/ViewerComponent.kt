@@ -74,10 +74,11 @@ private const val SUBSCRIPT = "subscript"
 @Composable
 fun ViewerComponent(
 	noteDbEntry: NoteDbEntry,
+	noteContent: JSONObject?,
 	connectedTag: List<String>,
 	onAction: (NoteActivity.Action) -> Unit
 ) {
-	val tiptapData = remember { if (noteDbEntry.content != null) noteDbEntry.content!! else null }
+	val tiptapData = remember { noteContent }
 
 	Column(
 		modifier = Modifier

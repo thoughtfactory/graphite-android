@@ -14,7 +14,7 @@ import com.syncodec.momento.settings.SettingsActivity
 
 @Composable
 fun SelectNotebookScreen(
-	notebookMap: Map<String, Pair<NotebookDbEntry, Int>>,
+	notebookList: List<NotebookDbEntry>,
 	onClick: (SettingsActivity.Click, Any?) -> Unit
 ) {
 	LazyVerticalGrid(
@@ -24,11 +24,14 @@ fun SelectNotebookScreen(
 			.fillMaxSize()
 			.padding(12.dp, 0.dp),
 	) {
-		notebookMap.forEach { (_, data) ->
+		notebookList.forEach {
 			item {
-				NotebookGridCard(notebook = data.first, notebookSize = data.second) {
-					onClick(SettingsActivity.Click.EXPORT_NOTEBOOK, it)
-				}
+				NotebookGridCard(
+					notebook = it,
+					isSelected = false,
+					onClick = { onClick(SettingsActivity.Click.EXPORT_NOTEBOOK, it) },
+					onLongClick = {}
+				)
 			}
 		}
 	}

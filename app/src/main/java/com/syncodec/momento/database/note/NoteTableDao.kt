@@ -31,15 +31,24 @@ interface NoteTableDao {
 		chapterPath: List<String>
 	): Flow<List<String>>
 
+	@Query(value = "SELECT `key` FROM note_table ORDER BY user_timestamp DESC")
+	fun getAllKeyAsFlow(): Flow<List<String>>
+
 	@Query(value = "SELECT `key` FROM note_table WHERE notebook_key = :notebookKey ORDER BY user_timestamp DESC")
 	suspend fun getAllKeyFromNotebook(notebookKey: String): List<String>
 
+	@Query(value = "SELECT `key` FROM note_table WHERE notebook_key IN (:notebookKeyList) ORDER BY user_timestamp DESC")
+	suspend fun getAllKeyFromNotebook(notebookKeyList: List<String>): List<String>
+
 	@Query(value = "SELECT COUNT(*) FROM note_table WHERE notebook_key = :notebookKey")
-	fun countNotebookSize(notebookKey: String): Flow<Int>
+	suspend fun countNotebookSize(notebookKey: String): Int
 
 	@Query(value = "DELETE FROM note_table WHERE `key` = :key")
 	suspend fun delete(key: String)
 
 	@Query("DELETE FROM note_table WHERE `key` IN (:keyList)")
 	fun delete(keyList: List<String>)
+
+	@Query("DELETE FROM note_table WHERE notebook_key IN (:keyList)")
+	fun deleteWithNotebook(keyList: List<String>)
 }

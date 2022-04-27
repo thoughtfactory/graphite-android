@@ -163,7 +163,7 @@ fun NoteScreen(
 					}
 				}
 
-				noteList.forEach { noteDbEntry ->
+				noteList.sortedBy { it.userTimestamp }.reversed().forEach { noteDbEntry ->
 					item {
 						val showEntry: Boolean = filterData(
 							showArchived = showArchived,

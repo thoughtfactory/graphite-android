@@ -223,7 +223,7 @@ class SettingsActivity : ComponentActivity() {
 		var showVaultScreen by showVaultScreen
 		val evokeReason by activityState.evokeReason
 
-		val notebookMap = viewModel.notebookMap
+		val notebookList by viewModel.notebookList.collectAsState(initial = listOf())
 
 		AnimatedContent(targetState = showVaultScreen) {
 			if (it) {
@@ -252,7 +252,7 @@ class SettingsActivity : ComponentActivity() {
 							Path.DATA -> DataScreen { click, data -> onClick(click, data) }
 							Path.IMPORT -> ImportScreen { click, data -> onClick(click, data) }
 							Path.EXPORT -> ExportScreen { click, data -> onClick(click, data) }
-							Path.SELECT_NOTEBOOK -> SelectNotebookScreen(notebookMap = notebookMap) { click, data ->
+							Path.SELECT_NOTEBOOK -> SelectNotebookScreen(notebookList = notebookList) { click, data ->
 								onClick(click, data)
 							}
 							Path.PRIVACY_POLICY -> logger("TODO")

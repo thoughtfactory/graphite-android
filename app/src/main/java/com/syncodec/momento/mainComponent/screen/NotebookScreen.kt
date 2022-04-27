@@ -21,7 +21,6 @@ import com.syncodec.momento.MainActivity
 import com.syncodec.momento.R
 import com.syncodec.momento.custom.notebook.NotebookGridCard
 import com.syncodec.momento.database.notebook.NotebookDbEntry
-import com.syncodec.momento.miscellaneous.logger
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -29,14 +28,14 @@ import com.syncodec.momento.miscellaneous.logger
 @ExperimentalPagerApi
 @Composable
 fun NotebookScreen(
-	notebookMap: Map<String, Pair<NotebookDbEntry, Int>>,
+	notebookListFlow: List<NotebookDbEntry>,
 	isSelected: Boolean,
 	selectedItemList: List<String>,
 	filterTag: List<String>,
-	onClick: (MainActivity.Action, Any?) -> Unit
+	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	Crossfade(
-		targetState = notebookMap.isNotEmpty(),
+		targetState = notebookListFlow.isNotEmpty(),
 		modifier = Modifier.fillMaxSize()
 	) {
 		if (it) {
@@ -47,11 +46,14 @@ fun NotebookScreen(
 					.fillMaxSize()
 					.padding(12.dp, 0.dp),
 			) {
-				notebookMap.forEach { (_, data) ->
+				notebookListFlow.forEach {
 					item {
-						NotebookGridCard(notebook = data.first, notebookSize = data.second) {
-							onClick(MainActivity.Action.CLICK_NOTEBOOK, it)
-						}
+						NotebookGridCard(
+							notebook = it,
+							isSelected = it.key in selectedItemList,
+							onClick = { onAction(MainActivity.Action.CLICK_NOTEBOOK, it) },
+							onLongClick = { onAction(MainActivity.Action.LONG_CLICK_NOTEBOOK, it) }
+						)
 					}
 				}
 			}

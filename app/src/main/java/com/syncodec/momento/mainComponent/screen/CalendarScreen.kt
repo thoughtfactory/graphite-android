@@ -105,7 +105,7 @@ private fun BottomSheetContent(
 			)
 		}
 
-		noteDbEntryDayMap?.forEach { note ->
+		noteDbEntryDayMap?.sortedBy { it.userTimestamp }?.reversed()?.forEach { note ->
 			val lastEntryKey =
 				if (noteDbEntryDayMap.isNotEmpty()) noteDbEntryDayMap.last().key else null
 

@@ -1,6 +1,7 @@
 package com.syncodec.momento.repository
 
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.syncodec.momento.Momento
 import com.syncodec.momento.database.UserDatabase
@@ -11,12 +12,14 @@ import com.syncodec.momento.database.note.NoteTableDao
 import com.syncodec.momento.database.notebook.NotebookDbEntry
 import com.syncodec.momento.database.notebook.NotebookTableDao
 import com.syncodec.momento.miscellaneous.generatePrimaryKey
+import com.syncodec.momento.miscellaneous.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class NoteRepository(val momento: Momento) {
 	private val attachmentRepository = AttachmentRepository.getInstance(momento = momento)
@@ -29,21 +32,6 @@ class NoteRepository(val momento: Momento) {
 	//	val noteDbEntryListFlow: Flow<List<NoteDbEntry>> = noteTableDao.getAllAsFlow()
 //	val noteTimelineListFlow = noteTableDao.getAllForTimelineAsFlow()
 	val notebookListFlow: Flow<List<NotebookDbEntry>> = notebookTableDao.getAllAsFlow()
-	val notebookMap: SnapshotStateMap<String, Pair<NotebookDbEntry, Int>> = mutableStateMapOf()
-
-	init {
-		CoroutineScope(Dispatchers.IO).launch {
-			notebookTableDao.getAllAsFlow().collect {
-				it.forEach { notebookDbEntry ->
-					CoroutineScope(Dispatchers.IO).launch {
-						noteTableDao.countNotebookSize(notebookDbEntry.key).collectLatest {
-							notebookMap[notebookDbEntry.key] = Pair(notebookDbEntry, it)
-						}
-					}
-				}
-			}
-		}
-	}
 
 	suspend fun insert(noteDbEntry: NoteDbEntry) =
 		withContext(Dispatchers.IO) { noteTableDao.insert(noteDbEntry) }
@@ -54,8 +42,10 @@ class NoteRepository(val momento: Momento) {
 	suspend fun insert(notebookDbEntry: NotebookDbEntry) =
 		withContext(Dispatchers.IO) { notebookTableDao.insert(notebookDbEntry) }
 
-	suspend fun getNote(key: String): NoteDbEntry? =
-		withContext(Dispatchers.IO) { noteTableDao.get(key = key) }
+	suspend fun getNote(key: String): Pair<NoteDbEntry?, JSONObject?> =
+		withContext(Dispatchers.IO) {
+			Pair(noteTableDao.get(key = key), momento.getNote(key = key))
+		}
 
 	suspend fun getChapter(key: String): ChapterDbEntry? =
 		withContext(Dispatchers.IO) { chapterTableDao.get(key = key) }
@@ -76,14 +66,21 @@ class NoteRepository(val momento: Momento) {
 
 	fun deleteNote(keyList: List<String>) {
 		noteTableDao.delete(keyList = keyList)
+		momento.deleteNote(keyList = keyList)
 	}
 
 	fun deleteChapter(keyList: List<String>) = chapterTableDao.delete(keyList = keyList)
 
-	suspend fun deleteNotebook(key: String) =
-		withContext(Dispatchers.IO) { notebookTableDao.delete(key) }
+	suspend fun deleteNotebook(keyList: List<String>) {
+		withContext(Dispatchers.IO) {
+			val noteKeyList = noteTableDao.getAllKeyFromNotebook(keyList)
+			noteTableDao.deleteWithNotebook(keyList = keyList)
+			notebookTableDao.delete(keyList = keyList)
+			momento.deleteNote(keyList = noteKeyList)
+		}
+	}
 
-	suspend fun getAllKey(): List<String> = TODO()
+	fun getAllKey(): Flow<List<NoteDbEntry>> = noteTableDao.getAllAsFlow()
 
 	fun getNoteAsFlow(notebookKey: String): Flow<List<NoteDbEntry>> =
 		noteTableDao.getFromNotebookAsFlow(notebookKey = notebookKey)
@@ -91,8 +88,15 @@ class NoteRepository(val momento: Momento) {
 	fun getChapterAsFlow(notebookKey: String): Flow<List<ChapterDbEntry>> =
 		chapterTableDao.getFromNotebookAsFlow(notebookKey = notebookKey)
 
-	suspend fun putNote(noteDbEntry: NoteDbEntry) =
-		withContext(Dispatchers.IO) { insert(noteDbEntry) }
+	suspend fun putNote(noteDbEntry: NoteDbEntry, noteContent: JSONObject?) =
+		withContext(Dispatchers.IO) {
+			insert(noteDbEntry)
+			notebookTableDao.get(noteDbEntry.notebookKey).apply {
+				this?.notebookSize = noteTableDao.countNotebookSize(notebookKey = noteDbEntry.notebookKey)
+				this?.let { insert(it) }
+			}
+			momento.putNote(key = noteDbEntry.key, noteContent = noteContent)
+		}
 
 	suspend fun putNotebook(notebook: NotebookDbEntry): String {
 		val primaryKey = generatePrimaryKey()

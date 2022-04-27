@@ -8,14 +8,6 @@ import org.json.JSONObject
 
 @Entity(
 	tableName = "note_table",
-	foreignKeys = [
-		ForeignKey(
-			entity = NotebookDbEntry::class,
-			parentColumns = ["key"],
-			childColumns = ["notebook_key"],
-			onDelete = ForeignKey.NO_ACTION
-		)
-	],
 	indices = [Index("key")]
 )
 data class NoteDbEntry(
@@ -49,9 +41,6 @@ data class NoteDbEntry(
 
 	@ColumnInfo(name = "attachment_thumbnail", typeAffinity = ColumnInfo.BLOB)
 	var attachmentThumbnail: Bitmap? = null
-
-	@ColumnInfo(name = "content", typeAffinity = ColumnInfo.BLOB)
-	var content: JSONObject? = null
 
 	@ColumnInfo(name = "attachment_key_list")
 	var attachmentKeyList: MutableList<String> = mutableListOf()
@@ -95,7 +84,6 @@ data class NoteDbEntry(
 		result = 31 * result + (title?.hashCode() ?: 0)
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (attachmentThumbnail?.hashCode() ?: 0)
-		result = 31 * result + (content?.hashCode() ?: 0)
 		result = 31 * result + attachmentKeyList.hashCode()
 		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)

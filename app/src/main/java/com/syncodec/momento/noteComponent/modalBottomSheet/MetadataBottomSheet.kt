@@ -215,7 +215,7 @@ private fun LocationCard(
 				NoteActivity.AddressState.REMOVED -> true
 				else -> false
 			},
-			onClick = { onAction(NoteActivity.Action.ADDRESS_CARD, null) }
+			onClick = { onAction(NoteActivity.Action.TRY_GET_LOCATION, true) }
 		) {
 			Column(
 				modifier = Modifier
@@ -224,7 +224,7 @@ private fun LocationCard(
 			) {
 				Text(
 					text = when (addressState) {
-						NoteActivity.AddressState.OFF -> "AddressState : OFF"
+						NoteActivity.AddressState.OFF -> "Initializing..."
 						NoteActivity.AddressState.INIT -> "Getting address..."
 						NoteActivity.AddressState.NO_PERMISSION -> "Location permission unavailable. Click to open settings."
 						NoteActivity.AddressState.REQUEST_PERMISSION -> "Location permission unavailable. Click to provide permission."

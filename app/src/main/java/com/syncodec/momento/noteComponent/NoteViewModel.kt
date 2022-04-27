@@ -37,6 +37,7 @@ import com.syncodec.momento.repository.TagRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.io.IOException
 import java.util.*
 
@@ -60,6 +61,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	lateinit var notebookKey: String
 	lateinit var chapterPath: MutableList<String>
 	val noteDbEntry = mutableStateOf<NoteDbEntry?>(null)
+	val noteContent = mutableStateOf<JSONObject?>(null)
 	val knotDbEntry = MutableStateFlow<NoteDbEntry?>(null)
 	val attachmentMap: SnapshotStateMap<String, Pair<AttachmentDbEntry, Uri>> = mutableStateMapOf()
 	val tagList = tagRepository.tags
@@ -126,7 +128,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 				it.attachmentThumbnail = bitmap?.let { it1 -> getResizedBitmap(it1, 256) }
 
-				noteRepository.putNote(noteDbEntry = it)
+				noteRepository.putNote(noteDbEntry = it, noteContent = noteContent.value)
 				tagRepository.connectTag(key = noteDbEntry.value!!.key, connectedTag)
 				attachmentRepository.putAttachment(attachmentList = attachmentMap.values.toList(), noteKey = noteDbEntry.value!!.key)
 				activityState.isSaving.value = false
@@ -138,9 +140,12 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	fun loadNote(key: String) {
 		viewModelScope.launch(Dispatchers.IO) {
 			status.value = Status.LOADING
-			noteDbEntry.value = noteRepository.getNote(key = key)
-			emitNote()
-			status.value = Status.LOADED
+			noteRepository.getNote(key = key).apply {
+				noteDbEntry.value = first
+				noteContent.value = second
+				emitNote()
+				status.value = Status.LOADED
+			}
 		}
 	}
 

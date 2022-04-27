@@ -129,8 +129,6 @@ class AttachmentActivity : ComponentActivity() {
 	private fun onPerformAction(action: Action, data: Any?) {
 		val activityState = viewModel.activityState
 
-		logger("action : $action")
-
 		when (action) {
 			Action.BACK -> onBackPressed()
 			Action.MENU -> {

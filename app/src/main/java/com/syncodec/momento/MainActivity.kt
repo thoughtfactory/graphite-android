@@ -15,13 +15,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,7 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.firebase.ui.auth.AuthUI
@@ -151,6 +148,27 @@ class MainActivity : ComponentActivity() {
 				}
 			}
 			Action.SHOW_DELETE -> viewModel.showDeleteDialog.value = true
+			Action.ON_DELETE -> {
+				val selectedItemList = viewModel.selectedItemList.toMutableList()
+				if (selectedItemList.contains(viewModel.defaultNotebookKey)) {
+					Toast.makeText(
+						this,
+						"Cannot delete default notebook",
+						Toast.LENGTH_SHORT
+					).show()
+				}
+				selectedItemList.remove(viewModel.defaultNotebookKey)
+
+				viewModel.delete(keyList = selectedItemList)
+				Toast.makeText(
+					this,
+					"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
+					Toast.LENGTH_SHORT
+				).show()
+				viewModel.selectedItemList.clear()
+				viewModel.isSelected.value = false
+				viewModel.showDeleteDialog.value = false
+			}
 			Action.CLICK_NOTE -> {
 				data as String
 				val selectedItemList = viewModel.selectedItemList
@@ -185,9 +203,17 @@ class MainActivity : ComponentActivity() {
 			}
 			Action.CLICK_NOTEBOOK -> {
 				data as String
-				Intent(this, NotebookActivity::class.java).apply {
-					putExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name, data)
-					startActivity(this)
+				val selectedItemList = viewModel.selectedItemList
+
+				if (viewModel.isSelected.value) {
+					viewModel.isSelected.value = true
+					if (data in selectedItemList) selectedItemList.remove(data)
+					else selectedItemList.add(data)
+				} else {
+					Intent(this, NotebookActivity::class.java).apply {
+						putExtra(Konstant.Companion.Konstant.NOTEBOOK_KEY.name, data)
+						startActivity(this)
+					}
 				}
 			}
 			Action.LONG_CLICK_NOTEBOOK -> {
@@ -454,7 +480,6 @@ class MainActivity : ComponentActivity() {
 									} else {
 										scope.launch { bottomSheetState.hide() }
 									}
-									logger("action : $action")
 									onPerformAction(action = action, data = data)
 								}
 							}
@@ -463,18 +488,7 @@ class MainActivity : ComponentActivity() {
 							showDeleteDialog = viewModel.showDeleteDialog.value,
 							selectedItemSize = viewModel.selectedItemList.size,
 							onDismiss = { viewModel.showDeleteDialog.value = false },
-							onDelete = {
-								val selectedItemList = viewModel.selectedItemList.toList()
-								viewModel.delete(keyList = selectedItemList)
-								Toast.makeText(
-									this,
-									"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
-									Toast.LENGTH_SHORT
-								).show()
-								viewModel.selectedItemList.clear()
-								viewModel.isSelected.value = false
-								viewModel.showDeleteDialog.value = false
-							},
+							onDelete = { onPerformAction(Action.ON_DELETE) },
 						)
 					}
 				}
@@ -545,6 +559,7 @@ class MainActivity : ComponentActivity() {
 		TRY_FIRST,
 		TRY_PREMIUM,
 		SHOW_DELETE,
+		ON_DELETE,
 		CLICK_NOTE,
 		LONG_CLICK_NOTE,
 		CLICK_NOTEBOOK,

@@ -34,12 +34,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
 	lateinit var activityState: SettingsActivity.ActivityState
 
-	val notebookMap: SnapshotStateMap<String, Pair<NotebookDbEntry, Int>> = noteRepository.notebookMap
+	val notebookList = noteRepository.notebookListFlow
 
 	suspend fun insertNote(notebookKey: String, data: String) {
 		val dataObject = JSONObject(data)
-		val dataJson = dataObject.getString("dataJson")
-		val dataText = dataObject.getString("dataText")
+		val dataJson = dataObject.optJSONObject("dataJson")
+		val dataText = dataObject.optString("dataText")
 		val importData = dataObject.getJSONObject("importData")
 
 		val noteDbEntry = NoteDbEntry(
@@ -56,7 +56,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 			this.title = null
 			this.contentThumbnail = dataText.substring(0, minOf(128, dataText.length))
 			this.attachmentThumbnail = null
-			this.content = JSONObject(dataJson)
+//			this.content = JSONObject(dataJson)
 			importData.optDouble("lat").also { lat ->
 				if (!lat.isNaN()) {
 					importData.optDouble("lon").also { lon ->
@@ -68,7 +68,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 			this.mood = importData.optInt("sentiment")
 		}
 
-		noteRepository.putNote(noteDbEntry = noteDbEntry)
+		noteRepository.putNote(noteDbEntry = noteDbEntry, noteContent = dataObject)
 	}
 
 	suspend fun exportNotes(notebookKey: String): String? {
@@ -79,31 +79,34 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 		val noteKeyList = noteRepository.openNotebook(notebookKey)
 		noteKeyList.forEach { key ->
 			try {
-				val noteDbEntry = noteRepository.getNote(key = key)
+				noteRepository.getNote(key = key).apply {
+					val noteDbEntry = first
+					val noteContent = second
 
-				if (noteDbEntry?.content != null) {
-					val attachmentDataList =
-						attachmentRepository.getAttachment(noteKey = noteDbEntry.key)
-					val attachmentList = attachmentRepository.getAttachmentUri(
-						keyList = attachmentDataList.listOfField(AttachmentDbEntry::key)
-					)
+					if (noteDbEntry != null) {
+						val attachmentDataList =
+							attachmentRepository.getAttachment(noteKey = noteDbEntry.key)
+						val attachmentList = attachmentRepository.getAttachmentUri(
+							keyList = attachmentDataList.listOfField(AttachmentDbEntry::key)
+						)
 
-					NoteExport(
-						key = noteDbEntry.key,
-						createdTimestamp = noteDbEntry.createdTimestamp,
-						modifiedTimestamp = noteDbEntry.modifiedTimestamp,
-						userTimestamp = noteDbEntry.userTimestamp,
-						timezone = noteDbEntry.timezone,
-						chapterPath = noteDbEntry.chapterPath,
-						notebookKey = noteDbEntry.notebookKey,
-						title = noteDbEntry.title,
-						content = noteDbEntry.content.toString(),
-						latLng = noteDbEntry.latLng,
-						address = noteDbEntry.address,
-						attachmentKey = attachmentList.keys.toList()
-					).apply {
-						File("${exportDir.path}/${noteDbEntry.key}.json")
-							.writeText(objectMapper.writeValueAsString(this))
+						NoteExport(
+							key = noteDbEntry.key,
+							createdTimestamp = noteDbEntry.createdTimestamp,
+							modifiedTimestamp = noteDbEntry.modifiedTimestamp,
+							userTimestamp = noteDbEntry.userTimestamp,
+							timezone = noteDbEntry.timezone,
+							chapterPath = noteDbEntry.chapterPath,
+							notebookKey = noteDbEntry.notebookKey,
+							title = noteDbEntry.title,
+							content = noteContent?.toString(),
+							latLng = noteDbEntry.latLng,
+							address = noteDbEntry.address,
+							attachmentKey = attachmentList.keys.toList()
+						).apply {
+							File("${exportDir.path}/${noteDbEntry.key}.json")
+								.writeText(objectMapper.writeValueAsString(this))
+						}
 					}
 				}
 			} catch (exception: Exception) {

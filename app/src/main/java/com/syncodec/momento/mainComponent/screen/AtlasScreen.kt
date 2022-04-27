@@ -165,7 +165,7 @@ private fun BottomSheetContent(
 				color = MaterialTheme.colorScheme.surface,
 			)
 		}
-		markerMap.forEachIndexed { index, note ->
+		markerMap.sortedBy { it.userTimestamp }.reversed().forEachIndexed { index, note ->
 			item {
 				NoteCard(
 					key = note.key,

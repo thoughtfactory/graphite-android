@@ -14,6 +14,7 @@ import com.syncodec.momento.miscellaneous.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.internal.wait
 import org.json.JSONObject
 import java.io.File
 import java.nio.charset.Charset
@@ -55,6 +56,30 @@ class Momento : Application() {
 
 		downloadQuote()
 	}
+
+	fun putNote(key: String, noteContent: JSONObject?) {
+		File("$NOTE_DIR/$key.json").apply {
+			noteContent?.toString()?.let { writeText(it) }
+		}
+	}
+
+	fun getNote(key: String): JSONObject? {
+		File("$NOTE_DIR/$key.json").also {
+			return if (it.exists()) {
+				try {
+					JSONObject(it.readText())
+				} catch (exception: Exception) {
+					null
+				}
+			} else {
+				null
+			}
+		}
+	}
+
+	fun deleteNote(key: String) = File("$NOTE_DIR/$key.json").delete()
+
+	fun deleteNote(keyList: List<String>) = keyList.forEach { File("$NOTE_DIR/$it.json").delete() }
 
 	fun putAttachment(key: String, uri: Uri): Boolean {
 		val inputStream = contentResolver.openInputStream(uri)

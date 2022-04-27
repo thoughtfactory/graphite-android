@@ -29,6 +29,9 @@ data class NotebookDbEntry(
 	@ColumnInfo(name = "thumbnail")
 	var bitmap: Bitmap? = null
 
+	@ColumnInfo(name = "notebook_size")
+	var notebookSize: Int = 0
+
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 

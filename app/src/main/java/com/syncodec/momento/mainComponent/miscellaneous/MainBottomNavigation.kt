@@ -113,7 +113,7 @@ fun MainNavigation(
 	val selectedItemList = viewModel.selectedItemList
 
 	val noteMap = viewModel.defaultNoteMap
-	val notebookMap = viewModel.notebookMap
+	val notebookListFlow by viewModel.notebookListFlow.collectAsState(initial = listOf())
 	val bucketList = viewModel.bucketList
 	val quote by viewModel.quote
 	val quoteBg by viewModel.quoteBg
@@ -131,7 +131,7 @@ fun MainNavigation(
 			) {
 				MomentoScreen(
 					noteMap = noteMap,
-					notebookMap = notebookMap,
+					notebookListFlow = notebookListFlow,
 					componentType = componentType,
 					isSelected = isSelected,
 					selectedItemList = selectedItemList,
