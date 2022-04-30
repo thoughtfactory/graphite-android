@@ -192,8 +192,10 @@ const editor = new Editor.Editor({
             placeholder: 'What story did you bring today?',
             showOnlyWhenEditable: true,
         }),
-        Typography.Typography,
-
+        Typography.Typography.configure({
+            openDoubleQuote: false,
+            closeDoubleQuote: false,
+        }),
     ],
     autofocus: true,
     editable: true,

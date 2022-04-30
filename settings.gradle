@@ -6,5 +6,5 @@ dependencyResolutionManagement {
 		maven { url 'https://jitpack.io' }
 	}
 }
-rootProject.name = "Momento"
+rootProject.name = "Graphite"
 include ':app'

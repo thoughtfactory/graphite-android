@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.syncodec.momento">
+	package="com.syncodec.graphite">
 
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
 	<application
-		android:name=".Momento"
+		android:name="com.syncodec.graphite.Graphite"
 		android:allowBackup="false"
 		android:icon="@mipmap/ic_launcher"
 		android:label="@string/app_name"
 		android:roundIcon="@mipmap/ic_launcher"
 		android:supportsRtl="false"
-		android:theme="@style/Theme.Momento">
+		android:theme="@style/Theme.Graphite">
 
 		<meta-data
 			android:name="com.google.android.gms.version"
@@ -33,10 +33,10 @@
 		</provider>
 
 		<activity
-			android:name=".MainActivity"
+			android:name="com.syncodec.graphite.MainActivity"
 			android:exported="true"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 
@@ -45,64 +45,64 @@
 		</activity>
 
 		<activity
-			android:name=".searchComponent.SearchActivity"
+			android:name="com.syncodec.graphite.searchComponent.SearchActivity"
 			android:exported="false"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".todayComponent.TodayActivity"
+			android:name="com.syncodec.graphite.todayComponent.TodayActivity"
 			android:exported="false"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".noteComponent.NoteActivity"
+			android:name="com.syncodec.graphite.noteComponent.NoteActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".bucketComponent.BucketActivity"
+			android:name="com.syncodec.graphite.bucketComponent.BucketActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".bucketItemComponent.BucketItemActivity"
+			android:name="com.syncodec.graphite.bucketItemComponent.BucketItemActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".notebookComponent.NotebookActivity"
+			android:name="com.syncodec.graphite.notebookComponent.NotebookActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".attachmentComponent.AttachmentActivity"
+			android:name="com.syncodec.graphite.attachmentComponent.AttachmentActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".settings.SettingsActivity"
+			android:name="com.syncodec.graphite.settingsComponent.SettingsActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 
 		<activity
-			android:name=".premiumComponent.PremiumActivity"
+			android:name="com.syncodec.graphite.premiumComponent.PremiumActivity"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Momento.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar">
 		</activity>
 	</application>
 </manifest>

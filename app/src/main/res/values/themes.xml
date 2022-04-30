@@ -1,18 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 	<!-- Base application theme. -->
-	<style name="Theme.Momento" parent="Theme.AppCompat.Light.NoActionBar">
+	<style name="Theme.Graphite" parent="Theme.AppCompat.Light.NoActionBar">
 		<!-- Primary brand color. -->
 		<item name="colorPrimary">@color/purple_500</item>
 		<!-- Status bar color. -->
 		<!-- Customize your theme here. -->
 	</style>
 
-	<style name="Theme.Momento.NoActionBar">
+	<style name="Theme.Graphite.NoActionBar">
 		<item name="windowActionBar">false</item>
 		<item name="windowNoTitle">true</item>
 	</style>
 
-	<style name="Theme.Momento.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+	<style name="Theme.Graphite.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-	<style name="Theme.Momento.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+	<style name="Theme.Graphite.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

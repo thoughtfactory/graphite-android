@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "729277081868",
-    "project_id": "the-life-cycle",
-    "storage_bucket": "the-life-cycle.appspot.com"
+    "project_number": "948547440986",
+    "project_id": "graphite-diary",
+    "storage_bucket": "graphite-diary.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:729277081868:android:583de97578b3e88cdd8129",
+        "mobilesdk_app_id": "1:948547440986:android:aac47be09b9afcbc0ca363",
         "android_client_info": {
-          "package_name": "com.syncodec.momento"
+          "package_name": "com.syncodec.graphite"
         }
       },
       "oauth_client": [
         {
-          "client_id": "729277081868-oin9p7ustebbs6bla6td69nmlqm8njb5.apps.googleusercontent.com",
+          "client_id": "948547440986-950pc2pvua7sa2krjg30m79ll5jaab2v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.syncodec.momento",
+            "package_name": "com.syncodec.graphite",
             "certificate_hash": "7dddaaa56c84dff70e7f679132f7fc0611e13ec9"
           }
         },
         {
-          "client_id": "729277081868-uj2bhu9j6mtpinaqrg4ruidg3b5358jf.apps.googleusercontent.com",
+          "client_id": "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBpjbJXhyYYixSqBIGzIURxzsi2H0dpTIY"
+          "current_key": "AIzaSyCKOa6d_fHXKAsIZRELfGlkLq4Sw0hFpbg"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "729277081868-uj2bhu9j6mtpinaqrg4ruidg3b5358jf.apps.googleusercontent.com",
+              "client_id": "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
