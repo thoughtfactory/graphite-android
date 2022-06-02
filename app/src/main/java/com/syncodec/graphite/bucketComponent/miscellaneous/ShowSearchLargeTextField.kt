@@ -12,10 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +28,6 @@ import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.graphite.R
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ShowSearchLargeTextField(
 	text: String,
@@ -78,27 +74,49 @@ fun ShowSearchLargeTextField(
 				modifier = Modifier.fillMaxWidth()
 			) {
 				Row(
-					modifier = Modifier.fillMaxWidth(),
 					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceBetween
+					horizontalArrangement = Arrangement.SpaceBetween,
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(12.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Spacer(modifier = Modifier.width(12.dp))
 					Box(
-						modifier = Modifier.weight(1f)
+						modifier = Modifier,
+						contentAlignment = Alignment.CenterStart,
 					) {
 						Crossfade(targetState = text.isEmpty()) {
 							if (it) {
 								Text(
 									text = placeholder,
 									style = MaterialTheme.typography.bodyMedium,
-									color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5),
+									color = MaterialTheme.colorScheme.surface.tone(
+										isSystemInDarkTheme(),
+										5
+									),
 									fontWeight = FontWeight.Bold
 								)
 							}
 						}
 						innerTextField()
 					}
-					DataTypeCard(dataType = dataType) { onAction(it) }
+					Row(
+						modifier = Modifier,
+						horizontalArrangement = Arrangement.Center,
+						verticalAlignment = Alignment.CenterVertically
+					) {
+						IconButton(onClick = { onValueChanged("") }) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_close),
+								contentDescription = "Clear search text",
+								tint = MaterialTheme.colorScheme.surface.tone(
+									isSystemInDarkTheme(),
+									5
+								),
+								modifier = Modifier.requiredSize(16.dp)
+							)
+						}
+						DataTypeCard(dataType = dataType) { onAction(it) }
+					}
 				}
 			}
 		}
@@ -118,7 +136,7 @@ private fun DataTypeCard(
 			.fillMaxHeight()
 			.clickable { onClick(BucketActivity.Action.DATA_TYPE_SELECT) },
 	) {
-		Spacer(modifier = Modifier.width(12.dp))
+		Spacer(modifier = Modifier.width(6.dp))
 		AnimatedContent(targetState = dataType) {
 			when (it) {
 				BucketActivity.DataType.TV -> Icon(

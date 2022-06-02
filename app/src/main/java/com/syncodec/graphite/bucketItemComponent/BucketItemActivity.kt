@@ -25,12 +25,13 @@ import com.syncodec.graphite.bucketItemComponent.modalBottonSheet.MenuBottomShee
 import com.syncodec.graphite.bucketItemComponent.screen.BookItemScreen
 import com.syncodec.graphite.bucketItemComponent.screen.ShowMovieItemScreen
 import com.syncodec.graphite.bucketItemComponent.screen.ShowTvItemScreen
+import com.syncodec.graphite.custom.ErrorView
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.database.bucketItem.BucketItemState
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
-import com.syncodec.graphite.ui.theme.GraphiteTheme
+import com.syncodec.graphite.ui.theme.GraphiteBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -39,10 +40,7 @@ class BucketItemActivity : ComponentActivity() {
 
 	val viewModel by viewModels<BucketItemViewModel>()
 
-	@OptIn(
-		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
-		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class
-	)
+	@OptIn(ExperimentalMaterialApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -70,7 +68,7 @@ class BucketItemActivity : ComponentActivity() {
 		viewModel.getItem(intent = intent)
 
 		setContent {
-			GraphiteTheme {
+			GraphiteBase {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
@@ -108,15 +106,15 @@ class BucketItemActivity : ComponentActivity() {
 				}
 			}
 			Action.FAVOURITE -> {
-//				bucketItemDbEntry!!.isFavourite = !bucketItemDbEntry!!.isFavourite
+				bucketItemDbEntry!!.isFavourite = !bucketItemDbEntry!!.isFavourite
 				viewModel.updateItem()
 			}
 			Action.ARCHIVE -> {
-//				bucketItemDbEntry!!.isArchived = !bucketItemDbEntry!!.isArchived
+				bucketItemDbEntry!!.isArchived = !bucketItemDbEntry!!.isArchived
 				viewModel.updateItem()
 			}
 			Action.LOCK -> {
-//				bucketItemDbEntry!!.isLocked = !bucketItemDbEntry!!.isLocked
+				bucketItemDbEntry!!.isLocked = !bucketItemDbEntry!!.isLocked
 				viewModel.updateItem()
 			}
 			Action.DELETE -> {
@@ -151,7 +149,7 @@ class BucketItemActivity : ComponentActivity() {
 				Status.INIT -> LoadingView()
 				Status.LOADING -> LoadingView()
 				Status.LOADED -> Content()
-				else -> null
+				Status.ERROR -> ErrorView()
 			}
 		}
 	}
@@ -174,7 +172,7 @@ class BucketItemActivity : ComponentActivity() {
 				MenuBottomSheet(
 					createdTimestamp = bucketItemDbEntry?.createdTimestamp ?: -1,
 					modifiedTimestamp = bucketItemDbEntry?.modifiedTimestamp ?: -1,
-				)
+				) { action, data -> onPerformAction(action, data) }
 			},
 		) {
 			Scaffold(

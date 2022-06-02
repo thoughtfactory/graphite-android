@@ -86,8 +86,7 @@ private fun GridItem(
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.padding(8.dp)
+		modifier = Modifier.padding(8.dp)
 	) {
 		Card(
 			elevation = 0.dp,

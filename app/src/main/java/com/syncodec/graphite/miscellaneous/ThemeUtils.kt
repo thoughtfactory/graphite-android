@@ -11,16 +11,16 @@ class ThemeUtils {
 		fun Color.tone(isDarkTheme: Boolean, hue: Int) = if (isDarkTheme) Color(this.toArgb().tints()[hue]) else Color(this.toArgb().shades()[hue])
 
 		val bookCoverImageList: List<Int> = listOf(
-			R.drawable.book_cover_1,
-			R.drawable.background_1,
-			R.drawable.book_cover_1,
-			R.drawable.book_cover_1,
-			R.drawable.book_cover_1,
-			R.drawable.book_cover_1,
-			R.drawable.book_cover_1,
-			R.drawable.book_cover_1,
-			R.drawable.book_cover_1,
-			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.background_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
+//			R.drawable.book_cover_1,
 		)
 	}
 }

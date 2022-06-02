@@ -27,6 +27,9 @@ interface AttachmentTableDao {
 	@Query(value = "SELECT * FROM attachment_table WHERE notebook_key = :notebookKey ORDER BY created_timestamp DESC")
 	fun getForNotebookAsFlow(notebookKey: String) : Flow<List<AttachmentDbEntry>>
 
+	@Query(value = "SELECT * FROM attachment_table WHERE notebook_key = :notebookKey ORDER BY created_timestamp DESC")
+	suspend fun getForNotebook(notebookKey: String) : List<AttachmentDbEntry>
+
 	@Query(value = "SELECT * FROM attachment_table ORDER BY created_timestamp DESC")
 	fun getAllAsFlow() : Flow<List<AttachmentDbEntry>>
 

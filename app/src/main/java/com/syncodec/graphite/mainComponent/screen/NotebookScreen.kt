@@ -17,13 +17,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.notebook.NotebookGridCard
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @ExperimentalMaterialApi
 @ExperimentalPagerApi
 @Composable

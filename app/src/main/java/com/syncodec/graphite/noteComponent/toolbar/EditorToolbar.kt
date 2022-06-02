@@ -21,6 +21,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.richText.RichTextEditor
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.graphite.noteComponent.NoteActivity
+import com.syncodec.graphite.ui.theme.PremiumCompositionLocal
 import java.text.SimpleDateFormat
 
 
@@ -151,8 +152,7 @@ fun EditorToolbar(
 							ToolbarButton.UNDERLINE -> richTextEditor.exec("editor.chain().focus().toggleUnderline().run();")
 							ToolbarButton.STRIKE -> richTextEditor.exec("editor.chain().focus().toggleStrike().run();")
 							ToolbarButton.HARD_BREAK -> richTextEditor.exec(
-								"editor.chain().focus().setHardBreak().run()",
-								false
+								"editor.chain().focus().setHardBreak().run()"
 							)
 							ToolbarButton.CHECK_LIST -> richTextEditor.exec("editor.commands.toggleTaskList();")
 							ToolbarButton.BULLET_LIST -> richTextEditor.exec("editor.commands.toggleBulletList();")
@@ -213,27 +213,32 @@ private fun StateEditorToolbar(
 		ToolbarButton(
 			name = "Attachment",
 			icon = R.drawable.ic_attachment,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.ATTACHMENT) }
 		ToolbarButton(
 			name = "Tag",
 			icon = R.drawable.ic_hashtag,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.TAG) }
 		ToolbarButton(
 			name = "State",
 			icon = R.drawable.ic_state,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.STATE) }
 		ToolbarButton(
 			name = "Text Format",
 			icon = R.drawable.ic_text_format,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.OPEN_FORMAT) }
 		ToolbarButton(
 			name = "Metadata",
 			icon = R.drawable.ic_info,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.METADATA) }
 	}
 }
@@ -243,6 +248,8 @@ private fun FormatEditorToolbar(
 	textFormat: RichTextEditor.TextFormat,
 	onClick: (ToolbarButton) -> Unit
 ) {
+	val isPremium = PremiumCompositionLocal.current
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -254,18 +261,21 @@ private fun FormatEditorToolbar(
 		ToolbarButton(
 			name = "Close formatter",
 			icon = R.drawable.ic_menu_vertical,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		)
 		{ onClick(ToolbarButton.CLOSE_FORMAT) }
 		ToolbarButton(
 			name = "Undo",
 			icon = R.drawable.ic_format_undo,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.UNDO) }
 		ToolbarButton(
 			name = "Redo",
 			icon = R.drawable.ic_format_redo,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.REDO) }
 
 		ToolbarSpacer()
@@ -273,27 +283,32 @@ private fun FormatEditorToolbar(
 		ToolbarButton(
 			name = "Format bold",
 			icon = R.drawable.ic_format_bold,
-			highlight = textFormat.bold
+			highlight = textFormat.bold,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.BOLD) }
 		ToolbarButton(
 			name = "Format italic",
 			icon = R.drawable.ic_format_italic,
-			highlight = textFormat.italic
+			highlight = textFormat.italic,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.ITALIC) }
 		ToolbarButton(
 			name = "Format underline",
 			icon = R.drawable.ic_format_underline,
-			highlight = textFormat.underline
+			highlight = textFormat.underline,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.UNDERLINE) }
 		ToolbarButton(
 			name = "Format strikethrough",
 			icon = R.drawable.ic_format_strikethrough,
-			highlight = textFormat.strike
+			highlight = textFormat.strike,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.STRIKE) }
 		ToolbarButton(
 			name = "Hard break",
 			icon = R.drawable.ic_format_hard_break,
-			highlight = false
+			highlight = false,
+			isEnabled = true
 		) { onClick(ToolbarButton.HARD_BREAK) }
 
 		ToolbarSpacer()
@@ -301,17 +316,20 @@ private fun FormatEditorToolbar(
 		ToolbarButton(
 			name = "Check list",
 			icon = R.drawable.ic_format_list_check,
-			highlight = textFormat.taskList
+			highlight = textFormat.taskList,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.CHECK_LIST) }
 		ToolbarButton(
 			name = "Bullet list",
 			icon = R.drawable.ic_format_list_bullet,
-			highlight = textFormat.bulletList
+			highlight = textFormat.bulletList,
+			isEnabled = true
 		) { onClick(ToolbarButton.BULLET_LIST) }
 		ToolbarButton(
 			name = "Ordered list",
 			icon = R.drawable.ic_format_list_ordered,
-			highlight = textFormat.orderedList
+			highlight = textFormat.orderedList,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.ORDERED_LIST) }
 
 		ToolbarSpacer()
@@ -328,95 +346,61 @@ private fun FormatEditorToolbar(
 				textFormat.heading6 -> R.drawable.ic_format_h6
 				else -> R.drawable.ic_format_paragraph
 			},
-			highlight = textFormat.heading1 || textFormat.heading2 || textFormat.heading3 || textFormat.heading4 || textFormat.heading5 || textFormat.heading6
+			highlight = textFormat.heading1 || textFormat.heading2 || textFormat.heading3 || textFormat.heading4 || textFormat.heading5 || textFormat.heading6,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.HEADING) }
 		ToolbarButton(
 			name = "Blockquote",
 			icon = R.drawable.ic_format_blockquote,
-			highlight = textFormat.blockquote
+			highlight = textFormat.blockquote,
+			isEnabled = true
 		) { onClick(ToolbarButton.BLOCKQUOTE) }
 		ToolbarSpacer()
 
 		ToolbarButton(
 			name = "Ordered list",
 			icon = R.drawable.ic_format_indent,
-			highlight = false
+			highlight = false,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.INDENT) }
 		ToolbarButton(
 			name = "Ordered list",
 			icon = R.drawable.ic_format_outdent,
-			highlight = false
+			highlight = false,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.OUTDENT) }
-		ToolbarButton(
-			name = if (textFormat.link == null) "Link" else "Unlink",
-			icon = if (textFormat.link == null) R.drawable.ic_format_link else R.drawable.ic_format_unlink,
-			highlight = textFormat.link != null
-		) { onClick(ToolbarButton.LINK) }
+//		ToolbarButton(
+//			name = if (textFormat.link == null) "Link" else "Unlink",
+//			icon = if (textFormat.link == null) R.drawable.ic_format_link else R.drawable.ic_format_unlink,
+//			highlight = textFormat.link != null,
+//			isEnabled = isPremium
+//		) { onClick(ToolbarButton.LINK) }
 		ToolbarButton(
 			name = "Superscript",
 			icon = R.drawable.ic_format_superscript,
-			highlight = textFormat.superscript
+			highlight = textFormat.superscript,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.SUPERSCRIPT) }
 		ToolbarButton(
 			name = "Subscript",
 			icon = R.drawable.ic_format_subscript,
-			highlight = textFormat.subscript
+			highlight = textFormat.subscript,
+			isEnabled = isPremium
 		) { onClick(ToolbarButton.SUBSCRIPT) }
-		ToolbarButton(
-			name = "Code",
-			icon = R.drawable.ic_format_code,
-			highlight = textFormat.code
-		) { onClick(ToolbarButton.CODE) }
-		ToolbarButton(
-			name = "Code block",
-			icon = R.drawable.ic_format_code_block,
-			highlight = textFormat.codeBlock
-		) { onClick(ToolbarButton.CODE_BLOCK) }
+//		ToolbarButton(
+//			name = "Code",
+//			icon = R.drawable.ic_format_code,
+//			highlight = textFormat.code,
+//			isEnabled = isPremium
+//		) { onClick(ToolbarButton.CODE) }
+//		ToolbarButton(
+//			name = "Code block",
+//			icon = R.drawable.ic_format_code_block,
+//			highlight = textFormat.codeBlock,
+//			isEnabled = isPremium
+//		) { onClick(ToolbarButton.CODE_BLOCK) }
 
 		Spacer(modifier = Modifier.width(8.dp))
-	}
-}
-
-@Composable
-private fun ToolbarButton(
-	name: String,
-	icon: Int,
-	highlight: Boolean,
-	onClick: () -> Unit
-) {
-	Row(
-		modifier = Modifier.height(40.dp)
-	) {
-		val containerColor by animateColorAsState(
-			if (highlight)
-				contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
-			else
-				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-		)
-		val contentColor by animateColorAsState(
-			if (highlight)
-				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-			else
-				contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
-		)
-
-		Box(
-			contentAlignment = Alignment.Center,
-			modifier = Modifier
-				.requiredSize(40.dp)
-				.clip(RoundedCornerShape(25))
-				.background(containerColor)
-				.clickable { onClick() },
-		) {
-			Icon(
-				painter = painterResource(id = icon),
-				contentDescription = name,
-				tint = contentColor,
-				modifier = Modifier.padding(8.dp)
-			)
-		}
-
-		Spacer(modifier = Modifier.width(4.dp))
 	}
 }
 
@@ -518,17 +502,20 @@ private fun NoteStateToolbar(
 			ToolbarButton(
 				name = "Favourite",
 				icon = R.drawable.ic_favourite,
-				highlight = isFavourite
+				highlight = isFavourite,
+				isEnabled = true
 			) { onAction(NoteActivity.Action.TOGGLE_FAVOURITE) }
 			ToolbarButton(
 				name = "Archive",
 				icon = R.drawable.ic_archive,
-				highlight = isArchive
+				highlight = isArchive,
+				isEnabled = true
 			) { onAction(NoteActivity.Action.TOGGLE_ARCHIVE) }
 			ToolbarButton(
 				name = "Lock",
 				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
-				highlight = isLocked
+				highlight = isLocked,
+				isEnabled = true
 			) { onAction(NoteActivity.Action.TOGGLE_LOCKED) }
 
 			Spacer(modifier = Modifier.width(8.dp))
@@ -541,6 +528,8 @@ private fun TextHeadingToolbar(
 	textFormat: RichTextEditor.TextFormat,
 	onClick: (ToolbarButton) -> Unit,
 ) {
+	val isPremium = PremiumCompositionLocal.current
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -560,37 +549,44 @@ private fun TextHeadingToolbar(
 			ToolbarButton(
 				name = "Paragraph",
 				icon = R.drawable.ic_format_paragraph,
-				highlight = textFormat.paragraph
+				highlight = textFormat.paragraph,
+				isEnabled = isPremium
 			) { onClick(ToolbarButton.PARAGRAPH) }
 			ToolbarButton(
 				name = "Heading 1",
 				icon = R.drawable.ic_format_h1,
-				highlight = textFormat.heading1
+				highlight = textFormat.heading1,
+				isEnabled = isPremium
 			) { onClick(ToolbarButton.H1) }
 			ToolbarButton(
 				name = "Heading 2",
 				icon = R.drawable.ic_format_h2,
-				highlight = textFormat.heading2
+				highlight = textFormat.heading2,
+				isEnabled = isPremium
 			) { onClick(ToolbarButton.H2) }
 			ToolbarButton(
 				name = "Heading 3",
 				icon = R.drawable.ic_format_h3,
-				highlight = textFormat.heading3
+				highlight = textFormat.heading3,
+				isEnabled = isPremium
 			) { onClick(ToolbarButton.H3) }
 			ToolbarButton(
 				name = "Heading 4",
 				icon = R.drawable.ic_format_h4,
-				highlight = textFormat.heading4
+				highlight = textFormat.heading4,
+				isEnabled = isPremium
 			) { onClick(ToolbarButton.H4) }
 			ToolbarButton(
 				name = "Heading 5",
 				icon = R.drawable.ic_format_h5,
-				highlight = textFormat.heading5
+				highlight = textFormat.heading5,
+				isEnabled = isPremium
 			) { onClick(ToolbarButton.H5) }
 			ToolbarButton(
 				name = "Heading 6",
 				icon = R.drawable.ic_format_h6,
-				highlight = textFormat.heading6
+				highlight = textFormat.heading6,
+				isEnabled = isPremium
 			) { onClick(ToolbarButton.H6) }
 
 			Spacer(modifier = Modifier.width(8.dp))

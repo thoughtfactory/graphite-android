@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -68,6 +69,7 @@ fun TopBar(
 							text = "Edit",
 							style = MaterialTheme.typography.bodyMedium,
 							textAlign = TextAlign.Center,
+							fontWeight = FontWeight.Bold,
 							modifier = Modifier.width(40.dp)
 						)
 
@@ -76,6 +78,7 @@ fun TopBar(
 							text = "Save",
 							style = MaterialTheme.typography.bodyMedium,
 							textAlign = TextAlign.Center,
+							fontWeight = FontWeight.Bold,
 							modifier = Modifier.width(40.dp)
 						)
 					}

@@ -12,8 +12,6 @@ import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-fun logger(msg: String) = Log.i("npr71", msg)
-
 fun generatePrimaryKey(): String = UUID.randomUUID().toString()
 
 fun locationAddressFilter(address: Address?): String? {

@@ -25,13 +25,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AddressCard(
 	addressState: NoteActivity.AddressState,
 	showAddressCard: Boolean,
-	address: String?,
 	latLng: LatLng?,
+	address: String?,
 	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
 	val scope = rememberCoroutineScope()

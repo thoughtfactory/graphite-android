@@ -78,7 +78,7 @@ fun TodoScreen(
 }
 
 @OptIn(
-	ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class,
+	ExperimentalFoundationApi::class,
 	ExperimentalAnimationApi::class
 )
 @Composable

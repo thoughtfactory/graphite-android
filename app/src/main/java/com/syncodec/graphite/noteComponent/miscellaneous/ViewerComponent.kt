@@ -113,7 +113,6 @@ fun ViewerComponent(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Thumbnail(
 	bitmap: Bitmap?,
@@ -195,8 +194,8 @@ private fun Header(
 				)
 				Spacer(modifier = Modifier.width(4.dp))
 				Text(
-					text = address ?: "Lat : ${latlng?.latitude?.roundTo(6)}, " +
-					"Lng : ${latlng?.longitude?.roundTo(6)}",
+					text = address ?: ("Lat : ${latlng?.latitude?.roundTo(6)}, " +
+							"Lng : ${latlng?.longitude?.roundTo(6)}"),
 					style = MaterialTheme.typography.bodyMedium,
 					color = MaterialTheme.colorScheme.onSurface,
 					maxLines = 1,
@@ -437,14 +436,14 @@ private fun RichTextScope.RenderList(
 		val content = contentList!!.optJSONObject(i)
 		when (content.optString(TYPE)) {
 			LIST_ITEM -> itemList.add(
-				RenderListItem(
+				renderListItem(
 					contentList = content.optJSONArray(CONTENT),
 					attrs = content.optJSONObject(ATTRS),
 					nestLevel = nestLevel + 1
 				)
 			)
 			TASK_ITEM -> itemList.add(
-				RenderListItem(
+				renderListItem(
 					contentList = content.optJSONArray(CONTENT),
 					attrs = content.optJSONObject(ATTRS),
 					nestLevel = nestLevel + 1
@@ -462,14 +461,14 @@ private fun RichTextScope.RenderList(
 }
 
 @Composable
-private fun RenderListItem(
+private fun renderListItem(
 	contentList: JSONArray?,
 	attrs: JSONObject?,
 	nestLevel: Int
 ): Pair<@Composable (RichTextScope.() -> Unit), Boolean?> {
 	return Pair(
 		{
-			for (i in 0 until (contentList?.length() ?: 0)) {
+			for (i in 0 until  (contentList?.length() ?: 0)) {
 				val content = contentList!!.optJSONObject(i)
 				when (content.optString(TYPE)) {
 					PARAGRAPH -> RenderParagraph(

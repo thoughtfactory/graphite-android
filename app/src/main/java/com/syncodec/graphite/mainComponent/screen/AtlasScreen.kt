@@ -1,6 +1,8 @@
 package com.syncodec.graphite.mainComponent.screen
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,19 +22,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.ClusterManager
-import com.syncodec.graphite.MainActivity
 import com.syncodec.graphite.custom.notebook.NoteCard
 import com.syncodec.graphite.custom.notebook.NotebookHeaderCard
 import com.syncodec.graphite.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.graphite.database.note.NoteDbEntry
+import com.syncodec.graphite.konstant.Konstant
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.mainComponent.miscellaneous.AtlasClusterItem
 import com.syncodec.graphite.mainComponent.miscellaneous.ClusterRenderer
 import com.syncodec.graphite.miscellaneous.GoogleMapUtils.Companion.isMarkerVisible
-import com.syncodec.graphite.R
 
 
 @SuppressLint("MissingPermission")
@@ -79,6 +82,7 @@ fun AtlasScreen(
 			BottomSheetContent(
 				markerMap = markerMap,
 				selectedItemList = selectedItemList,
+				noEntries = noteMap.isEmpty(),
 				onAction = onAction
 			)
 		},
@@ -95,13 +99,6 @@ fun AtlasScreen(
 		) { mapView ->
 			mapView.getMapAsync {
 				val map = it
-
-				try {
-					map.setMapStyle(
-						MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_light)
-					)
-				} catch (exception: Exception) {
-				}
 
 				map.uiSettings.isZoomControlsEnabled = false
 				map.uiSettings.isCompassEnabled = false
@@ -126,12 +123,6 @@ fun AtlasScreen(
 
 				clusterManager.renderer = clusterRenderer
 
-				noteMap.forEach { (_, note) ->
-					note.latLng?.let { it1 ->
-						AtlasClusterItem(latLng = it1, itemTitle = null)
-					}?.also { clusterManager.addItem(it) }
-				}
-
 				map.setOnCameraMoveListener { clusterManager.cluster() }
 
 				map.setOnCameraIdleListener {
@@ -143,6 +134,33 @@ fun AtlasScreen(
 						}
 					}
 				}
+
+				if (noteMap.isEmpty()) {
+					map.clear()
+					Konstant.ilMap.forEach { (latLng, il) ->
+						val markerOptions = MarkerOptions()
+							.position(latLng)
+							.anchor(0.5f, 0.5f)
+						map.addMarker(markerOptions)
+							?.setIcon(
+								BitmapDescriptorFactory.fromBitmap(
+									Bitmap.createScaledBitmap(
+										BitmapFactory.decodeResource(context.resources, il),
+										310,
+										310,
+										false
+									)
+								)
+							)
+					}
+				} else {
+					map.clear()
+					noteMap.forEach { (_, note) ->
+						note.latLng?.let { it1 ->
+							AtlasClusterItem(latLng = it1, itemTitle = null)
+						}?.also { clusterManager.addItem(it) }
+					}
+				}
 			}
 		}
 	}
@@ -152,6 +170,7 @@ fun AtlasScreen(
 private fun BottomSheetContent(
 	markerMap: SnapshotStateList<NoteDbEntry>,
 	selectedItemList: List<String>,
+	noEntries: Boolean,
 	onAction: (MainActivity.Action, String) -> Unit
 ) {
 	val lastEntryKey = if (markerMap.size != 0) markerMap.last().key else null

@@ -56,7 +56,7 @@ fun TopBar(
 			queryList = queryStringList,
 			icon = R.drawable.ic_search,
 			addExtra = false,
-			onClick = {onAction(SearchActivity.Action.CLICK_STRING, it)},
+			onClick = { onAction(SearchActivity.Action.CLICK_STRING, it) },
 			onClickExtra = {}
 		)
 		AnimatedVisibility(
@@ -259,7 +259,7 @@ private fun QueryCard(
 			modifier = Modifier
 				.clip(RoundedCornerShape(50))
 				.background(MaterialTheme.colorScheme.primary)
-				.clickable { updateVisibility = Random.nextInt() }
+				.clickable { onClick() }
 		) {
 			Row(
 				modifier = Modifier.padding(12.dp, 8.dp),

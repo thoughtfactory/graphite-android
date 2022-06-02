@@ -1,5 +1,6 @@
 package com.syncodec.graphite.bucketComponent.modalBottomSheet
 
+import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -26,20 +27,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.ClimateChangeMessage
 import com.syncodec.graphite.custom.LargeTextField
+import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
@@ -55,6 +56,8 @@ enum class SheetState {
 	ERROR
 }
 
+@Keep
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class BookData(
 	@JsonProperty("key")
 	val key: String,
@@ -68,6 +71,9 @@ data class BookData(
 	@JsonProperty("author_name")
 	val authorName: List<String>?,
 
+	@JsonProperty("description")
+	val description: String?,
+
 	@JsonProperty("first_publish_year")
 	val firstPublishYear: Int?
 ) : java.io.Serializable
@@ -78,8 +84,8 @@ fun AddBookSheet(
 	onAction: (BookData) -> Unit
 ) {
 	val context = LocalContext.current
-
-	val objectMapper = ObjectMapper().registerModule(KotlinModule())
+	val objectMapper: ObjectMapper = jsonMapper { addModule(kotlinModule()) }
+		.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	var bookNameText by rememberSaveable { mutableStateOf("") }
 	var isBookNameTextFocused by remember { mutableStateOf(false) }
@@ -95,7 +101,7 @@ fun AddBookSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier.heightIn(360.dp),
 	) {
 		Column(
@@ -165,8 +171,8 @@ fun AddBookSheet(
 					}
 				),
 				isFocused = isBookNameTextFocused,
-				onFocusChanged = {isBookNameTextFocused = it},
-				onValueChanged = {bookNameText = it}
+				onFocusChanged = { isBookNameTextFocused = it },
+				onValueChanged = { bookNameText = it }
 			)
 
 			Spacer(modifier = Modifier.height(8.dp))
@@ -180,17 +186,7 @@ fun AddBookSheet(
 							modifier = Modifier
 								.fillMaxWidth()
 								.height(256.dp),
-						) {
-							val lottieComposition by rememberLottieComposition(
-								LottieCompositionSpec.RawRes(R.raw.lottie_loading)
-							)
-
-							LottieAnimation(
-								composition = lottieComposition,
-								iterations = LottieConstants.IterateForever,
-								modifier = Modifier.requiredSize(64.dp)
-							)
-						}
+						) { LoadingView() }
 					}
 					SheetState.RESULT_FOUND -> {
 						LazyVerticalGrid(
@@ -207,22 +203,22 @@ fun AddBookSheet(
 					}
 					SheetState.RESULT_NOT_FOUND -> {
 						Column(
-							modifier = Modifier.height(256.dp)
+							modifier = Modifier.heightIn(256.dp),
+							horizontalAlignment = Alignment.CenterHorizontally
 						) {
+							Spacer(modifier = Modifier.height(24.dp))
 							Image(
-								painter = painterResource(id = R.drawable.il_result_unavailable_2),
+								painter = painterResource(id = R.drawable.il_error),
 								contentDescription = "No result found",
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(16.dp)
+								modifier = Modifier.fillMaxWidth(0.71f)
 							)
 
 							Spacer(modifier = Modifier.height(16.dp))
 
 							Text(
-								text = "Sorry, we can't find that",
-								style = MaterialTheme.typography.titleMedium,
-								color = MaterialTheme.colorScheme.secondary,
+								text = "Sorry, we could not find that",
+								style = MaterialTheme.typography.bodyLarge,
+								color = MaterialTheme.colorScheme.onSurface,
 								textAlign = TextAlign.Center,
 								modifier = Modifier.fillMaxWidth()
 							)
@@ -260,7 +256,7 @@ fun AddBookSheet(
 }
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BookCard(
 	modifier: Modifier,

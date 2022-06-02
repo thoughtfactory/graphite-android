@@ -1,5 +1,7 @@
 package com.syncodec.graphite.noteComponent.modalBottomSheet
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -15,36 +17,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.timeStampToPrettyFull
 import com.syncodec.graphite.miscellaneous.roundTo
 import com.syncodec.graphite.noteComponent.NoteActivity
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Map
-import compose.icons.tablericons.X
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 
-@OptIn(
-	ExperimentalFoundationApi::class,
-	ExperimentalMaterialApi::class,
-	ExperimentalAnimationApi::class
-)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MetadataBottomSheet(
-	note: NoteDbEntry?,
+	createdTimestamp: Long,
+	modifiedTimestamp: Long,
+	latLng: LatLng?,
+	address: String?,
 	addressState: NoteActivity.AddressState,
 	mapView: MapView,
 	onAction: (NoteActivity.Action, Any?) -> Unit
@@ -66,32 +66,32 @@ fun MetadataBottomSheet(
 			)
 
 			TimestampCard(
-				createdTimestamp = note?.createdTimestamp ?: -1,
-				modifiedTimestamp = note?.modifiedTimestamp ?: -1
+				createdTimestamp = createdTimestamp,
+				modifiedTimestamp = modifiedTimestamp
 			)
 
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LocationCard(
 				addressState = addressState,
-				address = note?.address,
-				latLng = if (note?.latLng != null)
-					LatLng(note.latLng!!.latitude, note.latLng!!.longitude)
+				address = address,
+				latLng = if (latLng != null)
+					LatLng(latLng.latitude, latLng.longitude)
 				else null,
 				onAction = onAction
 			)
 
 			AnimatedVisibility(
-				visible = note?.latLng != null,
+				visible = latLng != null,
 				enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 				exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 			) {
 //          WARN    Don't remove from if block or else null pointer exception
-				if (note?.latLng != null) {
+				if (latLng != null) {
 					Column {
 						Spacer(modifier = Modifier.height(8.dp))
 						MapCard(
-							latLng = note.latLng!!,
+							latLng = latLng,
 							mapView = mapView
 						)
 					}
@@ -213,7 +213,13 @@ private fun LocationCard(
 				NoteActivity.AddressState.REMOVED -> true
 				else -> false
 			},
-			onClick = { onAction(NoteActivity.Action.TRY_GET_LOCATION, true) }
+			onClick = {
+				if (addressState == NoteActivity.AddressState.REQUEST_PERMISSION) {
+					onAction(NoteActivity.Action.REQUEST_LOCATION_PERMISSION, true)
+				} else {
+					onAction(NoteActivity.Action.TRY_GET_LOCATION, true)
+				}
+			}
 		) {
 			Column(
 				modifier = Modifier
@@ -269,7 +275,7 @@ private fun LocationCard(
 				onClick = { onAction(NoteActivity.Action.OPEN_MAP_DIALOG, null) }
 			) {
 				Icon(
-					imageVector = TablerIcons.Map,
+					painter = painterResource(id = R.drawable.ic_atlas),
 					contentDescription = "Pick location",
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.requiredSize(20.dp)
@@ -286,7 +292,7 @@ private fun LocationCard(
 				onClick = { onAction(NoteActivity.Action.REMOVE_LOCATION, null) }
 			) {
 				Icon(
-					imageVector = TablerIcons.X,
+					painter = painterResource(id = R.drawable.ic_close),
 					contentDescription = "Remove Location",
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.requiredSize(20.dp)
@@ -302,6 +308,8 @@ private fun MapCard(
 	latLng: LatLng,
 	mapView: MapView
 ) {
+	val context = LocalContext.current
+
 	Card(
 		elevation = 0.dp,
 		backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -321,6 +329,16 @@ private fun MapCard(
 				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
 				val markerOptions = MarkerOptions().position(latLng)
 				googleMap.addMarker(markerOptions)
+					?.setIcon(
+						BitmapDescriptorFactory.fromBitmap(
+							Bitmap.createScaledBitmap(
+								BitmapFactory.decodeResource(
+									context.resources,
+									R.drawable.ic_map_marker_colored
+								), 80, 80, false
+							)
+						)
+					)
 			}
 		}
 

@@ -1,7 +1,6 @@
 package com.syncodec.graphite.custom
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
@@ -21,25 +20,24 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ClimateChangeMessage() {
 
 	var expanded by remember{ mutableStateOf(false) }
 
 	Card(
+		shape = RoundedCornerShape(12.dp),
+		backgroundColor = MaterialTheme.colorScheme.surface,
+		border = BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface),
+		onClick = {expanded = !expanded},
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(24.dp)
-			.background(Color.Transparent),
-		shape = RoundedCornerShape(12.dp),
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.primaryContainer),
-		onClick = {expanded = !expanded}
+			.padding(24.dp),
 	) {
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally,
-			modifier = Modifier
-				.padding(16.dp),
+			modifier = Modifier.padding(16.dp),
 		) {
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
@@ -53,10 +51,9 @@ fun ClimateChangeMessage() {
 						.padding(0.dp, 0.dp, 12.dp, 0.dp)
 				)
 				Text(
-					text = "Internet is already responsible for 2% of greenhouse gas emission. Search only for most accurate title.",
-					style = MaterialTheme.typography.bodySmall,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onPrimaryContainer,
+					text = "Internet is already responsible for 2% of greenhouse gas emission. Try searching for the most accurate title",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onBackground,
 					textAlign = TextAlign.Justify,
 				)
 			}
@@ -81,8 +78,7 @@ fun ClimateChangeMessage() {
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onBackground,
 						textAlign = TextAlign.End,
-						modifier = Modifier
-							.fillMaxWidth()
+						modifier = Modifier.fillMaxWidth()
 					)
 				}
 			}

@@ -120,17 +120,4 @@ data class NoteDbEntry(
 
 		return true
 	}
-
-//	override fun equals(other: Any?): Boolean {
-//		if (this.hashCode() != other.hashCode()) return false
-//		if (javaClass != other?.javaClass) return false
-//
-//		other as NoteDbEntry
-//
-//		if (key != other.key) return false
-//
-//		return true
-//	}
 }
-
-data class NoteForChapter(val key: String, val notebookKey: String, val chapterPath: MutableList<String>)

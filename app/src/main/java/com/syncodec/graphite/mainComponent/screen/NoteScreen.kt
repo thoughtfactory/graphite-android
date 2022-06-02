@@ -1,6 +1,5 @@
 package com.syncodec.graphite.mainComponent.screen
 
-import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -22,25 +21,24 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.syncodec.graphite.MainActivity
-import com.syncodec.graphite.Graphite
-import com.syncodec.graphite.custom.notebook.*
+import com.syncodec.graphite.mainComponent.MainActivity
+import com.syncodec.graphite.custom.notebook.NoEntryCard
+import com.syncodec.graphite.custom.notebook.NoteCard
+import com.syncodec.graphite.custom.notebook.NotebookHeaderCard
+import com.syncodec.graphite.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.graphite.custom.squircle.Squircle
 import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.database.quote.QuoteDbEntry
 import com.syncodec.graphite.konstant.Konstant
-import com.syncodec.graphite.miscellaneous.DataStore
 import com.syncodec.graphite.miscellaneous.TimeUtils
 import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.timeStampToPrettyDay
-import com.syncodec.graphite.miscellaneous.filterData
-import com.syncodec.graphite.todayComponent.TodayActivity
+import com.syncodec.graphite.ui.theme.PremiumCompositionLocal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -50,9 +48,7 @@ import kotlin.random.Random
 
 
 @OptIn(
-	ExperimentalMaterial3Api::class,
 	ExperimentalFoundationApi::class,
-	ExperimentalAnimationApi::class
 )
 @ExperimentalMaterialApi
 @ExperimentalPagerApi
@@ -60,26 +56,19 @@ import kotlin.random.Random
 fun NoteScreen(
 	noteMap: Map<String, NoteDbEntry>,
 	selectedItemList: List<String>,
-	filterTag: List<String>,
+	isFilterActive: Boolean,
 	quote: QuoteDbEntry?,
 	quoteBg: File?,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
-	val context = LocalContext.current
-	val dataStore = DataStore(context = context)
-
-	val vaultState = Graphite.Companion.VaultState.OPENED
-	val showArchived = false
-	val showFavourite = false
-	val showLocked = false
-
+	val isPremium = PremiumCompositionLocal.current
 	val showMembershipCardProb = remember { Random.nextDouble() }
 	var showMembershipCard by remember { mutableStateOf(false) }
 	var showQuoteCard by remember { mutableStateOf(false) }
 	LaunchedEffect(key1 = null) {
 		withContext(Dispatchers.IO) {
 			delay(1600)
-			showMembershipCard = showMembershipCardProb > 0
+			showMembershipCard = showMembershipCardProb > 0.25
 		}
 		withContext(Dispatchers.IO) {
 			delay(1200)
@@ -102,14 +91,9 @@ fun NoteScreen(
 			QuoteCard(
 				quote = quote,
 				quoteBg = quoteBg,
-				showCard = showQuoteCard && !(showArchived || showFavourite || showLocked)
-			)
+				showCard = showQuoteCard && !isFilterActive
+			) { onAction(MainActivity.Action.EN_QUOTE, null) }
 			Spacer(modifier = Modifier.height(8.dp))
-			MembershipCard(
-				showCard = showMembershipCard && !(showArchived || showFavourite || showLocked),
-				onAction = onAction
-			)
-			Spacer(modifier = Modifier.height(36.dp))
 
 			NoEntryCard()
 		}
@@ -119,19 +103,19 @@ fun NoteScreen(
 		) {
 			item {
 				Column(modifier = Modifier.fillMaxWidth()) {
-					if (showQuoteCard && quote != null && !(showArchived || showFavourite || showLocked)) {
+					if (showQuoteCard && quote != null && !isFilterActive) {
 						Spacer(modifier = Modifier.height(8.dp))
 					}
 					QuoteCard(
 						quote = quote,
 						quoteBg = quoteBg,
-						showCard = showQuoteCard && !(showArchived || showFavourite || showLocked)
-					)
-					if (showMembershipCard && !(showArchived || showFavourite || showLocked)) {
+						showCard = showQuoteCard && !isFilterActive
+					) { onAction(MainActivity.Action.EN_QUOTE, null) }
+					if (showMembershipCard && !isFilterActive) {
 						Spacer(modifier = Modifier.height(8.dp))
 					}
 					MembershipCard(
-						showCard = showMembershipCard && !(showArchived || showFavourite || showLocked),
+						showCard = showMembershipCard && !isFilterActive && !isPremium,
 						onAction = onAction
 					)
 					Spacer(modifier = Modifier.height(8.dp))
@@ -139,16 +123,7 @@ fun NoteScreen(
 			}
 
 			noteDbEntryDayMap.toSortedMap(Comparator.reverseOrder()).forEach { (day, noteList) ->
-				val sortedList = noteList.filter {
-					filterData(
-						showArchived = showArchived,
-						isArchived = false,
-						showFavourite = showFavourite,
-						isFavourite = false,
-						showLocked = showLocked,
-						isLocked = false
-					)
-				}.sortedBy { it.userTimestamp }.reversed()
+				val sortedList = noteList.sortedBy { it.userTimestamp }.reversed()
 
 				val entrySize = sortedList.size
 
@@ -166,15 +141,6 @@ fun NoteScreen(
 
 				sortedList.forEach { noteDbEntry ->
 					item {
-						val showEntry: Boolean = filterData(
-							showArchived = showArchived,
-							isArchived = false,
-							showFavourite = showFavourite,
-							isFavourite = false,
-							showLocked = showLocked,
-							isLocked = false
-						)
-
 						NoteCard(
 							key = noteDbEntry.key,
 							timestamp = noteDbEntry.userTimestamp,
@@ -191,7 +157,7 @@ fun NoteScreen(
 							attachmentThumbnail = noteDbEntry.attachmentThumbnail,
 							address = noteDbEntry.address,
 							latLng = noteDbEntry.latLng,
-							isVisible = showEntry,
+							isVisible = true,
 							selectedColor = MaterialTheme.colorScheme.surface,
 							onClick = { onAction(MainActivity.Action.CLICK_NOTE, noteDbEntry.key) },
 							onLongClick = {
@@ -199,7 +165,7 @@ fun NoteScreen(
 							},
 						)
 
-						NotebookTimelineSpacer(isVisible = noteDbEntry.key != lastEntryKey && showEntry)
+						NotebookTimelineSpacer(isVisible = noteDbEntry.key != lastEntryKey && true)
 					}
 				}
 			}
@@ -215,10 +181,9 @@ fun NoteScreen(
 private fun QuoteCard(
 	quote: QuoteDbEntry?,
 	quoteBg: File?,
-	showCard: Boolean
+	showCard: Boolean,
+	onClick: () -> Unit
 ) {
-	val context = LocalContext.current
-
 	val date = remember { DateTime.now() }
 	val d = remember { date.dayOfMonth }
 	val m = remember { date.monthOfYear }
@@ -234,7 +199,7 @@ private fun QuoteCard(
 				.fillMaxWidth()
 				.padding(12.dp, 0.dp)
 				.clip(RoundedCornerShape(12.dp))
-				.clickable { context.startActivity(Intent(context, TodayActivity::class.java)) },
+				.clickable { onClick() },
 		) {
 			Box(
 				modifier = Modifier
@@ -347,34 +312,44 @@ private fun MembershipCard(
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
 		Card(
+			border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
+			containerColor = Color.Transparent,
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(12.dp, 0.dp),
-			border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
-			containerColor = Color.Transparent
+			onClick = { onAction(MainActivity.Action.TRY_PREMIUM, null) }
 		) {
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(12.dp),
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Text(
-					text = "Want to add style to your notes?",
-					style = MaterialTheme.typography.bodyLarge,
-					color = MaterialTheme.colorScheme.onBackground,
-					modifier = Modifier.weight(1f)
-				)
+			Text(
+				text = "Add some style in your notes with premium",
+				style = MaterialTheme.typography.bodyLarge,
+				color = MaterialTheme.colorScheme.onBackground,
+				modifier = Modifier.padding(12.dp)
+			)
 
-				Button(
-					onClick = { onAction(MainActivity.Action.TRY_PREMIUM, null) }
-				) {
-					Text(
-						text = "Try premium",
-						style = MaterialTheme.typography.bodyLarge,
-					)
-				}
-			}
+//			Row(
+//				modifier = Modifier
+//					.fillMaxWidth()
+//					.padding(12.dp),
+//				verticalAlignment = Alignment.CenterVertically
+//			) {
+//				Text(
+//					text = "Add some style in your notes",
+//					style = MaterialTheme.typography.bodyLarge,
+//					color = MaterialTheme.colorScheme.onBackground,
+//					modifier = Modifier.weight(1f)
+//				)
+//
+//				Spacer(modifier = Modifier.width(32.dp))
+//
+//				Button(
+//					onClick = { onAction(MainActivity.Action.TRY_PREMIUM, null) }
+//				) {
+//					Text(
+//						text = "Try premium",
+//						style = MaterialTheme.typography.bodyLarge,
+//					)
+//				}
+//			}
 		}
 	}
 }

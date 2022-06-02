@@ -1,5 +1,6 @@
 package com.syncodec.graphite.mainComponent.modalBottomSheet
 
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
@@ -13,10 +14,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -35,11 +39,13 @@ private data class BucketButtonData(
 	val onClick: () -> Unit
 )
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun BucketBottomSheet(
 	onCreate: (String, BucketItemType) -> Unit
 ) {
+	val context = LocalContext.current
+	val keyboardController = LocalSoftwareKeyboardController.current
 	var selectedBucketType by remember { mutableStateOf<BucketItemType?>(null) }
 	var bucketNameText by rememberSaveable { mutableStateOf("") }
 	var isBucketNameTextFocused by remember { mutableStateOf(false) }
@@ -59,12 +65,23 @@ fun BucketBottomSheet(
 			subtitle = "Aren't those characters real!?",
 			bucketItemType = BucketItemType.SHOWS,
 			highlight = selectedBucketType == BucketItemType.SHOWS,
-		) { selectedBucketType = BucketItemType.SHOWS }
+		) { selectedBucketType = BucketItemType.SHOWS },
+		BucketButtonData(
+			subtitle = "More lists coming soon...",
+			bucketItemType = null,
+			highlight = false,
+		) {
+			Toast.makeText(
+				context,
+				"More lists coming soon... Stay tuned...",
+				Toast.LENGTH_SHORT
+			).show()
+		}
 	)
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
 			.heightIn(360.dp),
@@ -110,9 +127,7 @@ fun BucketBottomSheet(
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp)
-			) {
-				bucketNameText = it
-			}
+			) { bucketNameText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
 
@@ -126,6 +141,7 @@ fun BucketBottomSheet(
 				onCreate(bucketNameText, selectedBucketType!!)
 				bucketNameText = ""
 				selectedBucketType = null
+				keyboardController?.hide()
 			}
 
 			Spacer(modifier = Modifier.height(32.dp))
@@ -148,8 +164,7 @@ private fun BucketButton(
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.requiredWidth(160.dp)
+		modifier = Modifier.requiredWidth(160.dp)
 	) {
 		Card(
 			elevation = 0.dp,
@@ -173,7 +188,10 @@ private fun BucketButton(
 				horizontalAlignment = Alignment.Start
 			) {
 				Icon(
-					painter = painterResource(id = ResourceMap.bucketTypeToIcon[bucketButtonData.bucketItemType]!!),
+					painter = painterResource(
+						id = ResourceMap.bucketTypeToIcon[bucketButtonData.bucketItemType]
+							?: R.drawable.ic_state
+					),
 					contentDescription = null,
 					tint = contentColor,
 					modifier = Modifier
@@ -182,7 +200,8 @@ private fun BucketButton(
 				)
 
 				Text(
-					text = ResourceMap.BucketItemNameMap[bucketButtonData.bucketItemType]!!,
+					text = ResourceMap.BucketItemNameMap[bucketButtonData.bucketItemType]
+						?: "Stay tuned...",
 					style = MaterialTheme.typography.bodyMedium,
 					color = contentColor
 				)

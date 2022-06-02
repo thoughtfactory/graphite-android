@@ -2,7 +2,8 @@ package com.syncodec.graphite.mainComponent.modalBottomSheet
 
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
+import com.syncodec.graphite.ui.theme.PremiumCompositionLocal
 
 
 sealed class BottomSheetType {
@@ -11,16 +12,17 @@ sealed class BottomSheetType {
 	object NotebookBottomSheet : BottomSheetType()
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SheetLayout(
 	bottomSheetType: BottomSheetType,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
+	val isPremium = PremiumCompositionLocal.current
+
 	when (bottomSheetType) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet { onAction(it, null) }
 		BottomSheetType.BucketBottomSheet -> BucketBottomSheet { bucketName, bucketType ->
-			onAction(MainActivity.Action.NEW_BUCKET, Pair(bucketName, bucketType))
+			onAction(MainActivity.Action.NEW_BUCKET, Pair(Pair(bucketName, bucketType), isPremium))
 		}
 		BottomSheetType.NotebookBottomSheet -> NotebookBottomSheet { action, notebookDbEntry ->
 			onAction(action, notebookDbEntry)

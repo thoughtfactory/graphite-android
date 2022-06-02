@@ -20,7 +20,8 @@ class NoteRepository(val graphite: Graphite) {
 	private var noteTableDao: NoteTableDao = UserDatabase.getInstance(graphite).noteTableDao
 	private var notebookTableDao: NotebookTableDao =
 		UserDatabase.getInstance(graphite).notebookTableDao
-	private var chapterTableDao: ChapterTableDao = UserDatabase.getInstance(graphite).chapterTableDao
+	private var chapterTableDao: ChapterTableDao =
+		UserDatabase.getInstance(graphite).chapterTableDao
 
 	//	val noteDbEntryListFlow: Flow<List<NoteDbEntry>> = noteTableDao.getAllAsFlow()
 //	val noteTimelineListFlow = noteTableDao.getAllForTimelineAsFlow()
@@ -36,9 +37,7 @@ class NoteRepository(val graphite: Graphite) {
 		withContext(Dispatchers.IO) { notebookTableDao.insert(notebookDbEntry) }
 
 	suspend fun getNote(key: String): Pair<NoteDbEntry?, JSONObject?> =
-		withContext(Dispatchers.IO) {
-			Pair(noteTableDao.get(key = key), graphite.getNote(key = key))
-		}
+		Pair(noteTableDao.get(key = key), graphite.getNote(key = key))
 
 	suspend fun getChapter(key: String): ChapterDbEntry? =
 		withContext(Dispatchers.IO) { chapterTableDao.get(key = key) }
@@ -47,18 +46,23 @@ class NoteRepository(val graphite: Graphite) {
 
 	fun openNotebookChapterAsFlow(
 		notebookKey: String,
-		chapterPath: List<String>
+		chapterPath: List<String>,
+		showArchived: Boolean,
+		showLocked: Boolean
 	): Flow<List<String>> =
 		noteTableDao.getAllKeyFromNotebookAsFlow(
 			notebookKey = notebookKey,
-			chapterPath = chapterPath
+			chapterPath = chapterPath,
+			showArchived = showArchived,
+			showLocked = showLocked
 		)
 
 	suspend fun openNotebook(notebookKey: String): List<String> =
 		noteTableDao.getAllKeyFromNotebook(notebookKey = notebookKey)
 
-	fun deleteNote(keyList: List<String>) {
+	suspend fun deleteNote(keyList: List<String>) {
 		noteTableDao.delete(keyList = keyList)
+		attachmentRepository.deleteWithNote(keyList)
 		graphite.deleteNote(keyList = keyList)
 	}
 
@@ -87,7 +91,8 @@ class NoteRepository(val graphite: Graphite) {
 		withContext(Dispatchers.IO) {
 			insert(noteDbEntry)
 			notebookTableDao.get(noteDbEntry.notebookKey).apply {
-				this?.notebookSize = noteTableDao.countNotebookSize(notebookKey = noteDbEntry.notebookKey)
+				this?.notebookSize =
+					noteTableDao.countNotebookSize(notebookKey = noteDbEntry.notebookKey)
 				this?.let { insert(it) }
 			}
 			graphite.putNote(key = noteDbEntry.key, noteContent = noteContent)

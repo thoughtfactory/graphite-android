@@ -23,4 +23,7 @@ interface TagKeyDbTableDao {
 
 	@Query(value = "DELETE FROM tag_key_table WHERE tag = :tag AND `key` = :key")
 	suspend fun delete(tag: String, key: String)
+
+	@Query(value = "DELETE FROM tag_key_table WHERE `key` = :key")
+	suspend fun deleteConnection(key: String)
 }

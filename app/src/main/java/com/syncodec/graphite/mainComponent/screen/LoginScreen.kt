@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.res.ResourcesCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.revealTextView.RevealText
 import kotlinx.coroutines.delay
@@ -61,12 +61,10 @@ fun LoginScreen(
 	) {
 		Spacer(modifier = Modifier.height(16.dp))
 		Image(
-			painter = painterResource(id = R.drawable.il_login_background),
+			painter = painterResource(id = R.drawable.il_loader_illustration),
 			contentDescription = null,
 			contentScale = ContentScale.Fit,
-			modifier = Modifier
-				.height(screenHeight / 3)
-				.padding(16.dp),
+			modifier = Modifier.height(screenHeight / 3)
 		)
 
 		Spacer(modifier = Modifier.height(12.dp))
@@ -146,7 +144,6 @@ private fun ContentCard() {
 			showBucketList = true
 		}
 	}
-
 
 	Column(
 		modifier = Modifier
@@ -346,7 +343,6 @@ private fun LoginCard(
 					)
 
 					val annotatedLinkString: AnnotatedString = buildAnnotatedString {
-
 						val str = "I agree to the Terms of Service and Privacy Policy"
 						append(str)
 						addStyle(
@@ -375,14 +371,14 @@ private fun LoginCard(
 						)
 
 						addStringAnnotation(
-							tag = "Terms of Service",
-							annotation = "https://github.com",
+							tag = "url",
+							annotation = "https://graphite.syncodec.com/terms.html",
 							start = 15,
 							end = 15 + 16
 						)
 						addStringAnnotation(
-							tag = "Privacy Policy",
-							annotation = "https://github.com",
+							tag = "url",
+							annotation = "https://graphite.syncodec.com/policy.html",
 							start = 15 + 16 + 5,
 							end = 15 + 16 + 5 + 14
 						)
@@ -397,7 +393,7 @@ private fun LoginCard(
 							style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 18.sp),
 							onClick = {
 								annotatedLinkString
-									.getStringAnnotations("URL", it, it)
+									.getStringAnnotations("url", it, it)
 									.firstOrNull()?.let { stringAnnotation ->
 										uriHandler.openUri(stringAnnotation.item)
 									}

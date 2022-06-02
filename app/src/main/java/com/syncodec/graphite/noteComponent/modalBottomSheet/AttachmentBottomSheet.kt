@@ -24,8 +24,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
-import coil.fetch.VideoFrameUriFetcher
-import coil.request.videoFrameMillis
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
@@ -33,34 +31,29 @@ import com.syncodec.graphite.custom.button.MenuBottomSheetButton
 import com.syncodec.graphite.custom.button.MenuBottomSheetButtonData
 import com.syncodec.graphite.custom.squircle.SquircleShape
 import com.syncodec.graphite.database.attachment.AttachmentDbEntry
-import com.syncodec.graphite.database.attachment.getMimeType
 import com.syncodec.graphite.miscellaneous.FileUtils.Companion.createTempFileToExpose
 import com.syncodec.graphite.miscellaneous.generatePrimaryKey
-import com.syncodec.graphite.miscellaneous.logger
 import com.syncodec.graphite.noteComponent.NoteActivity
+import com.syncodec.graphite.ui.theme.PremiumCompositionLocal
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun AttachmentBottomSheet(
-	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri?>>,
 	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
+	val isPremium = PremiumCompositionLocal.current
+
 	var photoUri: Uri? = null
 	val takePicture =
 		rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
-			if (isCaptured) onAction(NoteActivity.Action.INSERT_PICTURE, photoUri)
-		}
-
-	val openMediaPicker =
-		rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
-			onAction(NoteActivity.Action.INSERT_MEDIA, uriList)
+			if (isCaptured) onAction(NoteActivity.Action.INSERT_FILE, Pair(listOf(photoUri), isPremium))
 		}
 
 	val openFilePicker =
-		rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uriList ->
-			onAction(NoteActivity.Action.INSERT_FILE, uriList)
+		rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
+			onAction(NoteActivity.Action.INSERT_FILE, Pair(uriList, isPremium))
 		}
 
 	val buttonDataList: List<MenuBottomSheetButtonData> = listOf(
@@ -73,7 +66,7 @@ fun AttachmentBottomSheet(
 			takePicture.launch(photoUri)
 		},
 		MenuBottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
-			openMediaPicker.launch(arrayOf("image/*", "video/*", "audio/*"))
+			openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
 		},
 		MenuBottomSheetButtonData(title = "Audio", icon = R.drawable.ic_mic) {
 			Toast.makeText(context, "Coming soon...", Toast.LENGTH_SHORT).show()
@@ -124,14 +117,13 @@ fun AttachmentBottomSheet(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalCoilApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AttachmentView(
 	attachment: AttachmentDbEntry,
-	uri: Uri,
+	uri: Uri?,
 	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
-	logger("attachment : ${attachment.mimeType} : ${attachment.getMimeType()} : ${uri.toString()}")
 	val context = LocalContext.current
 	Card(
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -146,7 +138,8 @@ private fun AttachmentView(
 		Box(
 			modifier = Modifier.fillMaxSize()
 		) {
-			when (attachment.getMimeType()) {
+//			TODO
+			when ("image") {
 				"image" -> {
 					Image(
 						painter = rememberImagePainter(
@@ -158,24 +151,24 @@ private fun AttachmentView(
 						modifier = Modifier.fillMaxSize()
 					)
 				}
-				"video" -> Image(
-					painter = rememberImagePainter(
-						data = uri,
-						builder = {
-							fetcher(VideoFrameUriFetcher(context))
-							crossfade(true)
-							// optionally set frame location
-							videoFrameMillis(1000)
-							this.listener(
-								onError = { request, exception ->
-								}
-							)
-						}
-					),
-					contentDescription = null,
-					contentScale = ContentScale.Crop,
-					modifier = Modifier.fillMaxSize()
-				)
+//				"video" -> Image(
+//					painter = rememberImagePainter(
+//						data = uri,
+//						builder = {
+//							fetcher(VideoFrameUriFetcher(context))
+//							crossfade(true)
+//							// optionally set frame location
+//							videoFrameMillis(1000)
+//							this.listener(
+//								onError = { request, exception ->
+//								}
+//							)
+//						}
+//					),
+//					contentDescription = null,
+//					contentScale = ContentScale.Crop,
+//					modifier = Modifier.fillMaxSize()
+//				)
 				else -> Image(
 					painter = rememberImagePainter(
 						data = uri,

@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.richText.RichTextEditor
 import com.syncodec.graphite.database.note.NoteDbEntry
@@ -23,15 +24,15 @@ import com.syncodec.graphite.noteComponent.NoteActivity
 import com.syncodec.graphite.noteComponent.miscellaneous.AddressCard
 import com.syncodec.graphite.noteComponent.toolbar.EditorToolbar
 
-@OptIn(
-	ExperimentalMaterial3Api::class,
-	ExperimentalMaterialApi::class,
-	ExperimentalPermissionsApi::class
-)
 @Composable
 fun NoteEditorScreen(
 	richTextEditor: RichTextEditor,
-	noteDbEntry: NoteDbEntry?,
+	userTimestamp: Long,
+	latLng: LatLng?,
+	address: String?,
+	isFavourite: Boolean,
+	isArchived: Boolean,
+	isLocked: Boolean,
 	addressState: NoteActivity.AddressState,
 	showAddressCard: Boolean,
 	status: Status,
@@ -69,16 +70,16 @@ fun NoteEditorScreen(
 						AddressCard(
 							addressState = addressState,
 							showAddressCard = showAddressCard,
-							address = noteDbEntry?.address,
-							latLng = noteDbEntry?.latLng,
+							latLng = latLng,
+							address = address,
 							onAction = onAction
 						)
 						EditorToolbar(
 							richTextEditor = richTextEditor,
-							userTimestamp = noteDbEntry?.userTimestamp ?: -1,
-							isFavourite = noteDbEntry?.isFavourite == true,
-							isArchive = noteDbEntry?.isArchived == true,
-							isLocked = noteDbEntry?.isLocked == true
+							userTimestamp = userTimestamp,
+							isFavourite = isFavourite,
+							isArchive = isArchived,
+							isLocked = isLocked
 						) { onAction(it, null) }
 					}
 				}

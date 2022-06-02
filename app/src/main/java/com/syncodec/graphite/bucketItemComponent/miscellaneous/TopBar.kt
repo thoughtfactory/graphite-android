@@ -55,7 +55,7 @@ private fun Bar(
 							tint = MaterialTheme.colorScheme.onSurface,
 							modifier = Modifier
 								.requiredSize(32.dp)
-								.padding(6.dp)
+								.padding(4.dp)
 						)
 					}
 				}
@@ -63,16 +63,16 @@ private fun Bar(
 		},
 		title = {},
 		actions = {
-			IconButton(onClick = { onAction(BucketItemActivity.Action.MENU, null) }) {
-				Icon(
-					painter = painterResource(id = R.drawable.ic_menu),
-					contentDescription = "Menu",
-					tint = MaterialTheme.colorScheme.onSurface,
-					modifier = Modifier
-						.requiredSize(32.dp)
-						.padding(4.dp)
-				)
-			}
+//			IconButton(onClick = { onAction(BucketItemActivity.Action.MENU, null) }) {
+//				Icon(
+//					painter = painterResource(id = R.drawable.ic_menu),
+//					contentDescription = "Menu",
+//					tint = MaterialTheme.colorScheme.onSurface,
+//					modifier = Modifier
+//						.requiredSize(32.dp)
+//						.padding(4.dp)
+//				)
+//			}
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
 	)

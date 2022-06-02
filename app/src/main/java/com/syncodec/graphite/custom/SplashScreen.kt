@@ -30,7 +30,7 @@ fun SplashScreen() {
 			.background(MaterialTheme.colorScheme.surface),
 	) {
 		Image(
-			painter = painterResource(id = R.drawable.il_login_background),
+			painter = painterResource(id = R.drawable.il_loader_illustration),
 			contentDescription = null,
 			modifier = Modifier.requiredSize(screenWidth / 2)
 		)

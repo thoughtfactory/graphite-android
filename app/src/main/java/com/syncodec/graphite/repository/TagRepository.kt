@@ -1,7 +1,5 @@
 package com.syncodec.graphite.repository
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.database.UserDatabase
 import com.syncodec.graphite.database.tag.TagDbEntry
@@ -15,8 +13,6 @@ import kotlinx.coroutines.launch
 
 class TagRepository(val graphite: Graphite) {
 
-	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
-
 	private val tagDbTableDao: TagDbTableDao = UserDatabase.getInstance(graphite).tagDbTableDao
 	private val tagKeyDbTableDao: TagKeyDbTableDao = UserDatabase.getInstance(graphite).tagKeyDbTableDao
 
@@ -28,13 +24,12 @@ class TagRepository(val graphite: Graphite) {
 
 	fun putTag(tag: String) = tagDbTableDao.insert(TagDbEntry(tag = tag))
 
-	suspend fun connectTag(key: String, tagList: List<String>) {
+	fun connectTag(key: String, tagList: List<String>) {
 		CoroutineScope(Dispatchers.IO).launch {
+			tagKeyDbTableDao.deleteConnection(key = key)
 			tagList.forEach {
-				TagKeyDbEntry(
-					tag =  it,
-					key = key
-				).apply { tagKeyDbTableDao.insert(this) }
+				TagKeyDbEntry(tag =  it, key = key)
+					.apply { tagKeyDbTableDao.insert(this) }
 			}
 		}
 	}

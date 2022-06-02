@@ -34,7 +34,7 @@ import com.syncodec.graphite.database.attachment.AttachmentDbEntry
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun AttachmentViewerScreen(
-	attachmentList: List<Pair<AttachmentDbEntry, Uri>>,
+	attachmentList: List<Pair<AttachmentDbEntry, Uri?>>,
 	pagerState: PagerState,
 	listState: LazyListState,
 	onAction: (AttachmentActivity.Action, Any?) -> Unit
@@ -90,7 +90,7 @@ fun AttachmentViewerScreen(
 @Composable
 private fun ViewerScreen(
 	key: String,
-	uri: Uri,
+	uri: Uri?,
 	onClick: () -> Unit
 ) {
 	Image(
@@ -101,7 +101,7 @@ private fun ViewerScreen(
 		contentDescription = null,
 		modifier = Modifier
 			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.surface)
+			.background(MaterialTheme.colorScheme.background)
 			.clickable(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null
@@ -109,10 +109,9 @@ private fun ViewerScreen(
 	)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PreviewSurface(
-	attachmentList: List<Pair<AttachmentDbEntry, Uri>>,
+	attachmentList: List<Pair<AttachmentDbEntry, Uri?>>,
 	listState: LazyListState,
 	currentIndex: Int,
 	onAction: (AttachmentActivity.Action, Any?) -> Unit

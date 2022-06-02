@@ -22,7 +22,6 @@ data class MenuBottomSheetButtonData(
 	val onClick: () -> Unit
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuBottomSheetButton(
 	buttonData: MenuBottomSheetButtonData?
@@ -55,7 +54,7 @@ fun MenuBottomSheetButton(
 				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onSurface,
 				textAlign = TextAlign.Center,
-				maxLines = 2,
+				maxLines = 1,
 				modifier = Modifier.fillMaxWidth()
 			)
 

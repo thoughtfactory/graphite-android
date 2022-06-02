@@ -1,9 +1,10 @@
 package com.syncodec.graphite.konstant
 
+import com.google.android.gms.maps.model.LatLng
+import com.syncodec.graphite.R
+
 class Konstant {
 	companion object {
-
-		const val ATTACHMENT_PRIMARY_KEY_LENGTH = 8
 
 		enum class Konstant {
 			BUCKET_KEY,
@@ -17,6 +18,8 @@ class Konstant {
 			NOTE_KEY,
 			IS_NEW,
 			IS_NOTE,
+			SHOW_ARCHIVED,
+			SHOW_LOCKED,
 			DO_DELETE
 		}
 
@@ -50,7 +53,10 @@ class Konstant {
 			"Dec"
 		)
 
-		val weekName: List<String> = listOf("S", "M", "T", "W", "T", "F", "S")
+		val weekNameInitial: List<String> = listOf("S", "M", "T", "W", "T", "F", "S")
+
+		val weekNameShort: List<String> = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+
 
 		val genreIdMap: Map<Int, String> = mapOf(
 			28 to "action",
@@ -72,6 +78,15 @@ class Konstant {
 			53 to "thriller",
 			10752 to "war",
 			37 to "western"
+		)
+
+		val ilMap: Map<LatLng, Int> = mapOf(
+			LatLng(48.864716, 2.349014) to R.drawable.il_map_1,
+			LatLng(53.726669, -127.647621) to R.drawable.il_map_6,
+			LatLng(27.173891, 78.042068) to R.drawable.il_map_2,
+			LatLng(-19.002846, 46.460938) to R.drawable.il_map_4,
+			LatLng(-46.2418834,-77.7089894) to R.drawable.il_map_5,
+			LatLng(-18.156290, 147.485962) to R.drawable.il_map_3,
 		)
 	}
 }

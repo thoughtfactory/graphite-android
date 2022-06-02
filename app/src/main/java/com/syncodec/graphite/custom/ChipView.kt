@@ -25,7 +25,7 @@ data class ChipData(
 	val onClick: (() -> Unit)? = null
 )
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChipView(
 	chipDataList: List<ChipData>,

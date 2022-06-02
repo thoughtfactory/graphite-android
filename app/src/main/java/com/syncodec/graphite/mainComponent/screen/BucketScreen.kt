@@ -22,11 +22,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.R
 import com.syncodec.graphite.database.bucket.BucketDbEntry
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 import com.syncodec.graphite.konstant.ResourceMap
+import java.util.*
+import kotlin.random.Random
 
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
@@ -67,51 +69,43 @@ fun BucketScreen(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun NoBucketCard() {
-	Box(
-		modifier = Modifier.fillMaxSize(),
-		contentAlignment = Alignment.Center
+	Column(
+		modifier = Modifier.fillMaxWidth(),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center
 	) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth(),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.Center
-		) {
-			Image(
-				painter = painterResource(id = R.drawable.il_reading),
-				contentDescription = "No diary entries",
-				modifier = Modifier
-					.fillMaxWidth(0.5f)
-			)
+		Spacer(modifier = Modifier.weight(1f))
+		Image(
+			painter = painterResource(id = if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g),
+			contentDescription = "No diary entries",
+			modifier = Modifier.fillMaxWidth(0.64f)
+		)
 
-			Spacer(modifier = Modifier.height(24.dp))
+		Spacer(modifier = Modifier.height(24.dp))
 
-			Text(
-				text = "The town was paper, but the memories were not.",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.primary,
-				modifier = Modifier
-					.fillMaxWidth(0.71f)
-			)
+		Text(
+			text = "Two roads diverged in a wood and I – \nI took the one less traveled by,\nand that has made all the difference",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onBackground,
+			modifier = Modifier.fillMaxWidth(0.71f)
+		)
 
-			Spacer(modifier = Modifier.height(16.dp))
+		Spacer(modifier = Modifier.height(16.dp))
 
-			Text(
-				text = "~ John Green, Paper Towns",
-				style = MaterialTheme.typography.bodySmall,
-				fontStyle = FontStyle.Italic,
-				textAlign = TextAlign.End,
-				color = MaterialTheme.colorScheme.primary,
-				modifier = Modifier.fillMaxWidth(0.71f)
-			)
-		}
+		Text(
+			text = "~ Robert Frost, The Road Not Taken",
+			style = MaterialTheme.typography.bodySmall,
+			fontStyle = FontStyle.Italic,
+			textAlign = TextAlign.End,
+			color = MaterialTheme.colorScheme.onBackground,
+			modifier = Modifier.fillMaxWidth(0.71f)
+		)
+		Spacer(modifier = Modifier.height(108.dp))
+		Spacer(modifier = Modifier.weight(1f))
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class,
-	ExperimentalMaterial3Api::class
-)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun BucketCard(
 	bucket: BucketDbEntry,

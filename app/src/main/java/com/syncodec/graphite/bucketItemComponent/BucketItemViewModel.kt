@@ -15,8 +15,8 @@ import coil.request.ImageRequest
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.BookData
@@ -36,7 +36,7 @@ import kotlin.properties.Delegates
 
 class BucketItemViewModel(application: Application) : AndroidViewModel(application) {
 
-	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
+	private val objectMapper = jsonMapper { addModule(kotlinModule()) }
 
 	private val bucketRepository: BucketRepository =
 		BucketRepository.getInstance(graphite = application as Graphite)
@@ -116,6 +116,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 						BucketItemType.BOOKS -> {
 							bookData.value =
 								intent.getSerializableExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name) as BookData
+							downloadBookData(id =  bookData.value!!.key)
 							getThumbnail()
 						}
 						BucketItemType.SHOWS -> {
@@ -343,6 +344,27 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 						voteAverage = optDouble("vote_average"),
 						voteCount = optInt("vote_count"),
 					).apply { movieData.value = this }
+				}
+			},
+			{
+				it.printStackTrace()
+			}
+		).apply { requestQueue.add(this) }
+	}
+
+	private fun downloadBookData(id: String) {
+		val requestQueue = Volley.newRequestQueue(getApplication<Graphite>().applicationContext)
+		val movieDataUrl = "https://openlibrary.org/$id.json"
+
+		StringRequest(
+			Request.Method.GET,
+			movieDataUrl,
+			{ requestResult ->
+				val bookDataJson = JSONObject(requestResult)
+				bookDataJson.apply {
+					this.optJSONObject("description")?.optString("value")?.apply {
+						bookData.value = bookData.value?.copy(description = this)
+					}
 				}
 			},
 			{

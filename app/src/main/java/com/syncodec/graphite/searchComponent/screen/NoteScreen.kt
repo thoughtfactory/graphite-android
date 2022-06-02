@@ -50,7 +50,7 @@ fun NoteScreen(
 					onClick = { /*TODO*/ }
 				)
 
-				NotebookTimelineSpacer(isVisible = note.key != lastEntryKey)
+				NotebookTimelineSpacer(isVisible = note.key != lastEntryKey && isVisible)
 			}
 		}
 	}

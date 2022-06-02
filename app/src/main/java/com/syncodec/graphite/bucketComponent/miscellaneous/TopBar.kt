@@ -54,7 +54,7 @@ private fun Bar(
 			IconButton(onClick = { onAction(BucketActivity.Action.BACK, null) }) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_back),
-					contentDescription = null,
+					contentDescription = "Back",
 					tint = MaterialTheme.colorScheme.onSurface,
 					modifier = Modifier
 						.requiredSize(32.dp)
@@ -68,28 +68,6 @@ private fun Bar(
 				color = MaterialTheme.colorScheme.onSurface,
 				style = MaterialTheme.typography.titleMedium
 			)
-		},
-		actions = {
-			IconButton(onClick = { onAction(BucketActivity.Action.SEARCH, null) }) {
-				Icon(
-					painter = painterResource(id = R.drawable.ic_search),
-					contentDescription = "Search",
-					tint = Color(0xFF2978B5),
-					modifier = Modifier
-						.requiredSize(32.dp)
-						.padding(4.dp)
-				)
-			}
-			IconButton(onClick = { onAction(BucketActivity.Action.MENU, null) }) {
-				Icon(
-					painter = painterResource(id = R.drawable.ic_menu),
-					contentDescription = "Menu",
-					tint = MaterialTheme.colorScheme.onSurface,
-					modifier = Modifier
-						.requiredSize(32.dp)
-						.padding(4.dp)
-				)
-			}
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
 	)

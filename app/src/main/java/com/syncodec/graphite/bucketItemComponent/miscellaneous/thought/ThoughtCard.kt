@@ -21,7 +21,7 @@ import com.syncodec.graphite.bucketItemComponent.BucketItemActivity
 
 
 @OptIn(
-	ExperimentalMaterialApi::class, ExperimentalAnimationApi::class,
+	ExperimentalAnimationApi::class,
 	ExperimentalMaterial3Api::class
 )
 @Composable

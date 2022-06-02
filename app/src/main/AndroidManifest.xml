@@ -4,6 +4,7 @@
 
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission android:name="Android.permission.INTERNET" />
 
 	<application
 		android:name="com.syncodec.graphite.Graphite"
@@ -33,7 +34,7 @@
 		</provider>
 
 		<activity
-			android:name="com.syncodec.graphite.MainActivity"
+			android:name="com.syncodec.graphite.mainComponent.MainActivity"
 			android:exported="true"
 			android:windowSoftInputMode="adjustResize"
 			android:theme="@style/Theme.Graphite.NoActionBar">

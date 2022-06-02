@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.syncodec.graphite.R
 import com.syncodec.graphite.miscellaneous.DataStore
-import com.syncodec.graphite.miscellaneous.logger
 
 enum class EvokeReason {
 	UNLOCK_VAULT,
@@ -51,7 +50,6 @@ private enum class Click {
 	CHECK
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun VaultScreen(
 	evokeReason: EvokeReason,
@@ -112,8 +110,8 @@ fun VaultScreen(
 
 					when (reason) {
 						EvokeReason.UNLOCK_VAULT -> {
+							code = ""
 							if (!isPasswordIncorrect) {
-								code = ""
 								Toast.makeText(context, "Vault unlocked", Toast.LENGTH_SHORT).show()
 								onSuccess()
 							} else showPasswordIncorrectMessage = true
@@ -278,8 +276,7 @@ private fun PasscodeIncorrectMessage(showPasswordIncorrectMessage: Boolean) {
 			color = MaterialTheme.colorScheme.onBackground,
 			maxLines = 2,
 			textAlign = TextAlign.Center,
-			modifier = Modifier
-				.fillMaxWidth(0.88f)
+			modifier = Modifier.fillMaxWidth(0.88f)
 		)
 	}
 }

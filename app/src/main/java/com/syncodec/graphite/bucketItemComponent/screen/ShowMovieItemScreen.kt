@@ -1,5 +1,6 @@
 package com.syncodec.graphite.bucketItemComponent.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,6 +11,8 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.ShowType
@@ -109,6 +112,17 @@ fun ShowMovieItemScreen(
 			val url = "https://www.themoviedb.org/movie/${movieData.id}"
 			onAction(BucketItemActivity.Action.OPEN_LINK, url)
 		}
+
+		Spacer(modifier = Modifier.height(32.dp))
+
+		Image(
+			painter = painterResource(id = R.drawable.il_tmdb),
+			contentDescription = "TMDB: The movie database",
+			contentScale = ContentScale.Fit,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(24.dp)
+		)
 
 		Spacer(modifier = Modifier.height(32.dp))
 	}

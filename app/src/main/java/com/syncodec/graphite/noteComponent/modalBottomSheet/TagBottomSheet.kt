@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
@@ -33,7 +34,7 @@ fun TagBottomSheet(
 ) {
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier.heightIn(360.dp),
 	) {
 		Column(
@@ -53,10 +54,8 @@ fun TagBottomSheet(
 				visible = connectedTag.isNotEmpty()
 			) {
 				Spacer(modifier = Modifier.height(6.dp))
-				ConnectedTagCard(connectedTag = connectedTag) { click, tag -> onAction(click, tag) }
+				ConnectedTagView(connectedTag = connectedTag) { click, tag -> onAction(click, tag) }
 			}
-
-			Spacer(modifier = Modifier.height(6.dp))
 
 			LazyColumn(modifier = Modifier.fillMaxWidth()) {
 				tagList.forEach {
@@ -65,13 +64,9 @@ fun TagBottomSheet(
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(8.dp, 0.dp)
+								.padding(24.dp,0.dp)
 								.height(1.dp)
-								.background(
-									MaterialTheme.colorScheme.onSurface.tone(
-										isSystemInDarkTheme(), 1
-									)
-								),
+								.background(MaterialTheme.colorScheme.onSurface.copy(0.71f)),
 						)
 					}
 				}
@@ -107,7 +102,10 @@ private fun SearchBar(
 
 		Row(modifier = Modifier) {
 			IconButton(
-				onClick = { onClick(NoteActivity.Action.ADD_TAG, tag) }
+				onClick = {
+					onClick(NoteActivity.Action.ADD_TAG, tag)
+					tag = ""
+				}
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_add),
@@ -124,7 +122,7 @@ private fun SearchBar(
 }
 
 @Composable
-private fun ConnectedTagCard(
+private fun ConnectedTagView(
 	connectedTag: List<String>,
 	onClick: (NoteActivity.Action, String) -> Unit
 ) {
@@ -137,7 +135,7 @@ private fun ConnectedTagCard(
 	) { connectedTag.forEach { ConnectedTag(it) { click, tag -> onClick(click, tag) } } }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.material.ExperimentalMaterialApi::class)
+@OptIn(androidx.compose.material.ExperimentalMaterialApi::class)
 @Composable
 private fun ConnectedTag(
 	tag: String,
@@ -147,12 +145,14 @@ private fun ConnectedTag(
 		selected = true,
 		onClick = { onClick(NoteActivity.Action.CONNECT_TAG, tag) },
 		colors = ChipDefaults.filterChipColors(
-			backgroundColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5))
+			backgroundColor = MaterialTheme.colorScheme.primary
+		)
 	) {
 		Text(
 			text = tag,
 			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurface.tone(!isSystemInDarkTheme(), 5)
+			fontWeight = FontWeight.Bold,
+			color = MaterialTheme.colorScheme.onPrimary
 		)
 	}
 }

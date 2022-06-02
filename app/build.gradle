@@ -14,7 +14,7 @@ android {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 31
-		versionCode 1
+		versionCode 10
 		versionName '1.0.0'
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -31,9 +31,15 @@ android {
 
 	buildTypes {
 		release {
-			minifyEnabled false
+			minifyEnabled true
+			shrinkResources true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 		}
+//		debug {
+//			minifyEnabled true
+//			shrinkResources true
+//			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//		}
 	}
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_1_8
@@ -54,7 +60,6 @@ android {
 			excludes += '/META-INF/{AL2.0,LGPL2.1}'
 		}
 		exclude 'META-INF/DEPENDENCIES'
-
 	}
 }
 
@@ -67,36 +72,31 @@ dependencies {
 
 	implementation 'androidx.compose.ui:ui:1.2.0-alpha07'
 	implementation 'androidx.compose.material:material:1.2.0-alpha07'
-	implementation 'androidx.compose.ui:ui-tooling-preview:1.2.0-alpha08'
 	implementation 'androidx.compose.material3:material3:1.0.0-alpha09'
-	implementation 'androidx.compose.ui:ui-util:1.2.0-alpha07'
+	implementation 'androidx.compose.ui:ui-tooling-preview:1.2.0-beta02'
+	implementation 'androidx.compose.ui:ui-util:1.2.0-beta02'
 
 	implementation "androidx.glance:glance-appwidget:1.0.0-alpha03"
 
-	implementation 'androidx.navigation:navigation-compose:2.5.0-beta01'
-	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.0'
+	implementation 'androidx.navigation:navigation-compose:2.5.0-rc01'
+	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.1'
 
 	implementation 'androidx.core:core-animation:1.0.0-alpha02'
 
-	implementation 'org.burnoutcrew.composereorderable:reorderable:0.7.4'
 	implementation 'me.onebone:toolbar-compose:2.3.1'
 
 	implementation 'com.google.accompanist:accompanist-insets:0.20.2'
 	implementation 'com.google.accompanist:accompanist-flowlayout:0.24.1-alpha'
 	implementation 'com.google.accompanist:accompanist-pager:0.24.1-alpha'
-	implementation 'com.google.accompanist:accompanist-pager-indicators:0.24.1-alpha'
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.16.0'
-	implementation 'com.google.accompanist:accompanist-swiperefresh:0.10.0'
 	implementation 'com.google.accompanist:accompanist-permissions:0.18.0'
 	implementation 'com.google.accompanist:accompanist-webview:0.24.1-alpha'
 
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
-	implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.1'
 	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
 	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.4.1'
 	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1'
 
-	implementation 'androidx.compose.runtime:runtime-livedata:1.1.1'
 	implementation 'androidx.compose.runtime:runtime:1.1.1'
 
 	implementation 'androidx.room:room-runtime:2.4.2'
@@ -105,17 +105,14 @@ dependencies {
 	kapt 'androidx.room:room-compiler:2.4.2'
 	kapt 'androidx.room:room-compiler:2.4.2'
 
-	implementation 'com.github.PhilJay:MPAndroidChart:3.1.0'
+	implementation 'com.fasterxml.jackson.core:jackson-core:2.13.2'
+	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.2'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2'
+	implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2"
 
-	implementation 'com.fasterxml.jackson.core:jackson-core:2.12.4'
-	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
-	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4'
-
-	implementation 'io.coil-kt:coil:1.4.0'
-	implementation 'io.coil-kt:coil-compose:1.4.0'
-	implementation 'io.coil-kt:coil-video:1.4.0'
-	implementation 'com.airbnb.android:lottie-compose:4.2.2'
+	implementation 'io.coil-kt:coil:2.1.0'
+	implementation 'io.coil-kt:coil-compose:2.1.0'
+	implementation 'io.coil-kt:coil-gif:2.1.0'
 
 	implementation 'com.android.volley:volley:1.2.1'
 
@@ -123,24 +120,34 @@ dependencies {
 
 	implementation 'me.jorgecastillo:androidcolorx:0.2.0'
 
-	implementation 'br.com.devsrsouza.compose.icons.android:tabler-icons:1.0.0'
-	implementation 'br.com.devsrsouza.compose.icons.android:erikflowers-weather-icons:1.0.0'
-
 	implementation platform('com.google.firebase:firebase-bom:29.3.1')
-	implementation 'com.google.android.gms:play-services-auth:20.1.0'
+	implementation 'com.google.android.gms:play-services-auth:20.2.0'
 	implementation 'com.google.firebase:firebase-analytics'
-	implementation 'com.firebaseui:firebase-ui-auth:7.2.0'
+	implementation 'com.firebaseui:firebase-ui-auth:8.0.0'
 	implementation 'com.google.firebase:firebase-auth-ktx'
 	implementation 'com.google.firebase:firebase-storage-ktx'
+	implementation 'com.google.firebase:firebase-firestore-ktx'
+
+	implementation 'io.qonversion.android.sdk:sdk:3.2.7'
 
 	implementation 'com.google.android.gms:play-services-location:19.0.1'
 	implementation 'com.google.maps.android:maps-ktx:3.2.1'
 	implementation 'com.google.maps.android:maps-utils-ktx:3.2.1'
 
-	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
-
 	implementation 'androidx.datastore:datastore-preferences-core:1.0.0'
 	implementation 'androidx.datastore:datastore-preferences:1.0.0'
+
+	implementation "androidx.security:security-crypto:1.0.0"
+	implementation "androidx.security:security-identity-credential:1.0.0-alpha03"
+//	implementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
+//	androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
+//	implementation 'com.google.crypto.tink:tink-android:1.6.1'
+
+	implementation 'com.github.LucasFsc:Html2Pdf:0.2-beta'
+
+
+	implementation "com.google.android.gms:play-services-oss-licenses:17.0.0"
+
 
 	implementation 'androidx.test:core-ktx:1.4.0'
 

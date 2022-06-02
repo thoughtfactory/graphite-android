@@ -1,6 +1,7 @@
 package com.syncodec.graphite.miscellaneous
 
 import android.text.format.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 class TimeUtils {
@@ -37,5 +38,7 @@ class TimeUtils {
 		}
 
 		fun getToday(): Long = timestampToCalendarDay(System.currentTimeMillis())
+
+		fun quoteKeyToTimestamp(key: String) : Long? = SimpleDateFormat("dd_mm_yyyy")?.parse(key)?.time
 	}
 }

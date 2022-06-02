@@ -1,5 +1,6 @@
 package com.syncodec.graphite.settingsComponent
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,37 +24,57 @@ import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.richText.RichTextEditor
 import com.syncodec.graphite.custom.richText.rememberRichTextEditorWithLifecycle
 import com.syncodec.graphite.miscellaneous.DataStore
-import com.syncodec.graphite.miscellaneous.FileUtils.Companion.getFileFromUri
 import com.syncodec.graphite.premiumComponent.PremiumActivity
-import com.syncodec.graphite.settingsComponent.miscellaneous.ImportDialog
+import com.syncodec.graphite.settingsComponent.miscellaneous.DataExchangeDialog
 import com.syncodec.graphite.settingsComponent.miscellaneous.TopBar
 import com.syncodec.graphite.settingsComponent.screen.*
-import com.syncodec.graphite.ui.theme.GraphiteTheme
+import com.syncodec.graphite.ui.theme.GraphiteBase
 import com.syncodec.graphite.vaultComponent.EvokeReason
 import com.syncodec.graphite.vaultComponent.VaultScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.zip.ZipFile
 
 
 class SettingsActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<SettingsViewModel>()
 	private var showVaultScreen: MutableState<Boolean> = mutableStateOf(false)
-	val firebaseAuth = FirebaseAuth.getInstance()
+
+	var showToast: Boolean = false
 
 	@OptIn(ExperimentalMaterialApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
+		Firebase.auth.addAuthStateListener {
+			viewModel.email.value = it.currentUser?.email
+			if (showToast) {
+				if (it.currentUser?.email == null) {
+					Toast.makeText(
+						this,
+						"Logging out successful...",
+						Toast.LENGTH_SHORT
+					).show()
+				} else {
+					Toast.makeText(
+						this,
+						"Welcome ${it.currentUser?.email}",
+						Toast.LENGTH_SHORT
+					).show()
+				}
+			}
+		}
 
 		setContent {
 			viewModel.activityState = rememberActivityState()
@@ -78,7 +99,7 @@ class SettingsActivity : ComponentActivity() {
 						}
 					)
 
-					GraphiteTheme {
+					GraphiteBase {
 						val systemUiController = rememberSystemUiController()
 						systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
 						systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
@@ -96,7 +117,7 @@ class SettingsActivity : ComponentActivity() {
 
 	private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
 		if (result.resultCode == RESULT_OK) {
-			if (firebaseAuth.currentUser != null) {
+			if (viewModel.firebaseAuth.currentUser != null) {
 			}
 		} else {
 			Toast.makeText(this, "Sign in failed", Toast.LENGTH_LONG).show()
@@ -111,69 +132,14 @@ class SettingsActivity : ComponentActivity() {
 		}
 	}
 
-	private val selectDocumentToImport =
+	private val importFromGraphite =
 		registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-			CoroutineScope(Dispatchers.Main).launch {
-				val activityState = viewModel.activityState
-				val file = getFileFromUri(uri = uri)
-				if (file != null) {
-					try {
-						val zipFile = ZipFile(file)
-						val fileList = zipFile.entries().toList()
-							.filter { it.name.split(".").lastOrNull() == "json" }
-						activityState.exchangeDataSize.value = fileList.size
+			viewModel.importFromGraphite(uri)
+		}
 
-						var currentIndex = 0
-
-						while (true) {
-							if (currentIndex < fileList.size) {
-								if (activityState.isDataSaving.value) {
-									delay(10)
-								} else {
-									val jsonString = String(
-										zipFile.getInputStream(fileList[currentIndex]).readBytes()
-									)
-									activityState.richTextEditor.exec("editor.importData($jsonString);")
-									activityState.isDataSaving.value = true
-									activityState.currentImportFileIndex.value = currentIndex
-									currentIndex++
-								}
-							} else {
-								break
-							}
-						}
-
-						activityState.dataExchange.value = DataExchange.NONE
-						activityState.exchangeDataSize.value = 0
-						activityState.currentImportFileIndex.value = 1
-						CoroutineScope(Dispatchers.Main).launch {
-							Toast.makeText(
-								this@SettingsActivity,
-								"${fileList.size} entries imported",
-								Toast.LENGTH_LONG
-							).show()
-						}
-					} catch (exception: Exception) {
-						activityState.dataExchange.value = DataExchange.NONE
-						activityState.exchangeDataSize.value = 0
-						activityState.currentImportFileIndex.value = 1
-
-						exception.printStackTrace()
-
-						CoroutineScope(Dispatchers.Main).launch {
-							Toast.makeText(
-								this@SettingsActivity,
-								"Sorry, can't process selected file",
-								Toast.LENGTH_LONG
-							).show()
-						}
-					}
-				} else {
-					activityState.dataExchange.value = DataExchange.NONE
-					activityState.exchangeDataSize.value = 0
-					activityState.currentImportFileIndex.value = 1
-				}
-			}
+	private val importFromJourney =
+		registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+			viewModel.importFromJourney(uri)
 		}
 
 	private fun onPerformAction(action: Action, data: Any? = null) {
@@ -182,10 +148,7 @@ class SettingsActivity : ComponentActivity() {
 		when (action) {
 			Action.BACK -> onBackPressed()
 			Action.NAVIGATION -> activityState.currentPath.add(data as Path)
-			Action.SUBSCRIPTION -> {
-				Intent(this, PremiumActivity::class.java).apply { startActivity(this) }
-			}
-			Action.INSTAGRAM -> null
+			Action.SUBSCRIPTION -> startActivity(Intent(this, PremiumActivity::class.java))
 			Action.LOGIN -> {
 				val providers =
 					arrayListOf(
@@ -198,6 +161,11 @@ class SettingsActivity : ComponentActivity() {
 					.setAlwaysShowSignInMethodScreen(false)
 					.build()
 				signInLauncher.launch(signInIntent)
+			}
+			Action.LOGOUT -> {
+				val dataStore = DataStore(this)
+				viewModel.firebaseAuth.signOut()
+				dataStore.putExpiryTime(0)
 			}
 			Action.CHANGE_FONT_FAMILY -> DataStore(context = this).putTypography(data as Int)
 			Action.CHANGE_THEME -> DataStore(context = this).putTheme(data as Int)
@@ -218,9 +186,13 @@ class SettingsActivity : ComponentActivity() {
 				activityState.evokeReason.value = EvokeReason.REMOVE_PASSCODE
 				showVaultScreen.value = true
 			}
-			Action.JOURNEY -> {
+			Action.IMPORT_GRAPHITE -> {
 				activityState.dataExchange.value = DataExchange.IMPORT
-				selectDocumentToImport.launch(arrayOf("application/zip"))
+				importFromGraphite.launch(arrayOf("application/zip"))
+			}
+			Action.IMPORT_JOURNEY -> {
+				activityState.dataExchange.value = DataExchange.IMPORT
+				importFromJourney.launch(arrayOf("application/zip"))
 			}
 			Action.EXPORT_NOTEBOOK -> {
 				activityState.dataExchange.value = DataExchange.EXPORT
@@ -237,7 +209,6 @@ class SettingsActivity : ComponentActivity() {
 						val intent = ShareCompat.IntentBuilder.from(this@SettingsActivity)
 							.setType("application/zip")
 							.setStream(uri)
-							.setChooserTitle("Choose bar")
 							.createChooserIntent()
 							.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
@@ -246,6 +217,92 @@ class SettingsActivity : ComponentActivity() {
 				}
 			}
 			Action.EXPORT_BUCKET -> {
+				Toast.makeText(
+					this,
+					"This functionality is under development. Stay tuned...",
+					Toast.LENGTH_SHORT
+				).show()
+			}
+			Action.GOOGLE_DRIVE -> {
+				Toast.makeText(
+					this,
+					"This functionality is under development. Stay tuned...",
+					Toast.LENGTH_SHORT
+				).show()
+			}
+			Action.ONE_DRIVE -> {
+				Toast.makeText(
+					this,
+					"This functionality is under development. Stay tuned...",
+					Toast.LENGTH_SHORT
+				).show()
+			}
+			Action.DROPBOX -> {
+				Toast.makeText(
+					this,
+					"This functionality is under development. Stay tuned...",
+					Toast.LENGTH_SHORT
+				).show()
+			}
+			Action.WEBDAV -> {
+				Toast.makeText(
+					this,
+					"This functionality is under development. Stay tuned...",
+					Toast.LENGTH_SHORT
+				).show()
+			}
+			Action.POLICY -> {
+				val url = "https://graphite.syncodec.com/policy.html"
+				Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply { startActivity(this) }
+			}
+			Action.TERMS -> {
+				val url = "https://graphite.syncodec.com/terms.html"
+				Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply { startActivity(this) }
+			}
+			Action.SHARE_A_WORD -> {
+				try {
+					val shareIntent = Intent(Intent.ACTION_SEND)
+					shareIntent.type = "text/plain"
+					shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Graphite")
+					var shareMessage =
+						"\nHey... Check out Graphite, an everyday diary and bucket list\n\n"
+					shareMessage =
+						"""
+						${shareMessage}https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}
+						""".trimIndent()
+					shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage)
+					startActivity(Intent.createChooser(shareIntent, "choose one"))
+				} catch (e: Exception) {
+				}
+			}
+			Action.RATE_US -> startActivity(
+				Intent(
+					Intent.ACTION_VIEW,
+					Uri.parse("market://details?id=${BuildConfig.APPLICATION_ID}")
+				)
+			)
+			Action.OPEN_SOURCE_LICENSES -> startActivity(
+				Intent(
+					this,
+					OssLicensesMenuActivity::class.java
+				)
+			)
+			Action.INSTAGRAM -> {
+				val uri = Uri.parse("https://www.instagram.com/graphite.diary/?hl=en")
+				val likeIng = Intent(Intent.ACTION_VIEW, uri)
+
+				likeIng.setPackage("com.instagram.android")
+
+				try {
+					startActivity(likeIng)
+				} catch (e: ActivityNotFoundException) {
+					startActivity(
+						Intent(
+							Intent.ACTION_VIEW,
+							Uri.parse("https://www.instagram.com/graphite.diary/?hl=en")
+						)
+					)
+				}
 			}
 		}
 	}
@@ -259,6 +316,7 @@ class SettingsActivity : ComponentActivity() {
 		val activityState = viewModel.activityState
 		var showVaultScreen by showVaultScreen
 		val evokeReason by activityState.evokeReason
+		val email by viewModel.email
 
 		val notebookList by viewModel.notebookList.collectAsState(initial = listOf())
 
@@ -267,31 +325,27 @@ class SettingsActivity : ComponentActivity() {
 				VaultScreen(
 					evokeReason = evokeReason,
 					onSuccess = { showVaultScreen = false }
-				) {
-
-				}
+				) {}
 			} else {
 				Scaffold(
 					topBar = {
 						TopBar(currentPath = activityState.currentPath) {
-							onPerformAction(
-								Action.BACK
-							)
+							onPerformAction(Action.BACK)
 						}
 					}
 				) {
 					AnimatedContent(targetState = activityState.currentPath.last()) {
 						when (it) {
-							Path.BASE -> BaseScreen { action, path ->
-								onPerformAction(action, path)
-							}
+							Path.BASE -> BaseScreen(
+								email = email
+							) { action, path -> onPerformAction(action, path) }
 							Path.LOGIN -> {}
 							Path.PREFERENCE -> PreferenceScreen { action, path ->
 								onPerformAction(action, path)
 							}
-							Path.THEME -> ThemeScreen { action, theme ->
-								onPerformAction(action, theme)
-							}
+//							Path.THEME -> ThemeScreen { action, theme ->
+//								onPerformAction(action, theme)
+//							}
 							Path.FONT_FAMILY -> FontFamilyScreen { action, typography ->
 								onPerformAction(action, typography)
 							}
@@ -307,18 +361,22 @@ class SettingsActivity : ComponentActivity() {
 							Path.EXPORT -> ExportScreen { action, data ->
 								onPerformAction(action, data)
 							}
+							Path.SYNC -> SyncScreen { action, data ->
+								onPerformAction(action, data)
+							}
 							Path.SELECT_NOTEBOOK -> SelectNotebookScreen(notebookList = notebookList) { action, data ->
 								onPerformAction(action, data)
 							}
-							Path.ABOUT_US -> AboutUsScreen { action, data ->
+							Path.GRAPHITE -> GraphiteScreen { action, data ->
 								onPerformAction(action, data)
 							}
 						}
 					}
-					ImportDialog(
+					DataExchangeDialog(
 						dataExchange = activityState.dataExchange.value,
 						dataExchangeSize = activityState.exchangeDataSize.value,
-						currentImportFileIndex = activityState.currentImportFileIndex.value
+						currentImportFileIndex = activityState.currentImportFileIndex.value,
+						currentImportFileName = activityState.currentImportFileName.value,
 					)
 				}
 			}
@@ -332,11 +390,11 @@ class SettingsActivity : ComponentActivity() {
 		val dataExchange: MutableState<DataExchange> = mutableStateOf(DataExchange.NONE),
 		val exchangeDataSize: MutableState<Int> = mutableStateOf(0),
 		val currentImportFileIndex: MutableState<Int> = mutableStateOf(0),
+		val currentImportFileName: MutableState<String?> = mutableStateOf(null),
 		val isDataSaving: MutableState<Boolean> = mutableStateOf(false),
 		val richTextEditor: RichTextEditor,
 	)
 
-	@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
 	@Composable
 	fun rememberActivityState(
 		richTextEditor: RichTextEditor = rememberRichTextEditorWithLifecycle()
@@ -348,14 +406,24 @@ class SettingsActivity : ComponentActivity() {
 		SUBSCRIPTION,
 		POLICY,
 		TERMS,
+		SHARE_A_WORD,
+		RATE_US,
+		OPEN_SOURCE_LICENSES,
 		INSTAGRAM,
 		LOGIN,
+		LOGOUT,
 		CHANGE_FONT_FAMILY,
 		CHANGE_THEME,
 		CHANGE_BACKGROUND,
-		JOURNEY,
+		IMPORT_GRAPHITE,
+		IMPORT_JOURNEY,
+		IMPORT_DAY_ONE,
 		EXPORT_NOTEBOOK,
 		EXPORT_BUCKET,
+		GOOGLE_DRIVE,
+		ONE_DRIVE,
+		DROPBOX,
+		WEBDAV,
 		ADD_PASSCODE,
 		CHANGE_PASSCODE,
 		REMOVE_PASSCODE,
@@ -379,8 +447,9 @@ class SettingsActivity : ComponentActivity() {
 			DATA,
 			IMPORT,
 			EXPORT,
+			SYNC,
 			SELECT_NOTEBOOK,
-			ABOUT_US
+			GRAPHITE
 		}
 
 		val PathNameMap: Map<Path, String> = mapOf(
@@ -391,10 +460,11 @@ class SettingsActivity : ComponentActivity() {
 			Path.FONT_FAMILY to "Font Family",
 			Path.SECURITY to "Security",
 			Path.DATA to "Data",
+			Path.SYNC to "Backup and Sync",
 			Path.IMPORT to "Import",
 			Path.EXPORT to "Export",
-			Path.SELECT_NOTEBOOK to "Select Notebook",
-			Path.ABOUT_US to "About Us",
+			Path.SELECT_NOTEBOOK to "Export Notebook",
+			Path.GRAPHITE to "Graphite",
 		)
 		val PathIconMap: Map<Path, Int> = mapOf(
 			Path.BASE to R.drawable.ic_settings,
@@ -404,10 +474,11 @@ class SettingsActivity : ComponentActivity() {
 			Path.FONT_FAMILY to R.drawable.ic_font_family,
 			Path.SECURITY to R.drawable.ic_security,
 			Path.DATA to R.drawable.ic_data,
+			Path.SYNC to R.drawable.ic_sync,
 			Path.IMPORT to R.drawable.ic_import,
 			Path.EXPORT to R.drawable.ic_export,
 			Path.SELECT_NOTEBOOK to R.drawable.ic_notebook,
-			Path.ABOUT_US to R.drawable.ic_about_us,
+			Path.GRAPHITE to R.drawable.ic_icon,
 		)
 	}
 }

@@ -2,7 +2,6 @@ package com.syncodec.graphite.konstant
 
 import com.syncodec.graphite.R
 import com.syncodec.graphite.database.bucketItem.BucketItemType
-import compose.icons.tablericons.*
 
 class ResourceMap {
 	companion object {

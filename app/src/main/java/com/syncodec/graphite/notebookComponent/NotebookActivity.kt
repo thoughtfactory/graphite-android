@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.R
 import com.syncodec.graphite.attachmentComponent.AttachmentActivity
 import com.syncodec.graphite.custom.DeleteDialog
@@ -35,13 +36,14 @@ import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
 import com.syncodec.graphite.miscellaneous.DataStore
-import com.syncodec.graphite.miscellaneous.logger
 import com.syncodec.graphite.noteComponent.NoteActivity
 import com.syncodec.graphite.notebookComponent.miscellaneous.TopBar
 import com.syncodec.graphite.notebookComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.graphite.notebookComponent.modalBottomSheet.SheetLayout
 import com.syncodec.graphite.notebookComponent.screen.NotebookScreen
-import com.syncodec.graphite.ui.theme.GraphiteTheme
+import com.syncodec.graphite.ui.theme.GraphiteBase
+import com.syncodec.graphite.vaultComponent.EvokeReason
+import com.syncodec.graphite.vaultComponent.VaultScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -65,7 +67,7 @@ class NotebookActivity : ComponentActivity() {
 		setContent {
 			viewModel.activityState = rememberActivityState()
 
-			GraphiteTheme {
+			GraphiteBase {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
@@ -78,6 +80,7 @@ class NotebookActivity : ComponentActivity() {
 	override fun onBackPressed() {
 		val activityState = viewModel.activityState
 		when {
+			viewModel.vaultState.value == Graphite.Companion.VaultState.TRY_OPEN -> viewModel.vaultState.value = Graphite.Companion.VaultState.CLOSED
 			activityState.isSelected.value -> {
 				activityState.isSelected.value = false
 				activityState.selectedItemList.clear()
@@ -163,6 +166,16 @@ class NotebookActivity : ComponentActivity() {
 						putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, data)
 						putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
 						putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
+
+						putExtra(
+							Konstant.Companion.Konstant.SHOW_ARCHIVED.name,
+							viewModel.activityState.showArchived.value
+						)
+						putExtra(
+							Konstant.Companion.Konstant.SHOW_LOCKED.name,
+							viewModel.vaultState.value == Graphite.Companion.VaultState.OPENED
+						)
+
 						startActivity(this)
 					}
 				}
@@ -214,7 +227,6 @@ class NotebookActivity : ComponentActivity() {
 			}
 			Action.NAVIGATE_CHAPTER -> {
 				data as Int
-				logger("data : $data")
 				for (i in 0 until data) {
 					viewModel.chapterPath.removeLastOrNull()
 					viewModel.chapterNamePath.removeLastOrNull()
@@ -242,6 +254,18 @@ class NotebookActivity : ComponentActivity() {
 				activityState.bottomSheetType.value = BottomSheetType.EditBottomSheet
 				activityState.scope.launch { activityState.bottomSheetState.show() }
 			}
+			Action.VAULT -> {
+				viewModel.vaultState.value = when (viewModel.vaultState.value) {
+					Graphite.Companion.VaultState.NOT_OPENED -> Graphite.Companion.VaultState.TRY_OPEN
+					Graphite.Companion.VaultState.OPENED -> {
+						Toast.makeText(this, "Vault closed...", Toast.LENGTH_SHORT).show()
+						Graphite.Companion.VaultState.CLOSED
+					}
+					Graphite.Companion.VaultState.CLOSED -> Graphite.Companion.VaultState.TRY_OPEN
+					else -> Graphite.Companion.VaultState.NOT_OPENED
+				}
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
+			}
 			Action.UPDATE_NOTEBOOK -> {
 				data as NotebookDbEntry
 				viewModel.updateNotebook(notebook = data)
@@ -255,18 +279,25 @@ class NotebookActivity : ComponentActivity() {
 				activityState.showArchived.value = !activityState.showArchived.value
 				activityState.scope.launch { activityState.bottomSheetState.hide() }
 			}
-			Action.LOCKED -> null
 		}
 	}
 
 	@OptIn(
 		ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
-		ExperimentalMaterialApi::class, ExperimentalAnimationApi::class
+		ExperimentalMaterialApi::class
 	)
 	@Composable
 	private fun Screen() {
+		val dataStore = remember { DataStore(context = this) }
+
 		val activityState = viewModel.activityState
 		val status by viewModel.status
+		val passcode by dataStore.getPasscode.collectAsState(initial = null)
+
+		val showFavourite by activityState.showFavourite
+		val showArchived by activityState.showArchived
+		val showLocked by activityState.showLocked
+		val vaultState by viewModel.vaultState
 
 		ModalBottomSheetLayout(
 			sheetState = activityState.bottomSheetState,
@@ -275,86 +306,109 @@ class NotebookActivity : ComponentActivity() {
 			sheetShape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
 			sheetContent = { SheetLayout { action, data -> onPerformAction(action, data) } },
 		) {
-			Scaffold(
-				containerColor = MaterialTheme.colorScheme.background,
-				topBar = {
-					if (status == Status.LOADED) {
-						TopBar(
-							notebookDbEntry = viewModel.notebookDbEntry.value!!,
-							chapterNamePath = viewModel.chapterNamePath,
-							isSelected = activityState.isSelected.value,
+			Crossfade(targetState = viewModel.vaultState.value) {
+				if (it == Graphite.Companion.VaultState.TRY_OPEN) {
+					VaultScreen(
+						evokeReason = if (passcode == "") EvokeReason.NEW_PASSCODE else EvokeReason.UNLOCK_VAULT,
+						onSuccess = {
+							viewModel.vaultState.value = Graphite.Companion.VaultState.OPENED
+							viewModel.activityState.showLocked.value = true
+						}
+					) { Toast.makeText(this, "Error opening vault...", Toast.LENGTH_SHORT).show() }
+				} else {
+					Scaffold(
+						containerColor = MaterialTheme.colorScheme.background,
+						topBar = {
+							if (status == Status.LOADED) {
+								TopBar(
+									notebookDbEntry = viewModel.notebookDbEntry.value!!,
+									chapterNamePath = viewModel.chapterNamePath,
+									isSelected = activityState.isSelected.value,
+									selectedItemSize = activityState.selectedItemList.size,
+									showFavorite = activityState.showFavourite.value,
+									showArchived = activityState.showArchived.value,
+								) { action, data -> onPerformAction(action, data) }
+							}
+						},
+						floatingActionButton = {
+							Column {
+								FloatingActionButton(
+									onClick = { onPerformAction(Action.CLICK_NEW_CHAPTER, null) }
+								) {
+									Icon(
+										painter = painterResource(id = R.drawable.ic_notebook),
+										contentDescription = "New chapter",
+										modifier = Modifier.requiredSize(24.dp)
+									)
+								}
+
+								Spacer(modifier = Modifier.height(16.dp))
+
+								FloatingActionButton(
+									onClick = { onPerformAction(Action.CLICK_NEW_NOTE, null) }
+								) {
+									Icon(
+										painter = painterResource(id = R.drawable.ic_note),
+										contentDescription = "New note",
+										modifier = Modifier.requiredSize(24.dp)
+									)
+								}
+							}
+						},
+						floatingActionButtonPosition = FabPosition.End
+					) {
+						when (status) {
+							Status.INIT -> LoadingView()
+							Status.LOADING -> LoadingView()
+							Status.LOADED ->
+								NotebookScreen(
+									noteList = viewModel.noteList.filter { it.chapterPath == viewModel.chapterPath }
+										.filter {
+											when {
+												showArchived && showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.isArchived && it.isFavourite && it.isLocked
+												showArchived && showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.isArchived && it.isFavourite
+												showArchived && showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.isArchived && it.isFavourite && !it.isLocked
+												showArchived && !showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.isArchived && it.isLocked
+												showArchived && !showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.isArchived
+												showArchived && !showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.isArchived && !it.isLocked
+												!showArchived && showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.isArchived && it.isFavourite && it.isLocked
+												!showArchived && showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.isArchived && it.isFavourite
+												!showArchived && showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> !it.isArchived && it.isFavourite && !it.isLocked
+												!showArchived && !showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.isArchived && it.isLocked
+												!showArchived && !showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.isArchived
+												!showArchived && !showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> !it.isArchived && !it.isLocked
+												else -> !it.isArchived && !it.isLocked
+											}
+										},
+									chapterList = viewModel.chapterList.filter { it.chapterPath == viewModel.chapterPath },
+									selectedItemList = activityState.selectedItemList,
+									showNotes = activityState.showNotes.value,
+									showChapters = activityState.showChapters.value,
+								) { action, data -> onPerformAction(action, data) }
+							Status.ERROR -> null
+						}
+
+						DeleteDialog(
+							showDeleteDialog = activityState.showDeleteDialog.value,
 							selectedItemSize = activityState.selectedItemList.size,
-							showFavorite = activityState.showFavourite.value,
-							showArchived = activityState.showArchived.value,
-							showLocked = activityState.showLocked.value
-						) { action, data -> onPerformAction(action, data) }
-					}
-				},
-				floatingActionButton = {
-					Column {
-						FloatingActionButton(
-							onClick = { onPerformAction(Action.CLICK_NEW_CHAPTER, null) }
-						) {
-							Icon(
-								painter = painterResource(id = R.drawable.ic_notebook),
-								contentDescription = "New chapter",
-								modifier = Modifier.requiredSize(24.dp)
-							)
-						}
+							onDismiss = { activityState.showDeleteDialog.value = false },
+							onDelete = {
+								val selectedItemList = activityState.selectedItemList.toList()
+								viewModel.deleteNote(selectedItemList)
+								viewModel.deleteChapter(selectedItemList)
 
-						Spacer(modifier = Modifier.height(16.dp))
-
-						FloatingActionButton(
-							onClick = { onPerformAction(Action.CLICK_NEW_NOTE, null) }
-						) {
-							Icon(
-								painter = painterResource(id = R.drawable.ic_note),
-								contentDescription = "New note",
-								modifier = Modifier.requiredSize(24.dp)
-							)
-						}
+								Toast.makeText(
+									this,
+									"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
+									Toast.LENGTH_SHORT
+								).show()
+								activityState.selectedItemList.clear()
+								activityState.isSelected.value = false
+								activityState.showDeleteDialog.value = false
+							},
+						)
 					}
-				},
-				floatingActionButtonPosition = FabPosition.End
-			) {
-				when (status) {
-					Status.INIT -> LoadingView()
-					Status.LOADING -> LoadingView()
-					Status.LOADED -> {
-						NotebookScreen(
-							noteList = viewModel.noteList.filter { it.chapterPath == viewModel.chapterPath },
-							chapterList = viewModel.chapterList.filter { it.chapterPath == viewModel.chapterPath },
-							selectedItemList = activityState.selectedItemList,
-							showNotes = activityState.showNotes.value,
-							showChapters = activityState.showChapters.value,
-							showFavourite = activityState.showFavourite.value,
-							showArchived = activityState.showArchived.value,
-							showLocked = activityState.showLocked.value,
-						) { action, data -> onPerformAction(action, data) }
-					}
-					Status.ERROR -> null
 				}
-
-				DeleteDialog(
-					showDeleteDialog = activityState.showDeleteDialog.value,
-					selectedItemSize = activityState.selectedItemList.size,
-					onDismiss = { activityState.showDeleteDialog.value = false },
-					onDelete = {
-						val selectedItemList = activityState.selectedItemList.toList()
-						viewModel.deleteNote(selectedItemList)
-						viewModel.deleteChapter(selectedItemList)
-
-						Toast.makeText(
-							this,
-							"${if (selectedItemList.size == 1) "1 entry" else "${selectedItemList.size} entries"} deleted",
-							Toast.LENGTH_SHORT
-						).show()
-						activityState.selectedItemList.clear()
-						activityState.isSelected.value = false
-						activityState.showDeleteDialog.value = false
-					},
-				)
-
 			}
 		}
 	}
@@ -403,10 +457,9 @@ class NotebookActivity : ComponentActivity() {
 		SET_AS_DEFAULT,
 		ATLAS,
 		EDIT_NOTEBOOK,
+		UPDATE_NOTEBOOK,
 		VAULT,
 		TOGGLE_FAVOURITE,
 		TOGGLE_ARCHIVED,
-		LOCKED,
-		UPDATE_NOTEBOOK,
 	}
 }

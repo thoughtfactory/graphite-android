@@ -25,78 +25,78 @@ import com.syncodec.graphite.ui.theme.*
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun ThemeScreen(
-	onClick: (SettingsActivity.Action, Int) -> Unit
-) {
-	val backgroundColorList : List<Pair<Color, Color>> = listOf(
-		Pair(lightBackground0, darkBackground0),
-		Pair(lightBackground1, darkBackground1),
-		Pair(lightBackground2, darkBackground2),
-		Pair(lightBackground3, darkBackground3),
-		Pair(lightBackground4, darkBackground4),
-		Pair(lightBackground5, darkBackground5),
-		Pair(lightBackground6, darkBackground6),
-		Pair(lightBackground7, darkBackground7),
-		Pair(lightBackground8, darkBackground8),
-		Pair(lightBackground9, darkBackground9),
-	)
-
-	val themeList : List<Pair<ColorScheme, ColorScheme>> = listOf(
-		Pair(lightColorScheme0, darkColorScheme0),
-		Pair(lightColorScheme1, darkColorScheme1),
-		Pair(lightColorScheme2, darkColorScheme2),
-		Pair(lightColorScheme3, darkColorScheme3),
-		Pair(lightColorScheme4, darkColorScheme4),
-		Pair(lightColorScheme5, darkColorScheme5),
-		Pair(lightColorScheme6, darkColorScheme6),
-	)
-
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.background),
-	) {
-		Spacer(modifier = Modifier.height(16.dp))
-		ThemeView()
-
-		Spacer(modifier = Modifier.height(16.dp))
-
-		LazyRow(
-			modifier = Modifier.fillMaxWidth(),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			item { Spacer(modifier = Modifier.width(16.dp)) }
-			backgroundColorList.forEachIndexed { index, data ->
-				item {
-					BackgroundCard(
-						lightBackground = data.first,
-						darkBackground = data.second
-					) { onClick(SettingsActivity.Action.CHANGE_BACKGROUND, index) }
-				}
-				item { Spacer(modifier = Modifier.width(8.dp)) }
-			}
-			item { Spacer(modifier = Modifier.width(8.dp)) }
-		}
-
-		Spacer(modifier = Modifier.height(16.dp))
-
-		LazyVerticalGrid(
-			columns = GridCells.Fixed(4),
-			modifier = Modifier.padding(16.dp, 0.dp),
-		) {
-			themeList.forEachIndexed { index, data ->
-				item {
-					ThemeCard(colorScheme = data.first) {
-						onClick(SettingsActivity.Action.CHANGE_THEME, index)
-					}
-				}
-			}
-		}
-	}
-}
+//@OptIn(ExperimentalFoundationApi::class)
+//@Composable
+//fun ThemeScreen(
+//	onClick: (SettingsActivity.Action, Int) -> Unit
+//) {
+//	val backgroundColorList : List<Pair<Color, Color>> = listOf(
+//		Pair(lightBackground0, darkBackground0),
+//		Pair(lightBackground1, darkBackground1),
+//		Pair(lightBackground2, darkBackground2),
+//		Pair(lightBackground3, darkBackground3),
+//		Pair(lightBackground4, darkBackground4),
+//		Pair(lightBackground5, darkBackground5),
+//		Pair(lightBackground6, darkBackground6),
+//		Pair(lightBackground7, darkBackground7),
+//		Pair(lightBackground8, darkBackground8),
+//		Pair(lightBackground9, darkBackground9),
+//	)
+//
+//	val themeList : List<Pair<ColorScheme, ColorScheme>> = listOf(
+//		Pair(lightColorScheme0, darkColorScheme0),
+//		Pair(lightColorScheme1, darkColorScheme1),
+//		Pair(lightColorScheme2, darkColorScheme2),
+//		Pair(lightColorScheme3, darkColorScheme3),
+//		Pair(lightColorScheme4, darkColorScheme4),
+//		Pair(lightColorScheme5, darkColorScheme5),
+//		Pair(lightColorScheme6, darkColorScheme6),
+//	)
+//
+//	Column(
+//		horizontalAlignment = Alignment.CenterHorizontally,
+//		modifier = Modifier
+//			.fillMaxSize()
+//			.background(MaterialTheme.colorScheme.background),
+//	) {
+//		Spacer(modifier = Modifier.height(16.dp))
+//		ThemeView()
+//
+//		Spacer(modifier = Modifier.height(16.dp))
+//
+//		LazyRow(
+//			modifier = Modifier.fillMaxWidth(),
+//			verticalAlignment = Alignment.CenterVertically,
+//		) {
+//			item { Spacer(modifier = Modifier.width(16.dp)) }
+//			backgroundColorList.forEachIndexed { index, data ->
+//				item {
+//					BackgroundCard(
+//						lightBackground = data.first,
+//						darkBackground = data.second
+//					) { onClick(SettingsActivity.Action.CHANGE_BACKGROUND, index) }
+//				}
+//				item { Spacer(modifier = Modifier.width(8.dp)) }
+//			}
+//			item { Spacer(modifier = Modifier.width(8.dp)) }
+//		}
+//
+//		Spacer(modifier = Modifier.height(16.dp))
+//
+//		LazyVerticalGrid(
+//			columns = GridCells.Fixed(4),
+//			modifier = Modifier.padding(16.dp, 0.dp),
+//		) {
+//			themeList.forEachIndexed { index, data ->
+//				item {
+//					ThemeCard(colorScheme = data.first) {
+//						onClick(SettingsActivity.Action.CHANGE_THEME, index)
+//					}
+//				}
+//			}
+//		}
+//	}
+//}
 
 @Preview
 @Composable

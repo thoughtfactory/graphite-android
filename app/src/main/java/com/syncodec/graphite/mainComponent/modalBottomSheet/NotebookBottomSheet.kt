@@ -25,26 +25,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.MainActivity
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.LargeTextField
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.custom.button.LargeButton
-import com.syncodec.graphite.custom.button.StateButton
-import com.syncodec.graphite.custom.button.StateData
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.database.notebook.NotebookTheme
 import com.syncodec.graphite.konstant.Color.Companion.colorList
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.bookCoverImageList
 import com.syncodec.graphite.miscellaneous.generatePrimaryKey
+import com.syncodec.graphite.ui.theme.PremiumCompositionLocal
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NotebookBottomSheet(
-	onAction: (MainActivity.Action, NotebookDbEntry) -> Unit
+	onAction: (MainActivity.Action, Pair<NotebookDbEntry, Boolean>) -> Unit
 ) {
 	val context = LocalContext.current
+	val isPremium = PremiumCompositionLocal.current
 	val focusManager = LocalFocusManager.current
 
 	var notebookTitleText by rememberSaveable { mutableStateOf("") }
@@ -106,27 +105,27 @@ fun NotebookBottomSheet(
 					.padding(24.dp, 0.dp)
 			) { notebookDescriptionText = it }
 
-			Spacer(modifier = Modifier.height(16.dp))
+//			Spacer(modifier = Modifier.height(16.dp))
 
-			StateButton(
-				stateList = listOf(
-					StateData(
-						title = "Color",
-						icon = R.drawable.ic_color,
-						stateTint = MaterialTheme.colorScheme.primary
-					),
-					StateData(
-						title = "Image",
-						icon = R.drawable.ic_gallery,
-						stateTint = MaterialTheme.colorScheme.primary
-					)
-				),
-				currentState = currentState,
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(32.dp)
-					.padding(24.dp, 0.dp),
-			) { currentState = it }
+//			StateButton(
+//				stateList = listOf(
+//					StateData(
+//						title = "Color",
+//						icon = R.drawable.ic_color,
+//						stateTint = MaterialTheme.colorScheme.primary
+//					),
+//					StateData(
+//						title = "Image",
+//						icon = R.drawable.ic_gallery,
+//						stateTint = MaterialTheme.colorScheme.primary
+//					)
+//				),
+//				currentState = currentState,
+//				modifier = Modifier
+//					.fillMaxWidth()
+//					.height(32.dp)
+//					.padding(24.dp, 0.dp),
+//			) { currentState = it }
 
 			Spacer(modifier = Modifier.height(12.dp))
 
@@ -151,7 +150,7 @@ fun NotebookBottomSheet(
 				}
 			}
 
-			Spacer(modifier = Modifier.height(16.dp))
+			Spacer(modifier = Modifier.height(12.dp))
 
 			LargeButton(
 				text = "Create",
@@ -170,7 +169,7 @@ fun NotebookBottomSheet(
 					this.bitmap =
 						notebookImage?.let { BitmapFactory.decodeResource(context.resources, it) }
 
-					onAction(MainActivity.Action.NEW_NOTEBOOK, this)
+					onAction(MainActivity.Action.NEW_NOTEBOOK, Pair(this, isPremium))
 				}
 
 				focusManager.clearFocus()

@@ -9,7 +9,9 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,26 +22,25 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.googleMap.rememberMapViewWithLifecycle
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.mainComponent.MainViewModel
 import com.syncodec.graphite.mainComponent.screen.AtlasScreen
 import com.syncodec.graphite.mainComponent.screen.BucketScreen
 import com.syncodec.graphite.mainComponent.screen.CalendarScreen
 import com.syncodec.graphite.mainComponent.screen.GraphiteScreen
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
-import kotlinx.coroutines.InternalCoroutinesApi
 
 
 open class BottomNavigationItem(var route: String, var icon: Int, var title: String) {
-	object Graphite : BottomNavigationItem("graphite", R.drawable.ic_write, "Graphite")
+	object Graphite : BottomNavigationItem("graphite", R.drawable.ic_icon, "Graphite")
 	object Bucket : BottomNavigationItem("bucket", R.drawable.ic_bucket, "Bucket")
 	object Calendar : BottomNavigationItem("calendar", R.drawable.ic_calendar, "Calendar")
 	object Atlas : BottomNavigationItem("atlas", R.drawable.ic_atlas, "Atlas")
 }
 
-@OptIn(InternalCoroutinesApi::class)
 @Composable
 fun BottomNavigationBar(
 	currentRoute: String?,
@@ -72,13 +73,14 @@ fun BottomNavigationBar(
 						text = screen.title,
 						textAlign = TextAlign.Center,
 						style = MaterialTheme.typography.bodyMedium,
+						fontWeight = FontWeight.Bold,
 						maxLines = 1,
 						lineHeight = 12.sp
 					)
 				},
 				colors = NavigationBarItemDefaults.colors(
-					selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-					unselectedIconColor = MaterialTheme.colorScheme.onSurface.tone(
+					selectedIconColor = if (screen.route == "graphite") Color.Unspecified else MaterialTheme.colorScheme.onPrimary,
+					unselectedIconColor = if (screen.route == "graphite") Color.Unspecified else MaterialTheme.colorScheme.onSurface.tone(
 						isSystemInDarkTheme(), 1
 					),
 					selectedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -106,9 +108,9 @@ fun MainNavigation(
 	val viewModel: MainViewModel = viewModel()
 
 	val vaultState by viewModel.vaultState
-	var showArchived by viewModel.showArchived
-	var showFavourite by viewModel.showFavourite
-	var showLocked by viewModel.showLocked
+	val showArchived by viewModel.showArchived
+	val showFavourite by viewModel.showFavourite
+	val showLocked by viewModel.showLocked
 	val isSelected by viewModel.isSelected
 	val selectedItemList = viewModel.selectedItemList
 
@@ -121,6 +123,49 @@ fun MainNavigation(
 	val componentType by viewModel.componentType
 	val bucketFilter = viewModel.bucketFilter
 
+//	showArchived	showFavourite	showLocked	isVaultOpen		filter
+//
+//      FALSE	        FALSE	        FALSE	    FALSE		!arc && !lock
+//      FALSE	        FALSE	        FALSE	    TRUE		!arc
+//      FALSE	        FALSE	        TRUE	    FALSE		*
+//      FALSE	        FALSE	        TRUE	    TRUE		!arc && lock
+//      FALSE	        TRUE	        FALSE	    FALSE		!arc && fav && !lock
+//      FALSE	        TRUE	        FALSE	    TRUE		!arc && fav
+//      FALSE	        TRUE	        TRUE	    FALSE		*
+//      FALSE	        TRUE	        TRUE	    TRUE		!arc && fav && lock
+//      TRUE	        FALSE	        FALSE	    FALSE		arc && !lock
+//      TRUE	        FALSE	        FALSE	    TRUE		arc
+//      TRUE	        FALSE	        TRUE	    FALSE		*
+//      TRUE	        FALSE	        TRUE	    TRUE		arc && lock
+//      TRUE	        TRUE	        FALSE	    FALSE		arc && fav && !lock
+//      TRUE	        TRUE	        FALSE	    TRUE		arc && fav
+//      TRUE	        TRUE	        TRUE	    FALSE		*
+//      TRUE	        TRUE	        TRUE	    TRUE		arc && fav && lock
+//
+
+
+	val filteredNoteMap = noteMap.filter {
+		when {
+			showArchived && showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isFavourite && it.value.isLocked
+//			showArchived && showFavourite && showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isFavourite && it.value.isLocked
+			showArchived && showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isFavourite
+			showArchived && showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isFavourite && !it.value.isLocked
+			showArchived && !showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isLocked
+//			showArchived && !showFavourite && showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isFavourite && it.value.isLocked
+			showArchived && !showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> it.value.isArchived
+			showArchived && !showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.value.isArchived && !it.value.isLocked
+			!showArchived && showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.value.isArchived && it.value.isFavourite && it.value.isLocked
+//			!showArchived && showFavourite && showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isFavourite && it.value.isLocked
+			!showArchived && showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.value.isArchived && it.value.isFavourite
+			!showArchived && showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> !it.value.isArchived && it.value.isFavourite && !it.value.isLocked
+			!showArchived && !showFavourite && showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.value.isArchived && it.value.isLocked
+//			!showArchived && !showFavourite && showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> it.value.isArchived && it.value.isFavourite && it.value.isLocked
+			!showArchived && !showFavourite && !showLocked && vaultState == Graphite.Companion.VaultState.OPENED -> !it.value.isArchived
+			!showArchived && !showFavourite && !showLocked && vaultState != Graphite.Companion.VaultState.OPENED -> !it.value.isArchived && !it.value.isLocked
+			else -> !it.value.isArchived && !it.value.isLocked
+		}
+	}
+
 	NavHost(
 		navController = navController,
 		startDestination = BottomNavigationItem.Graphite.route
@@ -130,11 +175,12 @@ fun MainNavigation(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
 				GraphiteScreen(
-					noteMap = noteMap,
+					noteMap = filteredNoteMap,
 					notebookListFlow = notebookListFlow,
 					componentType = componentType,
 					isSelected = isSelected,
 					selectedItemList = selectedItemList,
+					isFilterActive = showArchived || showFavourite || showLocked,
 					quote = quote,
 					quoteBg = quoteBg,
 					onAction = onAction
@@ -158,7 +204,7 @@ fun MainNavigation(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
 				CalendarScreen(
-					noteMap = noteMap,
+					noteMap = filteredNoteMap,
 					selectedItemList = selectedItemList,
 					onAction = onAction
 				)
@@ -170,7 +216,7 @@ fun MainNavigation(
 			) {
 				AtlasScreen(
 					mapView = mapView,
-					noteMap = noteMap,
+					noteMap = filteredNoteMap,
 					selectedItemList = selectedItemList,
 					onAction = onAction
 				)

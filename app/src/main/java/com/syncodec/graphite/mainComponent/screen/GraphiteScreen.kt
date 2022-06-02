@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.database.quote.QuoteDbEntry
@@ -23,6 +23,7 @@ fun GraphiteScreen(
 	componentType: MainActivity.ComponentType,
 	isSelected: Boolean,
 	selectedItemList: List<String>,
+	isFilterActive: Boolean,
 	quote: QuoteDbEntry?,
 	quoteBg: File?,
 	onAction: (MainActivity.Action, Any?) -> Unit
@@ -40,7 +41,7 @@ fun GraphiteScreen(
 				MainActivity.ComponentType.NOTE -> NoteScreen(
 					noteMap = noteMap,
 					selectedItemList = selectedItemList,
-					filterTag = listOf(),
+					isFilterActive = isFilterActive,
 					quote = quote,
 					quoteBg = quoteBg,
 				) { click, data -> onAction(click, data) }

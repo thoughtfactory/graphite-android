@@ -3,6 +3,7 @@ package com.syncodec.graphite.todayComponent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.Gravity
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -40,27 +41,19 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.ktx.storage
 import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.revealTextView.RevealText
 import com.syncodec.graphite.database.UserDatabase
 import com.syncodec.graphite.konstant.Konstant
-import com.syncodec.graphite.ui.theme.GraphiteTheme
+import com.syncodec.graphite.ui.theme.GraphiteBase
 import org.joda.time.DateTime
 import org.joda.time.Days
 import java.util.*
 
 
 class TodayActivity : ComponentActivity() {
-	@OptIn(
-		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
-		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class
-	)
-
 	val quoteTableDao = UserDatabase.getInstance(this).quoteTableDao
 
 	@OptIn(
@@ -76,7 +69,7 @@ class TodayActivity : ComponentActivity() {
 			systemUiController.setSystemBarsColor(color = Color.Transparent)
 
 			val keyList by quoteTableDao.getAllKeysAsFlow().collectAsState(listOf())
-			GraphiteTheme {
+			GraphiteBase {
 				if (keyList.isEmpty()) {
 					LoadingView()
 				} else {
@@ -92,9 +85,7 @@ class TodayActivity : ComponentActivity() {
 	@ExperimentalMaterial3Api
 	@Composable
 	fun TodayScreen() {
-		val storageRef = remember { Firebase.storage("gs://the-life-cycle.appspot.com").reference }
-
-		val startDate = remember { DateTime(2022, 4, 16, 0, 0, 0) }
+		val startDate = remember { DateTime(2022, 5, 4, 0, 0, 0) }
 		val endDate = remember { DateTime.now() }
 		val dayCount = remember { Days.daysBetween(startDate, endDate).days + 1 }
 
@@ -123,7 +114,6 @@ class TodayActivity : ComponentActivity() {
 			val y = pageDate.year.toString().padStart(2, '0')
 
 			Background(
-				storageRef = storageRef,
 				dmy = "${d}_${m}_${y}",
 			)
 
@@ -138,7 +128,6 @@ class TodayActivity : ComponentActivity() {
 
 	@Composable
 	private fun Background(
-		storageRef: StorageReference,
 		dmy: String,
 	) {
 		Image(
@@ -196,9 +185,10 @@ class TodayActivity : ComponentActivity() {
 				}
 			}
 
-			Column(modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp)
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(16.dp)
 			) {
 				Row(
 					modifier = Modifier.fillMaxWidth(),
@@ -322,7 +312,7 @@ class TodayActivity : ComponentActivity() {
 						horizontalArrangement = Arrangement.Start
 					) {
 						Column(
-							horizontalAlignment = Alignment.CenterHorizontally,
+							horizontalAlignment = Alignment.Start,
 							modifier = Modifier,
 						) {
 							AndroidView(
@@ -333,7 +323,10 @@ class TodayActivity : ComponentActivity() {
 										this.setBackgroundColor(0)
 										this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 64f)
 										this.setTypeface(
-											ResourcesCompat.getFont(context, R.font.graduate_regular),
+											ResourcesCompat.getFont(
+												context,
+												R.font.graduate_regular
+											),
 											Typeface.BOLD
 										)
 										this.letterSpacing = 0.1f
@@ -342,30 +335,74 @@ class TodayActivity : ComponentActivity() {
 								update = { view -> view.show() }
 							)
 
-							AndroidView(
-								factory = { context ->
-									RevealText(context).apply {
-										try {
-											val month =
-												Konstant.monthNameShort[m.toInt() - 1].uppercase(Locale.getDefault())
-											this.setText("$month $y")
-											this.setTextColor(android.graphics.Color.WHITE)
-											this.setBackgroundColor(0)
-											this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-											this.setTypeface(
-												ResourcesCompat.getFont(
-													context,
-													R.font.graduate_regular
-												),
-												Typeface.BOLD
-											)
-											this.letterSpacing = 0.1f
-										} catch (exception: Exception) {
+							Row(
+								modifier = Modifier.fillMaxWidth(),
+								verticalAlignment = Alignment.CenterVertically
+							) {
+								AndroidView(
+									factory = { context ->
+										RevealText(context).apply {
+											try {
+												val month =
+													Konstant.monthNameShort[m.toInt() - 1].uppercase(
+														Locale.getDefault()
+													)
+												this.setText("$month $y")
+												this.setTextColor(android.graphics.Color.WHITE)
+												this.setBackgroundColor(0)
+												this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+												this.setTypeface(
+													ResourcesCompat.getFont(
+														context,
+														R.font.graduate_regular
+													),
+													Typeface.BOLD
+												)
+												this.letterSpacing = 0.1f
+											} catch (exception: Exception) {
+											}
 										}
+									},
+									update = { view -> view.show() }
+								)
+
+								Spacer(modifier = Modifier.weight(1f))
+
+								if (quote?.special != "null") {
+									Box(
+										modifier = Modifier
+											.clip(RoundedCornerShape(12.dp))
+											.background(Color.Black.copy(alpha = 0.31f))
+									) {
+										AndroidView(
+											factory = { context ->
+												RevealText(context).apply {
+													try {
+														this.setText(quote?.special)
+														this.setTextColor(android.graphics.Color.WHITE)
+														this.setBackgroundColor(0)
+														this.setTextSize(
+															TypedValue.COMPLEX_UNIT_SP,
+															12f
+														)
+														this.setTypeface(
+															ResourcesCompat.getFont(
+																context,
+																R.font.graduate_regular
+															),
+															Typeface.BOLD
+														)
+														this.letterSpacing = 0.1f
+													} catch (exception: Exception) {
+													}
+												}
+											},
+											modifier = Modifier.padding(12.dp, 8.dp),
+											update = { view -> view.show() }
+										)
 									}
-								},
-								update = { view -> view.show() }
-							)
+								}
+							}
 						}
 					}
 				}
@@ -431,6 +468,7 @@ class TodayActivity : ComponentActivity() {
 										ResourcesCompat.getFont(context, R.font.overlock_bold),
 										Typeface.BOLD
 									)
+									this.gravity = Gravity.END
 									this.letterSpacing = 0.1f
 								}
 							},

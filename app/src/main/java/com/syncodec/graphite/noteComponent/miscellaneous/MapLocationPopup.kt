@@ -1,5 +1,6 @@
 package com.syncodec.graphite.noteComponent.miscellaneous
 
+import android.location.Geocoder
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -15,6 +16,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,11 +28,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.googleMap.rememberMapViewWithLifecycle
+import com.syncodec.graphite.miscellaneous.locationAddressFilter
 import com.syncodec.graphite.noteComponent.NoteActivity
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Check
-import compose.icons.tablericons.Circle
-import compose.icons.tablericons.CurrentLocation
+import java.util.*
+
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -38,9 +39,29 @@ fun MapLocationPopup(
 	showMapLocationDialog: Boolean,
 	latLng: LatLng?,
 	address: String?,
-	onClick: (NoteActivity.Action, Any?) -> Unit
+	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
-	var map: GoogleMap?
+	val context = LocalContext.current
+	var currentLatLng by remember { mutableStateOf(latLng) }
+	var currentAddress by remember { mutableStateOf(address) }
+
+	var map: GoogleMap? = null
+
+	LaunchedEffect(key1 = currentLatLng) {
+		if (currentLatLng != null) {
+			try {
+				val geocoder = Geocoder(context, Locale.getDefault())
+				val addressList =
+					geocoder.getFromLocation(currentLatLng!!.latitude, currentLatLng!!.longitude, 1)
+				if (addressList.isNotEmpty()) {
+					val addressFirst = addressList.firstOrNull()
+					currentAddress = locationAddressFilter(addressFirst)
+				}
+			} catch (exception: Exception) {
+
+			}
+		}
+	}
 
 	if (showMapLocationDialog) {
 		val mapView = rememberMapViewWithLifecycle()
@@ -59,7 +80,7 @@ fun MapLocationPopup(
 
 		Dialog(
 			properties = DialogProperties(usePlatformDefaultWidth = false),
-			onDismissRequest = { onClick(NoteActivity.Action.DISMISS_MAP_DIALOG, null) }
+			onDismissRequest = { onAction(NoteActivity.Action.DISMISS_MAP_DIALOG, null) }
 		) {
 			Box(
 				modifier = Modifier.fillMaxSize(0.9f),
@@ -68,19 +89,22 @@ fun MapLocationPopup(
 					factory = { mapView },
 					modifier = Modifier.clip(RoundedCornerShape(12.dp))
 				) { mapView ->
-					mapView.getMapAsync {
-						map = it
-						map!!.uiSettings.isZoomControlsEnabled = false
+					mapView.getMapAsync { googleMap ->
+						map = googleMap
+						googleMap.uiSettings.isZoomControlsEnabled = false
 
 						if (!isLoadedOnce && latLng != null) {
-							map!!.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+							googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
 							isLoadedOnce = true
 						}
 
-						map!!.setOnCameraMoveListener { isCameraIdle = false }
-						map!!.setOnCameraIdleListener {
+						googleMap.setOnCameraMoveListener { isCameraIdle = false }
+						googleMap.setOnCameraIdleListener {
 							isCameraIdle = true
-							onClick(NoteActivity.Action.REVERSE_GEOCODE, LatLng(map!!.cameraPosition.target.latitude, map!!.cameraPosition.target.longitude))
+							currentLatLng = LatLng(
+								googleMap.cameraPosition.target.latitude,
+								googleMap.cameraPosition.target.longitude
+							)
 						}
 					}
 				}
@@ -91,42 +115,64 @@ fun MapLocationPopup(
 						.align(Alignment.BottomEnd)
 				) {
 					FloatingActionButton(
-						onClick = { onClick(NoteActivity.Action.REFRESH_LOCATION, null) },
-						containerColor = MaterialTheme.colorScheme.primaryContainer,
-						) {
+						onClick = {
+							currentLatLng = latLng
+							currentAddress = address
+							latLng?.let { CameraUpdateFactory.newLatLng(it) }?.let {
+								map?.animateCamera(it)
+							}
+						},
+						containerColor = MaterialTheme.colorScheme.primary,
+					) {
 						Icon(
-							imageVector = TablerIcons.CurrentLocation,
+							painter = painterResource(id = R.drawable.ic_current_location),
 							contentDescription = "Get current location",
-							tint = MaterialTheme.colorScheme.onPrimaryContainer
+							tint = MaterialTheme.colorScheme.onPrimary,
+							modifier = Modifier.requiredSize(24.dp)
 						)
 					}
 
 					Spacer(modifier = Modifier.height(16.dp))
 
 					FloatingActionButton(
-						onClick = { onClick(NoteActivity.Action.DISMISS_MAP_DIALOG, null) },
-						containerColor = MaterialTheme.colorScheme.primaryContainer,
+						onClick = {
+							onAction(
+								NoteActivity.Action.DISMISS_MAP_DIALOG_AND_UPDATE_LOCATION,
+								Pair(currentLatLng, currentAddress)
+							)
+						},
+						containerColor = MaterialTheme.colorScheme.primary,
 					) {
 						Icon(
-							imageVector = TablerIcons.Check,
+							painter = painterResource(id = R.drawable.ic_done),
 							contentDescription = "Select location",
-							tint = MaterialTheme.colorScheme.onPrimaryContainer
+							tint = MaterialTheme.colorScheme.onPrimary,
+							modifier = Modifier.requiredSize(24.dp)
 						)
 					}
 				}
 
-				Box(
+				Column(
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(16.dp)
 						.clip(RoundedCornerShape(12.dp))
-						.background(MaterialTheme.colorScheme.primaryContainer)
+						.background(MaterialTheme.colorScheme.primary),
 				) {
 					Text(
-						text = if (address == null) "address unavailable" else address!!,
+						text = currentAddress ?: "address unavailable",
+						style = MaterialTheme.typography.bodyMedium,
+						color = MaterialTheme.colorScheme.onPrimary,
+						modifier = Modifier.padding(12.dp)
+					)
+
+					Spacer(modifier = Modifier.height(8.dp))
+
+					Text(
+						text = "${currentLatLng?.latitude}, ${currentLatLng?.longitude}",
 						style = MaterialTheme.typography.bodySmall,
 						fontWeight = FontWeight.Bold,
-						color = MaterialTheme.colorScheme.onPrimaryContainer,
+						color = MaterialTheme.colorScheme.onPrimary,
 						modifier = Modifier.padding(12.dp)
 					)
 				}
@@ -149,7 +195,7 @@ fun MapLocationPopup(
 					)
 
 					Icon(
-						imageVector = TablerIcons.Circle,
+						painter = painterResource(id = R.drawable.ic_circle),
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.primary,
 						modifier = Modifier.requiredSize(8.dp)

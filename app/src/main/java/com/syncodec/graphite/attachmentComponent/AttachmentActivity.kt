@@ -36,7 +36,7 @@ import com.syncodec.graphite.database.attachment.AttachmentDbEntry
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
 import com.syncodec.graphite.noteComponent.NoteActivity
-import com.syncodec.graphite.ui.theme.GraphiteTheme
+import com.syncodec.graphite.ui.theme.GraphiteBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,7 +84,7 @@ class AttachmentActivity : ComponentActivity() {
 		setContent {
 			viewModel.activityState = rememberActivityState()
 
-			GraphiteTheme {
+			GraphiteBase {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
@@ -206,7 +206,7 @@ class AttachmentActivity : ComponentActivity() {
 
 	@OptIn(
 		ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
-		ExperimentalMaterialApi::class, ExperimentalAnimationApi::class, ExperimentalPagerApi::class
+		ExperimentalMaterialApi::class, ExperimentalPagerApi::class
 	)
 	@Composable
 	private fun Screen() {

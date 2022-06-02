@@ -31,9 +31,9 @@ fun MenuBottomSheet(
 		MenuBottomSheetButtonData(title = "Set as default", icon = R.drawable.ic_state) {
 			onAction(NotebookActivity.Action.SET_AS_DEFAULT)
 		},
-		MenuBottomSheetButtonData(title = "Atlas", icon = R.drawable.ic_atlas) {
-			onAction(NotebookActivity.Action.ATLAS)
-		},
+//		MenuBottomSheetButtonData(title = "Atlas", icon = R.drawable.ic_atlas) {
+//			onAction(NotebookActivity.Action.ATLAS)
+//		},
 		MenuBottomSheetButtonData(title = "Edit", icon = R.drawable.ic_pencil) {
 			onAction(NotebookActivity.Action.EDIT_NOTEBOOK)
 		},

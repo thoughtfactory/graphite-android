@@ -1,5 +1,6 @@
 package com.syncodec.graphite.searchComponent.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,10 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.database.tag.TagDbEntry
 import com.syncodec.graphite.R
+import com.syncodec.graphite.database.tag.TagDbEntry
 
 
 @Composable
@@ -21,18 +24,22 @@ fun TagScreen(
 	tagList: List<TagDbEntry>,
 	onClick: (String) ->  Unit
 ) {
-	LazyColumn(
-		modifier = Modifier.fillMaxSize()
-	) {
-		tagList.forEach {
-			item { TagCard(tag = it) { onClick(it.tag) } }
-			item {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(1.dp)
-						.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.13f))
-				)
+	if (tagList.isEmpty()) {
+		SearchIllustration()
+	} else {
+		LazyColumn(
+			modifier = Modifier.fillMaxSize()
+		) {
+			tagList.forEach {
+				item { TagCard(tag = it) { onClick(it.tag) } }
+				item {
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(1.dp)
+							.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.13f))
+					)
+				}
 			}
 		}
 	}
@@ -65,5 +72,34 @@ private fun TagCard(
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onBackground,
 		)
+	}
+}
+
+@Composable
+private fun SearchIllustration() {
+	Column(
+		modifier = Modifier.fillMaxWidth(),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center
+	) {
+		Spacer(modifier = Modifier.weight(1f))
+		Image(
+			painter = painterResource(id = R.drawable.il_searching),
+			contentDescription = "No entries found",
+			contentScale = ContentScale.Fit,
+			modifier = Modifier.fillMaxWidth(0.80f),
+		)
+
+		Spacer(modifier = Modifier.height(24.dp))
+
+		Text(
+			text = "Keep searching, until you find it",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onBackground,
+			textAlign = TextAlign.Center,
+			modifier = Modifier.fillMaxWidth(0.71f)
+		)
+
+		Spacer(modifier = Modifier.weight(1f))
 	}
 }

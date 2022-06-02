@@ -88,18 +88,26 @@ class BucketRepository(val graphite: Graphite) {
 			updateBucketSize(bucketItemDbEntry.bucketKey)
 		}
 
-	suspend fun updateBucketSize(key: String) {
+	private suspend fun updateBucketSize(key: String) {
 		bucketDbTableDao.get(key).apply {
 			if (this != null) {
 				this.bucketSize = bucketItemDbTableDao.countBucketSize(key)
+				this.modifiedTimestamp = System.currentTimeMillis()
 				bucketDbTableDao.insert(this)
 			}
 		}
-
 	}
 
 	suspend fun updateBucketItem(bucketItemDbEntry: BucketItemDbEntry) =
-		withContext(Dispatchers.IO) { bucketItemDbTableDao.update(bucketItemDbEntry = bucketItemDbEntry) }
+		withContext(Dispatchers.IO) {
+			bucketItemDbTableDao.update(bucketItemDbEntry = bucketItemDbEntry)
+			updateBucketModifyTimestamp(bucketKey = bucketItemDbEntry.bucketKey)
+		}
+
+	suspend fun updateBucketModifyTimestamp(bucketKey: String) = bucketDbTableDao.get(bucketKey)?.apply {
+		this.modifiedTimestamp = System.currentTimeMillis()
+		bucketDbTableDao.update(this)
+	}
 
 	companion object {
 		private var INSTANCE: BucketRepository? = null

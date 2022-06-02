@@ -81,7 +81,7 @@ fun NotebookGridCard(
 					modifier = Modifier.fillMaxWidth(),
 				)
 				Text(
-					text = if (notebook.notebookSize == 0) "No entries" else if (notebook.notebookSize == 1) "1 entry" else "$notebook.notebookSize entries",
+					text = if (notebook.notebookSize == 0) "No entries" else if (notebook.notebookSize == 1) "1 entry" else "${notebook.notebookSize} entries",
 					style = MaterialTheme.typography.bodyMedium,
 					color = Color.White,
 					textAlign = TextAlign.Start,

@@ -16,7 +16,6 @@ import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.custom.button.MenuBottomSheetButton
 import com.syncodec.graphite.custom.button.MenuBottomSheetButtonData
-import compose.icons.tablericons.*
 import com.syncodec.graphite.noteComponent.NoteActivity
 import com.syncodec.graphite.R
 
@@ -28,18 +27,22 @@ fun MenuBottomSheet(
 ) {
 	val buttonDataList: List<MenuBottomSheetButtonData?> = listOf(
 		MenuBottomSheetButtonData(title = "Print", icon = R.drawable.ic_printer) {
+			onAction(NoteActivity.Action.PRINT, null)
 		},
 		MenuBottomSheetButtonData(title = "Export", icon = R.drawable.ic_export) {
+			onAction(NoteActivity.Action.EXPORT, null)
 		},
-		MenuBottomSheetButtonData(title = "Share", icon = R.drawable.ic_share) {
+		MenuBottomSheetButtonData(title = "Copy", icon = R.drawable.ic_copy) {
+			onAction(NoteActivity.Action.COPY, null)
 		},
 		MenuBottomSheetButtonData(title = "Delete", icon = R.drawable.ic_trash) {
+			onAction(NoteActivity.Action.DELETE, null)
 		}
 	)
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier.heightIn(180.dp),
 	) {
 		Column(

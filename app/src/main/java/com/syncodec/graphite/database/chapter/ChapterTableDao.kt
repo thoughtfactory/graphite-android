@@ -16,9 +16,6 @@ interface ChapterTableDao {
 	@Query(value = "SELECT * FROM chapter_table WHERE `key` = :key")
 	suspend fun get(key: String): ChapterDbEntry?
 
-	@Query(value = "SELECT * FROM chapter_table ORDER BY created_timestamp DESC")
-	fun getAllAsLiveData() : LiveData<List<ChapterDbEntry>>
-
 	@Query(value = "SELECT * FROM chapter_table WHERE notebook_key = :notebookKey ORDER BY created_timestamp DESC")
 	fun getFromNotebookAsFlow(notebookKey: String) : Flow<List<ChapterDbEntry>>
 

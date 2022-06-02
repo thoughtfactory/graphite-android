@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9663c726-d5d1-49a9-987e-877082b59835" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/deploymentTargetDropDown.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/deploymentTargetDropDown.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/proguard-rules.pro" beforeDir="false" afterPath="$PROJECT_DIR$/../app/proguard-rules.pro" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/release/app-release.aab" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/assets/tiptap/tiptap.js" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/assets/tiptap/tiptap.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/Graphite.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/Graphite.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/attachmentComponent/AttachmentViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/attachmentComponent/AttachmentViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/attachmentComponent/screen/AttachmentScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/attachmentComponent/screen/AttachmentScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/attachmentComponent/screen/AttachmentViewerScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/attachmentComponent/screen/AttachmentViewerScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketComponent/modalBottomSheet/AddBookSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketComponent/modalBottomSheet/AddBookSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketComponent/modalBottomSheet/AddShowSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketComponent/modalBottomSheet/AddShowSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketComponent/modalBottomSheet/MenuBottomSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketComponent/modalBottomSheet/MenuBottomSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/BucketItemActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/BucketItemActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/BucketItemViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/BucketItemViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/miscellaneous/TopBar.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/miscellaneous/TopBar.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/modalBottonSheet/MenuBottomSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/bucketItemComponent/modalBottonSheet/MenuBottomSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/LoadingView.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/LoadingView.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/calendarView/CalendarHeader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/calendarView/CalendarHeader.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/notebook/NotebookGridCard.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/notebook/NotebookGridCard.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/richText/Editor.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/custom/richText/Editor.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/attachment/AttachmentDbEntry.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/attachment/AttachmentDbEntry.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/attachment/AttachmentTableDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/attachment/AttachmentTableDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/bucketItem/BucketItemDbEntry.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/bucketItem/BucketItemDbEntry.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/chapter/ChapterTableDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/database/chapter/ChapterTableDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/konstant/ErrorCode.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/konstant/ErrorCode.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/konstant/ResourceMap.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/konstant/ResourceMap.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/MainViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/miscellaneous/MainBottomNavigation.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/miscellaneous/MainBottomNavigation.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/modalBottomSheet/MenuBottomSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/modalBottomSheet/MenuBottomSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/screen/NoteScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/mainComponent/screen/NoteScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/miscellaneous/FileUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/miscellaneous/FileUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/miscellaneous/StringUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/miscellaneous/StringUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/miscellaneous/TimeUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/miscellaneous/TimeUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/NoteActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/NoteActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/NoteViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/NoteViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/miscellaneous/MapLocationPopup.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/miscellaneous/MapLocationPopup.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/miscellaneous/NotificationCard.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/miscellaneous/NotificationCard.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/miscellaneous/TopBar.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/miscellaneous/TopBar.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/AttachmentBottomSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/AttachmentBottomSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/BottomSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/BottomSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/MenuBottomSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/MenuBottomSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/MetadataBottomSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/modalBottomSheet/MetadataBottomSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/toolbar/EditorToolbar.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/noteComponent/toolbar/EditorToolbar.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/premiumComponent/PremiumActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/premiumComponent/PremiumActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/repository/AttachmentRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/repository/AttachmentRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/repository/NoteRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/repository/NoteRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/SettingsActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/SettingsActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/SettingsViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/SettingsViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/screen/BaseScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/screen/BaseScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/screen/ImportScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/screen/ImportScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/screen/SecurityScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/settingsComponent/screen/SecurityScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/todayComponent/TodayActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/todayComponent/TodayActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/ui/theme/Theme.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/syncodec/graphite/ui/theme/Theme.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/res/drawable/ic_chevron_right.png" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/res/drawable/ic_chevron_right.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../gradle.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../icon.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tiptap.js" beforeDir="false" afterPath="$PROJECT_DIR$/tiptap.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="28pvNQXh4TvAMZxsApB4KoLARCh" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="cidr.known.project.marker" value="true" />
+    <property name="settings.editor.selected.configurable" value="AndroidSdkUpdater" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9663c726-d5d1-49a9-987e-877082b59835" name="Default Changelist" comment="" />
+      <created>1651926300625</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1651926300625</updated>
+    </task>
+    <servers />
+  </component>
+</project>

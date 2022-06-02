@@ -11,8 +11,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.syncodec.graphite.MainActivity
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.database.UserDatabase
 import com.syncodec.graphite.database.bucketItem.BucketItemType
@@ -35,7 +35,7 @@ import kotlin.collections.set
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-	val firebaseAuth = FirebaseAuth.getInstance()
+	val firebaseAuth = Firebase.auth
 	val dataStore = DataStore(this.getApplication())
 	private val noteRepository: NoteRepository =
 		NoteRepository.getInstance(graphite = application as Graphite)
@@ -135,10 +135,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		}
 	}
 
-	fun insertNotebook(notebook: NotebookDbEntry) =
-		viewModelScope.launch { noteRepository.putNotebook(notebook = notebook) }
+	suspend fun insertNotebook(notebook: NotebookDbEntry) =
+		noteRepository.putNotebook(notebook = notebook)
 
-	fun createNewBucket(bucketType: BucketItemType, title: String) = viewModelScope.launch {
+	fun insertBucket(bucketType: BucketItemType, title: String) = viewModelScope.launch {
 		bucketRepository.putNewBucket(bucketType = bucketType, title = title)
 	}
 }

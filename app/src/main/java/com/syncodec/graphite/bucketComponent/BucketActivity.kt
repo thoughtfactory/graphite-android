@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -47,7 +48,7 @@ import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
-import com.syncodec.graphite.ui.theme.GraphiteTheme
+import com.syncodec.graphite.ui.theme.GraphiteBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -78,7 +79,7 @@ class BucketActivity : ComponentActivity() {
 		}
 
 		setContent {
-			GraphiteTheme {
+			GraphiteBase {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
@@ -92,7 +93,7 @@ class BucketActivity : ComponentActivity() {
 	@OptIn(ExperimentalMaterialApi::class)
 	override fun onBackPressed() {
 		when {
-			viewModel.activityState.bottomSheetState.isVisible -> CoroutineScope(Dispatchers.IO).launch { viewModel.activityState.bottomSheetState.hide() }
+			viewModel.activityState.bottomSheetState.isVisible -> viewModel.activityState.coroutineScope.launch { viewModel.activityState.bottomSheetState.hide() }
 			viewModel.activityState.isSelected.value -> {
 				viewModel.activityState.selectedItemList.removeIf { true }
 				viewModel.activityState.isSelected.value = false
@@ -126,7 +127,6 @@ class BucketActivity : ComponentActivity() {
 
 		when (action) {
 			Action.BACK -> finish()
-			Action.SEARCH -> {}
 			Action.MENU -> {
 				scope.launch {
 					activityState.bottomSheetType.value = BottomSheetType.MenuBottomSheet
@@ -148,7 +148,8 @@ class BucketActivity : ComponentActivity() {
 					}
 				} else {
 					if (bucketDbEntry != null) {
- 						viewModel.bucketItemDbEntry.value = viewModel.bucketItemList.find { it.key == data }
+						viewModel.bucketItemDbEntry.value =
+							viewModel.bucketItemList.find { it.key == data }
 						when (bucketDbEntry?.bucketItemType) {
 							BucketItemType.TODO -> {
 								scope.launch {
@@ -316,6 +317,9 @@ class BucketActivity : ComponentActivity() {
 	)
 	@Composable
 	private fun Screen() {
+		val configuration = LocalConfiguration.current
+		val screenHeight = configuration.screenHeightDp.dp
+
 		val status by viewModel.status
 		val activityState = viewModel.activityState
 		val bucketDbEntry by viewModel.bucketDbEntry
@@ -363,12 +367,19 @@ class BucketActivity : ComponentActivity() {
 						) {
 							Spacer(modifier = Modifier.height(128.dp))
 							Image(
-								painter = painterResource(id = R.drawable.il_reading),
+								painter = painterResource(
+									id = when (bucketDbEntry?.bucketItemType) {
+										BucketItemType.TODO -> R.drawable.il_todo_header
+										BucketItemType.BOOKS -> R.drawable.il_book_header
+										BucketItemType.SHOWS -> R.drawable.il_show_header
+										else -> R.drawable.il_reading
+									}
+								),
 								contentDescription = null,
 								contentScale = ContentScale.Fit,
 								modifier = Modifier
 									.fillMaxWidth()
-									.height(192.dp)
+									.height(screenHeight / 3)
 									.graphicsLayer {
 										this.alpha =
 											viewModel.activityState.collapsingToolbarScaffoldState.toolbarState.progress
@@ -474,7 +485,6 @@ class BucketActivity : ComponentActivity() {
 
 	enum class Action {
 		BACK,
-		SEARCH,
 		MENU,
 		CHANGE_STATE,
 		CLICK_ITEM,

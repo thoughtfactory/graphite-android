@@ -3,6 +3,7 @@ package com.syncodec.graphite.noteComponent.modalBottomSheet
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.database.attachment.AttachmentDbEntry
 import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.database.tag.TagDbEntry
@@ -18,10 +19,13 @@ sealed class BottomSheetType {
 @Composable
 fun SheetLayout(
 	bottomSheetType: BottomSheetType,
-	note: NoteDbEntry?,
+	createdTimestamp: Long,
+	modifiedTimestamp: Long,
+	latLng: LatLng?,
+	address: String?,
 	tagList: List<TagDbEntry>,
 	connectedTag: List<String>,
-	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri>>,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri?>>,
 	addressState: NoteActivity.AddressState,
 	mapView: MapView,
 	onAction: (NoteActivity.Action, Any?) -> Unit
@@ -29,7 +33,10 @@ fun SheetLayout(
 	when (bottomSheetType) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet(onAction = onAction)
 		BottomSheetType.MetadataBottomSheet -> MetadataBottomSheet(
-			note = note,
+			createdTimestamp = createdTimestamp,
+			modifiedTimestamp = modifiedTimestamp,
+			latLng = latLng,
+			address = address,
 			addressState = addressState,
 			mapView = mapView,
 			onAction = onAction

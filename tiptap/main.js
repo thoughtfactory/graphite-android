@@ -47,7 +47,7 @@ const Typography = require('@tiptap/extension-typography');
 
 
 const editor = new Editor.Editor({
-    element: document.querySelector('.tiptap'),
+    element: document.querySelector('.npr71'),
     editorProps: {
         attributes: {
             class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none',
@@ -285,7 +285,7 @@ editor.getData = () => {
     data.dataJson = editor.getJSON();
     data.dataText = editor.getText();
 
-    bridge.getData(JSON.stringify(data));
+    bridge.saveData(JSON.stringify(data));
 };
 
 editor.setBaseFontFamily = (fontFamily) => {
@@ -296,16 +296,39 @@ editor.setBaseFontColor = (fontColor) => {
     document.getElementById("base").style.color = fontColor;
 };
 
-editor.importData = (importData) => {
-    editor.commands.setContent(importData.text);
+editor.importData = (importData, importer, cachePath) => {
+    
+    switch (importer) {
+        case "graphite":
+            editor.commands.setContent(JSON.parse(importData.content));
+            break;
+        case "journey":
+            editor.commands.setContent(importData.text);
+            break;
+        default:
+            break;
+    }
+
     importData.text = {};
 
     data = {};
     data.dataJson = editor.getJSON();
     data.dataText = editor.getText();
-    data.importData = importData
+    data.importData = importData;
+    data.importer = importer;
+    data.cachePath = cachePath;
 
-    bridge.getData(JSON.stringify(data));
-}
+    bridge.saveData(JSON.stringify(data));
+};
+
+editor.printData = (data) => {
+    editor.commands.setContent(data);
+    bridge.printData(editor.getHTML());
+};
+
+editor.getPlainText = (data) => {
+    editor.commands.setContent(data);
+    bridge.getPlainText(editor.getText());
+};
 
 module.exports = editor;

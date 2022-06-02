@@ -23,6 +23,7 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 	private val noteRepository: NoteRepository = NoteRepository(graphite = application as Graphite)
 
 	lateinit var activityState: NotebookActivity.ActivityState
+	var vaultState = (application as Graphite).vaultState
 
 	lateinit var notebookKey: String
 	var notebookDbEntry: MutableState<NotebookDbEntry?> = mutableStateOf(null)

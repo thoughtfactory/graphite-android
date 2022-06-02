@@ -17,6 +17,9 @@ data class AttachmentDbEntry(
 	@ColumnInfo(name = "mime_type")
 	val mimeType: String?,
 
+	@ColumnInfo(name = "extension")
+	val extension: String?,
+
 	@ColumnInfo(name = "note_key")
 	val noteKey: String,
 
@@ -30,25 +33,31 @@ data class AttachmentDbEntry(
 	var gDriveFileId: String? = null
 
 	override fun equals(other: Any?): Boolean {
-//		if (this.hashCode() != other.hashCode()) return false
-//		if (javaClass != other?.javaClass) return false
-//
-//		other as AttachmentDbEntry
-//
-//		if (key != other.key) return false
-//
-//		return true
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
 
-		return false
+		other as AttachmentDbEntry
+
+		if (key != other.key) return false
+		if (createdTimestamp != other.createdTimestamp) return false
+		if (mimeType != other.mimeType) return false
+		if (noteKey != other.noteKey) return false
+		if (chapterPath != other.chapterPath) return false
+		if (notebookKey != other.notebookKey) return false
+		if (gDriveFileId != other.gDriveFileId) return false
+
+		return true
 	}
 
 	override fun hashCode(): Int {
 		var result = key.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
-		result = 31 * result + mimeType.hashCode()
+		result = 31 * result + (mimeType?.hashCode() ?: 0)
+		result = 31 * result + (extension?.hashCode() ?: 0)
+		result = 31 * result + noteKey.hashCode()
+		result = 31 * result + chapterPath.hashCode()
+		result = 31 * result + notebookKey.hashCode()
 		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
 		return result
 	}
 }
-
-fun AttachmentDbEntry.getMimeType() = mimeType?.split("/")?.firstOrNull()

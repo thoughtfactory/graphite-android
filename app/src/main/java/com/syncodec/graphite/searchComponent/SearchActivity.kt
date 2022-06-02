@@ -6,9 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -16,21 +13,23 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.Graphite
+import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.searchComponent.miscellaneous.TopBar
 import com.syncodec.graphite.searchComponent.screen.NoteScreen
 import com.syncodec.graphite.searchComponent.screen.TagScreen
-import com.syncodec.graphite.ui.theme.GraphiteTheme
+import com.syncodec.graphite.ui.theme.GraphiteBase
 
 class SearchActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<SearchViewModel>()
 
-	@OptIn(ExperimentalMaterialApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
+		viewModel.showLocked = intent.getBooleanExtra(Konstant.Companion.Konstant.SHOW_LOCKED.name, false)
+
 		setContent {
-			GraphiteTheme {
+			GraphiteBase {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
@@ -67,6 +66,7 @@ class SearchActivity : ComponentActivity() {
 					onPerformAction(Action.HIDE_TAG_SCREEN)
 				}
 
+				viewModel.searchInTag()
 				if (queryStringList.isEmpty() && queryTagList.isEmpty()) onPerformAction(Action.SHOW_TAG_SCREEN)
 			}
 			Action.CLICK_STRING -> {
@@ -75,6 +75,7 @@ class SearchActivity : ComponentActivity() {
 				val queryTagList = activityState.queryTagList
 				queryStringList.remove(data)
 				if (queryStringList.isEmpty() && queryTagList.isEmpty()) onPerformAction(Action.SHOW_TAG_SCREEN)
+				viewModel.searchInNote()
 			}
 			Action.SHOW_TAG_SCREEN -> activityState.showTagScreen.value = true
 			Action.HIDE_TAG_SCREEN -> activityState.showTagScreen.value = false
@@ -108,18 +109,13 @@ class SearchActivity : ComponentActivity() {
 				if (it) {
 					TagScreen(tagList = tagList) { onPerformAction(Action.CLICK_TAG, it) }
 				} else {
-					NoteScreen(
-						noteList = noteList
-					)
+					NoteScreen(noteList = noteList)
 				}
 			}
 		}
 	}
 
-	@OptIn(ExperimentalMaterialApi::class)
-	inner class ActivityState(
-		val bottomSheetState: ModalBottomSheetState,
-	) {
+	inner class ActivityState {
 		var query = mutableStateOf("")
 		var vaultState = (application as Graphite).vaultState
 
@@ -139,12 +135,9 @@ class SearchActivity : ComponentActivity() {
 		var showBucket = mutableStateOf(false)
 	}
 
-	@OptIn(ExperimentalMaterialApi::class)
 	@Composable
-	private fun rememberActivityState(
-		bottomSheetState: ModalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden),
-	) = remember {
-		ActivityState(bottomSheetState)
+	private fun rememberActivityState() = remember {
+		ActivityState()
 	}
 
 	enum class Action {

@@ -3,6 +3,7 @@ package com.syncodec.graphite.custom.calendarView
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -19,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,10 +30,8 @@ import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import com.syncodec.graphite.konstant.Konstant
-import compose.icons.TablerIcons
-import compose.icons.tablericons.ChevronLeft
-import compose.icons.tablericons.ChevronRight
 import kotlinx.coroutines.launch
+import com.syncodec.graphite.R
 
 
 @OptIn(ExperimentalPagerApi::class)
@@ -115,9 +115,10 @@ private fun CalendarHeaderMonth(
 	) {
 		IconButton(onClick = { onClick(Click.PREVIOUS_MONTH, null) }) {
 			Icon(
-				imageVector = TablerIcons.ChevronLeft,
+				painter = painterResource(id = R.drawable.ic_chevron_left),
 				contentDescription = "Previous month",
-				tint = MaterialTheme.colorScheme.primary
+				tint = MaterialTheme.colorScheme.primary,
+				modifier = Modifier.requiredSize(24.dp)
 			)
 		}
 
@@ -144,9 +145,10 @@ private fun CalendarHeaderMonth(
 
 		IconButton(onClick = { onClick(Click.NEXT_MONTH, null) }) {
 			Icon(
-				imageVector = TablerIcons.ChevronRight,
+				painter = painterResource(id = R.drawable.ic_chevron_right),
 				contentDescription = "Next month",
-				tint = MaterialTheme.colorScheme.primary
+				tint = MaterialTheme.colorScheme.primary,
+				modifier = Modifier.requiredSize(24.dp)
 			)
 		}
 	}

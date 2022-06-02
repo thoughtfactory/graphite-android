@@ -18,7 +18,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.custom.calendarView.Calendar
 import com.syncodec.graphite.custom.notebook.NoteCard
 import com.syncodec.graphite.custom.notebook.NotebookHeaderCard
@@ -38,7 +38,6 @@ fun CalendarScreen(
 ) {
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
-	val scope = rememberCoroutineScope()
 	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
 
 	var selectedTimestamp: Long by remember { mutableStateOf(TimeUtils.getToday()) }

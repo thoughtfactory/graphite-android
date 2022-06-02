@@ -26,7 +26,6 @@ fun TopBar(
 	selectedItemSize: Int,
 	showFavorite: Boolean,
 	showArchived: Boolean,
-	showLocked: Boolean,
 	onAction: (NotebookActivity.Action, Any?) -> Unit
 ) {
 	Column(modifier = Modifier.fillMaxWidth()) {
@@ -46,7 +45,6 @@ fun TopBar(
 		Filter(
 			showFavorite = showFavorite,
 			showArchived = showArchived,
-			showLocked = showLocked,
 		) { action, data -> onAction(action, data) }
 
 		Spacer(modifier = Modifier.height(6.dp))
@@ -140,7 +138,6 @@ private fun Bar(
 private fun Filter(
 	showFavorite: Boolean,
 	showArchived: Boolean,
-	showLocked: Boolean,
 	onAction: (NotebookActivity.Action, Any?) -> Unit
 ) {
 	val chipDataList: List<ChipData> = listOf(
@@ -154,15 +151,10 @@ private fun Filter(
 			icon = R.drawable.ic_archive,
 			isSelected = showArchived
 		) { onAction(NotebookActivity.Action.TOGGLE_ARCHIVED, null) },
-		ChipData(
-			title = "Locked",
-			icon = R.drawable.ic_lock_open,
-			isSelected = showLocked
-		) { onAction(NotebookActivity.Action.LOCKED, null) }
 	)
 
 	AnimatedVisibility(
-		visible = showFavorite || showArchived || showLocked,
+		visible = showFavorite || showArchived,
 		enter = expandVertically(tween(600)) + fadeIn(tween(300)),
 		exit = shrinkVertically(tween(600)) + fadeOut(tween(300)),
 		modifier = Modifier.fillMaxWidth()

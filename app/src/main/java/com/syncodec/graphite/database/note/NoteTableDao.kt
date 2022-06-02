@@ -25,10 +25,12 @@ interface NoteTableDao {
 	@Query(value = "SELECT * FROM note_table WHERE notebook_key = :notebookKey ORDER BY user_timestamp DESC")
 	fun getFromNotebookAsFlow(notebookKey: String): Flow<List<NoteDbEntry>>
 
-	@Query(value = "SELECT `key` FROM note_table WHERE notebook_key = :notebookKey AND chapter_path = :chapterPath ORDER BY user_timestamp DESC")
+	@Query(value = "SELECT `key` FROM note_table WHERE notebook_key = :notebookKey AND chapter_path = :chapterPath AND is_archived = :showArchived AND is_locked = :showLocked ORDER BY user_timestamp DESC")
 	fun getAllKeyFromNotebookAsFlow(
 		notebookKey: String,
-		chapterPath: List<String>
+		chapterPath: List<String>,
+		showArchived: Boolean,
+		showLocked: Boolean
 	): Flow<List<String>>
 
 	@Query(value = "SELECT `key` FROM note_table ORDER BY user_timestamp DESC")

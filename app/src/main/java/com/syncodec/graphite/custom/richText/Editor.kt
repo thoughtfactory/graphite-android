@@ -1,7 +1,6 @@
 package com.syncodec.graphite.custom.richText
 
 import android.content.Context
-import android.util.Log
 import android.webkit.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
@@ -10,15 +9,16 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.miscellaneous.DataStore
 import com.syncodec.graphite.miscellaneous.toHexString
+import kotlinx.coroutines.*
 
 
 class RichTextEditor(context: Context, val textColor: String, typography: Int?) : WebView(context) {
-	private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	interface OnFormatUpdateListener {
 		fun onFormatUpdate(newTextFormat: TextFormat)
@@ -38,13 +38,34 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 		onSaveDataListener = listener
 	}
 
+	interface OnPrintDataListener {
+		fun onPrintData(data: String)
+	}
+
+	private var onPrintDataListener: OnPrintDataListener? = null
+	fun setOnPrintData(listener: OnPrintDataListener) {
+		onPrintDataListener = listener
+	}
+
+	interface OnGetTextListener {
+		fun onGetPlainText(data: String)
+	}
+
+	private var onGetPlainTextListener: OnGetTextListener? = null
+	fun setOnPlainGetText(listener: OnGetTextListener) {
+		onGetPlainTextListener = listener
+	}
+
 	var isReady: MutableState<Boolean> = mutableStateOf(false)
 	var currentSelection: Int = 0
 
 	init {
 		isVerticalScrollBarEnabled = false
 		isHorizontalScrollBarEnabled = false
+
 		settings.javaScriptEnabled = true
+		settings.domStorageEnabled = true
+
 		webViewClient = WebViewClient()
 
 		webChromeClient = object : WebChromeClient() {
@@ -52,8 +73,6 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 				return true
 			}
 		}
-
-		settings.allowFileAccess = true
 
 		setBackgroundColor(0)
 		setLayerType(LAYER_TYPE_SOFTWARE, null)
@@ -74,23 +93,22 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 	private fun load(trigger: String) {
 		evaluateJavascript(trigger) { result ->
 			run {
-				Log.i("JS", result)
 			}
 		}
 	}
 
-	fun exec(trigger: String, blur: Boolean = true) {
-		Log.i(TAG, "isReady : ${isReady.value}")
-		if (isReady.value) {
-			if (blur) {
-				clearFocus()
-				load(trigger)
-				requestFocus()
-			} else {
+	fun exec(trigger: String) {
+		CoroutineScope(Dispatchers.IO).launch {
+			while (true) {
+				try {
+					if (isReady.value) break
+				} catch (exception: Exception) {
+				}
+				delay(400)
+			}
+			withContext(Dispatchers.Main) {
 				load(trigger)
 			}
-		} else {
-			postDelayed({ exec(trigger) }, 100)
 		}
 	}
 
@@ -101,14 +119,28 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 
 	@JavascriptInterface
 	fun format(textFormatJsonString: String) {
-		val newTextFormat: TextFormat = objectMapper.readValue(textFormatJsonString)
-		onFormatUpdateListener?.onFormatUpdate(newTextFormat)
-		currentSelection = newTextFormat.currentSelection
+		try {
+			val newTextFormat: TextFormat = objectMapper.readValue(textFormatJsonString)
+			onFormatUpdateListener?.onFormatUpdate(newTextFormat)
+			currentSelection = newTextFormat.currentSelection
+		} catch (exception: Exception) {
+			
+		}
 	}
 
 	@JavascriptInterface
-	fun getData(data: String) {
+	fun saveData(data: String) {
 		onSaveDataListener?.onSaveData(data)
+	}
+
+	@JavascriptInterface
+	fun printData(data: String) {
+		onPrintDataListener?.onPrintData(data = data)
+	}
+
+	@JavascriptInterface
+	fun getPlainText(data: String) {
+		onGetPlainTextListener?.onGetPlainText(data = data)
 	}
 
 	data class TextFormat(
@@ -155,7 +187,7 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 
 	companion object {
 		const val TAG = "RICH_TEXT_EDITOR"
-		const val INDEX_PATH = "file:///android_asset/tiptap/index.html"
+		const val INDEX_PATH = "file:///android_asset/dropper/index.html"
 	}
 }
 
@@ -171,9 +203,7 @@ fun rememberRichTextEditorWithLifecycle(): RichTextEditor {
 	val lifecycle = LocalLifecycleOwner.current.lifecycle
 	DisposableEffect(lifecycle) {
 		lifecycle.addObserver(lifecycleObserver)
-		onDispose {
-			lifecycle.removeObserver(lifecycleObserver)
-		}
+		onDispose { lifecycle.removeObserver(lifecycleObserver) }
 	}
 
 	return richTextEditor

@@ -10,7 +10,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.database.attachment.AttachmentDbEntry
 import com.syncodec.graphite.database.attachment.AttachmentTableDao
-import com.syncodec.graphite.database.bucket.*
+import com.syncodec.graphite.database.bucket.BucketDbEntry
+import com.syncodec.graphite.database.bucket.BucketDbTableDao
 import com.syncodec.graphite.database.bucketItem.*
 import com.syncodec.graphite.database.chapter.ChapterDbEntry
 import com.syncodec.graphite.database.chapter.ChapterTableDao
@@ -43,14 +44,24 @@ class Converters {
 
 	@TypeConverter
 	fun fromLatLngToData(value: LatLng?): String? {
-		return value?.let { objectMapper.writeValueAsString(it) }
+		JSONObject().apply {
+			return if (value != null) {
+				put("latitude" , value.latitude)
+				put("longitude" , value.longitude)
+				toString()
+			} else null
+		}
 	}
 
 	@TypeConverter
 	fun fromDataToLatLng(data: String?): LatLng? {
 		return if (data != null) {
-			val jsonObject = JSONObject(data)
-			LatLng(jsonObject.getDouble("latitude"), jsonObject.getDouble("longitude"))
+			try {
+				val jsonObject = JSONObject(data)
+				LatLng(jsonObject.getDouble("latitude"), jsonObject.getDouble("longitude"))
+			} catch (exception : Exception) {
+				null
+			}
 		} else null
 	}
 

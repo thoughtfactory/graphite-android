@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.ShowType
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShowHeaderCard(
 	title: String,

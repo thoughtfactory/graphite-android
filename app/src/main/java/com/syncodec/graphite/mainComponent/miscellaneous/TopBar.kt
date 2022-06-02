@@ -4,7 +4,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +15,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.custom.ChipData
 import com.syncodec.graphite.custom.ChipView
 import com.syncodec.graphite.custom.button.StateButton
@@ -27,10 +26,6 @@ import com.syncodec.graphite.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.graphite.R
 
 
-@OptIn(
-	ExperimentalMaterialApi::class, ExperimentalAnimationApi::class,
-	ExperimentalMaterial3Api::class
-)
 @Composable
 fun TopBar(
 	isSelected: Boolean,
@@ -132,16 +127,18 @@ private fun Bar(
 		} else {
 			CenterAlignedTopAppBar(
 				navigationIcon = {
-					IconButton(onClick = {
-						onAction(
-							MainActivity.Action.OPEN_BOTTOM_SHEET,
-							BottomSheetType.MenuBottomSheet
-						)
-					}) {
+					IconButton(
+						onClick = {
+							onAction(
+								MainActivity.Action.OPEN_BOTTOM_SHEET,
+								BottomSheetType.MenuBottomSheet
+							)
+						}
+					) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_icon),
+							painter = painterResource(id = R.drawable.ic_state),
 							contentDescription = null,
-							tint = Color.Unspecified,
+							tint = MaterialTheme.colorScheme.primary,
 							modifier = Modifier
 								.requiredSize(32.dp)
 								.padding(4.dp)
@@ -152,9 +149,7 @@ private fun Bar(
 					Text(
 						text = "GRAPHITE",
 						modifier = Modifier,
-						fontFamily = FontFamily(
-							Font(R.font.graduate_regular, FontWeight.Normal)
-						),
+						fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
 						fontWeight = FontWeight.Bold,
 						fontSize = 24.sp,
 						lineHeight = 28.sp,
@@ -250,7 +245,6 @@ private fun BucketFilter(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun Filter(
 	showFavorite: Boolean,
@@ -269,11 +263,6 @@ private fun Filter(
 			icon = R.drawable.ic_archive,
 			isSelected = showArchived
 		) { onAction(MainActivity.Action.TOGGLE_ARCHIVED, null) },
-		ChipData(
-			title = "Locked",
-			icon = R.drawable.ic_lock_open,
-			isSelected = showLocked
-		) { onAction(MainActivity.Action.LOCKED, null) }
 	)
 
 	AnimatedVisibility(
@@ -285,6 +274,7 @@ private fun Filter(
 		Column(
 			modifier = Modifier.fillMaxWidth()
 		) {
+			Spacer(modifier = Modifier.height(2.dp))
 			ChipView(chipDataList = chipDataList)
 			Spacer(modifier = Modifier.height(6.dp))
 		}

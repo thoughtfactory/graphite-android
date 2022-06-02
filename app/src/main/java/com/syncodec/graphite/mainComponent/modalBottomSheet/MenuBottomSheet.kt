@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.MainActivity
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.custom.button.MenuBottomSheetButton
@@ -29,8 +29,8 @@ fun MenuBottomSheet(
 		MenuBottomSheetButtonData(title = "Attachment", icon = R.drawable.ic_attachment) {
 			onAction(MainActivity.Action.ATTACHMENT)
 		},
-		MenuBottomSheetButtonData(title = "Tags", icon = R.drawable.ic_hashtag) {
-			onAction(MainActivity.Action.TAGS)
+		MenuBottomSheetButtonData(title = "EnQuote", icon = R.drawable.ic_quote) {
+			onAction(MainActivity.Action.EN_QUOTE)
 		},
 		MenuBottomSheetButtonData(title = "Vault", icon = R.drawable.ic_vault) {
 			onAction(MainActivity.Action.VAULT)

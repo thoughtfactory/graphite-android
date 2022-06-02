@@ -1,5 +1,6 @@
 package com.syncodec.graphite.bucketItemComponent.screen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -8,11 +9,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.BookData
 import com.syncodec.graphite.bucketItemComponent.BucketItemActivity
 import com.syncodec.graphite.bucketItemComponent.miscellaneous.BookHeaderCard
+import com.syncodec.graphite.bucketItemComponent.miscellaneous.OverviewCard
 import com.syncodec.graphite.bucketItemComponent.miscellaneous.ThumbnailCard
 import com.syncodec.graphite.bucketItemComponent.miscellaneous.thought.ThoughtCard
 import com.syncodec.graphite.custom.button.LargeButton
@@ -77,13 +81,34 @@ fun BookItemScreen(
 		)
 		Spacer(modifier = Modifier.height(12.dp))
 
+		AnimatedVisibility(visible = bookData.description != null) {
+			Column(
+				modifier = Modifier.fillMaxWidth()
+			) {
+				OverviewCard(overview = bookData.description!!)
+				Spacer(modifier = Modifier.height(12.dp))
+			}
+		}
+
 		LargeButton(
 			text = "View in Open Library",
 			enabled = true,
 			modifier = Modifier.fillMaxWidth()
 		) {
-
+			val url = "https://openlibrary.org/${bookData.key}"
+			onAction(BucketItemActivity.Action.OPEN_LINK, url)
 		}
+
+		Spacer(modifier = Modifier.height(32.dp))
+
+		Image(
+			painter = painterResource(id = R.drawable.il_open_library),
+			contentDescription = "Open Library",
+			contentScale = ContentScale.Fit,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(128.dp)
+		)
 
 		Spacer(modifier = Modifier.height(32.dp))
 	}

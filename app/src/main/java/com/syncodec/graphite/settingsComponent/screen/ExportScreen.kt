@@ -20,7 +20,7 @@ fun ExportScreen(
 		item {
 			SettingButton(
 				title = "Notebook",
-				subTitle = "Export multiple notebook",
+				subTitle = "Export notebook",
 				icon = R.drawable.ic_notebook,
 				tint = Color(0xFFFED049)
 			) { onClick(SettingsActivity.Action.NAVIGATION, SettingsActivity.Companion.Path.SELECT_NOTEBOOK) }
@@ -28,7 +28,7 @@ fun ExportScreen(
 		item {
 			SettingButton(
 				title = "Bucket",
-				subTitle = "Export single or multiple bucket",
+				subTitle = "Export bucket",
 				icon = R.drawable.ic_bucket,
 				tint = Color(0xFFFF6464)
 			) { onClick(SettingsActivity.Action.EXPORT_BUCKET, null) }

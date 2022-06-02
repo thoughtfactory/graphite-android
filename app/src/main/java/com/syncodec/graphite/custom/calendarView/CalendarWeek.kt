@@ -42,7 +42,7 @@ fun CalendarWeek() {
 						contentAlignment = Alignment.Center
 					) {
 						Text(
-							text = Konstant.weekName[i],
+							text = Konstant.weekNameInitial[i],
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onPrimary,
 							fontWeight = FontWeight.Bold

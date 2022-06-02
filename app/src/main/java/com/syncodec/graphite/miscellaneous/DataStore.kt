@@ -34,6 +34,7 @@ class DataStore(private val context: Context) {
 		private val PREFERENCE_DEFAULT_NOTE_KEY = stringPreferencesKey("default_notebook_key")
 		private val PREFERENCE_NOTE_SHOW_LOCATION_PERMISSION =
 			booleanPreferencesKey("show_location_permission_card")
+		private val PREFERENCE_EXPIRY_TIME = longPreferencesKey("expiry_time")
 	}
 
 	val getIsFirstTime: Flow<Boolean> =
@@ -78,7 +79,8 @@ class DataStore(private val context: Context) {
 				try {
 					if (data.length > 256 + 16) {
 						val salt = data.substring(0, 256).toByteArray(StandardCharsets.ISO_8859_1)
-						val iv = data.substring(256, 256 + 16).toByteArray(StandardCharsets.ISO_8859_1)
+						val iv =
+							data.substring(256, 256 + 16).toByteArray(StandardCharsets.ISO_8859_1)
 						val cipherText =
 							data.substring(256 + 16).toByteArray(StandardCharsets.ISO_8859_1)
 
@@ -106,7 +108,7 @@ class DataStore(private val context: Context) {
 		val salt = ByteArray(256)
 		random.nextBytes(salt)
 
-		val pbKeySpec = PBEKeySpec("password".toCharArray(), salt, 1324, 256)
+		val pbKeySpec = PBEKeySpec("7U%%!p28p94o!2B1@4Vqk*3VX!&g0fgP".toCharArray(), salt, 1324, 256)
 		val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
 		val keyBytes = secretKeyFactory.generateSecret(pbKeySpec).encoded
 		val keySpec = SecretKeySpec(keyBytes, "AES")
@@ -136,5 +138,12 @@ class DataStore(private val context: Context) {
 			context.dataStore.edit { pref ->
 				pref[PREFERENCE_DEFAULT_NOTE_KEY] = notebookKey
 			}
+		}
+
+	val getExpiryTime =
+		context.dataStore.data.map { preferences -> preferences[PREFERENCE_EXPIRY_TIME] }
+	fun putExpiryTime(expiryTime: Long) =
+		CoroutineScope(Dispatchers.IO).launch {
+			context.dataStore.edit { pref -> pref[PREFERENCE_EXPIRY_TIME] = expiryTime }
 		}
 }

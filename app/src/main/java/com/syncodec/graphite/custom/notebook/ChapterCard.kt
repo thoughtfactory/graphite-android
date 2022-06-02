@@ -24,7 +24,8 @@ import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.entryTimestamp1
 import dev.jorgecastillo.androidcolorx.library.tints
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class,
+@OptIn(
+	ExperimentalFoundationApi::class, ExperimentalAnimationApi::class,
 	ExperimentalMaterial3Api::class
 )
 @Composable

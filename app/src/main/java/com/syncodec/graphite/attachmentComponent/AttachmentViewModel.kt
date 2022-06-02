@@ -24,7 +24,7 @@ class AttachmentViewModel(application: Application) : AndroidViewModel(applicati
 
 	var isNote: Boolean? = null
 	lateinit var key: String
-	var attachmentList: SnapshotStateList<Pair<AttachmentDbEntry, Uri>> = mutableStateListOf()
+	var attachmentList: SnapshotStateList<Pair<AttachmentDbEntry, Uri?>> = mutableStateListOf()
 
 	var status: MutableState<Status> = mutableStateOf(Status.INIT)
 
@@ -35,7 +35,7 @@ class AttachmentViewModel(application: Application) : AndroidViewModel(applicati
 				attachmentRepository.getAttachmentForNoteAsFlow(noteKey = key).collect {
 					attachmentList.clear()
 					it.forEach {
-						attachmentList.add(Pair(it, attachmentRepository.getAttachmentUri(it.key)))
+						attachmentList.add(Pair(it, attachmentRepository.getAttachmentUri(it.key, it.extension)))
 					}
 
 					status.value = Status.LOADED
@@ -45,7 +45,7 @@ class AttachmentViewModel(application: Application) : AndroidViewModel(applicati
 				attachmentRepository.getAttachmentForNotebookAsFlow(notebookKey = key).collect {
 					attachmentList.clear()
 					it.forEach {
-						attachmentList.add(Pair(it, attachmentRepository.getAttachmentUri(it.key)))
+						attachmentList.add(Pair(it, attachmentRepository.getAttachmentUri(it.key, it.extension)))
 					}
 
 					status.value = Status.LOADED

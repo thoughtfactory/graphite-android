@@ -1,9 +1,12 @@
 package com.syncodec.graphite.miscellaneous
 
 import android.content.Context
+import android.database.Cursor
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.syncodec.graphite.Graphite
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -76,6 +79,30 @@ class FileUtils {
 
 			copyInputStreamToOutputStream(inputStream, outputStream)
 			return tempFile
+		}
+
+		fun Context.getFileName(uri: Uri): String? {
+			var result: String? = null
+			if (uri.scheme == "content") {
+				val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
+				cursor.use { cursor ->
+					if (cursor != null && cursor.moveToFirst()) {
+						result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+					}
+				}
+			}
+			if (result == null) {
+				result = uri.path
+				val cut = result!!.lastIndexOf('/')
+				if (cut != -1) {
+					result = result!!.substring(cut + 1)
+				}
+			}
+			return result
+		}
+
+		fun Context.getFileExtension(uri: Uri): String? {
+			return getFileName(uri = uri)?.split(".")?.lastOrNull()
 		}
 
 		fun zipFolder(inputFolderPath: String, outZipPath: String) {

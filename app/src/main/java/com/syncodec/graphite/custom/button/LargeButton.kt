@@ -9,9 +9,6 @@ import androidx.compose.ui.Modifier
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class,
-	ExperimentalMaterial3Api::class
-)
 @Composable
 fun LargeButton(
 	text: String,

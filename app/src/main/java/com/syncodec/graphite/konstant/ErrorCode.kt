@@ -1,8 +1,6 @@
 package com.syncodec.graphite.konstant
 
-import androidx.compose.ui.graphics.vector.ImageVector
-import compose.icons.TablerIcons
-import compose.icons.tablericons.AlertCircle
+import com.syncodec.graphite.R
 
 class ErrorCode {
 	companion object {
@@ -14,8 +12,8 @@ class ErrorCode {
 			ErrorCode.URL_RANGE_SELECTION_ERROR to "Please select some text to add link"
 		)
 
-		val errorCodeResourceMap: Map<ErrorCode, ImageVector> = mapOf(
-			ErrorCode.URL_RANGE_SELECTION_ERROR to TablerIcons.AlertCircle
+		val errorCodeResourceMap: Map<ErrorCode, Int> = mapOf(
+			ErrorCode.URL_RANGE_SELECTION_ERROR to R.drawable.ic_alert
 		)
 	}
 }

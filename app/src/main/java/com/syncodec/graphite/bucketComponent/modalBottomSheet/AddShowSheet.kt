@@ -1,5 +1,6 @@
 package com.syncodec.graphite.bucketComponent.modalBottomSheet
 
+import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -27,10 +28,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -40,6 +37,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.bucketComponent.BucketActivity
 import com.syncodec.graphite.bucketComponent.miscellaneous.ShowSearchLargeTextField
 import com.syncodec.graphite.custom.ClimateChangeMessage
+import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.konstant.Secret
@@ -48,6 +46,41 @@ import org.json.JSONObject
 import java.io.Serializable
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+
+
+enum class ShowType {
+	MOVIE,
+	TV
+}
+
+@Keep
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class ShowData(
+	@JsonProperty("id")
+	val id: String,
+
+	@JsonProperty("show_type")
+	val showType: ShowType,
+
+	@JsonProperty("title")
+	val title: String,
+
+	@JsonProperty("poster_path")
+	val posterPath: String?,
+
+	@JsonProperty("release_date")
+	val releaseDate: String?,
+) : Serializable {
+	companion object {
+		val mock = ShowData(
+			id = "342470",
+			showType = ShowType.MOVIE,
+			title = "All the Bright Places",
+			posterPath = "/4SafxuMKQiw4reBiWKVZJpJn80I.jpg",
+			releaseDate = "2020-02-28",
+		)
+	}
+}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Composable
@@ -173,20 +206,7 @@ fun AddShowSheet(
 							modifier = Modifier
 								.fillMaxWidth()
 								.height(256.dp),
-						) {
-							val lottieComposition by rememberLottieComposition(
-								LottieCompositionSpec.RawRes(
-									R.raw.lottie_loading
-								)
-							)
-
-							LottieAnimation(
-								composition = lottieComposition,
-								iterations = LottieConstants.IterateForever,
-								modifier = Modifier
-									.requiredSize(64.dp)
-							)
-						}
+						) { LoadingView() }
 					}
 					SheetState.RESULT_FOUND -> {
 						LazyVerticalGrid(
@@ -205,26 +225,24 @@ fun AddShowSheet(
 					}
 					SheetState.RESULT_NOT_FOUND -> {
 						Column(
-							modifier = Modifier
-								.height(256.dp)
+							modifier = Modifier.heightIn(256.dp),
+							horizontalAlignment = Alignment.CenterHorizontally
 						) {
+							Spacer(modifier = Modifier.height(24.dp))
 							Image(
-								painter = painterResource(id = R.drawable.il_result_unavailable_2),
+								painter = painterResource(id = R.drawable.il_error),
 								contentDescription = "No result found",
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(16.dp)
+								modifier = Modifier.fillMaxWidth(0.71f)
 							)
 
 							Spacer(modifier = Modifier.height(16.dp))
 
 							Text(
-								text = "Sorry, we can't find that",
-								style = MaterialTheme.typography.titleMedium,
-								color = MaterialTheme.colorScheme.secondary,
+								text = "Sorry, we could not find that",
+								style = MaterialTheme.typography.bodyLarge,
+								color = MaterialTheme.colorScheme.onSurface,
 								textAlign = TextAlign.Center,
-								modifier = Modifier
-									.fillMaxWidth()
+								modifier = Modifier.fillMaxWidth()
 							)
 						}
 					}
@@ -262,7 +280,7 @@ fun AddShowSheet(
 }
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShowCard(
 	modifier: Modifier,
@@ -305,39 +323,6 @@ private fun ShowCard(
 			color = MaterialTheme.colorScheme.onBackground,
 			modifier = Modifier
 				.padding(0.dp, 4.dp, 0.dp, 0.dp)
-		)
-	}
-}
-
-enum class ShowType {
-	MOVIE,
-	TV
-}
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class ShowData(
-	@JsonProperty("id")
-	val id: String,
-
-	@JsonProperty("show_type")
-	val showType: ShowType,
-
-	@JsonProperty("title")
-	val title: String,
-
-	@JsonProperty("poster_path")
-	val posterPath: String?,
-
-	@JsonProperty("release_date")
-	val releaseDate: String?,
-) : Serializable {
-	companion object {
-		val mock = ShowData(
-			id = "342470",
-			showType = ShowType.MOVIE,
-			title = "All the Bright Places",
-			posterPath = "/4SafxuMKQiw4reBiWKVZJpJn80I.jpg",
-			releaseDate = "2020-02-28",
 		)
 	}
 }

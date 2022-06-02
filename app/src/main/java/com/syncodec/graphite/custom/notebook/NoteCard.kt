@@ -26,13 +26,14 @@ import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.squircle.SquircleShape
 import com.syncodec.graphite.miscellaneous.StringUtils.Companion.addEmptyLines
+import com.syncodec.graphite.miscellaneous.StringUtils.Companion.decrypt
 import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.entryTimestamp0
 import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.entryTimestamp1
 import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.timeStampToTime
+import com.syncodec.graphite.miscellaneous.roundTo
 
 
 @OptIn(
-	ExperimentalMaterialApi::class,
 	ExperimentalFoundationApi::class,
 	ExperimentalAnimationApi::class,
 	ExperimentalMaterial3Api::class
@@ -61,7 +62,7 @@ fun NoteCard(
 ) {
 	val containerColor by animateColorAsState(if (isSelected) selectedColor else Color.Transparent)
 
-	var cardHeight by remember { mutableStateOf(0)}
+	var cardHeight by remember { mutableStateOf(0) }
 
 	AnimatedVisibility(
 		visible = isVisible,
@@ -83,7 +84,10 @@ fun NoteCard(
 			Spacer(modifier = Modifier.width(4.dp))
 			OutlinedCard(
 				shape = RoundedCornerShape(12.dp),
-				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.31f)),
+				border = BorderStroke(
+					1.dp,
+					MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.17f)
+				),
 				containerColor = containerColor,
 				elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 				modifier = Modifier
@@ -129,12 +133,12 @@ fun NoteCard(
 						Spacer(modifier = Modifier.height(4.dp))
 
 						Content(
-							contentThumbnail = contentThumbnail,
+							contentThumbnail = contentThumbnail?.decrypt(),
 							attachmentCount = attachmentCount,
 							attachmentThumbnail = attachmentThumbnail
 						)
 
-						if (address!=null || latLng!=null) {
+						if (address != null || latLng != null) {
 							Spacer(modifier = Modifier.height(4.dp))
 							Location(
 								address = address,
@@ -304,9 +308,17 @@ private fun Location(
 
 		Spacer(modifier = Modifier.width(4.dp))
 
-		if (address!=null) {
+		if (!address.isNullOrBlank()) {
 			Text(
 				text = address,
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onBackground,
+				overflow = TextOverflow.Ellipsis,
+				maxLines = 1
+			)
+		} else if (latLng != null) {
+			Text(
+				text = "${latLng.latitude.roundTo(6)}, ${latLng.longitude.roundTo(6)}",
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onBackground,
 				overflow = TextOverflow.Ellipsis,

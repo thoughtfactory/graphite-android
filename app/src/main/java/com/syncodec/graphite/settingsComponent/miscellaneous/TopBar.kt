@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -17,7 +17,6 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.settingsComponent.SettingsActivity
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun TopBar(
 	currentPath: List<SettingsActivity.Companion.Path>,
@@ -25,7 +24,8 @@ fun TopBar(
 ) {
 	Bar(
 		title = SettingsActivity.PathNameMap[currentPath.last()]!!,
-		icon = SettingsActivity.PathIconMap[currentPath.last()]!!
+		icon = SettingsActivity.PathIconMap[currentPath.last()]!!,
+		currentPath = currentPath
 	) { onBack() }
 }
 
@@ -34,6 +34,7 @@ fun TopBar(
 private fun Bar(
 	title: String,
 	icon: Int,
+	currentPath: List<SettingsActivity.Companion.Path>,
 	onBack: () -> Unit
 ) {
 	SmallTopAppBar(
@@ -76,7 +77,7 @@ private fun Bar(
 				Icon(
 					painter = painterResource(id = it),
 					contentDescription = title,
-					tint = MaterialTheme.colorScheme.onBackground,
+					tint = if (currentPath.lastOrNull() == SettingsActivity.Companion.Path.GRAPHITE) Color.Unspecified else MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier
 						.requiredSize(32.dp)
 						.padding(4.dp)

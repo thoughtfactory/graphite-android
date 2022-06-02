@@ -64,7 +64,6 @@ fun NoteViewerScreen(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun Viewer(
 	status: Status,

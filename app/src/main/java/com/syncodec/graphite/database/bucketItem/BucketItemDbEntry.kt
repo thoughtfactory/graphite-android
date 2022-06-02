@@ -42,22 +42,20 @@ data class BucketItemDbEntry(
 	@ColumnInfo(name = "data", typeAffinity = ColumnInfo.BLOB)
 	var data: BucketItem? = null
 
+	@ColumnInfo(name = "is_favourite")
+	var isFavourite: Boolean = false
+
+	@ColumnInfo(name = "is_archived")
+	var isArchived: Boolean = false
+
+	@ColumnInfo(name = "is_locked")
+	var isLocked: Boolean = false
+
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 
 	@ColumnInfo(name = "hash")
 	var hash: Long? = null
-
-	override fun equals(other: Any?): Boolean {
-//		if (this.hashCode() != other.hashCode()) return false
-//		if (javaClass != other?.javaClass) return false
-//
-//		other as BucketItemDbEntry
-//		if (key != other.key) return false
-//		return true
-
-		return false
-	}
 
 	override fun hashCode(): Int {
 		var result = key.hashCode()
@@ -74,6 +72,29 @@ data class BucketItemDbEntry(
 		result = 31 * result + (gDriveFileId?.hashCode() ?: 0)
 		result = 31 * result + (hash?.hashCode() ?: 0)
 		return result
+	}
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+
+		other as BucketItemDbEntry
+
+		if (key != other.key) return false
+		if (bucketKey != other.bucketKey) return false
+		if (bucketItemType != other.bucketItemType) return false
+		if (createdTimestamp != other.createdTimestamp) return false
+		if (modifiedTimestamp != other.modifiedTimestamp) return false
+		if (title != other.title) return false
+		if (thumbnail != other.thumbnail) return false
+		if (state != other.state) return false
+		if (latLng != other.latLng) return false
+		if (address != other.address) return false
+		if (data != other.data) return false
+		if (gDriveFileId != other.gDriveFileId) return false
+		if (hash != other.hash) return false
+
+		return true
 	}
 
 }

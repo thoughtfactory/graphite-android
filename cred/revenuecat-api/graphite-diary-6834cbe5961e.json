@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "graphite-diary",
+  "private_key_id": "6834cbe5961eef5b29176a2c77707e87ea0fc5d2",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC56ZY7QNz4AqgF\nYzDXlm/SPQm9fTLyMiKPKnJ9JJPG32dF3ianTlLDrBNUOpo/1FyCxwBnjX8UUNUC\nPi5mTMhcs0sTmt0DdCusWm+7/+0QiwVguOBeJFrXS8tigwGqzWP9xAE9e0yYcRLb\nZZpQuYuYyihPGwbzGJuGlMM+m0yYQSUbt6GaUrATESMm24QOdHmZhuMm45flwXxA\nqoxv+KeeXS1WBBlBgbj0ppS7YaoUwkefI52zdwbYI0VgOg4BSjH87OV8djmWGymS\nsNdDeqsSevcDGX84mBmipiqZUGlcQDQyKrG2LUjdsfKPlDvg4WsPEbDl2VoMuAyR\nO5sQSbCxAgMBAAECggEAMCatwF8GXD3j4rFUHyJZh+xDL47TuSL/DHGEAaGNnL6T\n8uacwExq5z8UKoabGNkZtM1x72AYf9yHrvMH9XsBkfDmCwfbIl/eR9+MfPbGIbjA\nBdMcWYW0+XoqDTO9JM3ZjgpL/+6FYh43MhfYpfvIiiQh2Is5e5DuBydUgkyaw/v5\nTznpgoKJglBgTV2rJETV8Jtiz3Alm5Q7/Rm/Osku7Tzqiu6TnuasIvNjSaKXHuQ4\nS2mNGbMsfoT3LVXrn7Sv2XXan3y10zw+F4lNRduMWexZwxDF9sDUisxXNEG0LGm2\neYbJ7+lrI56EuJHmcFQrhoHwskkExJBU4/nxtSIMeQKBgQD7BZU8BUEr7YWTZUJY\nPLMnhEeXD3acT7iM9bOQDvJhcETMAw9fjfsgD7bbYXW8Pzyu3m1qumfwRerupL+A\nIQSTY/9ufL847aqVOJ6rV9ilCpMZumgrzLEa1dHjXPioqHdwP56KxqNxHpPbBu3t\nqC2EQSedUZtTAxr/cZzJBftcvwKBgQC9mXL0AmGZyppkkMs0iaJHadYvbGmt2695\nuXVtbMCCeJol51hJppTCMbXdxg+CymbAXQXS4eOWzVGuUss6U/m78ctonuYwaHYc\nD+CR8nACRLSPgBhwt7ja+J0b0i7IqewiV2VmVFNKcZoPV84bRXul+OAqI1+spJvK\n6Mza7B2ejwKBgGk5XeVbDoaremLe/4CdcTwPZzMbeEzt3h64oByzJ0dRGIWsgrU7\nfxlhfPVZVVEj8PwcoSEsIoXFyUVgKiY7sP9X26sk/8ONXQRQR7LrkBUe6arPSPuT\nQmpNVz5HqrSIagjTolHqEnlIqBIYRYRqCyp1ZXW8z69sjdSme2KI72VhAoGACLU9\nhFt/pBKcGLZVvun7XBBOWAtAp02Jt6t+6zGtfdCQM+F2Opu+BVVHJxJrr/Qf2AHt\nvIvHaiuv7rO6xckJlUo7r2hs5hhGJG/OPqXF4zTInjah6LtncBcvEBINOAYl5EXj\nUFnbIXYqPz4nJzV/wlW15fmN8V32EdGzZvKlQZ0CgYEAop/3JJzHOE76g2BTkFXn\nu6lTyiB+9pr91gSoDwte3AlsgEhYvKqlNtLs2duJ6wOwyL8Oypo82ABCI7pZU5Zn\naR+nXlY+hfEJVQKYVrrRFWruZa4KyuASrdA1fppdYxpQuDU3VKGZXVliIFSWwHJY\nCXi2JNGbWFjYqmwR2oH6MnM=\n-----END PRIVATE KEY-----\n",
+  "client_email": "revenuecat-api@graphite-diary.iam.gserviceaccount.com",
+  "client_id": "100859947291590242107",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/revenuecat-api%40graphite-diary.iam.gserviceaccount.com"
+}
