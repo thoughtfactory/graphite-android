@@ -1,11 +1,11 @@
 package com.syncodec.graphite.searchComponent
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -14,6 +14,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.konstant.Konstant
+import com.syncodec.graphite.noteComponent.NoteActivity
 import com.syncodec.graphite.searchComponent.miscellaneous.TopBar
 import com.syncodec.graphite.searchComponent.screen.NoteScreen
 import com.syncodec.graphite.searchComponent.screen.TagScreen
@@ -26,7 +27,8 @@ class SearchActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		viewModel.showLocked = intent.getBooleanExtra(Konstant.Companion.Konstant.SHOW_LOCKED.name, false)
+		viewModel.showLocked =
+			intent.getBooleanExtra(Konstant.Companion.Konstant.SHOW_LOCKED.name, false)
 
 		setContent {
 			GraphiteBase {
@@ -50,7 +52,9 @@ class SearchActivity : ComponentActivity() {
 			Action.HIT_SEARCH -> {
 				val query by activityState.query
 				val queryStringList = activityState.queryStringList
-				if (!queryStringList.contains(query) && query.isNotBlank()) queryStringList.add(query)
+				if (!queryStringList.contains(query) && query.isNotBlank()) queryStringList.add(
+					query
+				)
 				onPerformAction(Action.HIDE_TAG_SCREEN)
 				activityState.query.value = ""
 				viewModel.searchInNote()
@@ -79,6 +83,25 @@ class SearchActivity : ComponentActivity() {
 			}
 			Action.SHOW_TAG_SCREEN -> activityState.showTagScreen.value = true
 			Action.HIDE_TAG_SCREEN -> activityState.showTagScreen.value = false
+			Action.CLICK_NOTE -> {
+				data as Pair<*, *>
+				Intent(this, NoteActivity::class.java).apply {
+					putExtra(
+						Konstant.Companion.Konstant.NOTEBOOK_KEY.name,
+						data.second as String
+					)
+					putStringArrayListExtra(
+						Konstant.Companion.Konstant.CHAPTER_KEY.name,
+						java.util.ArrayList()
+					)
+					putExtra(Konstant.Companion.Konstant.NOTE_KEY.name, data.first as String)
+					putExtra(Konstant.Companion.Konstant.IS_VIEWER.name, true)
+					putExtra(Konstant.Companion.Konstant.IS_NEW.name, false)
+					putExtra(Konstant.Companion.Konstant.SHOW_ARCHIVED.name, false)
+					putExtra(Konstant.Companion.Konstant.SHOW_LOCKED.name, false)
+					startActivity(this)
+				}
+			}
 		}
 	}
 
@@ -109,7 +132,9 @@ class SearchActivity : ComponentActivity() {
 				if (it) {
 					TagScreen(tagList = tagList) { onPerformAction(Action.CLICK_TAG, it) }
 				} else {
-					NoteScreen(noteList = noteList)
+					NoteScreen(noteList = noteList) { action, data ->
+						onPerformAction(action, data)
+					}
 				}
 			}
 		}
@@ -148,5 +173,6 @@ class SearchActivity : ComponentActivity() {
 		CLICK_STRING,
 		SHOW_TAG_SCREEN,
 		HIDE_TAG_SCREEN,
+		CLICK_NOTE
 	}
 }

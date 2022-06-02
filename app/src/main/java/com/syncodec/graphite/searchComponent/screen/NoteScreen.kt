@@ -13,10 +13,12 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.custom.notebook.NoteCard
 import com.syncodec.graphite.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.graphite.database.note.NoteDbEntry
+import com.syncodec.graphite.searchComponent.SearchActivity
 
 @Composable
 fun NoteScreen(
-	noteList: SnapshotStateMap<NoteDbEntry, Boolean>
+	noteList: SnapshotStateMap<NoteDbEntry, Boolean>,
+	onAction: (SearchActivity.Action, Any?) -> Unit
 ) {
 	var lastEntryKey: String? = null
 	SideEffect {
@@ -47,7 +49,12 @@ fun NoteScreen(
 					latLng = note.latLng,
 					isVisible = isVisible,
 					selectedColor = Color.Transparent,
-					onClick = { /*TODO*/ }
+					onClick = {
+						onAction(
+							SearchActivity.Action.CLICK_NOTE,
+							Pair(note.key, note.notebookKey)
+						)
+					}
 				)
 
 				NotebookTimelineSpacer(isVisible = note.key != lastEntryKey && isVisible)
