@@ -14,7 +14,7 @@ android {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 31
-		versionCode 10
+		versionCode 11
 		versionName '1.0.0'
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
