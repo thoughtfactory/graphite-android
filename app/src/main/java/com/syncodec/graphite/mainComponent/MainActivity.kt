@@ -31,7 +31,6 @@ import androidx.navigation.compose.rememberNavController
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
-import com.google.accompanist.insets.ExperimentalAnimatedInsets
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -44,14 +43,11 @@ import com.syncodec.graphite.custom.SplashScreen
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.konstant.Konstant
-import com.syncodec.graphite.mainComponent.miscellaneous.BottomNavigationBar
-import com.syncodec.graphite.mainComponent.miscellaneous.BottomNavigationItem
-import com.syncodec.graphite.mainComponent.miscellaneous.MainNavigation
-import com.syncodec.graphite.mainComponent.miscellaneous.TopBar
+import com.syncodec.graphite.mainComponent.miscellaneous.*
 import com.syncodec.graphite.mainComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.graphite.mainComponent.modalBottomSheet.SheetLayout
 import com.syncodec.graphite.mainComponent.screen.LoginScreen
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.graphite.noteComponent.NoteActivity
 import com.syncodec.graphite.notebookComponent.NotebookActivity
@@ -80,7 +76,7 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		CoroutineScope(Dispatchers.IO).launch {
-			viewModel.dataStore.getIsFirstTime.collect {
+			viewModel.dataStoreInstance.getIsFirstTime.collect {
 				showLoginScreen.value = it && viewModel.firebaseAuth.currentUser == null
 			}
 		}
@@ -136,7 +132,7 @@ class MainActivity : ComponentActivity() {
 				signInLauncher.launch(signInIntent)
 			}
 			Action.TRY_FIRST -> {
-				viewModel.dataStore.putIsFirstTime(false)
+				viewModel.dataStoreInstance.putIsFirstTime(false)
 				showLoginScreen.value = false
 				viewModel.getQuote()
 			}
@@ -167,6 +163,7 @@ class MainActivity : ComponentActivity() {
 				viewModel.isSelected.value = false
 				viewModel.showDeleteDialog.value = false
 			}
+			Action.DISMISS_RELEASE_NOTES -> viewModel.showReleaseNotes.value = false
 			Action.CLICK_NOTE -> {
 				data as String
 				val selectedItemList = viewModel.selectedItemList
@@ -377,7 +374,7 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
-	@OptIn(ExperimentalAnimatedInsets::class, ExperimentalMaterialApi::class)
+	@OptIn(ExperimentalMaterialApi::class)
 	@Preview
 	@ExperimentalPagerApi
 	@ExperimentalFoundationApi
@@ -395,8 +392,8 @@ class MainActivity : ComponentActivity() {
 		val bottomSheetState =
 			rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
-		val dataStore = remember { DataStore(context = this) }
-		val passcode by dataStore.getPasscode.collectAsState(initial = null)
+		val dataStoreInstance = remember { DataStoreInstance(context = this) }
+		val passcode by dataStoreInstance.getPasscode.collectAsState(initial = null)
 
 		Crossfade(
 			targetState = viewModel.vaultState.value,
@@ -528,13 +525,13 @@ class MainActivity : ComponentActivity() {
 							onDismiss = { viewModel.showDeleteDialog.value = false },
 							onDelete = { onPerformAction(Action.ON_DELETE) },
 						)
+						ReleaseNotes()
 					}
 				}
 			}
 		}
 	}
 
-	@OptIn(ExperimentalMaterialApi::class)
 	@Composable
 	private fun FloatingActionButton(
 		currentRoute: String?,
@@ -598,6 +595,7 @@ class MainActivity : ComponentActivity() {
 		TRY_PREMIUM,
 		SHOW_DELETE,
 		ON_DELETE,
+		DISMISS_RELEASE_NOTES,
 		CLICK_NOTE,
 		LONG_CLICK_NOTE,
 		CLICK_NOTEBOOK,

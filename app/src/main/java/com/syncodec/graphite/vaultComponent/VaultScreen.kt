@@ -3,7 +3,10 @@ package com.syncodec.graphite.vaultComponent
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -22,9 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
+
 
 enum class EvokeReason {
 	UNLOCK_VAULT,
@@ -57,8 +62,8 @@ fun VaultScreen(
 	onFailed: () -> Unit
 ) {
 	val context = LocalContext.current
-	val dataStore = remember { DataStore(context = context) }
-	val passcode by dataStore.getPasscode.collectAsState(initial = null)
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+	val passcode by dataStoreInstance.getPasscode.collectAsState(initial = null)
 
 	var code by remember { mutableStateOf("") }
 	var newPasscode by remember { mutableStateOf("") }
@@ -125,7 +130,7 @@ fun VaultScreen(
 						}
 						EvokeReason.CONFIRM_PASSCODE -> {
 							if (newPasscode == code) {
-								dataStore.putPasscode(code)
+								dataStoreInstance.putPasscode(code)
 								code = ""
 								Toast.makeText(context, "Passcode updated", Toast.LENGTH_SHORT)
 									.show()
@@ -142,7 +147,7 @@ fun VaultScreen(
 						}
 						EvokeReason.REMOVE_PASSCODE -> {
 							if (!isPasswordIncorrect) {
-								dataStore.putPasscode("")
+								dataStoreInstance.putPasscode("")
 								code = ""
 								Toast.makeText(
 									context,
@@ -192,6 +197,8 @@ fun VaultScreen(
 
 @Composable
 private fun PasscodeImage() {
+	val context = LocalContext.current
+
 	Box(
 		modifier = Modifier
 			.fillMaxWidth(0.71f)
@@ -199,11 +206,15 @@ private fun PasscodeImage() {
 			.padding(32.dp),
 		contentAlignment = Alignment.Center
 	) {
-		Image(
-			painter = rememberImagePainter(R.drawable.il_vault),
+		AsyncImage(
+			model = ImageRequest.Builder(context)
+				.data(R.drawable.il_vault)
+				.crossfade(300)
+				.build(),
+			placeholder = null,
 			contentDescription = null,
 			contentScale = ContentScale.Fit,
-			modifier = Modifier.fillMaxSize()
+			modifier = Modifier.fillMaxSize(),
 		)
 	}
 }

@@ -2,6 +2,7 @@ package com.syncodec.graphite.ui.theme
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -14,7 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.custom.LoadingView
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 
 
 private val DarkColorScheme = darkColorScheme(
@@ -117,10 +118,12 @@ fun GraphiteBase(
 ) {
 	val context = LocalContext.current
 
-	val dataStore = DataStore(context = context)
-	val currentTypography by dataStore.getTypography.collectAsState(initial = null)
-	val expiryTimestamp by dataStore.getExpiryTime.collectAsState(initial = null)
+	val dataStoreInstance = DataStoreInstance(context = context)
+	val currentTypography by dataStoreInstance.getTypography.collectAsState(initial = null)
+	val superExpiryTimestampString by dataStoreInstance.getSuperExpiryTime.collectAsState(initial = null)
+	val expiryTimestampString by dataStoreInstance.getExpiryTime.collectAsState(initial = null)
 	val currentTimestamp = System.currentTimeMillis()
+
 
 	val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 	val appColorScheme = when {
@@ -128,6 +131,7 @@ fun GraphiteBase(
 		dynamicColor && !isDarkTheme -> dynamicLightColorScheme(LocalContext.current)
 		else -> if (isDarkTheme) darkColorScheme0 else lightColorScheme0
 	}
+
 	val appTypography = when (currentTypography) {
 		0 -> UbuntuTypography
 		1 -> SourceSansProTypography
@@ -144,9 +148,18 @@ fun GraphiteBase(
 		val rippleIndication = rememberRipple()
 		Crossfade(targetState = currentTypography != null) {
 			if (it) {
+				val superExpiryTimestamp = superExpiryTimestampString?.toLongOrNull()
+				val expiryTimestamp = expiryTimestampString?.toLongOrNull()
+
+				Log.i("npr71", "superExpiryTimestamp : $superExpiryTimestamp")
+				Log.i("npr71", "expiryTimestamp : $expiryTimestamp")
+
 				CompositionLocalProvider(
 					PremiumCompositionLocal provides
-							((expiryTimestamp ?: 0L) > currentTimestamp)
+							if (superExpiryTimestamp == null)
+									(expiryTimestamp ?: 0L) > currentTimestamp
+							else
+								superExpiryTimestamp > currentTimestamp
 				) {
 					CompositionLocalProvider(
 						LocalIndication provides rippleIndication,

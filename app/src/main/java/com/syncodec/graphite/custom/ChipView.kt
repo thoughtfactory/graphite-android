@@ -6,7 +6,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,7 +55,7 @@ fun ChipView(
 			Card(
 				border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 3)),
 				containerColor = containerColor,
-				shape = RoundedCornerShape(20.dp),
+				shape = RoundedCornerShape(12.dp),
 				modifier = Modifier
 					.height(32.dp)
 					.clickable(

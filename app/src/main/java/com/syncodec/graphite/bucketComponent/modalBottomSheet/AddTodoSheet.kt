@@ -1,6 +1,5 @@
 package com.syncodec.graphite.bucketComponent.modalBottomSheet
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -23,7 +22,7 @@ import com.syncodec.graphite.custom.button.LargeButton
 import com.syncodec.graphite.custom.button.StateButton
 import com.syncodec.graphite.custom.button.StateData
 
-@OptIn(ExperimentalFoundationApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun AddTodoSheet(
 	key: String?,
@@ -33,7 +32,6 @@ fun AddTodoSheet(
 	onAction: (String?, String, Int) -> Unit
 ) {
 	var todoText by remember { mutableStateOf(title) }
-	var isTodoTextFocused by remember { mutableStateOf(false) }
 
 	val stateList: List<StateData> = listOf(
 		StateData(title = "To Do", icon = R.drawable.ic_todo, MaterialTheme.colorScheme.primary),
@@ -60,7 +58,7 @@ fun AddTodoSheet(
 			BottomSheetStrip()
 
 			BottomSheetHeader(
-				title = if (key==null) "Add a task" else "Update task",
+				title = if (key == null) "Add a task" else "Update task",
 				icon = R.drawable.ic_todo
 			)
 
@@ -79,11 +77,8 @@ fun AddTodoSheet(
 				keyboardActions = KeyboardActions(
 					onSearch = {
 					}
-				),
-				isFocused = isTodoTextFocused,
-				onFocusChanged = { isTodoTextFocused = it },
-				onValueChanged = { todoText = it }
-			)
+				)
+			) { todoText = it }
 
 			Spacer(modifier = Modifier.height(16.dp))
 
@@ -99,7 +94,7 @@ fun AddTodoSheet(
 			Spacer(modifier = Modifier.height(16.dp))
 
 			LargeButton(
-				text = "Update todo",
+				text = if (key == null) "Add todo" else "Update todo",
 				enabled = todoText.isNotBlank(),
 				modifier = Modifier
 					.fillMaxWidth()

@@ -41,7 +41,7 @@ import com.qonversion.android.sdk.dto.QPermission
 import com.qonversion.android.sdk.dto.products.QProduct
 import com.qonversion.android.sdk.dto.products.QProductDuration
 import com.syncodec.graphite.R
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.ui.theme.GraphiteBase
 
 
@@ -104,7 +104,7 @@ class PremiumActivity : ComponentActivity() {
 	}
 
 	private fun onAction(action: ACTION, data: Any? = null) {
-		val dataStore = DataStore(this@PremiumActivity)
+		val dataStoreInstance = DataStoreInstance(this@PremiumActivity)
 
 		when (action) {
 			ACTION.BACK -> finish()
@@ -141,9 +141,9 @@ class PremiumActivity : ComponentActivity() {
 												val calendar = Calendar.getInstance()
 												calendar.add(Calendar.MONTH, 1)
 
-												dataStore.putExpiryTime(calendar.timeInMillis)
+												dataStoreInstance.putExpiryTime(calendar.timeInMillis)
 											} else {
-												dataStore.putExpiryTime(it)
+												dataStoreInstance.putExpiryTime(it)
 											}
 
 											Toast.makeText(
@@ -151,6 +151,7 @@ class PremiumActivity : ComponentActivity() {
 												"Welcome to Graphite Premium",
 												Toast.LENGTH_LONG
 											).show()
+											finish()
 										}
 									}
 
@@ -201,9 +202,9 @@ class PremiumActivity : ComponentActivity() {
 											calendar.add(Calendar.MONTH, 1)
 
 											if (it == null) {
-												dataStore.putExpiryTime(calendar.timeInMillis)
+												dataStoreInstance.putExpiryTime(calendar.timeInMillis)
 											} else {
-												dataStore.putExpiryTime(it)
+												dataStoreInstance.putExpiryTime(it)
 											}
 
 											isSubscriptionActive =
@@ -216,6 +217,7 @@ class PremiumActivity : ComponentActivity() {
 												"Purchase restored. Welcome to Graphite Premium",
 												Toast.LENGTH_LONG
 											).show()
+											finish()
 										} else {
 											Toast.makeText(
 												this@PremiumActivity,
@@ -232,7 +234,7 @@ class PremiumActivity : ComponentActivity() {
 					)
 				}
 			}
-			ACTION.RESTORE_71 -> {
+			ACTION.RESTORE_SUPER -> {
 				showLoadingView.value = true
 
 				if (firebaseAuth.currentUser == null) {
@@ -250,13 +252,15 @@ class PremiumActivity : ComponentActivity() {
 						.get()
 						.addOnSuccessListener { documentSnapshot ->
 							val expiryTimestamp = documentSnapshot.getTimestamp("override")?.seconds?.times(1000)
-							if (expiryTimestamp != null) {
-								dataStore.putExpiryTime(expiryTimestamp)
+							val currentTimestamp = System.currentTimeMillis()
+							if (expiryTimestamp != null && expiryTimestamp >  currentTimestamp) {
+								dataStoreInstance.putSuperExpiryTime(expiryTimestamp)
 								Toast.makeText(
 									this,
 									"Welcome to Graphite",
 									Toast.LENGTH_LONG
 								).show()
+								finish()
 							} else {
 								Toast.makeText(
 									this@PremiumActivity,
@@ -597,7 +601,7 @@ class PremiumActivity : ComponentActivity() {
 				.clip(RoundedCornerShape(50))
 				.combinedClickable(
 					onClick = { onAction(ACTION.RESTORE) },
-					onLongClick = { onAction(ACTION.RESTORE_71) }
+					onLongClick = { onAction(ACTION.RESTORE_SUPER) }
 				),
 		) {
 			Row(
@@ -631,6 +635,6 @@ class PremiumActivity : ComponentActivity() {
 		SELECT_SUBSCRIPTION,
 		SUBSCRIBE,
 		RESTORE,
-		RESTORE_71
+		RESTORE_SUPER
 	}
 }

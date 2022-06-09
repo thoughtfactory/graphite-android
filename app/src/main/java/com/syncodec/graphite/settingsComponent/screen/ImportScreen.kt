@@ -33,6 +33,22 @@ fun ImportScreen(
 				tint = Color(0xFFCC9B6D)
 			) { onAction(SettingsActivity.Action.IMPORT_JOURNEY, null) }
 		}
+		item {
+			SettingButton(
+				title = "Day One",
+				subTitle = "Import your entries from Day One",
+				icon = R.drawable.ic_state,
+				tint = Color(0xFF14C38E)
+			) { onAction(SettingsActivity.Action.IMPORT_DAY_ONE, null) }
+		}
+		item {
+			SettingButton(
+				title = "Google Keep",
+				subTitle = "Import your entries from Google Keep",
+				icon = R.drawable.ic_state,
+				tint = Color(0xFF1464DF)
+			) { onAction(SettingsActivity.Action.IMPORT_GOOGLE_KEEP, null) }
+		}
 //		item {
 //			SettingButton(
 //				title = "Day One",

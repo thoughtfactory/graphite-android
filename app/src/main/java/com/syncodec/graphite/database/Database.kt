@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -46,8 +48,8 @@ class Converters {
 	fun fromLatLngToData(value: LatLng?): String? {
 		JSONObject().apply {
 			return if (value != null) {
-				put("latitude" , value.latitude)
-				put("longitude" , value.longitude)
+				put("latitude", value.latitude)
+				put("longitude", value.longitude)
 				toString()
 			} else null
 		}
@@ -59,7 +61,7 @@ class Converters {
 			try {
 				val jsonObject = JSONObject(data)
 				LatLng(jsonObject.getDouble("latitude"), jsonObject.getDouble("longitude"))
-			} catch (exception : Exception) {
+			} catch (exception: Exception) {
 				null
 			}
 		} else null
@@ -143,7 +145,7 @@ class Converters {
 		TagKeyDbEntry::class,
 		QuoteDbEntry::class
 	],
-	version = 1,
+	version = 2,
 	exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -160,6 +162,15 @@ abstract class UserDatabase : RoomDatabase() {
 	abstract val quoteTableDao: QuoteTableDao
 
 	companion object {
+		val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+			override fun migrate(database: SupportSQLiteDatabase) {
+				database.execSQL("ALTER TABLE `quote_table` ADD COLUMN `bg_provider` TEXT")
+				database.execSQL("ALTER TABLE `quote_table` ADD COLUMN `bg_provider_link` TEXT")
+
+				database.execSQL("DELETE FROM `quote_table`")
+			}
+		}
+
 		@Volatile
 		private var INSTANCE: UserDatabase? = null
 
@@ -171,10 +182,7 @@ abstract class UserDatabase : RoomDatabase() {
 						context,
 						UserDatabase::class.java,
 						"user_database"
-					)
-//						TODO
-//                      !!!   Will destruct and reconstruct database when version changes
-						.fallbackToDestructiveMigration()
+					).addMigrations(MIGRATION_1_2)
 						.build()
 					INSTANCE = instance
 				}

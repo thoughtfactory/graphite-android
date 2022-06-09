@@ -2,7 +2,6 @@ package com.syncodec.graphite.bucketComponent.modalBottomSheet
 
 import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -12,7 +11,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,7 +24,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -78,7 +77,7 @@ data class BookData(
 	val firstPublishYear: Int?
 ) : java.io.Serializable
 
-@OptIn(ExperimentalFoundationApi::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(androidx.compose.animation.ExperimentalAnimationApi::class)
 @Composable
 fun AddBookSheet(
 	onAction: (BookData) -> Unit
@@ -88,7 +87,6 @@ fun AddBookSheet(
 		.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	var bookNameText by rememberSaveable { mutableStateOf("") }
-	var isBookNameTextFocused by remember { mutableStateOf(false) }
 
 	var sheetState by remember { mutableStateOf(SheetState.INIT) }
 
@@ -169,11 +167,8 @@ fun AddBookSheet(
 						stringRequest.tag = tag
 						requestQueue.add(stringRequest)
 					}
-				),
-				isFocused = isBookNameTextFocused,
-				onFocusChanged = { isBookNameTextFocused = it },
-				onValueChanged = { bookNameText = it }
-			)
+				)
+			) { bookNameText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
 
@@ -263,6 +258,8 @@ private fun BookCard(
 	bookData: BookData,
 	onAction: () -> Unit
 ) {
+	val context = LocalContext.current
+
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier.padding(8.dp),
@@ -275,14 +272,15 @@ private fun BookCard(
 			onClick = { onAction() }
 		) {
 			if (bookData.coverI != null) {
-				Image(
-					painter = rememberImagePainter(
-						data = "https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg",
-						builder = { crossfade(true) }
-					),
-					contentDescription = null,
+				AsyncImage(
+					model = ImageRequest.Builder(context)
+						.data("https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg")
+						.crossfade(300)
+						.build(),
+					placeholder = null,
+					contentDescription = bookData.key,
+					contentScale = ContentScale.Crop,
 					modifier = Modifier.fillMaxSize(),
-					contentScale = ContentScale.Crop
 				)
 			}
 		}

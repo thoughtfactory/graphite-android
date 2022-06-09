@@ -91,13 +91,11 @@ private fun SearchBar(
 		horizontalArrangement = Arrangement.SpaceBetween
 	) {
 		LargeTextField(
-			text = tag,
-			placeholder = "Add new tag",
-			isFocused = isFocused,
-			onFocusChanged = { isFocused = it },
 			modifier = Modifier
 				.weight(1f)
-				.padding(24.dp, 0.dp, 8.dp, 0.dp)
+				.padding(24.dp, 0.dp, 8.dp, 0.dp),
+			text = tag,
+			placeholder = "Add new tag"
 		) { tag = it }
 
 		Row(modifier = Modifier) {

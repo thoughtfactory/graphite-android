@@ -18,18 +18,20 @@
     src: url('./font/ubuntu.ttf') format('truetype');
 }
 
-body {
-    padding-left: 8px;
-    padding-right: 8px;
+.ProseMirror {
+    border: 2px solid;
+    border-radius: 8px;
+    padding: 8px;
+    padding-top: 0px;
+    min-height: 128px;
 }
 
 .ProseMirror:focus {
-    outline: none;
-    height: max-content;
+    border: 2px solid;
+    outline: 0px solid;
 }
 
 .ProseMirror p {
-    margin: 1em 0;
     width: fit-content;
     height: fit-content;
 }
@@ -78,7 +80,6 @@ input[type=checkbox]:checked+span:before {
     background-color: #98CCD3;
     border-color: #40858F;
 }
-
 
 input[type=checkbox]:checked:disabled+span:before {
     transform: scale(1);

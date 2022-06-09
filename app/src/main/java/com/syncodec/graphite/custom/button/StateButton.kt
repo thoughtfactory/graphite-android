@@ -32,7 +32,6 @@ data class StateData(
 	val stateTint: Color,
 )
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StateButton(
 	stateList: List<StateData>,
@@ -47,7 +46,7 @@ fun StateButton(
 		modifier = modifier.fillMaxWidth(),
 		color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
 		tonalElevation = 0.dp,
-		shape = RoundedCornerShape(50)
+		shape = RoundedCornerShape(12.dp)
 	) {
 		Row(
 			modifier = Modifier.fillMaxSize()
@@ -57,7 +56,7 @@ fun StateButton(
 				modifier = Modifier
 					.fillMaxHeight()
 					.weight(1f)
-					.clip(RoundedCornerShape(50))
+					.clip(RoundedCornerShape(12.dp))
 					.background(stateList[currentState].stateTint)
 			)
 			Spacer(modifier = Modifier.weight((stateList.size - spacerWeight - 1 + 0.00001).toFloat()))

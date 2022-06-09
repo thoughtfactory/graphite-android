@@ -18,15 +18,14 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.custom.LargeTextField
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.custom.LargeTextField
 import com.syncodec.graphite.custom.button.LargeButton
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 import com.syncodec.graphite.konstant.ResourceMap
@@ -48,7 +47,6 @@ fun BucketBottomSheet(
 	val keyboardController = LocalSoftwareKeyboardController.current
 	var selectedBucketType by remember { mutableStateOf<BucketItemType?>(null) }
 	var bucketNameText by rememberSaveable { mutableStateOf("") }
-	var isBucketNameTextFocused by remember { mutableStateOf(false) }
 
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
@@ -120,13 +118,11 @@ fun BucketBottomSheet(
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = bucketNameText,
-				placeholder = "Umm... Let me think...",
-				isFocused = isBucketNameTextFocused,
-				onFocusChanged = { isBucketNameTextFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+					.padding(24.dp, 0.dp),
+				text = bucketNameText,
+				placeholder = "Umm... Let me think..."
 			) { bucketNameText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
@@ -154,11 +150,11 @@ private fun BucketButton(
 	bucketButtonData: BucketButtonData
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
 		animationSpec = tween(600)
 	)
 	val contentColor by animateColorAsState(
-		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onBackground,
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
 		animationSpec = tween(600)
 	)
 
@@ -170,7 +166,7 @@ private fun BucketButton(
 			elevation = 0.dp,
 			shape = RoundedCornerShape(12.dp),
 			backgroundColor = containerColor,
-			border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),
+			border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
 			modifier = Modifier
 				.width(160.dp)
 				.height(96.dp)

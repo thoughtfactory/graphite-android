@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +31,7 @@ import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun TopBar(
 	query: String,
@@ -155,7 +154,11 @@ private fun SearchField(
 					.focusRequester(focusRequester),
 
 				keyboardActions = KeyboardActions(
-					onSearch = { onHitSearch() }
+					onSearch = {
+						onHitSearch()
+						keyboardController?.hide()
+						focusRequester.freeFocus()
+					}
 				),
 				keyboardOptions = KeyboardOptions(
 					imeAction = ImeAction.Search
@@ -229,7 +232,7 @@ private fun QueryListCard(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun QueryCard(
 	query: String?,
@@ -237,7 +240,7 @@ private fun QueryCard(
 	onClick: () -> Unit
 ) {
 	var isVisible by remember { mutableStateOf(false) }
-	var updateVisibility by remember { mutableStateOf(Random.nextInt()) }
+	val updateVisibility by remember { mutableStateOf(Random.nextInt()) }
 	LaunchedEffect(
 		key1 = updateVisibility
 	) {
@@ -255,31 +258,46 @@ private fun QueryCard(
 		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
-		Box(
-			modifier = Modifier
-				.clip(RoundedCornerShape(50))
-				.background(MaterialTheme.colorScheme.primary)
-				.clickable { onClick() }
+		Row(
+			modifier = Modifier,
+			verticalAlignment = Alignment.CenterVertically
 		) {
-			Row(
-				modifier = Modifier.padding(12.dp, 8.dp),
-				verticalAlignment = Alignment.CenterVertically
+			Box(
+				modifier = Modifier
+					.clip(RoundedCornerShape(50))
+					.background(MaterialTheme.colorScheme.primary)
+					.clickable { onClick() }
 			) {
-				Icon(
-					painter = painterResource(id = icon),
-					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onPrimary,
-					modifier = Modifier.requiredSize(16.dp)
-				)
-				if (query != null) {
-					Spacer(modifier = Modifier.width(6.dp))
-					Text(
-						text = query,
-						color = MaterialTheme.colorScheme.onPrimary,
-						style = MaterialTheme.typography.bodyMedium,
+				Row(
+					modifier = Modifier.padding(12.dp, 8.dp),
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Icon(
+						painter = painterResource(id = icon),
+						contentDescription = null,
+						tint = MaterialTheme.colorScheme.onPrimary,
+						modifier = Modifier.requiredSize(16.dp)
 					)
+					if (query != null) {
+						Spacer(modifier = Modifier.width(6.dp))
+						Text(
+							text = query,
+							color = MaterialTheme.colorScheme.onPrimary,
+							style = MaterialTheme.typography.bodyMedium,
+						)
+					}
 				}
 			}
+
+			Spacer(modifier = Modifier.width(6.dp))
+
+			Text(
+				text = "OR",
+				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onSurface
+			)
+
+			Spacer(modifier = Modifier.width(6.dp))
 		}
 	}
 }

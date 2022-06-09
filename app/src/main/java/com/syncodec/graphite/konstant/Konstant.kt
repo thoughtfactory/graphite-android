@@ -79,14 +79,5 @@ class Konstant {
 			10752 to "war",
 			37 to "western"
 		)
-
-		val ilMap: Map<LatLng, Int> = mapOf(
-			LatLng(48.864716, 2.349014) to R.drawable.il_map_1,
-			LatLng(53.726669, -127.647621) to R.drawable.il_map_6,
-			LatLng(27.173891, 78.042068) to R.drawable.il_map_2,
-			LatLng(-19.002846, 46.460938) to R.drawable.il_map_4,
-			LatLng(-46.2418834,-77.7089894) to R.drawable.il_map_5,
-			LatLng(-18.156290, 147.485962) to R.drawable.il_map_3,
-		)
 	}
 }

@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.miscellaneous.toHexString
 import kotlinx.coroutines.*
 
@@ -195,7 +195,7 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 fun rememberRichTextEditorWithLifecycle(): RichTextEditor {
 	val context = LocalContext.current
 	val textColor = MaterialTheme.colorScheme.onBackground.toHexString()
-	val typography by DataStore(context).getTypography.collectAsState(initial = null)
+	val typography by DataStoreInstance(context).getTypography.collectAsState(initial = null)
 
 	val richTextEditor = remember { RichTextEditor(context, textColor, typography) }
 

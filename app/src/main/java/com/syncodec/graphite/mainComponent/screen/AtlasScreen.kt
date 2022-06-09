@@ -1,8 +1,6 @@
 package com.syncodec.graphite.mainComponent.screen
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,16 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.ClusterManager
 import com.syncodec.graphite.custom.notebook.NoteCard
 import com.syncodec.graphite.custom.notebook.NotebookHeaderCard
 import com.syncodec.graphite.custom.notebook.NotebookTimelineSpacer
 import com.syncodec.graphite.database.note.NoteDbEntry
-import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.mainComponent.miscellaneous.AtlasClusterItem
 import com.syncodec.graphite.mainComponent.miscellaneous.ClusterRenderer
@@ -135,31 +130,10 @@ fun AtlasScreen(
 					}
 				}
 
-				if (noteMap.isEmpty()) {
-					map.clear()
-					Konstant.ilMap.forEach { (latLng, il) ->
-						val markerOptions = MarkerOptions()
-							.position(latLng)
-							.anchor(0.5f, 0.5f)
-						map.addMarker(markerOptions)
-							?.setIcon(
-								BitmapDescriptorFactory.fromBitmap(
-									Bitmap.createScaledBitmap(
-										BitmapFactory.decodeResource(context.resources, il),
-										310,
-										310,
-										false
-									)
-								)
-							)
-					}
-				} else {
-					map.clear()
-					noteMap.forEach { (_, note) ->
-						note.latLng?.let { it1 ->
-							AtlasClusterItem(latLng = it1, itemTitle = null)
-						}?.also { clusterManager.addItem(it) }
-					}
+				noteMap.forEach { (_, note) ->
+					note.latLng?.let { it1 ->
+						AtlasClusterItem(latLng = it1, itemTitle = null)
+					}?.also { clusterManager.addItem(it) }
 				}
 			}
 		}

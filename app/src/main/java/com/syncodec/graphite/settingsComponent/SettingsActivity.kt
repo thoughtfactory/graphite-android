@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -22,7 +21,6 @@ import androidx.core.content.FileProvider
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.google.firebase.auth.ktx.auth
@@ -32,7 +30,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.richText.RichTextEditor
 import com.syncodec.graphite.custom.richText.rememberRichTextEditorWithLifecycle
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.premiumComponent.PremiumActivity
 import com.syncodec.graphite.settingsComponent.miscellaneous.DataExchangeDialog
 import com.syncodec.graphite.settingsComponent.miscellaneous.TopBar
@@ -51,9 +49,8 @@ class SettingsActivity : ComponentActivity() {
 	private val viewModel by viewModels<SettingsViewModel>()
 	private var showVaultScreen: MutableState<Boolean> = mutableStateOf(false)
 
-	var showToast: Boolean = false
+	private var showToast: Boolean = false
 
-	@OptIn(ExperimentalMaterialApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -78,8 +75,8 @@ class SettingsActivity : ComponentActivity() {
 
 		setContent {
 			viewModel.activityState = rememberActivityState()
-			val dataStore = DataStore(this)
-			val defaultNotebookKey by dataStore.getDefaultNotebookKey.collectAsState(initial = null)
+			val dataStoreInstance = DataStoreInstance(this)
+			val defaultNotebookKey by dataStoreInstance.getDefaultNotebookKey.collectAsState(initial = null)
 
 			Crossfade(targetState = defaultNotebookKey) {
 				if (it == null) {
@@ -89,10 +86,14 @@ class SettingsActivity : ComponentActivity() {
 						object : RichTextEditor.OnSaveDataListener {
 							override fun onSaveData(data: String) {
 								CoroutineScope(Dispatchers.IO).launch {
-									viewModel.insertNote(
-										notebookKey = defaultNotebookKey!!,
-										data = data
-									)
+									try {
+										viewModel.importNotes(
+											notebookKey = defaultNotebookKey!!,
+											data = data
+										)
+									} catch (exception: Exception) {
+
+									}
 									viewModel.activityState.isDataSaving.value = false
 								}
 							}
@@ -163,13 +164,14 @@ class SettingsActivity : ComponentActivity() {
 				signInLauncher.launch(signInIntent)
 			}
 			Action.LOGOUT -> {
-				val dataStore = DataStore(this)
+				val dataStoreInstance = DataStoreInstance(this)
 				viewModel.firebaseAuth.signOut()
-				dataStore.putExpiryTime(0)
+				dataStoreInstance.putSuperExpiryTime(0)
+				dataStoreInstance.putExpiryTime(0)
 			}
-			Action.CHANGE_FONT_FAMILY -> DataStore(context = this).putTypography(data as Int)
-			Action.CHANGE_THEME -> DataStore(context = this).putTheme(data as Int)
-			Action.CHANGE_BACKGROUND -> DataStore(context = this).putBackground(data as Int)
+			Action.CHANGE_FONT_FAMILY -> DataStoreInstance(context = this).putTypography(data as Int)
+			Action.CHANGE_THEME -> DataStoreInstance(context = this).putTheme(data as Int)
+			Action.CHANGE_BACKGROUND -> DataStoreInstance(context = this).putBackground(data as Int)
 			Action.ADD_PASSCODE -> {
 				activityState.evokeReason.value = EvokeReason.NEW_PASSCODE
 				showVaultScreen.value = true
@@ -194,6 +196,16 @@ class SettingsActivity : ComponentActivity() {
 				activityState.dataExchange.value = DataExchange.IMPORT
 				importFromJourney.launch(arrayOf("application/zip"))
 			}
+			Action.IMPORT_DAY_ONE -> Toast.makeText(
+				this,
+				"This functionality is under development. Stay tuned...",
+				Toast.LENGTH_SHORT
+			).show()
+			Action.IMPORT_GOOGLE_KEEP -> Toast.makeText(
+				this,
+				"This functionality is under development. Stay tuned...",
+				Toast.LENGTH_SHORT
+			).show()
 			Action.EXPORT_NOTEBOOK -> {
 				activityState.dataExchange.value = DataExchange.EXPORT
 				CoroutineScope(Dispatchers.IO).launch {
@@ -383,8 +395,7 @@ class SettingsActivity : ComponentActivity() {
 		}
 	}
 
-	@OptIn(ExperimentalMaterialApi::class)
-	inner class ActivityState @OptIn(ExperimentalPermissionsApi::class) constructor(
+	inner class ActivityState constructor(
 		val currentPath: SnapshotStateList<Path> = mutableStateListOf(Path.BASE),
 		val evokeReason: MutableState<EvokeReason> = mutableStateOf(EvokeReason.UNLOCK_VAULT),
 		val dataExchange: MutableState<DataExchange> = mutableStateOf(DataExchange.NONE),
@@ -418,6 +429,7 @@ class SettingsActivity : ComponentActivity() {
 		IMPORT_GRAPHITE,
 		IMPORT_JOURNEY,
 		IMPORT_DAY_ONE,
+		IMPORT_GOOGLE_KEEP,
 		EXPORT_NOTEBOOK,
 		EXPORT_BUCKET,
 		GOOGLE_DRIVE,

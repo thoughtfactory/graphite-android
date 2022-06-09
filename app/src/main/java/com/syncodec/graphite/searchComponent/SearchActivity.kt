@@ -132,7 +132,10 @@ class SearchActivity : ComponentActivity() {
 				if (it) {
 					TagScreen(tagList = tagList) { onPerformAction(Action.CLICK_TAG, it) }
 				} else {
-					NoteScreen(noteList = noteList) { action, data ->
+					NoteScreen(
+						noteList = noteList,
+						isSearching = activityState.isSearching.value
+					) { action, data ->
 						onPerformAction(action, data)
 					}
 				}
@@ -148,6 +151,8 @@ class SearchActivity : ComponentActivity() {
 		val queryTagList: SnapshotStateList<String> = mutableStateListOf()
 
 		var showTagScreen = mutableStateOf(true)
+
+		var isSearching = mutableStateOf(false)
 
 		var showArchived = mutableStateOf(false)
 		var showFavourite = mutableStateOf(false)

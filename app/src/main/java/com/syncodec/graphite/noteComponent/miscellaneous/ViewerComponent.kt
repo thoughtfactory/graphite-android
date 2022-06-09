@@ -1,7 +1,6 @@
 package com.syncodec.graphite.noteComponent.miscellaneous
 
 import android.graphics.Bitmap
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -23,10 +23,10 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.R
@@ -118,6 +118,8 @@ private fun Thumbnail(
 	bitmap: Bitmap?,
 	onAction: (NoteActivity.Action) -> Unit
 ) {
+	val context = LocalContext.current
+
 	if (bitmap != null) {
 		Box(
 			modifier = Modifier
@@ -126,14 +128,15 @@ private fun Thumbnail(
 				.clip(SquircleShape(12.0))
 				.clickable { onAction(NoteActivity.Action.OPEN_ATTACHMENT) }
 		) {
-			Image(
-				painter = rememberImagePainter(
-					data = bitmap,
-					builder = { crossfade(300) }
-				),
+			AsyncImage(
+				model = ImageRequest.Builder(context)
+					.data(bitmap)
+					.crossfade(300)
+					.build(),
+				placeholder = null,
 				contentDescription = "Attachment",
+				contentScale = ContentScale.Crop,
 				modifier = Modifier.fillMaxSize(),
-				contentScale = ContentScale.Crop
 			)
 		}
 	}
@@ -359,7 +362,7 @@ private fun RichTextScope.RenderHeading(
 ) {
 	val level = attrs?.optInt(LEVEL)
 
-	if (level != null) {
+	if (level != null && level > 0 && level < 7) {
 		Heading(level = level) {
 			richTextString {
 				var textLength = 0
@@ -367,13 +370,7 @@ private fun RichTextScope.RenderHeading(
 					val content = contentList!!.optJSONObject(i)
 					val text = content.optString(TEXT)
 					when (content.optString(TYPE)) {
-						TEXT -> RenderText(
-							text = text,
-							marks = content.optJSONArray(MARKS),
-							start = textLength,
-							end = textLength + text.length,
-							nestLevel = nestLevel + 1
-						)
+						TEXT -> append(text = text)
 					}
 					textLength += text.length
 				}
@@ -416,6 +413,21 @@ private fun RichTextScope.RenderBlockquote(
 				PARAGRAPH -> RenderParagraph(
 					attrs = content.optJSONObject(ATTRS),
 					contentList = content.optJSONArray(CONTENT),
+					nestLevel = nestLevel + 1
+				)
+				BULLET_LIST -> RenderList(
+					contentList = content.optJSONArray(CONTENT),
+					listType = ListType.Unordered,
+					nestLevel = nestLevel + 1
+				)
+				ORDERED_LIST -> RenderList(
+					contentList = content.optJSONArray(CONTENT),
+					listType = ListType.Ordered,
+					nestLevel = nestLevel + 1
+				)
+				TASK_LIST -> RenderList(
+					contentList = content.optJSONArray(CONTENT),
+					listType = ListType.Task,
 					nestLevel = nestLevel + 1
 				)
 			}
@@ -468,12 +480,27 @@ private fun renderListItem(
 ): Pair<@Composable (RichTextScope.() -> Unit), Boolean?> {
 	return Pair(
 		{
-			for (i in 0 until  (contentList?.length() ?: 0)) {
+			for (i in 0 until (contentList?.length() ?: 0)) {
 				val content = contentList!!.optJSONObject(i)
 				when (content.optString(TYPE)) {
 					PARAGRAPH -> RenderParagraph(
 						attrs = content.optJSONObject(ATTRS),
 						contentList = content.optJSONArray(CONTENT),
+						nestLevel = nestLevel + 1
+					)
+					BULLET_LIST -> RenderList(
+						contentList = content.optJSONArray(CONTENT),
+						listType = ListType.Unordered,
+						nestLevel = nestLevel + 1
+					)
+					ORDERED_LIST -> RenderList(
+						contentList = content.optJSONArray(CONTENT),
+						listType = ListType.Ordered,
+						nestLevel = nestLevel + 1
+					)
+					TASK_LIST -> RenderList(
+						contentList = content.optJSONArray(CONTENT),
+						listType = ListType.Task,
 						nestLevel = nestLevel + 1
 					)
 				}
@@ -558,7 +585,6 @@ private fun RichTextString.Builder.RenderText(
 	}
 }
 
-@OptIn(ExperimentalUnitApi::class)
 private fun viewerTextStyle(
 	colorScheme: ColorScheme,
 	typography: Typography

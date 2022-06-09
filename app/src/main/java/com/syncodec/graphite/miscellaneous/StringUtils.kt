@@ -19,32 +19,36 @@ class StringUtils {
 			return false
 		}
 
-		fun String.encrypt(): String {
-			val random = SecureRandom()
-			val salt = ByteArray(256)
-			random.nextBytes(salt)
+		fun String.encrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
+			try {
+				val random = SecureRandom()
+				val salt = ByteArray(256)
+				random.nextBytes(salt)
 
-			val pbKeySpec =
-				PBEKeySpec("cJj1w1^x00#r!37#tM@46tM1q1d*&Cm".toCharArray(), salt, 1324, 256)
-			val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-			val keyBytes = secretKeyFactory.generateSecret(pbKeySpec).encoded
-			val keySpec = SecretKeySpec(keyBytes, "AES")
+				val pbKeySpec =
+					PBEKeySpec(key.toCharArray(), salt, 1324, 256)
+				val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+				val keyBytes = secretKeyFactory.generateSecret(pbKeySpec).encoded
+				val keySpec = SecretKeySpec(keyBytes, "AES")
 
-			val ivRandom = SecureRandom()
-			val iv = ByteArray(16)
-			ivRandom.nextBytes(iv)
-			val ivSpec = IvParameterSpec(iv)
+				val ivRandom = SecureRandom()
+				val iv = ByteArray(16)
+				ivRandom.nextBytes(iv)
+				val ivSpec = IvParameterSpec(iv)
 
-			val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-			cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
-			val encrypted = cipher.doFinal(toByteArray())
+				val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
+				cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
+				val encrypted = cipher.doFinal(toByteArray())
 
-			return salt.toString(StandardCharsets.ISO_8859_1) +
-					iv.toString(StandardCharsets.ISO_8859_1) +
-					encrypted.toString(StandardCharsets.ISO_8859_1)
+				return salt.toString(StandardCharsets.ISO_8859_1) +
+						iv.toString(StandardCharsets.ISO_8859_1) +
+						encrypted.toString(StandardCharsets.ISO_8859_1)
+			} catch (exception : Exception) {
+				return null
+			}
 		}
 
-		fun String.decrypt(): String {
+		fun String.decrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
 			return try {
 				if (length > 256 + 16) {
 					val salt = substring(0, 256).toByteArray(StandardCharsets.ISO_8859_1)
@@ -53,7 +57,7 @@ class StringUtils {
 					val cipherText =
 						substring(256 + 16).toByteArray(StandardCharsets.ISO_8859_1)
 
-					val pbKeySpec = PBEKeySpec("cJj1w1^x00#r!37#tM@46tM1q1d*&Cm".toCharArray(), salt, 1324, 256)
+					val pbKeySpec = PBEKeySpec(key.toCharArray(), salt, 1324, 256)
 					val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
 					val keyBytes = secretKeyFactory.generateSecret(pbKeySpec).encoded
 					val keySpec = SecretKeySpec(keyBytes, "AES")
@@ -65,10 +69,10 @@ class StringUtils {
 
 					decrypted.toString(StandardCharsets.ISO_8859_1)
 				} else {
-					""
+					null
 				}
 			} catch (exception: Exception) {
-				""
+				null
 			}
 		}
 	}

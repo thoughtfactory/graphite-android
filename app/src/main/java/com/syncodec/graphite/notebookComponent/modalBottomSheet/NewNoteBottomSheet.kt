@@ -50,13 +50,11 @@ fun NewNoteBottomSheet(
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = noteTitleText,
-				placeholder = "What is this note about",
-				isFocused = isNoteTitleFocused,
-				onFocusChanged = { isNoteTitleFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+					.padding(24.dp, 0.dp),
+				text = noteTitleText,
+				placeholder = "What is this note about"
 			) {
 				noteTitleText = it
 			}

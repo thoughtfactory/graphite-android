@@ -4,14 +4,11 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.IconButton
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,8 +19,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import coil.annotation.ExperimentalCoilApi
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
@@ -48,7 +45,10 @@ fun AttachmentBottomSheet(
 	var photoUri: Uri? = null
 	val takePicture =
 		rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
-			if (isCaptured) onAction(NoteActivity.Action.INSERT_FILE, Pair(listOf(photoUri), isPremium))
+			if (isCaptured) onAction(
+				NoteActivity.Action.INSERT_FILE,
+				Pair(listOf(photoUri), isPremium)
+			)
 		}
 
 	val openFilePicker =
@@ -141,14 +141,15 @@ private fun AttachmentView(
 //			TODO
 			when ("image") {
 				"image" -> {
-					Image(
-						painter = rememberImagePainter(
-							data = uri,
-							builder = { crossfade(true) }
-						),
+					AsyncImage(
+						model = ImageRequest.Builder(context)
+							.data(uri)
+							.crossfade(300)
+							.build(),
+						placeholder = null,
 						contentDescription = null,
 						contentScale = ContentScale.Crop,
-						modifier = Modifier.fillMaxSize()
+						modifier = Modifier.fillMaxSize(),
 					)
 				}
 //				"video" -> Image(
@@ -169,14 +170,15 @@ private fun AttachmentView(
 //					contentScale = ContentScale.Crop,
 //					modifier = Modifier.fillMaxSize()
 //				)
-				else -> Image(
-					painter = rememberImagePainter(
-						data = uri,
-						builder = { crossfade(true) }
-					),
+				else -> AsyncImage(
+					model = ImageRequest.Builder(context)
+						.data(uri)
+						.crossfade(300)
+						.build(),
+					placeholder = null,
 					contentDescription = null,
 					contentScale = ContentScale.Crop,
-					modifier = Modifier.fillMaxSize()
+					modifier = Modifier.fillMaxSize(),
 				)
 			}
 

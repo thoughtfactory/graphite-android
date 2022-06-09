@@ -1,7 +1,9 @@
 package com.syncodec.graphite.database.export
 
+import androidx.annotation.Keep
 import com.google.android.gms.maps.model.LatLng
 
+@Keep
 data class NoteExport(
 	val key: String,
 	val createdTimestamp: Long,
@@ -15,5 +17,6 @@ data class NoteExport(
 	val latLng: LatLng?,
 	val address: String?,
 	val attachmentKey: List<String>,
-	val tagList: List<String>
+	val tagList: List<String>,
+	val version: Int = 1
 )

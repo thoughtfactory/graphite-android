@@ -611,6 +611,7 @@ class NoteActivity : ComponentActivity() {
 		SAVE_NOTE,
 		EDIT_NOTE,
 		EDITOR_READY,
+		FOCUS_EDITOR,
 		OPEN_METADATA,
 		OPEN_MENU,
 		NEXT_PAGE,

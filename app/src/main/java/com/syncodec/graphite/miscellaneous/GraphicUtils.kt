@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
+import java.io.File
+import java.io.FileOutputStream
 
 fun View.loadBitmapFromView() : Bitmap? {
 	val b = Bitmap.createBitmap(layoutParams.width, layoutParams.height, Bitmap.Config.ARGB_8888)
@@ -35,6 +37,16 @@ class GraphicUtils {
 			view.draw(canvas)
 
 			return bitmap
+		}
+
+		fun Bitmap.saveBitmap(file: File) {
+			try {
+				FileOutputStream(file).use { out ->
+					compress(Bitmap.CompressFormat.PNG, 100, out)
+				}
+			} catch (e: Exception) {
+				e.printStackTrace()
+			}
 		}
 	}
 }

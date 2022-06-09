@@ -10,13 +10,11 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -45,6 +43,7 @@ import com.syncodec.graphite.bucketComponent.screen.TodoScreen
 import com.syncodec.graphite.bucketItemComponent.BucketItemActivity
 import com.syncodec.graphite.custom.DeleteDialog
 import com.syncodec.graphite.custom.LoadingView
+import com.syncodec.graphite.database.bucketItem.BucketItemState
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
@@ -62,10 +61,7 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 class BucketActivity : ComponentActivity() {
 	val viewModel by viewModels<BucketViewModel>()
 
-	@OptIn(
-		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
-		ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class
-	)
+	@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -93,7 +89,7 @@ class BucketActivity : ComponentActivity() {
 	@OptIn(ExperimentalMaterialApi::class)
 	override fun onBackPressed() {
 		when {
-			viewModel.activityState.bottomSheetState.isVisible -> viewModel.activityState.coroutineScope.launch { viewModel.activityState.bottomSheetState.hide() }
+			viewModel.activityState.bottomSheetState.isVisible -> viewModel.activityState.scope.launch { viewModel.activityState.bottomSheetState.hide() }
 			viewModel.activityState.isSelected.value -> {
 				viewModel.activityState.selectedItemList.removeIf { true }
 				viewModel.activityState.isSelected.value = false
@@ -121,7 +117,7 @@ class BucketActivity : ComponentActivity() {
 
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
 	private fun onPerformAction(action: Action, data: Any? = null) {
-		val scope = viewModel.activityState.coroutineScope
+		val scope = viewModel.activityState.scope
 		val activityState = viewModel.activityState
 		val bucketDbEntry by viewModel.bucketDbEntry
 
@@ -217,12 +213,12 @@ class BucketActivity : ComponentActivity() {
 
 				viewModel.bucketItemDbEntry.value = null
 
-				activityState.coroutineScope.launch {
+				activityState.scope.launch {
 					activityState.bottomSheetState.show()
 				}
 			}
 			Action.ADD_BOOK -> {
-				activityState.coroutineScope.launch { viewModel.activityState.bottomSheetState.hide() }
+				activityState.scope.launch { viewModel.activityState.bottomSheetState.hide() }
 				Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.IS_NEW.name, true)
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
@@ -235,7 +231,7 @@ class BucketActivity : ComponentActivity() {
 				}
 			}
 			Action.ADD_SHOW -> {
-				activityState.coroutineScope.launch { activityState.bottomSheetState.hide() }
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
 				Intent(this@BucketActivity, BucketItemActivity::class.java).apply {
 					putExtra(Konstant.Companion.Konstant.IS_NEW.name, true)
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
@@ -304,6 +300,9 @@ class BucketActivity : ComponentActivity() {
 				bucketDbEntry!!.isLocked = !bucketDbEntry!!.isLocked
 				viewModel.updateItem()
 			}
+			Action.UPDATE_BUCKET -> {
+				viewModel.updateBucket(bucketTitle = data as String)
+			}
 			Action.DELETE -> null
 			Action.EXPORT -> null
 			Action.SHARE -> null
@@ -329,6 +328,18 @@ class BucketActivity : ComponentActivity() {
 		val bottomSheetType by activityState.bottomSheetType
 		val dataType by activityState.dataType
 
+		var alphaCount by remember { mutableStateOf(0) }
+		var betaCount by remember { mutableStateOf(0) }
+		var gammaCount by remember { mutableStateOf(0) }
+		var totalCount by remember { mutableStateOf(0) }
+
+		SideEffect {
+			alphaCount = bucketItemList.filter { it.state == BucketItemState.ALPHA }.size
+			betaCount = bucketItemList.filter { it.state == BucketItemState.BETA }.size
+			gammaCount = bucketItemList.filter { it.state == BucketItemState.GAMMA }.size
+			totalCount = alphaCount + betaCount + gammaCount
+		}
+
 		ModalBottomSheetLayout(
 			sheetState = viewModel.activityState.bottomSheetState,
 			sheetElevation = 0.dp,
@@ -340,10 +351,14 @@ class BucketActivity : ComponentActivity() {
 					bucketItemDbEntry = bucketItemDbEntry,
 					bottomSheetType = bottomSheetType,
 					dataType = dataType,
+					alphaCount = alphaCount,
+					betaCount = betaCount,
+					gammaCount = gammaCount,
+					totalCount = totalCount,
 				) { action, data -> onPerformAction(action, data) }
 			}
 		) {
-			if (bucketItemList.isNullOrEmpty()) {
+			if (bucketItemList.isEmpty()) {
 				EmptyBucketView(
 					bucketTitle = bucketDbEntry?.title ?: "",
 					bucketItemType = bucketDbEntry!!.bucketItemType
@@ -448,7 +463,7 @@ class BucketActivity : ComponentActivity() {
 
 	@OptIn(ExperimentalMaterialApi::class)
 	class ActivityState @OptIn(ExperimentalPagerApi::class) constructor(
-		val coroutineScope: CoroutineScope,
+		val scope: CoroutineScope,
 		val bottomSheetState: ModalBottomSheetState,
 		val collapsingToolbarScaffoldState: CollapsingToolbarScaffoldState,
 		val pagerState: PagerState
@@ -502,6 +517,7 @@ class BucketActivity : ComponentActivity() {
 		FAVOURITE,
 		ARCHIVE,
 		LOCK,
+		UPDATE_BUCKET,
 		DELETE,
 		EXPORT,
 		SHARE,

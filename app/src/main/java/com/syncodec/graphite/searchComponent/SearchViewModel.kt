@@ -1,8 +1,10 @@
 package com.syncodec.graphite.searchComponent
 
 import android.app.Application
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.AndroidViewModel
@@ -71,6 +73,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 		searchCanceller = Random.nextInt()
 		val currentSearchCanceller = searchCanceller
 		viewModelScope.launch(Dispatchers.Default) {
+			activityState.isSearching.value = true
+
 			noteList.forEach { (note, _) -> noteList[note] = false }
 			noteList.forEach { (note, _) ->
 				getApplication<Graphite>().getNoteString(note.key)?.also { noteContent ->
@@ -90,6 +94,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 					}
 				}
 			}
+
+			activityState.isSearching.value = false
 		}
 	}
 

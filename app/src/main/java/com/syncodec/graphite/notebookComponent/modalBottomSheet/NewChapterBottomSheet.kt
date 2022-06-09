@@ -52,13 +52,11 @@ fun NewChapterBottomSheet(
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = chapterTitleText,
-				placeholder = "Don't keep chapter name empty",
-				isFocused = isChapterTitleTextFocused,
-				onFocusChanged = { isChapterTitleTextFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+					.padding(24.dp, 0.dp),
+				text = chapterTitleText,
+				placeholder = "Don't keep chapter name empty"
 			) {
 				chapterTitleText = it
 			}
@@ -66,13 +64,11 @@ fun NewChapterBottomSheet(
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = chapterDescriptionText,
-				placeholder = "What is it about?",
-				isFocused = isChapterDescriptionTextFocused,
-				onFocusChanged = { isChapterDescriptionTextFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+					.padding(24.dp, 0.dp),
+				text = chapterDescriptionText,
+				placeholder = "What is it about?"
 			) { chapterDescriptionText = it }
 
 			Spacer(modifier = Modifier.height(16.dp))

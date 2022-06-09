@@ -3,7 +3,6 @@ package com.syncodec.graphite.bucketComponent.modalBottomSheet
 import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -13,7 +12,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,7 +25,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -82,7 +81,7 @@ data class ShowData(
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AddShowSheet(
 	dataType: BucketActivity.DataType,
@@ -91,7 +90,6 @@ fun AddShowSheet(
 	val context = LocalContext.current
 
 	var showNameText by rememberSaveable { mutableStateOf("") }
-	var isShowNameTextFocused by remember { mutableStateOf(false) }
 
 	var sheetState by remember { mutableStateOf(SheetState.INIT) }
 
@@ -190,8 +188,6 @@ fun AddShowSheet(
 
 					}
 				),
-				isFocused = isShowNameTextFocused,
-				onFocusChanged = { isShowNameTextFocused = it },
 				onValueChanged = { showNameText = it }
 			) { onAction(BucketActivity.Action.DATA_TYPE_SELECT, null) }
 
@@ -287,6 +283,8 @@ private fun ShowCard(
 	showData: ShowData,
 	onClick: () -> Unit = {}
 ) {
+	val context = LocalContext.current
+
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier.padding(8.dp),
@@ -299,14 +297,15 @@ private fun ShowCard(
 			onClick = { onClick() }
 		) {
 			if (showData.posterPath != null) {
-				Image(
-					painter = rememberImagePainter(
-						data = "https://image.tmdb.org/t/p/w500${showData.posterPath}",
-						builder = { crossfade(true) }
-					),
-					contentDescription = showData.title,
+				AsyncImage(
+					model = ImageRequest.Builder(context)
+						.data("https://image.tmdb.org/t/p/w500${showData.posterPath}")
+						.crossfade(300)
+						.build(),
+					placeholder = null,
+					contentDescription = showData.id,
+					contentScale = ContentScale.Crop,
 					modifier = Modifier.fillMaxSize(),
-					contentScale = ContentScale.Crop
 				)
 			}
 		}

@@ -19,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class BucketViewModel(application: Application) : AndroidViewModel(application) {
 
-	private val bucketRepository: BucketRepository = BucketRepository.getInstance(graphite = application as Graphite)
+	private val bucketRepository: BucketRepository =
+		BucketRepository.getInstance(graphite = application as Graphite)
 
 	lateinit var activityState: BucketActivity.ActivityState
 
@@ -73,11 +74,23 @@ class BucketViewModel(application: Application) : AndroidViewModel(application) 
 		}
 	}
 
-	fun updateItem() = viewModelScope.launch(Dispatchers.IO) { bucketDbEntry.value?.let { bucketRepository.putBucket(bucketDbEntry = it) } }
+	fun updateItem() = viewModelScope.launch(Dispatchers.IO) {
+		bucketDbEntry.value?.let {
+			bucketRepository.putBucket(bucketDbEntry = it)
+		}
+	}
 
 	fun deleteBucketItem(keyList: List<String>) {
 		viewModelScope.launch(Dispatchers.IO) {
 			bucketRepository.deleteBucketItem(bucketKey = bucketKey, keyList = keyList)
 		}
 	}
+
+	fun updateBucket(bucketTitle: String) =
+		viewModelScope.launch(Dispatchers.IO) {
+			bucketDbEntry.value?.apply {
+				this.title = bucketTitle
+				bucketRepository.putBucket(this)
+			}
+		}
 }

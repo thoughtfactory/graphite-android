@@ -58,7 +58,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
 	val notebookList = noteRepository.notebookListFlow
 
-	suspend fun insertNote(notebookKey: String, data: String) {
+	suspend fun importNotes(notebookKey: String, data: String) {
 		val dataObject = JSONObject(data)
 		val dataJson = dataObject.optJSONObject("dataJson")
 		val dataText = dataObject.optString("dataText")
@@ -81,9 +81,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 						if (importData.optLong("userTimestamp") != 0L) importData.optLong("userTimestamp") else System.currentTimeMillis()
 					this.title = importData.optString("title")
 					this.contentThumbnail = dataText.substring(0, minOf(256, dataText.length)).encrypt()
-					importData.optDouble("lat").also { lat ->
+					importData.optDouble("latitude").also { lat ->
 						if (!lat.isNaN()) {
-							importData.optDouble("lon").also { lon ->
+							importData.optDouble("longitude").also { lon ->
 								if (!lon.isNaN()) this.latLng = LatLng(lat, lon)
 							}
 						}

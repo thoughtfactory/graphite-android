@@ -6,8 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle.Companion.Italic
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.resolveDefaults
 import androidx.compose.ui.unit.sp
 
@@ -22,36 +20,27 @@ import androidx.compose.ui.unit.sp
 public typealias HeadingStyle = (level: Int, textStyle: TextStyle) -> TextStyle
 
 internal val DefaultHeadingStyle: HeadingStyle = { level, textStyle ->
-  when (level) {
-    0 -> TextStyle(
-        fontSize = 36.sp,
-        fontWeight = FontWeight.Bold
-    )
-    1 -> TextStyle(
-        fontSize = 26.sp,
-        fontWeight = FontWeight.Bold
-    )
-    2 -> TextStyle(
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Bold,
-        color = textStyle.color.copy(alpha = .7F)
-    )
-    3 -> TextStyle(
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold,
-        fontStyle = Italic
-    )
-    4 -> TextStyle(
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        color = textStyle.color.copy(alpha = .7F)
-    )
-    5 -> TextStyle(
-        fontWeight = FontWeight.Bold,
-        color = textStyle.color.copy(alpha = .5f)
-    )
-    else -> textStyle
-  }
+	when (level) {
+		1 -> TextStyle(
+			fontSize = 48.sp,
+		)
+		2 -> TextStyle(
+			fontSize = 40.sp,
+		)
+		3 -> TextStyle(
+			fontSize = 32.sp,
+		)
+		4 -> TextStyle(
+			fontSize = 28.sp,
+		)
+		5 -> TextStyle(
+			fontSize = 24.sp,
+		)
+		6 -> TextStyle(
+			fontSize = 20.sp,
+		)
+		else -> textStyle
+	}
 }
 
 /**
@@ -59,13 +48,14 @@ internal val DefaultHeadingStyle: HeadingStyle = { level, textStyle ->
  *
  * @param level The non-negative rank of the header, with 0 being the most important.
  */
-@Composable public fun RichTextScope.Heading(
-  level: Int,
-  text: String
+@Composable
+fun RichTextScope.Heading(
+	level: Int,
+	text: String
 ) {
-  Heading(level) {
-    Text(text)
-  }
+	Heading(level) {
+		Text(text)
+	}
 }
 
 /**
@@ -73,22 +63,23 @@ internal val DefaultHeadingStyle: HeadingStyle = { level, textStyle ->
  *
  * @param level The non-negative rank of the header, with 0 being the most important.
  */
-@Composable public fun RichTextScope.Heading(
-  level: Int,
-  children: @Composable RichTextScope.() -> Unit
+@Composable
+fun RichTextScope.Heading(
+	level: Int,
+	children: @Composable RichTextScope.() -> Unit
 ) {
-  require(level >= 0) { "Level must be at least 0" }
+	require(level >= 0) { "Level must be at least 0" }
 
-  val incomingStyle = currentTextStyle.let {
-    it.copy(color = it.color.takeOrElse { currentContentColor })
-  }
-  val currentTextStyle = resolveDefaults(incomingStyle, LocalLayoutDirection.current)
+	val incomingStyle = currentTextStyle.let {
+		it.copy(color = it.color.takeOrElse { currentContentColor })
+	}
+	val currentTextStyle = resolveDefaults(incomingStyle, LocalLayoutDirection.current)
 
-  val headingStyleFunction = currentRichTextStyle.resolveDefaults().headingStyle!!
-  val headingTextStyle = headingStyleFunction(level, currentTextStyle)
-  val mergedTextStyle = currentTextStyle.merge(headingTextStyle)
+	val headingStyleFunction = currentRichTextStyle.resolveDefaults().headingStyle!!
+	val headingTextStyle = headingStyleFunction(level, currentTextStyle)
+	val mergedTextStyle = currentTextStyle.merge(headingTextStyle)
 
-  ProvideTextStyle(mergedTextStyle) {
-    children()
-  }
+	ProvideTextStyle(mergedTextStyle) {
+		children()
+	}
 }

@@ -1,21 +1,26 @@
 package com.syncodec.graphite.bucketItemComponent.miscellaneous
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 
 @Composable
 fun ThumbnailCard(
 	thumbnail: Any?
 ) {
+	val context = LocalContext.current
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
 
@@ -27,14 +32,15 @@ fun ThumbnailCard(
 			.aspectRatio(0.75f)
 			.padding(0.dp),
 	) {
-		Image(
-			painter = rememberImagePainter(
-				data = thumbnail,
-				builder = { crossfade(true) }
-			),
+		AsyncImage(
+			model = ImageRequest.Builder(context)
+				.data(thumbnail)
+				.crossfade(300)
+				.build(),
+			placeholder = null,
 			contentDescription = null,
 			contentScale = ContentScale.Crop,
-			modifier = Modifier.fillMaxSize()
+			modifier = Modifier.fillMaxSize(),
 		)
 	}
 }

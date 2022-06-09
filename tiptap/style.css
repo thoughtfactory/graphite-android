@@ -28,8 +28,12 @@ body {
     padding-right: 8px;
 }
 
+.ProseMirror {
+    height: 130px;
+}
+
 .ProseMirror:focus {
-    outline: none;
+    outline: #40858F;
     height: max-content;
 }
 

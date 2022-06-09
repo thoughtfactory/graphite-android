@@ -1,6 +1,7 @@
 package com.syncodec.graphite.notebookComponent.modalBottomSheet
 
 import android.graphics.BitmapFactory
+import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -22,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -30,28 +30,22 @@ import com.syncodec.graphite.custom.LargeTextField
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.custom.button.LargeButton
-import com.syncodec.graphite.custom.button.StateButton
-import com.syncodec.graphite.custom.button.StateData
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.database.notebook.NotebookTheme
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.bookCoverImageList
 import com.syncodec.graphite.notebookComponent.NotebookActivity
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun EditBottomSheet(
 	notebookDbEntry: NotebookDbEntry,
 	onAction: (NotebookActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
-	val focusManager = LocalFocusManager.current
 
 	var notebookTitleText by rememberSaveable { mutableStateOf(notebookDbEntry.title) }
-	var isNotebookTitleTextFocused by remember { mutableStateOf(false) }
 
 	var notebookDescriptionText by rememberSaveable { mutableStateOf(notebookDbEntry.description) }
-	var isNotebookDescriptionTextFocused by remember { mutableStateOf(false) }
 
 	var notebookTheme by remember { mutableStateOf(NotebookTheme.COLOR) }
 	var notebookColor by remember { mutableStateOf(notebookDbEntry.color?.let { Color(it) }) }
@@ -67,13 +61,11 @@ fun EditBottomSheet(
 		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(180.dp),
+			.heightIn(420.dp),
 	) {
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally,
-			modifier = Modifier
-				.fillMaxWidth()
-				.heightIn(420.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
 
 			BottomSheetStrip()
@@ -87,48 +79,22 @@ fun EditBottomSheet(
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = notebookTitleText,
-				placeholder = "Give your book a title",
-				isFocused = isNotebookTitleTextFocused,
-				onFocusChanged = { isNotebookTitleTextFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+					.padding(24.dp, 0.dp),
+				text = notebookTitleText,
+				placeholder = "Give your book a title"
 			) { notebookTitleText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = notebookDescriptionText ?: "",
-				placeholder = "And a little description",
-				isFocused = isNotebookDescriptionTextFocused,
-				onFocusChanged = { isNotebookDescriptionTextFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
-			) { notebookDescriptionText = it }
-
-			Spacer(modifier = Modifier.height(16.dp))
-
-			StateButton(
-				stateList = listOf(
-					StateData(
-						title = "Color",
-						icon = R.drawable.ic_color,
-						stateTint = MaterialTheme.colorScheme.primary
-					),
-					StateData(
-						title = "Image",
-						icon = R.drawable.ic_gallery,
-						stateTint = MaterialTheme.colorScheme.primary
-					)
-				),
-				currentState = currentState,
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(32.dp)
 					.padding(24.dp, 0.dp),
-			) { currentState = it }
+				text = notebookDescriptionText ?: "",
+				placeholder = "And a little description"
+			) { notebookDescriptionText = it }
 
 			Spacer(modifier = Modifier.height(12.dp))
 
@@ -162,19 +128,31 @@ fun EditBottomSheet(
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp)
 			) {
-				notebookDbEntry.apply {
-					this.title = notebookTitleText
-					this.description = notebookDescriptionText
-					this.color = notebookColor?.toArgb()
-					this.bitmap =
-						notebookImage?.let { BitmapFactory.decodeResource(context.resources, it) }
+				when {
+					notebookTitleText.isEmpty() -> Toast.makeText(
+						context,
+						"Notebook title cannot be empty",
+						Toast.LENGTH_SHORT
+					).show()
+					notebookColor == null -> Toast.makeText(
+						context,
+						"Select a color for notebook",
+						Toast.LENGTH_SHORT
+					).show()
+					else -> {
+						notebookDbEntry.apply {
+							this.title = notebookTitleText
+							this.description = notebookDescriptionText
+							this.color = notebookColor?.toArgb()
+							this.bitmap =
+								notebookImage?.let { BitmapFactory.decodeResource(context.resources, it) }
 
-					onAction(NotebookActivity.Action.UPDATE_NOTEBOOK, this)
+							onAction(NotebookActivity.Action.UPDATE_NOTEBOOK, this)
+						}
+
+						notebookTitleText = ""
+						notebookDescriptionText = ""					}
 				}
-
-				focusManager.clearFocus()
-				notebookTitleText = ""
-				notebookDescriptionText = ""
 			}
 
 			Spacer(modifier = Modifier.height(32.dp))

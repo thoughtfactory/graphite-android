@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -68,6 +67,18 @@ private fun Bar(
 				color = MaterialTheme.colorScheme.onSurface,
 				style = MaterialTheme.typography.titleMedium
 			)
+		},
+		actions = {
+			IconButton(onClick = { onAction(BucketActivity.Action.MENU, null) }) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_menu),
+					contentDescription = "Menu",
+					tint = MaterialTheme.colorScheme.onSurface,
+					modifier = Modifier
+						.requiredSize(32.dp)
+						.padding(4.dp)
+				)
+			}
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
 	)

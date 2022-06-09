@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.settingsComponent.SettingsActivity
 import com.syncodec.graphite.settingsComponent.miscellaneous.SettingButton
 
@@ -19,8 +19,8 @@ fun SecurityScreen(
 	onClick: (SettingsActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
-	val dataStore = remember { DataStore(context = context) }
-	val passcode by dataStore.getPasscode.collectAsState(initial = null)
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+	val passcode by dataStoreInstance.getPasscode.collectAsState(initial = null)
 
 	Crossfade(targetState = passcode != null) {
 		if (it) {

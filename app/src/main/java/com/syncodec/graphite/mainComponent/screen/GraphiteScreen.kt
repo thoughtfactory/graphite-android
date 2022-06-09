@@ -1,5 +1,7 @@
 package com.syncodec.graphite.mainComponent.screen
 
+import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
@@ -25,7 +27,7 @@ fun GraphiteScreen(
 	selectedItemList: List<String>,
 	isFilterActive: Boolean,
 	quote: QuoteDbEntry?,
-	quoteBg: File?,
+	quoteBg: Drawable?,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
 	Box(

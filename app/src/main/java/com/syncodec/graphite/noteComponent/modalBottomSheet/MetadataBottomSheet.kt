@@ -103,7 +103,6 @@ fun MetadataBottomSheet(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TimestampCard(
 	createdTimestamp: Long,
@@ -184,7 +183,7 @@ fun TimestampCard(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun LocationCard(
 	addressState: NoteActivity.AddressState,

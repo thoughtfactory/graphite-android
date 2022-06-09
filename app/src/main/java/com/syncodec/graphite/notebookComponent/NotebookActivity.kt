@@ -35,7 +35,7 @@ import com.syncodec.graphite.database.chapter.ChapterDbEntry
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.noteComponent.NoteActivity
 import com.syncodec.graphite.notebookComponent.miscellaneous.TopBar
 import com.syncodec.graphite.notebookComponent.modalBottomSheet.BottomSheetType
@@ -240,8 +240,8 @@ class NotebookActivity : ComponentActivity() {
 				}
 			}
 			Action.SET_AS_DEFAULT -> {
-				val dataStore = DataStore(this)
-				dataStore.putDefaultNotebookKey(notebookKey = viewModel.notebookKey)
+				val dataStoreInstance = DataStoreInstance(this)
+				dataStoreInstance.putDefaultNotebookKey(notebookKey = viewModel.notebookKey)
 				activityState.scope.launch { activityState.bottomSheetState.hide() }
 				Toast.makeText(
 					this,
@@ -288,11 +288,11 @@ class NotebookActivity : ComponentActivity() {
 	)
 	@Composable
 	private fun Screen() {
-		val dataStore = remember { DataStore(context = this) }
+		val dataStoreInstance = remember { DataStoreInstance(context = this) }
 
 		val activityState = viewModel.activityState
 		val status by viewModel.status
-		val passcode by dataStore.getPasscode.collectAsState(initial = null)
+		val passcode by dataStoreInstance.getPasscode.collectAsState(initial = null)
 
 		val showFavourite by activityState.showFavourite
 		val showArchived by activityState.showArchived

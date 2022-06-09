@@ -3,15 +3,24 @@ package com.syncodec.graphite
 import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.FileProvider
+import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import com.qonversion.android.sdk.Qonversion
@@ -24,14 +33,18 @@ import com.syncodec.graphite.database.export.NoteExport
 import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.database.quote.QuoteDbEntry
 import com.syncodec.graphite.konstant.Konstant
-import com.syncodec.graphite.miscellaneous.DataStore
+import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.miscellaneous.FileUtils
 import com.syncodec.graphite.miscellaneous.FileUtils.Companion.copyInputStreamToOutputStream
 import com.syncodec.graphite.miscellaneous.FileUtils.Companion.getFileExtension
+import com.syncodec.graphite.miscellaneous.GraphicUtils.Companion.saveBitmap
 import com.syncodec.graphite.miscellaneous.TimeUtils
+import com.syncodec.graphite.miscellaneous.dataStore
 import io.github.lucasfsc.html2pdf.Html2Pdf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.File
@@ -41,7 +54,10 @@ import java.util.*
 
 class Graphite : Application() {
 
+	lateinit var dataStoreInstance: DataStoreInstance
 	var vaultState = mutableStateOf(VaultState.NOT_OPENED)
+
+	private lateinit var appUpdateManager: AppUpdateManager
 
 	private lateinit var ROOT: String
 
@@ -63,16 +79,22 @@ class Graphite : Application() {
 	override fun onCreate() {
 		super.onCreate()
 
+		dataStoreInstance = DataStoreInstance(this)
+		appUpdateManager = AppUpdateManagerFactory.create(this)
+
+		applyUpdates()
+		checkUpdate()
+
 		Qonversion.launch(this, "uxe7AOivKhdL8V-U-ZlHS1d03IGxlAhk", false)
 
-		Qonversion.checkPermissions(object : QonversionPermissionsCallback{
+		Qonversion.checkPermissions(object : QonversionPermissionsCallback {
 			override fun onError(error: QonversionError) {
 
 			}
 
 			override fun onSuccess(permissions: Map<String, QPermission>) {
 				var isSubscriptionActive: Boolean = false
-				val dataStore = DataStore(this@Graphite)
+				val dataStoreInstance = DataStoreInstance(this@Graphite)
 
 				permissions.forEach { (key, qPermission) ->
 					qPermission.expirationDate?.time.also {
@@ -80,9 +102,9 @@ class Graphite : Application() {
 						calendar.add(android.icu.util.Calendar.MONTH, 1)
 
 						if (it == null) {
-							dataStore.putExpiryTime(calendar.timeInMillis)
+							dataStoreInstance.putExpiryTime(calendar.timeInMillis)
 						} else {
-							dataStore.putExpiryTime(it)
+							dataStoreInstance.putExpiryTime(it)
 						}
 
 						isSubscriptionActive =
@@ -101,6 +123,51 @@ class Graphite : Application() {
 		File(QUOTE_DIR).mkdirs()
 
 		downloadQuote()
+	}
+
+	private fun applyUpdates() {
+		CoroutineScope(Dispatchers.IO).launch {
+			dataStoreInstance.storedVersion.collectLatest { version ->
+				when (version) {
+					0 -> update_0_1()
+					1 -> null
+				}
+				this.cancel()
+			}
+		}
+	}
+
+	private fun update_0_1() {
+		Log.i("npr71", "update_0_1")
+		CoroutineScope(Dispatchers.IO).launch {
+
+
+			val preferencesFile = File("${cacheDir.path}/pref.json")
+			val jsonObject = JSONObject()
+			dataStore.data.collectLatest {
+				it.asMap().forEach { (key, value) -> jsonObject.put(key.name, value) }
+				preferencesFile.writeText(jsonObject.toString())
+				this.cancel()
+			}
+
+			dataStoreInstance.clearDatastore()
+
+			dataStoreInstance.storeVersion(1)
+			dataStoreInstance.putDefaultNotebookKey(jsonObject.optString("default_notebook_key"))
+		}
+		return
+	}
+
+	private fun checkUpdate() {
+		val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+		appUpdateInfoTask?.addOnSuccessListener { appUpdateInfo ->
+			if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+				&& appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
+			) {
+				Toast.makeText(this, "New update is available", Toast.LENGTH_SHORT).show()
+			} else {
+			}
+		}
 	}
 
 	fun putNote(key: String, noteContent: JSONObject?) {
@@ -202,11 +269,6 @@ class Graphite : Application() {
 	fun deleteAttachment(keyList: List<String>) =
 		keyList.forEach { File("$ATTACHMENT_DIR/$it").delete() }
 
-	fun getQuoteBg(date: String): File? {
-		val file = File("$QUOTE_DIR/${date}.jpeg")
-		return if (file.exists()) file else null
-	}
-
 	fun printNote(
 		htmlContent: String,
 		key: String?,
@@ -302,14 +364,17 @@ class Graphite : Application() {
 				.writeText(objectMapper.writeValueAsString(this))
 
 
-			noteDbEntry.attachmentKeyList.forEach {attachmentKey ->
-				getAttachment(attachmentKey)?.also {uri ->
+			noteDbEntry.attachmentKeyList.forEach { attachmentKey ->
+				getAttachment(attachmentKey)?.also { uri ->
 					val extension = getFileExtension(uri = uri)
 					val attachmentFile =
 						File("${exportDir.path}/$attachmentKey${if (extension != null) ".$extension" else ""}")
 					val inputStream = contentResolver.openInputStream(uri)
 					val outputStream = attachmentFile.outputStream()
-					if (inputStream != null) copyInputStreamToOutputStream(inputStream, outputStream)
+					if (inputStream != null) copyInputStreamToOutputStream(
+						inputStream,
+						outputStream
+					)
 				}
 			}
 
@@ -361,6 +426,7 @@ class Graphite : Application() {
 
 			val maxDate = quoteKeyList.maxOfOrNull { TimeUtils.quoteKeyToTimestamp(it) ?: 0 }
 
+//			Request for data only if next 3 days data is unavailable
 			if ((maxDate?.minus(TimeUtils.getToday()) ?: 0) < 3 * 24 * 60 * 60 * 1000) {
 				quoteDirRef.listAll()
 					.addOnSuccessListener { dateList ->
@@ -369,55 +435,60 @@ class Graphite : Application() {
 								date.child("${date.name}.json")
 									.getBytes(1024 * 1024)
 									.addOnSuccessListener { byteArray ->
-										File("$QUOTE_DIR/").mkdirs()
 										File("$QUOTE_DIR/${date.name}.jpeg").createNewFile()
 										val fileUri =
 											Uri.fromFile(File("$QUOTE_DIR/${date.name}.jpeg"))
+
+										val jsonObject =
+											JSONObject(byteArray.toString(Charset.defaultCharset()))
+										QuoteDbEntry(
+											date = date.name,
+											quote = jsonObject.getString("quote"),
+											author = jsonObject.getString("author"),
+											authorLink = jsonObject.optString("authorLink"),
+											bgLink = jsonObject.optString("bgLink"),
+											bgCred = jsonObject.optString("bgCred"),
+											bgCredLink = jsonObject.optString("bgCredLink"),
+											bgProvider = jsonObject.optString("bgProvider"),
+											bgProviderLink = jsonObject.optString("bgProviderLink"),
+											special = jsonObject.getString("special"),
+											isFavourite = false,
+										).apply {
+											CoroutineScope(Dispatchers.IO).launch {
+												quoteTableDao.insert(this@apply)
+											}
+										}
+
+
 										date.child("${date.name}.jpg")
 											.getFile(fileUri)
 											.addOnSuccessListener {
-												val jsonObject =
-													JSONObject(byteArray.toString(Charset.defaultCharset()))
-												QuoteDbEntry(
-													date = date.name,
-													quote = jsonObject.getString("quote"),
-													author = jsonObject.getString("author"),
-													special = jsonObject.getString("special"),
-													isFavourite = false,
-													authorLink = jsonObject.optString("authorLink"),
-													bgLink = jsonObject.optString("bgLink"),
-													bgCred = jsonObject.optString("bgCred"),
-													bgCredLink = jsonObject.optString("bgCredLink")
-												).apply {
-													CoroutineScope(Dispatchers.IO).launch {
-														quoteTableDao.insert(this@apply)
-													}
-												}
 											}
 											.addOnFailureListener {
-												val jsonObject =
-													JSONObject(byteArray.toString(Charset.defaultCharset()))
-												QuoteDbEntry(
-													date = date.name,
-													quote = jsonObject.optString("quote"),
-													author = jsonObject.optString("author"),
-													special = jsonObject.optString("special"),
-													isFavourite = false,
-													authorLink = jsonObject.optString("authorLink"),
-													bgLink = jsonObject.optString("bgLink"),
-													bgCred = jsonObject.optString("bgCred"),
-													bgCredLink = jsonObject.optString("bgCredLink")
-												).apply {
-													CoroutineScope(Dispatchers.IO).launch {
-														quoteTableDao.insert(this@apply)
-													}
-												}
 											}
 									}
 							}
 						}
 					}
 			}
+		}
+	}
+
+	fun saveQuoteBd(ymd: String, drawable: Drawable) {
+		CoroutineScope(Dispatchers.IO).launch {
+			File("${applicationContext.cacheDir.path}/$QUOTE_DIR/").mkdirs()
+			File("${applicationContext.cacheDir.path}/$QUOTE_DIR/$ymd.png").apply {
+				drawable.toBitmap().saveBitmap(this)
+			}
+		}
+	}
+
+	fun loadQuoteBg(ymd: String): Drawable? {
+		return try {
+			BitmapFactory.decodeFile("${applicationContext.cacheDir.path}/$QUOTE_DIR/$ymd.png")
+				.toDrawable(applicationContext.resources)
+		} catch (exception: Exception) {
+			null
 		}
 	}
 

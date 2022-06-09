@@ -46,4 +46,5 @@
 
 -keep class com.syncodec.graphite.database.** { *; }
 
+-keep class com.google.android.gms.maps.model.LatLng { *; }
 -keep class com.revenuecat.purchases.** { *; }

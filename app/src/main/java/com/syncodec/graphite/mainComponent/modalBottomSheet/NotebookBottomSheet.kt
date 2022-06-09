@@ -1,6 +1,7 @@
 package com.syncodec.graphite.mainComponent.modalBottomSheet
 
 import android.graphics.BitmapFactory
+import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -22,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -44,13 +44,10 @@ fun NotebookBottomSheet(
 ) {
 	val context = LocalContext.current
 	val isPremium = PremiumCompositionLocal.current
-	val focusManager = LocalFocusManager.current
 
 	var notebookTitleText by rememberSaveable { mutableStateOf("") }
-	var isNotebookTitleTextFocused by remember { mutableStateOf(false) }
 
 	var notebookDescriptionText by rememberSaveable { mutableStateOf("") }
-	var isNotebookDescriptionTextFocused by remember { mutableStateOf(false) }
 
 	var notebookTheme by remember { mutableStateOf(NotebookTheme.COLOR) }
 	var notebookColor by remember { mutableStateOf<Color?>(null) }
@@ -63,7 +60,7 @@ fun NotebookBottomSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
 			.heightIn(420.dp),
@@ -84,25 +81,21 @@ fun NotebookBottomSheet(
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = notebookTitleText,
-				placeholder = "Give your book a title",
-				isFocused = isNotebookTitleTextFocused,
-				onFocusChanged = { isNotebookTitleTextFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+					.padding(24.dp, 0.dp),
+				text = notebookTitleText,
+				placeholder = "Give your book a title",
 			) { notebookTitleText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
 
 			LargeTextField(
-				text = notebookDescriptionText,
-				placeholder = "And a little description",
-				isFocused = isNotebookDescriptionTextFocused,
-				onFocusChanged = { isNotebookDescriptionTextFocused = it },
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+					.padding(24.dp, 0.dp),
+				text = notebookDescriptionText,
+				placeholder = "And a little description"
 			) { notebookDescriptionText = it }
 
 //			Spacer(modifier = Modifier.height(16.dp))
@@ -127,7 +120,7 @@ fun NotebookBottomSheet(
 //					.padding(24.dp, 0.dp),
 //			) { currentState = it }
 
-			Spacer(modifier = Modifier.height(12.dp))
+			Spacer(modifier = Modifier.height(16.dp))
 
 			Crossfade(
 				targetState = notebookTheme,
@@ -159,22 +152,40 @@ fun NotebookBottomSheet(
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp)
 			) {
-				NotebookDbEntry(
-					key = generatePrimaryKey(),
-					createdTimestamp = System.currentTimeMillis()
-				).apply {
-					this.title = notebookTitleText
-					this.description = notebookDescriptionText
-					this.color = notebookColor?.toArgb()
-					this.bitmap =
-						notebookImage?.let { BitmapFactory.decodeResource(context.resources, it) }
+				when {
+					notebookTitleText.isEmpty() -> Toast.makeText(
+						context,
+						"Notebook title cannot be empty",
+						Toast.LENGTH_SHORT
+					).show()
+					notebookColor == null -> Toast.makeText(
+						context,
+						"Select a color for notebook",
+						Toast.LENGTH_SHORT
+					).show()
+					else -> {
+						NotebookDbEntry(
+							key = generatePrimaryKey(),
+							createdTimestamp = System.currentTimeMillis()
+						).apply {
+							this.title = notebookTitleText
+							this.description = notebookDescriptionText
+							this.color = notebookColor?.toArgb()
+							this.bitmap =
+								notebookImage?.let {
+									BitmapFactory.decodeResource(
+										context.resources,
+										it
+									)
+								}
 
-					onAction(MainActivity.Action.NEW_NOTEBOOK, Pair(this, isPremium))
+							onAction(MainActivity.Action.NEW_NOTEBOOK, Pair(this, isPremium))
+						}
+
+						notebookTitleText = ""
+						notebookDescriptionText = ""
+					}
 				}
-
-				focusManager.clearFocus()
-				notebookTitleText = ""
-				notebookDescriptionText = ""
 			}
 
 			Spacer(modifier = Modifier.height(32.dp))

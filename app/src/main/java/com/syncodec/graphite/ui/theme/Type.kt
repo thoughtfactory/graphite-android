@@ -28,6 +28,13 @@ private val ATWriter = FontFamily(
 )
 
 val OverlockTypography = Typography(
+	titleLarge = TextStyle(
+		fontFamily = OverlockFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 32.sp,
+		lineHeight = 36.sp,
+		letterSpacing = 1.sp
+	),
 	titleMedium = TextStyle(
 		fontFamily = OverlockFontFamily,
 		fontWeight = FontWeight.Bold,
@@ -59,6 +66,13 @@ val OverlockTypography = Typography(
 )
 
 val SourceSansProTypography = Typography(
+	titleLarge = TextStyle(
+		fontFamily = SourceSansProFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 32.sp,
+		lineHeight = 36.sp,
+		letterSpacing = 1.sp
+	),
 	titleMedium = TextStyle(
 		fontFamily = SourceSansProFontFamily,
 		fontWeight = FontWeight.Bold,
@@ -89,7 +103,15 @@ val SourceSansProTypography = Typography(
 	)
 )
 
+// Default font
 val UbuntuTypography = Typography(
+	titleLarge = TextStyle(
+		fontFamily = UbuntuFontFamily,
+		fontWeight = FontWeight.Bold,
+		fontSize = 28.sp,
+		lineHeight = 32.sp,
+		letterSpacing = 1.sp
+	),
 	titleMedium = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Bold,

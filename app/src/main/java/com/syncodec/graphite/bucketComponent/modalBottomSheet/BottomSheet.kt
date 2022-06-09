@@ -1,10 +1,10 @@
 package com.syncodec.graphite.bucketComponent.modalBottomSheet
 
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import com.syncodec.graphite.bucketComponent.BucketActivity
 import com.syncodec.graphite.database.bucket.BucketDbEntry
 import com.syncodec.graphite.database.bucketItem.BucketItemPreviewDbEntry
+import com.syncodec.graphite.database.bucketItem.BucketItemType
 
 
 sealed class BottomSheetType {
@@ -14,19 +14,29 @@ sealed class BottomSheetType {
 	object AddMovieSheet : BottomSheetType()
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SheetLayout(
 	bucketDbEntry: BucketDbEntry?,
 	bucketItemDbEntry: BucketItemPreviewDbEntry?,
 	bottomSheetType: BottomSheetType,
 	dataType: BucketActivity.DataType,
+	alphaCount: Int,
+	betaCount: Int,
+	gammaCount: Int,
+	totalCount: Int,
 	onAction: (BucketActivity.Action, Any?) -> Unit
 ) {
 	when (bottomSheetType) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet(
 			createdTimestamp = bucketDbEntry?.createdTimestamp ?: -1,
 			modifiedTimestamp = bucketDbEntry?.modifiedTimestamp ?: -1,
+			bucketTitle = bucketDbEntry?.title ?: "",
+			bucketItemType = bucketDbEntry?.bucketItemType ?: BucketItemType.TODO,
+			alphaCount = alphaCount,
+			betaCount = betaCount,
+			gammaCount = gammaCount,
+			totalCount = totalCount,
+			onAction = onAction
 		)
 		BottomSheetType.AddTodoSheet -> AddTodoSheet(
 			key = bucketItemDbEntry?.key,

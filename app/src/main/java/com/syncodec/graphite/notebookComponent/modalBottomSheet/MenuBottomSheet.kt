@@ -19,7 +19,6 @@ import com.syncodec.graphite.notebookComponent.NotebookActivity
 import com.syncodec.graphite.R
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MenuBottomSheet(
 	onAction: (NotebookActivity.Action) -> Unit

@@ -18,10 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.attachmentComponent.AttachmentActivity
 import com.syncodec.graphite.database.attachment.AttachmentDbEntry
@@ -75,6 +77,8 @@ private fun AttachmentCard(
 	onClick: () -> Unit,
 	onLongClick: () -> Unit
 ) {
+	val context = LocalContext.current
+
 	val borderColor by animateColorAsState(targetValue = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent)
 
 	Card(
@@ -91,14 +95,15 @@ private fun AttachmentCard(
 				onLongClick = { onLongClick() },
 			),
 	) {
-		Image(
-			painter = rememberImagePainter(
-				data = uri,
-				builder = { crossfade(true) }
-			),
+		AsyncImage(
+			model = ImageRequest.Builder(context)
+				.data(uri)
+				.crossfade(300)
+				.build(),
+			placeholder = null,
 			contentDescription = null,
 			contentScale = ContentScale.Crop,
-			modifier = Modifier
+			modifier = Modifier,
 		)
 	}
 }

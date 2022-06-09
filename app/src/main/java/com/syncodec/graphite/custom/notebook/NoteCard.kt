@@ -3,11 +3,13 @@ package com.syncodec.graphite.custom.notebook
 import android.graphics.Bitmap
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,12 +18,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.squircle.SquircleShape
@@ -253,6 +257,8 @@ private fun Content(
 	attachmentCount: Int,
 	attachmentThumbnail: Bitmap?
 ) {
+	val context = LocalContext.current
+
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalArrangement = Arrangement.SpaceBetween,
@@ -277,13 +283,17 @@ private fun Content(
 
 			Spacer(modifier = Modifier.width(8.dp))
 
-			Image(
-				painter = rememberImagePainter(data = attachmentThumbnail),
-				contentDescription = "Attachment thumbnail",
+			AsyncImage(
+				model = ImageRequest.Builder(context)
+					.data(attachmentThumbnail)
+					.crossfade(300)
+					.build(),
+				placeholder = null,
+				contentDescription = null,
 				contentScale = ContentScale.Crop,
 				modifier = Modifier
 					.requiredSize(80.dp)
-					.clip(SquircleShape(4.0))
+					.clip(SquircleShape(4.0)),
 			)
 		}
 	}

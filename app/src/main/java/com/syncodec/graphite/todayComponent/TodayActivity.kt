@@ -1,6 +1,7 @@
 package com.syncodec.graphite.todayComponent
 
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -12,15 +13,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,11 +34,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.WindowCompat
-import coil.compose.rememberImagePainter
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
+import com.google.accompanist.flowlayout.FlowRow
+import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.LoadingView
@@ -48,13 +53,19 @@ import com.syncodec.graphite.custom.revealTextView.RevealText
 import com.syncodec.graphite.database.UserDatabase
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.ui.theme.GraphiteBase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.joda.time.Days
 import java.util.*
 
 
 class TodayActivity : ComponentActivity() {
-	val quoteTableDao = UserDatabase.getInstance(this).quoteTableDao
+	private val quoteTableDao = UserDatabase.getInstance(this).quoteTableDao
+
+	val storage = Firebase.storage("gs://graphite-diary.appspot.com")
+	val storageRef = storage.reference
 
 	@OptIn(
 		ExperimentalPagerApi::class, ExperimentalMaterialApi::class,
@@ -85,7 +96,7 @@ class TodayActivity : ComponentActivity() {
 	@ExperimentalMaterial3Api
 	@Composable
 	fun TodayScreen() {
-		val startDate = remember { DateTime(2022, 5, 4, 0, 0, 0) }
+		val startDate = remember { DateTime(2022, 6, 4, 0, 0, 0) }
 		val endDate = remember { DateTime.now() }
 		val dayCount = remember { Days.daysBetween(startDate, endDate).days + 1 }
 
@@ -109,18 +120,18 @@ class TodayActivity : ComponentActivity() {
 		) { page ->
 			val pageDate = startDate.plusDays(page)
 
-			val d = pageDate.dayOfMonth.toString().padStart(2, '0')
-			val m = pageDate.monthOfYear.toString().padStart(2, '0')
 			val y = pageDate.year.toString().padStart(2, '0')
+			val m = pageDate.monthOfYear.toString().padStart(2, '0')
+			val d = pageDate.dayOfMonth.toString().padStart(2, '0')
 
 			Background(
-				dmy = "${d}_${m}_${y}",
+				ymd = "${y}_${m}_${d}",
 			)
 
 			QuoteCard(
-				d = d,
-				m = m,
 				y = y,
+				m = m,
+				d = d,
 				loadPage = currentPage == page,
 			)
 		}
@@ -128,31 +139,68 @@ class TodayActivity : ComponentActivity() {
 
 	@Composable
 	private fun Background(
-		dmy: String,
+		ymd: String,
 	) {
-		Image(
-			painter = rememberImagePainter(
-				data = (application as Graphite).getQuoteBg(date = dmy),
-				builder = { crossfade(600) }
-			),
+
+		var drawable by remember { mutableStateOf<Drawable?>(null) }
+
+		LaunchedEffect(key1 = null) {
+			CoroutineScope(Dispatchers.IO).launch {
+				(application as Graphite).loadQuoteBg(ymd = ymd).apply {
+					if (this == null) {
+						val quoteBgRef = storageRef.child("server/enQuote/$ymd/$ymd.jpg")
+
+						quoteBgRef.downloadUrl.addOnSuccessListener {
+							val loader = ImageLoader(this@TodayActivity)
+							val request = ImageRequest.Builder(this@TodayActivity)
+								.data(it)
+								.allowHardware(false)
+								.build()
+
+							CoroutineScope(Dispatchers.IO).launch {
+								drawable = loader.execute(request).drawable
+								drawable?.let { it1 ->
+									(application as Graphite).saveQuoteBd(
+										ymd = ymd,
+										drawable = it1
+									)
+								}
+							}
+						}
+					} else {
+						drawable = this
+					}
+				}
+			}
+		}
+
+		AsyncImage(
+			model = ImageRequest.Builder(this)
+				.data(drawable)
+				.crossfade(300)
+				.build(),
+			placeholder = null,
 			contentDescription = null,
 			contentScale = ContentScale.Crop,
-			colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.31f), BlendMode.SrcOver),
+			colorFilter = ColorFilter.tint(
+				Color.Black.copy(alpha = 0.47f),
+				BlendMode.SrcOver
+			),
 			modifier = Modifier.fillMaxSize(),
 		)
 	}
 
 	@Composable
 	private fun QuoteCard(
-		d: String,
-		m: String,
 		y: String,
+		m: String,
+		d: String,
 		loadPage: Boolean
 	) {
 		val uriHandler = LocalUriHandler.current
 
 		var isLoaded by remember { mutableStateOf(false) }
-		val quote by quoteTableDao.getAsFlow("${d}_${m}_${y}").collectAsState(initial = null)
+		val quote by quoteTableDao.getAsFlow("${y}_${m}_${d}").collectAsState(initial = null)
 
 		LaunchedEffect(key1 = loadPage) {
 			if (loadPage) isLoaded = true
@@ -190,116 +238,54 @@ class TodayActivity : ComponentActivity() {
 					.fillMaxWidth()
 					.padding(16.dp)
 			) {
-				Row(
+
+				FlowRow(
+					crossAxisAlignment = FlowCrossAxisAlignment.Center,
+					mainAxisAlignment = MainAxisAlignment.End,
 					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.End
 				) {
-					if (isLoaded && quote != null && quote!!.bgCred != null) {
-						AndroidView(
-							factory = { context ->
-								RevealText(context).apply {
-									this.setText("background image")
-									this.setTextColor(android.graphics.Color.WHITE)
-									this.setBackgroundColor(0)
-									this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-									this.setTypeface(
-										ResourcesCompat.getFont(context, R.font.overlock_regular),
-										Typeface.BOLD_ITALIC
-									)
-									this.letterSpacing = 0.1f
-								}
-							},
-							update = { view -> view.show() },
-							modifier = Modifier
-								.alpha(0.47f)
-								.clickable(enabled = quote!!.bgLink != null) {
-									try {
-										uriHandler.openUri(quote!!.bgLink!!)
-									} catch (exception: Exception) {
-									}
-								}
+					IconButton(
+						onClick = {
+							try {
+								quote?.bgLink?.let { it1 -> uriHandler.openUri(it1) }
+							} catch (exception: Exception) {
+							}
+						}
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_gallery),
+							contentDescription = "Background image",
+							tint = Color.White.copy(0.71f),
+							modifier = Modifier.requiredSize(20.dp)
 						)
-						AndroidView(
-							factory = { context ->
-								RevealText(context).apply {
-									this.setText(" by ")
-									this.setTextColor(android.graphics.Color.WHITE)
-									this.setBackgroundColor(0)
-									this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-									this.setTypeface(
-										ResourcesCompat.getFont(context, R.font.overlock_regular),
-										Typeface.BOLD_ITALIC
-									)
-									this.letterSpacing = 0.1f
+					}
+
+					quote?.bgCred?.let {
+						Text(
+							text = "by $it ",
+							style = MaterialTheme.typography.bodyMedium,
+							color = Color.White.copy(alpha = 0.47f),
+							modifier = Modifier.clickable {
+								try {
+									quote?.bgCredLink?.let { it1 -> uriHandler.openUri(it1) }
+								} catch (exception: Exception) {
 								}
-							},
-							update = { view -> view.show() },
-							modifier = Modifier.alpha(0.47f)
+							}
 						)
-						AndroidView(
-							factory = { context ->
-								RevealText(context).apply {
-									this.setText("${quote!!.bgCred}")
-									this.setTextColor(android.graphics.Color.WHITE)
-									this.setBackgroundColor(0)
-									this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-									this.setTypeface(
-										ResourcesCompat.getFont(context, R.font.overlock_regular),
-										Typeface.BOLD_ITALIC
-									)
-									this.letterSpacing = 0.1f
+						Spacer(modifier = Modifier.height(4.dp))
+					}
+
+					quote?.bgProvider?.let {
+						Text(
+							text = "from $it",
+							style = MaterialTheme.typography.bodyMedium,
+							color = Color.White.copy(alpha = 0.47f),
+							modifier = Modifier.clickable {
+								try {
+									quote?.bgProviderLink?.let { it1 -> uriHandler.openUri(it1) }
+								} catch (exception: Exception) {
 								}
-							},
-							update = { view -> view.show() },
-							modifier = Modifier
-								.alpha(0.47f)
-								.clickable(enabled = quote!!.bgCredLink != null) {
-									try {
-										uriHandler.openUri(quote!!.bgCredLink!!)
-									} catch (exception: Exception) {
-									}
-								}
-						)
-						AndroidView(
-							factory = { context ->
-								RevealText(context).apply {
-									this.setText(" on ")
-									this.setTextColor(android.graphics.Color.WHITE)
-									this.setBackgroundColor(0)
-									this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-									this.setTypeface(
-										ResourcesCompat.getFont(context, R.font.overlock_regular),
-										Typeface.BOLD_ITALIC
-									)
-									this.letterSpacing = 0.1f
-								}
-							},
-							update = { view -> view.show() },
-							modifier = Modifier.alpha(0.47f)
-						)
-						AndroidView(
-							factory = { context ->
-								RevealText(context).apply {
-									this.setText("Pexels")
-									this.setTextColor(android.graphics.Color.WHITE)
-									this.setBackgroundColor(0)
-									this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-									this.setTypeface(
-										ResourcesCompat.getFont(context, R.font.overlock_regular),
-										Typeface.BOLD_ITALIC
-									)
-									this.letterSpacing = 0.1f
-								}
-							},
-							update = { view -> view.show() },
-							modifier = Modifier
-								.alpha(0.47f)
-								.clickable(enabled = quote!!.bgCredLink != null) {
-									try {
-										uriHandler.openUri("https://www.pexels.com/")
-									} catch (exception: Exception) {
-									}
-								}
+							}
 						)
 					}
 				}

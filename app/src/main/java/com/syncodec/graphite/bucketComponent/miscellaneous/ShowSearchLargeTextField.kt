@@ -21,7 +21,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.bucketComponent.BucketActivity
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
@@ -35,92 +39,66 @@ fun ShowSearchLargeTextField(
 	dataType: BucketActivity.DataType,
 	keyboardOptions: KeyboardOptions? = null,
 	keyboardActions: KeyboardActions? = null,
-	isFocused: Boolean,
-	onFocusChanged: (Boolean) -> Unit,
 	onValueChanged: (String) -> Unit,
 	onAction: (BucketActivity.Action) -> Unit
 ) {
-	BasicTextField(
-		value = text,
-		onValueChange = { onValueChanged(it) },
-		singleLine = true,
-		keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
-		keyboardActions = keyboardActions ?: KeyboardActions.Default,
-		cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-		textStyle = MaterialTheme.typography.bodyMedium.copy(
-			color = MaterialTheme.colorScheme.primary,
-			fontWeight = FontWeight.Bold
-		),
+	val textColor = MaterialTheme.colorScheme.onBackground
+
+	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.height(48.dp)
 			.padding(24.dp, 0.dp)
 			.clip(RoundedCornerShape(12.dp))
-			.background(
-				if (text.isEmpty() && !isFocused) {
-					Color.LightGray.copy(alpha = 0.13f)
-				} else {
-					MaterialTheme.colorScheme.background
-				}
-			)
-			.onFocusChanged { onFocusChanged(it.isFocused) },
-		decorationBox = { innerTextField ->
-			Surface(
-				border = BorderStroke(
-					2.dp, if (isFocused) MaterialTheme.colorScheme.primary
-					else MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 5)
-				),
-				shape = RoundedCornerShape(12.dp),
-				modifier = Modifier.fillMaxWidth()
-			) {
-				Row(
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceBetween,
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(12.dp, 0.dp, 0.dp, 0.dp),
-				) {
-					Box(
-						modifier = Modifier,
-						contentAlignment = Alignment.CenterStart,
-					) {
-						Crossfade(targetState = text.isEmpty()) {
-							if (it) {
-								Text(
-									text = placeholder,
-									style = MaterialTheme.typography.bodyMedium,
-									color = MaterialTheme.colorScheme.surface.tone(
-										isSystemInDarkTheme(),
-										5
-									),
-									fontWeight = FontWeight.Bold
-								)
-							}
-						}
+			.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f)),
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Spacer(modifier = Modifier.width(12.dp))
+
+		BasicTextField(
+			value = text,
+			onValueChange = { onValueChanged(it) },
+			singleLine = true,
+			keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
+			keyboardActions = keyboardActions ?:  KeyboardActions.Default,
+			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+			textStyle = MaterialTheme.typography.bodyMedium,
+			modifier = Modifier.weight(1f),
+			visualTransformation = { text ->
+				TransformedText(
+					AnnotatedString(
+						text.toString(),
+						SpanStyle(color = textColor, fontWeight = FontWeight.Bold)
+					),
+					OffsetMapping.Identity
+				)
+			},
+			decorationBox = { innerTextField ->
+				Crossfade(targetState = text.isEmpty()) {
+					if (it) {
+						Text(
+							text = placeholder,
+							style = MaterialTheme.typography.bodyMedium,
+							color = textColor.copy(alpha = 0.31f),
+							fontWeight = FontWeight.Bold
+						)
+					} else {
 						innerTextField()
-					}
-					Row(
-						modifier = Modifier,
-						horizontalArrangement = Arrangement.Center,
-						verticalAlignment = Alignment.CenterVertically
-					) {
-						IconButton(onClick = { onValueChanged("") }) {
-							Icon(
-								painter = painterResource(id = R.drawable.ic_close),
-								contentDescription = "Clear search text",
-								tint = MaterialTheme.colorScheme.surface.tone(
-									isSystemInDarkTheme(),
-									5
-								),
-								modifier = Modifier.requiredSize(16.dp)
-							)
-						}
-						DataTypeCard(dataType = dataType) { onAction(it) }
 					}
 				}
 			}
+		)
+
+		IconButton(onClick = { onValueChanged("") }) {
+			Icon(
+				painter = painterResource(id = R.drawable.ic_close),
+				contentDescription = "Clear text",
+				tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+				modifier = Modifier.requiredSize(16.dp)
+			)
 		}
-	)
+
+		DataTypeCard(dataType = dataType) { onAction(it) }
+	}
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -133,7 +111,6 @@ private fun DataTypeCard(
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.SpaceBetween,
 		modifier = Modifier
-			.fillMaxHeight()
 			.clickable { onClick(BucketActivity.Action.DATA_TYPE_SELECT) },
 	) {
 		Spacer(modifier = Modifier.width(6.dp))
