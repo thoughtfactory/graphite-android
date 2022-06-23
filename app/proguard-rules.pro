@@ -48,3 +48,4 @@
 
 -keep class com.google.android.gms.maps.model.LatLng { *; }
 -keep class com.revenuecat.purchases.** { *; }
+-keep class org.jsoup.**
