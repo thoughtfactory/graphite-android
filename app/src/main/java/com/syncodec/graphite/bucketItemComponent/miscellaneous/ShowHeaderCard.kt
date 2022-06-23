@@ -3,12 +3,11 @@ package com.syncodec.graphite.bucketItemComponent.miscellaneous
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.ShowType
 
@@ -26,7 +25,7 @@ fun ShowHeaderCard(
 ) {
 	Card(
 		modifier = Modifier.fillMaxWidth(),
-		containerColor = Color.Transparent,
+		colors = CardDefaults.cardColors(Color.Transparent),
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
 		border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
 		shape = RoundedCornerShape(12.dp),
@@ -35,13 +34,13 @@ fun ShowHeaderCard(
 			modifier = Modifier.padding(16.dp)
 		) {
 			Row(
-				modifier = Modifier.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically
 			) {
 				Text(
 					text = title,
 					color = MaterialTheme.colorScheme.onBackground,
-					style = MaterialTheme.typography.bodyLarge,
-					fontWeight = FontWeight.Bold,
+					style = MaterialTheme.typography.titleLarge,
 					modifier = Modifier,
 				)
 
@@ -63,13 +62,14 @@ fun ShowHeaderCard(
 			Spacer(modifier = Modifier.height(8.dp))
 
 			Row(
-				modifier = Modifier.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically
 			) {
 				if (showLength != null) {
 					Text(
 						text = if (showType == ShowType.MOVIE) "~ $showLength min" else "~ $showLength min / ep",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier
 					)
 				}
@@ -78,7 +78,7 @@ fun ShowHeaderCard(
 					Text(
 						text = " | ",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier
 					)
 				}
@@ -87,7 +87,7 @@ fun ShowHeaderCard(
 					Text(
 						text = "$noSeason seas",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier
 					)
 				}
@@ -96,7 +96,7 @@ fun ShowHeaderCard(
 					Text(
 						text = " | ",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier
 					)
 				}
@@ -105,7 +105,7 @@ fun ShowHeaderCard(
 					Text(
 						text = "$noEpisode epis",
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier
 					)
 				}
@@ -115,8 +115,7 @@ fun ShowHeaderCard(
 					Text(
 						text = releaseDate,
 						color = MaterialTheme.colorScheme.primary,
-						style = MaterialTheme.typography.bodySmall,
-						fontWeight = FontWeight.Bold,
+						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier
 					)
 				}

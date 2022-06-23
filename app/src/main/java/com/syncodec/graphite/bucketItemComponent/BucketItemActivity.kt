@@ -8,16 +8,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.ShowType
 import com.syncodec.graphite.bucketItemComponent.miscellaneous.TopBar
@@ -183,39 +184,41 @@ class BucketItemActivity : ComponentActivity() {
 					) { action, data -> onPerformAction(action, data) }
 				}
 			) {
-				when (viewModel.bucketItemType) {
-					BucketItemType.TODO -> null
-					BucketItemType.BOOKS -> Crossfade(targetState = bookData != null) {
-						if (it) {
-							BookItemScreen(
-								bookData = bookData!!,
-								thumbnail = viewModel.thumbnail.value,
-								thoughtList = thoughtList,
-								currentState = bucketItemDbEntry!!.state.ordinal,
-							) {action, data -> onPerformAction(action, data) }
-						} else {
-							LoadingView()
-						}
-					}
-					BucketItemType.SHOWS -> {
-						Crossfade(targetState = tvData != null || movieData != null) {
+				Box(modifier = Modifier.padding(it)) {
+					when (viewModel.bucketItemType) {
+						BucketItemType.TODO -> null
+						BucketItemType.BOOK -> Crossfade(targetState = bookData != null) {
 							if (it) {
-								when (viewModel.showData.value!!.showType) {
-									ShowType.TV -> ShowTvItemScreen(
-										tvData = tvData!!,
-										thumbnail = viewModel.thumbnail.value,
-										thoughtList = thoughtList,
-										currentState = bucketItemDbEntry!!.state.ordinal,
-									) { action, data -> onPerformAction(action, data) }
-									ShowType.MOVIE -> ShowMovieItemScreen(
-										movieData = movieData!!,
-										thumbnail = viewModel.thumbnail.value,
-										currentState = bucketItemDbEntry!!.state.ordinal,
-										thoughtList = thoughtList,
-									) { action, data -> onPerformAction(action, data) }
-								}
+								BookItemScreen(
+									bookData = bookData!!,
+									thumbnail = viewModel.thumbnail.value,
+									thoughtList = thoughtList,
+									currentState = bucketItemDbEntry!!.state.ordinal,
+								) {action, data -> onPerformAction(action, data) }
 							} else {
 								LoadingView()
+							}
+						}
+						BucketItemType.SHOW -> {
+							Crossfade(targetState = tvData != null || movieData != null) {
+								if (it) {
+									when (viewModel.showData.value!!.showType) {
+										ShowType.TV -> ShowTvItemScreen(
+											tvData = tvData!!,
+											thumbnail = viewModel.thumbnail.value,
+											thoughtList = thoughtList,
+											currentState = bucketItemDbEntry!!.state.ordinal,
+										) { action, data -> onPerformAction(action, data) }
+										ShowType.MOVIE -> ShowMovieItemScreen(
+											movieData = movieData!!,
+											thumbnail = viewModel.thumbnail.value,
+											currentState = bucketItemDbEntry!!.state.ordinal,
+											thoughtList = thoughtList,
+										) { action, data -> onPerformAction(action, data) }
+									}
+								} else {
+									LoadingView()
+								}
 							}
 						}
 					}
@@ -229,8 +232,7 @@ class BucketItemActivity : ComponentActivity() {
 		val coroutineScope: CoroutineScope,
 		val bottomSheetState: ModalBottomSheetState,
 		var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false),
-	) {
-	}
+	)
 
 	@OptIn(ExperimentalMaterialApi::class)
 	@Composable

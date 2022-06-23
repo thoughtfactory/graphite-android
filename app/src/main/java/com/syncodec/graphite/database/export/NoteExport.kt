@@ -16,7 +16,7 @@ data class NoteExport(
 	val content: String?,
 	val latLng: LatLng?,
 	val address: String?,
-	val attachmentKey: List<String>,
+	val attachmentKeyList: List<String>,
 	val tagList: List<String>,
 	val version: Int = 1
 )

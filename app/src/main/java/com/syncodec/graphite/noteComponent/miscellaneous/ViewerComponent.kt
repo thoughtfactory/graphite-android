@@ -1,9 +1,10 @@
 package com.syncodec.graphite.noteComponent.miscellaneous
 
-import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -22,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -35,7 +35,7 @@ import com.syncodec.graphite.custom.richText.viewer.string.RichTextString
 import com.syncodec.graphite.custom.richText.viewer.string.RichTextStringStyle
 import com.syncodec.graphite.custom.richText.viewer.string.Text
 import com.syncodec.graphite.custom.richText.viewer.string.richTextString
-import com.syncodec.graphite.custom.squircle.SquircleShape
+import com.syncodec.graphite.database.attachment.AttachmentDbEntry
 import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.noteViewerTimestamp
 import com.syncodec.graphite.miscellaneous.roundTo
@@ -75,6 +75,7 @@ private const val SUBSCRIPT = "subscript"
 fun ViewerComponent(
 	noteDbEntry: NoteDbEntry,
 	noteContent: JSONObject?,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri?>>,
 	connectedTag: List<String>,
 	onAction: (NoteActivity.Action) -> Unit
 ) {
@@ -88,7 +89,7 @@ fun ViewerComponent(
 	) {
 		if (noteDbEntry.attachmentKeyList.isNotEmpty()) {
 			Spacer(modifier = Modifier.height(14.dp))
-			Thumbnail(bitmap = noteDbEntry.attachmentThumbnail) { onAction(it) }
+			Thumbnail(attachmentMap = attachmentMap) { onAction(it) }
 		}
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -115,30 +116,26 @@ fun ViewerComponent(
 
 @Composable
 private fun Thumbnail(
-	bitmap: Bitmap?,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri?>>,
 	onAction: (NoteActivity.Action) -> Unit
 ) {
 	val context = LocalContext.current
 
-	if (bitmap != null) {
-		Box(
+	if (attachmentMap.isNotEmpty()) {
+		AsyncImage(
+			model = ImageRequest.Builder(context)
+				.data(attachmentMap.values.first().second)
+				.crossfade(300)
+				.build(),
+			placeholder = null,
+			contentDescription = "Attachment",
+			contentScale = ContentScale.Crop,
 			modifier = Modifier
 				.fillMaxWidth()
 				.aspectRatio(1f)
-				.clip(SquircleShape(12.0))
+				.clip(RoundedCornerShape(12.dp))
 				.clickable { onAction(NoteActivity.Action.OPEN_ATTACHMENT) }
-		) {
-			AsyncImage(
-				model = ImageRequest.Builder(context)
-					.data(bitmap)
-					.crossfade(300)
-					.build(),
-				placeholder = null,
-				contentDescription = "Attachment",
-				contentScale = ContentScale.Crop,
-				modifier = Modifier.fillMaxSize(),
-			)
-		}
+		)
 	}
 }
 
@@ -190,7 +187,7 @@ private fun Header(
 				horizontalArrangement = Arrangement.SpaceBetween
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_location_pin_3),
+					painter = painterResource(id = R.drawable.ic_map_marker),
 					contentDescription = "Location",
 					tint = MaterialTheme.colorScheme.onSurface,
 					modifier = Modifier.requiredSize(16.dp)
@@ -681,13 +678,3 @@ private fun SetupMaterialRichText(
 }
 
 private val LocalMaterialThemingApplied = compositionLocalOf { false }
-
-
-class MockNoteDataList : PreviewParameterProvider<List<String>> {
-	override val values = sequenceOf(
-		listOf(
-			"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"“You've gotta dance like there's nobody watching,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Love like you'll never be hurt,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Sing like there's nobody listening,\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"And live like it's heaven on earth.”\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"― William W. Purkey\"}]}]}",
-			"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"plain text\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"bold\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"italic\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"underline\"}],\"text\":\"underline\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"strike\"}],\"text\":\"strike\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"plain\"},{\"type\":\"text\",\"marks\":[{\"type\":\"superscript\"}],\"text\":\"super\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"plain\"},{\"type\":\"text\",\"marks\":[{\"type\":\"subscript\"}],\"text\":\"sub\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"paragraph\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":1},\"content\":[{\"type\":\"text\",\"text\":\"H1\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"H2\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"H3\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":4},\"content\":[{\"type\":\"text\",\"text\":\"H4\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":5},\"content\":[{\"type\":\"text\",\"text\":\"H5\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":6},\"content\":[{\"type\":\"text\",\"text\":\"H6\"}]},{\"type\":\"blockquote\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"hardBreak\"},{\"type\":\"text\",\"text\":\"blockquote\"}]}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"left align\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"center\"},\"content\":[{\"type\":\"text\",\"text\":\"center align\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"right\"},\"content\":[{\"type\":\"text\",\"text\":\"right align\"}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"justify\"},\"content\":[{\"type\":\"text\",\"text\":\"justify\"}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"Bullet list\"}]},{\"type\":\"bulletList\",\"content\":[{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"bullet 1\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"bullet 2\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"bullet 3\"}]}]}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"Ordered list\"}]},{\"type\":\"orderedList\",\"attrs\":{\"start\":1},\"content\":[{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"order 1\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"order 2\"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"order 3\"}]}]}]},{\"type\":\"heading\",\"attrs\":{\"textAlign\":\"left\",\"level\":3},\"content\":[{\"type\":\"text\",\"text\":\"Task list\"}]},{\"type\":\"taskList\",\"content\":[{\"type\":\"taskItem\",\"attrs\":{\"checked\":false},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"task 1\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"task 2\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"task 3\"}]}]}]},{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"}}]}"
-		)
-	)
-}

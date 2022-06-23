@@ -4,8 +4,29 @@ import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.maps.model.LatLng
+import com.syncodec.graphite.miscellaneous.base64stringToBitmap
+import com.syncodec.graphite.miscellaneous.bitmapToBase64String
+import java.io.IOException
 
+@JsonSerialize(using = BucketItemDbEntrySerializer::class)
+@JsonDeserialize(using = BucketItemDbEntryDeserializer::class)
 @Entity(tableName = "bucket_item_table")
 data class BucketItemDbEntry(
 	@PrimaryKey(autoGenerate = false)
@@ -51,6 +72,7 @@ data class BucketItemDbEntry(
 	@ColumnInfo(name = "is_locked")
 	var isLocked: Boolean = false
 
+	@get:JsonIgnore
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 
@@ -101,12 +123,92 @@ data class BucketItemDbEntry(
 
 enum class BucketItemType {
 	TODO,
-	BOOKS,
-	SHOWS,
+	BOOK,
+	SHOW,
+	LINK
 }
 
 enum class BucketItemState {
 	ALPHA,
 	BETA,
 	GAMMA
+}
+
+
+private class BucketItemDbEntrySerializer @JvmOverloads constructor(t: Class<BucketItemDbEntry?>? = null) :
+	StdSerializer<BucketItemDbEntry>(t) {
+	@Throws(IOException::class, JsonProcessingException::class)
+	override fun serialize(
+		value: BucketItemDbEntry, gen: JsonGenerator, provider: SerializerProvider
+	) {
+		val objectMapper: ObjectMapper = jsonMapper { addModule(kotlinModule()) }
+
+		gen.writeStartObject()
+		gen.writeStringField("key", value.key)
+		gen.writeStringField("bucketKey", value.bucketKey)
+		gen.writeStringField("bucketItemType", value.bucketItemType.name)
+		gen.writeNumberField("createdTimestamp", value.createdTimestamp)
+		gen.writeNumberField("modifiedTimestamp", value.modifiedTimestamp)
+		gen.writeStringField("title", value.title)
+		gen.writeStringField("thumbnail", value.thumbnail?.bitmapToBase64String())
+		gen.writeStringField("state", value.state.name)
+		gen.writeObjectField("latLng", value.latLng)
+		gen.writeStringField("address", value.address)
+		gen.writeStringField("data", objectMapper.writeValueAsString(value.data))
+		gen.writeBooleanField("isFavourite", value.isFavourite)
+		gen.writeBooleanField("isArchived", value.isArchived)
+		gen.writeBooleanField("isLocked", value.isLocked)
+
+		gen.writeEndObject()
+	}
+}
+
+private class BucketItemDbEntryDeserializer @JvmOverloads constructor(t: Class<BucketItemDbEntry?>? = null) :
+	StdDeserializer<BucketItemDbEntry>(t) {
+
+	@Throws(IOException::class, JsonProcessingException::class)
+	override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): BucketItemDbEntry {
+		val objectMapper: ObjectMapper = jsonMapper { addModule(kotlinModule()) }
+
+		val node: JsonNode = parser.codec.readTree(parser)
+
+		val key = node["key"].asText()
+		val bucketKey = node["bucketKey"].asText()
+		val bucketItemType = BucketItemType.valueOf(node["bucketItemType"].asText())
+		val createdTimestamp = node["createdTimestamp"].asLong()
+		val modifiedTimestamp = node["modifiedTimestamp"].asLong()
+		val title = node["title"].asText()
+		val thumbnail = node["thumbnail"].asText().base64stringToBitmap()
+		val state = BucketItemState.valueOf(node["state"].asText())
+		val latLngNode = node["latLng"] as JsonNode
+		val latitude =
+			if (latLngNode !is NullNode) latLngNode["latitude"].asDouble() else NullNode.getInstance()
+		val longitude =
+			if (latLngNode !is NullNode) latLngNode["longitude"].asDouble() else NullNode.getInstance()
+		val latLng =
+			if (latitude is Double && longitude is Double) LatLng(latitude, longitude) else null
+		val address = node["address"].asText()
+		val data = objectMapper.readValue<BucketItem>(node["data"].asText())
+		val isFavourite = node["isFavourite"].asBoolean(false)
+		val isArchived = node["isArchived"].asBoolean(false)
+		val isLocked = node["isLocked"].asBoolean(false)
+
+		return BucketItemDbEntry(
+			key = key,
+			bucketKey = bucketKey,
+			bucketItemType = bucketItemType,
+			createdTimestamp = createdTimestamp
+		) .apply {
+			this.modifiedTimestamp = modifiedTimestamp
+			this.title = title
+			this.thumbnail = thumbnail
+			this.state = state
+			this.latLng = latLng
+			this.address = address
+			this.data = data
+			this.isFavourite = isFavourite
+			this.isArchived = isArchived
+			this.isLocked = isLocked
+		}
+	}
 }

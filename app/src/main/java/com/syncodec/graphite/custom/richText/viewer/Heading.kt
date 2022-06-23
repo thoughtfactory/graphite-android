@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.resolveDefaults
 import androidx.compose.ui.unit.sp
 
@@ -22,22 +23,34 @@ public typealias HeadingStyle = (level: Int, textStyle: TextStyle) -> TextStyle
 internal val DefaultHeadingStyle: HeadingStyle = { level, textStyle ->
 	when (level) {
 		1 -> TextStyle(
-			fontSize = 48.sp,
+			fontSize = 45.sp,
+			lineHeight = 45.sp,
+			fontWeight = FontWeight.Bold
 		)
 		2 -> TextStyle(
-			fontSize = 40.sp,
+			fontSize = 37.sp,
+			lineHeight = 37.sp,
+			fontWeight = FontWeight.Bold
 		)
 		3 -> TextStyle(
-			fontSize = 32.sp,
+			fontSize = 29.sp,
+			lineHeight = 29.sp,
+			fontWeight = FontWeight.Bold
 		)
 		4 -> TextStyle(
-			fontSize = 28.sp,
+			fontSize = 25.sp,
+			lineHeight = 25.sp,
+			fontWeight = FontWeight.Bold
 		)
 		5 -> TextStyle(
-			fontSize = 24.sp,
+			fontSize = 21.sp,
+			lineHeight = 21.sp,
+			fontWeight = FontWeight.Bold
 		)
 		6 -> TextStyle(
-			fontSize = 20.sp,
+			fontSize = 17.sp,
+			lineHeight = 17.sp,
+			fontWeight = FontWeight.Bold
 		)
 		else -> textStyle
 	}

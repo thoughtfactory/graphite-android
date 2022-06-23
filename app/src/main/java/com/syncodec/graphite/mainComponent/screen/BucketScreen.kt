@@ -43,7 +43,6 @@ fun BucketScreen(
 		modifier = Modifier.fillMaxSize()
 	) {
 		if (bucketList.isNotEmpty()) {
-			Spacer(modifier = Modifier.height(8.dp))
 			LazyVerticalGrid(
 				columns = GridCells.Adaptive(minSize = 144.dp),
 				modifier = Modifier.padding(4.dp),
@@ -66,7 +65,6 @@ fun BucketScreen(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun NoBucketCard() {
 	Column(
@@ -119,14 +117,14 @@ private fun BucketCard(
 	OutlinedCard(
 		shape = RoundedCornerShape(12.dp),
 		border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
-		containerColor = containerColor,
+		colors = CardDefaults.cardColors(containerColor),
 		elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 		modifier = Modifier
 			.height(96.dp)
 			.padding(4.dp)
 			.clip(RoundedCornerShape(12.dp))
 			.combinedClickable(
-				onClick = { onAction(MainActivity.Action.CLICK_BUCKET, bucket.key) },
+				onClick = { onAction(MainActivity.Action.CLICK_BUCKET, Pair(bucket.key, bucket.bucketItemType)) },
 				onLongClick = { onAction(MainActivity.Action.LONG_CLICK_BUCKET, bucket.key) }
 			),
 	) {

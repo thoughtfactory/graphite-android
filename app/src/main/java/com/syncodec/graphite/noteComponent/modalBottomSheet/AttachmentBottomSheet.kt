@@ -26,7 +26,6 @@ import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.custom.button.MenuBottomSheetButton
 import com.syncodec.graphite.custom.button.MenuBottomSheetButtonData
-import com.syncodec.graphite.custom.squircle.SquircleShape
 import com.syncodec.graphite.database.attachment.AttachmentDbEntry
 import com.syncodec.graphite.miscellaneous.FileUtils.Companion.createTempFileToExpose
 import com.syncodec.graphite.miscellaneous.generatePrimaryKey
@@ -126,9 +125,11 @@ private fun AttachmentView(
 ) {
 	val context = LocalContext.current
 	Card(
+		colors = CardDefaults.cardColors(
+			MaterialTheme.colorScheme.surface
+		),
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-		containerColor = MaterialTheme.colorScheme.surface,
-		shape = SquircleShape(6.0),
+		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier
 			.fillMaxWidth()
 			.aspectRatio(1f)

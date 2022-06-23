@@ -125,7 +125,7 @@ fun MapLocationPopup(
 						containerColor = MaterialTheme.colorScheme.primary,
 					) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_current_location),
+							painter = painterResource(id = R.drawable.ic_gps),
 							contentDescription = "Get current location",
 							tint = MaterialTheme.colorScheme.onPrimary,
 							modifier = Modifier.requiredSize(24.dp)
@@ -195,7 +195,7 @@ fun MapLocationPopup(
 					)
 
 					Icon(
-						painter = painterResource(id = R.drawable.ic_circle),
+						painter = painterResource(id = R.drawable.  ic_circle),
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.primary,
 						modifier = Modifier.requiredSize(8.dp)

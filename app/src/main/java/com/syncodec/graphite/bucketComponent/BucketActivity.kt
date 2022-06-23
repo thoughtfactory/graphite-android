@@ -1,7 +1,10 @@
 package com.syncodec.graphite.bucketComponent
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -10,6 +13,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,10 +29,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.kedia.ogparser.OpenGraphCallback
+import com.kedia.ogparser.OpenGraphParser
+import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
 import com.syncodec.graphite.bucketComponent.miscellaneous.AddNewBucketItemButton
 import com.syncodec.graphite.bucketComponent.miscellaneous.DataTypeSelectDropdownDemo
@@ -39,12 +50,14 @@ import com.syncodec.graphite.bucketComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.SheetLayout
 import com.syncodec.graphite.bucketComponent.modalBottomSheet.ShowData
 import com.syncodec.graphite.bucketComponent.screen.GridItemScreen
+import com.syncodec.graphite.bucketComponent.screen.LinkScreen
 import com.syncodec.graphite.bucketComponent.screen.TodoScreen
 import com.syncodec.graphite.bucketItemComponent.BucketItemActivity
 import com.syncodec.graphite.custom.DeleteDialog
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.database.bucketItem.BucketItemState
 import com.syncodec.graphite.database.bucketItem.BucketItemType
+import com.syncodec.graphite.database.bucketItem.LinkData
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
 import com.syncodec.graphite.ui.theme.GraphiteBase
@@ -59,6 +72,8 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 
 
 class BucketActivity : ComponentActivity() {
+	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
 	val viewModel by viewModels<BucketViewModel>()
 
 	@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
@@ -70,6 +85,18 @@ class BucketActivity : ComponentActivity() {
 				finish()
 			} else {
 				viewModel.bucketKey = it
+				intent.getIntExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, -1).also {
+					if (it == -1) {
+						finish()
+					} else {
+						try {
+							viewModel.bucketItemType = BucketItemType.values()[it]
+						} catch (exception: Exception) {
+							Toast.makeText(this, "Error getting data", Toast.LENGTH_SHORT).show()
+							finish()
+						}
+					}
+				}
 				viewModel.getBucket()
 			}
 		}
@@ -154,7 +181,7 @@ class BucketActivity : ComponentActivity() {
 									activityState.bottomSheetState.show()
 								}
 							}
-							BucketItemType.BOOKS -> Intent(
+							BucketItemType.BOOK -> Intent(
 								this@BucketActivity,
 								BucketItemActivity::class.java
 							).apply {
@@ -171,7 +198,7 @@ class BucketActivity : ComponentActivity() {
 
 								startForResult.launch(this)
 							}
-							BucketItemType.SHOWS -> Intent(
+							BucketItemType.SHOW -> Intent(
 								this@BucketActivity,
 								BucketItemActivity::class.java
 							).apply {
@@ -187,6 +214,16 @@ class BucketActivity : ComponentActivity() {
 								)
 
 								startForResult.launch(this)
+							}
+							BucketItemType.LINK -> {
+								try {
+									val linkData = objectMapper.readValue<LinkData>(viewModel.bucketItemDbEntry.value?.data?.extra as String)
+
+									startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(linkData.originalUrl)))
+								} catch (exception: Exception) {
+									exception.printStackTrace()
+									Toast.makeText(this, "Error opening link", Toast.LENGTH_SHORT).show()
+								}
 							}
 						}
 					}
@@ -206,16 +243,24 @@ class BucketActivity : ComponentActivity() {
 				activityState.bottomSheetType.value =
 					when (bucketDbEntry?.bucketItemType) {
 						BucketItemType.TODO -> BottomSheetType.AddTodoSheet
-						BucketItemType.BOOKS -> BottomSheetType.AddBookSheet
-						BucketItemType.SHOWS -> BottomSheetType.AddMovieSheet
+						BucketItemType.BOOK -> BottomSheetType.AddBookSheet
+						BucketItemType.SHOW -> BottomSheetType.AddMovieSheet
+						BucketItemType.LINK -> BottomSheetType.AddLinkSheet
 						else -> BottomSheetType.MenuBottomSheet
 					}
 
 				viewModel.bucketItemDbEntry.value = null
 
-				activityState.scope.launch {
-					activityState.bottomSheetState.show()
-				}
+				activityState.scope.launch { activityState.bottomSheetState.show() }
+			}
+			Action.ADD_TODO -> {
+				data as Triple<*, *, *>
+				viewModel.addTodo(
+					key = data.first as String?,
+					title = data.second as String,
+					state = data.third as Int
+				)
+				scope.launch { activityState.bottomSheetState.hide() }
 			}
 			Action.ADD_BOOK -> {
 				activityState.scope.launch { viewModel.activityState.bottomSheetState.hide() }
@@ -224,7 +269,7 @@ class BucketActivity : ComponentActivity() {
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
 					putExtra(
 						Konstant.Companion.Konstant.BUCKET_TYPE.name,
-						BucketItemType.BOOKS.ordinal
+						BucketItemType.BOOK.ordinal
 					)
 					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, data as BookData)
 					startActivity(this)
@@ -237,20 +282,75 @@ class BucketActivity : ComponentActivity() {
 					putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, viewModel.bucketKey)
 					putExtra(
 						Konstant.Companion.Konstant.BUCKET_TYPE.name,
-						BucketItemType.SHOWS.ordinal
+						BucketItemType.SHOW.ordinal
 					)
 					putExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name, data as ShowData)
 					startActivity(this)
 				}
 			}
-			Action.ADD_TODO -> {
-				data as Triple<*, *, *>
-				viewModel.addTodo(
-					key = data.first as String?,
-					title = data.second as String,
-					state = data.third as Int
-				)
-				scope.launch { activityState.bottomSheetState.hide() }
+			Action.ADD_LINK -> {
+				data as String
+				val openGraphParser = OpenGraphParser(object : OpenGraphCallback {
+					override fun onPostResponse(openGraphResult: OpenGraphResult) {
+						viewModel.addLink(openGraphResult, data)
+					}
+
+					override fun onError(error: String) {
+						viewModel.addLink(null, data)
+					}
+				}, showNullOnEmpty = true, context = this)
+
+				openGraphParser.parse(data)
+				activityState.scope.launch { activityState.bottomSheetState.hide() }
+			}
+			Action.COPY_LINK -> {
+				data as String
+				val bucketItem = viewModel.bucketItemList.find { it.key == data }
+				val linkData = objectMapper.readValue<LinkData>(bucketItem?.data?.extra as String)
+				if (linkData.originalUrl.isNullOrBlank()) {
+					Toast.makeText(
+						this@BucketActivity,
+						"Error copying link",
+						Toast.LENGTH_SHORT
+					).show()
+				} else {
+					try {
+						val clipboard: ClipboardManager =
+							getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+						val clip = ClipData.newPlainText("link", linkData.originalUrl)
+						clipboard.setPrimaryClip(clip)
+						Toast.makeText(
+							this@BucketActivity,
+							"Link copied",
+							Toast.LENGTH_SHORT
+						).show()
+					} catch (exception: Exception) {
+						Toast.makeText(
+							this@BucketActivity,
+							"Error copying link",
+							Toast.LENGTH_SHORT
+						).show()
+					}
+				}
+			}
+			Action.SHARE_LINK -> {
+				data as String
+				val bucketItem = viewModel.bucketItemList.find { it.key == data }
+				val linkData = objectMapper.readValue<LinkData>(bucketItem?.data?.extra as String)
+
+				if (linkData.originalUrl.isNullOrBlank()) {
+					Toast.makeText(
+						this@BucketActivity,
+						"Error sharing link",
+						Toast.LENGTH_SHORT
+					).show()
+				} else {
+					val i = Intent(Intent.ACTION_SEND)
+					i.type = "text/plain"
+					i.putExtra(Intent.EXTRA_SUBJECT, "Sharing link")
+					i.putExtra(Intent.EXTRA_TEXT, linkData.originalUrl)
+					startActivity(Intent.createChooser(i, "Share link"))
+				}
 			}
 			Action.DATA_TYPE_SELECT -> {
 				activityState.isSelectionCardVisible.value = true
@@ -311,7 +411,7 @@ class BucketActivity : ComponentActivity() {
 
 	@OptIn(
 		ExperimentalMaterialApi::class,
-		androidx.compose.animation.ExperimentalAnimationApi::class,
+		ExperimentalAnimationApi::class,
 		ExperimentalPagerApi::class
 	)
 	@Composable
@@ -385,8 +485,9 @@ class BucketActivity : ComponentActivity() {
 								painter = painterResource(
 									id = when (bucketDbEntry?.bucketItemType) {
 										BucketItemType.TODO -> R.drawable.il_todo_header
-										BucketItemType.BOOKS -> R.drawable.il_book_header
-										BucketItemType.SHOWS -> R.drawable.il_show_header
+										BucketItemType.BOOK -> R.drawable.il_book_header
+										BucketItemType.SHOW -> R.drawable.il_show_header
+										BucketItemType.LINK -> R.drawable.il_link_header
 										else -> R.drawable.il_reading
 									}
 								),
@@ -419,12 +520,17 @@ class BucketActivity : ComponentActivity() {
 										selectedBucketItemList = activityState.selectedItemList,
 										pagerState = activityState.pagerState,
 									) { action, key -> onPerformAction(action, key) }
-									BucketItemType.BOOKS -> GridItemScreen(
+									BucketItemType.BOOK -> GridItemScreen(
 										bucketItemList = bucketItemList,
 										selectedBucketItemList = activityState.selectedItemList,
 										pagerState = activityState.pagerState,
 									) { action, key -> onPerformAction(action, key) }
-									BucketItemType.SHOWS -> GridItemScreen(
+									BucketItemType.SHOW -> GridItemScreen(
+										bucketItemList = bucketItemList,
+										selectedBucketItemList = activityState.selectedItemList,
+										pagerState = activityState.pagerState,
+									) { action, key -> onPerformAction(action, key) }
+									BucketItemType.LINK -> LinkScreen(
 										bucketItemList = bucketItemList,
 										selectedBucketItemList = activityState.selectedItemList,
 										pagerState = activityState.pagerState,
@@ -505,9 +611,12 @@ class BucketActivity : ComponentActivity() {
 		CLICK_ITEM,
 		LONG_CLICK_ITEM,
 		OPEN_ADD_SHEET,
+		ADD_TODO,
 		ADD_BOOK,
 		ADD_SHOW,
-		ADD_TODO,
+		ADD_LINK,
+		COPY_LINK,
+		SHARE_LINK,
 		DATA_TYPE_SELECT,
 		DATA_TYPE,
 		SHOW_DELETE,

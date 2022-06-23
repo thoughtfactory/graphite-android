@@ -21,8 +21,14 @@ interface BucketItemDbTableDao {
 	@Query(value = "SELECT * FROM bucket_item_table WHERE `key` = :key")
 	fun getAsFlow(key: String): Flow<BucketItemDbEntry?>
 
+	@Query(value = "SELECT `key` FROM bucket_item_table")
+	suspend fun getAllKeys(): List<String>
+
 	@Query(value = "SELECT `key`, created_timestamp, modified_timestamp, title, thumbnail, state FROM bucket_item_table WHERE bucket_key = :bucketKey")
 	fun getForPreviewAsFlow(bucketKey: String): Flow<List<BucketItemPreviewDbEntry>>
+
+	@Query(value = "SELECT `key`, created_timestamp, modified_timestamp, title, thumbnail, state, data FROM bucket_item_table WHERE bucket_key = :bucketKey")
+	fun getForPreviewWithExtraAsFlow(bucketKey: String): Flow<List<BucketItemPreviewDbEntry>>
 
 	@Query(value = "SELECT * FROM bucket_item_table WHERE bucket_key = :bucketKey ORDER BY created_timestamp DESC")
 	fun getFromBucketAsFlow(bucketKey: String) : Flow<List<BucketItemDbEntry>>
@@ -41,6 +47,9 @@ interface BucketItemDbTableDao {
 
 	@Query("DELETE FROM bucket_item_table WHERE `key` IN (:keyList)")
 	suspend fun delete(keyList: List<String>)
+
+	@Query("DELETE FROM bucket_item_table")
+	suspend fun deleteAll()
 
 	@Query("DELETE FROM bucket_item_table WHERE bucket_key IN (:bucketKeyList)")
 	suspend fun deleteWithBucket(bucketKeyList: List<String>)

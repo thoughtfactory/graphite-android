@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,7 +13,6 @@ import com.syncodec.graphite.bucketComponent.BucketActivity
 import com.syncodec.graphite.custom.button.LargeButton
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun AddNewBucketItemButton(
 	bucketItemType: BucketItemType,
@@ -41,8 +39,9 @@ fun AddNewBucketItemButton(
 				LargeButton(
 					text = when (bucketItemType) {
 						BucketItemType.TODO -> "Add a new Task"
-						BucketItemType.BOOKS -> "A new story?"
-						BucketItemType.SHOWS -> "What did you watch?"
+						BucketItemType.BOOK -> "A new story?"
+						BucketItemType.SHOW -> "What did you watch?"
+						BucketItemType.LINK -> "Save a link"
 					},
 					enabled = true,
 					modifier = Modifier

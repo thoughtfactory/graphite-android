@@ -1,19 +1,21 @@
 package com.syncodec.graphite.noteComponent.screen
 
+import android.net.Uri
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
+import com.syncodec.graphite.custom.ErrorView
 import com.syncodec.graphite.custom.LoadingView
+import com.syncodec.graphite.database.attachment.AttachmentDbEntry
 import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.konstant.Status
 import com.syncodec.graphite.noteComponent.NoteActivity
@@ -27,6 +29,7 @@ fun NoteViewerScreen(
 	noteKeyList: List<String>,
 	noteDbEntry: NoteDbEntry?,
 	noteContent: JSONObject?,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri?>>,
 	connectedTag: List<String>,
 	pagerState: PagerState,
 	status: Status,
@@ -53,6 +56,7 @@ fun NoteViewerScreen(
 							status = status,
 							noteDbEntry = noteDbEntry,
 							noteContent = noteContent,
+							attachmentMap = attachmentMap,
 							connectedTag = connectedTag
 						) { onClick(it) }
 					} else {
@@ -69,6 +73,7 @@ private fun Viewer(
 	status: Status,
 	noteDbEntry: NoteDbEntry?,
 	noteContent: JSONObject?,
+	attachmentMap: Map<String, Pair<AttachmentDbEntry, Uri?>>,
 	connectedTag: List<String>,
 	onAction: (NoteActivity.Action) -> Unit
 ) {
@@ -86,10 +91,10 @@ private fun Viewer(
 				ViewerComponent(
 					noteDbEntry = noteDbEntry,
 					noteContent = noteContent,
+					attachmentMap = attachmentMap,
 					connectedTag = connectedTag
 				) { onAction(it) }
-			Status.ERROR -> {
-			}
+			Status.ERROR -> ErrorView()
 		}
 	}
 }

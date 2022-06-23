@@ -12,6 +12,9 @@ interface TagDbTableDao {
 	@Update
 	fun update(tagDbEntry: TagDbEntry)
 
+	@Query(value = "SELECT tag FROM tag_table")
+	fun getAllKeys(): List<String>
+
 	@Query(value = "SELECT * FROM tag_table WHERE tag = :tag")
 	fun getTagAsFlow(tag: String): Flow<TagDbEntry?>
 
@@ -20,4 +23,7 @@ interface TagDbTableDao {
 
 	@Query(value = "DELETE FROM tag_table WHERE tag = :tag")
 	suspend fun delete(tag: String)
+
+	@Query(value = "DELETE FROM tag_table")
+	suspend fun deleteAll()
 }

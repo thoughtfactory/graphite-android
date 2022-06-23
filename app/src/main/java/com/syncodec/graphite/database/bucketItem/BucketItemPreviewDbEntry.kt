@@ -20,7 +20,10 @@ data class BucketItemPreviewDbEntry(
 	var thumbnail: Bitmap? = null,
 
 	@ColumnInfo(name = "state")
-	var state: BucketItemState = BucketItemState.ALPHA
+	var state: BucketItemState = BucketItemState.ALPHA,
+
+	@ColumnInfo(name = "data")
+	var data: BucketItem? = null,
 ) {
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true

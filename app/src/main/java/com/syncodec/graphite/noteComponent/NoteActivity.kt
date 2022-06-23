@@ -20,6 +20,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +29,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
@@ -41,17 +41,19 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.Graphite
 import com.syncodec.graphite.attachmentComponent.AttachmentActivity
+import com.syncodec.graphite.custom.DeleteDialog
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.googleMap.rememberMapViewWithLifecycle
 import com.syncodec.graphite.custom.richText.RichTextEditor
 import com.syncodec.graphite.custom.richText.rememberRichTextEditorWithLifecycle
 import com.syncodec.graphite.konstant.Konstant
 import com.syncodec.graphite.konstant.Status
+import com.syncodec.graphite.miscellaneous.LocalRichTextEditor
 import com.syncodec.graphite.miscellaneous.StringUtils.Companion.encrypt
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.graphite.miscellaneous.locationAddressFilter
+import com.syncodec.graphite.noteComponent.miscellaneous.BottomBar
 import com.syncodec.graphite.noteComponent.miscellaneous.MapLocationPopup
-import com.syncodec.graphite.noteComponent.miscellaneous.NotificationType
 import com.syncodec.graphite.noteComponent.miscellaneous.TopBar
 import com.syncodec.graphite.noteComponent.modalBottomSheet.BottomSheetType
 import com.syncodec.graphite.noteComponent.modalBottomSheet.SheetLayout
@@ -92,8 +94,10 @@ class NoteActivity : ComponentActivity() {
 			} else finish()
 		}
 
-		viewModel.showArchived = intent.getBooleanExtra(Konstant.Companion.Konstant.SHOW_ARCHIVED.name, false)
-		viewModel.showLocked = intent.getBooleanExtra(Konstant.Companion.Konstant.SHOW_LOCKED.name, false)
+		viewModel.showArchived =
+			intent.getBooleanExtra(Konstant.Companion.Konstant.SHOW_ARCHIVED.name, false)
+		viewModel.showLocked =
+			intent.getBooleanExtra(Konstant.Companion.Konstant.SHOW_LOCKED.name, false)
 
 		viewModel.viewerKey.value = intent.getStringExtra(Konstant.Companion.Konstant.NOTE_KEY.name)
 		val title = intent.getStringExtra(Konstant.Companion.Konstant.TITLE.name)
@@ -148,14 +152,16 @@ class NoteActivity : ComponentActivity() {
 							clipboard.setPrimaryClip(clip)
 							Toast.makeText(
 								this@NoteActivity,
-								"Text copied...",
+								"Text copied",
 								Toast.LENGTH_SHORT
 							).show()
 						}
 					}
 				)
 
-				Screen()
+				CompositionLocalProvider(values = arrayOf(LocalRichTextEditor provides viewModel.activityState.richTextEditor)) {
+					Screen()
+				}
 			}
 		}
 	}
@@ -196,12 +202,6 @@ class NoteActivity : ComponentActivity() {
 			Action.EDITOR_READY -> viewModel.status.value = Status.LOADED
 			Action.OPEN_METADATA -> {
 				activityState.bottomSheetType.value = BottomSheetType.MetadataBottomSheet
-				scope.launch {
-					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
-				}
-			}
-			Action.OPEN_MENU -> {
-				activityState.bottomSheetType.value = BottomSheetType.MenuBottomSheet
 				scope.launch {
 					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
 				}
@@ -265,6 +265,9 @@ class NoteActivity : ComponentActivity() {
 					activityState.bottomSheetState.animateTo(ModalBottomSheetValue.Expanded)
 				}
 			}
+			Action.UPDATE_TITLE -> {
+				viewModel.title.value = data as String
+			}
 			Action.TOGGLE_FAVOURITE -> viewModel.isFavourite.value = !viewModel.isFavourite.value
 			Action.TOGGLE_ARCHIVE -> viewModel.isArchived.value = !viewModel.isArchived.value
 			Action.TOGGLE_LOCKED -> viewModel.isLocked.value = !viewModel.isLocked.value
@@ -276,7 +279,10 @@ class NoteActivity : ComponentActivity() {
 					if (isPremium) {
 						this.forEach { uri -> viewModel.insertAttachment(uri as Uri) }
 					} else if (viewModel.attachmentMap.size < 4) {
-						this.subList(0, minOf(4, this.size, maxOf(0, 4 - viewModel.attachmentMap.size)))
+						this.subList(
+							0,
+							minOf(4, this.size, maxOf(0, 4 - viewModel.attachmentMap.size))
+						)
 							.forEach { viewModel.insertAttachment(uri = it as Uri) }
 					} else {
 						Toast.makeText(
@@ -314,6 +320,7 @@ class NoteActivity : ComponentActivity() {
 				activityState.richTextEditor.exec("editor.getPlainText(${viewModel.noteContent.value?.toString()});")
 				activityState.coroutineScope.launch { activityState.bottomSheetState.hide() }
 			}
+			Action.SHOW_DELETE_POPUP -> activityState.showDeleteDialog.value = true
 			Action.DELETE -> {
 				viewModel.delete()
 				activityState.coroutineScope.launch { activityState.bottomSheetState.hide() }
@@ -382,12 +389,12 @@ class NoteActivity : ComponentActivity() {
 					},
 					onIoException = {
 						Log.i(
-							"Diary Activity",
-							"Reverse Geocode : IO Exception : Maybe network unavailable"
+							"Reverse Geocode",
+							"IO Exception : Maybe network is unavailable"
 						)
 					},
 					onException = {
-						Log.e("Diary Activity", "Reverse Geocode : Exception")
+						Log.e("Reverse Geocode", "Reverse Geocode : Exception")
 					}
 				)
 			}
@@ -424,6 +431,8 @@ class NoteActivity : ComponentActivity() {
 			sheetContent = {
 				SheetLayout(
 					bottomSheetType = bottomSheetType,
+					key = viewModel.noteDbEntry.value?.key,
+					title = viewModel.title.value,
 					createdTimestamp = viewModel.createdTimestamp.value,
 					modifiedTimestamp = viewModel.modifiedTimestamp.value,
 					latLng = viewModel.latLng.value,
@@ -442,37 +451,46 @@ class NoteActivity : ComponentActivity() {
 						isViewer = viewModel.viewerKey.value != null,
 						isSaving = viewModel.activityState.isSaving.value
 					) { action, data -> onPerformAction(action, data) }
+				},
+				bottomBar = {
+					BottomBar(
+						isViewer = viewModel.viewerKey.value != null,
+						isSaving = activityState.isSaving.value,
+						userTimestamp = viewModel.userTimestamp.value,
+						isFavourite = viewModel.isFavourite.value,
+						isArchive = viewModel.isArchived.value,
+						isLocked = viewModel.isLocked.value
+					) { action, data -> onPerformAction(action, data) }
 				}
 			) {
 				Crossfade(
 					targetState = viewModel.viewerKey.value == null,
-					animationSpec = tween(600)
+					animationSpec = tween(600),
+					modifier = Modifier.padding(it)
 				) { if (it) EditorScreen() else ViewerScreen() }
 			}
+			DeleteDialog(
+				showDeleteDialog = activityState.showDeleteDialog.value,
+				key = viewerKey ?: "",
+				onDismiss = { activityState.showDeleteDialog.value = false },
+				onDelete = { onPerformAction(Action.DELETE) },
+			)
 		}
 	}
 
-	@OptIn(ExperimentalPermissionsApi::class)
 	@Composable
 	private fun EditorScreen() {
 		val scope = rememberCoroutineScope()
-		val configuration = LocalConfiguration.current
-		val screenWidth = configuration.screenWidthDp.dp
 
 		val activityState = viewModel.activityState
-		val noteDbEntry by viewModel.noteDbEntry
 		val addressState by activityState.addressState
 		val showAddressCard by activityState.showAddressCard
 		val status by viewModel.status
 
 		var isSaved by activityState.isSaved
 
-		val userTimestamp by viewModel.userTimestamp
 		val latLng by viewModel.latLng
 		val address by viewModel.address
-		val isFavourite by viewModel.isFavourite
-		val isArchived by viewModel.isArchived
-		val isLocked by viewModel.isLocked
 
 		LaunchedEffect(key1 = isSaved) {
 			if (isSaved) {
@@ -485,13 +503,8 @@ class NoteActivity : ComponentActivity() {
 		}
 
 		NoteEditorScreen(
-			richTextEditor = activityState.richTextEditor,
-			userTimestamp = userTimestamp,
 			latLng = latLng,
 			address = address,
-			isFavourite = isFavourite,
-			isArchived = isArchived,
-			isLocked = isLocked,
 			addressState = addressState,
 			showAddressCard = showAddressCard,
 			status = status,
@@ -542,6 +555,7 @@ class NoteActivity : ComponentActivity() {
 			pagerState = viewModel.activityState.pagerState,
 			noteDbEntry = noteDbEntry,
 			noteContent = noteContent,
+			attachmentMap = viewModel.attachmentMap,
 			connectedTag = viewModel.connectedTag,
 			status = status
 		) { onPerformAction(it, noteKeyList.size) }
@@ -559,11 +573,11 @@ class NoteActivity : ComponentActivity() {
 		val mapView: MapView,
 		val pagerState: PagerState,
 		var bottomSheetType: MutableState<BottomSheetType> = mutableStateOf(BottomSheetType.AttachmentBottomSheet),
-		var notificationType: MutableState<NotificationType> = mutableStateOf(NotificationType.UrlSelectionNotification),
 		var isNotificationVisible: MutableState<Boolean> = mutableStateOf(false),
 		var addressState: MutableState<AddressState> = mutableStateOf(AddressState.INIT),
 		var showAddressCard: MutableState<Boolean> = mutableStateOf(false),
 		var showMapLocationDialog: MutableState<Boolean> = mutableStateOf(false),
+		var showDeleteDialog: MutableState<Boolean> = mutableStateOf(false),
 		var isSaving: MutableState<Boolean> = mutableStateOf(false),
 		var isSaved: MutableState<Boolean> = mutableStateOf(false)
 	)
@@ -620,6 +634,7 @@ class NoteActivity : ComponentActivity() {
 		HIDE_ADDRESS,
 		REQUEST_LOCATION_PERMISSION,
 		SELECT_TIME,
+		UPDATE_TITLE,
 		ATTACHMENT_BUTTON,
 		TOGGLE_FAVOURITE,
 		TOGGLE_ARCHIVE,
@@ -630,6 +645,7 @@ class NoteActivity : ComponentActivity() {
 		PRINT,
 		EXPORT,
 		COPY,
+		SHOW_DELETE_POPUP,
 		DELETE,
 		TAG_BUTTON,
 		TRY_GET_LOCATION,

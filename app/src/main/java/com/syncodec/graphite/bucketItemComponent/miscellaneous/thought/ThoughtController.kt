@@ -31,7 +31,7 @@ fun ThoughtController(
 			modifier = Modifier.weight(1f),
 		) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_cancel),
+				painter = painterResource(id = R.drawable.ic_close),
 				contentDescription = "Discard",
 				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier.requiredSize(20.dp)
@@ -68,7 +68,7 @@ fun ThoughtController(
 		if (onDelete!=null) {
 			IconButton(onClick = { onDelete.invoke() }) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_trash),
+					painter = painterResource(id = R.drawable.ic_delete),
 					contentDescription = "Delete",
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.requiredSize(20.dp)

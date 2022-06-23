@@ -21,6 +21,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -28,7 +29,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.android.gms.maps.model.LatLng
 import com.syncodec.graphite.R
-import com.syncodec.graphite.custom.squircle.SquircleShape
 import com.syncodec.graphite.miscellaneous.StringUtils.Companion.addEmptyLines
 import com.syncodec.graphite.miscellaneous.StringUtils.Companion.decrypt
 import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.entryTimestamp0
@@ -92,7 +92,7 @@ fun NoteCard(
 					1.dp,
 					MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.17f)
 				),
-				containerColor = containerColor,
+				colors = CardDefaults.cardColors(containerColor),
 				elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 				modifier = Modifier
 					.fillMaxWidth()
@@ -143,7 +143,7 @@ fun NoteCard(
 						)
 
 						if (address != null || latLng != null) {
-							Spacer(modifier = Modifier.height(4.dp))
+							Spacer(modifier = Modifier.height(8.dp))
 							Location(
 								address = address,
 								latLng = latLng
@@ -154,18 +154,6 @@ fun NoteCard(
 			}
 		}
 	}
-}
-
-@Composable
-private fun TitleText(text: String) {
-	Text(
-		text = text,
-		style = MaterialTheme.typography.bodySmall,
-		color = MaterialTheme.colorScheme.onBackground,
-		fontWeight = FontWeight.Bold,
-		maxLines = 1,
-		modifier = Modifier
-	)
 }
 
 @Composable
@@ -199,7 +187,7 @@ private fun Title(
 
 		if (isLocked) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_security),
+				painter = painterResource(id = R.drawable.ic_shield),
 				contentDescription = "Locked",
 				tint = Color(0xFF289672),
 				modifier = Modifier.requiredSize(14.dp)
@@ -252,6 +240,18 @@ private fun Title(
 }
 
 @Composable
+private fun TitleText(text: String) {
+	Text(
+		text = text,
+		style = MaterialTheme.typography.bodyMedium,
+		color = MaterialTheme.colorScheme.onBackground,
+		fontWeight = FontWeight.Bold,
+		maxLines = 1,
+		modifier = Modifier
+	)
+}
+
+@Composable
 private fun Content(
 	contentThumbnail: String?,
 	attachmentCount: Int,
@@ -293,7 +293,7 @@ private fun Content(
 				contentScale = ContentScale.Crop,
 				modifier = Modifier
 					.requiredSize(80.dp)
-					.clip(SquircleShape(4.0)),
+					.clip(RoundedCornerShape(12.dp)),
 			)
 		}
 	}
@@ -321,16 +321,18 @@ private fun Location(
 		if (!address.isNullOrBlank()) {
 			Text(
 				text = address,
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onBackground,
+				style = MaterialTheme.typography.labelMedium,
+				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+				fontStyle = FontStyle.Italic,
 				overflow = TextOverflow.Ellipsis,
 				maxLines = 1
 			)
 		} else if (latLng != null) {
 			Text(
 				text = "${latLng.latitude.roundTo(6)}, ${latLng.longitude.roundTo(6)}",
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onBackground,
+				style = MaterialTheme.typography.labelMedium,
+				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+				fontStyle = FontStyle.Italic,
 				overflow = TextOverflow.Ellipsis,
 				maxLines = 1
 			)

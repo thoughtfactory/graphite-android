@@ -1,28 +1,32 @@
 package com.syncodec.graphite.mainComponent.miscellaneous
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.syncodec.graphite.miscellaneous.DataStoreInstance
+import com.tobianoapps.bulletin.components.BulletinScreen
+import com.tobianoapps.bulletin.data.Bulletin
+import com.tobianoapps.bulletin.data.Change
+import com.tobianoapps.bulletin.data.ChangeType
+import com.tobianoapps.bulletin.data.Release
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReleaseNotes() {
 	val context = LocalContext.current
@@ -30,79 +34,120 @@ fun ReleaseNotes() {
 
 	val showReleaseNote by dataStore.showReleaseNotes.collectAsState(initial = null)
 
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
-
-	if (showReleaseNote != false) {
-		Dialog(
-			onDismissRequest = { dataStore.setShowReleaseNotes(false) },
-			properties = DialogProperties()
-		) {
-			OutlinedCard(
-				border = BorderStroke(3.dp, MaterialTheme.colorScheme.primary),
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(screenHeight * 2 / 3)
-			) {
-				LazyColumn(
-					horizontalAlignment = Alignment.Start,
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(16.dp, 0.dp),
-				) {
-					item { Spacer(modifier = Modifier.height(16.dp)) }
-
-					release(
-						releaseVersion = "Release 1.1.0",
-						releaseContentList = listOf(
-							"Can update bucket title",
-							"UI changes in text field",
-							"Added release notes",
-							"Bug fixes in vault",
-							"Bug fixes in richtext editor",
-							"Bug fixes in richtext viewer",
+	val bulletin by rememberSaveable() {
+		mutableStateOf(
+			Bulletin(
+				listOf(
+					Release(
+						time = 1655912742000,
+						label = "1.2.0",
+						changes = listOf(
+							Change(
+								changeType = ChangeType.NEW,
+								summary = "Local Backup and Restore"
+							),
+							Change(
+								changeType = ChangeType.NEW,
+								summary = "Added Links Bucket"
+							),
+							Change(
+								changeType = ChangeType.NEW,
+								summary = "Added year progress bar"
+							),
+							Change(
+								changeType = ChangeType.IMPROVED,
+								summary = "Improved icons"
+							),
+							Change(
+								changeType = ChangeType.IMPROVED,
+								summary = "UI changes in Note Editor and Note Viewer"
+							),
+							Change(
+								changeType = ChangeType.FIXED,
+								summary = "Focusing on textfield shows cursor"
+							),
+							Change(
+								changeType = ChangeType.FIXED,
+								summary = "Color of Title in dark theme"
+							),
+							Change(
+								changeType = ChangeType.FIXED,
+								summary = "Fixes in Heading component in Note Viewer"
+							)
+						)
+					),
+					Release(
+						time = 1654799400000,
+						label = "1.1.0",
+						changes = listOf(
+							Change(
+								changeType = ChangeType.NEW,
+								summary = "Added release notes"
+							),
+							Change(
+								changeType = ChangeType.IMPROVED,
+								summary = "Added title update in bucket in notes"
+							),
+							Change(
+								changeType = ChangeType.FIXED,
+								summary = "Vault passcode couldn't be saved"
+							),
+							Change(
+								changeType = ChangeType.FIXED,
+								summary = "Fixes in Note Editor"
+							),
+							Change(
+								changeType = ChangeType.FIXED,
+								summary = "Fixes in Note Viewer"
+							),
+							Change(
+								changeType = ChangeType.REMOVED,
+								summary = "Illustrations from Atlas"
+							),
+							Change(
+								changeType = ChangeType.IMPROVED,
+								summary = "UI changes in Text Field"
+							)
+						)
+					),
+					Release(
+						time = 1654021800000,
+						label = "1.0.0",
+						changes = listOf(
+							Change(
+								changeType = ChangeType.NEW,
+								summary = "First Release"
+							)
 						)
 					)
+				)
+			)
+		)
+	}
 
-					release(
-						releaseVersion = "Release 1.0.0",
-						releaseContentList = listOf(
-							"Initial release"
-						)
+	if (showReleaseNote != false) {
+		Dialog(onDismissRequest = { dataStore.setShowReleaseNotes(false) }) {
+			Column(
+				horizontalAlignment = Alignment.End,
+				modifier = Modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+			) {
+				BulletinScreen(
+					modifier = Modifier.weight(1f),
+					bulletin = bulletin,
+				)
+
+				Spacer(modifier = Modifier.height(8.dp))
+
+				Button(
+					onClick = { dataStore.setShowReleaseNotes(false) },
+					modifier = Modifier.padding(0.dp, 0.dp, 12.dp, 8.dp)
+				) {
+					Text(
+						text = "Okay",
+						style = MaterialTheme.typography.labelLarge
 					)
 				}
 			}
 		}
 	}
-}
-
-private fun LazyListScope.release(releaseVersion: String, releaseContentList: List<String>) {
-	item {
-		Text(
-			text = releaseVersion,
-			style = MaterialTheme.typography.titleLarge,
-			color = MaterialTheme.colorScheme.onBackground
-		)
-	}
-	item { Spacer(modifier = Modifier.height(8.dp)) }
-	releaseContentList.forEach {
-		item {
-			Text(
-				text = it,
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
-				modifier = Modifier.padding(8.dp, 2.dp, 0.dp, 2.dp)
-			)
-		}
-	}
-	item { Spacer(modifier = Modifier.height(16.dp)) }
-	item {
-		Spacer(
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(2.dp)
-				.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f))
-		)
-	}
-	item { Spacer(modifier = Modifier.height(16.dp)) }
 }

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -31,6 +32,8 @@ fun LargeTextField(
 	modifier: Modifier = Modifier,
 	text: String,
 	placeholder: String,
+	isFocused: Boolean,
+	onFocusChanged: (Boolean) -> Unit,
 	keyboardOptions: KeyboardOptions? = null,
 	keyboardActions: KeyboardActions? = null,
 	onValueChanged: (String) -> Unit
@@ -53,7 +56,9 @@ fun LargeTextField(
 			keyboardActions = keyboardActions ?:  KeyboardActions.Default,
 			cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
 			textStyle = MaterialTheme.typography.bodyMedium,
-			modifier = Modifier.weight(1f),
+			modifier = Modifier
+				.weight(1f)
+				.onFocusChanged { onFocusChanged(it.isFocused) },
 			visualTransformation = { text ->
 				TransformedText(
 					AnnotatedString(
@@ -64,13 +69,12 @@ fun LargeTextField(
 				)
 			},
 			decorationBox = { innerTextField ->
-				Crossfade(targetState = text.isEmpty()) {
+				Crossfade(targetState = text.isEmpty() && !isFocused) {
 					if (it) {
 						Text(
 							text = placeholder,
 							style = MaterialTheme.typography.bodyMedium,
 							color = textColor.copy(alpha = 0.31f),
-							fontWeight = FontWeight.Bold
 						)
 					} else {
 						innerTextField()
@@ -84,7 +88,7 @@ fun LargeTextField(
 				painter = painterResource(id = R.drawable.ic_close),
 				contentDescription = "Clear text",
 				tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-				modifier = Modifier.requiredSize(16.dp)
+				modifier = Modifier
 			)
 		}
 	}

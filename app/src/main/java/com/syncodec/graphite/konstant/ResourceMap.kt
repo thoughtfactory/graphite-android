@@ -7,14 +7,16 @@ class ResourceMap {
 	companion object {
 		val bucketTypeToIcon: Map<BucketItemType, Int> = mapOf(
 			BucketItemType.TODO to R.drawable.ic_todo,
-			BucketItemType.BOOKS to R.drawable.ic_book,
-			BucketItemType.SHOWS to R.drawable.ic_show,
+			BucketItemType.BOOK to R.drawable.ic_book,
+			BucketItemType.SHOW to R.drawable.ic_show,
+			BucketItemType.LINK to R.drawable.ic_link,
 		)
 
 		val BucketItemNameMap: Map<BucketItemType, String> = mapOf(
 			BucketItemType.TODO to "Todo",
-			BucketItemType.BOOKS to "Books",
-			BucketItemType.SHOWS to "Movies / Series",
+			BucketItemType.BOOK to "Books",
+			BucketItemType.SHOW to "Movies / Series",
+			BucketItemType.LINK to "Link",
 		)
 	}
 }

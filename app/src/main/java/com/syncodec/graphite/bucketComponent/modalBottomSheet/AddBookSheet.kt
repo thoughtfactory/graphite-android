@@ -87,6 +87,7 @@ fun AddBookSheet(
 		.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	var bookNameText by rememberSaveable { mutableStateOf("") }
+	var isBookNameTextFocused by remember { mutableStateOf(false) }
 
 	var sheetState by remember { mutableStateOf(SheetState.INIT) }
 
@@ -126,6 +127,8 @@ fun AddBookSheet(
 					keyboardType = KeyboardType.Text,
 					imeAction = ImeAction.Search
 				),
+				isFocused = isBookNameTextFocused,
+				onFocusChanged = { isBookNameTextFocused = it },
 				keyboardActions = KeyboardActions(
 					onSearch = {
 						sheetState = SheetState.SEARCHING
@@ -265,7 +268,9 @@ private fun BookCard(
 		modifier = Modifier.padding(8.dp),
 	) {
 		Card(
-			containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
+			colors = CardDefaults.cardColors(
+				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+			),
 			elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
 			shape = RoundedCornerShape(12.dp),
 			modifier = modifier,

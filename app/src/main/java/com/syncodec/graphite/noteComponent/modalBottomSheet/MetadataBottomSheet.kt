@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
@@ -22,25 +21,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.syncodec.graphite.R
+import com.syncodec.graphite.custom.bottomSheet.BottomSheetTitleCard
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.miscellaneous.TimeUtils.Companion.timeStampToPrettyFull
+import com.syncodec.graphite.custom.bottomSheet.BottomSheetKeyCard
 import com.syncodec.graphite.miscellaneous.roundTo
 import com.syncodec.graphite.noteComponent.NoteActivity
-import java.util.*
-import java.util.concurrent.TimeUnit
 
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MetadataBottomSheet(
+	key: String?,
+	title: String?,
 	createdTimestamp: Long,
 	modifiedTimestamp: Long,
 	latLng: LatLng?,
@@ -65,10 +64,18 @@ fun MetadataBottomSheet(
 				icon = R.drawable.ic_info
 			)
 
-			TimestampCard(
+			BottomSheetKeyCard(
+				key = key,
 				createdTimestamp = createdTimestamp,
 				modifiedTimestamp = modifiedTimestamp
 			)
+
+			Spacer(modifier = Modifier.height(8.dp))
+
+			BottomSheetTitleCard(
+				title = title ?: "",
+				placeholder = "Note title"
+			) { onAction(NoteActivity.Action.UPDATE_TITLE, it) }
 
 			Spacer(modifier = Modifier.height(8.dp))
 
@@ -99,86 +106,6 @@ fun MetadataBottomSheet(
 			}
 
 			Spacer(modifier = Modifier.height(32.dp))
-		}
-	}
-}
-
-@Composable
-fun TimestampCard(
-	createdTimestamp: Long,
-	modifiedTimestamp: Long
-) {
-	Card(
-		elevation = 0.dp,
-		backgroundColor = MaterialTheme.colorScheme.background,
-		shape = RoundedCornerShape(12.dp),
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp)
-		) {
-			Row(
-				modifier = Modifier.fillMaxWidth()
-			) {
-				Text(
-					text = "Created on : ",
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onBackground
-				)
-				Spacer(modifier = Modifier.weight(1f))
-				Text(
-					text = timeStampToPrettyFull(createdTimestamp),
-					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onBackground
-				)
-			}
-
-			Spacer(modifier = Modifier.height(8.dp))
-
-			Row(
-				modifier = Modifier.fillMaxWidth()
-			) {
-				Text(
-					text = "Last edited on : ",
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onBackground
-				)
-				Spacer(modifier = Modifier.weight(1f))
-
-				val calendar = Calendar.getInstance()
-				val days = TimeUnit.MILLISECONDS.toDays(calendar.timeInMillis - modifiedTimestamp)
-				val hours = TimeUnit.MILLISECONDS.toHours(calendar.timeInMillis - modifiedTimestamp)
-				val minutes =
-					TimeUnit.MILLISECONDS.toMinutes(calendar.timeInMillis - modifiedTimestamp)
-
-				val modifiedTimestampPretty = if (days in 1..7) {
-					"About $days days ago"
-				} else if (days > 7) {
-					timeStampToPrettyFull(modifiedTimestamp)
-				} else {
-					if (hours in 1..24) {
-						"About $hours hour${if (hours == 1L) "" else "s"} ago"
-					} else {
-						if (minutes in 1..60) {
-							"About $minutes minute${if (minutes == 1L) "" else "s"} ago"
-						} else {
-							"About few seconds ago"
-						}
-					}
-				}
-
-				Text(
-					text = modifiedTimestampPretty,
-					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.onBackground
-				)
-			}
 		}
 	}
 }

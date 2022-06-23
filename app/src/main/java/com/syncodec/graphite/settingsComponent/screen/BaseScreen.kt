@@ -11,11 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
 import com.syncodec.graphite.settingsComponent.SettingsActivity
 import com.syncodec.graphite.settingsComponent.miscellaneous.SettingButton
-import com.syncodec.graphite.R
 import com.syncodec.graphite.ui.theme.PremiumCompositionLocal
 
 
@@ -32,8 +32,6 @@ fun BaseScreen(
 		item {
 			LoginButton(
 				email = email,
-				icon = R.drawable.ic_login,
-				tint = Color(0xFF5463FF),
 				onClick = { onAction(SettingsActivity.Action.LOGIN, null) },
 				onLogout = { onAction(SettingsActivity.Action.LOGOUT, null) }
 			)
@@ -42,28 +40,25 @@ fun BaseScreen(
 			item {
 				SettingButton(
 					title = "Subscription",
-					icon = R.drawable.ic_subscription,
-					tint = Color(0xFF66BFBF)
+					leadingIcon = R.drawable.ic_subscription,
 				) { onAction(SettingsActivity.Action.SUBSCRIPTION, null) }
 			}
 		}
-//		item {
-//			SettingButton(
-//				title = "Preference",
-//				icon = R.drawable.ic_preference,
-//				tint = Color(0xFFFE7E6D)
-//			) {
-//				onAction(
-//					SettingsActivity.Action.NAVIGATION,
-//					SettingsActivity.Companion.Path.PREFERENCE
-//				)
-//			}
-//		}
+		item {
+			SettingButton(
+				title = "Preference",
+				leadingIcon = R.drawable.ic_preference,
+			) {
+				onAction(
+					SettingsActivity.Action.NAVIGATION,
+					SettingsActivity.Companion.Path.PREFERENCE
+				)
+			}
+		}
 		item {
 			SettingButton(
 				title = "Security",
-				icon = R.drawable.ic_security,
-				tint = Color(0xFF28527A)
+				leadingIcon = R.drawable.ic_lock_close,
 			) {
 				onAction(
 					SettingsActivity.Action.NAVIGATION,
@@ -74,46 +69,35 @@ fun BaseScreen(
 		item {
 			SettingButton(
 				title = "Data",
-				icon = R.drawable.ic_data,
-				tint = Color(0xFF5EAAA8)
+				leadingIcon = R.drawable.ic_data,
 			) { onAction(SettingsActivity.Action.NAVIGATION, SettingsActivity.Companion.Path.DATA) }
 		}
 		item {
 			SettingButton(
 				title = "Backup and Sync",
-				icon = R.drawable.ic_sync,
-				tint = Color(0xFFCC9B6D)
+				leadingIcon = R.drawable.ic_sync,
 			) { onAction(SettingsActivity.Action.NAVIGATION, SettingsActivity.Companion.Path.SYNC) }
 		}
 		item {
 			SettingButton(
-				title = "Privacy policy",
-				icon = R.drawable.ic_privacy,
-				tint = Color(0xFF886F6F)
+				title = "Privacy Policy",
+				leadingIcon = R.drawable.ic_policy,
 			) { onAction(SettingsActivity.Action.POLICY, null) }
 		}
 		item {
 			SettingButton(
-				title = "Terms of service",
-				icon = R.drawable.ic_terms,
-				tint = Color(0xFF316B83)
+				title = "Terms of Service",
+				leadingIcon = R.drawable.ic_terms,
 			) { onAction(SettingsActivity.Action.TERMS, null) }
 		}
-//		item {
-//			OssLicensesMenuActivity.setActivityTitle("Open Source Licenses")
-//			Intent(this, OssLicensesMenuActivity::class.java).apply {
-//				startActivity(this)
-//			}
-//		}
 		item {
 			SettingButton(
-				title = "Graphite",
-				icon = R.drawable.ic_icon,
-				tint = Color.Unspecified
+				title = "About Us",
+				leadingIcon = R.drawable.ic_about_us,
 			) {
 				onAction(
 					SettingsActivity.Action.NAVIGATION,
-					SettingsActivity.Companion.Path.GRAPHITE
+					SettingsActivity.Companion.Path.ABOUT_US
 				)
 			}
 		}
@@ -124,8 +108,6 @@ fun BaseScreen(
 @Composable
 private fun LoginButton(
 	email: String?,
-	icon: Int? = null,
-	tint: Color? = null,
 	enabled: Boolean = true,
 	onClick: () -> Unit,
 	onLogout: () -> Unit
@@ -142,31 +124,25 @@ private fun LoginButton(
 		Row(
 			modifier = Modifier
 				.fillMaxSize()
-				.padding(24.dp, 0.dp),
+				.padding(16.dp, 0.dp),
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			if (icon != null) {
-				Icon(
-					painter = painterResource(id = icon),
-					contentDescription = email,
-					tint = tint ?: Color.Unspecified,
-					modifier = Modifier.requiredSize(24.dp)
-				)
-				Spacer(modifier = Modifier.width(24.dp))
-			} else {
-				Spacer(modifier = Modifier.width(48.dp))
-			}
+			Icon(
+				painter = painterResource(id = R.drawable.ic_account),
+				contentDescription = email,
+				tint = MaterialTheme.colorScheme.onBackground,
+				modifier = Modifier.requiredSize(28.dp)
+			)
+			Spacer(modifier = Modifier.width(24.dp))
 			Text(
 				text = email ?: "Login",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold,
-				color = if (enabled) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(
-					0.47f
-				),
-				modifier = Modifier
+				style = MaterialTheme.typography.titleMedium,
+				color = if (enabled) MaterialTheme.colorScheme.onBackground
+				else MaterialTheme.colorScheme.onBackground.copy(0.47f),
+				overflow = TextOverflow.Ellipsis,
+				modifier = Modifier.weight(1f)
 			)
 
-			Spacer(modifier = Modifier.weight(1f))
 
 			if (email != null) {
 				OutlinedButton(

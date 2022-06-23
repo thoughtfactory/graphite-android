@@ -30,30 +30,24 @@ fun GraphiteScreen(
 	quoteBg: Drawable?,
 	onAction: (MainActivity.Action, Any?) -> Unit
 ) {
-	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.padding(0.dp, 0.dp, 0.dp, 64.dp)
+	Crossfade(
+		targetState = componentType,
+		modifier = Modifier.fillMaxSize()
 	) {
-		Crossfade(
-			targetState = componentType,
-			modifier = Modifier
-		) {
-			when (it) {
-				MainActivity.ComponentType.NOTE -> NoteScreen(
-					noteMap = noteMap,
-					selectedItemList = selectedItemList,
-					isFilterActive = isFilterActive,
-					quote = quote,
-					quoteBg = quoteBg,
-				) { click, data -> onAction(click, data) }
-				MainActivity.ComponentType.NOTEBOOK -> NotebookScreen(
-					notebookListFlow = notebookListFlow,
-					isSelected = isSelected,
-					selectedItemList = selectedItemList,
-					filterTag = listOf()
-				) { click, data -> onAction(click, data) }
-			}
+		when (it) {
+			MainActivity.ComponentType.NOTE -> NoteScreen(
+				noteMap = noteMap,
+				selectedItemList = selectedItemList,
+				isFilterActive = isFilterActive,
+				quote = quote,
+				quoteBg = quoteBg,
+			) { click, data -> onAction(click, data) }
+			MainActivity.ComponentType.NOTEBOOK -> NotebookScreen(
+				notebookListFlow = notebookListFlow,
+				isSelected = isSelected,
+				selectedItemList = selectedItemList,
+				filterTag = listOf()
+			) { click, data -> onAction(click, data) }
 		}
 	}
 }

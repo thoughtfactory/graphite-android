@@ -15,9 +15,9 @@ fun FontFamilyScreen(
 	LazyColumn(
 		modifier = Modifier.fillMaxSize()
 	) {
-		item { SettingButton(title = "Overlock") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 0) } }
-		item { SettingButton(title = "Source Sans Pro") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 1) } }
-		item { SettingButton(title = "Ubuntu") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 2) } }
-		item { SettingButton(title = "ATWriter") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 3) } }
+//		item { SettingButton(title = "Overlock") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 0) } }
+//		item { SettingButton(title = "Source Sans Pro") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 1) } }
+//		item { SettingButton(title = "Ubuntu") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 2) } }
+//		item { SettingButton(title = "ATWriter") { onClick(SettingsActivity.Action.CHANGE_FONT_FAMILY, 3) } }
 	}
 }

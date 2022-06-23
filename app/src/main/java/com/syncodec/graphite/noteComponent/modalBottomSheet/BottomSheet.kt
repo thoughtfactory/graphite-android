@@ -10,7 +10,6 @@ import com.syncodec.graphite.database.tag.TagDbEntry
 import com.syncodec.graphite.noteComponent.NoteActivity
 
 sealed class BottomSheetType {
-	object MenuBottomSheet : BottomSheetType()
 	object MetadataBottomSheet : BottomSheetType()
 	object AttachmentBottomSheet : BottomSheetType()
 	object TagBottomSheet : BottomSheetType()
@@ -19,6 +18,8 @@ sealed class BottomSheetType {
 @Composable
 fun SheetLayout(
 	bottomSheetType: BottomSheetType,
+	key: String?,
+	title: String?,
 	createdTimestamp: Long,
 	modifiedTimestamp: Long,
 	latLng: LatLng?,
@@ -31,8 +32,9 @@ fun SheetLayout(
 	onAction: (NoteActivity.Action, Any?) -> Unit
 ) {
 	when (bottomSheetType) {
-		BottomSheetType.MenuBottomSheet -> MenuBottomSheet(onAction = onAction)
 		BottomSheetType.MetadataBottomSheet -> MetadataBottomSheet(
+			key = key,
+			title = title,
 			createdTimestamp = createdTimestamp,
 			modifiedTimestamp = modifiedTimestamp,
 			latLng = latLng,

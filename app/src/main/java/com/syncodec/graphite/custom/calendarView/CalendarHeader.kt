@@ -1,25 +1,17 @@
 package com.syncodec.graphite.custom.calendarView
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.IconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,9 +21,9 @@ import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
+import com.syncodec.graphite.R
 import com.syncodec.graphite.konstant.Konstant
 import kotlinx.coroutines.launch
-import com.syncodec.graphite.R
 
 
 @OptIn(ExperimentalPagerApi::class)
@@ -48,7 +40,7 @@ fun CalendarHeader(
 	}
 }
 
-@OptIn(ExperimentalPagerApi::class, androidx.compose.material.ExperimentalMaterialApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun CalendarHeaderYear(
 	pagerState: PagerState,
@@ -72,28 +64,19 @@ private fun CalendarHeaderYear(
 		item { Spacer(modifier = Modifier.width(8.dp)) }
 		for (year in 1901 until 2100) {
 			item {
-				val animateFloat by animateFloatAsState(targetValue = if (currentYear == year) 1.3f else 1f)
-				Card(
-					modifier = Modifier
-						.padding(if (currentYear == year) 16.dp else 4.dp, 0.dp)
-						.graphicsLayer {
-							this.scaleX = animateFloat
-							this.scaleY = animateFloat
-						},
-					shape = RoundedCornerShape(50),
-					border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-					backgroundColor = if (currentYear == year) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
-					onClick = { onClick(Click.SELECT_YEAR, year) }
-				) {
-					Text(
-						text = "$year",
-						style = MaterialTheme.typography.bodyMedium,
-						color = if (currentYear == year) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-						fontWeight = FontWeight.Bold,
-						modifier = Modifier
-							.padding(16.dp, 8.dp)
-					)
-				}
+				FilterChip(
+					label = {
+						Text(
+							text = "$year",
+							style = MaterialTheme.typography.bodyMedium,
+							fontWeight = FontWeight.Bold,
+							modifier = Modifier
+						)
+					},
+					selected = currentYear == year,
+					onClick = { onClick(Click.SELECT_YEAR, year) },
+					modifier = Modifier.padding(4.dp, 0.dp)
+				)
 			}
 		}
 		item { Spacer(modifier = Modifier.width(8.dp)) }

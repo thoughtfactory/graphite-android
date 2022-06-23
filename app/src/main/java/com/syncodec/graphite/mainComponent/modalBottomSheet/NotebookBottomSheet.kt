@@ -38,6 +38,7 @@ import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.bookCoverImageLi
 import com.syncodec.graphite.miscellaneous.generatePrimaryKey
 import com.syncodec.graphite.ui.theme.PremiumCompositionLocal
 
+
 @Composable
 fun NotebookBottomSheet(
 	onAction: (MainActivity.Action, Pair<NotebookDbEntry, Boolean>) -> Unit
@@ -46,8 +47,10 @@ fun NotebookBottomSheet(
 	val isPremium = PremiumCompositionLocal.current
 
 	var notebookTitleText by rememberSaveable { mutableStateOf("") }
+	var isNotebookTitleTextFocused by remember { mutableStateOf(false) }
 
 	var notebookDescriptionText by rememberSaveable { mutableStateOf("") }
+	var isNotebookDescriptionTextFocused by remember { mutableStateOf(false) }
 
 	var notebookTheme by remember { mutableStateOf(NotebookTheme.COLOR) }
 	var notebookColor by remember { mutableStateOf<Color?>(null) }
@@ -86,6 +89,8 @@ fun NotebookBottomSheet(
 					.padding(24.dp, 0.dp),
 				text = notebookTitleText,
 				placeholder = "Give your book a title",
+				isFocused = isNotebookTitleTextFocused,
+				onFocusChanged = { isNotebookTitleTextFocused = it },
 			) { notebookTitleText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
@@ -95,7 +100,9 @@ fun NotebookBottomSheet(
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp),
 				text = notebookDescriptionText,
-				placeholder = "And a little description"
+				placeholder = "And a little description",
+				isFocused = isNotebookDescriptionTextFocused,
+				onFocusChanged = { isNotebookDescriptionTextFocused = it },
 			) { notebookDescriptionText = it }
 
 //			Spacer(modifier = Modifier.height(16.dp))

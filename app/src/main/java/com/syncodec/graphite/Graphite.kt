@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.FileProvider
@@ -55,6 +54,7 @@ import java.util.*
 class Graphite : Application() {
 
 	lateinit var dataStoreInstance: DataStoreInstance
+
 	var vaultState = mutableStateOf(VaultState.NOT_OPENED)
 
 	private lateinit var appUpdateManager: AppUpdateManager
@@ -75,6 +75,7 @@ class Graphite : Application() {
 
 	private val QUOTE_DIR = "quote"
 		get() = "$DATA/$field"
+
 
 	override fun onCreate() {
 		super.onCreate()
@@ -130,7 +131,8 @@ class Graphite : Application() {
 			dataStoreInstance.storedVersion.collectLatest { version ->
 				when (version) {
 					0 -> update_0_1()
-					1 -> null
+					1 -> update_12_13()
+					13 -> null
 				}
 				this.cancel()
 			}
@@ -138,10 +140,7 @@ class Graphite : Application() {
 	}
 
 	private fun update_0_1() {
-		Log.i("npr71", "update_0_1")
 		CoroutineScope(Dispatchers.IO).launch {
-
-
 			val preferencesFile = File("${cacheDir.path}/pref.json")
 			val jsonObject = JSONObject()
 			dataStore.data.collectLatest {
@@ -158,9 +157,13 @@ class Graphite : Application() {
 		return
 	}
 
+	private fun update_12_13() {
+		CoroutineScope(Dispatchers.IO).launch { dataStoreInstance.storeVersion(13) }
+	}
+
 	private fun checkUpdate() {
 		val appUpdateInfoTask = appUpdateManager.appUpdateInfo
-		appUpdateInfoTask?.addOnSuccessListener { appUpdateInfo ->
+		appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
 			if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
 				&& appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
 			) {
@@ -197,7 +200,9 @@ class Graphite : Application() {
 					)?.let { JSONObject(it) }
 				} catch (exception: Exception) {
 					exception.printStackTrace()
-					Toast.makeText(this@Graphite, "Error reading data", Toast.LENGTH_SHORT).show()
+					CoroutineScope(Dispatchers.Main).launch {
+						Toast.makeText(this@Graphite, "Error reading data", Toast.LENGTH_SHORT).show()
+					}
 					null
 				}
 			} else {
@@ -216,7 +221,9 @@ class Graphite : Application() {
 					)
 				} catch (exception: Exception) {
 					exception.printStackTrace()
-					Toast.makeText(this@Graphite, "Error reading data", Toast.LENGTH_SHORT).show()
+					CoroutineScope(Dispatchers.Main).launch {
+						Toast.makeText(this@Graphite, "Error reading data", Toast.LENGTH_SHORT).show()
+					}
 					null
 				}
 			} else {
@@ -228,6 +235,15 @@ class Graphite : Application() {
 	fun deleteNote(key: String) = File("$NOTE_DIR/$key").delete()
 
 	fun deleteNote(keyList: List<String>) = keyList.forEach { File("$NOTE_DIR/$it").delete() }
+
+	fun deleteAllNote() {
+		try {
+			File(NOTE_DIR).deleteRecursively()
+			File(NOTE_DIR).mkdirs()
+		} catch (exception: Exception) {
+
+		}
+	}
 
 	fun putAttachment(key: String, uri: Uri?, extension: String?): Boolean {
 		val inputStream = uri?.let { contentResolver.openInputStream(it) }
@@ -268,6 +284,15 @@ class Graphite : Application() {
 
 	fun deleteAttachment(keyList: List<String>) =
 		keyList.forEach { File("$ATTACHMENT_DIR/$it").delete() }
+
+	fun deleteAllAttachment() {
+		try {
+			File(ATTACHMENT_DIR).deleteRecursively()
+			File(ATTACHMENT_DIR).mkdirs()
+		} catch (exception: Exception) {
+
+		}
+	}
 
 	fun printNote(
 		htmlContent: String,
@@ -357,7 +382,7 @@ class Graphite : Application() {
 			content = noteContent.toString(),
 			latLng = noteDbEntry.latLng,
 			address = noteDbEntry.address,
-			attachmentKey = noteDbEntry.attachmentKeyList,
+			attachmentKeyList = noteDbEntry.attachmentKeyList,
 			tagList = tagList,
 		).apply {
 			File("${exportDir.path}/${noteDbEntry.key}.json")

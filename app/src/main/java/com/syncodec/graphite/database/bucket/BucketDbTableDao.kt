@@ -15,6 +15,9 @@ interface BucketDbTableDao {
 	@Query(value = "SELECT * FROM bucket_table WHERE `key` = :key")
 	suspend fun get(key: String): BucketDbEntry?
 
+	@Query(value = "SELECT `key` FROM bucket_table")
+	suspend fun getAllKeys(): List<String>
+
 	@Query(value = "SELECT * FROM bucket_table WHERE `key` = :key")
 	fun getAsFlow(key: String): Flow<BucketDbEntry?>
 
@@ -29,4 +32,7 @@ interface BucketDbTableDao {
 
 	@Query(value = "DELETE FROM bucket_table WHERE `key` IN (:keyList)")
 	suspend fun delete(keyList: List<String>)
+
+	@Query(value = "DELETE FROM bucket_table")
+	suspend fun deleteAll()
 }

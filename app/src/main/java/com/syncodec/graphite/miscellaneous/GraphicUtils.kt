@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
@@ -47,6 +48,14 @@ class GraphicUtils {
 			} catch (e: Exception) {
 				e.printStackTrace()
 			}
+		}
+
+		fun Bitmap.toByteArray(): ByteArray {
+			val stream = ByteArrayOutputStream()
+			compress(Bitmap.CompressFormat.PNG, 100, stream)
+			val byteArray: ByteArray = stream.toByteArray()
+			recycle()
+			return byteArray
 		}
 	}
 }

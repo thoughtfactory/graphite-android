@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.settingsComponent.SettingsActivity
 import com.syncodec.graphite.settingsComponent.miscellaneous.SettingButton
 import com.syncodec.graphite.R
@@ -19,34 +18,41 @@ fun SyncScreen(
 	) {
 		item {
 			SettingButton(
+				title = "Local Backup",
+				leadingIcon = R.drawable.ic_local_backup,
+			) {
+				onAction(
+					SettingsActivity.Action.NAVIGATION,
+					SettingsActivity.Companion.Path.LOCAL_BACKUP
+				)
+			}
+		}
+		item {
+			SettingButton(
 				title = "Google Drive",
 				subTitle = "Coming soon...",
-				icon = R.drawable.ic_state,
-				tint = Color(0xFF87A7B3)
+				leadingIcon = R.drawable.ic_state,
 			) { onAction(SettingsActivity.Action.GOOGLE_DRIVE, null) }
 		}
 		item {
 			SettingButton(
 				title = "One Drive",
 				subTitle = "Coming soon...",
-				icon = R.drawable.ic_state,
-				tint = Color(0xFF125D98)
+				leadingIcon = R.drawable.ic_state,
 			) { onAction(SettingsActivity.Action.ONE_DRIVE, null) }
 		}
 		item {
 			SettingButton(
 				title = "Dropbox",
 				subTitle = "Coming soon...",
-				icon = R.drawable.ic_state,
-				tint = Color(0xFF564A4A)
+				leadingIcon = R.drawable.ic_state,
 			) { onAction(SettingsActivity.Action.DROPBOX, null) }
 		}
 		item {
 			SettingButton(
 				title = "WebDAV",
 				subTitle = "Coming soon...",
-				icon = R.drawable.ic_state,
-				tint = Color(0xFF00917C)
+				leadingIcon = R.drawable.ic_state,
 			) { onAction(SettingsActivity.Action.WEBDAV, null) }
 		}
 	}

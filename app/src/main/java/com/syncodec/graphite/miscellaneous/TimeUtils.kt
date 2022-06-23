@@ -6,9 +6,11 @@ import java.util.*
 
 class TimeUtils {
 	companion object {
-		fun timeStampToPrettyDay(timestamp: Long): String = DateFormat.format("dd MMM, yyyy EEE", timestamp).toString()
+		fun Long.timeStampToPrettyDay(): String = DateFormat.format("dd MMM, yyyy EEE", this).toString()
 
-		fun timeStampToPrettyFull(timestamp: Long): String = DateFormat.format("EEE dd MMM, yyyy, HH:mm aa", timestamp).toString()
+		fun Long.timeStampToPrettyFull(): String = DateFormat.format("EEE dd MMM, yyyy, HH:mm aa", this).toString()
+
+		fun Long.timeStampToPrettyFullStop(): String = DateFormat.format("EEE dd MMM, yyyy, HH mm ss aa", this).toString()
 
 		fun timeStampToTime(timestamp: Long): String = DateFormat.format("HH:mm aa", timestamp).toString()
 

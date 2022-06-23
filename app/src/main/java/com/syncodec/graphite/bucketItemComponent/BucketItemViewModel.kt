@@ -69,7 +69,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 		viewModelScope.launch(Dispatchers.IO) {
 			when (bucketItemType) {
 				BucketItemType.TODO -> null
-				BucketItemType.BOOKS -> {
+				BucketItemType.BOOK -> {
 					bucketItemKey.value = bucketItemDbEntry.value!!.key
 					bucketItemDbEntry.value!!.apply {
 						this.title = bookData.value?.title
@@ -83,7 +83,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 						getFromDatabase()
 					}
 				}
-				BucketItemType.SHOWS -> {
+				BucketItemType.SHOW -> {
 					bucketItemKey.value = bucketItemDbEntry.value!!.key
 					bucketItemDbEntry.value!!.apply {
 						this.title = showData.value?.title
@@ -113,13 +113,13 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 				try {
 					when (bucketItemType) {
 						BucketItemType.TODO -> null
-						BucketItemType.BOOKS -> {
+						BucketItemType.BOOK -> {
 							bookData.value =
 								intent.getSerializableExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name) as BookData
 							downloadBookData(id =  bookData.value!!.key)
 							getThumbnail()
 						}
-						BucketItemType.SHOWS -> {
+						BucketItemType.SHOW -> {
 							showData.value =
 								intent.getSerializableExtra(Konstant.Companion.Konstant.BUCKET_ITEM_DATA.name) as ShowData
 							when (showData.value!!.showType) {
@@ -157,7 +157,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 			when (bucketItemType) {
 				BucketItemType.TODO -> {
 				}
-				BucketItemType.BOOKS -> {
+				BucketItemType.BOOK -> {
 					if (bucketItemDbEntry.value!!.key.isNotEmpty()) {
 						if (bucketItemDbEntry.value!!.data == null) {
 							putItem()
@@ -168,7 +168,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 						bucketRepository.updateBucketItem(bucketItemDbEntry = bucketItemDbEntry.value!!)
 					}
 				}
-				BucketItemType.SHOWS -> {
+				BucketItemType.SHOW -> {
 					if (bucketItemDbEntry.value!!.key.isNotEmpty()) {
 						if (bucketItemDbEntry.value!!.data == null) {
 							putItem()
@@ -187,21 +187,21 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 	private suspend fun getFromDatabase() {
 		try {
-			bucketRepository.getBucketItem(bucketItemKey = bucketItemKey.value!!).collect {
-				if (it == null) {
+			bucketRepository.getBucketItem(bucketItemKey = bucketItemKey.value!!).collect { bucketItemDbEntry1 ->
+				if (bucketItemDbEntry1 == null) {
 					status.value = Status.ERROR
 				} else {
-					bucketItemDbEntry.value = it
+					bucketItemDbEntry.value = bucketItemDbEntry1
 					thumbnail.value = bucketItemDbEntry.value?.thumbnail
 					bucketItem.value = bucketItemDbEntry.value?.data
 
-					when (it.bucketItemType) {
+					when (bucketItemDbEntry1.bucketItemType) {
 						BucketItemType.TODO -> null
-						BucketItemType.BOOKS -> {
+						BucketItemType.BOOK -> {
 							bookData.value =
 								bucketItem.value?.extra?.let { objectMapper.readValue(it as String) }
 						}
-						BucketItemType.SHOWS -> {
+						BucketItemType.SHOW -> {
 							if (bucketItem.value?.extra != null) {
 								val jsonObject = JSONObject(bucketItem.value?.extra as String)
 								showData.value = when (jsonObject.optString("showType")) {
@@ -377,7 +377,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 		if (isNew) {
 			when (bucketItemType) {
 				BucketItemType.TODO -> null
-				BucketItemType.BOOKS -> {
+				BucketItemType.BOOK -> {
 					val request = ImageRequest.Builder(getApplication())
 						.data("https://covers.openlibrary.org/b/id/${bookData.value!!.coverI}-M.jpg")
 						.target { thumbnail.value = it.toBitmap() }
@@ -387,7 +387,7 @@ class BucketItemViewModel(application: Application) : AndroidViewModel(applicati
 
 					imageLoader.execute(request = request)
 				}
-				BucketItemType.SHOWS -> {
+				BucketItemType.SHOW -> {
 					val request = ImageRequest.Builder(getApplication())
 						.data("https://image.tmdb.org/t/p/w500${showData.value!!.posterPath}")
 						.target { thumbnail.value = it.toBitmap() }

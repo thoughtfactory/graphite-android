@@ -26,6 +26,7 @@ class NoteRepository(val graphite: Graphite) {
 	//	val noteDbEntryListFlow: Flow<List<NoteDbEntry>> = noteTableDao.getAllAsFlow()
 //	val noteTimelineListFlow = noteTableDao.getAllForTimelineAsFlow()
 	val notebookListFlow: Flow<List<NotebookDbEntry>> = notebookTableDao.getAllAsFlow()
+	val noteListFlow: Flow<List<NoteDbEntry>> = noteTableDao.getAllAsFlow()
 
 	suspend fun insert(noteDbEntry: NoteDbEntry) =
 		withContext(Dispatchers.IO) { noteTableDao.insert(noteDbEntry) }

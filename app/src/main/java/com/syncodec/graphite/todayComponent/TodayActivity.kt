@@ -227,8 +227,6 @@ class TodayActivity : ComponentActivity() {
 						contentDescription = "Back",
 						tint = Color.White,
 						modifier = Modifier
-							.requiredSize(32.dp)
-							.padding(4.dp)
 					)
 				}
 			}
@@ -244,20 +242,22 @@ class TodayActivity : ComponentActivity() {
 					mainAxisAlignment = MainAxisAlignment.End,
 					modifier = Modifier.fillMaxWidth(),
 				) {
-					IconButton(
-						onClick = {
-							try {
-								quote?.bgLink?.let { it1 -> uriHandler.openUri(it1) }
-							} catch (exception: Exception) {
+					quote?.bgLink?.let {
+						IconButton(
+							onClick = {
+								try {
+									uriHandler.openUri(it)
+								} catch (exception: Exception) {
+								}
 							}
+						) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_gallery),
+								contentDescription = "Background image",
+								tint = Color.White.copy(0.71f),
+								modifier = Modifier
+							)
 						}
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_gallery),
-							contentDescription = "Background image",
-							tint = Color.White.copy(0.71f),
-							modifier = Modifier.requiredSize(20.dp)
-						)
 					}
 
 					quote?.bgCred?.let {

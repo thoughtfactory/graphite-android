@@ -25,6 +25,9 @@ interface NoteTableDao {
 	@Query(value = "SELECT * FROM note_table WHERE notebook_key = :notebookKey ORDER BY user_timestamp DESC")
 	fun getFromNotebookAsFlow(notebookKey: String): Flow<List<NoteDbEntry>>
 
+	@Query(value = "SELECT `key` FROM note_table ORDER BY user_timestamp DESC")
+	fun getAllKeys(): List<String>
+
 	@Query(value = "SELECT `key` FROM note_table WHERE notebook_key = :notebookKey AND chapter_path = :chapterPath AND is_archived = :showArchived AND is_locked = :showLocked ORDER BY user_timestamp DESC")
 	fun getAllKeyFromNotebookAsFlow(
 		notebookKey: String,
@@ -49,8 +52,11 @@ interface NoteTableDao {
 	suspend fun delete(key: String)
 
 	@Query("DELETE FROM note_table WHERE `key` IN (:keyList)")
-	fun delete(keyList: List<String>)
+	suspend fun delete(keyList: List<String>)
+
+	@Query("DELETE FROM note_table")
+	suspend fun deleteAll()
 
 	@Query("DELETE FROM note_table WHERE notebook_key IN (:keyList)")
-	fun deleteWithNotebook(keyList: List<String>)
+	suspend fun deleteWithNotebook(keyList: List<String>)
 }

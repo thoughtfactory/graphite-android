@@ -38,17 +38,19 @@ import com.syncodec.graphite.notebookComponent.NotebookActivity
 
 @Composable
 fun EditBottomSheet(
-	notebookDbEntry: NotebookDbEntry,
+	notebookDbEntry: NotebookDbEntry?,
 	onAction: (NotebookActivity.Action, Any?) -> Unit
 ) {
 	val context = LocalContext.current
 
-	var notebookTitleText by rememberSaveable { mutableStateOf(notebookDbEntry.title) }
+	var notebookTitleText by rememberSaveable { mutableStateOf(notebookDbEntry?.title ?: "") }
+	var isNotebookTitleTextFocused by remember { mutableStateOf(false) }
 
-	var notebookDescriptionText by rememberSaveable { mutableStateOf(notebookDbEntry.description) }
+	var notebookDescriptionText by rememberSaveable { mutableStateOf(notebookDbEntry?.description ?: "") }
+	var isNotebookDescriptionTextFocused by remember { mutableStateOf(false) }
 
 	var notebookTheme by remember { mutableStateOf(NotebookTheme.COLOR) }
-	var notebookColor by remember { mutableStateOf(notebookDbEntry.color?.let { Color(it) }) }
+	var notebookColor by remember { mutableStateOf(notebookDbEntry?.color?.let { Color(it) }) }
 	var notebookImage by remember { mutableStateOf<Int?>(null) }
 
 	var currentState by remember { mutableStateOf(0) }
@@ -83,7 +85,9 @@ fun EditBottomSheet(
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp),
 				text = notebookTitleText,
-				placeholder = "Give your book a title"
+				placeholder = "Give your book a title",
+				isFocused = isNotebookTitleTextFocused,
+				onFocusChanged = { isNotebookTitleTextFocused = it },
 			) { notebookTitleText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
@@ -93,7 +97,9 @@ fun EditBottomSheet(
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp),
 				text = notebookDescriptionText ?: "",
-				placeholder = "And a little description"
+				placeholder = "And a little description",
+				isFocused = isNotebookDescriptionTextFocused,
+				onFocusChanged = { isNotebookDescriptionTextFocused = it },
 			) { notebookDescriptionText = it }
 
 			Spacer(modifier = Modifier.height(12.dp))
@@ -141,17 +147,23 @@ fun EditBottomSheet(
 					).show()
 					else -> {
 						notebookDbEntry.apply {
-							this.title = notebookTitleText
-							this.description = notebookDescriptionText
-							this.color = notebookColor?.toArgb()
-							this.bitmap =
-								notebookImage?.let { BitmapFactory.decodeResource(context.resources, it) }
+							this?.title = notebookTitleText
+							this?.description = notebookDescriptionText
+							this?.color = notebookColor?.toArgb()
+							this?.bitmap =
+								notebookImage?.let {
+									BitmapFactory.decodeResource(
+										context.resources,
+										it
+									)
+								}
 
 							onAction(NotebookActivity.Action.UPDATE_NOTEBOOK, this)
 						}
 
 						notebookTitleText = ""
-						notebookDescriptionText = ""					}
+						notebookDescriptionText = ""
+					}
 				}
 			}
 

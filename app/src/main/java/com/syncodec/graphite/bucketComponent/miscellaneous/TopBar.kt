@@ -65,7 +65,6 @@ private fun Bar(
 			Text(
 				text = title,
 				color = MaterialTheme.colorScheme.onSurface,
-				style = MaterialTheme.typography.titleMedium
 			)
 		},
 		actions = {
@@ -93,8 +92,9 @@ private fun StateSelector(
 ) {
 	val stateNameList: List<String> = when (bucketItemType) {
 		BucketItemType.TODO -> listOf("All", "To Do", "Doing", "Done")
-		BucketItemType.BOOKS -> listOf("All", "To Read", "Reading", "Read")
-		BucketItemType.SHOWS -> listOf("All", "To Watch", "Watching", "Watched")
+		BucketItemType.BOOK -> listOf("All", "To Read", "Reading", "Read")
+		BucketItemType.SHOW -> listOf("All", "To Watch", "Watching", "Watched")
+		BucketItemType.LINK -> listOf("All", "To Visit", "Opened", "Done")
 	}
 	val stateIconList: List<Int> = when (bucketItemType) {
 		BucketItemType.TODO -> listOf(
@@ -103,13 +103,19 @@ private fun StateSelector(
 			R.drawable.ic_todo,
 			R.drawable.ic_done
 		)
-		BucketItemType.BOOKS -> listOf(
+		BucketItemType.BOOK -> listOf(
 			R.drawable.ic_state,
 			R.drawable.ic_clock,
 			R.drawable.ic_book,
 			R.drawable.ic_done
 		)
-		BucketItemType.SHOWS -> listOf(
+		BucketItemType.SHOW -> listOf(
+			R.drawable.ic_state,
+			R.drawable.ic_clock,
+			R.drawable.ic_show,
+			R.drawable.ic_done
+		)
+		BucketItemType.LINK -> listOf(
 			R.drawable.ic_state,
 			R.drawable.ic_clock,
 			R.drawable.ic_show,
@@ -118,7 +124,7 @@ private fun StateSelector(
 	}
 
 	AnimatedVisibility(
-		visible = showStateSelector,
+		visible = showStateSelector && bucketItemType != BucketItemType.LINK,
 		enter = expandVertically(tween(600)) + fadeIn(tween(300)),
 		exit = shrinkVertically(tween(600)) + fadeOut(tween(300)),
 		modifier = Modifier

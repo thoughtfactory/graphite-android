@@ -6,16 +6,27 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.Graphite
+import com.syncodec.graphite.database.chapter.ChapterDbEntry
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class FileUtils {
 	companion object {
+		val objectMapper: ObjectMapper = jsonMapper { addModule(kotlinModule()) }
+
 		@Throws(IOException::class)
 		fun createTempFile(key: String, extension: String?): File =
-			File.createTempFile("attachment_", "_$key${if (extension !=null) ".$extension" else ""}")
+			File.createTempFile(
+				"attachment_",
+				"_$key${if (extension != null) ".$extension" else ""}"
+			)
 
 		@Throws(IOException::class)
 		fun createTempFileToExpose(
@@ -87,7 +98,8 @@ class FileUtils {
 				val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
 				cursor.use { cursor ->
 					if (cursor != null && cursor.moveToFirst()) {
-						result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+						result =
+							cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
 					}
 				}
 			}
@@ -128,6 +140,33 @@ class FileUtils {
 			} catch (ioe: IOException) {
 				ioe.printStackTrace()
 			}
+		}
+
+		fun DocumentFile.readAsString(context: Context): String {
+			val inputStream =
+				context.contentResolver.openInputStream(uri)
+
+			val r = BufferedReader(InputStreamReader(inputStream))
+			val data: StringBuilder = StringBuilder()
+			var line: String?
+			while (r.readLine().also { line = it } != null) {
+				data.append(line).append('\n')
+			}
+
+			return data.toString()
+		}
+
+		inline fun <reified T : Any> DocumentFile.readAsObject(context: Context): T {
+			val inputStream = context.contentResolver.openInputStream(uri)
+
+			val r = BufferedReader(InputStreamReader(inputStream))
+			val data: StringBuilder = StringBuilder()
+			var line: String?
+			while (r.readLine().also { line = it } != null) {
+				data.append(line).append('\n')
+			}
+
+			return objectMapper.readValue(data.toString(), T::class.java)
 		}
 	}
 }

@@ -26,6 +26,9 @@ interface NotebookTableDao {
 	@Query(value = "SELECT * FROM notebook_table ORDER BY created_timestamp DESC")
 	suspend fun getAll() : List<NotebookDbEntry>
 
+	@Query(value = "SELECT `key` FROM notebook_table ORDER BY created_timestamp DESC")
+	suspend fun getAllKeys() : List<String>
+
 	@Query(value = "DELETE FROM notebook_table WHERE `key` = :key")
 	suspend fun delete(key: String)
 
@@ -34,4 +37,7 @@ interface NotebookTableDao {
 
 	@Delete
 	suspend fun delete(diaryEntries: List<NotebookDbEntry>)
+
+	@Query("DELETE FROM notebook_table")
+	suspend fun deleteAll()
 }

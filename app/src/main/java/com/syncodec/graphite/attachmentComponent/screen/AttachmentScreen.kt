@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -82,7 +79,10 @@ private fun AttachmentCard(
 	val borderColor by animateColorAsState(targetValue = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent)
 
 	Card(
-		containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
+		colors = CardDefaults.cardColors(
+			MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+		),
+		elevation = CardDefaults.cardElevation(0.dp),
 		shape = RoundedCornerShape(12.dp),
 		border = BorderStroke(3.dp, borderColor),
 		modifier = Modifier

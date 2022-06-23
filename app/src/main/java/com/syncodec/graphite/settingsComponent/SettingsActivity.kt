@@ -11,13 +11,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.rememberSplineBasedDecay
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.core.app.ShareCompat
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
@@ -26,14 +30,12 @@ import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.LoadingView
 import com.syncodec.graphite.custom.richText.RichTextEditor
 import com.syncodec.graphite.custom.richText.rememberRichTextEditorWithLifecycle
-import com.syncodec.graphite.miscellaneous.DataStoreInstance
+import com.syncodec.graphite.database.snapshot.Snapshot
 import com.syncodec.graphite.premiumComponent.PremiumActivity
-import com.syncodec.graphite.settingsComponent.miscellaneous.DataExchangeDialog
-import com.syncodec.graphite.settingsComponent.miscellaneous.TopBar
+import com.syncodec.graphite.settingsComponent.miscellaneous.*
 import com.syncodec.graphite.settingsComponent.screen.*
 import com.syncodec.graphite.ui.theme.GraphiteBase
 import com.syncodec.graphite.vaultComponent.EvokeReason
@@ -47,12 +49,15 @@ import java.io.File
 class SettingsActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<SettingsViewModel>()
-	private var showVaultScreen: MutableState<Boolean> = mutableStateOf(false)
+
+	private var backupFolderPath: MutableState<String?> = mutableStateOf(null)
 
 	private var showToast: Boolean = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
+		backupFolderPath.value = contentResolver.persistedUriPermissions.firstOrNull()?.uri?.path
 
 		Firebase.auth.addAuthStateListener {
 			viewModel.email.value = it.currentUser?.email
@@ -75,8 +80,9 @@ class SettingsActivity : ComponentActivity() {
 
 		setContent {
 			viewModel.activityState = rememberActivityState()
-			val dataStoreInstance = DataStoreInstance(this)
-			val defaultNotebookKey by dataStoreInstance.getDefaultNotebookKey.collectAsState(initial = null)
+			val defaultNotebookKey by viewModel.dataStoreInstance.getDefaultNotebookKey.collectAsState(
+				initial = null
+			)
 
 			Crossfade(targetState = defaultNotebookKey) {
 				if (it == null) {
@@ -126,8 +132,8 @@ class SettingsActivity : ComponentActivity() {
 	}
 
 	override fun onBackPressed() {
-		if (showVaultScreen.value) {
-			showVaultScreen.value = false
+		if (viewModel.activityState.showVaultScreen.value) {
+			viewModel.activityState.showVaultScreen.value = false
 		} else {
 			if (viewModel.activityState.currentPath.last() == Path.BASE) super.onBackPressed() else viewModel.activityState.currentPath.removeLast()
 		}
@@ -141,6 +147,20 @@ class SettingsActivity : ComponentActivity() {
 	private val importFromJourney =
 		registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
 			viewModel.importFromJourney(uri)
+		}
+
+	private val localBackupDirSelector =
+		registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+			it.data?.data.apply {
+				this?.let { it1 ->
+					contentResolver.takePersistableUriPermission(
+						this,
+						Intent.FLAG_GRANT_READ_URI_PERMISSION
+					)
+					backupFolderPath.value =
+						contentResolver.persistedUriPermissions?.firstOrNull()?.uri?.path
+				}
+			}
 		}
 
 	private fun onPerformAction(action: Action, data: Any? = null) {
@@ -164,30 +184,26 @@ class SettingsActivity : ComponentActivity() {
 				signInLauncher.launch(signInIntent)
 			}
 			Action.LOGOUT -> {
-				val dataStoreInstance = DataStoreInstance(this)
 				viewModel.firebaseAuth.signOut()
-				dataStoreInstance.putSuperExpiryTime(0)
-				dataStoreInstance.putExpiryTime(0)
+				viewModel.dataStoreInstance.putSuperExpiryTime(0)
+				viewModel.dataStoreInstance.putExpiryTime(0)
 			}
-			Action.CHANGE_FONT_FAMILY -> DataStoreInstance(context = this).putTypography(data as Int)
-			Action.CHANGE_THEME -> DataStoreInstance(context = this).putTheme(data as Int)
-			Action.CHANGE_BACKGROUND -> DataStoreInstance(context = this).putBackground(data as Int)
+			Action.CHANGE_FONT_FAMILY -> viewModel.dataStoreInstance.putTypography(data as Int)
+			Action.CHANGE_THEME -> viewModel.dataStoreInstance.putTheme(data as Int)
+			Action.CHANGE_BACKGROUND -> viewModel.dataStoreInstance.putBackground(data as Int)
 			Action.ADD_PASSCODE -> {
 				activityState.evokeReason.value = EvokeReason.NEW_PASSCODE
-				showVaultScreen.value = true
+				viewModel.activityState.showVaultScreen.value = true
 			}
 			Action.CHANGE_PASSCODE -> {
 				activityState.evokeReason.value = EvokeReason.CHANGE_PASSCODE
-				showVaultScreen.value = true
+				viewModel.activityState.showVaultScreen.value = true
 			}
 			Action.REMOVE_PASSCODE -> {
 				activityState.evokeReason.value = EvokeReason.REMOVE_PASSCODE
-				showVaultScreen.value = true
+				viewModel.activityState.showVaultScreen.value = true
 			}
-			Action.BIOMETRIC_UNLOCK -> {
-				activityState.evokeReason.value = EvokeReason.REMOVE_PASSCODE
-				showVaultScreen.value = true
-			}
+			Action.BIOMETRIC_UNLOCK -> onPerformAction(Action.COMING_SOON)
 			Action.IMPORT_GRAPHITE -> {
 				activityState.dataExchange.value = DataExchange.IMPORT
 				importFromGraphite.launch(arrayOf("application/zip"))
@@ -196,16 +212,8 @@ class SettingsActivity : ComponentActivity() {
 				activityState.dataExchange.value = DataExchange.IMPORT
 				importFromJourney.launch(arrayOf("application/zip"))
 			}
-			Action.IMPORT_DAY_ONE -> Toast.makeText(
-				this,
-				"This functionality is under development. Stay tuned...",
-				Toast.LENGTH_SHORT
-			).show()
-			Action.IMPORT_GOOGLE_KEEP -> Toast.makeText(
-				this,
-				"This functionality is under development. Stay tuned...",
-				Toast.LENGTH_SHORT
-			).show()
+			Action.IMPORT_DAY_ONE -> onPerformAction(Action.COMING_SOON)
+			Action.IMPORT_GOOGLE_KEEP -> onPerformAction(Action.COMING_SOON)
 			Action.EXPORT_NOTEBOOK -> {
 				activityState.dataExchange.value = DataExchange.EXPORT
 				CoroutineScope(Dispatchers.IO).launch {
@@ -228,40 +236,80 @@ class SettingsActivity : ComponentActivity() {
 					}
 				}
 			}
-			Action.EXPORT_BUCKET -> {
-				Toast.makeText(
-					this,
-					"This functionality is under development. Stay tuned...",
-					Toast.LENGTH_SHORT
-				).show()
+			Action.EXPORT_BUCKET -> onPerformAction(Action.COMING_SOON)
+			Action.GOOGLE_DRIVE -> onPerformAction(Action.COMING_SOON)
+			Action.ONE_DRIVE -> onPerformAction(Action.COMING_SOON)
+			Action.DROPBOX -> onPerformAction(Action.COMING_SOON)
+			Action.WEBDAV -> onPerformAction(Action.COMING_SOON)
+			Action.SETUP_LOCAL_BACKUP_FOLDER -> {
+				Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+					localBackupDirSelector.launch(this)
+				}
 			}
-			Action.GOOGLE_DRIVE -> {
-				Toast.makeText(
-					this,
-					"This functionality is under development. Stay tuned...",
-					Toast.LENGTH_SHORT
-				).show()
+			Action.REMOVE_LOCAL_BACKUP_FOLDER -> {
+				contentResolver.persistedUriPermissions.forEach {
+					contentResolver.releasePersistableUriPermission(
+						it.uri,
+						Intent.FLAG_GRANT_READ_URI_PERMISSION
+					)
+				}
+				backupFolderPath.value =
+					contentResolver.persistedUriPermissions.firstOrNull()?.uri?.path
 			}
-			Action.ONE_DRIVE -> {
-				Toast.makeText(
-					this,
-					"This functionality is under development. Stay tuned...",
-					Toast.LENGTH_SHORT
-				).show()
+			Action.TAKE_SNAPSHOT -> {
+				val uri = contentResolver.persistedUriPermissions.firstOrNull()?.uri
+				if (uri == null) {
+					Toast.makeText(
+						this,
+						"Error generating snapshot. Try setting up backup folder again",
+						Toast.LENGTH_SHORT
+					).show()
+				} else {
+					viewModel.takeSnapshot(uri = uri)
+				}
 			}
-			Action.DROPBOX -> {
-				Toast.makeText(
-					this,
-					"This functionality is under development. Stay tuned...",
-					Toast.LENGTH_SHORT
-				).show()
+			Action.REFRESH_SNAPSHOT -> {
+				val uri = contentResolver.persistedUriPermissions.firstOrNull()?.uri
+				if (uri == null) {
+					Toast.makeText(
+						this,
+						"Error refreshing snapshots",
+						Toast.LENGTH_SHORT
+					).show()
+				} else {
+					viewModel.refreshSnapshot(uri = uri)
+				}
 			}
-			Action.WEBDAV -> {
-				Toast.makeText(
-					this,
-					"This functionality is under development. Stay tuned...",
-					Toast.LENGTH_SHORT
-				).show()
+			Action.OPEN_SNAPSHOT -> {
+				viewModel.currentSnapshot.value = data as Snapshot
+				onPerformAction(Action.NAVIGATION, Path.RESTORE_SNAPSHOT)
+			}
+			Action.RESTORE_SNAPSHOT_CONSENT -> activityState.showRestoreSnapshotConsent.value = true
+			Action.RESTORE_SNAPSHOT -> {
+				viewModel.restoreSnapshot()
+				activityState.showRestoreSnapshotConsent.value = false
+			}
+			Action.ON_SNAPSHOT_COMPLETE -> {
+				Toast.makeText(this, "Snapshot created successfully", Toast.LENGTH_SHORT).show()
+
+				val uri = contentResolver.persistedUriPermissions.firstOrNull()?.uri
+				if (uri == null) {
+					Toast.makeText(
+						this,
+						"Error refreshing snapshots",
+						Toast.LENGTH_SHORT
+					).show()
+				} else {
+					viewModel.refreshSnapshot(uri)
+				}
+			}
+			Action.ON_RESTORE_COMPLETE -> {
+				Toast.makeText(this, "Snapshot restoration complete", Toast.LENGTH_SHORT).show()
+			}
+			Action.DONT_RESTORE_SNAPSHOT -> activityState.showRestoreSnapshotConsent.value = false
+			Action.ACTION_VIEW -> {
+				viewModel.currentSnapshotFile.value = data as DocumentFile
+				onPerformAction(Action.NAVIGATION, Path.SNAPSHOT_PREVIEW)
 			}
 			Action.POLICY -> {
 				val url = "https://graphite.syncodec.com/policy.html"
@@ -316,21 +364,34 @@ class SettingsActivity : ComponentActivity() {
 					)
 				}
 			}
+			Action.COMING_SOON -> Toast.makeText(
+				this,
+				"This functionality is under development. Stay tuned...",
+				Toast.LENGTH_SHORT
+			).show()
 		}
 	}
 
 	@OptIn(
 		ExperimentalMaterial3Api::class,
-		androidx.compose.animation.ExperimentalAnimationApi::class
+		ExperimentalAnimationApi::class
 	)
 	@Composable
 	private fun Screen() {
 		val activityState = viewModel.activityState
-		var showVaultScreen by showVaultScreen
+		var showVaultScreen by viewModel.activityState.showVaultScreen
 		val evokeReason by activityState.evokeReason
 		val email by viewModel.email
 
 		val notebookList by viewModel.notebookList.collectAsState(initial = listOf())
+		val currentSnapshot by viewModel.currentSnapshot
+		val currentSnapshotFile by viewModel.currentSnapshotFile
+
+		val decayAnimationSpec = rememberSplineBasedDecay<Float>()
+		val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+			decayAnimationSpec,
+			rememberTopAppBarScrollState()
+		)
 
 		AnimatedContent(targetState = showVaultScreen) {
 			if (it) {
@@ -341,12 +402,19 @@ class SettingsActivity : ComponentActivity() {
 			} else {
 				Scaffold(
 					topBar = {
-						TopBar(currentPath = activityState.currentPath) {
+						TopBar(
+							title = PathNameMap[activityState.currentPath.last()]!!,
+							scrollBehavior = scrollBehavior
+						) {
 							onPerformAction(Action.BACK)
 						}
-					}
+					},
+					modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
 				) {
-					AnimatedContent(targetState = activityState.currentPath.last()) {
+					AnimatedContent(
+						targetState = activityState.currentPath.last(),
+						modifier = Modifier.padding(it)
+					) {
 						when (it) {
 							Path.BASE -> BaseScreen(
 								email = email
@@ -376,10 +444,47 @@ class SettingsActivity : ComponentActivity() {
 							Path.SYNC -> SyncScreen { action, data ->
 								onPerformAction(action, data)
 							}
+							Path.LOCAL_BACKUP -> LocalBackupScreen(
+								backFolderPath = backupFolderPath.value
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen(
+								snapshotList = viewModel.snapshotList,
+								isRefreshing = viewModel.isSnapshotRefreshing.value,
+							) { action, data -> onPerformAction(action, data) }
+							Path.RESTORE_SNAPSHOT -> RestoreSnapshotScreen(
+								snapshot = viewModel.currentSnapshot.value,
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_NOTEBOOK -> SnapshotContentScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("Notebooks"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_CHAPTER -> SnapshotContentScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("Chapters"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_NOTE -> SnapshotContentScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("Notes"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_ATTACHMENT -> SnapshotContentScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("Attachments"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_BUCKET -> SnapshotContentScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("Buckets"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_BUCKET_ITEM -> SnapshotContentScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("Bucket Items"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_TAG -> SnapshotPreviewScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("tags.json"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_CONNECTION -> SnapshotPreviewScreen(
+								documentFile = currentSnapshot?.documentFile?.findFile("connections.json"),
+							) { action, data -> onPerformAction(action, data) }
+							Path.SNAPSHOT_PREVIEW -> SnapshotPreviewScreen(
+								documentFile = currentSnapshotFile,
+							) { action, data -> onPerformAction(action, data) }
 							Path.SELECT_NOTEBOOK -> SelectNotebookScreen(notebookList = notebookList) { action, data ->
 								onPerformAction(action, data)
 							}
-							Path.GRAPHITE -> GraphiteScreen { action, data ->
+							Path.ABOUT_US -> AboutUsScreen { action, data ->
 								onPerformAction(action, data)
 							}
 						}
@@ -390,6 +495,45 @@ class SettingsActivity : ComponentActivity() {
 						currentImportFileIndex = activityState.currentImportFileIndex.value,
 						currentImportFileName = activityState.currentImportFileName.value,
 					)
+					TakeSnapshotDialog(
+						timestamp = System.currentTimeMillis(),
+						totalNotebook = activityState.totalNotebook.value,
+						processedNotebook = activityState.processedNotebook.value,
+						totalChapter = activityState.totalChapter.value,
+						processedChapter = activityState.processedChapter.value,
+						totalNote = activityState.totalNote.value,
+						processedNote = activityState.processedNote.value,
+						totalAttachment = activityState.totalAttachment.value,
+						processedAttachment = activityState.processedAttachment.value,
+						totalBucket = activityState.totalBucket.value,
+						processedBucket = activityState.processedBucket.value,
+						totalBucketItem = activityState.totalBucketItem.value,
+						processedBucketItem = activityState.processedBucketItem.value,
+						totalTag = activityState.totalTag.value,
+						processedTag = activityState.processedTag.value,
+						isSnapshotting = activityState.isSnapshotting.value
+					) { onPerformAction(Action.ON_SNAPSHOT_COMPLETE) }
+					RestoreSnapshotDialog(
+						timestamp = System.currentTimeMillis(),
+						totalNotebook = activityState.totalNotebook.value,
+						processedNotebook = activityState.processedNotebook.value,
+						totalChapter = activityState.totalChapter.value,
+						processedChapter = activityState.processedChapter.value,
+						totalNote = activityState.totalNote.value,
+						processedNote = activityState.processedNote.value,
+						totalAttachment = activityState.totalAttachment.value,
+						processedAttachment = activityState.processedAttachment.value,
+						totalBucket = activityState.totalBucket.value,
+						processedBucket = activityState.processedBucket.value,
+						totalBucketItem = activityState.totalBucketItem.value,
+						processedBucketItem = activityState.processedBucketItem.value,
+						totalTag = activityState.totalTag.value,
+						processedTag = activityState.processedTag.value,
+						isRestoring = activityState.isRestoring.value
+					) { onPerformAction(Action.ON_RESTORE_COMPLETE) }
+					RestoreSnapshotConsentDialog(
+						showDialog = activityState.showRestoreSnapshotConsent.value
+					) { action, data -> onPerformAction(action, data) }
 				}
 			}
 		}
@@ -404,6 +548,24 @@ class SettingsActivity : ComponentActivity() {
 		val currentImportFileName: MutableState<String?> = mutableStateOf(null),
 		val isDataSaving: MutableState<Boolean> = mutableStateOf(false),
 		val richTextEditor: RichTextEditor,
+		val showVaultScreen: MutableState<Boolean> = mutableStateOf(false),
+		val totalNotebook: MutableState<Int> = mutableStateOf(0),
+		val processedNotebook: MutableState<Int> = mutableStateOf(0),
+		val totalChapter: MutableState<Int> = mutableStateOf(0),
+		val processedChapter: MutableState<Int> = mutableStateOf(0),
+		val totalNote: MutableState<Int> = mutableStateOf(0),
+		val processedNote: MutableState<Int> = mutableStateOf(0),
+		val totalAttachment: MutableState<Int> = mutableStateOf(0),
+		val processedAttachment: MutableState<Int> = mutableStateOf(0),
+		val totalBucket: MutableState<Int> = mutableStateOf(0),
+		val processedBucket: MutableState<Int> = mutableStateOf(0),
+		val totalBucketItem: MutableState<Int> = mutableStateOf(0),
+		val processedBucketItem: MutableState<Int> = mutableStateOf(0),
+		val totalTag: MutableState<Int> = mutableStateOf(0),
+		val processedTag: MutableState<Int> = mutableStateOf(0),
+		val isSnapshotting: MutableState<Boolean> = mutableStateOf(false),
+		val isRestoring: MutableState<Boolean> = mutableStateOf(false),
+		val showRestoreSnapshotConsent: MutableState<Boolean> = mutableStateOf(false)
 	)
 
 	@Composable
@@ -436,10 +598,22 @@ class SettingsActivity : ComponentActivity() {
 		ONE_DRIVE,
 		DROPBOX,
 		WEBDAV,
+		SETUP_LOCAL_BACKUP_FOLDER,
+		REMOVE_LOCAL_BACKUP_FOLDER,
+		TAKE_SNAPSHOT,
+		REFRESH_SNAPSHOT,
+		OPEN_SNAPSHOT,
+		RESTORE_SNAPSHOT_CONSENT,
+		RESTORE_SNAPSHOT,
+		ON_SNAPSHOT_COMPLETE,
+		ON_RESTORE_COMPLETE,
+		DONT_RESTORE_SNAPSHOT,
+		ACTION_VIEW,
 		ADD_PASSCODE,
 		CHANGE_PASSCODE,
 		REMOVE_PASSCODE,
 		BIOMETRIC_UNLOCK,
+		COMING_SOON
 	}
 
 	enum class DataExchange {
@@ -460,8 +634,20 @@ class SettingsActivity : ComponentActivity() {
 			IMPORT,
 			EXPORT,
 			SYNC,
+			LOCAL_BACKUP,
+			SNAPSHOT_WAREHOUSE,
+			RESTORE_SNAPSHOT,
+			SNAPSHOT_NOTEBOOK,
+			SNAPSHOT_CHAPTER,
+			SNAPSHOT_NOTE,
+			SNAPSHOT_ATTACHMENT,
+			SNAPSHOT_BUCKET,
+			SNAPSHOT_BUCKET_ITEM,
+			SNAPSHOT_TAG,
+			SNAPSHOT_CONNECTION,
+			SNAPSHOT_PREVIEW,
 			SELECT_NOTEBOOK,
-			GRAPHITE
+			ABOUT_US
 		}
 
 		val PathNameMap: Map<Path, String> = mapOf(
@@ -472,25 +658,23 @@ class SettingsActivity : ComponentActivity() {
 			Path.FONT_FAMILY to "Font Family",
 			Path.SECURITY to "Security",
 			Path.DATA to "Data",
-			Path.SYNC to "Backup and Sync",
 			Path.IMPORT to "Import",
 			Path.EXPORT to "Export",
+			Path.SYNC to "Backup and Sync",
+			Path.LOCAL_BACKUP to "Local Backup",
+			Path.SNAPSHOT_WAREHOUSE to "Snapshot Warehouse",
+			Path.RESTORE_SNAPSHOT to "Restore Snapshot",
+			Path.SNAPSHOT_NOTEBOOK to "Notebook Snapshot",
+			Path.SNAPSHOT_CHAPTER to "Chapter Snapshot",
+			Path.SNAPSHOT_NOTE to "Note Snapshot",
+			Path.SNAPSHOT_ATTACHMENT to "Attachment Snapshot",
+			Path.SNAPSHOT_BUCKET to "Bucket Snapshot",
+			Path.SNAPSHOT_BUCKET_ITEM to "Bucket Item Snapshot",
+			Path.SNAPSHOT_TAG to "Tag Snapshot",
+			Path.SNAPSHOT_CONNECTION to "Connection Snapshot",
+			Path.SNAPSHOT_PREVIEW to "Preview",
 			Path.SELECT_NOTEBOOK to "Export Notebook",
-			Path.GRAPHITE to "Graphite",
-		)
-		val PathIconMap: Map<Path, Int> = mapOf(
-			Path.BASE to R.drawable.ic_settings,
-			Path.LOGIN to R.drawable.ic_login,
-			Path.PREFERENCE to R.drawable.ic_preference,
-			Path.THEME to R.drawable.ic_theme,
-			Path.FONT_FAMILY to R.drawable.ic_font_family,
-			Path.SECURITY to R.drawable.ic_security,
-			Path.DATA to R.drawable.ic_data,
-			Path.SYNC to R.drawable.ic_sync,
-			Path.IMPORT to R.drawable.ic_import,
-			Path.EXPORT to R.drawable.ic_export,
-			Path.SELECT_NOTEBOOK to R.drawable.ic_notebook,
-			Path.GRAPHITE to R.drawable.ic_icon,
+			Path.ABOUT_US to "About Us",
 		)
 	}
 }

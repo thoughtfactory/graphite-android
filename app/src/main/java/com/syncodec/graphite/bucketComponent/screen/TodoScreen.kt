@@ -8,19 +8,18 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.syncodec.graphite.R
@@ -29,11 +28,11 @@ import com.syncodec.graphite.database.bucketItem.BucketItemPreviewDbEntry
 import com.syncodec.graphite.database.bucketItem.BucketItemState
 
 
-@OptIn(ExperimentalFoundationApi::class, com.google.accompanist.pager.ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun TodoScreen(
 	bucketItemList: List<BucketItemPreviewDbEntry>,
-	selectedBucketItemList: SnapshotStateList<String>,
+	selectedBucketItemList: List<String>,
 	pagerState: PagerState,
 	onAction: (BucketActivity.Action, Any?) -> Unit
 ) {

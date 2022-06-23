@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
 @Composable
-@OptIn(ExperimentalAnimationApi::class)
 fun ExpandableBox(
 	isVisible: Boolean = true,
 	initialVisibility: Boolean = false,

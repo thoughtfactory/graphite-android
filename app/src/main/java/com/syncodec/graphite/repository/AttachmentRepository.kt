@@ -33,9 +33,7 @@ class AttachmentRepository(val graphite: Graphite) {
 							uri = it.second,
 							extension = it.first.extension
 						)
-						if (isCopied) {
-							attachmentTableDao.insert(it.first)
-						}
+						if (isCopied) attachmentTableDao.insert(it.first)
 					}
 				} catch (exception: Exception) {
 				}

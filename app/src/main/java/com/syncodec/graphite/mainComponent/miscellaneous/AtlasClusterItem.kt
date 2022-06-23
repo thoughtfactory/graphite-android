@@ -74,7 +74,7 @@ class AtlasItem(context: Context, val itemSize: Int) : FrameLayout(context) {
 		addView(
 			ImageView(context).apply {
 				layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-				setImageResource(R.drawable.ic_notes_3)
+				setImageResource(R.drawable.ic_note_cluster)
 			}
 		)
 

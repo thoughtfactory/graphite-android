@@ -109,3 +109,33 @@ ul[data-type="taskList"] li>label {
 ul[data-type="taskList"] li>div {
     flex: 1 1 auto;
 }
+
+h1 {
+    font-size: 48px;
+    line-height: 40px;
+}
+
+h2 {
+    font-size: 40px;
+    line-height: 32px;
+}
+
+h3 {
+    font-size: 32px;
+    line-height: 28px;
+}
+
+h4 {
+    font-size: 28px;
+    line-height: 24px;
+}
+
+h5 {
+    font-size: 24px;
+    line-height: 20px;
+}
+
+h6 {
+    font-size: 20px;
+    line-height: 18px;
+}

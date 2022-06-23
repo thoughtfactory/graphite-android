@@ -28,7 +28,7 @@ fun MenuBottomSheet(
 		MenuBottomSheetButtonData(title = "Share", icon = R.drawable.ic_share) {
 			onAction(AttachmentActivity.Action.SHARE)
 		},
-		MenuBottomSheetButtonData(title = "Delete", icon = R.drawable.ic_trash) {
+		MenuBottomSheetButtonData(title = "Delete", icon = R.drawable.ic_delete) {
 			onAction(AttachmentActivity.Action.DELETE)
 		}
 	)

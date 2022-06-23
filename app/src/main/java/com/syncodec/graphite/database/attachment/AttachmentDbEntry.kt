@@ -3,6 +3,7 @@ package com.syncodec.graphite.database.attachment
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 
 @Entity(tableName = "attachment_table")
@@ -29,6 +30,7 @@ data class AttachmentDbEntry(
 	@ColumnInfo(name = "notebook_key")
 	val notebookKey: String
 ) {
+	@get:JsonIgnore
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 

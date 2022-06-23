@@ -2,7 +2,6 @@ package com.syncodec.graphite.notebookComponent.modalBottomSheet
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -19,7 +18,6 @@ import com.syncodec.graphite.custom.button.LargeButton
 import com.syncodec.graphite.notebookComponent.NotebookActivity
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NewNoteBottomSheet(
 	onAction: (NotebookActivity.Action, Any?) -> Unit
@@ -31,7 +29,7 @@ fun NewNoteBottomSheet(
 
 	Surface(
 		shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-		color= MaterialTheme.colorScheme.surface,
+		color = MaterialTheme.colorScheme.surface,
 		modifier = Modifier
 			.fillMaxWidth()
 			.heightIn(180.dp),
@@ -54,7 +52,9 @@ fun NewNoteBottomSheet(
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp),
 				text = noteTitleText,
-				placeholder = "What is this note about"
+				placeholder = "What is this note about",
+				isFocused = isNoteTitleFocused,
+				onFocusChanged = { isNoteTitleFocused = it }
 			) {
 				noteTitleText = it
 			}

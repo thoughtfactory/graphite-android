@@ -2,18 +2,14 @@ package com.syncodec.graphite.mainComponent.screen
 
 import android.graphics.drawable.Drawable
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,18 +21,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.pager.ExperimentalPagerApi
+import com.syncodec.graphite.R
+import com.syncodec.graphite.custom.animation.AnimatedText
 import com.syncodec.graphite.custom.notebook.NoEntryCard
 import com.syncodec.graphite.custom.notebook.NoteCard
 import com.syncodec.graphite.custom.notebook.NotebookHeaderCard
 import com.syncodec.graphite.custom.notebook.NotebookTimelineSpacer
-import com.syncodec.graphite.custom.squircle.Squircle
 import com.syncodec.graphite.database.note.NoteDbEntry
 import com.syncodec.graphite.database.quote.QuoteDbEntry
 import com.syncodec.graphite.konstant.Konstant
@@ -48,6 +49,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.joda.time.DateTime
+import java.util.*
+import kotlin.Comparator
 import kotlin.random.Random
 
 
@@ -92,11 +95,15 @@ fun NoteScreen(
 			Column(
 				modifier = Modifier.fillMaxSize()
 			) {
+				YearProgressCard()
+				Spacer(modifier = Modifier.height(8.dp))
+
 				QuoteCard(
 					quote = quote,
 					quoteBg = quoteBg,
 					showCard = showQuoteCard && !isFilterActive
 				) { onAction(MainActivity.Action.EN_QUOTE, null) }
+
 				Spacer(modifier = Modifier.height(8.dp))
 
 				NoEntryCard()
@@ -107,18 +114,21 @@ fun NoteScreen(
 			) {
 				item {
 					Column(modifier = Modifier.fillMaxWidth()) {
+						YearProgressCard()
+						Spacer(modifier = Modifier.height(8.dp))
 						QuoteCard(
 							quote = quote,
 							quoteBg = quoteBg,
 							showCard = showQuoteCard && !isFilterActive
 						) { onAction(MainActivity.Action.EN_QUOTE, null) }
+
 						if (showMembershipCard && !isFilterActive) {
 							Spacer(modifier = Modifier.height(8.dp))
+							MembershipCard(
+								showCard = showMembershipCard && !isFilterActive && !isPremium,
+								onAction = onAction
+							)
 						}
-						MembershipCard(
-							showCard = showMembershipCard && !isFilterActive && !isPremium,
-							onAction = onAction
-						)
 						Spacer(modifier = Modifier.height(8.dp))
 					}
 				}
@@ -131,7 +141,7 @@ fun NoteScreen(
 					stickyHeader {
 						AnimatedVisibility(visible = entrySize != 0) {
 							NotebookHeaderCard(
-								title = timeStampToPrettyDay(day),
+								title = day.timeStampToPrettyDay(),
 								noEntries = "$entrySize ${if (entrySize == 1) "entry" else "entries"}",
 								color = MaterialTheme.colorScheme.background
 							)
@@ -230,9 +240,10 @@ private fun QuoteCard(
 						.padding(12.dp),
 					verticalAlignment = Alignment.CenterVertically
 				) {
-					Squircle(
-						sizeInDp = 56.dp,
-						smoothing = 6.0,
+					Box(
+						modifier = Modifier
+							.aspectRatio(1f)
+							.clip(RoundedCornerShape(12.dp))
 					) {
 						AsyncImage(
 							model = ImageRequest.Builder(context)
@@ -272,7 +283,6 @@ private fun QuoteCard(
 								maxLines = 1
 							)
 						}
-
 					}
 
 					Spacer(modifier = Modifier.padding(8.dp))
@@ -307,6 +317,76 @@ private fun QuoteCard(
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@Preview
+@Composable
+private fun YearProgressCard(
+	showCard: Boolean = true,
+) {
+	var startAnimation by remember { mutableStateOf(false) }
+	val calendar = remember { Calendar.getInstance() }
+	val totalDays = remember { if (calendar.get(Calendar.YEAR) % 4 == 0) 366 else 365 }
+	val progress by animateIntAsState(
+		targetValue = if (startAnimation) calendar.get(Calendar.DAY_OF_YEAR) else 0,
+		animationSpec = tween(2400)
+	)
+
+	LaunchedEffect(key1 = startAnimation) { startAnimation = true }
+
+	AnimatedVisibility(
+		visible = showCard,
+		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
+	) {
+		Card(
+			colors = CardDefaults.cardColors(Color.Transparent),
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(12.dp, 8.dp, 12.dp, 4.dp),
+		) {
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Text(
+					text = calendar.get(Calendar.YEAR).toString(),
+					fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
+					fontWeight = FontWeight.Bold,
+					fontSize = 20.sp,
+					lineHeight = 24.sp,
+					letterSpacing = 2.sp,
+					color = MaterialTheme.colorScheme.onBackground
+				)
+
+				Spacer(modifier = Modifier.width(12.dp))
+
+				Box(
+					modifier = Modifier
+						.weight(1f)
+						.clip(RoundedCornerShape(50))
+						.background(Color.Transparent)
+						.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50)),
+				) {
+					Box(
+						modifier = Modifier
+							.fillMaxWidth(progress.toFloat() / totalDays)
+							.height(12.dp)
+							.background(MaterialTheme.colorScheme.primary)
+					)
+				}
+
+				Spacer(modifier = Modifier.width(12.dp))
+
+				AnimatedText(
+					animatedText = (progress.toFloat() * 100/ totalDays).toInt().toString(),
+					staticText = "%",
+					color = MaterialTheme.colorScheme.onBackground
+				)
+			}
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun MembershipCard(
 	showCard: Boolean,
@@ -317,9 +397,11 @@ private fun MembershipCard(
 		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
-		Card(
+		OutlinedCard(
+			colors = CardDefaults.outlinedCardColors(
+				containerColor = Color.Transparent
+			),
 			border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
-			containerColor = Color.Transparent,
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(12.dp, 0.dp),
@@ -331,31 +413,6 @@ private fun MembershipCard(
 				color = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier.padding(12.dp)
 			)
-
-//			Row(
-//				modifier = Modifier
-//					.fillMaxWidth()
-//					.padding(12.dp),
-//				verticalAlignment = Alignment.CenterVertically
-//			) {
-//				Text(
-//					text = "Add some style in your notes",
-//					style = MaterialTheme.typography.bodyLarge,
-//					color = MaterialTheme.colorScheme.onBackground,
-//					modifier = Modifier.weight(1f)
-//				)
-//
-//				Spacer(modifier = Modifier.width(32.dp))
-//
-//				Button(
-//					onClick = { onAction(MainActivity.Action.TRY_PREMIUM, null) }
-//				) {
-//					Text(
-//						text = "Try premium",
-//						style = MaterialTheme.typography.bodyLarge,
-//					)
-//				}
-//			}
 		}
 	}
 }

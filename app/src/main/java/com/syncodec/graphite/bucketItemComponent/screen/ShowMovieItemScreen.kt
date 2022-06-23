@@ -49,7 +49,7 @@ fun ShowMovieItemScreen(
 
 		if (!movieData.tagline.isNullOrBlank()) {
 			TaglineCard(tagline = movieData.tagline)
-			Spacer(modifier = Modifier.height(16.dp))
+			Spacer(modifier = Modifier.height(24.dp))
 		}
 
 		ShowHeaderCard(

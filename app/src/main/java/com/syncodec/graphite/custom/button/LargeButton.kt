@@ -46,7 +46,7 @@ fun LargeButton(
 	) {
 		Text(
 			text = text,
-			style = MaterialTheme.typography.bodyLarge,
+			style = MaterialTheme.typography.titleMedium,
 			color = contentColor
 		)
 	}

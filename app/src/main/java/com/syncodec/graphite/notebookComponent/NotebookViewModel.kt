@@ -14,8 +14,10 @@ import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.konstant.Status
 import com.syncodec.graphite.miscellaneous.CollectionUtils.Companion.listOfField
 import com.syncodec.graphite.repository.NoteRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class NotebookViewModel(application: Application) : AndroidViewModel(application) {
@@ -27,8 +29,8 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 
 	lateinit var notebookKey: String
 	var notebookDbEntry: MutableState<NotebookDbEntry?> = mutableStateOf(null)
-	var noteList: SnapshotStateList<NoteDbEntry> = mutableStateListOf()
 	var chapterList: SnapshotStateList<ChapterDbEntry> = mutableStateListOf()
+	var noteList: SnapshotStateList<NoteDbEntry> = mutableStateListOf()
 
 	var status: MutableState<Status> = mutableStateOf(Status.INIT)
 
@@ -40,23 +42,28 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 
 		viewModelScope.launch(Dispatchers.IO) {
 			noteRepository.getNotebookAsFlow(key = notebookKey).collect {
-				notebookDbEntry.value = it
-				status.value = Status.LOADED
-			}
-		}
-		viewModelScope.launch(Dispatchers.IO) {
-			noteRepository.getNoteAsFlow(notebookKey = notebookKey).collect {
-				noteList.clear()
-				noteList.addAll(it)
+				CoroutineScope(Dispatchers.Main).launch {
+					notebookDbEntry.value = it
+					status.value = Status.LOADED
+				}
 			}
 		}
 		viewModelScope.launch(Dispatchers.IO) {
 			noteRepository.getChapterAsFlow(notebookKey = notebookKey).collect {
-				chapterList.clear()
-				chapterList.addAll(it)
+				CoroutineScope(Dispatchers.Main).launch {
+					chapterList.clear()
+					chapterList.addAll(it)
+				}
 			}
 		}
-
+		viewModelScope.launch(Dispatchers.IO) {
+			noteRepository.getNoteAsFlow(notebookKey = notebookKey).collect {
+				CoroutineScope(Dispatchers.Main).launch {
+					noteList.clear()
+					noteList.addAll(it)
+				}
+			}
+		}
 	}
 
 	fun putChapter(

@@ -3,10 +3,7 @@ package com.syncodec.graphite.vaultComponent
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -29,6 +26,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.miscellaneous.DataStoreInstance
+import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
 
 
 enum class EvokeReason {
@@ -265,7 +263,7 @@ private fun PasscodeProgressIndicator(code: String) {
 					.padding(8.dp),
 				shape = CircleShape,
 				border = BorderStroke(3.dp, MaterialTheme.colorScheme.primaryContainer),
-				containerColor = tint
+				colors = CardDefaults.cardColors(tint),
 			) {
 
 			}
@@ -292,7 +290,6 @@ private fun PasscodeIncorrectMessage(showPasswordIncorrectMessage: Boolean) {
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PasscodeKeyboard(
 	onClick: (Click) -> Unit

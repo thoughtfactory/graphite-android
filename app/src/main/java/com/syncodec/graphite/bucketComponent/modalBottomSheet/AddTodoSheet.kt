@@ -32,6 +32,7 @@ fun AddTodoSheet(
 	onAction: (String?, String, Int) -> Unit
 ) {
 	var todoText by remember { mutableStateOf(title) }
+	var isTodoTextFocused by remember { mutableStateOf(false) }
 
 	val stateList: List<StateData> = listOf(
 		StateData(title = "To Do", icon = R.drawable.ic_todo, MaterialTheme.colorScheme.primary),
@@ -68,6 +69,8 @@ fun AddTodoSheet(
 				modifier = Modifier.padding(24.dp, 0.dp),
 				text = todoText,
 				placeholder = "Add a task",
+				isFocused = isTodoTextFocused,
+				onFocusChanged = { isTodoTextFocused = it },
 				keyboardOptions = KeyboardOptions.Default.copy(
 					capitalization = KeyboardCapitalization.None,
 					autoCorrect = true,

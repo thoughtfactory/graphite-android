@@ -433,7 +433,7 @@ class PremiumActivity : ComponentActivity() {
 		)
 
 		Card(
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
+			colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f)),
 			shape = RoundedCornerShape(24.dp),
 			border = BorderStroke(3.dp, borderColor),
 			modifier = Modifier
@@ -577,7 +577,7 @@ class PremiumActivity : ComponentActivity() {
 				)
 				Spacer(modifier = Modifier.weight(1f))
 				Icon(
-					painter = painterResource(id = R.drawable.ic_check),
+					painter = painterResource(id = R.drawable.ic_done),
 					contentDescription = null,
 					tint = Color.White,
 					modifier = Modifier
@@ -618,7 +618,7 @@ class PremiumActivity : ComponentActivity() {
 				)
 				Spacer(modifier = Modifier.weight(1f))
 				Icon(
-					painter = painterResource(id = R.drawable.ic_restore),
+					painter = painterResource(id = R.drawable.ic_history),
 					contentDescription = null,
 					tint = Color.White,
 					modifier = Modifier

@@ -151,15 +151,14 @@ fun GraphiteBase(
 				val superExpiryTimestamp = superExpiryTimestampString?.toLongOrNull()
 				val expiryTimestamp = expiryTimestampString?.toLongOrNull()
 
-				Log.i("npr71", "superExpiryTimestamp : $superExpiryTimestamp")
-				Log.i("npr71", "expiryTimestamp : $expiryTimestamp")
-
 				CompositionLocalProvider(
 					PremiumCompositionLocal provides
-							if (superExpiryTimestamp == null)
-									(expiryTimestamp ?: 0L) > currentTimestamp
+							(if (superExpiryTimestamp == null)
+								(expiryTimestamp ?: 0L) > currentTimestamp
 							else
 								superExpiryTimestamp > currentTimestamp
+									),
+					LocalIndication provides rippleIndication
 				) {
 					CompositionLocalProvider(
 						LocalIndication provides rippleIndication,

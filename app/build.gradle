@@ -1,21 +1,23 @@
 plugins {
 	id 'com.android.application'
+	id 'org.jetbrains.kotlin.android'
 	id 'kotlin-android'
 	id 'kotlin-kapt'
+	id 'io.realm.kotlin'
 	id 'com.google.gms.google-services'
 	id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 	id 'com.google.android.gms.oss-licenses-plugin'
 }
 
 android {
-	compileSdk 31
+	compileSdk 32
 
 	defaultConfig {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
-		targetSdk 31
-		versionCode 12
-		versionName '1.1.0'
+		targetSdk 32
+		versionCode 13
+		versionName '1.2.0'
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 		vectorDrawables {
@@ -27,6 +29,12 @@ android {
 			properties.load(rootProject.file('local.properties').newDataInputStream())
 		}
 		manifestPlaceholders = [mapsApiKey: properties.getProperty('MAPS_API_KEY', '')]
+
+		javaCompileOptions {
+			annotationProcessorOptions {
+				arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
+			}
+		}
 	}
 
 	buildTypes {
@@ -41,20 +49,25 @@ android {
 //			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 //		}
 	}
+
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_1_8
 		targetCompatibility JavaVersion.VERSION_1_8
 	}
+
 	kotlinOptions {
 		jvmTarget = '1.8'
 		useIR = true
 	}
+
 	buildFeatures {
 		compose true
 	}
+
 	composeOptions {
 		kotlinCompilerExtensionVersion compose_version
 	}
+
 	packagingOptions {
 		resources {
 			excludes += '/META-INF/{AL2.0,LGPL2.1}'
@@ -64,24 +77,24 @@ android {
 }
 
 dependencies {
-	implementation 'androidx.core:core-ktx:1.7.0'
+	implementation 'androidx.core:core-ktx:1.8.0'
 
 	implementation 'androidx.activity:activity-compose:1.4.0'
-	implementation 'androidx.appcompat:appcompat:1.4.1'
+	implementation 'androidx.appcompat:appcompat:1.4.2'
 	implementation 'androidx.fragment:fragment-ktx:1.4.1'
 
-	implementation 'androidx.compose.ui:ui:1.2.0-alpha07'
-	implementation 'androidx.compose.material:material:1.2.0-alpha07'
-	implementation 'androidx.compose.material3:material3:1.0.0-alpha09'
-	implementation 'androidx.compose.ui:ui-tooling-preview:1.2.0-beta02'
-	implementation 'androidx.compose.ui:ui-util:1.2.0-beta02'
+	implementation 'androidx.compose.material:material:1.2.0-rc01'
+	implementation 'androidx.compose.material3:material3:1.0.0-alpha13'
+	implementation 'androidx.compose.ui:ui:1.2.0-rc01'
+	implementation 'androidx.compose.ui:ui-tooling-preview:1.2.0-rc01'
+	implementation 'androidx.compose.ui:ui-util:1.2.0-rc01'
 
 	implementation "androidx.glance:glance-appwidget:1.0.0-alpha03"
 
-	implementation 'androidx.navigation:navigation-compose:2.5.0-rc01'
+	implementation 'androidx.navigation:navigation-compose:2.5.0-rc02'
 	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.1'
 
-	implementation 'androidx.core:core-animation:1.0.0-alpha02'
+	implementation 'androidx.core:core-animation:1.0.0-beta01'
 
 	implementation 'me.onebone:toolbar-compose:2.3.1'
 
@@ -91,6 +104,7 @@ dependencies {
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.16.0'
 	implementation 'com.google.accompanist:accompanist-permissions:0.18.0'
 	implementation 'com.google.accompanist:accompanist-webview:0.24.1-alpha'
+	implementation 'com.google.accompanist:accompanist-swiperefresh:0.24.1-alpha'
 
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
 	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
@@ -104,6 +118,11 @@ dependencies {
 	testImplementation 'androidx.room:room-testing:2.4.2'
 	kapt 'androidx.room:room-compiler:2.4.2'
 	kapt 'androidx.room:room-compiler:2.4.2'
+	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1'
+	implementation 'io.realm.kotlin:library-base:1.0.0'
+
+	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1'
+	implementation 'io.realm.kotlin:library-base:1.0.0'
 
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.13.2'
 	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.2'
@@ -120,6 +139,8 @@ dependencies {
 
 	implementation 'me.jorgecastillo:androidcolorx:0.2.0'
 
+	implementation 'com.tobianoapps:bulletin:1.0.0'
+
 	implementation 'com.google.android.play:core:1.10.3'
 
 	implementation platform('com.google.firebase:firebase-bom:29.3.1')
@@ -132,7 +153,7 @@ dependencies {
 
 	implementation 'io.qonversion.android.sdk:sdk:3.2.7'
 
-	implementation 'com.google.android.gms:play-services-location:19.0.1'
+	implementation 'com.google.android.gms:play-services-location:20.0.0'
 	implementation 'com.google.maps.android:maps-ktx:3.2.1'
 	implementation 'com.google.maps.android:maps-utils-ktx:3.2.1'
 
@@ -147,6 +168,7 @@ dependencies {
 
 	implementation 'com.github.LucasFsc:Html2Pdf:0.2-beta'
 
+	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.4'
 
 	implementation "com.google.android.gms:play-services-oss-licenses:17.0.0"
 

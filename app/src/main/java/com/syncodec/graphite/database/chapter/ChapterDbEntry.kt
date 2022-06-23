@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 
 @Entity(
@@ -52,6 +53,7 @@ data class ChapterDbEntry(
 	@ColumnInfo(name = "deleted_timestamp")
 	var deletedTimestamp: Long = -1
 
+	@get:JsonIgnore
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 

@@ -3,6 +3,7 @@ package com.syncodec.graphite.database.bucket
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 
 @Entity(tableName = "bucket_table")
@@ -35,6 +36,7 @@ data class BucketDbEntry(
 	@ColumnInfo(name = "is_locked")
 	var isLocked = false
 
+	@get:JsonIgnore
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
 

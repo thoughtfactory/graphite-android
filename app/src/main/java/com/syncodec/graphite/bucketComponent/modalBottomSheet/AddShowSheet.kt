@@ -90,6 +90,7 @@ fun AddShowSheet(
 	val context = LocalContext.current
 
 	var showNameText by rememberSaveable { mutableStateOf("") }
+	var isShowNameTextFocused by remember { mutableStateOf(false) }
 
 	var sheetState by remember { mutableStateOf(SheetState.INIT) }
 
@@ -127,6 +128,8 @@ fun AddShowSheet(
 				text = showNameText,
 				placeholder = "Search for movie or show",
 				dataType = dataType,
+				isFocused = isShowNameTextFocused,
+				onFocusChanged = { isShowNameTextFocused = it },
 				keyboardOptions = KeyboardOptions(
 					capitalization = KeyboardCapitalization.None,
 					autoCorrect = true,
@@ -290,8 +293,10 @@ private fun ShowCard(
 		modifier = Modifier.padding(8.dp),
 	) {
 		Card(
-			containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
-			elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+			colors = CardDefaults.cardColors(
+				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+			),
+			elevation = CardDefaults.cardElevation(0.dp),
 			shape = RoundedCornerShape(12.dp),
 			modifier = modifier,
 			onClick = { onClick() }

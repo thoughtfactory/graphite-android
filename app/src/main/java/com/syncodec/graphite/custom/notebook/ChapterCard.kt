@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -58,15 +58,17 @@ fun ChapterCard(
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(if (isLast) 64.dp else 56.dp)
 				.padding(8.dp, 0.dp, 8.dp, if (isLast) 8.dp else 0.dp),
 		) {
 			NoteSpacer(isLast = isLast)
 			Spacer(modifier = Modifier.width(4.dp))
 			OutlinedCard(
 				shape = RoundedCornerShape(12.dp),
-				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.31f)),
-				containerColor = containerColor,
+				border = BorderStroke(
+					1.dp,
+					MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.31f)
+				),
+				colors = CardDefaults.cardColors(containerColor),
 				elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 				modifier = Modifier
 					.fillMaxSize()
@@ -87,7 +89,7 @@ fun ChapterCard(
 					) {
 						Text(
 							text = entryTimestamp0(timestamp),
-							style = MaterialTheme.typography.bodySmall,
+							style = MaterialTheme.typography.bodyMedium,
 							color = MaterialTheme.colorScheme.primary,
 							fontWeight = FontWeight.Bold,
 							maxLines = 1,
@@ -95,7 +97,7 @@ fun ChapterCard(
 						)
 						Text(
 							text = entryTimestamp1(timestamp),
-							style = MaterialTheme.typography.bodySmall,
+							style = MaterialTheme.typography.bodyMedium,
 							color = MaterialTheme.colorScheme.primary.copy(0.31f),
 							fontWeight = FontWeight.Bold,
 							maxLines = 1,
@@ -107,7 +109,7 @@ fun ChapterCard(
 
 						if (isLocked) {
 							Icon(
-								painter = painterResource(id = R.drawable.ic_security),
+								painter = painterResource(id = R.drawable.ic_shield),
 								contentDescription = "Locked",
 								tint = Color(MaterialTheme.colorScheme.primary.toArgb().tints()[1]),
 								modifier = Modifier
@@ -160,15 +162,27 @@ fun ChapterCard(
 							)
 						}
 					}
+					Spacer(modifier = Modifier.height(4.dp))
 					Text(
 						text = title,
-						style = MaterialTheme.typography.titleSmall,
+						style = MaterialTheme.typography.titleMedium,
 						color = MaterialTheme.colorScheme.onBackground,
 						maxLines = 1,
 						overflow = TextOverflow.Ellipsis,
-						modifier = Modifier
-							.height(80.dp)
 					)
+					Spacer(modifier = Modifier.height(4.dp))
+
+					if (description != null) {
+						Text(
+							text = "$description",
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+							fontStyle = FontStyle.Italic,
+							maxLines = 2,
+							overflow = TextOverflow.Ellipsis,
+							modifier = Modifier
+						)
+					}
 				}
 			}
 		}

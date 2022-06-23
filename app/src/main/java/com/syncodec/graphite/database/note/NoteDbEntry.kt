@@ -1,13 +1,14 @@
 package com.syncodec.graphite.database.note
 
 import android.graphics.Bitmap
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.google.android.gms.maps.model.LatLng
 
-@Entity(
-	tableName = "note_table",
-	indices = [Index("key")]
-)
+
+@Entity(tableName = "note_table")
 data class NoteDbEntry(
 	@PrimaryKey(autoGenerate = false)
 	@ColumnInfo(name = "key")
@@ -64,9 +65,9 @@ data class NoteDbEntry(
 	@ColumnInfo(name = "deleted_timestamp")
 	var deletedTimestamp: Long = -1
 
+	@get:JsonIgnore
 	@ColumnInfo(name = "g_drive_file_id")
 	var gDriveFileId: String? = null
-
 
 
 	override fun hashCode(): Int {

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,8 +19,8 @@ fun OverviewCard(
 ) {
 	Card(
 		modifier = Modifier.fillMaxWidth(),
-		containerColor = Color.Transparent,
-		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+		colors = CardDefaults.cardColors(Color.Transparent),
+		elevation = CardDefaults.cardElevation(0.dp),
 		border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
 		shape = RoundedCornerShape(12.dp),
 	) {

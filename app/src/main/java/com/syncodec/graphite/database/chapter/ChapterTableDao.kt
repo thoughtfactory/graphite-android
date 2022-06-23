@@ -16,6 +16,9 @@ interface ChapterTableDao {
 	@Query(value = "SELECT * FROM chapter_table WHERE `key` = :key")
 	suspend fun get(key: String): ChapterDbEntry?
 
+	@Query(value = "SELECT `key` FROM chapter_table")
+	suspend fun getAllKeys(): List<String>
+
 	@Query(value = "SELECT * FROM chapter_table WHERE notebook_key = :notebookKey ORDER BY created_timestamp DESC")
 	fun getFromNotebookAsFlow(notebookKey: String) : Flow<List<ChapterDbEntry>>
 
@@ -24,6 +27,9 @@ interface ChapterTableDao {
 
 	@Query("DELETE FROM chapter_table WHERE `key` IN (:keyList)")
 	fun delete(keyList: List<String>)
+
+	@Query("DELETE FROM chapter_table")
+	suspend fun deleteAll()
 
 	@Delete
 	suspend fun delete(chapterDbEntries: List<ChapterDbEntry>)

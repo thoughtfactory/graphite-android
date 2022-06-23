@@ -3,7 +3,6 @@ package com.syncodec.graphite.searchComponent.miscellaneous
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,8 +23,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.custom.LargeTextField
 import com.syncodec.graphite.searchComponent.SearchActivity
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -90,6 +92,8 @@ private fun Bar(
 	onQueryChange: (String) -> Unit,
 	onHitSearch: () -> Unit
 ) {
+	var isSearchViewFocused by remember { mutableStateOf(false) }
+
 	SmallTopAppBar(
 		navigationIcon = {
 			IconButton(
@@ -106,107 +110,29 @@ private fun Bar(
 			}
 		},
 		title = {
-			SearchField(
-				query = query,
-				onQueryChange = onQueryChange,
-				onHitSearch = onHitSearch
-			)
-		},
-	)
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-private fun SearchField(
-	query: String,
-	onQueryChange: (String) -> Unit,
-	onHitSearch: () -> Unit
-) {
-	val keyboardController = LocalSoftwareKeyboardController.current
-	val focusRequester = remember { FocusRequester() }
-
-	androidx.compose.material.Card(
-		elevation = 0.dp,
-		shape = RoundedCornerShape(12.dp),
-		backgroundColor = MaterialTheme.colorScheme.background,
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(40.dp)
-	) {
-		Row(
-			modifier = Modifier.fillMaxSize(),
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			Spacer(modifier = Modifier.width(12.dp))
-			BasicTextField(
-				value = query,
-				onValueChange = { onQueryChange(it) },
-				singleLine = true,
-				cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
-				textStyle = MaterialTheme.typography.bodyMedium.copy(
-					color = MaterialTheme.colorScheme.onBackground,
-					fontWeight = FontWeight.Bold
-				),
-				modifier = Modifier
-					.weight(1f)
-					.height(48.dp)
-					.clip(RoundedCornerShape(12.dp))
-					.focusRequester(focusRequester),
-
-				keyboardActions = KeyboardActions(
-					onSearch = {
-						onHitSearch()
-						keyboardController?.hide()
-						focusRequester.freeFocus()
-					}
-				),
-				keyboardOptions = KeyboardOptions(
+			LargeTextField(
+				text = query,
+				placeholder = "Search within notes...",
+				isFocused = isSearchViewFocused,
+				onFocusChanged = { isSearchViewFocused = it },
+				keyboardOptions = KeyboardOptions.Default.copy(
+					capitalization = KeyboardCapitalization.None,
+					autoCorrect = true,
+					keyboardType = KeyboardType.Text,
 					imeAction = ImeAction.Search
 				),
-				decorationBox = { innerTextField ->
-					androidx.compose.material.Card(
-						modifier = Modifier.fillMaxWidth(),
-						backgroundColor = Color.Transparent,
-						elevation = 0.dp,
-						shape = RoundedCornerShape(12.dp),
-					) {
-						Box(
-							contentAlignment = Alignment.CenterStart,
-							modifier = Modifier
-								.fillMaxWidth()
-						) {
-							if (query.isEmpty()) {
-								Text(
-									text = "Search within notes...",
-									style = MaterialTheme.typography.bodyMedium,
-									color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
-									fontWeight = FontWeight.Bold,
-									maxLines = 1
-								)
-							}
-							innerTextField()
-						}
-					}
-				}
+				keyboardActions = KeyboardActions(
+					onSearch = { onHitSearch() }
+				),
+				onValueChanged = onQueryChange
 			)
-
-			Spacer(modifier = Modifier.width(8.dp))
-
-			IconButton(onClick = { onQueryChange("") }) {
-				Icon(
-					painter = painterResource(id = R.drawable.ic_close),
-					contentDescription = "Clear search query",
-					tint = MaterialTheme.colorScheme.onBackground,
-					modifier = Modifier.requiredSize(16.dp)
-				)
-			}
-		}
-	}
-
-	LaunchedEffect(key1 = Unit) {
-		focusRequester.requestFocus()
-		keyboardController?.show()
-	}
+//			SearchField(
+//				query = query,
+//				onQueryChange = onQueryChange,
+//				onHitSearch = onHitSearch
+//			)
+		},
+	)
 }
 
 @Composable
@@ -223,16 +149,14 @@ private fun QueryListCard(
 		item { Spacer(modifier = Modifier.width(8.dp)) }
 		queryList.forEach {
 			item { QueryCard(query = it, icon = icon) { onClick(it) } }
-			item { Spacer(modifier = Modifier.width(6.dp)) }
 		}
 		if (addExtra && queryList.isNotEmpty()) {
 			item { QueryCard(query = null, icon = R.drawable.ic_add) { onClickExtra() } }
-			item { Spacer(modifier = Modifier.width(6.dp)) }
 		}
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun QueryCard(
 	query: String?,
@@ -258,46 +182,69 @@ private fun QueryCard(
 		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
-		Row(
-			modifier = Modifier,
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			Box(
-				modifier = Modifier
-					.clip(RoundedCornerShape(50))
-					.background(MaterialTheme.colorScheme.primary)
-					.clickable { onClick() }
-			) {
-				Row(
-					modifier = Modifier.padding(12.dp, 8.dp),
-					verticalAlignment = Alignment.CenterVertically
-				) {
-					Icon(
-						painter = painterResource(id = icon),
-						contentDescription = null,
-						tint = MaterialTheme.colorScheme.onPrimary,
-						modifier = Modifier.requiredSize(16.dp)
+		FilterChip(
+			selectedIcon = {
+				Icon(
+					painter = painterResource(id = icon),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onPrimary,
+					modifier = Modifier.requiredSize(16.dp)
+				)
+			},
+			label = {
+				if (query != null) {
+					Text(
+						text = query,
+						color = MaterialTheme.colorScheme.onPrimary,
+						style = MaterialTheme.typography.bodyMedium,
 					)
-					if (query != null) {
-						Spacer(modifier = Modifier.width(6.dp))
-						Text(
-							text = query,
-							color = MaterialTheme.colorScheme.onPrimary,
-							style = MaterialTheme.typography.bodyMedium,
-						)
-					}
 				}
-			}
-
-			Spacer(modifier = Modifier.width(6.dp))
-
-			Text(
-				text = "OR",
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurface
-			)
-
-			Spacer(modifier = Modifier.width(6.dp))
-		}
+			},
+			selected = true,
+			enabled = true,
+			onClick = { onClick() },
+			modifier = Modifier.padding(4.dp, 0.dp)
+		)
+//		Row(
+//			modifier = Modifier,
+//			verticalAlignment = Alignment.CenterVertically
+//		) {
+//			Box(
+//				modifier = Modifier
+//					.clip(RoundedCornerShape(50))
+//					.background(MaterialTheme.colorScheme.primary)
+//					.clickable { onClick() }
+//			) {
+//				Row(
+//					modifier = Modifier.padding(12.dp, 8.dp),
+//					verticalAlignment = Alignment.CenterVertically
+//				) {
+//					Icon(
+//						painter = painterResource(id = icon),
+//						contentDescription = null,
+//						tint = MaterialTheme.colorScheme.onPrimary,
+//						modifier = Modifier.requiredSize(16.dp)
+//					)
+//					if (query != null) {
+//						Spacer(modifier = Modifier.width(6.dp))
+//						Text(
+//							text = query,
+//							color = MaterialTheme.colorScheme.onPrimary,
+//							style = MaterialTheme.typography.bodyMedium,
+//						)
+//					}
+//				}
+//			}
+//
+//			Spacer(modifier = Modifier.width(6.dp))
+//
+//			Text(
+//				text = "OR",
+//				style = MaterialTheme.typography.bodyMedium,
+//				color = MaterialTheme.colorScheme.onSurface
+//			)
+//
+//			Spacer(modifier = Modifier.width(6.dp))
+//		}
 	}
 }

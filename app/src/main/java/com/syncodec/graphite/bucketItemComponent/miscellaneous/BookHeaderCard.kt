@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun BookHeaderCard(
 	title: String,
@@ -22,8 +21,7 @@ fun BookHeaderCard(
 	author: String? = null,
 ) {
 	Card(
-		modifier = Modifier
-			.fillMaxWidth(),
+		modifier = Modifier.fillMaxWidth(),
 		elevation = 0.dp,
 		shape = RoundedCornerShape(12.dp),
 		border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondaryContainer),

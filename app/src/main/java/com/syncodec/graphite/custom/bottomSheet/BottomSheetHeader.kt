@@ -25,7 +25,7 @@ fun BottomSheetHeader(
 	) {
 		Text(
 			text = title,
-			style = MaterialTheme.typography.titleSmall,
+			style = MaterialTheme.typography.titleLarge,
 			color = MaterialTheme.colorScheme.primary
 		)
 
@@ -42,7 +42,7 @@ fun BottomSheetHeader(
 	if (subTitle != null) {
 		Text(
 			text = subTitle,
-			style = MaterialTheme.typography.bodySmall,
+			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurface,
 			maxLines = 2,
 			modifier = Modifier

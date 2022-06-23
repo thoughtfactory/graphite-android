@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.miscellaneous.DataStoreInstance
 import com.syncodec.graphite.settingsComponent.SettingsActivity
 import com.syncodec.graphite.settingsComponent.miscellaneous.SettingButton
+import com.syncodec.graphite.R
 
 
 @Composable
@@ -30,28 +31,32 @@ fun SecurityScreen(
 				item {
 					SettingButton(
 						title = "Add Passcode",
-						enabled = passcode == ""
+						enabled = passcode == "",
+						leadingIcon = R.drawable.ic_passcode
 					) { onClick(SettingsActivity.Action.ADD_PASSCODE, null) }
 				}
 				item {
 					SettingButton(
 						title = "Change Passcode",
-						enabled = passcode != ""
+						enabled = passcode != "",
+						leadingIcon = R.drawable.ic_change_passcode
 					) { onClick(SettingsActivity.Action.CHANGE_PASSCODE, null) }
 				}
 				item {
 					SettingButton(
 						title = "Remove Passcode",
-						enabled = passcode != ""
+						enabled = passcode != "",
+						leadingIcon = R.drawable.ic_remove_passcode
 					) { onClick(SettingsActivity.Action.REMOVE_PASSCODE, null) }
 				}
-//				item {
-//					SettingButton(
-//						title = "Biometric Unlock",
-//						subTitle = "Unlock vault with biometric",
-//						enabled = passcode != ""
-//					) { onClick(SettingsActivity.Action.BIOMETRIC_UNLOCK, null) }
-//				}
+				item {
+					SettingButton(
+						title = "Biometric Unlock",
+						subTitle = "Unlock vault with biometric",
+						enabled = true,
+						leadingIcon = R.drawable.ic_biometric
+					) { onClick(SettingsActivity.Action.BIOMETRIC_UNLOCK, SettingsActivity.Action.BIOMETRIC_UNLOCK) }
+				}
 			}
 		}
 	}

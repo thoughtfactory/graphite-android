@@ -12,6 +12,7 @@ sealed class BottomSheetType {
 	object AddTodoSheet : BottomSheetType()
 	object AddBookSheet : BottomSheetType()
 	object AddMovieSheet : BottomSheetType()
+	object AddLinkSheet : BottomSheetType()
 }
 
 @Composable
@@ -28,6 +29,7 @@ fun SheetLayout(
 ) {
 	when (bottomSheetType) {
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet(
+			key = bucketDbEntry?.key,
 			createdTimestamp = bucketDbEntry?.createdTimestamp ?: -1,
 			modifiedTimestamp = bucketDbEntry?.modifiedTimestamp ?: -1,
 			bucketTitle = bucketDbEntry?.title ?: "",
@@ -53,5 +55,6 @@ fun SheetLayout(
 			dataType = dataType,
 			onAction = onAction
 		)
+		BottomSheetType.AddLinkSheet -> AddLinkSheet(onAction = onAction)
 	}
 }

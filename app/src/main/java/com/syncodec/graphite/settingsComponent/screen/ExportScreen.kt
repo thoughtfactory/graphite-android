@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.settingsComponent.SettingsActivity
 import com.syncodec.graphite.settingsComponent.miscellaneous.SettingButton
 import com.syncodec.graphite.R
@@ -21,16 +20,14 @@ fun ExportScreen(
 			SettingButton(
 				title = "Notebook",
 				subTitle = "Export notebook",
-				icon = R.drawable.ic_notebook,
-				tint = Color(0xFFFED049)
+				leadingIcon = R.drawable.ic_notebook,
 			) { onClick(SettingsActivity.Action.NAVIGATION, SettingsActivity.Companion.Path.SELECT_NOTEBOOK) }
 		}
 		item {
 			SettingButton(
 				title = "Bucket",
 				subTitle = "Export bucket",
-				icon = R.drawable.ic_bucket,
-				tint = Color(0xFFFF6464)
+				leadingIcon = R.drawable.ic_bucket,
 			) { onClick(SettingsActivity.Action.EXPORT_BUCKET, null) }
 		}
 	}

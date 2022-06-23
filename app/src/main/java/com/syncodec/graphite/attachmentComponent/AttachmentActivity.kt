@@ -9,7 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -241,33 +243,34 @@ class AttachmentActivity : ComponentActivity() {
 					}
 				}
 			) {
-				when (status) {
-					Status.INIT -> LoadingView()
-					Status.LOADING -> LoadingView()
-					Status.LOADED -> {
-						Crossfade(targetState = activityState.isViewer.value) {
-							if (it) {
-								AttachmentViewerScreen(
-									attachmentList = attachmentList,
-									pagerState = activityState.pagerState,
-									listState = activityState.listState
-								) { action, data -> onPerformAction(action, data) }
-							} else {
-								AttachmentScreen(
-									attachmentList = attachmentList,
-									selectedItemList = activityState.selectedItemList
-								) { action, data -> onPerformAction(action, data) }
+				Box(modifier = Modifier.padding(it)) {
+					when (status) {
+						Status.INIT -> LoadingView()
+						Status.LOADING -> LoadingView()
+						Status.LOADED -> {
+							Crossfade(targetState = activityState.isViewer.value) {
+								if (it) {
+									AttachmentViewerScreen(
+										attachmentList = attachmentList,
+										pagerState = activityState.pagerState,
+										listState = activityState.listState
+									) { action, data -> onPerformAction(action, data) }
+								} else {
+									AttachmentScreen(
+										attachmentList = attachmentList,
+										selectedItemList = activityState.selectedItemList
+									) { action, data -> onPerformAction(action, data) }
+								}
 							}
 						}
+						Status.ERROR -> null
 					}
-					Status.ERROR -> null
-				}
 
-				DeleteDialog(
-					showDeleteDialog = activityState.showDeleteDialog.value,
-					selectedItemSize = activityState.selectedItemList.size,
-					onDismiss = { activityState.showDeleteDialog.value = false },
-					onDelete = {
+					DeleteDialog(
+						showDeleteDialog = activityState.showDeleteDialog.value,
+						selectedItemSize = activityState.selectedItemList.size,
+						onDismiss = { activityState.showDeleteDialog.value = false },
+						onDelete = {
 //						val selectedItemList = activityState.selectedItemList.toList()
 //						viewModel.deleteNote(selectedItemList)
 //						viewModel.deleteChapter(selectedItemList)
@@ -280,9 +283,9 @@ class AttachmentActivity : ComponentActivity() {
 //						activityState.selectedItemList.clear()
 //						activityState.isSelected.value = false
 //						activityState.showDeleteDialog.value = false
-					},
-				)
-
+						},
+					)
+				}
 			}
 		}
 	}

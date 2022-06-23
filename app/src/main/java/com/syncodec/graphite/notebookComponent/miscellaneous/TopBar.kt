@@ -17,7 +17,7 @@ import com.syncodec.graphite.custom.ChipView
 import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.notebookComponent.NotebookActivity
 
-@OptIn(ExperimentalMaterialApi::class)
+
 @Composable
 fun TopBar(
 	notebookDbEntry: NotebookDbEntry,
@@ -65,7 +65,6 @@ private fun Bar(
 					Text(
 						text = if (selectedItemSize == 0) "Select items to delete" else if (selectedItemSize == 1) "1 item selected" else "$selectedItemSize items selected",
 						modifier = Modifier,
-						style = MaterialTheme.typography.titleMedium,
 						color = MaterialTheme.colorScheme.onSurface
 					)
 				},
@@ -74,12 +73,10 @@ private fun Bar(
 						onClick = { onAction(NotebookActivity.Action.SHOW_DELETE, null) }
 					) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_trash),
+							painter = painterResource(id = R.drawable.ic_delete),
 							contentDescription = "Delete items",
 							tint = Color(0xFFF05945),
 							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(4.dp)
 						)
 					}
 				},
@@ -98,8 +95,6 @@ private fun Bar(
 							contentDescription = "Back",
 							tint = MaterialTheme.colorScheme.onSurface,
 							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(4.dp)
 						)
 					}
 				},
@@ -107,21 +102,29 @@ private fun Bar(
 					Text(
 						text = title,
 						modifier = Modifier,
-						style = MaterialTheme.typography.titleMedium,
 						color = MaterialTheme.colorScheme.onSurface
 					)
 				},
 				actions = {
 					IconButton(
-						onClick = { onAction(NotebookActivity.Action.MENU, null) }
+						onClick = { onAction(NotebookActivity.Action.OPEN_METADATA, null) }
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_info),
+							contentDescription = "Metadata",
+							tint = MaterialTheme.colorScheme.onSurface,
+							modifier = Modifier
+						)
+					}
+
+					IconButton(
+						onClick = { onAction(NotebookActivity.Action.OPEN_MENU, null) }
 					) {
 						Icon(
 							painter = painterResource(id = R.drawable.ic_menu),
 							contentDescription = "Menu",
 							tint = MaterialTheme.colorScheme.onSurface,
 							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(4.dp)
 						)
 					}
 				},
@@ -133,7 +136,6 @@ private fun Bar(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun Filter(
 	showFavorite: Boolean,

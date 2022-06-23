@@ -45,8 +45,9 @@ fun EmptyBucketView(
 				painter = painterResource(
 					id = when (bucketItemType) {
 						BucketItemType.TODO -> if (Random.nextBoolean()) R.drawable.il_todo_g else R.drawable.il_todo_b
-						BucketItemType.BOOKS -> if (Random.nextBoolean()) R.drawable.il_book_b else R.drawable.il_book_g
-						BucketItemType.SHOWS -> R.drawable.il_show
+						BucketItemType.BOOK -> if (Random.nextBoolean()) R.drawable.il_book_b else R.drawable.il_book_g
+						BucketItemType.SHOW -> R.drawable.il_show
+						BucketItemType.LINK -> R.drawable.il_link
 					}
 				),
 				contentDescription = "No items found",
@@ -58,8 +59,9 @@ fun EmptyBucketView(
 			Text(
 				text = when (bucketItemType) {
 					BucketItemType.TODO -> "Live your life by a compass, not a clock"
-					BucketItemType.BOOKS -> "There is more treasure in books than in all the pirate’s loot on Treasure Island"
-					BucketItemType.SHOWS -> "When your life flashes before your eyes at the end, make sure it's a good movie you're watching"
+					BucketItemType.BOOK -> "There is more treasure in books than in all the pirate’s loot on Treasure Island"
+					BucketItemType.SHOW -> "When your life flashes before your eyes at the end, make sure it's a good movie you're watching"
+					BucketItemType.LINK -> "You could write a book about things that you can't find on-line"
 				},
 				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.primary,
@@ -71,8 +73,9 @@ fun EmptyBucketView(
 			Text(
 				text = when (bucketItemType) {
 					BucketItemType.TODO -> "~ Stephen R Covey"
-					BucketItemType.BOOKS -> "~ Walt Disney"
-					BucketItemType.SHOWS -> "~ Stewart Stafford"
+					BucketItemType.BOOK -> "~ Walt Disney"
+					BucketItemType.SHOW -> "~ Stewart Stafford"
+					BucketItemType.LINK -> "~ Maggie Stiefvater"
 				},
 				style = MaterialTheme.typography.bodySmall,
 				fontStyle = FontStyle.Italic,

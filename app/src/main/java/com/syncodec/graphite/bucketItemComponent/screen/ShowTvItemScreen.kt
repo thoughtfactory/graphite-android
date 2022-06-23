@@ -49,7 +49,7 @@ fun ShowTvItemScreen(
 
 		if (!tvData.tagline.isNullOrBlank()) {
 			TaglineCard(tagline = tvData.tagline)
-			Spacer(modifier = Modifier.height(12.dp))
+			Spacer(modifier = Modifier.height(24.dp))
 		}
 
 		ShowHeaderCard(

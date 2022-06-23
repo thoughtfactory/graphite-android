@@ -7,7 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
@@ -32,42 +32,43 @@ fun ToolbarButton(
 	onClick: () -> Unit
 ) {
 	val context = LocalContext.current
-
+	val containerColor by animateColorAsState(
+		if (highlight)
+			contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
+		else
+			MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+	)
+	val contentColor by animateColorAsState(
+		if (highlight)
+			MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+		else
+			contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
+	)
 	Row(
-		modifier = Modifier.height(40.dp)
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.Center,
+		modifier = Modifier
+			.requiredSize(48.dp)
+			.padding(2.dp)
+			.clip(RoundedCornerShape(25, 25, if (isEnabled) (25) else 0, 25))
+			.background(containerColor)
+			.clickable {
+				if (isEnabled) {
+					onClick()
+				} else {
+					Toast
+						.makeText(
+							context,
+							"Subscribe to Graphite Premium to unlock rich text",
+							Toast.LENGTH_SHORT
+						)
+						.show()
+				}
+			},
 	) {
-		val containerColor by animateColorAsState(
-			if (highlight)
-				contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
-			else
-				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-		)
-		val contentColor by animateColorAsState(
-			if (highlight)
-				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-			else
-				contentColorFor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
-		)
-
+		Spacer(modifier = Modifier.width(2.dp))
 		Box(
-			contentAlignment = Alignment.Center,
-			modifier = Modifier
-				.requiredSize(40.dp)
-				.clip(RoundedCornerShape(25, 25, if (isEnabled) (25) else 0, 25))
-				.background(containerColor)
-				.clickable {
-					if (isEnabled) {
-						onClick()
-					} else {
-						Toast
-							.makeText(
-								context,
-								"Subscribe to Graphite Premium to unlock rich text",
-								Toast.LENGTH_SHORT
-							)
-							.show()
-					}
-				},
+			modifier = Modifier.fillMaxWidth()
 		) {
 			Icon(
 				painter = painterResource(id = icon),
@@ -75,7 +76,7 @@ fun ToolbarButton(
 				tint = contentColor,
 				modifier = Modifier
 					.requiredSize(40.dp)
-					.padding(8.dp)
+					.padding(6.dp)
 			)
 
 			if (!isEnabled) {
@@ -94,7 +95,6 @@ fun ToolbarButton(
 				}
 			}
 		}
-
-		Spacer(modifier = Modifier.width(4.dp))
+		Spacer(modifier = Modifier.width(2.dp))
 	}
 }

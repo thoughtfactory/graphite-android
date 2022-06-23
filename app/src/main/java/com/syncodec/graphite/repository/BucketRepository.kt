@@ -41,6 +41,10 @@ class BucketRepository(val graphite: Graphite) {
 		return bucketItemDbTableDao.getForPreviewAsFlow(bucketKey = bucketKey)
 	}
 
+	fun getBucketItemPreviewWithExtraListAsFlow(bucketKey: String): Flow<List<BucketItemPreviewDbEntry>> {
+		return bucketItemDbTableDao.getForPreviewWithExtraAsFlow(bucketKey = bucketKey)
+	}
+
 	fun getBucket(bucketKey: String): Flow<BucketDbEntry?> {
 		return bucketDbTableDao.getAsFlow(key = bucketKey)
 	}

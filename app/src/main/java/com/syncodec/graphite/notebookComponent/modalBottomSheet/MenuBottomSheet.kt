@@ -4,19 +4,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.custom.button.MenuBottomSheetButton
 import com.syncodec.graphite.custom.button.MenuBottomSheetButtonData
 import com.syncodec.graphite.notebookComponent.NotebookActivity
-import com.syncodec.graphite.R
 
 
 @Composable
@@ -36,7 +35,7 @@ fun MenuBottomSheet(
 		MenuBottomSheetButtonData(title = "Edit", icon = R.drawable.ic_pencil) {
 			onAction(NotebookActivity.Action.EDIT_NOTEBOOK)
 		},
-		MenuBottomSheetButtonData(title = "Vault", icon = R.drawable.ic_vault) {
+		MenuBottomSheetButtonData(title = "Vault", icon = R.drawable.ic_shield) {
 			onAction(NotebookActivity.Action.VAULT)
 		},
 		MenuBottomSheetButtonData(title = "Favourite", icon = R.drawable.ic_favourite) {

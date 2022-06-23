@@ -1,7 +1,5 @@
 package com.syncodec.graphite.bucketItemComponent.modalBottonSheet
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -13,16 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
+import com.syncodec.graphite.bucketItemComponent.BucketItemActivity
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetHeader
+import com.syncodec.graphite.custom.bottomSheet.BottomSheetKeyCard
 import com.syncodec.graphite.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.custom.button.MenuBottomSheetButton
 import com.syncodec.graphite.custom.button.MenuBottomSheetButtonData
-import com.syncodec.graphite.noteComponent.modalBottomSheet.TimestampCard
-import com.syncodec.graphite.R
-import com.syncodec.graphite.bucketItemComponent.BucketItemActivity
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MenuBottomSheet(
 	createdTimestamp: Long,
@@ -32,7 +29,7 @@ fun MenuBottomSheet(
 	val menuBottomSheetButtonDataList: List<MenuBottomSheetButtonData?> = listOf(
 		MenuBottomSheetButtonData(
 			title = "Delete",
-			icon = R.drawable.ic_trash,
+			icon = R.drawable.ic_delete,
 			highlight = false
 		) { onAction(BucketItemActivity.Action.DELETE, null) },
 		MenuBottomSheetButtonData(
@@ -64,7 +61,8 @@ fun MenuBottomSheet(
 				icon = R.drawable.ic_menu
 			)
 
-			TimestampCard(
+			BottomSheetKeyCard(
+				key = "",
 				createdTimestamp = createdTimestamp,
 				modifiedTimestamp = modifiedTimestamp
 			)

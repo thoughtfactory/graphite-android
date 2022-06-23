@@ -15,15 +15,15 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.syncodec.graphite.mainComponent.MainActivity
+import com.syncodec.graphite.R
 import com.syncodec.graphite.custom.ChipData
 import com.syncodec.graphite.custom.ChipView
 import com.syncodec.graphite.custom.button.StateButton
 import com.syncodec.graphite.custom.button.StateData
 import com.syncodec.graphite.database.bucketItem.BucketItemType
 import com.syncodec.graphite.konstant.ResourceMap
+import com.syncodec.graphite.mainComponent.MainActivity
 import com.syncodec.graphite.mainComponent.modalBottomSheet.BottomSheetType
-import com.syncodec.graphite.R
 
 
 @Composable
@@ -113,12 +113,9 @@ private fun Bar(
 				actions = {
 					IconButton(onClick = { onAction(MainActivity.Action.SHOW_DELETE, null) }) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_trash),
+							painter = painterResource(id = R.drawable.ic_delete),
 							contentDescription = "Delete items",
-							tint = Color(0xFFF05945),
-							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(4.dp)
+							tint = Color(0xFFF05945)
 						)
 					}
 				},
@@ -138,10 +135,7 @@ private fun Bar(
 						Icon(
 							painter = painterResource(id = R.drawable.ic_state),
 							contentDescription = null,
-							tint = MaterialTheme.colorScheme.primary,
-							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(4.dp)
+							tint = MaterialTheme.colorScheme.onBackground,
 						)
 					}
 				},
@@ -162,10 +156,7 @@ private fun Bar(
 						Icon(
 							painter = painterResource(id = R.drawable.ic_search),
 							contentDescription = "Search",
-							tint = Color(0xFF2978B5),
-							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(4.dp)
+							tint = MaterialTheme.colorScheme.onBackground
 						)
 					}
 				},
@@ -196,7 +187,7 @@ private fun ComponentType(
 				stateList = listOf(
 					StateData(
 						title = "Diary",
-						icon = R.drawable.ic_write,
+						icon = R.drawable.ic_note,
 						stateTint = MaterialTheme.colorScheme.primary
 					),
 					StateData(

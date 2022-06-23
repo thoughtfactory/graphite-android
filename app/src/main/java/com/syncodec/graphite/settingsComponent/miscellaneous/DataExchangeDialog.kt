@@ -75,8 +75,7 @@ fun DataExchangeDialog(
 					}
 				}
 			},
-			confirmButton = {
-			},
+			confirmButton = { },
 		)
 	}
 }

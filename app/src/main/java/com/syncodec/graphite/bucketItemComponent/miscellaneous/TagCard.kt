@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 
+
 @Composable
 fun TagCard(
 	tagList: List<String>
@@ -30,8 +31,8 @@ fun TagCard(
 @Composable
 private fun Tag(tag: String) {
 	Card(
-		containerColor = Color.Transparent,
-		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+		colors = CardDefaults.cardColors(Color.Transparent),
+		elevation = CardDefaults.cardElevation(0.dp),
 		border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
 		shape = RoundedCornerShape(50),
 	) {

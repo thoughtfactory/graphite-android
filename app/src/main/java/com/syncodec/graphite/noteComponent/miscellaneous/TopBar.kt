@@ -1,22 +1,21 @@
 package com.syncodec.graphite.noteComponent.miscellaneous
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.miscellaneous.ThemeUtils.Companion.tone
 import com.syncodec.graphite.noteComponent.NoteActivity
 
-@OptIn(ExperimentalMaterialApi::class)
+
 @Composable
 fun TopBar(
 	isViewer: Boolean,
@@ -35,8 +34,6 @@ fun TopBar(
 							contentDescription = "Back",
 							tint = MaterialTheme.colorScheme.primary,
 							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(4.dp)
 						)
 					} else {
 						Icon(
@@ -44,8 +41,6 @@ fun TopBar(
 							contentDescription = "Discard",
 							tint = MaterialTheme.colorScheme.primary,
 							modifier = Modifier
-								.requiredSize(32.dp)
-								.padding(6.dp)
 						)
 					}
 				}
@@ -53,51 +48,31 @@ fun TopBar(
 		},
 		title = {},
 		actions = {
-			Button(
-				onClick = {
-					if (isViewer) onAction(NoteActivity.Action.EDIT_NOTE, null)
-					else onAction(NoteActivity.Action.SAVE_NOTE, null)
-				},
-				colors = ButtonDefaults.filledTonalButtonColors(
-					containerColor = MaterialTheme.colorScheme.primary,
-					contentColor = MaterialTheme.colorScheme.onPrimary
-				)
+			Crossfade(
+				targetState = isViewer,
+				animationSpec = tween(300)
 			) {
-				Crossfade(targetState = isViewer) {
-					if (it) {
-						Text(
-							text = "Edit",
-							style = MaterialTheme.typography.bodyMedium,
-							textAlign = TextAlign.Center,
-							fontWeight = FontWeight.Bold,
-							modifier = Modifier.width(40.dp)
-						)
-
-					} else {
-						Text(
-							text = "Save",
-							style = MaterialTheme.typography.bodyMedium,
-							textAlign = TextAlign.Center,
-							fontWeight = FontWeight.Bold,
-							modifier = Modifier.width(40.dp)
+				if (it) {
+					IconButton(
+						onClick = { onAction(NoteActivity.Action.SHOW_DELETE_POPUP, null) }
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_delete),
+							contentDescription = "Menu",
+							tint = Color(0xFFF05945),
+							modifier = Modifier
 						)
 					}
-				}
-			}
-			AnimatedVisibility(
-				visible = isViewer
-			) {
-				IconButton(
-					onClick = { onAction(NoteActivity.Action.OPEN_MENU, null) }
-				) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_menu),
-						contentDescription = "Menu",
-						tint = MaterialTheme.colorScheme.primary,
-						modifier = Modifier
-							.requiredSize(32.dp)
-							.padding(6.dp)
-					)
+				} else {
+					IconButton(
+						onClick = { onAction(NoteActivity.Action.OPEN_METADATA, null) }
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_info),
+							contentDescription = "Metadata",
+							modifier = Modifier
+						)
+					}
 				}
 			}
 			Spacer(modifier = Modifier.width(4.dp))

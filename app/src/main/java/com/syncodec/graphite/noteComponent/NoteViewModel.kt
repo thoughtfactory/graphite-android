@@ -19,6 +19,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.graphite.Graphite
@@ -208,14 +209,16 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 					isLocked.value = it.isLocked
 				}
 
+				loadAttachment(key = key)
 				status.value = Status.LOADED
 			}
 		}
 	}
 
 	fun loadAttachment(key: String) {
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Main) {
 			status.value = Status.LOADING
+			attachmentMap.clear()
 			attachmentRepository.getAttachment(noteKey = key).forEach {
 				attachmentMap[it.key] =
 					Pair(it, attachmentRepository.getAttachmentUri(it.key, it.extension))
@@ -251,9 +254,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 	@SuppressLint("MissingPermission")
 	fun getLocation() {
-		fusedLocationClient.getCurrentLocation(
-			LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken
-		)
+		fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken)
 			.addOnSuccessListener { location: Location? ->
 				if (location == null)
 					this.latLng.value = null

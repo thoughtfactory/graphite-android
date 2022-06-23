@@ -1,25 +1,26 @@
 package com.syncodec.graphite.notebookComponent.modalBottomSheet
 
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.graphite.database.notebook.NotebookDbEntry
 import com.syncodec.graphite.notebookComponent.NotebookActivity
-import com.syncodec.graphite.notebookComponent.NotebookViewModel
 
 sealed class BottomSheetType {
 	object NewChapterBottomSheet : BottomSheetType()
 	object NewNoteBottomSheet : BottomSheetType()
 	object MenuBottomSheet : BottomSheetType()
+	object MetadataBottomSheet : BottomSheetType()
 	object EditBottomSheet : BottomSheetType()
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SheetLayout(
+	bottomSheetType: BottomSheetType,
+	notebookDbEntry: NotebookDbEntry?,
+	chapterSize: Int,
+	noteSize: Int,
 	onAction: (NotebookActivity.Action, Any?) -> Unit
 ) {
-	val viewModel: NotebookViewModel = viewModel()
-	when (viewModel.activityState.bottomSheetType.value) {
+	when (bottomSheetType) {
 		BottomSheetType.NewChapterBottomSheet -> NewChapterBottomSheet { action, data ->
 			onAction(action, data)
 		}
@@ -27,8 +28,13 @@ fun SheetLayout(
 			onAction(action, data)
 		}
 		BottomSheetType.MenuBottomSheet -> MenuBottomSheet { onAction(it, null) }
+		BottomSheetType.MetadataBottomSheet -> MetadataBottomSheet(
+			key = notebookDbEntry?.key,
+			noteSize = noteSize,
+			chapterSize = chapterSize
+		)
 		BottomSheetType.EditBottomSheet -> EditBottomSheet(
-			notebookDbEntry = viewModel.notebookDbEntry.value!!
+			notebookDbEntry = notebookDbEntry
 		) { action, data -> onAction(action, data) }
 	}
 }

@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -227,16 +228,17 @@ class MainActivity : ComponentActivity() {
 				else selectedItemList.add(data)
 			}
 			Action.CLICK_BUCKET -> {
-				data as String
+				data as Pair<*, *>
 				val selectedItemList = viewModel.selectedItemList
 
 				if (viewModel.isSelected.value) {
 					viewModel.isSelected.value = true
-					if (data in selectedItemList) selectedItemList.remove(data)
-					else selectedItemList.add(data)
+					if (data.first in selectedItemList) selectedItemList.remove(data.first as String)
+					else selectedItemList.add(data.first as String)
 				} else {
 					Intent(this, BucketActivity::class.java).apply {
-						putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, data as String)
+						putExtra(Konstant.Companion.Konstant.BUCKET_KEY.name, data.first as String)
+						putExtra(Konstant.Companion.Konstant.BUCKET_TYPE.name, (data.second as BucketItemType).ordinal)
 						startActivity(this)
 					}
 				}
@@ -499,23 +501,25 @@ class MainActivity : ComponentActivity() {
 								}
 							}
 						) {
-							val viewModelStoreOwner =
-								checkNotNull(LocalViewModelStoreOwner.current) {
-									"No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
-								}
-
-							CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
-								MainNavigation(
-									navController = navController,
-									viewModelStoreOwner = viewModelStoreOwner,
-								) { action, data ->
-									if (action == Action.OPEN_BOTTOM_SHEET) {
-										viewModel.bottomSheetType.value = data as BottomSheetType
-										scope.launch { bottomSheetState.show() }
-									} else {
-										scope.launch { bottomSheetState.hide() }
+							Box(modifier = Modifier.padding(it)) {
+								val viewModelStoreOwner =
+									checkNotNull(LocalViewModelStoreOwner.current) {
+										"No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
 									}
-									onPerformAction(action = action, data = data)
+
+								CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
+									MainNavigation(
+										navController = navController,
+										viewModelStoreOwner = viewModelStoreOwner,
+									) { action, data ->
+										if (action == Action.OPEN_BOTTOM_SHEET) {
+											viewModel.bottomSheetType.value = data as BottomSheetType
+											scope.launch { bottomSheetState.show() }
+										} else {
+											scope.launch { bottomSheetState.hide() }
+										}
+										onPerformAction(action = action, data = data)
+									}
 								}
 							}
 						}

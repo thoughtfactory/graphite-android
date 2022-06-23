@@ -47,6 +47,7 @@ fun BucketBottomSheet(
 	val keyboardController = LocalSoftwareKeyboardController.current
 	var selectedBucketType by remember { mutableStateOf<BucketItemType?>(null) }
 	var bucketNameText by rememberSaveable { mutableStateOf("") }
+	var isBucketNameTextFocused by remember { mutableStateOf(false) }
 
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
@@ -56,14 +57,19 @@ fun BucketBottomSheet(
 		) { selectedBucketType = BucketItemType.TODO },
 		BucketButtonData(
 			subtitle = "A little fiction here, and a little fantasy there",
-			bucketItemType = BucketItemType.BOOKS,
-			highlight = selectedBucketType == BucketItemType.BOOKS,
-		) { selectedBucketType = BucketItemType.BOOKS },
+			bucketItemType = BucketItemType.BOOK,
+			highlight = selectedBucketType == BucketItemType.BOOK,
+		) { selectedBucketType = BucketItemType.BOOK },
 		BucketButtonData(
 			subtitle = "Aren't those characters real!?",
-			bucketItemType = BucketItemType.SHOWS,
-			highlight = selectedBucketType == BucketItemType.SHOWS,
-		) { selectedBucketType = BucketItemType.SHOWS },
+			bucketItemType = BucketItemType.SHOW,
+			highlight = selectedBucketType == BucketItemType.SHOW,
+		) { selectedBucketType = BucketItemType.SHOW },
+		BucketButtonData(
+			subtitle = "Maybe I will visit this someday",
+			bucketItemType = BucketItemType.LINK,
+			highlight = selectedBucketType == BucketItemType.LINK,
+		) { selectedBucketType = BucketItemType.LINK },
 		BucketButtonData(
 			subtitle = "More lists coming soon...",
 			bucketItemType = null,
@@ -108,7 +114,7 @@ fun BucketBottomSheet(
 
 			Text(
 				text = "And name it",
-				style = MaterialTheme.typography.titleSmall,
+				style = MaterialTheme.typography.titleMedium,
 				color = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
 					.fillMaxWidth()
@@ -122,7 +128,9 @@ fun BucketBottomSheet(
 					.fillMaxWidth()
 					.padding(24.dp, 0.dp),
 				text = bucketNameText,
-				placeholder = "Umm... Let me think..."
+				placeholder = "Umm... Let me think...",
+				isFocused = isBucketNameTextFocused,
+				onFocusChanged = { isBucketNameTextFocused = it },
 			) { bucketNameText = it }
 
 			Spacer(modifier = Modifier.height(8.dp))

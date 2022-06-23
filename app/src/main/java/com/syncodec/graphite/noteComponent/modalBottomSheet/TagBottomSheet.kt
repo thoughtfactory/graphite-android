@@ -7,8 +7,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ChipDefaults
-import androidx.compose.material.FilterChip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,8 +51,10 @@ fun TagBottomSheet(
 			AnimatedVisibility(
 				visible = connectedTag.isNotEmpty()
 			) {
-				Spacer(modifier = Modifier.height(6.dp))
-				ConnectedTagView(connectedTag = connectedTag) { click, tag -> onAction(click, tag) }
+				Column(modifier = Modifier.fillMaxWidth()) {
+					Spacer(modifier = Modifier.height(4.dp))
+					ConnectedTagView(connectedTag = connectedTag) { click, tag -> onAction(click, tag) }
+				}
 			}
 
 			LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -64,7 +64,7 @@ fun TagBottomSheet(
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(24.dp,0.dp)
+								.padding(24.dp, 0.dp)
 								.height(1.dp)
 								.background(MaterialTheme.colorScheme.onSurface.copy(0.71f)),
 						)
@@ -95,7 +95,9 @@ private fun SearchBar(
 				.weight(1f)
 				.padding(24.dp, 0.dp, 8.dp, 0.dp),
 			text = tag,
-			placeholder = "Add new tag"
+			placeholder = "Add new tag",
+			isFocused = isFocused,
+			onFocusChanged = { isFocused = it }
 		) { tag = it }
 
 		Row(modifier = Modifier) {
@@ -133,7 +135,7 @@ private fun ConnectedTagView(
 	) { connectedTag.forEach { ConnectedTag(it) { click, tag -> onClick(click, tag) } } }
 }
 
-@OptIn(androidx.compose.material.ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ConnectedTag(
 	tag: String,
@@ -142,17 +144,15 @@ private fun ConnectedTag(
 	FilterChip(
 		selected = true,
 		onClick = { onClick(NoteActivity.Action.CONNECT_TAG, tag) },
-		colors = ChipDefaults.filterChipColors(
-			backgroundColor = MaterialTheme.colorScheme.primary
-		)
-	) {
-		Text(
-			text = tag,
-			style = MaterialTheme.typography.bodyMedium,
-			fontWeight = FontWeight.Bold,
-			color = MaterialTheme.colorScheme.onPrimary
-		)
-	}
+		label = {
+			Text(
+				text = tag,
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold,
+				color = MaterialTheme.colorScheme.onPrimary
+			)
+		}
+	)
 }
 
 @Composable

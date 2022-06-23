@@ -66,7 +66,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 	var showLocked = mutableStateOf(false)
 	var showTrash = mutableStateOf(false)
 	val bucketFilter: SnapshotStateList<BucketItemType> =
-		mutableStateListOf(BucketItemType.TODO, BucketItemType.BOOKS, BucketItemType.SHOWS)
+		mutableStateListOf(BucketItemType.TODO, BucketItemType.BOOK, BucketItemType.SHOW, BucketItemType.LINK)
 
 	var defaultNotebookKey: String? = null
 	var defaultNoteMap: SnapshotStateMap<String, NoteDbEntry> = mutableStateMapOf()

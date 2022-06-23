@@ -2,10 +2,8 @@ package com.syncodec.graphite.settingsComponent.screen
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.R
 import com.syncodec.graphite.settingsComponent.SettingsActivity
 import com.syncodec.graphite.settingsComponent.miscellaneous.SettingButton
@@ -21,12 +19,11 @@ fun PreferenceScreen(
 		item {
 			SettingButton(
 				title = "Theme",
-				subTitle = "Material you",
-				icon = R.drawable.ic_theme,
-				tint = MaterialTheme.colorScheme.primary
+				subTitle = "Graphite",
+				leadingIcon = R.drawable.ic_theme,
 			) {
 				onAction(
-					SettingsActivity.Action.NAVIGATION,
+					SettingsActivity.Action.COMING_SOON,
 					SettingsActivity.Companion.Path.THEME
 				)
 			}
@@ -34,12 +31,11 @@ fun PreferenceScreen(
 		item {
 			SettingButton(
 				title = "Font Family",
-				subTitle = "Roboto",
-				icon = R.drawable.ic_font_family,
-				tint = Color(0xFFBFA2DB)
+				subTitle = "Ubuntu",
+				leadingIcon = R.drawable.ic_font_family,
 			) {
 				onAction(
-					SettingsActivity.Action.NAVIGATION,
+					SettingsActivity.Action.COMING_SOON,
 					SettingsActivity.Companion.Path.FONT_FAMILY
 				)
 			}
