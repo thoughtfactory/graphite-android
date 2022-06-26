@@ -16,6 +16,12 @@ data class QuoteDbEntry(
 	@ColumnInfo(name = "author")
 	val author: String?,
 
+	@ColumnInfo(name = "special")
+	val special: String?,
+
+	@ColumnInfo(name = "is_favourite")
+	var isFavourite: Boolean,
+
 	@ColumnInfo(name = "author_link")
 	val authorLink: String?,
 
@@ -33,10 +39,4 @@ data class QuoteDbEntry(
 
 	@ColumnInfo(name = "bg_provider_link")
 	val bgProviderLink: String?,
-
-	@ColumnInfo(name = "special")
-	val special: String?,
-
-	@ColumnInfo(name = "is_favourite")
-	var isFavourite: Boolean,
 )
