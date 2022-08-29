@@ -1,42 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DesignSurface">
-    <option name="filePathToZoomLevelMap">
-      <map>
-        <entry key="app/src/main/res/drawable/ic_alert.xml" value="0.1085" />
-        <entry key="app/src/main/res/drawable/ic_copy.xml" value="0.1175" />
-        <entry key="app/src/main/res/drawable/ic_data.xml" value="0.1" />
-        <entry key="app/src/main/res/drawable/ic_lock_close.xml" value="0.1" />
-        <entry key="app/src/main/res/drawable/ic_locked.xml" value="0.1085" />
-        <entry key="app/src/main/res/drawable/ic_menu.xml" value="0.1" />
-        <entry key="app/src/main/res/drawable/ic_privacy.xml" value="0.1" />
-        <entry key="app/src/main/res/drawable/ic_restore.xml" value="0.1" />
-        <entry key="app/src/main/res/drawable/ic_tv.xml" value="0.1" />
-        <entry key="app/src/main/res/drawable/il_book.xml" value="0.159" />
-        <entry key="app/src/main/res/drawable/il_book_g.xml" value="0.1395" />
-        <entry key="app/src/main/res/drawable/il_bucket.xml" value="0.1525" />
-        <entry key="app/src/main/res/drawable/il_environment.xml" value="0.137" />
-        <entry key="app/src/main/res/drawable/il_loader_illustration.xml" value="0.137" />
-        <entry key="app/src/main/res/drawable/il_login_background.xml" value="0.249" />
-        <entry key="app/src/main/res/drawable/il_me_background.xml" value="0.137" />
-        <entry key="app/src/main/res/drawable/il_notebook.xml" value="0.137" />
-        <entry key="app/src/main/res/drawable/il_search.xml" value="0.1525" />
-        <entry key="app/src/main/res/drawable/il_searching.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_show.xml" value="0.249" />
-        <entry key="app/src/main/res/drawable/il_show_header.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_tmdb.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_todo_b.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_todo_g.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_todo_header.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_vault.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_vault_2.xml" value="0.1525" />
-        <entry key="app/src/main/res/drawable/il_watching_movie.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_writing_b.xml" value="0.148" />
-        <entry key="app/src/main/res/drawable/il_writing_g.xml" value="0.148" />
-      </map>
-    </option>
-  </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

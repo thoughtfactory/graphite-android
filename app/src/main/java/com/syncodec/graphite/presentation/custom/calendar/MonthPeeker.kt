@@ -1,0 +1,38 @@
+package com.syncodec.graphite.presentation.custom.calendar
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import org.joda.time.DateTime
+
+
+@Preview
+@Composable
+fun MonthPeeker() {
+
+	val noDays = DateTime(System.currentTimeMillis()).dayOfMonth().maximumValue
+
+	Row(
+		horizontalArrangement = Arrangement.SpaceAround,
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(24.dp)
+	) {
+		Spacer(modifier = Modifier.width(8.dp))
+		for (i in 0 until noDays) {
+			Box(
+				modifier = Modifier
+					.requiredSize(6.dp)
+					.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f), CircleShape)
+			)
+		}
+		Spacer(modifier = Modifier.width(8.dp))
+	}
+}

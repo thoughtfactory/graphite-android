@@ -1,0 +1,470 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:7535225934569600556",
+      "lastPropertyId": "7:6475777029015972758",
+      "name": "AttachmentObject",
+      "properties": [
+        {
+          "id": "1:5988498381570944125",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1820374663773880710",
+          "name": "uId",
+          "indexId": "1:8194203260921935133",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:9019300060129069701",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "4:5108523531489957284",
+          "name": "extension",
+          "type": 9
+        },
+        {
+          "id": "6:3026102852679219607",
+          "name": "mimeType",
+          "type": 9
+        },
+        {
+          "id": "7:6475777029015972758",
+          "name": "parentNoteId",
+          "indexId": "9:5838174003663110768",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "NoteObject"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:3050809501063485472",
+      "lastPropertyId": "2:6674648346639819587",
+      "name": "BaseObject",
+      "properties": [
+        {
+          "id": "1:5164158158028649153",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6674648346639819587",
+          "name": "defaultChapterId",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:1751856073866064591",
+      "lastPropertyId": "13:5025422481129991084",
+      "name": "BucketItemObject",
+      "properties": [
+        {
+          "id": "1:7537970370335726092",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6567665591106885190",
+          "name": "uId",
+          "indexId": "2:8870461920627193913",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:5674680560051326667",
+          "name": "createdTimestamp",
+          "type": 6
+        },
+        {
+          "id": "4:51179578145205333",
+          "name": "modifiedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "6:3998799052571753219",
+          "name": "bucketType",
+          "type": 9
+        },
+        {
+          "id": "7:6298908634063102334",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "8:1689112593071945670",
+          "name": "state",
+          "type": 9
+        },
+        {
+          "id": "9:7293991930203042383",
+          "name": "thumbnail",
+          "type": 23
+        },
+        {
+          "id": "10:8299791356580363889",
+          "name": "item",
+          "type": 9
+        },
+        {
+          "id": "11:9023530761318359695",
+          "name": "isFavourite",
+          "type": 1
+        },
+        {
+          "id": "12:444054569770237016",
+          "name": "isLocked",
+          "type": 1
+        },
+        {
+          "id": "13:5025422481129991084",
+          "name": "parentBucketId",
+          "indexId": "8:2427597319707863476",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "BucketObject"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:3153608694950602819",
+      "lastPropertyId": "9:2575654378015192165",
+      "name": "BucketObject",
+      "properties": [
+        {
+          "id": "1:6553712335830074412",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4267720179059267419",
+          "name": "uId",
+          "indexId": "3:4718568921683746757",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:1500157644241518352",
+          "name": "createdTimestamp",
+          "type": 6
+        },
+        {
+          "id": "4:6081110731976451951",
+          "name": "modifiedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "5:5602544662306505366",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "6:441200625614956068",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "7:3612929191159384437",
+          "name": "bucketType",
+          "type": 9
+        },
+        {
+          "id": "8:365046749204475634",
+          "name": "isFavourite",
+          "type": 1
+        },
+        {
+          "id": "9:2575654378015192165",
+          "name": "isLocked",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:8343140060365290529",
+      "lastPropertyId": "12:8044355831378192040",
+      "name": "ChapterObject",
+      "properties": [
+        {
+          "id": "1:3286505360657183784",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3311008781551945195",
+          "name": "uId",
+          "indexId": "4:4245803159986140159",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:7949376725593825756",
+          "name": "createdTimestamp",
+          "type": 6
+        },
+        {
+          "id": "4:5729564781026704325",
+          "name": "modifiedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "5:877850468093265863",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "6:3834156010251416035",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "7:7912274682390762036",
+          "name": "color",
+          "type": 5
+        },
+        {
+          "id": "9:7771811985337168664",
+          "name": "thumbnail",
+          "type": 23
+        },
+        {
+          "id": "10:1833238741815803477",
+          "name": "isFavourite",
+          "type": 1
+        },
+        {
+          "id": "11:5220372379934733058",
+          "name": "isLocked",
+          "type": 1
+        },
+        {
+          "id": "12:8044355831378192040",
+          "name": "parentChapterId",
+          "indexId": "6:4288467509625473488",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "ChapterObject"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "6:7517875655128679821",
+      "lastPropertyId": "17:6901691380044754029",
+      "name": "NoteObject",
+      "properties": [
+        {
+          "id": "1:6381253755029938220",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8564083146900481128",
+          "name": "uId",
+          "indexId": "5:8825963408972405846",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:5631612546611060147",
+          "name": "createdTimestamp",
+          "type": 6
+        },
+        {
+          "id": "4:410763875955788051",
+          "name": "modifiedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "5:5028815178868491587",
+          "name": "userTimestamp",
+          "type": 6
+        },
+        {
+          "id": "6:9021087098043627362",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "7:6893351959217971059",
+          "name": "color",
+          "type": 5
+        },
+        {
+          "id": "8:7250962202878251474",
+          "name": "address",
+          "type": 9
+        },
+        {
+          "id": "9:336216647407103367",
+          "name": "contentThumbnail",
+          "type": 9
+        },
+        {
+          "id": "10:4377519529941011080",
+          "name": "content",
+          "type": 9
+        },
+        {
+          "id": "11:5325137174869347622",
+          "name": "thumbnail",
+          "type": 23
+        },
+        {
+          "id": "12:5924596785650971748",
+          "name": "thumbnailType",
+          "type": 9
+        },
+        {
+          "id": "14:494738945456528493",
+          "name": "isFavourite",
+          "type": 1
+        },
+        {
+          "id": "15:1150267200377479644",
+          "name": "isLocked",
+          "type": 1
+        },
+        {
+          "id": "16:5777408526060653158",
+          "name": "parentChapterId",
+          "indexId": "7:533962087233632543",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "ChapterObject"
+        },
+        {
+          "id": "17:6901691380044754029",
+          "name": "latLng",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "7:458315800132409093",
+      "lastPropertyId": "15:1399560005039405395",
+      "name": "QuoteObject",
+      "properties": [
+        {
+          "id": "1:1195957575461153085",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8283532186529376795",
+          "name": "uId",
+          "indexId": "10:1238832716142955850",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:7401391705142895574",
+          "name": "date",
+          "type": 9
+        },
+        {
+          "id": "4:368716745146351117",
+          "name": "quote",
+          "type": 9
+        },
+        {
+          "id": "5:6401011687174019404",
+          "name": "author",
+          "type": 9
+        },
+        {
+          "id": "6:8929618062433604854",
+          "name": "authorLink",
+          "type": 9
+        },
+        {
+          "id": "7:7602775241510443847",
+          "name": "bg",
+          "type": 23
+        },
+        {
+          "id": "8:5982960830409843527",
+          "name": "bgLink",
+          "type": 9
+        },
+        {
+          "id": "9:7244649352323624588",
+          "name": "bgCred",
+          "type": 9
+        },
+        {
+          "id": "10:323153608558358264",
+          "name": "bgCredLink",
+          "type": 9
+        },
+        {
+          "id": "11:2552075186769473890",
+          "name": "bgProvider",
+          "type": 9
+        },
+        {
+          "id": "12:6073356354728609672",
+          "name": "bgProviderLink",
+          "type": 9
+        },
+        {
+          "id": "13:6144751762345601787",
+          "name": "special",
+          "type": 9
+        },
+        {
+          "id": "14:1418026785936766558",
+          "name": "specialLink",
+          "type": 9
+        },
+        {
+          "id": "15:1399560005039405395",
+          "name": "isFavourite",
+          "type": 1
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "7:458315800132409093",
+  "lastIndexId": "10:1238832716142955850",
+  "lastRelationId": "4:1571738908214958166",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [
+    8190538410893430126,
+    6801707614483991888,
+    6254965514270903384,
+    4323021285668783199
+  ],
+  "retiredRelationUids": [
+    3295410794109744455,
+    350261672178848498,
+    7263059372346296752,
+    1571738908214958166
+  ],
+  "version": 1
+}

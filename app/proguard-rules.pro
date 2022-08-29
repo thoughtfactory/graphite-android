@@ -42,7 +42,7 @@
     @android.webkit.JavascriptInterface <methods>;
 }
 
--keep class com.syncodec.graphite.custom.richText.*
+-keep class com.syncodec.graphite.presentation.custom.richText.*
 
 -keep class com.syncodec.graphite.database.** { *; }
 

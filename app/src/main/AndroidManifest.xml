@@ -7,7 +7,7 @@
 	<uses-permission android:name="Android.permission.INTERNET" />
 
 	<application
-		android:name="com.syncodec.graphite.Graphite"
+		android:name="com.syncodec.graphite.BaseApplication"
 		android:allowBackup="false"
 		android:icon="@mipmap/ic_launcher"
 		android:label="@string/app_name"
@@ -29,15 +29,14 @@
 			android:grantUriPermissions="true">
 			<meta-data
 				android:name="android.support.FILE_PROVIDER_PATHS"
-				android:resource="@xml/file_provider_path">
-			</meta-data>
+				android:resource="@xml/file_provider_path" />
 		</provider>
 
 		<activity
-			android:name="com.syncodec.graphite.mainComponent.MainActivity"
+			android:name="com.syncodec.graphite.presentation.main.MainActivity"
 			android:exported="true"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 
@@ -46,64 +45,33 @@
 		</activity>
 
 		<activity
-			android:name="com.syncodec.graphite.searchComponent.SearchActivity"
+			android:name=".presentation.note.NoteActivity"
 			android:exported="false"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
 
 		<activity
-			android:name="com.syncodec.graphite.todayComponent.TodayActivity"
+			android:name=".presentation.notebook.NotebookActivity"
 			android:exported="false"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
 
 		<activity
-			android:name="com.syncodec.graphite.noteComponent.NoteActivity"
+			android:name=".presentation.bucket.BucketActivity"
 			android:exported="false"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
 
 		<activity
-			android:name="com.syncodec.graphite.bucketComponent.BucketActivity"
+			android:name=".presentation.bucketItem.BucketItemActivity"
 			android:exported="false"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
 
 		<activity
-			android:name="com.syncodec.graphite.bucketItemComponent.BucketItemActivity"
+			android:name=".presentation.settings.SettingsActivity"
 			android:exported="false"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
-
-		<activity
-			android:name="com.syncodec.graphite.notebookComponent.NotebookActivity"
-			android:exported="false"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
-
-		<activity
-			android:name="com.syncodec.graphite.attachmentComponent.AttachmentActivity"
-			android:exported="false"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
-
-		<activity
-			android:name="com.syncodec.graphite.settingsComponent.SettingsActivity"
-			android:exported="false"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
-
-		<activity
-			android:name="com.syncodec.graphite.premiumComponent.PremiumActivity"
-			android:exported="false"
-			android:windowSoftInputMode="adjustResize"
-			android:theme="@style/Theme.Graphite.NoActionBar">
-		</activity>
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
 	</application>
 </manifest>
