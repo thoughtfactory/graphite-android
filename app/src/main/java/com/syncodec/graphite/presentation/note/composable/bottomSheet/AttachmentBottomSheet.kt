@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,8 +23,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.button.MenuBottomSheetButton
-import com.syncodec.graphite.presentation.custom.button.MenuBottomSheetButtonData
+import com.syncodec.graphite.presentation.custom.button.BottomSheetButton
+import com.syncodec.graphite.presentation.custom.button.BottomSheetButtonData
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.AttachmentPreview
@@ -57,25 +58,25 @@ fun AttachmentBottomSheet(
 		viewModel.bufferAttachment(uriList)
 	}
 
-	val buttonList: List<MenuBottomSheetButtonData> = listOf(
-		MenuBottomSheetButtonData(title = "Camera", icon = R.drawable.ic_camera) {
-			photoUri = createTempFileToExpose(
-				context = activity,
-				key = generatePrimaryKey(),
-				extension = ".jpg"
-			).first
-			takePicture.launch(photoUri)
-		},
-		MenuBottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
-			openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
-		},
-		MenuBottomSheetButtonData(title = "Audio", icon = R.drawable.ic_mic) {
-		},
-		MenuBottomSheetButtonData(title = "File", icon = R.drawable.ic_file) {
-			openFilePicker.launch(arrayOf("*/*"))
-		},
-	)
-
+	val buttonList: List<BottomSheetButtonData> = remember {
+		listOf(
+			BottomSheetButtonData(title = "Camera", icon = R.drawable.ic_camera) {
+				photoUri = createTempFileToExpose(
+					context = activity,
+					key = generatePrimaryKey(),
+					extension = ".jpg"
+				).first
+				takePicture.launch(photoUri)
+			},
+			BottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
+				openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
+			},
+//		    TODO Add audio recording
+			BottomSheetButtonData(title = "File", icon = R.drawable.ic_file) {
+				openFilePicker.launch(arrayOf("*/*"))
+			},
+		)
+	}
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
@@ -96,7 +97,18 @@ fun AttachmentBottomSheet(
 			modifier = Modifier.padding(24.dp, 0.dp),
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
-			buttonList.forEach { MenuBottomSheetButton(it, modifier = Modifier.weight(1f)) }
+			buttonList.forEachIndexed { index, buttonData ->
+				BottomSheetButton(
+					modifier = Modifier.weight(1f),
+					title = buttonData.title,
+					icon = buttonData.icon,
+					onClick = buttonData.onClick
+				)
+
+				if (index != buttonList.size - 1) {
+					Spacer(modifier = Modifier.width(8.dp))
+				}
+			}
 		}
 
 		if (attachmentList.isNotEmpty()) {

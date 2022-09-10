@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.custom.button.MenuButton
-import com.syncodec.graphite.presentation.custom.button.StateButton
-import com.syncodec.graphite.presentation.custom.button.StateData
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 
 

@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.ui
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import com.syncodec.graphite.utils.getInverseBWColor
 
 
 val lightColorScheme0 = lightColorScheme(
@@ -34,3 +35,23 @@ val darkColorScheme0 = darkColorScheme(
 	background = Color(0xFF02060A),
 	onBackground = Color(0xFFCEDBE6)
 )
+
+val Color.Companion.DeleteContainer: Color
+	get() = Color(0xFFE94560)
+val Color.Companion.DeleteContent: Color
+	get() = Color.White
+
+val Color.Companion.FavouriteContainer: Color
+	get() = Color(0xFFE78EA9)
+val Color.Companion.FavouriteContent: Color
+	get() = Color.White
+
+val Color.Companion.LockOpenContainer:Color
+	get() = Color(0xFFE94560)
+val Color.Companion.LockOpenContent:Color
+	get() = Color(0xFFE94560).getInverseBWColor()
+
+val Color.Companion.LockClosedContainer:Color
+	get() = Color(0xFF76BA99)
+val Color.Companion.LockClosedContent:Color
+	get() = Color.White

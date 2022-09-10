@@ -1,9 +1,8 @@
-package com.syncodec.graphite.presentation.main.composable.bottomSheet
+package com.syncodec.graphite.presentation.notebook.composable.bottomSheet
 
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -12,29 +11,26 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.text.LargeTextField
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.custom.button.LargeButton
 import com.syncodec.graphite.presentation.custom.notebook.NotebookColorChooser
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
-import com.syncodec.graphite.presentation.main.MainViewModel
-import com.syncodec.graphite.utils.colorList
+import com.syncodec.graphite.presentation.custom.text.LargeTextField
+import com.syncodec.graphite.presentation.notebook.NotebookViewModel
 
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun NotebookBottomSheet(
+fun ChapterBottomSheet(
 	closeSheet: () -> Unit
 ) {
 	val context = LocalContext.current
-	val viewModel: MainViewModel = viewModel()
+	val viewModel: NotebookViewModel = viewModel()
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var titleText by rememberSaveable { mutableStateOf("") }
@@ -59,9 +55,9 @@ fun NotebookBottomSheet(
 		BottomSheetStrip()
 
 		BottomSheetHeader(
-			title = "Writing a new book?",
+			title = "New Chapter",
 			icon = R.drawable.ic_notebook,
-			subTitle = "Keep your notes organized in notebooks"
+			subTitle = "Add a chapter to your notebook"
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -71,7 +67,7 @@ fun NotebookBottomSheet(
 				.fillMaxWidth()
 				.padding(24.dp, 0.dp),
 			text = titleText,
-			placeholder = "Give your book a title",
+			placeholder = "What's the title of your chapter?",
 			isFocused = isTitleTextFocused,
 			focusRequester = titleTextFocusRequester,
 			onFocusChanged = { isTitleTextFocused = it },
@@ -113,7 +109,7 @@ fun NotebookBottomSheet(
 				notebookColor == null -> Toast.makeText(context, "Select a color for notebook", Toast.LENGTH_SHORT).show()
 				else -> {
 
-					viewModel.putNotebook(title = titleText, description = descriptionText, color = notebookColor, bitmap = null)
+					viewModel.putChapter(title = titleText, description = descriptionText, color = notebookColor, bitmap = null)
 
 					titleTextFocusRequester.freeFocus()
 					descriptionTextFocusRequester.freeFocus()

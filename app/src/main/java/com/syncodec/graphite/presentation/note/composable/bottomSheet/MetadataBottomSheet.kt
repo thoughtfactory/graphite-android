@@ -77,7 +77,10 @@ fun MetadataBottomSheet(
 
 		ParentCard(
 			parentChapterId = parentChapterId,
-		)
+		) {
+			viewModel.showChapterSelectorDialog.value = true
+			closeSheet()
+		}
 
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -101,7 +104,10 @@ fun MetadataBottomSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ParentCard(parentChapterId: ObjectId?) {
+private fun ParentCard(
+	parentChapterId: ObjectId?,
+	onClick: () -> Unit
+) {
 	val scope = rememberCoroutineScope()
 	var chapterTitle by remember { mutableStateOf<String?>(null) }
 
@@ -117,7 +123,7 @@ private fun ParentCard(parentChapterId: ObjectId?) {
 			containerColor = MaterialTheme.colorScheme.background,
 			contentColor = MaterialTheme.colorScheme.onBackground
 		),
-		onClick = { /*TODO*/ },
+		onClick = onClick,
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(24.dp, 0.dp)

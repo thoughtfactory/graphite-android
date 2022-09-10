@@ -10,9 +10,9 @@ import io.realm.kotlin.types.RealmObject
 class NoteObject: RealmObject {
 	var id: ObjectId = ObjectId.create()
 
-	var createdTimestamp: Long = 0
-	var modifiedTimestamp: Long = 0
-	var userTimestamp: Long = 0
+	var createdTimestamp: Long = System.currentTimeMillis()
+	var modifiedTimestamp: Long = System.currentTimeMillis()
+	var userTimestamp: Long = System.currentTimeMillis()
 	var title: String? = null
 	var color: Int? = null
 	var latLng: LatLng? = null
@@ -114,6 +114,7 @@ class NoteObject: RealmObject {
 			isLocked = this.isLocked
 		)
 	}
+
 
 	companion object {
 		fun getInstance(): NoteObject {

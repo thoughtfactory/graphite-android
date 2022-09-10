@@ -18,10 +18,10 @@ fun BottomSheetHeader(
 	subTitle: String? = null
 ) {
 	Row(
+		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(24.dp, 0.dp),
-		verticalAlignment = Alignment.CenterVertically
+			.padding(24.dp, 0.dp)
 	) {
 		Text(
 			text = title,

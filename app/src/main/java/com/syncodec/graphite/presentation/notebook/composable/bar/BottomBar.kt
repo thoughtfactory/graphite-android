@@ -14,11 +14,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.BucketBottomSheetType
 
 
 @Composable
 fun BottomBar(
-	openSheet: () -> Unit
+	openSheet: (BucketBottomSheetType) -> Unit
 ) {
 	LazyRow() {
 		item { Spacer(modifier = Modifier.width(16.dp)) }
@@ -45,7 +46,7 @@ fun BottomBar(
 		Spacer(modifier = Modifier.weight(1f))
 		Spacer(modifier = Modifier.width(16.dp))
 		FloatingActionButton(
-			onClick = { openSheet() },
+			onClick = { openSheet(BucketBottomSheetType.CHAPTER) },
 			elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
 		) {
 			Icon(

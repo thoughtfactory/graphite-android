@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.custom.button
+package com.syncodec.graphite.presentation.custom.button.stateButton
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -8,11 +8,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,7 +29,7 @@ import com.syncodec.graphite.utils.tone
 data class StateData(
 	val title: String,
 	val icon: Int?,
-	val stateTint: Color,
+	val stateTint: Color? = null,
 )
 
 @Composable
@@ -41,14 +42,15 @@ fun StateButton(
 	val interactionSource = remember { MutableInteractionSource() }
 	val spacerWeight by animateFloatAsState(targetValue = currentState.toFloat())
 
-	Surface(
-		modifier = modifier.fillMaxWidth(),
-		color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
-		tonalElevation = 0.dp,
-		shape = RoundedCornerShape(12.dp)
+	Box(
+		modifier = modifier
+			.fillMaxWidth()
+			.background(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1), RoundedCornerShape(8.dp)),
+		contentAlignment = Alignment.Center
 	) {
 		Row(
-			modifier = Modifier.fillMaxSize()
+			modifier = Modifier.fillMaxSize(),
+			verticalAlignment = Alignment.CenterVertically
 		) {
 			Spacer(modifier = Modifier.weight((spacerWeight + 0.00001).toFloat()))
 			Box(
@@ -56,15 +58,13 @@ fun StateButton(
 					.fillMaxHeight()
 					.weight(1f)
 					.clip(RoundedCornerShape(12.dp))
-					.background(stateList[currentState].stateTint)
+					.background(stateList[currentState].stateTint ?: MaterialTheme.colorScheme.primary)
 			)
 			Spacer(modifier = Modifier.weight((stateList.size - spacerWeight - 1 + 0.00001).toFloat()))
 		}
 
 		Row(
-			modifier = Modifier
-				.fillMaxSize()
-				.fillMaxHeight(),
+			modifier = Modifier.fillMaxSize(),
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			stateList.forEachIndexed { index, state ->
@@ -86,7 +86,7 @@ fun StateButton(
 							painter = painterResource(id = state.icon),
 							contentDescription = state.title,
 							tint = textColor,
-							modifier = Modifier.requiredSize(20.dp)
+							modifier = Modifier.requiredSize(24.dp)
 						)
 						Spacer(modifier = Modifier.width(6.dp))
 					}

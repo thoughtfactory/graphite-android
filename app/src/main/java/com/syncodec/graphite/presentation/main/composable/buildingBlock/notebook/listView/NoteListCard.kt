@@ -67,8 +67,6 @@ fun NoteListCard(
 		}
 	)
 
-	Log.i("npr71", "attachmentSize: ${attachmentThumbnail?.height}.")
-
 	var cardHeight by remember { mutableStateOf(0) }
 
 	AnimatedVisibility(

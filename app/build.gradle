@@ -83,21 +83,21 @@ android {
 }
 
 dependencies {
-	implementation 'androidx.core:core-ktx:1.8.0'
+	implementation 'androidx.core:core-ktx:1.9.0'
 
-	implementation 'androidx.activity:activity-compose:1.6.0-beta01'
-	implementation 'androidx.appcompat:appcompat:1.6.0-beta01'
+	implementation 'androidx.activity:activity-compose:1.6.0-rc02'
+	implementation 'androidx.appcompat:appcompat:1.6.0-rc01'
 
-	implementation 'androidx.compose.material:material:1.3.0-alpha03'
-	implementation 'androidx.compose.material3:material3:1.0.0-alpha16'
-	implementation 'androidx.compose.ui:ui:1.3.0-alpha03'
+	implementation 'androidx.compose.material:material:1.3.0-beta02'
+	implementation 'androidx.compose.material3:material3:1.0.0-beta02'
+	implementation 'androidx.compose.ui:ui:1.3.0-beta02'
 //	implementation 'androidx.compose.foundation:foundation:2.7.0-alpha03'
-	implementation 'androidx.compose.ui:ui-tooling-preview:1.3.0-alpha03'
-	implementation 'androidx.compose.ui:ui-util:1.3.0-alpha03'
+	implementation 'androidx.compose.ui:ui-tooling-preview:1.3.0-beta02'
+	implementation 'androidx.compose.ui:ui-util:1.3.0-beta02'
 
 	implementation "androidx.glance:glance-appwidget:1.0.0-alpha04"
 
-	implementation 'androidx.navigation:navigation-compose:2.5.1'
+	implementation 'androidx.navigation:navigation-compose:2.5.2'
 	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.1'
 
 	implementation 'androidx.core:core-animation:1.0.0-beta01'
@@ -138,7 +138,7 @@ dependencies {
 	implementation 'io.coil-kt:coil-video:2.1.0'
 
 	implementation platform('com.google.firebase:firebase-bom:30.2.0')
-	implementation 'com.google.android.gms:play-services-auth:20.2.0'
+	implementation 'com.google.android.gms:play-services-auth:20.3.0'
 	implementation 'com.google.firebase:firebase-analytics'
 	implementation 'com.firebaseui:firebase-ui-auth:8.0.1'
 	implementation 'com.google.firebase:firebase-auth-ktx'
@@ -150,6 +150,7 @@ dependencies {
 	implementation 'joda-time:joda-time:2.10.14'
 
 	implementation 'me.jorgecastillo:androidcolorx:0.2.0'
+	implementation 'com.godaddy.android.colorpicker:compose-color-picker-android:0.5.0'
 
 	implementation 'com.tobianoapps:bulletin:1.0.1'
 
@@ -172,6 +173,8 @@ dependencies {
 //	implementation 'com.google.crypto.tink:tink-android:1.6.1'
 
 	implementation 'com.valentinilk.shimmer:compose-shimmer:1.0.3'
+
+	implementation 'com.github.skydoves:colorpicker-compose:1.0.0'
 
 	implementation 'com.github.LucasFsc:Html2Pdf:0.2-beta'
 

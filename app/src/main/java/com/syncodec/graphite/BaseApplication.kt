@@ -51,7 +51,7 @@ class BaseApplication : Application() {
 								"Default diary. Every notes will be saved in this notebook by default"
 							chapterObject.color = getRandomColor().toArgb()
 
-							Repository.putChapter(chapterObject)
+							Repository.putChapter(null, chapterObject)
 
 							BaseObject().also { baseObject ->
 								baseObject.defaultChapterId = chapterObject.id

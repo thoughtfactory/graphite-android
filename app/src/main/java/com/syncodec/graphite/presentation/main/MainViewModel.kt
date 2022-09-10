@@ -81,9 +81,9 @@ class MainViewModel : ViewModel() {
 				ChapterObject().apply {
 					this.title = title
 					this.description = description
-					this.color = color?.toArgb()
+					this.color = color?.toArgb() ?: getRandomColor().toArgb()
 
-					Repository.putChapter(this)
+					Repository.putChapter(null, this)
 				}
 			} catch (e: Exception) {
 //	    		TODO Show error message

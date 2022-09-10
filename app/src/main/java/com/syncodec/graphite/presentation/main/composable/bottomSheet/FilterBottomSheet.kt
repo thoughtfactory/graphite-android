@@ -12,8 +12,8 @@ import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetKeyText
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.custom.button.LargeButton
-import com.syncodec.graphite.presentation.custom.button.StateButton
-import com.syncodec.graphite.presentation.custom.button.StateData
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType

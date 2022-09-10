@@ -13,8 +13,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.custom.button.MenuButton
-import com.syncodec.graphite.presentation.custom.button.StateButton
-import com.syncodec.graphite.presentation.custom.button.StateData
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
 
 
 @Composable

@@ -122,7 +122,7 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 			val newTextFormat: TextFormat = objectMapper.readValue(textFormatJsonString)
 			onFormatUpdateListener?.onFormatUpdate(newTextFormat)
 			currentSelection = newTextFormat.currentSelection
-		} catch (exception: Exception) {
+		} catch (_: Exception) {
 			
 		}
 	}
@@ -130,6 +130,10 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 	@JavascriptInterface
 	fun saveData(data: String) {
 		onSaveDataListener?.onSaveData(data)
+	}
+
+	fun callPrintData(data: String?) {
+		exec("editor.printData($data);")
 	}
 
 	@JavascriptInterface
@@ -191,7 +195,7 @@ class RichTextEditor(context: Context, val textColor: String, typography: Int?) 
 }
 
 @Composable
-fun rememberRichTextEditorWithLifecycle(): RichTextEditor {
+fun rememberRichTextEditor(): RichTextEditor {
 	val context = LocalContext.current
 //	val textColor = MaterialTheme.colorScheme.onBackground.toHexString()
 	val textColor = MaterialTheme.colorScheme.onBackground.toHexString()

@@ -2,7 +2,6 @@ package com.syncodec.graphite.utils
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.navigation.NavHostController
-import com.syncodec.graphite.presentation.custom.button.MenuBottomSheetButtonData
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObjectLite
@@ -16,16 +15,6 @@ class FunctionPreviewParameter: PreviewParameterProvider<() -> Unit> {
 
 class StringPreviewParameter: PreviewParameterProvider<String> {
 	override val values: Sequence<String> = sequenceOf(generatePrimaryKey(), generatePrimaryKey(), generatePrimaryKey())
-}
-
-class MenuBottomSheetButtonDataPreviewParameter: PreviewParameterProvider<MenuBottomSheetButtonData> {
-	override val values = sequenceOf(
-		MenuBottomSheetButtonData(
-			title = "Title",
-			icon = R.drawable.ic_settings,
-			onClick = {}
-		)
-	)
 }
 
 class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteObjectLite>>> {

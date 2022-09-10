@@ -60,6 +60,8 @@ fun NotebookScreen(
 						)
 					}
 				}
+				item { Spacer(modifier = Modifier.height(96.dp)) }
+				item { Spacer(modifier = Modifier.height(96.dp)) }
 			}
 		}
 	}

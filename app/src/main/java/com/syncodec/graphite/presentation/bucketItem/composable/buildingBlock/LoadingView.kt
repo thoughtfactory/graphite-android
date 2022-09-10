@@ -13,8 +13,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.custom.button.LargeButton
-import com.syncodec.graphite.presentation.custom.button.StateButton
-import com.syncodec.graphite.presentation.custom.button.StateData
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
 
 
 @Composable

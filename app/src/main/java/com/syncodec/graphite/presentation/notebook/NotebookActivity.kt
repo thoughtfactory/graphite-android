@@ -40,7 +40,7 @@ class NotebookActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surface)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primary)
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
 
 				NotebookScreen()

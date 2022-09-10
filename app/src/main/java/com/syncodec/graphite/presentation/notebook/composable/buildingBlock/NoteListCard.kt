@@ -1,9 +1,7 @@
 package com.syncodec.graphite.presentation.notebook.composable.buildingBlock
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -21,13 +19,16 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.utils.*
+import com.syncodec.graphite.utils.addEmptyLines
+import com.syncodec.graphite.utils.entryTimestamp0
+import com.syncodec.graphite.utils.entryTimestamp1
+import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.ObjectId
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteCard(
+fun NoteListCard(
 	id: ObjectId,
 	timestamp: Long,
 	showFullTime: Boolean,
@@ -59,7 +60,7 @@ fun NoteCard(
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(12.dp, 12.dp)
+				.padding(12.dp)
 		) {
 			Row(
 				modifier = Modifier.fillMaxWidth()

@@ -154,7 +154,7 @@ fun MainNavigation(
 					notebookId = defaultNotebookId,
 					noteDayMap = noteDayMap,
 					bucketList = bucketList,
-					notebookList = notebookList,
+					notebookList = notebookList.filter { it.parentChapterId == null },
 					viewType = viewType,
 					onClickFab = {
 						when(componentType) {
@@ -162,7 +162,6 @@ fun MainNavigation(
 								Intent(activity, NoteActivity::class.java).apply {
 									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
 //          						TODO    Check if notebookId is not null
-									Log.d("npr71", "notebookId: $defaultNotebookId")
 									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId.toString())
 									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.ordinal)
 									activity.startActivity(this)

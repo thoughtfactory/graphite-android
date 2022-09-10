@@ -29,10 +29,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.Repository.getAttachmentFile
-import com.syncodec.graphite.di.model.AttachmentObject
-import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.model.*
 import com.syncodec.graphite.utils.*
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineScope
@@ -55,10 +52,13 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 	val showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
 	var showDiscardDialog: MutableState<Boolean> = mutableStateOf(false)
+	var showChapterSelectorDialog: MutableState<Boolean> = mutableStateOf(false)
 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
 
 	val chapterObject: MutableState<ChapterObject?> = mutableStateOf(null)
+	var selectorChapterObject: MutableState<ChapterObject?> = mutableStateOf(null)
+	val selectorChapterList = Repository.getAllChapterAsFlow()
 	val noteIdList: SnapshotStateList<ObjectId> = mutableStateListOf()
 
 	var noteId: MutableState<ObjectId?> = mutableStateOf(null)
@@ -73,11 +73,13 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	val contentThumbnail: MutableState<String?> = mutableStateOf(null)
 	val content: MutableState<String?> = mutableStateOf(null)
 
-	//  Map<UId, Triple<Uri, File, AttachmentObject>>
+	//  Map<Id, Triple<Uri, File, AttachmentObject>>
 	val attachmentListStored: SnapshotStateMap<ObjectId, Triple<Uri, File, AttachmentObject>> = mutableStateMapOf()
 	val attachmentListVisible: SnapshotStateMap<ObjectId, Triple<Uri, File, AttachmentObject>> = mutableStateMapOf()
 	val isFavourite: MutableState<Boolean> = mutableStateOf(false)
 	val isLocked: MutableState<Boolean> = mutableStateOf(false)
+
+	val tagObjectList = Repository.getAllTagAsFlow()
 
 	var isUserScrollEnabled: MutableState<Boolean> = mutableStateOf(false)
 	val locationSnackbarHostState = SnackbarHostState()
@@ -87,8 +89,15 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	fun initNewData(chapterId: ObjectId, filter: Extra.Companion.Filter) {
 
 		viewModelScope.launch(Dispatchers.IO) {
+
+			withContext(Dispatchers.Main) {
+				selectorChapterObject.value = Repository.getChapter(chapterId)
+			}
+
 			Repository.getChapterAsFlow(chapterId).collectLatest {
-				chapterObject.value = it
+				withContext(Dispatchers.Main) {
+					chapterObject.value = it
+				}
 			}
 		}
 
@@ -104,15 +113,19 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		isViewer.value = false
 	}
 
-	fun loadAndViewData(chapterUId: ObjectId, noteId: ObjectId, filter: Extra.Companion.Filter) {
+	fun loadAndViewData(chapterId: ObjectId, noteId: ObjectId, filter: Extra.Companion.Filter) {
 		isNew.value = false
 		when (filter) {
 			Extra.Companion.Filter.READ_CHAPTER -> {
 				viewModelScope.launch(Dispatchers.IO) {
 					isUserScrollEnabled.value = true
 
+					withContext(Dispatchers.Main) {
+						selectorChapterObject.value = Repository.getChapter(chapterId)
+					}
+
 					Repository
-						.getChapterAsFlow(id = chapterUId)
+						.getChapterAsFlow(id = chapterId)
 						.map {
 							viewModelScope.launch(Dispatchers.Main) {
 								chapterObject.value = it
@@ -507,5 +520,17 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		} else {
 			this.title.value = title
 		}
+	}
+
+	fun putTag(tagObject: TagObject) {
+		Repository.putTag(tagObject = tagObject)
+	}
+
+	fun connectNoteToTag() {
+//		Repository.connectNoteToTag()
+	}
+
+	fun printNote(data: String) {
+		println(data)
 	}
 }

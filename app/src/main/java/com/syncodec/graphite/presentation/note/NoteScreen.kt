@@ -11,9 +11,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -29,19 +31,26 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.snackbar.LocationSnackbarHost
-import kotlinx.coroutines.delay
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun NoteScreen() {
 	val scope = rememberCoroutineScope()
 
 	val viewModel: NoteViewModel = viewModel()
 
+	val keyboardController = LocalSoftwareKeyboardController.current
+
 	val isViewer by viewModel.isViewer
 
-	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+	val modalBottomSheetState = rememberModalBottomSheetState(
+		initialValue = ModalBottomSheetValue.Hidden,
+		confirmStateChange = {
+			keyboardController?.hide()
+			true
+		}
+	)
 	var bottomSheetType: NoteBottomSheetType by rememberSaveable { mutableStateOf(NoteBottomSheetType.METADATA) }
 
 	val locationSnackbarHostState = viewModel.locationSnackbarHostState
@@ -73,6 +82,10 @@ fun NoteScreen() {
 						bottomSheetType = NoteBottomSheetType.ATTACHMENT
 						openSheet()
 					},
+					onClickTag = {
+						bottomSheetType = NoteBottomSheetType.TAG
+						openSheet()
+					}
 				)
 			},
 			snackbarHost = {

@@ -17,7 +17,7 @@ import java.io.File
 
 
 object Repository {
-	val realm = Realm.open(RealmConfiguration.Builder(setOf(BaseObject::class, ChapterObject::class, NoteObject::class, AttachmentObject::class, BucketObject::class, BucketItemObject::class)).build())
+	val realm = Realm.open(RealmConfiguration.Builder(setOf(BaseObject::class, ChapterObject::class, NoteObject::class, AttachmentObject::class, BucketObject::class, BucketItemObject::class, TagObject::class)).build())
 
 	val firebaseStorageApi = FirebaseStorageApi()
 	val openLibraryApi = OpenLibraryApi()
@@ -77,10 +77,17 @@ object Repository {
 
 	fun getNotebookAsFlow(id: ObjectId) = realm.query(ChapterObject::class,"id == $0 ", id).first().asFlow().map { it.obj }
 
-	fun putChapter(chapterObject: ChapterObject) {
+	fun putChapter(parentChapterId: ObjectId?, chapterObject: ChapterObject) {
 		CoroutineScope(Dispatchers.IO).launch {
 			realm.write {
-				copyToRealm(chapterObject)
+				if (parentChapterId == null) {
+					copyToRealm(chapterObject)
+				} else {
+					val parentChapter = realm.query(ChapterObject::class, "id == $0", parentChapterId).first().find()
+					if (parentChapter != null) {
+						findLatest(parentChapter)?.chapterList?.add(chapterObject)
+					}
+				}
 			}
 		}
 	}
@@ -107,7 +114,7 @@ object Repository {
 					noteObject.parentChapterId = chapterId
 					findLatest(chapterObject)
 						?.noteList
-						?.add(noteObject.clone())
+						?.add(noteObject)
 
 					onSuccess()
 				}
@@ -174,6 +181,28 @@ object Repository {
 //  		TODO Show error message
 			e.printStackTrace()
 			null
+		}
+	}
+
+	fun putTag(tagObject: TagObject){
+		CoroutineScope(Dispatchers.IO).launch {
+			realm.write {
+				copyToRealm(tagObject)
+			}
+		}
+	}
+
+	fun getAllTagAsFlow() = realm.query(TagObject::class).asFlow().map { it.list }
+
+	fun connectNoteToTag(tagObject: TagObject, noteObject: NoteObject) {
+		CoroutineScope(Dispatchers.IO).launch {
+			realm.write {
+				if (tagObject.noteList.contains(noteObject)) {
+					tagObject.noteList.remove(noteObject)
+				} else {
+					tagObject.noteList.add(noteObject)
+				}
+			}
 		}
 	}
 }

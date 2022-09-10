@@ -17,6 +17,7 @@ import com.syncodec.graphite.presentation.notebook.NotebookActivity
 @Composable
 fun TopBar(
 	title: String,
+	onClickMenu: () -> Unit
 ) {
 	Column(
 		modifier = Modifier
@@ -25,6 +26,7 @@ fun TopBar(
 	) {
 		Bar(
 			title = title,
+			onClickMenu = onClickMenu
 		)
 	}
 }
@@ -33,6 +35,7 @@ fun TopBar(
 @Composable
 private fun Bar(
 	title: String,
+	onClickMenu: () -> Unit,
 ) {
 	val activity: NotebookActivity = LocalContext.current as NotebookActivity
 
@@ -53,7 +56,8 @@ private fun Bar(
 			MenuButton(
 				icon = R.drawable.ic_menu,
 				contentDescription = "Menu",
-			){}
+				onClick = onClickMenu
+			)
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
 	)

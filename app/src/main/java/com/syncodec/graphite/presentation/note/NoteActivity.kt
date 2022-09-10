@@ -2,21 +2,20 @@ package com.syncodec.graphite.presentation.note
 
 import android.os.Bundle
 import android.util.Log
-import android.window.OnBackInvokedDispatcher
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.core.os.BuildCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.custom.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.custom.dialog.DiscardDialog
 import com.syncodec.graphite.presentation.custom.richText.RichTextEditor
-import com.syncodec.graphite.presentation.custom.richText.rememberRichTextEditorWithLifecycle
+import com.syncodec.graphite.presentation.custom.richText.rememberRichTextEditor
+import com.syncodec.graphite.presentation.note.composable.dialog.chapterSelectorDialog.ChapterSelectorDialog
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalRichTextEditor
@@ -79,7 +78,7 @@ class NoteActivity : ComponentActivity() {
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primary)
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
 
-				val richTextEditor = rememberRichTextEditorWithLifecycle()
+				val richTextEditor = rememberRichTextEditor()
 
 				richTextEditor.setOnSaveData(listener = object : RichTextEditor.OnSaveDataListener {
 					override fun onSaveData(data: String) {
@@ -91,9 +90,19 @@ class NoteActivity : ComponentActivity() {
 					}
 				})
 
+				richTextEditor.setOnPrintData(listener = object : RichTextEditor.OnPrintDataListener {
+					override fun onPrintData(data: String) {
+						viewModel.printNote(data = data)
+					}
+				})
+
 				var showDeleteDialog by viewModel.showDeleteDialog
 				var showDiscardDialog by viewModel.showDiscardDialog
+				var showChapterSelectorDialog by viewModel.showChapterSelectorDialog
+
 				val noteId by viewModel.noteId
+				var selectorParentChapterObject by viewModel.selectorChapterObject
+				val selectorChapterList by viewModel.selectorChapterList.collectAsState(initial = listOf())
 
 				CompositionLocalProvider(
 					LocalCompositionPremium provides true,
@@ -106,6 +115,7 @@ class NoteActivity : ComponentActivity() {
 						id = noteId,
 						onDismiss = { showDeleteDialog = false }
 					) { viewModel.deleteNote() }
+
 					DiscardDialog(
 						showDiscardDialog = showDiscardDialog,
 						onDismiss = { showDiscardDialog = false }
@@ -117,24 +127,57 @@ class NoteActivity : ComponentActivity() {
 							else -> finish()
 						}
 					}
+
+					selectorParentChapterObject?.let {
+						ChapterSelectorDialog(
+							showDialog = showChapterSelectorDialog,
+							onDismiss = { showChapterSelectorDialog = false },
+							parentChapter = it,
+							chapterList = selectorChapterList,
+							onClickChapter = { selectorParentChapterObject = it },
+							onSelectChapter = {
+								viewModel.chapterObject.value = it
+							}
+						)
+					}
 				}
 			}
 		}
 	}
 
 	override fun onBackPressed() {
-		if (viewModel.isNew.value == true && viewModel.isViewer.value) {
-			super.onBackPressed()
-		} else if(viewModel.isNew.value == true && !viewModel.isViewer.value) {
-			viewModel.showDiscardDialog.value = true
+
+		if (viewModel.showChapterSelectorDialog.value) {
+			viewModel.showChapterSelectorDialog.value = false
+		} else {
+			if (viewModel.isNew.value == true) {
+				if (viewModel.isViewer.value) {
+					super.onBackPressed()
+				} else {
+					viewModel.showDiscardDialog.value = true
+				}
+			} else if (viewModel.isNew.value == false) {
+				if (viewModel.isViewer.value) {
+					super.onBackPressed()
+				} else {
+					viewModel.showDiscardDialog.value = true
+				}
+			} else {
+				super.onBackPressed()
+			}
 		}
-		else if (viewModel.isNew.value == false && viewModel.isViewer.value) {
-			super.onBackPressed()
-		} else if (viewModel.isNew.value == false && !viewModel.isViewer.value) {
-//			TODO Show discard popup
-			viewModel.showDiscardDialog.value = true
-		} else if (viewModel.isNew.value == null) {
-			super.onBackPressed()
-		}
+
+//		if (viewModel.isNew.value == true && viewModel.isViewer.value) {
+//			super.onBackPressed()
+//		} else if(viewModel.isNew.value == true && !viewModel.isViewer.value) {
+//			viewModel.showDiscardDialog.value = true
+//		}
+//		else if (viewModel.isNew.value == false && viewModel.isViewer.value) {
+//			super.onBackPressed()
+//		} else if (viewModel.isNew.value == false && !viewModel.isViewer.value) {
+//			viewModel.showDiscardDialog.value = true
+//		} else if (viewModel.isNew.value == null) {
+//			super.onBackPressed()
+//		}
 	}
 }
