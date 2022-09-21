@@ -4,13 +4,9 @@ import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallTopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -32,10 +28,10 @@ fun TopBar(
 	val isViewer by viewModel.isViewer
 	val isSaving by viewModel.isSaving
 
-	var isFavourite by viewModel.isFavourite
-	var isLocked by viewModel.isLocked
+	val isFavourite by viewModel.isFavourite
+	val isLocked by viewModel.isLocked
 
-	SmallTopAppBar(
+	TopAppBar(
 		navigationIcon = {
 			Crossfade(targetState = isViewer) {
 				if (it) {

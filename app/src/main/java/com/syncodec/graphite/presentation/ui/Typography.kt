@@ -66,7 +66,7 @@ val UbuntuTypography = Typography(
 	titleMedium = TextStyle(
 		fontFamily = UbuntuFontFamily,
 		fontWeight = FontWeight.Medium,
-		fontSize = 16.sp,
+		fontSize = 18.sp,
 		lineHeight = 24.sp,
 		letterSpacing = 1.sp
 	),
@@ -100,10 +100,10 @@ val UbuntuTypography = Typography(
 	),
 	labelLarge = TextStyle(
 		fontFamily = UbuntuFontFamily,
-		fontWeight = FontWeight.Normal,
-		fontSize = 11.sp,
-		lineHeight = 12.sp,
-		letterSpacing = 0.2.sp
+		fontWeight = FontWeight.Bold,
+		fontSize = 14.sp,
+		lineHeight = 16.sp,
+		letterSpacing = 0.4.sp
 	),
 	labelMedium = TextStyle(
 		fontFamily = UbuntuFontFamily,

@@ -53,6 +53,7 @@ fun Calendar(
 				Click.SELECT_YEAR -> scope.launch {
 					pagerState.scrollToPage(((data as Int - 1900) * 12) + (pagerState.currentPage % 12))
 				}
+				else -> null
 			}
 		}
 

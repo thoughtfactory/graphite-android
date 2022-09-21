@@ -1,0 +1,38 @@
+body{
+    margin: 0px;
+    padding: 10px 30px;
+}
+
+.bar_height{
+    height: 65px;
+}
+
+.header{
+    position: fixed;
+    top: 0px;
+}
+
+.footer{
+    position: fixed;
+    bottom: 0px;    
+}
+
+.bar{
+    left: 0px;
+    padding: 10px 30px;
+    background-color: antiquewhite; 
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.bar_sep{
+    margin-top: 5px;
+    height: 2px;
+    border-top: 1px solid black;
+    border-bottom: 2px solid blue;
+}
+
+.header_bar_top{
+    display: flex;
+    justify-content: space-between;
+}

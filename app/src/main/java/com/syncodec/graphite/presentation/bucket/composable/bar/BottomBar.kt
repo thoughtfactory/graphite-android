@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.bucket.composable.bar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.FloatingActionButton
@@ -13,46 +14,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetType
 import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.utils.tone
 
 
 @Composable
 fun BottomBar(
-	openSheet: () -> Unit
+	modifier: Modifier,
+	openSheet: (BucketBottomSheetType) -> Unit
 ) {
-	LazyRow() {
-		item { Spacer(modifier = Modifier.width(16.dp)) }
-	}
+	val containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+	val contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
+
 	Row(
-		modifier = Modifier
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = modifier
 			.fillMaxWidth()
 			.height(80.dp)
-			.background(MaterialTheme.colorScheme.surface),
-		verticalAlignment = Alignment.CenterVertically
+			.background(containerColor)
 	) {
 		Spacer(modifier = Modifier.width(16.dp))
 
 		MenuButton(
 			icon = R.drawable.ic_share,
-			contentDescription = "Share Bucket"
+			contentDescription = "Share Bucket",
+			tint = contentColor
 		) {}
 
 		MenuButton(
 			icon = R.drawable.ic_export,
-			contentDescription = "Export Bucket"
+			contentDescription = "Export Bucket",
+			tint = contentColor
 		) {}
 
 		Spacer(modifier = Modifier.weight(1f))
+
 		Spacer(modifier = Modifier.width(16.dp))
-		FloatingActionButton(
-			onClick = { openSheet() },
-			elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+
+		MenuButton(
+			icon = R.drawable.ic_menu,
+			contentDescription = "Menu",
+			tint = contentColor
 		) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_add_2),
-				contentDescription = "Add new item",
-			)
+			openSheet(BucketBottomSheetType.MENU)
 		}
+
 		Spacer(modifier = Modifier.width(16.dp))
 	}
 }

@@ -182,7 +182,7 @@ private fun ComponentType(
 					),
 				),
 				currentState = componentType.ordinal,
-				modifier = Modifier.height(32.dp),
+				modifier = Modifier.height(36.dp),
 				onStateChange = onStateChange
 			)
 			Spacer(modifier = Modifier.height(6.dp))

@@ -2,21 +2,31 @@ package com.syncodec.graphite.presentation.notebook.composable.bottomSheet
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.button.BottomSheetButton
-import com.syncodec.graphite.presentation.custom.button.BottomSheetButtonData
+import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
+import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.notebook.NotebookViewModel
-import com.syncodec.graphite.presentation.ui.*
+import com.syncodec.graphite.presentation.ui.DeleteContainer
+import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.utils.getInverseBWColor
+import com.syncodec.graphite.utils.timeStampToPrettyFull
+import io.realm.kotlin.types.ObjectId
 
 
 @Composable
@@ -24,6 +34,9 @@ fun MenuBottomSheet(
 	closeSheet: () -> Unit
 ) {
 	val viewModel: NotebookViewModel = viewModel()
+
+	val chapterObject by viewModel.chapterObject
+	val tagList = viewModel.tagObjectList
 
 	val buttonList: List<BottomSheetButtonData> = remember {
 		listOf(
@@ -47,16 +60,6 @@ fun MenuBottomSheet(
 				contentColor = Color.DeleteContent,
 				onClick = {}
 			),
-			BottomSheetButtonData(
-				title = "Lock",
-				icon = R.drawable.ic_lock_close,
-				onClick = {}
-			),
-			BottomSheetButtonData(
-				title = "Favorite",
-				icon = R.drawable.ic_favourite,
-				onClick = {}
-			)
 		)
 	}
 
@@ -64,7 +67,6 @@ fun MenuBottomSheet(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(360.dp)
 			.background(MaterialTheme.colorScheme.surface)
 	) {
 
@@ -77,39 +79,178 @@ fun MenuBottomSheet(
 
 		Spacer(modifier = Modifier.height(8.dp))
 
+		BottomSheetButtonGrid(buttonList = buttonList)
 
-		for (i in 0 until (buttonList.size / 3) + 1) {
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(12.dp, 0.dp)
-			) {
-				Row(
-					modifier = Modifier.fillMaxWidth()
-				) {
-					for (j in 0 until 3) {
-						val buttonData = buttonList.getOrNull(i * 3 + j)
-						if (buttonData != null) {
-							BottomSheetButton(
-								title = buttonData.title,
-								icon = buttonData.icon,
-								containerColor = buttonData.containerColor,
-								contentColor = buttonData.contentColor,
-								modifier = Modifier.weight(1f),
-								onClick = buttonData.onClick
-							)
-						} else {
-							Box(modifier = Modifier.weight(1f))
-						}
-						if (j != 2) Spacer(modifier = Modifier.width(8.dp))
-					}
-				}
-				if (i != (buttonList.size / 3)) {
-					Spacer(modifier = Modifier.height(8.dp))
-				}
-			}
+		InfoView(
+			id = chapterObject?.id,
+			createdTimestamp = chapterObject?.createdTimestamp,
+			modifiedTimestamp = chapterObject?.modifiedTimestamp,
+			description = chapterObject?.description,
+			color = chapterObject?.color,
+		)
+
+		TagView(
+			tagList = tagList.filter { it.objectIdList.contains(chapterObject?.id) }.map { it.toLite() },
+		)
+
+		Spacer(modifier = Modifier.height(4.dp))
+		Button(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp),
+			onClick = {
+				viewModel.showManageTagDialog.value = true
+				closeSheet()
+			},
+		) {
+			Text(
+				text = "Manage Tag",
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold,
+			)
 		}
 
+		Spacer(modifier = Modifier.height(4.dp))
+		DataView(
+			totalChapter = chapterObject?.countTotalChapter(),
+			totalNote = chapterObject?.countTotalNote(),
+		)
+
 		Spacer(modifier = Modifier.height(32.dp))
+	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TagView(
+	tagList: List<TagObjectLite>
+) {
+	FlowRow(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(24.dp, 0.dp),
+	) {
+		tagList.forEach { tag ->
+			SuggestionChip(
+				onClick = { /*TODO*/ },
+				label = {
+					Text(
+						text = tag.tag,
+						style = MaterialTheme.typography.bodyMedium,
+						fontWeight = FontWeight.Bold,
+						color = Color(tag.color).getInverseBWColor()
+					)
+				},
+				border = SuggestionChipDefaults.suggestionChipBorder(
+					borderColor = Color(tag.color),
+					borderWidth = 2.dp,
+				),
+				colors = SuggestionChipDefaults.suggestionChipColors(
+					containerColor = Color(tag.color),
+					labelColor = Color(tag.color).getInverseBWColor(),
+				),
+			)
+		}
+	}
+}
+
+@Composable
+private fun InfoView(
+	id: ObjectId?,
+	createdTimestamp: Long?,
+	modifiedTimestamp: Long?,
+	description: String?,
+	color: Int?
+) {
+	Card(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(24.dp, 0.dp),
+		shape = RoundedCornerShape(24.dp),
+		colors = CardDefaults.outlinedCardColors(
+			containerColor = color?.let { Color(it) } ?: MaterialTheme.colorScheme.background,
+			contentColor = color?.let { Color(it).getInverseBWColor() } ?: MaterialTheme.colorScheme.onBackground
+		)
+	) {
+		Column(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(16.dp)
+		) {
+			Text(
+				text = id?.toString() ?: "Loading...",
+				style = MaterialTheme.typography.bodyMedium
+			)
+			Spacer(modifier = Modifier.height(8.dp))
+
+			Text(
+				text = description ?: "No description",
+				style = if (description == null) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+				fontWeight = if (description == null) FontWeight.Normal else FontWeight.Bold,
+				fontStyle = if (description == null) FontStyle.Italic else FontStyle.Normal
+			)
+			Spacer(modifier = Modifier.height(8.dp))
+
+			Text(
+				text = "Created on: ${createdTimestamp?.timeStampToPrettyFull() ?: "Loading..."}",
+				style = MaterialTheme.typography.bodyMedium,
+				fontStyle = FontStyle.Italic
+			)
+			Spacer(modifier = Modifier.height(2.dp))
+
+			Text(
+				text = "Modified on: ${modifiedTimestamp?.timeStampToPrettyFull() ?: "Loading..."}",
+				style = MaterialTheme.typography.bodyMedium,
+				fontStyle = FontStyle.Italic
+			)
+		}
+	}
+}
+
+@Composable
+private fun DataView(
+	totalChapter: Int?,
+	totalNote: Int?
+) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(24.dp, 0.dp),
+	) {
+		DataItemView(
+			text = "${totalChapter?.toString() ?: "Loading..."} Chapter${if (totalNote == 1) "" else "s"}",
+			modifier = Modifier.weight(1f)
+		)
+		Spacer(modifier = Modifier.width(4.dp))
+		DataItemView(
+			text = "${totalNote?.toString() ?: "Loading..."} Note${if (totalNote == 1) "" else "s"}",
+			modifier = Modifier.weight(1f)
+		)
+	}
+}
+
+@Composable
+private fun DataItemView(
+	modifier: Modifier = Modifier,
+	text: String,
+) {
+	Card(
+		shape = RoundedCornerShape(24.dp),
+		colors = CardDefaults.outlinedCardColors(
+			containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
+			contentColor = MaterialTheme.colorScheme.onBackground
+		),
+		modifier = modifier.height(40.dp)
+	) {
+		Box(
+			contentAlignment = Alignment.Center,
+			modifier = Modifier.fillMaxSize()
+		) {
+			Text(
+				text = text,
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold,
+			)
+		}
 	}
 }

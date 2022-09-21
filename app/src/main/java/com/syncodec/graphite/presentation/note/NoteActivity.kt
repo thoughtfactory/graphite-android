@@ -1,7 +1,12 @@
 package com.syncodec.graphite.presentation.note
 
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -10,17 +15,26 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.custom.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.custom.dialog.DiscardDialog
+import com.syncodec.graphite.presentation.custom.printer.Printer
 import com.syncodec.graphite.presentation.custom.richText.RichTextEditor
 import com.syncodec.graphite.presentation.custom.richText.rememberRichTextEditor
+import com.syncodec.graphite.presentation.note.composable.dialog.LocationPermissionRationaleDialog
+import com.syncodec.graphite.presentation.note.composable.dialog.SetLocationDialog
 import com.syncodec.graphite.presentation.note.composable.dialog.chapterSelectorDialog.ChapterSelectorDialog
+import com.syncodec.graphite.presentation.note.composable.dialog.printDialog.PrintDialog
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.LocalRichTextEditor
 import com.syncodec.graphite.utils.LocalCompositionPremium
+import com.syncodec.graphite.utils.LocalRichTextEditor
 import io.realm.kotlin.types.ObjectId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class NoteActivity : ComponentActivity() {
@@ -76,29 +90,42 @@ class NoteActivity : ComponentActivity() {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primary)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.primary)
 
 				val richTextEditor = rememberRichTextEditor()
 
-				richTextEditor.setOnSaveData(listener = object : RichTextEditor.OnSaveDataListener {
-					override fun onSaveData(data: String) {
-						when(viewModel.isNew.value) {
-							true -> viewModel.putNote(data = data)
-							false -> viewModel.updateNote(data = data) {  }
-							null -> null
+				richTextEditor.setOnSaveData(
+					object : RichTextEditor.OnSaveDataListener {
+						override fun onSaveData(data: String) {
+							when (viewModel.isNew.value) {
+								true -> viewModel.putNote(data = data)
+								false -> viewModel.updateNote(data = data)
+								null -> null
+							}
 						}
 					}
-				})
+				)
 
-				richTextEditor.setOnPrintData(listener = object : RichTextEditor.OnPrintDataListener {
-					override fun onPrintData(data: String) {
-						viewModel.printNote(data = data)
+				richTextEditor.setOnPrintData(
+					object : RichTextEditor.OnPrintDataListener {
+						override fun onPrintData(data: String) {
+//							viewModel.printNote(data = data)
+
+							CoroutineScope(Dispatchers.Main).launch {
+								val printer = Printer(this@NoteActivity)
+								printer.createWebPrintJob(data)
+							}
+
+						}
 					}
-				})
+				)
 
 				var showDeleteDialog by viewModel.showDeleteDialog
 				var showDiscardDialog by viewModel.showDiscardDialog
 				var showChapterSelectorDialog by viewModel.showChapterSelectorDialog
+				var showLocationPermissionRationaleDialog by viewModel.showLocationPermissionRationaleDialog
+				var showSetLocationDialog by viewModel.showSetLocationDialog
+				var showPrintDialog by viewModel.showPrintDialog
 
 				val noteId by viewModel.noteId
 				var selectorParentChapterObject by viewModel.selectorChapterObject
@@ -135,10 +162,57 @@ class NoteActivity : ComponentActivity() {
 							parentChapter = it,
 							chapterList = selectorChapterList,
 							onClickChapter = { selectorParentChapterObject = it },
-							onSelectChapter = {
-								viewModel.chapterObject.value = it
-							}
+							onSelectChapter = { viewModel.chapterObject.value = it }
 						)
+					}
+
+					LocationPermissionRationaleDialog(
+						showDialog = showLocationPermissionRationaleDialog,
+						onRequestPermission = {
+							Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+								addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+								this.data = Uri.fromParts("package", packageName, null)
+								startActivity(this)
+							}
+						}
+					) { showLocationPermissionRationaleDialog = false }
+
+					SetLocationDialog(
+						showDialog = showSetLocationDialog,
+						latLng = viewModel.latLng.value,
+						address = viewModel.address.value,
+						reverseGeocode = { latLng, onAddressAvailable ->
+							if (latLng.longitude != null && latLng.latitude != null) {
+								viewModel.reverseGeocode(
+									latitude = latLng.latitude!!,
+									longitude = latLng.longitude!!,
+									onAddressAvailable = onAddressAvailable,
+									onIoException = {
+										Toast.makeText(this, "Unable to get address. Please check your internet connection", Toast.LENGTH_SHORT).show()
+									},
+									onException = {
+										Toast.makeText(this, "Unable to get address.", Toast.LENGTH_SHORT).show()
+									}
+								)
+							} else {
+								onAddressAvailable(null)
+							}
+						},
+						onDismiss = { showSetLocationDialog = false }
+					) { latLng, address ->
+						if (latLng.latitude == null || latLng.longitude == null) {
+							Toast.makeText(this, "Error setting location", Toast.LENGTH_SHORT).show()
+						} else {
+							viewModel.onReceiveLocation(latitude = latLng.latitude!!, longitude = latLng.longitude!!)
+							viewModel.onReceiveAddress(address = address)
+						}
+						showSetLocationDialog = false
+					}
+
+					PrintDialog(
+						showDialog = showPrintDialog
+					) {
+						showPrintDialog = false
 					}
 				}
 			}
@@ -149,6 +223,8 @@ class NoteActivity : ComponentActivity() {
 
 		if (viewModel.showChapterSelectorDialog.value) {
 			viewModel.showChapterSelectorDialog.value = false
+		} else if (viewModel.showSetLocationDialog.value) {
+			viewModel.showSetLocationDialog.value = false
 		} else {
 			if (viewModel.isNew.value == true) {
 				if (viewModel.isViewer.value) {

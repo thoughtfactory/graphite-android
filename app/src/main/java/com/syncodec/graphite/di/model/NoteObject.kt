@@ -5,10 +5,11 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 class NoteObject: RealmObject {
-	var id: ObjectId = ObjectId.create()
+	@PrimaryKey var id: ObjectId = ObjectId.create()
 
 	var createdTimestamp: Long = System.currentTimeMillis()
 	var modifiedTimestamp: Long = System.currentTimeMillis()

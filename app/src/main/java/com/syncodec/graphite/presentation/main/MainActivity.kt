@@ -19,10 +19,8 @@ class MainActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(
-					MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-				)
+				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
 				MainScreen()
 			}

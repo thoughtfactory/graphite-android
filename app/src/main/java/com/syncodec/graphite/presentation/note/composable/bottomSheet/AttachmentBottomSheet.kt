@@ -23,8 +23,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.button.BottomSheetButton
-import com.syncodec.graphite.presentation.custom.button.BottomSheetButtonData
+import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
+import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.AttachmentPreview

@@ -30,6 +30,7 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.Repository.getAttachmentFile
 import com.syncodec.graphite.di.model.*
+import com.syncodec.graphite.presentation.custom.printer.Printer
 import com.syncodec.graphite.utils.*
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineScope
@@ -51,8 +52,11 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	var isSaving: MutableState<Boolean> = mutableStateOf(false)
 
 	val showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
-	var showDiscardDialog: MutableState<Boolean> = mutableStateOf(false)
-	var showChapterSelectorDialog: MutableState<Boolean> = mutableStateOf(false)
+	val showDiscardDialog: MutableState<Boolean> = mutableStateOf(false)
+	val showChapterSelectorDialog: MutableState<Boolean> = mutableStateOf(false)
+	val showLocationPermissionRationaleDialog: MutableState<Boolean> = mutableStateOf(false)
+	val showSetLocationDialog: MutableState<Boolean> = mutableStateOf(false)
+	val showPrintDialog: MutableState<Boolean> = mutableStateOf(false)
 
 	val status: MutableState<Status> = mutableStateOf(Status.INIT)
 
@@ -260,10 +264,9 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		isViewer.value = false
 	}
 
-	fun updateNote(data: String? = null, action: () -> Unit) {
+	fun updateNote(data: String? = null) {
 		viewModelScope.launch(Dispatchers.IO) {
 			isUserScrollEnabled.value = false
-			action.invoke()
 			try {
 //				Only update if the entry already exists
 				if (this@NoteViewModel.noteId.value != null) {
@@ -310,11 +313,11 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 
 							if (chapterObject.value != null) {
 								Repository.putNote(chapterObject.value!!.id, this) {
+									Toast.makeText(getApplication(), "Note updated", Toast.LENGTH_SHORT).show()
 									loadAndViewData(chapterObject.value!!.id, this.id, Extra.Companion.Filter.READ_CHAPTER)
 								}
 							}
 
-//  				    	this@NoteViewModel.noteId.value = id
 							isViewer.value = true
 						} else {
 //							TODO Show error message
@@ -375,7 +378,9 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	private val fusedLocationClient: FusedLocationProviderClient = FusedLocationProviderClient(application.applicationContext)
 	private val cancellationToken = CancellationTokenSource().token
 
-	fun getLocation() {
+	fun getLocation(
+		tryShowRationale: Boolean = false,
+	) {
 		locationState.value = LocationState.INIT
 
 		viewModelScope.launch(Dispatchers.IO) {
@@ -383,52 +388,31 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 			if (getApplication<BaseApplication>().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
 				getApplication<BaseApplication>().checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
 			) {
-				withContext(Dispatchers.Main) {
-					locationState.value = LocationState.NO_PERMISSION
-				}
-				// TODO: Consider calling
-				//    ActivityCompat#requestPermissions
-				// here to request the missing permissions, and then overriding
-				//   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-				//                                          int[] grantResults)
-				// to handle the case where the user grants the permission. See the documentation
-				// for ActivityCompat#requestPermissions for more details.
+				withContext(Dispatchers.Main) { locationState.value = LocationState.NO_PERMISSION }
+				showLocationPermissionRationaleDialog.value = tryShowRationale
+
 				return@launch
 			}
-			fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken)
+
+			fusedLocationClient
+				.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken)
 				.addOnSuccessListener { location: Location? ->
 					if (location == null) {
 						this@NoteViewModel.latLng.value = null
+						if (isViewer.value) updateNote()
 						locationState.value = LocationState.ERROR
 						Toast.makeText(getApplication(), "Error getting location", Toast.LENGTH_SHORT).show()
 					} else {
-						this@NoteViewModel.latLng.value = LatLng(location.latitude, location.longitude)
-						locationState.value = LocationState.LATLNG
-					}
+						onReceiveLocation(latitude = location.latitude, longitude = location.longitude)
 
-//					activityState.addressState.value = NoteActivity.AddressState.LOCATION
-
-					if (location != null) {
 						reverseGeocode(
 							latitude = location.latitude,
 							longitude = location.longitude,
 							onAddressAvailable = { address ->
-								viewModelScope.launch(Dispatchers.Main) {
-									this@NoteViewModel.address.value = locationAddressFilter(address = address)
-
-									if (this@NoteViewModel.address.value != null) {
-										locationSnackbarHostState.showSnackbar(
-											message = this@NoteViewModel.address.value ?: "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
-											duration = SnackbarDuration.Short
-										)
-										locationState.value = LocationState.ADDRESS
-									} else {
-										locationSnackbarHostState.showSnackbar(
-											message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
-											duration = SnackbarDuration.Short
-										)
-										locationState.value = LocationState.LATLNG_NO_ADDRESS
-									}
+								if (address == null) {
+									Toast.makeText(getApplication(), "Error getting address", Toast.LENGTH_SHORT).show()
+								} else {
+									onReceiveAddress(address = locationAddressFilter(address = address))
 								}
 							},
 							onIoException = {
@@ -453,7 +437,6 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 					}
 				}
 				.addOnFailureListener {
-//				activityState.addressState.value = NoteActivity.AddressState.ERROR
 					viewModelScope.launch(Dispatchers.Main) {
 						locationSnackbarHostState.showSnackbar(
 							message = "Error getting location",
@@ -464,14 +447,47 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 		}
 	}
 
+	fun onReceiveLocation(
+		latitude: Double,
+		longitude: Double,
+	) {
+		this@NoteViewModel.latLng.value = LatLng(latitude, longitude)
+		if (isViewer.value) updateNote()
+		locationState.value = LocationState.LATLNG
+	}
+
+	fun onReceiveAddress(
+		address: String?,
+	) {
+		viewModelScope.launch(Dispatchers.Main) {
+			this@NoteViewModel.address.value = address
+			if (isViewer.value) updateNote()
+
+			if (this@NoteViewModel.address.value == null) {
+				locationSnackbarHostState.showSnackbar(
+					message = "Lat : ${this@NoteViewModel.latLng.value?.latitude}\nLng : ${this@NoteViewModel.latLng.value?.longitude}",
+					duration = SnackbarDuration.Short
+				)
+				locationState.value = LocationState.LATLNG_NO_ADDRESS
+			} else {
+				locationSnackbarHostState.showSnackbar(
+					message = this@NoteViewModel.address.value ?: "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
+					duration = SnackbarDuration.Short
+				)
+				locationState.value = LocationState.ADDRESS
+			}
+		}
+	}
+
 
 	fun removeLocation() {
 		latLng.value = null
 		address.value = null
 		locationState.value = LocationState.REMOVED
+		if (isViewer.value) updateNote()
 	}
 
-	private fun reverseGeocode(
+	fun reverseGeocode(
 		latitude: Double,
 		longitude: Double,
 		onAddressAvailable: (Address?) -> Unit,
@@ -486,6 +502,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 						onAddressAvailable(addresses.getOrNull(0))
 					}
 				} else {
+//					Deprecation is handled in upper block
 					val addresses = geocoder.getFromLocation(latitude, longitude, 1)
 					onAddressAvailable(addresses?.firstOrNull())
 				}
@@ -499,27 +516,18 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun onUpdateFavorite() {
-		if (isViewer.value) {
-			updateNote { isFavourite.value = !isFavourite.value }
-		} else {
-			isFavourite.value = !isFavourite.value
-		}
+		isFavourite.value = !isFavourite.value
+		if (isViewer.value) updateNote()
 	}
 
 	fun onUpdateLock() {
-		if (isViewer.value) {
-			updateNote { isLocked.value = !isLocked.value }
-		} else {
-			isLocked.value = !isLocked.value
-		}
+		isLocked.value = !isLocked.value
+		if (isViewer.value) updateNote()
 	}
 
 	fun updateTitle(title: String?) {
-		if (isViewer.value) {
-			updateNote { this.title.value = title }
-		} else {
-			this.title.value = title
-		}
+		this.title.value = title
+		if (isViewer.value) updateNote()
 	}
 
 	fun putTag(tagObject: TagObject) {
@@ -531,6 +539,10 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
 	}
 
 	fun printNote(data: String) {
-		println(data)
+		showPrintDialog.value = true
+		viewModelScope.launch(Dispatchers.Main) {
+			val printer = Printer(getApplication())
+			printer.createWebPrintJob(data)
+		}
 	}
 }

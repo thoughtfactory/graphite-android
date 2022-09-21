@@ -116,8 +116,9 @@ fun FilterBottomSheet(
 		StateButton(
 			stateList = filterStateList,
 			currentState = filterInclusivityState,
+			containerColor = MaterialTheme.colorScheme.background,
 			modifier = Modifier
-				.height(32.dp)
+				.height(36.dp)
 				.padding(24.dp, 0.dp),
 			onStateChange = onTagFilterChange
 		)
@@ -131,8 +132,9 @@ fun FilterBottomSheet(
 		StateButton(
 			stateList = sortOnStateList,
 			currentState = sortOn.ordinal,
+			containerColor = MaterialTheme.colorScheme.background,
 			modifier = Modifier
-				.height(32.dp)
+				.height(36.dp)
 				.padding(24.dp, 0.dp)
 		) { onUpdateSortOn(SortOn.values().getOrElse(it) { SortOn.TITLE }) }
 
@@ -145,8 +147,9 @@ fun FilterBottomSheet(
 		StateButton(
 			stateList = sortByStateList,
 			currentState = sortBy.ordinal,
+			containerColor = MaterialTheme.colorScheme.background,
 			modifier = Modifier
-				.height(32.dp)
+				.height(36.dp)
 				.padding(24.dp, 0.dp),
 		) { onUpdateSortBy(SortBy.values().getOrElse(it) { SortBy.ASCENDING }) }
 
@@ -159,8 +162,9 @@ fun FilterBottomSheet(
 		StateButton(
 			stateList = viewTypeStateList,
 			currentState = viewType.ordinal,
+			containerColor = MaterialTheme.colorScheme.background,
 			modifier = Modifier
-				.height(32.dp)
+				.height(36.dp)
 				.padding(24.dp, 0.dp),
 		) { onUpdateViewType(ViewType.values().getOrElse(it) { ViewType.LIST }) }
 

@@ -161,10 +161,11 @@ fun AddShowBottomSheet(
 					stateTint = MaterialTheme.colorScheme.primary
 				)
 			),
+			containerColor = MaterialTheme.colorScheme.background,
 			currentState = currentState,
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(32.dp)
+				.height(36.dp)
 				.padding(24.dp, 0.dp)
 		) { currentState = it }
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 
@@ -25,7 +26,8 @@ fun LocationSnackbarHost(snackbarData: SnackbarData) {
 		) {
 			Text(
 				text = snackbarData.visuals.message,
-				style = MaterialTheme.typography.titleMedium,
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold,
 				modifier = Modifier
 			)
 		}

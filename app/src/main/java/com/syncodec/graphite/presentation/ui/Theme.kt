@@ -1,8 +1,10 @@
 package com.syncodec.graphite.presentation.ui
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
@@ -55,3 +57,6 @@ val Color.Companion.LockClosedContainer:Color
 	get() = Color(0xFF76BA99)
 val Color.Companion.LockClosedContent:Color
 	get() = Color.White
+
+
+val dialogPadding = PaddingValues(24.dp, 24.dp, 24.dp, 12.dp)

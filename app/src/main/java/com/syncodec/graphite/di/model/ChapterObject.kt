@@ -7,10 +7,11 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 class ChapterObject : RealmObject {
-	var id: ObjectId = ObjectId.create()
+	@PrimaryKey var id: ObjectId = ObjectId.create()
 
 	var createdTimestamp: Long = System.currentTimeMillis()
 	var modifiedTimestamp: Long = System.currentTimeMillis()
@@ -39,12 +40,12 @@ class ChapterObject : RealmObject {
 				isLocked = this.isLocked,
 				totalChapterDirect = this.chapterList.size,
 				totalNoteDirect = this.noteList.size,
-				totalChapter = this.chapterList.size,
-				totalNote = this.noteList.size,
+				totalChapter = this.countTotalChapter(),
+				totalNote = this.countTotalNote(),
 				parentChapterId = this.parentChapterId
 		)
 	}
-	suspend fun getPath(): List<ChapterObjectLite> {
+	fun getPath(): List<ChapterObjectLite> {
 		val path = mutableListOf<ChapterObjectLite>()
 		var chapter: ChapterObject? = this
 		while (chapter?.parentChapterId != null) {
@@ -52,6 +53,22 @@ class ChapterObject : RealmObject {
 			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
 		}
 		return path
+	}
+
+	fun countTotalChapter(): Int {
+		var total = 0
+		for (chapter in chapterList) {
+			total += chapter.countTotalChapter()
+		}
+		return total + chapterList.size
+	}
+
+	fun countTotalNote(): Int {
+		var total = 0
+		for (chapter in chapterList) {
+			total += chapter.countTotalNote()
+		}
+		return total + noteList.size
 	}
 
 	override fun hashCode(): Int {

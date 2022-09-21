@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,12 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.custom.button.MenuButton
 import com.syncodec.graphite.presentation.custom.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.composable.bar.*
 import com.syncodec.graphite.utils.LocalCompositionPremium
+import com.syncodec.graphite.utils.tone
 import java.text.SimpleDateFormat
 
 
@@ -73,6 +76,8 @@ private fun DateTimeButton(
 	userTimestamp: Long,
 	onClick: () -> Unit
 ) {
+	val contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
+
 	AnimatedContent(targetState = userTimestamp) {
 		Row(
 			modifier = Modifier
@@ -85,7 +90,7 @@ private fun DateTimeButton(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_clock),
 				contentDescription = null,
-				tint = MaterialTheme.colorScheme.onSurface,
+				tint = contentColor,
 				modifier = Modifier.requiredSize(28.dp)
 			)
 			Column(
@@ -98,12 +103,14 @@ private fun DateTimeButton(
 				Text(
 					text = SimpleDateFormat("h:mm a, EEE").format(it),
 					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurface
+					color = contentColor,
+					fontWeight = FontWeight.Bold
 				)
 				Text(
 					text = SimpleDateFormat("MMM d, yyyy").format(it),
 					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSurface
+					color = contentColor,
+					fontWeight = FontWeight.Bold
 				)
 			}
 		}

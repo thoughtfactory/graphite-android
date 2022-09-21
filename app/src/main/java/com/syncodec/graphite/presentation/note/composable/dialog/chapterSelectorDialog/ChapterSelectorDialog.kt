@@ -24,7 +24,6 @@ import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.custom.button.MenuButton
 import com.syncodec.graphite.utils.getInverseBWColor
-import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.launch
 
 

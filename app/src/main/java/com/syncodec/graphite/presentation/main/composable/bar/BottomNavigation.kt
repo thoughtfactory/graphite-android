@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.bar
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -83,11 +82,9 @@ fun BottomNavigationBar(
 				},
 				colors = NavigationBarItemDefaults.colors(
 					selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-					unselectedIconColor = MaterialTheme.colorScheme.onSurface.tone(
-						isSystemInDarkTheme(), 1
-					),
-					selectedTextColor = MaterialTheme.colorScheme.onSurface,
-					unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+					unselectedIconColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+					selectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+					unselectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
 					indicatorColor = MaterialTheme.colorScheme.primary
 				),
 				selected = currentRoute == screen.route,
@@ -157,7 +154,7 @@ fun MainNavigation(
 					notebookList = notebookList.filter { it.parentChapterId == null },
 					viewType = viewType,
 					onClickFab = {
-						when(componentType) {
+						when (componentType) {
 							ComponentType.NOTE -> {
 								Intent(activity, NoteActivity::class.java).apply {
 									putExtra(Extra.Companion.Constant.IS_NEW.name, true)

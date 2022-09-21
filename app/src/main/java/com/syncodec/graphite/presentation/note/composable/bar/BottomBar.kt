@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +21,7 @@ import com.syncodec.graphite.presentation.note.composable.bar.bottomBar.EditorBo
 import com.syncodec.graphite.presentation.note.composable.bar.bottomBar.EditorToolbar
 import com.syncodec.graphite.presentation.note.composable.bar.bottomBar.ViewerBottomBar
 import com.syncodec.graphite.utils.LocalRichTextEditor
+import com.syncodec.graphite.utils.tone
 
 
 enum class ToolbarState {
@@ -58,10 +60,13 @@ fun BottomBar(
 		if (isViewer) toolbarState = ToolbarState.NONE
 	}
 
+	val containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
+	val contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+			.background(containerColor)
 	) {
 		EditorToolbar(
 			richTextEditor = richTextEditor,

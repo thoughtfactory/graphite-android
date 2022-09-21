@@ -5,7 +5,10 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.notebook.composable.screen.NotebookScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -39,13 +42,32 @@ class NotebookActivity : ComponentActivity() {
 
 		setContent {
 			BaseContent {
+
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primary)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
+				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
 				NotebookScreen()
 			}
 		}
 	}
 
+	override fun onBackPressed() {
+		val chapterObject by viewModel.chapterObject
+		var showManageTagDialog by viewModel.showManageTagDialog
+
+		if (chapterObject == null) {
+			super.onBackPressed()
+		} else {
+			if (showManageTagDialog) {
+				viewModel.showManageTagDialog.value = false
+			} else {
+				if (chapterObject!!.parentChapterId == null) {
+					super.onBackPressed()
+				} else {
+					chapterObject!!.parentChapterId?.let { viewModel.loadChapter(it) }
+				}
+			}
+		}
+	}
 }

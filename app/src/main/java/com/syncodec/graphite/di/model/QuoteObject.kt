@@ -1,12 +1,12 @@
 package com.syncodec.graphite.di.model
 
-import com.syncodec.graphite.utils.generatePrimaryKey
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 class QuoteObject: RealmObject {
-	val _id: ObjectId = ObjectId.create()
+	@PrimaryKey val id: ObjectId = ObjectId.create()
 
 	var date: String? = null
 	var quote: String? = null

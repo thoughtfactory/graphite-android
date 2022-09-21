@@ -221,6 +221,7 @@ fun rememberRichTextEditorLifecycleObserver(richTextEditor: RichTextEditor): Lif
 			when (event) {
 				Lifecycle.Event.ON_RESUME -> richTextEditor.onResume()
 				Lifecycle.Event.ON_PAUSE -> richTextEditor.onPause()
+				else -> null
 			}
 		}
 	}

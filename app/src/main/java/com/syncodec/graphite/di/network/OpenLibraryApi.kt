@@ -97,7 +97,7 @@ data class BookData(
 	@JsonProperty("author_name")
 	var authorList: List<String?>?,
 	@JsonProperty("first_publish_year")
-	var firstPublishedYear: Int?,
+	var firstPublishedYear: String?,
 	@JsonProperty("description")
 	var description: String?
 ) : Serializable {
@@ -106,7 +106,7 @@ data class BookData(
 		result = 31 * result + (title?.hashCode() ?: 0)
 		result = 31 * result + (coverI?.hashCode() ?: 0)
 		result = 31 * result + (authorList?.hashCode() ?: 0)
-		result = 31 * result + (firstPublishedYear ?: 0)
+		result = 31 * result + (firstPublishedYear?.hashCode() ?: 0)
 		result = 31 * result + (description?.hashCode() ?: 0)
 		return result
 	}

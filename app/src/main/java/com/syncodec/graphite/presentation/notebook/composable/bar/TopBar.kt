@@ -1,5 +1,7 @@
 package com.syncodec.graphite.presentation.notebook.composable.bar
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -7,16 +9,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.custom.button.MenuButton
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 
 
 @Composable
 fun TopBar(
-	title: String,
+	title: String?,
+	isLocked: Boolean,
+	isFavourite: Boolean,
+	onClickLock: () -> Unit,
+	onClickFavourite: () -> Unit,
 	onClickMenu: () -> Unit
 ) {
 	Column(
@@ -25,8 +30,11 @@ fun TopBar(
 			.background(MaterialTheme.colorScheme.background)
 	) {
 		Bar(
-			title = title,
-			onClickMenu = onClickMenu
+			title = title ?: "",
+			isLocked = isLocked,
+			isFavourite = isFavourite,
+			onClickLock = onClickLock,
+			onClickFavourite = onClickFavourite
 		)
 	}
 }
@@ -35,30 +43,59 @@ fun TopBar(
 @Composable
 private fun Bar(
 	title: String,
-	onClickMenu: () -> Unit,
+	isLocked: Boolean,
+	isFavourite: Boolean,
+	onClickLock: () -> Unit,
+	onClickFavourite: () -> Unit,
 ) {
 	val activity: NotebookActivity = LocalContext.current as NotebookActivity
 
-	SmallTopAppBar(
+	TopAppBar(
 		navigationIcon = {
 			MenuButton(
 				icon = R.drawable.ic_back,
-				contentDescription = "Back"
-			) { activity.finish() }
+				contentDescription = "Back",
+				tint = MaterialTheme.colorScheme.onBackground
+			) {
+				activity.onBackPressed()
+			}
 		},
 		title = {
-			Text(
-				text = title,
-				color = MaterialTheme.colorScheme.onSurface,
-			)
+			Crossfade(
+				targetState = title,
+				animationSpec = tween(300)
+			) {
+				Text(
+					text = it,
+					color = MaterialTheme.colorScheme.onBackground,
+					fontWeight = FontWeight.Bold
+				)
+			}
 		},
 		actions = {
 			MenuButton(
-				icon = R.drawable.ic_menu,
-				contentDescription = "Menu",
-				onClick = onClickMenu
+				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
+				contentDescription = if (isLocked) "Locked" else "Not locked",
+				tint = MaterialTheme.colorScheme.onBackground,
+				isChecked = isLocked,
+				isEnabled = true,
+				onClick = onClickLock
+			)
+
+			MenuButton(
+				icon = R.drawable.ic_favourite,
+				contentDescription = "Favourite",
+				tint = MaterialTheme.colorScheme.onBackground,
+				isChecked = isFavourite,
+				isEnabled = true,
+				onClick = onClickFavourite,
 			)
 		},
-		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+		colors = TopAppBarDefaults.smallTopAppBarColors(
+			containerColor = MaterialTheme.colorScheme.background,
+			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+			titleContentColor = MaterialTheme.colorScheme.onSurface,
+			actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+		)
 	)
 }

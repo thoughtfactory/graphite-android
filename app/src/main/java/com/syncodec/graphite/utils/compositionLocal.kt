@@ -3,6 +3,7 @@ package com.syncodec.graphite.utils
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.presentation.custom.richText.RichTextEditor
 
 
@@ -25,3 +26,6 @@ val LocalSetModalBottomSheetType = compositionLocalOf<(Int) -> Unit> { error("No
 //		mutableStateOf((if (value == "null") null else value) as T)
 //	}
 //)
+
+
+val LocalBackgroundColor = compositionLocalOf { Color.White }

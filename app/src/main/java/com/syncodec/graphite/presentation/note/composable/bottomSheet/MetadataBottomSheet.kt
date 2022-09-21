@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.note.composable.bottomSheet
 
-import android.util.Log
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -88,14 +89,10 @@ fun MetadataBottomSheet(
 			locationState = locationState,
 			latLng = latLng,
 			address = address,
-			onRequestPermission = {},
-			onRemoveLocation = {
-				viewModel.removeLocation()
-			},
-			onReloadLocation = {
-				viewModel.getLocation()
-			},
-			onSetLocation = {}
+			onRequestPermission = { viewModel.getLocation(tryShowRationale = true) },
+			onRemoveLocation = { viewModel.removeLocation() },
+			onReloadLocation = { viewModel.getLocation() },
+			onSetLocation = { viewModel.showSetLocationDialog.value = true }
 		)
 
 		Spacer(modifier = Modifier.height(32.dp))
@@ -162,7 +159,7 @@ private fun ParentCard(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun LocationCard(
 	locationState: LocationState,
@@ -175,7 +172,7 @@ private fun LocationCard(
 ) {
 	val cameraPositionState = rememberCameraPositionState {}
 
-	SideEffect {
+	LaunchedEffect(key1 = latLng) {
 		if (latLng?.toGLatLng() != null) {
 			latLng.toGLatLng()?.let {
 				cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(it, 15f))
@@ -194,190 +191,229 @@ private fun LocationCard(
 			.fillMaxWidth()
 			.padding(24.dp, 0.dp)
 	) {
-		when (locationState) {
-			LocationState.INIT -> {
-				Column(
-					modifier = Modifier
-						.padding(12.dp)
-						.fillMaxWidth(),
-				) {
-					Text(
-						text = "Getting location...",
-						style = MaterialTheme.typography.bodyMedium
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					OutlinedButton(onClick = onRemoveLocation) {
+		AnimatedContent(targetState = locationState) {
+			when(it) {
+				LocationState.INIT -> {
+					Column(
+						modifier = Modifier
+							.padding(12.dp)
+							.fillMaxWidth(),
+					) {
 						Text(
-							text = "Reload location",
-							style = MaterialTheme.typography.labelLarge
+							text = "Getting location...",
+							style = MaterialTheme.typography.bodyMedium
 						)
+						Spacer(modifier = Modifier.height(4.dp))
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.End
+						) {
+							OutlinedButton(onClick = onRemoveLocation) {
+								Text(
+									text = "Reload location",
+									style = MaterialTheme.typography.bodyMedium,
+									fontWeight = FontWeight.Bold
+								)
+							}
+							Spacer(modifier = Modifier.width(8.dp))
+							Button(onClick = onSetLocation) {
+								Text(
+									text = "Set location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+						}
 					}
 				}
-			}
-			LocationState.NO_PERMISSION -> {
-				Column(
-					modifier = Modifier
-						.padding(12.dp)
-						.fillMaxWidth(),
-				) {
-					Text(
-						text = "Location permission unavailable",
-						style = MaterialTheme.typography.bodyMedium
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					OutlinedButton(onClick = onRequestPermission) {
+				LocationState.NO_PERMISSION -> {
+					Column(
+						modifier = Modifier
+							.padding(12.dp)
+							.fillMaxWidth(),
+					) {
 						Text(
-							text = "Request permission",
-							style = MaterialTheme.typography.labelLarge
+							text = "Location permission unavailable",
+							style = MaterialTheme.typography.bodyMedium
 						)
+						Spacer(modifier = Modifier.height(4.dp))
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.End
+						) {
+							OutlinedButton(onClick = onRequestPermission) {
+								Text(
+									text = "Request permission",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+							Spacer(modifier = Modifier.width(8.dp))
+							Button(onClick = onSetLocation) {
+								Text(
+									text = "Set location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+						}
 					}
 				}
-			}
-			LocationState.LATLNG -> {
-				Column(
-					modifier = Modifier
-						.padding(12.dp)
-						.fillMaxWidth(),
-				) {
-					LocationGoogleMap(latLng = latLng)
-					Spacer(modifier = Modifier.height(8.dp))
-					Text(
-						text = "${latLng?.latitude}, ${latLng?.longitude}\nGetting address...",
-						style = MaterialTheme.typography.bodyMedium
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					Row(
-						modifier = Modifier.fillMaxWidth(),
-						horizontalArrangement = Arrangement.End
+				LocationState.LATLNG -> {
+					Column(
+						modifier = Modifier
+							.padding(12.dp)
+							.fillMaxWidth(),
 					) {
-						OutlinedButton(onClick = onRemoveLocation) {
-							Text(
-								text = "Remove location",
-								style = MaterialTheme.typography.labelLarge
-							)
-						}
-						Spacer(modifier = Modifier.width(8.dp))
-						Button(onClick = onSetLocation) {
-							Text(
-								text = "Set location",
-								style = MaterialTheme.typography.labelLarge
-							)
-						}
-					}
-				}
-			}
-			LocationState.LATLNG_NO_ADDRESS -> {
-				Column(
-					modifier = Modifier
-						.padding(12.dp)
-						.fillMaxWidth(),
-				) {
-					LocationGoogleMap(latLng = latLng)
-					Spacer(modifier = Modifier.height(8.dp))
-					Text(
-						text = "${latLng?.latitude}, ${latLng?.longitude}",
-						style = MaterialTheme.typography.bodyMedium
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					Row(
-						modifier = Modifier.fillMaxWidth(),
-						horizontalArrangement = Arrangement.End
-					) {
-						OutlinedButton(onClick = onRemoveLocation) {
-							Text(
-								text = "Remove location",
-								style = MaterialTheme.typography.labelLarge
-							)
-						}
-						Spacer(modifier = Modifier.width(8.dp))
-						Button(onClick = onSetLocation) {
-							Text(
-								text = "Set location",
-								style = MaterialTheme.typography.labelLarge
-							)
-						}
-					}
-				}
-			}
-			LocationState.ADDRESS -> {
-				Column(
-					modifier = Modifier
-						.padding(12.dp)
-						.fillMaxWidth(),
-				) {
-					LocationGoogleMap(latLng = latLng)
-					Spacer(modifier = Modifier.height(8.dp))
-					Text(
-						text = "${latLng?.latitude}, ${latLng?.longitude}\n$address",
-						style = MaterialTheme.typography.bodyMedium
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					Row(
-						modifier = Modifier.fillMaxWidth(),
-						horizontalArrangement = Arrangement.End
-					) {
-						OutlinedButton(onClick = onRemoveLocation) {
-							Text(
-								text = "Remove location",
-								style = MaterialTheme.typography.labelLarge
-							)
-						}
-						Spacer(modifier = Modifier.width(8.dp))
-						Button(onClick = onSetLocation) {
-							Text(
-								text = "Set location",
-								style = MaterialTheme.typography.labelLarge
-							)
-						}
-					}
-				}
-			}
-			LocationState.ERROR -> {
-				Column(
-					modifier = Modifier
-						.padding(12.dp)
-						.fillMaxWidth(),
-				) {
-					Text(
-						text = "Error getting location...",
-						style = MaterialTheme.typography.bodyMedium
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					OutlinedButton(onClick = onReloadLocation) {
+						LocationGoogleMap(latLng = latLng)
+						Spacer(modifier = Modifier.height(8.dp))
 						Text(
-							text = "Reload location",
-							style = MaterialTheme.typography.labelLarge
+							text = "${latLng?.latitude}, ${latLng?.longitude}\nGetting address...",
+							style = MaterialTheme.typography.bodyMedium
 						)
+						Spacer(modifier = Modifier.height(4.dp))
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.End
+						) {
+							OutlinedButton(onClick = onRemoveLocation) {
+								Text(
+									text = "Remove location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+							Spacer(modifier = Modifier.width(8.dp))
+							Button(onClick = onSetLocation) {
+								Text(
+									text = "Set location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+						}
 					}
 				}
-			}
-			LocationState.REMOVED -> {
-				Column(
-					modifier = Modifier
-						.padding(12.dp)
-						.fillMaxWidth(),
-				) {
-					Text(
-						text = "Location removed...",
-						style = MaterialTheme.typography.bodyMedium
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					Row(
-						modifier = Modifier.fillMaxWidth(),
-						horizontalArrangement = Arrangement.End
+				LocationState.LATLNG_NO_ADDRESS -> {
+					Column(
+						modifier = Modifier
+							.padding(12.dp)
+							.fillMaxWidth(),
 					) {
-						OutlinedButton(onClick = onReloadLocation) {
-							Text(
-								text = "Reload location",
-								style = MaterialTheme.typography.labelLarge
-							)
+						LocationGoogleMap(latLng = latLng)
+						Spacer(modifier = Modifier.height(8.dp))
+						Text(
+							text = "${latLng?.latitude}, ${latLng?.longitude}",
+							style = MaterialTheme.typography.bodyMedium
+						)
+						Spacer(modifier = Modifier.height(4.dp))
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.End
+						) {
+							OutlinedButton(onClick = onRemoveLocation) {
+								Text(
+									text = "Remove location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+							Spacer(modifier = Modifier.width(8.dp))
+							Button(onClick = onSetLocation) {
+								Text(
+									text = "Set location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
 						}
-						Spacer(modifier = Modifier.width(8.dp))
-						Button(onClick = onSetLocation) {
-							Text(
-								text = "Set location",
-								style = MaterialTheme.typography.labelLarge
-							)
+					}
+				}
+				LocationState.ADDRESS -> {
+					Column(
+						modifier = Modifier
+							.padding(12.dp)
+							.fillMaxWidth(),
+					) {
+						LocationGoogleMap(latLng = latLng)
+						Spacer(modifier = Modifier.height(8.dp))
+						Text(
+							text = "${latLng?.latitude}, ${latLng?.longitude}\n$address",
+							style = MaterialTheme.typography.bodyMedium
+						)
+						Spacer(modifier = Modifier.height(4.dp))
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.End
+						) {
+							OutlinedButton(onClick = onRemoveLocation) {
+								Text(
+									text = "Remove location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+							Spacer(modifier = Modifier.width(8.dp))
+							Button(onClick = onSetLocation) {
+								Text(
+									text = "Set location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+						}
+					}
+				}
+				LocationState.ERROR -> {
+					Column(
+						modifier = Modifier
+							.padding(12.dp)
+							.fillMaxWidth(),
+					) {
+						Text(
+							text = "Error getting location...",
+							style = MaterialTheme.typography.bodyMedium
+						)
+						Spacer(modifier = Modifier.height(4.dp))
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.End
+						) {
+							OutlinedButton(onClick = onReloadLocation) {
+								Text(
+									text = "Reload location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+							Spacer(modifier = Modifier.width(8.dp))
+							Button(onClick = onSetLocation) {
+								Text(
+									text = "Set location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+						}
+					}
+				}
+				LocationState.REMOVED -> {
+					Column(
+						modifier = Modifier
+							.padding(12.dp)
+							.fillMaxWidth(),
+					) {
+						Text(
+							text = "Location removed...",
+							style = MaterialTheme.typography.bodyMedium
+						)
+						Spacer(modifier = Modifier.height(4.dp))
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.End
+						) {
+							OutlinedButton(onClick = onReloadLocation) {
+								Text(
+									text = "Reload location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
+							Spacer(modifier = Modifier.width(8.dp))
+							Button(onClick = onSetLocation) {
+								Text(
+									text = "Set location",
+									style = MaterialTheme.typography.labelLarge
+								)
+							}
 						}
 					}
 				}

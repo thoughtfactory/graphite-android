@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.bucket
 
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,42 @@ class BucketViewModel: ViewModel() {
 		viewModelScope.launch(Dispatchers.IO) {
 			Repository.getBucketAsFlow(id = id).collect {
 				bucketObject.value = it
+			}
+		}
+	}
+
+	fun toggleLock() {
+		if (bucketObject.value != null) {
+			try {
+				Repository.updateBucket(
+					id = bucketObject.value!!.id,
+					title = bucketObject.value!!.title,
+					description = bucketObject.value!!.description,
+					isFavourite = bucketObject.value!!.isFavourite,
+					isLocked = !bucketObject.value!!.isLocked
+				)
+			} catch (e: Exception) {
+//				TODO Show error
+				e.printStackTrace()
+				Log.i("npr71", "Error updating chapter")
+			}
+		}
+	}
+
+	fun toggleFavourite() {
+		if (bucketObject.value != null) {
+			try {
+				Repository.updateBucket(
+					id = bucketObject.value!!.id,
+					title = bucketObject.value!!.title,
+					description = bucketObject.value!!.description,
+					isFavourite = !bucketObject.value!!.isFavourite,
+					isLocked = bucketObject.value!!.isLocked
+				)
+			} catch (e: Exception) {
+//				TODO Show error
+				e.printStackTrace()
+				Log.i("npr71", "Error updating chapter")
 			}
 		}
 	}

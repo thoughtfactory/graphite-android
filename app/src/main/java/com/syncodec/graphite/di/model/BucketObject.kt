@@ -19,8 +19,8 @@ enum class BucketType {
 class BucketObject: RealmObject {
 	@PrimaryKey var id: ObjectId = ObjectId.create()
 
-	var createdTimestamp: Long = 0
-	var modifiedTimestamp: Long = 0
+	var createdTimestamp: Long = System.currentTimeMillis()
+	var modifiedTimestamp: Long = System.currentTimeMillis()
 	var title: String = ""
 	var description: String? = null
 	var bucketType: String = ""

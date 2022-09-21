@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.custom.button.stateButton
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -34,19 +35,21 @@ data class StateData(
 
 @Composable
 fun StateButton(
-	stateList: List<StateData>,
-	currentState: Int,
 	modifier: Modifier,
+	stateList: List<StateData>,
+	containerColor: Color = MaterialTheme.colorScheme.surface,
+	currentState: Int,
 	onStateChange: (Int) -> Unit
 ) {
 	val interactionSource = remember { MutableInteractionSource() }
 	val spacerWeight by animateFloatAsState(targetValue = currentState.toFloat())
 
 	Box(
+		contentAlignment = Alignment.Center,
 		modifier = modifier
 			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1), RoundedCornerShape(8.dp)),
-		contentAlignment = Alignment.Center
+			.background(containerColor, RoundedCornerShape(31))
+			.border(4.dp, containerColor, RoundedCornerShape(31))
 	) {
 		Row(
 			modifier = Modifier.fillMaxSize(),
@@ -57,8 +60,8 @@ fun StateButton(
 				modifier = Modifier
 					.fillMaxHeight()
 					.weight(1f)
-					.clip(RoundedCornerShape(12.dp))
-					.background(stateList[currentState].stateTint ?: MaterialTheme.colorScheme.primary)
+					.background(stateList[currentState].stateTint ?: MaterialTheme.colorScheme.primary, RoundedCornerShape(31))
+					.border(4.dp, containerColor, RoundedCornerShape(31))
 			)
 			Spacer(modifier = Modifier.weight((stateList.size - spacerWeight - 1 + 0.00001).toFloat()))
 		}

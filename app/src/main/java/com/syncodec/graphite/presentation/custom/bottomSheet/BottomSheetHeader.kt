@@ -7,7 +7,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 
@@ -15,8 +17,12 @@ import androidx.compose.ui.unit.dp
 fun BottomSheetHeader(
 	title: String,
 	icon: Int,
-	subTitle: String? = null
+	subTitle: String? = null,
+	contentColor: Color? = null,
 ) {
+
+	val _contentColor = contentColor ?: MaterialTheme.colorScheme.onSurface
+
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier
@@ -25,8 +31,9 @@ fun BottomSheetHeader(
 	) {
 		Text(
 			text = title,
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface
+			style = MaterialTheme.typography.titleLarge,
+			color = _contentColor,
+			fontWeight = FontWeight.Bold
 		)
 
 		Spacer(modifier = Modifier.weight(1f))
@@ -34,7 +41,7 @@ fun BottomSheetHeader(
 		Icon(
 			painter = painterResource(id = icon),
 			contentDescription = null,
-			tint = MaterialTheme.colorScheme.primary,
+			tint = _contentColor,
 			modifier = Modifier.requiredSize(24.dp)
 		)
 	}
@@ -43,7 +50,7 @@ fun BottomSheetHeader(
 		Text(
 			text = subTitle,
 			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurface,
+			color = _contentColor,
 			maxLines = 2,
 			modifier = Modifier
 				.fillMaxWidth()

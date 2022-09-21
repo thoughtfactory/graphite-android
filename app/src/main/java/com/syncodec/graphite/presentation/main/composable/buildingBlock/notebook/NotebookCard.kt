@@ -13,15 +13,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.utils.getInverseBWColor
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NotebookCard(
 	title: String,
-	color: Int?,
+	color: Color,
 	isSelected: Boolean,
 	onClick: (() -> Unit)?,
 	onLongClick: (() -> Unit)?
@@ -33,7 +35,7 @@ fun NotebookCard(
 			.fillMaxSize()
 			.aspectRatio(0.75f)
 			.padding(16.dp)
-			.background(if (color != null) Color(color) else Color.Transparent, RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
+			.background(color, RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
 			.clip(RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
 			.combinedClickable(
 				enabled = onClick != null || onLongClick != null,
@@ -64,8 +66,10 @@ fun NotebookCard(
 				Text(
 					text = title,
 					style = MaterialTheme.typography.titleLarge,
-					color = Color.White.copy(alpha = 0.88f),
+					color = color.getInverseBWColor(),
 					textAlign = TextAlign.Start,
+					fontWeight = FontWeight.Bold,
+					maxLines = 1,
 					modifier = Modifier.fillMaxWidth(),
 				)
 //				Text(

@@ -57,7 +57,7 @@ fun ChapterBottomSheet(
 		BottomSheetHeader(
 			title = "New Chapter",
 			icon = R.drawable.ic_notebook,
-			subTitle = "Add a chapter to your notebook"
+			subTitle = "Add a chapter to your notebook",
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))

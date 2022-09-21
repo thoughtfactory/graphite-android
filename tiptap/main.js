@@ -205,7 +205,7 @@ const editor = new Editor.Editor({
 });
 
 function onCreate() {
-    bridge.onCreate();
+    // bridge.onCreate();
 };
 
 editor.on('transaction', ({
@@ -277,7 +277,7 @@ editor.on('transaction', ({
     currentFormat.canOutdent = editor.can().liftListItem('listItem');
     // editor.isActive('textStyle', { fontFamily: 'serif' })
 
-    bridge.format(JSON.stringify(currentFormat));
+    // bridge.format(JSON.stringify(currentFormat));
 });
 
 editor.getData = () => {
@@ -285,7 +285,7 @@ editor.getData = () => {
     data.dataJson = editor.getJSON();
     data.dataText = editor.getText();
 
-    bridge.saveData(JSON.stringify(data));
+    // bridge.saveData(JSON.stringify(data));
 };
 
 editor.setBaseFontFamily = (fontFamily) => {
@@ -318,17 +318,17 @@ editor.importData = (importData, importer, cachePath) => {
     data.importer = importer;
     data.cachePath = cachePath;
 
-    bridge.saveData(JSON.stringify(data));
+    // bridge.saveData(JSON.stringify(data));
 };
 
 editor.printData = (data) => {
     editor.commands.setContent(data);
-    bridge.printData(editor.getHTML());
+    // bridge.printData(editor.getHTML());
 };
 
 editor.getPlainText = (data) => {
     editor.commands.setContent(data);
-    bridge.getPlainText(editor.getText());
+    // bridge.getPlainText(editor.getText());
 };
 
 module.exports = editor;

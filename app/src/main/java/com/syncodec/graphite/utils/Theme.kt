@@ -17,6 +17,15 @@ fun Color.toHexString(): String {
 	return String.format("#%06X", (0xFFFFFF and this.toArgb()))
 }
 
+fun String.toColor(color: Color): Color {
+	return try {
+		Color(android.graphics.Color.parseColor("#${this}"))
+	} catch (e: Exception) {
+		e.printStackTrace()
+		color
+	}
+}
+
 fun getRandomColor(): Color {
 	return Color(Random.nextInt(256), Random.nextInt(256), Random.nextInt(256), 255)
 }

@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.button.BottomSheetButton
-import com.syncodec.graphite.presentation.custom.button.BottomSheetButtonData
+import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
+import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.main.MainActivity
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.utils.FunctionPreviewParameter

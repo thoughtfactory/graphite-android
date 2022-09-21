@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
@@ -20,7 +21,13 @@ import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
 @Composable
 fun TopBar(
 	title: String,
-	bucketType: BucketType
+	bucketType: BucketType,
+	isFavourite: Boolean,
+	isLocked: Boolean,
+	itemState: Int,
+	onClickFavourite: () -> Unit,
+	onClickLock: () -> Unit,
+	onStateChange: (Int) -> Unit
 ) {
 	Column(
 		modifier = Modifier
@@ -29,12 +36,17 @@ fun TopBar(
 	) {
 		Bar(
 			title = title,
+			isLocked = isLocked,
+			isFavourite = isFavourite,
+			onClickFavourite = onClickFavourite,
+			onClickLock = onClickLock
 		)
 
 		StateSelector(
 			showStateSelector = true,
-			currentState = 0,
-			bucketType = bucketType
+			bucketType = bucketType,
+			currentState = itemState,
+			onStateChange = onStateChange
 		)
 	}
 }
@@ -43,37 +55,67 @@ fun TopBar(
 @Composable
 private fun Bar(
 	title: String,
+	isFavourite: Boolean,
+	isLocked: Boolean,
+	onClickFavourite: () -> Unit,
+	onClickLock: () -> Unit
 ) {
 	val activity: BucketActivity = LocalContext.current as BucketActivity
 
-	SmallTopAppBar(
+	TopAppBar(
 		navigationIcon = {
 			MenuButton(
 				icon = R.drawable.ic_back,
-				contentDescription = "Back"
-			) { activity.finish() }
+				contentDescription = "Back",
+				tint = MaterialTheme.colorScheme.onBackground
+			) { activity.onBackPressed() }
 		},
 		title = {
-			Text(
-				text = title,
-				color = MaterialTheme.colorScheme.onSurface,
-			)
+			Crossfade(
+				targetState = title,
+				animationSpec = tween(300)
+			) {
+				Text(
+					text = it,
+					color = MaterialTheme.colorScheme.onBackground,
+					fontWeight = FontWeight.Bold
+				)
+			}
 		},
 		actions = {
 			MenuButton(
-				icon = R.drawable.ic_menu,
-				contentDescription = "Menu",
-			){}
+				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
+				contentDescription = if (isLocked) "Locked" else "Not locked",
+				tint = MaterialTheme.colorScheme.onBackground,
+				isChecked = isLocked,
+				isEnabled = true,
+				onClick = onClickLock
+			)
+
+			MenuButton(
+				icon = R.drawable.ic_favourite,
+				contentDescription = "Favourite",
+				tint = MaterialTheme.colorScheme.onBackground,
+				isChecked = isFavourite,
+				isEnabled = true,
+				onClick = onClickFavourite,
+			)
 		},
-		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+		colors = TopAppBarDefaults.smallTopAppBarColors(
+			containerColor = MaterialTheme.colorScheme.background,
+			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+			titleContentColor = MaterialTheme.colorScheme.onSurface,
+			actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+		)
 	)
 }
 
 @Composable
 private fun StateSelector(
 	showStateSelector: Boolean,
+	bucketType: BucketType,
 	currentState: Int,
-	bucketType: BucketType
+	onStateChange: (Int) -> Unit
 ) {
 	val stateNameList: List<String> = when (bucketType) {
 		BucketType.TODO -> listOf("All", "To Do", "Doing", "Done")
@@ -150,8 +192,9 @@ private fun StateSelector(
 					)
 				),
 				currentState = currentState,
-				modifier = Modifier.height(32.dp)
-			) { }
+				modifier = Modifier.height(36.dp),
+				onStateChange = onStateChange
+			)
 			Spacer(modifier = Modifier.height(8.dp))
 		}
 	}

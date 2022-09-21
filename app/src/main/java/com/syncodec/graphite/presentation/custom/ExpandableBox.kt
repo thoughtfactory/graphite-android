@@ -30,7 +30,7 @@ fun ExpandableBox(
 	val exitFadeOut = remember { fadeOut(animationSpec = TweenSpec(durationMillis = durationMillis, easing = LinearOutSlowInEasing)) }
 	val exitCollapse = remember {
 		if (orientation == ExpandableBoxOrientation.VERTICAL) {
-			shrinkHorizontally(animationSpec = TweenSpec(durationMillis = durationMillis, easing = LinearOutSlowInEasing))
+			shrinkVertically(animationSpec = TweenSpec(durationMillis = durationMillis, easing = LinearOutSlowInEasing))
 		} else {
 			shrinkHorizontally(animationSpec = TweenSpec(durationMillis = durationMillis, easing = LinearOutSlowInEasing))
 		}

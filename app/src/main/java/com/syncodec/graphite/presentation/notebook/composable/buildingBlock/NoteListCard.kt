@@ -1,6 +1,8 @@
 package com.syncodec.graphite.presentation.notebook.composable.buildingBlock
 
 import android.graphics.Bitmap
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +21,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
@@ -26,7 +29,7 @@ import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.ObjectId
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun NoteListCard(
 	id: ObjectId,
@@ -43,45 +46,52 @@ fun NoteListCard(
 	attachmentThumbnail: Bitmap?,
 	address: String?,
 	latLng: LatLng?,
+	tagList: List<TagObjectLite>,
 	isVisible: Boolean = false,
 	selectedColor: Color,
 	onClick: () -> Unit,
 	onLongClick: (() -> Unit)? = null
 ) {
-	OutlinedCard(
-		onClick = onClick,
-		border = BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
-		colors = CardDefaults.outlinedCardColors(
-			containerColor = Color.Transparent,
-			contentColor = MaterialTheme.colorScheme.onSurface,
-		),
-		modifier = Modifier.padding(12.dp, 4.dp)
+	AnimatedVisibility(
+		visible = isVisible,
+		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
+		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(12.dp)
+		OutlinedCard(
+			onClick = onClick,
+			border = BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
+			colors = CardDefaults.outlinedCardColors(
+				containerColor = Color.Transparent,
+				contentColor = MaterialTheme.colorScheme.onBackground,
+			),
+			modifier = Modifier.padding(12.dp, 4.dp)
 		) {
-			Row(
-				modifier = Modifier.fillMaxWidth()
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(12.dp)
 			) {
-				Title(
-					showFullTime = true,
-					timestamp = timestamp,
-					title = title,
-					isLocked = isLocked,
-					isFavourite = isFavourite,
-					attachmentCount = attachmentCount
+				Row(
+					modifier = Modifier.fillMaxWidth()
+				) {
+					Title(
+						showFullTime = true,
+						timestamp = timestamp,
+						title = title,
+						isLocked = isLocked,
+						isFavourite = isFavourite,
+						attachmentCount = attachmentCount
+					)
+				}
+
+				Spacer(modifier = Modifier.height(4.dp))
+
+				Content(
+					contentThumbnail = contentThumbnail,
+					attachmentCount = attachmentCount,
+					attachmentThumbnail = attachmentThumbnail
 				)
 			}
-
-			Spacer(modifier = Modifier.height(4.dp))
-
-			Content(
-				contentThumbnail = contentThumbnail,
-				attachmentCount = attachmentCount,
-				attachmentThumbnail = attachmentThumbnail
-			)
 		}
 	}
 }

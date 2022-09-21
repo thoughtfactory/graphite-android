@@ -6,15 +6,24 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 class TagObject : RealmObject {
-	var id: ObjectId = ObjectId.create()
+	@PrimaryKey var id: ObjectId = ObjectId.create()
 
 	var tag: String = ""
 	var color: Int = getRandomColor().toArgb()
 
-	var noteList: RealmList<NoteObject> = realmListOf()
+	var objectIdList: RealmList<ObjectId> = realmListOf()
+
+	fun toLite(): TagObjectLite {
+		return TagObjectLite(
+			id = id,
+			tag = tag,
+			color = color
+		)
+	}
 
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
@@ -34,3 +43,9 @@ class TagObject : RealmObject {
 		return result
 	}
 }
+
+data class TagObjectLite(
+	val id: ObjectId,
+	val tag: String,
+	val color: Int
+)

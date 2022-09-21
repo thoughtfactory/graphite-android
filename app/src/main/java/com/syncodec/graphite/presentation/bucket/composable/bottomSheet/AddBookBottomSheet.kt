@@ -1,15 +1,17 @@
 package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,11 +21,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -39,8 +43,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.network.BookData
-import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
+import com.syncodec.graphite.di.network.GoogleBookData
+import com.syncodec.graphite.di.network.GoogleBookSearchResult
 import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
@@ -49,9 +53,10 @@ import com.syncodec.graphite.presentation.custom.text.LargeTextField
 import com.syncodec.graphite.presentation.custom.LoadingView
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
-import com.syncodec.graphite.utils.tone
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.SocketTimeoutException
@@ -62,8 +67,9 @@ import java.net.SocketTimeoutException
 fun AddBookBottomSheet(
 	closeSheet: () -> Unit
 ) {
-	val objectMapper = jsonMapper { addModule(kotlinModule()) }
-		.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+	val context = LocalContext.current
+
+	val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	val activity: BucketActivity = LocalContext.current as BucketActivity
 	val viewModel: BucketViewModel = viewModel()
@@ -75,7 +81,10 @@ fun AddBookBottomSheet(
 	val focusRequester = remember { FocusRequester() }
 
 	var status: Status by remember { mutableStateOf(Status.INIT) }
-	var openLibraryTitleSearchResult: OpenLibraryTitleSearchResult? by remember { mutableStateOf(null) }
+	var googleBooksSearchResult: GoogleBookSearchResult? by remember { mutableStateOf(null) }
+
+	var currentState by rememberSaveable { mutableStateOf(0) }
+	val lazyGridState = rememberLazyGridState()
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -113,33 +122,27 @@ fun AddBookBottomSheet(
 					status = Status.LOADING
 					focusRequester.freeFocus()
 					keyboardController?.hide()
-					openLibraryTitleSearchResult = null
+					googleBooksSearchResult = null
 					scope.launch(Dispatchers.IO) {
 						try {
-							Repository
-								.openLibraryApi
-								.searchForTitle(queryText) { response ->
-									if (response?.body == null) {
-										status = Status.ERROR
-									} else {
-										openLibraryTitleSearchResult =
-											objectMapper.readValue(response.body!!.string())
-										status = Status.LOADED
-									}
+							Repository.googleBooksApi.searchForAll(queryText) {response ->
+								if (response?.body == null) {
+									status = Status.ERROR
+								} else {
+									googleBooksSearchResult = objectMapper.readValue(response.body!!.string())
+									Log.i("npr71", "googleBooksSearchResult: $googleBooksSearchResult")
+									status = Status.LOADED
 								}
+							}
 						} catch (e: SocketTimeoutException) {
-//								TODO update error message and image
+//							TODO update error message and image
 							scope.launch(Dispatchers.Main) {
-								Toast.makeText(
-									activity,
-									"Timeout getting search results",
-									Toast.LENGTH_SHORT
-								).show()
+								Toast.makeText(activity, "Timeout getting search results", Toast.LENGTH_SHORT).show()
 							}
 							status = Status.ERROR
 							e.printStackTrace()
 						} catch (e: Exception) {
-//								TODO update error message and image
+//							TODO update error message and image
 							status = Status.ERROR
 							e.printStackTrace()
 						}
@@ -149,6 +152,39 @@ fun AddBookBottomSheet(
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
+
+		StateButton(
+			stateList = listOf(
+				StateData(
+					title = "All",
+					icon = R.drawable.ic_state,
+					stateTint = MaterialTheme.colorScheme.primary
+				),
+				StateData(
+					title = "Title",
+					icon = R.drawable.ic_title,
+					stateTint = MaterialTheme.colorScheme.primary
+				),
+				StateData(
+					title = "Author",
+					icon = R.drawable.ic_book,
+					stateTint = MaterialTheme.colorScheme.primary
+				),
+				StateData(
+					title = "ISBN",
+					icon = R.drawable.ic_book,
+					stateTint = MaterialTheme.colorScheme.primary
+				),
+			),
+			containerColor = MaterialTheme.colorScheme.background,
+			currentState = currentState,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(36.dp)
+				.padding(24.dp, 0.dp)
+		) { currentState = it }
+
+		Spacer(modifier = Modifier.height(4.dp))
 
 		AnimatedContent(targetState = status) {
 			when (it) {
@@ -162,31 +198,34 @@ fun AddBookBottomSheet(
 					) { LoadingView() }
 				}
 				Status.LOADED -> {
-//						TODO    What if list is empty?
+//					TODO    What if list is empty?
 					LazyVerticalGrid(
 						columns = GridCells.Fixed(3),
-						modifier = Modifier.padding(8.dp)
+						state = lazyGridState,
+						modifier = Modifier.padding(16.dp, 0.dp)
 					) {
-						openLibraryTitleSearchResult?.docs?.forEach { bookMetadata ->
-							item {
-								BookCard(
-									bookData = bookMetadata
-								) {
-									focusRequester.freeFocus()
-									keyboardController?.hide()
+						googleBooksSearchResult?.items?.forEach { googleBookData ->
+							if (googleBookData!= null) {
+								item {
+									BookCard(
+										googleBookData = googleBookData
+									) {
+										focusRequester.freeFocus()
+										keyboardController?.hide()
 
-									if (viewModel.bucketObject.value != null && bookMetadata.key != null) {
-										Intent(activity, BucketItemActivity::class.java).apply {
-											putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-											putExtra(Extra.Companion.Constant.BUCKET_ID.name, viewModel.bucketObject.value!!.id.toString())
-											putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.BOOK.name)
-											putExtra(Extra.Companion.Constant.BOOK_KEY.name, bookMetadata.key)
-											putExtra(Extra.Companion.Constant.EXTRA_DATA.name, bookMetadata)
+										if (viewModel.bucketObject.value != null && googleBookData.id != null) {
+											Intent(activity, BucketItemActivity::class.java).apply {
+												putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+												putExtra(Extra.Companion.Constant.BUCKET_ID.name, viewModel.bucketObject.value!!.id.toString())
+												putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.BOOK.name)
+												putExtra(Extra.Companion.Constant.BOOK_KEY.name, googleBookData.id)
+												putExtra(Extra.Companion.Constant.EXTRA_DATA.name, googleBookData)
 
-											activity.startActivity(this)
+												activity.startActivity(this)
+											}
+										} else {
+											Toast.makeText(activity, "Error adding book to bucket", Toast.LENGTH_SHORT).show()
 										}
-									} else {
-										Toast.makeText(activity, "Error adding book to bucket", Toast.LENGTH_SHORT).show()
 									}
 								}
 							}
@@ -221,55 +260,64 @@ fun AddBookBottomSheet(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BookCard(
-	bookData: BookData,
+	googleBookData: GoogleBookData,
 	onClick: () -> Unit
 ) {
 	val context = LocalContext.current
 
 	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
+		horizontalAlignment = Alignment.Start,
 		modifier = Modifier.padding(8.dp),
 	) {
-		Card(
-			colors = CardDefaults.cardColors(
-				MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
-			),
-			elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-			shape = RoundedCornerShape(12.dp),
-			modifier = Modifier.aspectRatio(0.75f),
-			onClick = { onClick() }
+		Box(
+			modifier = Modifier
+				.aspectRatio(0.66666f)
+				.background(MaterialTheme.colorScheme.background.copy(alpha = 0.47f), RoundedCornerShape(12.dp))
+				.clip(RoundedCornerShape(12.dp))
+				.clickable { onClick() }
 		) {
-			if (bookData.coverI != null) {
+			if (googleBookData.volumeInfo?.imageLinks?.thumbnail != null) {
 				AsyncImage(
 					model = ImageRequest.Builder(context)
-						.data("https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg")
+						.data("https://books.google.com/books/content?id=${googleBookData.id}&printsec=frontcover&img=1&zoom=10&edge=curl&source=gbs_api")
 						.crossfade(300)
 						.build(),
 					placeholder = null,
-					contentDescription = bookData.key,
+					contentDescription = googleBookData.volumeInfo.title,
 					contentScale = ContentScale.Crop,
 					modifier = Modifier.fillMaxSize(),
 				)
 			}
 		}
 
+		Spacer(modifier = Modifier.height(4.dp))
+
 		Text(
-			text = bookData.title ?: "",
+			text = googleBookData.volumeInfo?.title ?: "Untitled",
 			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier.padding(0.dp, 4.dp, 0.dp, 0.dp)
+			color = MaterialTheme.colorScheme.onSurface,
+			fontStyle = if (googleBookData.volumeInfo?.title == null) FontStyle.Italic else FontStyle.Normal,
 		)
 
+		Spacer(modifier = Modifier.height(4.dp))
 		var author = ""
-		bookData.authorList?.forEach { author += " $it" }
+		googleBookData.volumeInfo?.authors?.forEachIndexed { index, s -> author += if (index == 0) s else ", $s" }
 		Text(
 			text = "~ $author",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier.padding(0.dp, 4.dp, 0.dp, 0.dp)
 		)
+
+		googleBookData.volumeInfo?.publishedDate?.take( 4)?.let {
+			Spacer(modifier = Modifier.height(4.dp))
+			Text(
+				text = it,
+				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onBackground,
+				fontStyle = FontStyle.Italic,
+			)
+		}
 	}
 }

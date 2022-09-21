@@ -7,7 +7,8 @@ enum class BucketBottomSheetType {
 	MENU,
 	ADD_TODO,
 	ADD_BOOK,
-	ADD_SHOW
+	ADD_SHOW,
+	ADD_LINK
 }
 
 @Composable
@@ -20,5 +21,6 @@ fun SheetLayout(
 		BucketBottomSheetType.ADD_TODO -> AddTodoBottomSheet(closeSheet = closeSheet)
 		BucketBottomSheetType.ADD_BOOK -> AddBookBottomSheet(closeSheet = closeSheet)
 		BucketBottomSheetType.ADD_SHOW -> AddShowBottomSheet(closeSheet = closeSheet)
+		else -> {}
 	}
 }

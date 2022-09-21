@@ -2,27 +2,41 @@ package com.syncodec.graphite.di
 
 import android.content.Context
 import com.syncodec.graphite.di.model.*
+import com.syncodec.graphite.di.network.FirebaseStorageApi
+import com.syncodec.graphite.di.network.GoogleBooksApi
 import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.network.TMDbApi
-
-import com.syncodec.graphite.di.network.FirebaseStorageApi
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
 
 
 object Repository {
-	val realm = Realm.open(RealmConfiguration.Builder(setOf(BaseObject::class, ChapterObject::class, NoteObject::class, AttachmentObject::class, BucketObject::class, BucketItemObject::class, TagObject::class)).build())
+
+	val realm = Realm.open(
+		RealmConfiguration.Builder(
+			setOf(
+				BaseObject::class,
+				ChapterObject::class,
+				NoteObject::class,
+				AttachmentObject::class,
+				BucketObject::class,
+				BucketItemObject::class,
+				TagObject::class
+			)
+		).build()
+	)
 
 	val firebaseStorageApi = FirebaseStorageApi()
 	val openLibraryApi = OpenLibraryApi()
+	val googleBooksApi = GoogleBooksApi()
 	val tmDbApi = TMDbApi()
-
 
 	fun putBase(baseObject: BaseObject) {
 		CoroutineScope(Dispatchers.IO).launch {
@@ -75,7 +89,7 @@ object Repository {
 
 	fun getAllNotebookAsFlow() = realm.query(ChapterObject::class).asFlow().map { it.list }
 
-	fun getNotebookAsFlow(id: ObjectId) = realm.query(ChapterObject::class,"id == $0 ", id).first().asFlow().map { it.obj }
+	fun getNotebookAsFlow(id: ObjectId) = realm.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 
 	fun putChapter(parentChapterId: ObjectId?, chapterObject: ChapterObject) {
 		CoroutineScope(Dispatchers.IO).launch {
@@ -92,9 +106,33 @@ object Repository {
 		}
 	}
 
-	fun getChapter(id: ObjectId) = realm.query(ChapterObject::class,"id == $0 ", id).first().find()
+	fun updateChapter(
+		id: ObjectId,
+		title: String,
+		description: String?,
+		color: Int,
+		isFavourite: Boolean,
+		isLocked: Boolean,
+	) {
+		CoroutineScope(Dispatchers.IO).launch {
+			realm.write {
+				val chapter = realm.query(ChapterObject::class, "id == $0", id).first().find()
+				if (chapter != null) {
+					findLatest(chapter)?.apply {
+						this.title = title
+						this.description = description
+						this.color = color
+						this.isFavourite = isFavourite
+						this.isLocked = isLocked
+					}
+				}
+			}
+		}
+	}
 
-	fun getChapterAsFlow(id: ObjectId) = realm.query(ChapterObject::class,"id == $0 ", id).first().asFlow().map { it.obj }
+	fun getChapter(id: ObjectId) = realm.query(ChapterObject::class, "id == $0 ", id).first().find()
+
+	fun getChapterAsFlow(id: ObjectId) = realm.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 
 	fun getAllChapterAsFlow(): Flow<List<ChapterObject>> = realm.query(ChapterObject::class).asFlow().map { it.list }
 
@@ -122,15 +160,15 @@ object Repository {
 		}
 	}
 
-	fun getNoteAsFlow(id: String) = realm.query(ChapterObject::class,"id == $0 ", id).first().asFlow().map { it.obj }
+	fun getNoteAsFlow(id: String) = realm.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 
-	fun getNote(id: ObjectId) = realm.query(NoteObject::class,"id == $0 ", id).first().find()
+	fun getNote(id: ObjectId) = realm.query(NoteObject::class, "id == $0 ", id).first().find()
 
 //	ERROR Delete operations are not updated
 //	@OptIn(ExperimentalCoroutinesApi::class)
 //	fun getNoteFromChapterAsFlow(chapterId: String) = store.boxFor<ChapterObject>().query(ChapterObject_.uId.equal(chapterUId)).build().flow().map { it.firstOrNull() }
 
-	fun getNoteListFromChapterAsFlow(chapterId: String) = realm.query(ChapterObject::class,"Id == $0 ", chapterId).first().asFlow().map { it.obj?.noteList }
+	fun getNoteListFromChapterAsFlow(chapterId: String) = realm.query(ChapterObject::class, "Id == $0 ", chapterId).first().asFlow().map { it.obj?.noteList }
 
 	fun getDefaultNotebookId() = getBaseAsFlow().map { it.obj?.defaultChapterId }
 
@@ -144,7 +182,7 @@ object Repository {
 		}
 	}
 
-	fun getChapterTitle(id: ObjectId) = realm.query(ChapterObject::class,"id == $0 ", id).first().find()?.title
+	fun getChapterTitle(id: ObjectId) = realm.query(ChapterObject::class, "id == $0 ", id).first().find()?.title
 
 //	NOTE - Bucket component
 
@@ -152,6 +190,31 @@ object Repository {
 		CoroutineScope(Dispatchers.IO).launch {
 			realm.write {
 				copyToRealm(bucketObject)
+			}
+		}
+	}
+
+	fun updateBucket(
+		id: ObjectId,
+		title: String,
+		description: String?,
+		isFavourite: Boolean,
+		isLocked: Boolean,
+	) {
+		CoroutineScope(Dispatchers.IO).launch {
+
+			realm.write {
+				val bucket = getBucket(id = id)
+				if (bucket != null) {
+					findLatest(bucket)?.apply {
+						this.modifiedTimestamp = System.currentTimeMillis()
+
+						this.title = title
+						this.description = description
+						this.isFavourite = isFavourite
+						this.isLocked = isLocked
+					}
+				}
 			}
 		}
 	}
@@ -184,7 +247,7 @@ object Repository {
 		}
 	}
 
-	fun putTag(tagObject: TagObject){
+	fun putTag(tagObject: TagObject) {
 		CoroutineScope(Dispatchers.IO).launch {
 			realm.write {
 				copyToRealm(tagObject)
@@ -192,16 +255,34 @@ object Repository {
 		}
 	}
 
-	fun getAllTagAsFlow() = realm.query(TagObject::class).asFlow().map { it.list }
+	fun getAllTagAsFlow(): Flow<List<TagObject>> = realm.query(TagObject::class).asFlow().map { it.list }
 
-	fun connectNoteToTag(tagObject: TagObject, noteObject: NoteObject) {
+
+	fun <T> updateTagConnection(tagObject: TagObject, realmObject: T) {
 		CoroutineScope(Dispatchers.IO).launch {
-			realm.write {
-				if (tagObject.noteList.contains(noteObject)) {
-					tagObject.noteList.remove(noteObject)
-				} else {
-					tagObject.noteList.add(noteObject)
+
+			try {
+				realm.write {
+					val _tagObject = this.query(TagObject::class, "id == $0", tagObject.id).find().first()
+
+					val objectId = if (realmObject is NoteObject) {
+						realmObject.id
+					} else if (realmObject is ChapterObject) {
+						(realmObject as ChapterObject).id
+					} else {
+						null
+					}
+
+					if (objectId != null) {
+						if (_tagObject.objectIdList.contains(objectId)) {
+							this.findLatest(_tagObject)?.objectIdList?.remove(objectId)
+						} else {
+							this.findLatest(_tagObject)?.objectIdList?.add(objectId)
+						}
+					}
 				}
+			} catch (e: Exception) {
+				e.printStackTrace()
 			}
 		}
 	}

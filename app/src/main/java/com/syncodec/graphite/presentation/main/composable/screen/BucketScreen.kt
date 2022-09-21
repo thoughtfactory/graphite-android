@@ -121,7 +121,7 @@ private fun BucketCard(
 
 	OutlinedCard(
 		shape = RoundedCornerShape(4.dp, 4.dp, 16.dp, 16.dp),
-		border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
+		border = BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
 		colors = CardDefaults.cardColors(containerColor),
 		elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 		modifier = Modifier

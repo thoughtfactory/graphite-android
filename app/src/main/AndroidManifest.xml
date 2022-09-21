@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.syncodec.graphite">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-	<uses-permission android:name="Android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.INTERNET" />
 
 	<application
 		android:name="com.syncodec.graphite.BaseApplication"
@@ -21,6 +20,9 @@
 		<meta-data
 			android:name="com.google.android.geo.API_KEY"
 			android:value="${mapsApiKey}" />
+		<meta-data
+			android:name="GOOGLE_BOOK_API_KEY"
+			android:value="${googleBookApiKey}" />
 
 		<provider
 			android:name="androidx.core.content.FileProvider"
@@ -39,8 +41,19 @@
 			android:windowSoftInputMode="adjustResize">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
-
 				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+
+			<intent-filter>
+				<action android:name="android.intent.action.SEND" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:mimeType="application/*" />
+				<data android:mimeType="audio/*" />
+				<data android:mimeType="image/*" />
+				<data android:mimeType="message/*" />
+				<data android:mimeType="multipart/*" />
+				<data android:mimeType="text/*" />
+				<data android:mimeType="video/*" />
 			</intent-filter>
 		</activity>
 
@@ -48,7 +61,21 @@
 			android:name=".presentation.note.NoteActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
-			android:windowSoftInputMode="adjustResize" />
+			android:windowSoftInputMode="adjustResize" >
+
+			<intent-filter>
+				<action android:name="android.intent.action.SEND" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:mimeType="application/*" />
+				<data android:mimeType="audio/*" />
+				<data android:mimeType="image/*" />
+				<data android:mimeType="message/*" />
+				<data android:mimeType="multipart/*" />
+				<data android:mimeType="text/*" />
+				<data android:mimeType="video/*" />
+			</intent-filter>
+
+		</activity>
 
 		<activity
 			android:name=".presentation.notebook.NotebookActivity"

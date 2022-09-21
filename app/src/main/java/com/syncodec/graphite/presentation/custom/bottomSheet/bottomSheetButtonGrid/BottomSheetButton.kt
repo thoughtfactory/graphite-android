@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.custom.button
+package com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,7 +37,7 @@ fun BottomSheetButton(
 	contentColor: Color? = null,
 	onClick: () -> Unit
 ) {
-	val _containerColor = containerColor ?: MaterialTheme.colorScheme.background
+	val _containerColor = containerColor ?: MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
 	val _contentColor = contentColor ?: MaterialTheme.colorScheme.onBackground
 
 	Column(

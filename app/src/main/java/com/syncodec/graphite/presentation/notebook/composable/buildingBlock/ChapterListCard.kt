@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,8 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.presentation.custom.ExpandableBox
 import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.presentation.ui.FavouriteContent
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.ObjectId
@@ -34,8 +38,8 @@ import io.realm.kotlin.types.ObjectId
 fun ChapterListCard(
 	id: ObjectId,
 	timestamp: Long,
-	isLocked: Boolean,
 	isSelected: Boolean,
+	isLocked: Boolean,
 	isFavourite: Boolean,
 	isDeleted: Boolean,
 	isLast: Boolean,
@@ -44,6 +48,7 @@ fun ChapterListCard(
 	color: Color,
 	noteCount: Int,
 	chapterCount: Int,
+	tagList: List<TagObjectLite>,
 	isVisible: Boolean = false,
 	selectedColor: Color,
 	onClick: () -> Unit,
@@ -52,8 +57,16 @@ fun ChapterListCard(
 	val containerColor by animateColorAsState(
 		when {
 			isSelected -> selectedColor
-			isFavourite -> Color(0x13FE3A58)
-			else -> color.copy(alpha = 0.47f)
+//			else -> color
+			isFavourite -> Color.FavouriteContainer.copy(alpha = 0.71f)
+			else -> MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
+		}
+	)
+	val contentColor by animateColorAsState(
+		when {
+			isSelected -> selectedColor.getInverseBWColor()
+			isFavourite -> Color.FavouriteContent
+			else -> MaterialTheme.colorScheme.onSurface
 		}
 	)
 
@@ -64,11 +77,11 @@ fun ChapterListCard(
 		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
-		OutlinedCard(
+		Card(
 			shape = RoundedCornerShape(12.dp),
-			border = BorderStroke(2.dp, color),
-			colors = CardDefaults.cardColors(containerColor),
+			colors = CardDefaults.cardColors(containerColor = containerColor),
 			elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
+			border = BorderStroke(2.dp, if (isFavourite) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(12.dp, 4.dp)
@@ -78,18 +91,18 @@ fun ChapterListCard(
 					onLongClick = { onLongClick?.invoke() }
 				),
 		) {
-			Box(modifier = Modifier) {
+			Box(
+				modifier = Modifier.fillMaxWidth()
+			) {
 				Column(
 					modifier = Modifier
 						.fillMaxWidth()
-						.padding(12.dp, 8.dp)
+						.padding(12.dp, 8.dp, 0.dp, 8.dp)
 				) {
 					Title(
 						timestamp = timestamp,
 						title = title,
-						color = color,
-						isLocked = isLocked,
-						isFavourite = isFavourite,
+						contentColor = contentColor,
 						noteCount = noteCount,
 						chapterCount = chapterCount,
 						isExpanded = isExpanded,
@@ -103,8 +116,44 @@ fun ChapterListCard(
 							timestamp = timestamp,
 							title = title,
 							description = description,
-							color = color,
+							contentColor = contentColor,
 						)
+					}
+
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						modifier = Modifier.fillMaxWidth()
+					) {
+						Text(
+							text = id.toString(),
+							style = MaterialTheme.typography.bodySmall,
+							fontStyle = FontStyle.Italic,
+							color = contentColor,
+							maxLines = 1,
+							overflow = TextOverflow.Ellipsis,
+						)
+
+						Spacer(modifier = Modifier.width(12.dp))
+
+						Box(
+							modifier = Modifier
+								.weight(1f)
+								.height(8.dp)
+								.background(color = color, shape = RoundedCornerShape(50))
+						)
+
+						if (isLocked) {
+							Spacer(modifier = Modifier.width(12.dp))
+
+							Icon(
+								painter = painterResource(id = R.drawable.ic_lock_close),
+								contentDescription = "Locked",
+								tint = contentColor,
+								modifier = Modifier.size(20.dp)
+							)
+						}
+
+						Spacer(modifier = Modifier.width(12.dp))
 					}
 				}
 			}
@@ -117,9 +166,7 @@ fun ChapterListCard(
 private fun Title(
 	timestamp: Long,
 	title: String,
-	color: Color,
-	isLocked: Boolean,
-	isFavourite: Boolean,
+	contentColor: Color,
 	noteCount: Int,
 	chapterCount: Int,
 	isExpanded: Boolean,
@@ -133,7 +180,7 @@ private fun Title(
 			text = title,
 			style = MaterialTheme.typography.titleLarge,
 			fontWeight = FontWeight.Bold,
-			color = color.getInverseBWColor(),
+			color = contentColor,
 			overflow = TextOverflow.Ellipsis,
 			modifier = Modifier.weight(1f),
 		)
@@ -143,15 +190,16 @@ private fun Title(
 		Icon(
 			painter = painterResource(id = R.drawable.ic_notebook),
 			contentDescription = "Chapter count",
-			tint = color.getInverseBWColor(),
+			tint = contentColor,
 		)
 
 		Spacer(modifier = Modifier.width(4.dp))
 
 		Text(
-			text = "$chapterCount chapters",
+			text = "$chapterCount",
 			style = MaterialTheme.typography.bodyMedium,
-			color = color.getInverseBWColor(),
+			fontWeight = FontWeight.Bold,
+			color = contentColor,
 		)
 
 		Spacer(modifier = Modifier.width(16.dp))
@@ -159,34 +207,19 @@ private fun Title(
 		Icon(
 			painter = painterResource(id = R.drawable.ic_note),
 			contentDescription = "Note count",
-			tint = color.getInverseBWColor(),
+			tint = contentColor,
 		)
 
 		Spacer(modifier = Modifier.width(4.dp))
 
 		Text(
-			text = "$noteCount notes",
+			text = "$noteCount",
 			style = MaterialTheme.typography.bodyMedium,
-			color = color.getInverseBWColor(),
+			fontWeight = FontWeight.Bold,
+			color = contentColor,
 		)
 
 		Spacer(modifier = Modifier.width(4.dp))
-
-		if (isLocked) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_lock_close),
-				contentDescription = "Locked",
-				tint = color.getInverseBWColor(),
-			)
-		}
-
-		if (isFavourite) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_favourite),
-				contentDescription = "Favourite",
-				tint = color.getInverseBWColor(),
-			)
-		}
 
 		AnimatedContent(
 			targetState = isExpanded,
@@ -196,7 +229,7 @@ private fun Title(
 				MenuButton(
 					icon = R.drawable.ic_chevron_down,
 					contentDescription = "Less info",
-					tint = color.getInverseBWColor(),
+					tint = contentColor,
 					onClick = onMoreInfo
 				)
 
@@ -204,7 +237,7 @@ private fun Title(
 				MenuButton(
 					icon = R.drawable.ic_chevron_right,
 					contentDescription = "More info",
-					tint = color.getInverseBWColor(),
+					tint = contentColor,
 					onClick = onMoreInfo
 				)
 			}
@@ -218,7 +251,7 @@ private fun ExpandedContent(
 	timestamp: Long,
 	title: String,
 	description: String?,
-	color: Color
+	contentColor: Color
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth()
@@ -226,7 +259,7 @@ private fun ExpandedContent(
 		Text(
 			text = title,
 			style = MaterialTheme.typography.bodyMedium,
-			color = color.getInverseBWColor(),
+			color = contentColor,
 		)
 
 		Spacer(modifier = Modifier.height(4.dp))
@@ -235,7 +268,7 @@ private fun ExpandedContent(
 			text = if (description.isNullOrBlank()) "No description" else description,
 			style = MaterialTheme.typography.bodyMedium,
 			fontStyle = if (description.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
-			color = color.getInverseBWColor(),
+			color = contentColor,
 		)
 
 		Spacer(modifier = Modifier.height(4.dp))
@@ -244,16 +277,9 @@ private fun ExpandedContent(
 			text = "Created on ${timestamp.timeStampToPrettyFull()}",
 			style = MaterialTheme.typography.bodyMedium,
 			fontStyle = if (description.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
-			color = color.getInverseBWColor(),
+			color = contentColor,
 		)
 
 		Spacer(modifier = Modifier.height(4.dp))
-
-		Text(
-			text = id.toString(),
-			style = MaterialTheme.typography.bodySmall,
-			fontStyle = FontStyle.Italic,
-			color = color.getInverseBWColor(),
-		)
 	}
 }

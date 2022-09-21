@@ -3,7 +3,6 @@ package com.syncodec.graphite.presentation.main.composable.bottomSheet
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -12,7 +11,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
@@ -23,9 +21,7 @@ import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.custom.button.LargeButton
 import com.syncodec.graphite.presentation.custom.notebook.NotebookColorChooser
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
 import com.syncodec.graphite.presentation.main.MainViewModel
-import com.syncodec.graphite.utils.colorList
 
 
 @OptIn(ExperimentalComposeUiApi::class)

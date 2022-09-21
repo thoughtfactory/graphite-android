@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.ObjectId
@@ -36,8 +38,8 @@ class BucketActivity: ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface)
+				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
 				BucketScreen()
 			}

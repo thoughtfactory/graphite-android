@@ -28,7 +28,9 @@ android {
 		if (rootProject.file('local.properties').exists()) {
 			properties.load(rootProject.file('local.properties').newDataInputStream())
 		}
-		manifestPlaceholders = [mapsApiKey: properties.getProperty('MAPS_API_KEY', '')]
+
+		manifestPlaceholders.mapsApiKey = properties.getProperty('MAPS_API_KEY', '')
+		manifestPlaceholders.googleBookApiKey = properties.getProperty('GOOGLE_BOOK_API_KEY', '')
 
 		javaCompileOptions {
 			annotationProcessorOptions {
@@ -59,11 +61,8 @@ android {
 
 	kotlinOptions {
 		jvmTarget = '1.8'
-		useIR = true
 
-		freeCompilerArgs += [
-				"-Xjvm-default=all",
-		]
+		freeCompilerArgs += ["-Xjvm-default=all"]
 	}
 
 	buildFeatures {
@@ -73,13 +72,13 @@ android {
 	composeOptions {
 		kotlinCompilerExtensionVersion compose_version
 	}
-
 	packagingOptions {
 		resources {
-			excludes += '/META-INF/{AL2.0,LGPL2.1}'
+			excludes += ['/META-INF/{AL2.0,LGPL2.1}', 'META-INF/DEPENDENCIES']
 		}
-		exclude 'META-INF/DEPENDENCIES'
 	}
+
+	namespace 'com.syncodec.graphite'
 }
 
 dependencies {
@@ -118,7 +117,7 @@ dependencies {
 
 	implementation 'androidx.compose.runtime:runtime:1.2.1'
 
-	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3'
+	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
 	implementation 'io.realm.kotlin:library-base:1.0.2'
 
 	implementation 'androidx.room:room-runtime:2.4.3'
@@ -178,7 +177,7 @@ dependencies {
 
 	implementation 'com.github.LucasFsc:Html2Pdf:0.2-beta'
 
-	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.4'
+//	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.4'
 
 	implementation "com.google.android.gms:play-services-oss-licenses:17.0.0"
 
