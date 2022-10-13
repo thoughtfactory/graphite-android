@@ -1,6 +1,12 @@
 package com.syncodec.graphite.di.model
 
 import androidx.room.PrimaryKey
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.kedia.ogparser.OpenGraphResult
+import com.syncodec.graphite.di.network.BookData
+import com.syncodec.graphite.di.network.ShowData
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 
@@ -14,16 +20,50 @@ enum class BucketItemState {
 class BucketItemObject: RealmObject {
 	@PrimaryKey var id: ObjectId = ObjectId.create()
 
-	var createdTimestamp: Long = 0
-	var modifiedTimestamp: Long = 0
-	var bucketType: String = ""
-	var title: String = ""
-	var state: String = ""
+	var createdTimestamp: Long = System.currentTimeMillis()
+	var modifiedTimestamp: Long = System.currentTimeMillis()
+	var bucketType: String = BucketType.UNKNOWN.name
+	var title: String? = null
+	var state: String = BucketItemState.ALPHA.name
 	var thumbnail: String? = null
-	var item: String? = null
 	var isFavourite: Boolean = false
 	var isLocked: Boolean = false
 
+	var data: String? = null
+
+	fun toBookData(): BookData? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			objectMapper.readValue(data, BookData::class.java)
+		} catch (e: Exception) {
+			e.printStackTrace()
+			null
+		}
+	}
+
+	fun toShowData(): ShowData? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			objectMapper.readValue(data, ShowData::class.java)
+		} catch (e: Exception) {
+			e.printStackTrace()
+			null
+		}
+	}
+
+	fun toOpenGraphResult(): OpenGraphResult? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			objectMapper.readValue(data, OpenGraphResult::class.java)
+		} catch (e: Exception) {
+			e.printStackTrace()
+			null
+		}
+	}
+
+	fun setOpenGraphResult(openGraphResult: OpenGraphResult) {
+		this.data = jsonMapper { addModule(kotlinModule()) }.writeValueAsString(openGraphResult)
+	}
 
 	override fun hashCode(): Int {
 		var result = id.hashCode()
@@ -32,9 +72,9 @@ class BucketItemObject: RealmObject {
 		result = 31 * result + bucketType.hashCode()
 		result = 31 * result + title.hashCode()
 		result = 31 * result + state.hashCode()
-		result = 31 * result + (item?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
+		result = 31 * result + (data?.hashCode() ?: 0)
 		return result
 	}
 
@@ -48,9 +88,9 @@ class BucketItemObject: RealmObject {
 		if (bucketType != other.bucketType) return false
 		if (title != other.title) return false
 		if (state != other.state) return false
-		if (item != other.item) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
+		if (data != other.data) return false
 
 		return true
 	}

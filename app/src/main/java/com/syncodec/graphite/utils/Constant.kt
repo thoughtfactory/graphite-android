@@ -78,8 +78,9 @@ enum class LocationState {
 	INIT,
 	NO_PERMISSION,
 	LATLNG,
-	LATLNG_NO_ADDRESS,
-	ADDRESS,
+	ONLY_LATLNG,
+	ONLY_ADDRESS,
+	SUCCESS,
 	ERROR,
 	REMOVED
 }
@@ -114,24 +115,11 @@ val colorList: List<Color> = listOf(
 	Color(0xFF655D8A),
 	Color(0xFFD885A3),
 	Color(0xFF694E4E),
-	Color(0xFF54BAB9),
-	Color(0xFFE9DAC1),
-	Color(0xFF7897AB),
-	Color(0xFF632626),
-	Color(0xFF6867AC),
-	Color(0xFFA267AC),
-	Color(0xFF92A9BD),
-	Color(0xFFCA965C),
-	Color(0xFFFF865E),
-	Color(0xFF3DB2FF),
-	Color(0xFFBEAEE2),
-	Color(0xFF564A4A),
-	Color(0xFF52734D),
-	Color(0xFF94EBCD),
-	Color(0xFF8A8635),
-	Color(0xFF889EAF),
-	Color(0xFFFFFFFF),
-	Color(0xFF000000),
+)
+
+val imageList: List<Int> = listOf(
+	R.drawable.img_1,
+	R.drawable.img_2,
 )
 
 val mimeTypeIconMap: Map<String, Int> = mapOf(
@@ -189,22 +177,34 @@ val mimeSubTypeIconMap: Map<String, Int> = mapOf(
 class Extra {
 	companion object {
 		enum class Constant {
+			OBJECT_ID,
+			OBJECT_TYPE,
 			IS_NEW,
 			CHAPTER_ID,
 			NOTE_ID,
+			SHOW_ALL_ATTACHMENTS,
 			BUCKET_ID,
 			BUCKET_ITEM_ID,
 			BUCKET_TYPE,
 			BUCKET_EXTRA_DATA,
-			BOOK_KEY,
-			MOVIE_UID,
-			EXTRA_DATA,
-			SHOW_TYPE,
+			BOOK_ID,
+			MOVIE_ID,
+			TV_ID,
 			FILTER
 		}
 
+		enum class ObjectType {
+			ATTAHCMENT,
+			BUCKET_ITEM,
+			BUCKET,
+			CHAPTER,
+			NOTE,
+			TAG
+		}
+
 		enum class Filter {
-			READ_CHAPTER
+			SINGLE_READ,
+			READ_CHAPTER,
 		}
 	}
 }
@@ -215,5 +215,3 @@ enum class Status {
 	LOADED,
 	ERROR
 }
-
-val TMDbKey = "daf55a105cab241cd55fa75413656db4"

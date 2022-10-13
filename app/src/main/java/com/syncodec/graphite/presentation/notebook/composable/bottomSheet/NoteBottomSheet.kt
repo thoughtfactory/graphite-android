@@ -11,8 +11,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.utils.LocalBackgroundColor
 import com.syncodec.graphite.utils.getInverseBWColor
 
@@ -26,7 +26,6 @@ fun NoteBottomSheet(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(360.dp)
 			.background(MaterialTheme.colorScheme.onSurface)
 	) {
 

@@ -3,7 +3,6 @@ package com.syncodec.graphite.presentation.notebook
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -13,11 +12,10 @@ import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.BucketBottomSheetType
-import com.syncodec.graphite.utils.getRandomColor
+import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.collect
 
 
 class NotebookViewModel : ViewModel() {
@@ -31,6 +29,9 @@ class NotebookViewModel : ViewModel() {
 	val showManageTagDialog: MutableState<Boolean> = mutableStateOf(false)
 
 	var bottomSheetType: MutableState<BucketBottomSheetType> = mutableStateOf(BucketBottomSheetType.MENU)
+
+	val rootChapterId: MutableState<ObjectId?> = mutableStateOf(null)
+	val rootColor: MutableState<Color?> = mutableStateOf(null)
 
 	fun initNotebook(chapterId: ObjectId) {
 		viewModelScope.launch(Dispatchers.IO) {
@@ -53,15 +54,12 @@ class NotebookViewModel : ViewModel() {
 					ChapterObject().apply {
 						this.title = title
 						this.description = description
-						this.color = color?.toArgb() ?: getRandomColor().toArgb()
+						this.color = color?.toArgb()
+						this.thumbnail = bitmap?.encodeBase64()
+
 						this.parentChapterId = chapterObject.value?.id
 
-						try {
-							Repository.putChapter(chapterObject.value!!.id, this)
-						} catch (e: Exception) {
-//							TODO Show error
-							e.printStackTrace()
-						}
+						Repository.putChapter(this.parentChapterId, this)
 					}
 				} catch (e: Exception) {
 //	    		    TODO Show error message
@@ -76,7 +74,8 @@ class NotebookViewModel : ViewModel() {
 	fun updateChapter(
 		title: String,
 		description: String?,
-		color: Color,
+		color: Color?,
+		thumbnail: Bitmap?,
 		isFavourite: Boolean,
 		isLocked: Boolean,
 	) {
@@ -84,7 +83,8 @@ class NotebookViewModel : ViewModel() {
 			id = chapterObject.value!!.id,
 			title = title,
 			description = description,
-			color = color.toArgb(),
+			color = color?.toArgb(),
+			thumbnail = thumbnail?.encodeBase64(),
 			isFavourite = isFavourite,
 			isLocked = isLocked
 		)
@@ -92,13 +92,18 @@ class NotebookViewModel : ViewModel() {
 
 	fun loadChapter(chapterId: ObjectId) {
 		currentChapterId = chapterId
-
 		viewModelScope.launch {
 			Repository.getChapterAsFlow(chapterId).cancellable().collect { it ->
 				if (it != null) {
 					if (it.id == currentChapterId) {
 						withContext(Dispatchers.Main) {
 							chapterObject.value = it
+							if (rootChapterId.value == null) {
+								rootChapterId.value = it.id
+							}
+							if (rootColor.value == null) {
+								rootColor.value = it.color?.let { it1 -> Color(it1) } ?: Color.Unspecified
+							}
 						}
 					} else {
 						this.cancel()
@@ -116,6 +121,7 @@ class NotebookViewModel : ViewModel() {
 					title = chapterObject.value!!.title,
 					description = chapterObject.value!!.description,
 					color = chapterObject.value!!.color,
+					thumbnail = chapterObject.value!!.thumbnail,
 					isFavourite = chapterObject.value!!.isFavourite,
 					isLocked = !chapterObject.value!!.isLocked
 				)
@@ -135,18 +141,19 @@ class NotebookViewModel : ViewModel() {
 					title = chapterObject.value!!.title,
 					description = chapterObject.value!!.description,
 					color = chapterObject.value!!.color,
+					thumbnail = chapterObject.value!!.thumbnail,
 					isFavourite = !chapterObject.value!!.isFavourite,
 					isLocked = chapterObject.value!!.isLocked
 				)
 			} catch (e: Exception) {
 //				TODO Show error
 				e.printStackTrace()
-				Log.i("npr71", "Error updating chapter}")
+				Log.i("npr71", "Error updating chapter")
 			}
 		}
 	}
 
-	fun updateTag(tagObject: TagObject) {
-		Repository.updateTagConnection(tagObject, chapterObject.value)
+	fun updateTagConnection(tagObjectId : ObjectId) {
+		Repository.updateTagConnection(tagObjectId = tagObjectId, chapterObject.value?.id)
 	}
 }

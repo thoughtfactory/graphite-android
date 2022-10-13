@@ -4,9 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,8 +22,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.button.MenuButton
-import com.syncodec.graphite.presentation.custom.richText.RichTextEditor
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.composable.bar.*
 import com.syncodec.graphite.utils.LocalCompositionPremium
 import com.syncodec.graphite.utils.tone
@@ -124,6 +127,10 @@ fun EditorToolbar(
 	richTextEditor: RichTextEditor,
 	textFormat: RichTextEditor.TextFormat,
 	toolbarState: ToolbarState,
+	onClickMetadata: () -> Unit,
+	onClickLocation: () -> Unit,
+	onClickAttachment: () -> Unit,
+	onClickTag: () -> Unit,
 	onClickCloseToolbar: () -> Unit,
 	onClickFormatToolbar: () -> Unit,
 	onClickHeadingToolbar: () -> Unit,
@@ -132,22 +139,16 @@ fun EditorToolbar(
 		Column(
 			modifier = Modifier.fillMaxWidth()
 		) {
-			Spacer(modifier = Modifier.height(4.dp))
-			when (it) {
-				ToolbarState.NONE -> null
-				ToolbarState.FORMAT -> FormatToolbar(
-					richTextEditor = richTextEditor,
-					textFormat = textFormat,
-					onClickCloseToolbar = onClickCloseToolbar,
-					onClickHeadingToolbar = onClickHeadingToolbar
-				)
-				ToolbarState.HEADING -> HeadingToolbar(
-					richTextEditor = richTextEditor,
-					textFormat = textFormat,
-					onClickFormatToolbar = onClickFormatToolbar,
-				)
-				ToolbarState.LINK -> null
-			}
+			FormatToolbar(
+				richTextEditor = richTextEditor,
+				textFormat = textFormat,
+				onClickMetadata = onClickMetadata,
+				onClickLocation = onClickLocation,
+				onClickAttachment = onClickAttachment,
+				onClickTag = onClickTag,
+				onClickCloseToolbar = onClickCloseToolbar,
+				onClickHeadingToolbar = onClickHeadingToolbar
+			)
 		}
 	}
 }
@@ -156,113 +157,141 @@ fun EditorToolbar(
 private fun FormatToolbar(
 	richTextEditor: RichTextEditor,
 	textFormat: RichTextEditor.TextFormat,
+	onClickMetadata: () -> Unit,
+	onClickLocation: () -> Unit,
+	onClickAttachment: () -> Unit,
+	onClickTag: () -> Unit,
 	onClickCloseToolbar: () -> Unit,
 	onClickHeadingToolbar: () -> Unit,
 ) {
 	val isPremium = LocalCompositionPremium.current
 
-	Box(
-		modifier = Modifier.fillMaxWidth()
+	Row(
+		modifier = Modifier.horizontalScroll(rememberScrollState())
 	) {
-		LazyRow(
+		Spacer(modifier = Modifier.width(16.dp))
+		Row(
 			modifier = Modifier
-		) {
-			item { Spacer(modifier = Modifier.width(4.dp)) }
-
-			item {
-				MenuButton(
-					icon = R.drawable.ic_chevron_down,
-					contentDescription = "Close formatter",
-					onClick = onClickCloseToolbar
+				.background(
+					color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.31f),
+					shape =  RoundedCornerShape(50)
 				)
-			}
-			item {
+				.clip(RoundedCornerShape(50))
+		) {
+			Row(
+				modifier = Modifier.padding(2.dp)
+			) {
+
+				MenuButton(
+					icon = R.drawable.ic_info,
+					contentDescription = "Info",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
+					shape = CircleShape,
+					onClick = onClickMetadata
+				)
+
+				MenuButton(
+					icon = R.drawable.ic_map_marker,
+					contentDescription = "Location",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
+					shape = CircleShape,
+					onClick = onClickLocation
+				)
+
+				MenuButton(
+					icon = R.drawable.ic_attachment,
+					contentDescription = "Attachment",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
+					shape = CircleShape,
+					onClick = onClickAttachment
+				)
+
+				MenuButton(
+					icon = R.drawable.ic_hashtag,
+					contentDescription = "Tag",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
+					shape = CircleShape,
+					onClick = onClickTag
+				)
+
+
+				ToolbarSpacer()
+
 				MenuButton(
 					icon = R.drawable.ic_format_undo,
 					contentDescription = "Undo",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					onClick = { richTextEditor.exec("editor.commands.undo();") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_redo,
 					contentDescription = "Redo",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					onClick = { richTextEditor.exec("editor.commands.redo();") }
 				)
-			}
 
-			item { ToolbarSpacer() }
+				ToolbarSpacer()
 
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_bold,
 					contentDescription = "Bold",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.bold,
 					onClick = { richTextEditor.exec("editor.chain().focus().toggleBold().run()") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_italic,
 					contentDescription = "Italic",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.italic,
 					onClick = { richTextEditor.exec("editor.chain().focus().toggleItalic().run()") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_underline,
 					contentDescription = "Underline",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.underline,
 					onClick = { richTextEditor.exec("editor.chain().focus().toggleUnderline().run()") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_strikethrough,
 					contentDescription = "Strikethrough",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.strike,
 					onClick = { richTextEditor.exec("editor.chain().focus().toggleStrike().run()") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_hard_break,
 					contentDescription = "Format hard break",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					onClick = { richTextEditor.exec("editor.chain().focus().setHardBreak().run()") }
 				)
-			}
+				ToolbarSpacer()
 
-			item { ToolbarSpacer() }
-
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_list_check,
 					contentDescription = "Check list",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.taskList,
 					onClick = { richTextEditor.exec("editor.commands.toggleTaskList();") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_list_bullet,
 					contentDescription = "Bullet list",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.bulletList,
 					onClick = { richTextEditor.exec("editor.commands.toggleBulletList();") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_list_ordered,
 					contentDescription = "Ordered list",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.orderedList,
 					onClick = { richTextEditor.exec("editor.commands.toggleOrderedList();") }
 				)
-			}
 
-			item { ToolbarSpacer() }
+				ToolbarSpacer()
 
-			item {
 				MenuButton(
 					icon = when {
 						textFormat.paragraph -> R.drawable.ic_format_paragraph
@@ -275,57 +304,53 @@ private fun FormatToolbar(
 						else -> R.drawable.ic_format_paragraph
 					},
 					contentDescription = "Format heading",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.heading1 || textFormat.heading2 || textFormat.heading3 || textFormat.heading4 || textFormat.heading5 || textFormat.heading6,
 					onClick = onClickHeadingToolbar
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_blockquote,
 					contentDescription = "Format blockquote",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.blockquote,
 					onClick = { richTextEditor.exec("editor.chain().focus().toggleBlockquote().run();") }
 				)
-			}
 
-			item { ToolbarSpacer() }
+				ToolbarSpacer()
 
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_indent,
 					contentDescription = "Format indent",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					onClick = { richTextEditor.exec("editor.chain().focus().sinkListItem('listItem').run()") }
 				)
-			}
-			item {
+
 				MenuButton(
 					icon = R.drawable.ic_format_outdent,
 					contentDescription = "Format outdent",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					onClick = { richTextEditor.exec("editor.chain().focus().liftListItem('listItem').run()") }
 				)
-			}
 
-			item { ToolbarSpacer() }
+				ToolbarSpacer()
 
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_superscript,
 					contentDescription = "Format superscript",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.superscript,
 					onClick = { richTextEditor.exec("editor.chain().focus().toggleSuperscript().run();") }
 				)
-			}
-			item {
 				MenuButton(
 					icon = R.drawable.ic_format_subscript,
 					contentDescription = "Format subscript",
+					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.subscript,
 					onClick = { richTextEditor.exec("editor.chain().focus().toggleSubscript().run();") }
 				)
 			}
-
-			item { Spacer(modifier = Modifier.width(4.dp)) }
 		}
+		Spacer(modifier = Modifier.width(16.dp))
 	}
 }
 
@@ -338,77 +363,63 @@ private fun HeadingToolbar(
 	Box(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		LazyRow(
+		Row(
 			modifier = Modifier
+				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.747f), RoundedCornerShape(50))
+				.clip(RoundedCornerShape(50))
 		) {
-			item { Spacer(modifier = Modifier.width(4.dp)) }
+			Spacer(modifier = Modifier.width(4.dp))
 
-			item {
-				MenuButton(
-					icon = R.drawable.ic_chevron_down,
-					contentDescription = "Format toolbar",
-					onClick = onClickFormatToolbar
-				)
-			}
+			MenuButton(
+				icon = R.drawable.ic_chevron_down,
+				contentDescription = "Format toolbar",
+				onClick = onClickFormatToolbar
+			)
 
-			item { ToolbarSpacer() }
+			ToolbarSpacer()
 
-			item {
-				MenuButton(
-					icon = R.drawable.ic_format_paragraph,
-					contentDescription = "Format paragraph",
-					isChecked = textFormat.paragraph,
-					onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 3 });") }
-				)
-			}
-			item {
-				MenuButton(
-					icon = R.drawable.ic_format_h1,
-					contentDescription = "Format heading 1",
-					isChecked = textFormat.heading1,
-					onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 1 });") }
-				)
-			}
-			item {
-				MenuButton(
-					icon = R.drawable.ic_format_h2,
-					contentDescription = "Format heading 2",
-					isChecked = textFormat.heading2,
-					onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 2 });") }
-				)
-			}
-			item {
-				MenuButton(
-					icon = R.drawable.ic_format_h3,
-					contentDescription = "Format heading 3",
-					isChecked = textFormat.heading3,
-					onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 3 });") }
-				)
-			}
-			item {
-				MenuButton(
-					icon = R.drawable.ic_format_h4,
-					contentDescription = "Format heading 4",
-					isChecked = textFormat.heading4,
-					onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 4 });") }
-				)
-			}
-			item {
-				MenuButton(
-					icon = R.drawable.ic_format_h5,
-					contentDescription = "Format heading 5",
-					isChecked = textFormat.heading5,
-					onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 5 });") }
-				)
-			}
-			item {
-				MenuButton(
-					icon = R.drawable.ic_format_h6,
-					contentDescription = "Format heading 6",
-					isChecked = textFormat.heading6,
-					onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 6 });") }
-				)
-			}
+			MenuButton(
+				icon = R.drawable.ic_format_paragraph,
+				contentDescription = "Format paragraph",
+				isChecked = textFormat.paragraph,
+				onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 3 });") }
+			)
+			MenuButton(
+				icon = R.drawable.ic_format_h1,
+				contentDescription = "Format heading 1",
+				isChecked = textFormat.heading1,
+				onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 1 });") }
+			)
+			MenuButton(
+				icon = R.drawable.ic_format_h2,
+				contentDescription = "Format heading 2",
+				isChecked = textFormat.heading2,
+				onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 2 });") }
+			)
+			MenuButton(
+				icon = R.drawable.ic_format_h3,
+				contentDescription = "Format heading 3",
+				isChecked = textFormat.heading3,
+				onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 3 });") }
+			)
+			MenuButton(
+				icon = R.drawable.ic_format_h4,
+				contentDescription = "Format heading 4",
+				isChecked = textFormat.heading4,
+				onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 4 });") }
+			)
+			MenuButton(
+				icon = R.drawable.ic_format_h5,
+				contentDescription = "Format heading 5",
+				isChecked = textFormat.heading5,
+				onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 5 });") }
+			)
+			MenuButton(
+				icon = R.drawable.ic_format_h6,
+				contentDescription = "Format heading 6",
+				isChecked = textFormat.heading6,
+				onClick = { richTextEditor.exec("editor.commands.toggleHeading({ level: 6 });") }
+			)
 		}
 	}
 }
@@ -416,7 +427,7 @@ private fun HeadingToolbar(
 @Composable
 private fun ToolbarSpacer() {
 	Row(
-		modifier = Modifier.height(40.dp),
+		modifier = Modifier.height(44.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Spacer(modifier = Modifier.width(4.dp))

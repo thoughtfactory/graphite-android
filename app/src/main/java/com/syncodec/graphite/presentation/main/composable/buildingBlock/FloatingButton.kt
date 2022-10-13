@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import com.syncodec.graphite.R
 
 
@@ -18,7 +19,8 @@ fun NoteFloatingActionButton(
 		text = {
 			Text(
 				text = "New Note",
-				style = MaterialTheme.typography.bodyMedium
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold
 			)
 		},
 		icon = {
@@ -41,7 +43,8 @@ fun BucketFloatingActionButton(
 		text = {
 			Text(
 				text = "New Bucket",
-				style = MaterialTheme.typography.bodyMedium
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold
 			)
 		},
 		icon = {
@@ -64,7 +67,8 @@ fun NotebookFloatingActionButton(
 		text = {
 			Text(
 				text = "New Notebook",
-				style = MaterialTheme.typography.bodyMedium
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold
 			)
 		},
 		icon = {

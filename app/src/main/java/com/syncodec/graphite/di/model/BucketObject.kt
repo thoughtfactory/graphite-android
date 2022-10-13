@@ -29,6 +29,7 @@ class BucketObject: RealmObject {
 
 	var bucketItemList: RealmList<BucketItemObject> = realmListOf()
 
+
 	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
@@ -38,6 +39,7 @@ class BucketObject: RealmObject {
 		result = 31 * result + bucketType.hashCode()
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
+		result = 31 * result + bucketItemList.hashCode()
 		return result
 	}
 
@@ -53,6 +55,7 @@ class BucketObject: RealmObject {
 		if (bucketType != other.bucketType) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
+		if (bucketItemList != other.bucketItemList) return false
 
 		return true
 	}

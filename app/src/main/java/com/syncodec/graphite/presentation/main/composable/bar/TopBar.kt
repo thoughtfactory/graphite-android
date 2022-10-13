@@ -16,9 +16,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.button.MenuButton
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 
 
@@ -27,9 +27,9 @@ fun TopBar(
 	currentRoute: String?,
 	componentType: ComponentType,
 	onComponentChange: (Int) -> Unit,
-	onOpenMenu: () -> Unit,
-	onOpenFilter: () -> Unit,
-	onOpenSearch: () -> Unit
+	onClickOpenMenu: () -> Unit,
+	onClickOpenFilter: () -> Unit,
+	onClickSearch: () -> Unit
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
@@ -49,15 +49,21 @@ fun TopBar(
 			isSelected = false,
 			selectedItemSize = 0,
 			currentRoute = currentRoute,
-			onOpenMenu = onOpenMenu,
-			onOpenFilter = onOpenFilter,
-			onOpenSearch = onOpenSearch
+			onClickOpenMenu = onClickOpenMenu,
+			onClickOpenFilter = onClickOpenFilter,
+			onClickSearch = onClickSearch
 		)
 
-		ComponentType(
-			showComponentChooser = true,
-			componentType = componentType,
-		) { onComponentChange(it) }
+		AnimatedVisibility(
+			visible = currentRoute == BottomNavigationItem.Home.route,
+			enter = expandVertically(tween(300)),
+			exit = shrinkVertically(tween(300))
+		) {
+			ComponentType(
+				showComponentChooser = true,
+				componentType = componentType,
+			) { onComponentChange(it) }
+		}
 	}
 }
 
@@ -67,9 +73,9 @@ private fun Bar(
 	isSelected: Boolean,
 	selectedItemSize: Int,
 	currentRoute: String?,
-	onOpenMenu: () -> Unit,
-	onOpenFilter: () -> Unit,
-	onOpenSearch: () -> Unit,
+	onClickOpenMenu: () -> Unit,
+	onClickOpenFilter: () -> Unit,
+	onClickSearch: () -> Unit,
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
@@ -83,7 +89,7 @@ private fun Bar(
 
 	Crossfade(targetState = isSelected) {
 		if (it) {
-			SmallTopAppBar(
+			TopAppBar(
 				title = {
 					Text(
 						text = if (selectedItemSize == 0) "Select items to delete" else if (selectedItemSize == 1) "1 item selected" else "$selectedItemSize items selected",
@@ -106,15 +112,11 @@ private fun Bar(
 		} else {
 			CenterAlignedTopAppBar(
 				navigationIcon = {
-					IconButton(
-						onClick = { onOpenMenu() }
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_state),
-							contentDescription = null,
-							tint = MaterialTheme.colorScheme.onBackground,
-						)
-					}
+					MenuButton(
+						icon = R.drawable.ic_menu,
+						tint = MaterialTheme.colorScheme.onBackground,
+						onClick = onClickOpenMenu
+					)
 				},
 				title = {
 					Text(
@@ -132,12 +134,12 @@ private fun Bar(
 					MenuButton(
 						icon = R.drawable.ic_filter,
 						tint = MaterialTheme.colorScheme.onBackground,
-						onClick = onOpenFilter
+						onClick = onClickOpenFilter
 					)
 					MenuButton(
 						icon = R.drawable.ic_search,
 						tint = MaterialTheme.colorScheme.onBackground,
-						onClick = onOpenSearch
+						onClick = onClickSearch
 					)
 				},
 				colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = containerColor)

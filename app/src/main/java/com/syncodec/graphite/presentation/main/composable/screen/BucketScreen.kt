@@ -54,7 +54,9 @@ fun BucketScreen(
 			} else {
 				LazyVerticalGrid(
 					columns = GridCells.Adaptive(minSize = 144.dp),
-					modifier = Modifier.padding(4.dp),
+					modifier = Modifier
+						.padding(4.dp)
+						.fillMaxSize(),
 				) {
 					bucketList.forEach {
 						item {

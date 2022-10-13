@@ -21,6 +21,6 @@ fun SheetLayout(
 		BucketBottomSheetType.ADD_TODO -> AddTodoBottomSheet(closeSheet = closeSheet)
 		BucketBottomSheetType.ADD_BOOK -> AddBookBottomSheet(closeSheet = closeSheet)
 		BucketBottomSheetType.ADD_SHOW -> AddShowBottomSheet(closeSheet = closeSheet)
-		else -> {}
+		BucketBottomSheetType.ADD_LINK -> AddLinkBottomSheet(closeSheet = closeSheet)
 	}
 }

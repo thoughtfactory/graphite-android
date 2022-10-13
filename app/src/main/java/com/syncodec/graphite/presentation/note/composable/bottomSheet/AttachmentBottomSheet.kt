@@ -21,10 +21,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
-import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
+import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.AttachmentPreview
@@ -39,10 +39,7 @@ fun AttachmentBottomSheet(
 	val activity: NoteActivity = LocalContext.current as NoteActivity
 	val viewModel: NoteViewModel = viewModel()
 
-	val attachmentList = viewModel.attachmentListVisible.toList().sortedBy {
-		it.second.third.createdTimestamp
-	}
-
+	val attachmentList = viewModel.attachmentListNew.toList().sortedBy { it.second.third.createdTimestamp }
 
 	var photoUri: Uri? = null
 	val takePicture =
@@ -134,7 +131,10 @@ fun AttachmentBottomSheet(
 								modifier = Modifier
 									.fillMaxWidth()
 									.aspectRatio(1f),
-								onRemove = { attachmentList.drop(index) },
+								onRemove = {
+									viewModel.attachmentListNew.remove(data.third.id)
+//									attachmentList.drop(index)
+								},
 							) {
 								try {
 									Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(activity, "com.syncodec.fileprovider", data.second)).apply {

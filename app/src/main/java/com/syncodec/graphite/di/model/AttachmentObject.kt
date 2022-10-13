@@ -1,6 +1,7 @@
 package com.syncodec.graphite.di.model
 
 import androidx.room.PrimaryKey
+import com.syncodec.graphite.di.Repository
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 
@@ -15,6 +16,8 @@ class AttachmentObject: RealmObject {
 	var isSaved: Boolean = false
 	var isFavourite: Boolean = false
 	var isLocked: Boolean = false
+
+	var parentNoteId: ObjectId? = null
 
 	fun getTypeString(): String? {
 		return mimeType?.split("/")?.getOrNull(0)
@@ -37,6 +40,15 @@ class AttachmentObject: RealmObject {
 
 	fun isRenderable(): Boolean {
 		return getTypeString() == "image" || getTypeString() == "video" || getTypeString() == "audio" || getSubTypeString() == "pdf"
+	}
+
+	fun getParentChapterId(): ObjectId? {
+		return parentNoteId?.let { Repository.getNote(it)?.parentChapterId }
+	}
+
+	fun isParentLocked(): Boolean {
+		val note: NoteObject? = parentNoteId?.let { Repository.getNote(id = it) }
+		return note?.isLocked ?: false
 	}
 
 	override fun hashCode(): Int {
@@ -68,6 +80,7 @@ class AttachmentObject: RealmObject {
 		this.extension = this@AttachmentObject.extension
 		this.mimeType = this@AttachmentObject.mimeType
 		this.isSaved = this@AttachmentObject.isSaved
+		this.parentNoteId = this@AttachmentObject.parentNoteId
 	}
 
 	companion object {

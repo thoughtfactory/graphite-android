@@ -2,13 +2,13 @@ package com.syncodec.graphite.presentation.note.composable.dialog
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.presentation.custom.dialog.GenericDialog
-import com.syncodec.graphite.presentation.custom.dialog.buildingBlock.DualActionButtons
+import com.syncodec.graphite.presentation.common.dialog.GenericDialog
+import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 
 
 @Composable

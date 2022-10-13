@@ -1,18 +1,49 @@
 package com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView
 
 import android.graphics.Bitmap
-import android.util.Log
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.FixedThreshold
+import androidx.compose.material.FractionalThreshold
+import androidx.compose.material.rememberSwipeableState
+import androidx.compose.material.swipeable
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,18 +56,26 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.utils.*
+import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.utils.addEmptyLines
+import com.syncodec.graphite.utils.entryTimestamp0
+import com.syncodec.graphite.utils.entryTimestamp1
+import com.syncodec.graphite.utils.roundTo
+import com.syncodec.graphite.utils.timeStampToTime
+import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.ObjectId
+import kotlin.math.roundToInt
 
 
 @OptIn(
 	ExperimentalFoundationApi::class,
-	ExperimentalAnimationApi::class
+	ExperimentalAnimationApi::class, ExperimentalMaterialApi::class
 )
 @Composable
 fun NoteListCard(
@@ -55,6 +94,7 @@ fun NoteListCard(
 	address: String?,
 	latLng: LatLng?,
 	isVisible: Boolean = false,
+	containerColor : Color = Color.Transparent,
 	selectedColor: Color,
 	onClick: () -> Unit,
 	onLongClick: (() -> Unit)? = null,
@@ -62,10 +102,13 @@ fun NoteListCard(
 	val containerColor by animateColorAsState(
 		when {
 			isSelected -> selectedColor
-			isFavourite -> Color(0x13FE3A58)
-			else -> Color.Transparent
+			isFavourite -> Color.FavouriteContainer
+			else -> containerColor
 		}
 	)
+
+	val swipeableState = rememberSwipeableState(0)
+	val anchors = mapOf(0f to 0, with(LocalDensity.current) { 128.dp.toPx() } to 1)
 
 	var cardHeight by remember { mutableStateOf(0) }
 
@@ -87,64 +130,89 @@ fun NoteListCard(
 				height = cardHeight
 			)
 			Spacer(modifier = Modifier.width(4.dp))
-			OutlinedCard(
-				shape = RoundedCornerShape(12.dp),
-				border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.17f)),
-				colors = CardDefaults.cardColors(containerColor),
-				elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
+			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.clip(RoundedCornerShape(12.dp))
-					.combinedClickable(
-						onClick = { onClick() },
-						onLongClick = { onLongClick?.invoke() }
+					.swipeable(
+						state = swipeableState,
+						anchors = anchors,
+						thresholds = { _, _ -> FractionalThreshold(0.31f) },
+						orientation = Orientation.Horizontal
 					)
+					.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
 			) {
-				Box(modifier = Modifier) {
-					Box(
-						contentAlignment = Alignment.CenterEnd,
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(with(LocalDensity.current) { cardHeight.toDp() }),
-					) {
+				OutlinedCard(
+					shape = RoundedCornerShape(12.dp),
+					border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.17f)),
+					colors = CardDefaults.cardColors(containerColor),
+					elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
+					modifier = Modifier
+						.fillMaxWidth()
+						.offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
+						.clip(RoundedCornerShape(12.dp))
+						.combinedClickable(
+							onClick = { onClick() },
+							onLongClick = { onLongClick?.invoke() }
+						)
+						.swipeable(
+							state = swipeableState,
+							anchors = anchors,
+							thresholds = { _, _ -> FractionalThreshold(0.31f) },
+							orientation = Orientation.Horizontal
+						)
+				) {
+					Box(modifier = Modifier) {
 						Box(
+							contentAlignment = Alignment.CenterEnd,
 							modifier = Modifier
-								.width(6.dp)
-								.height(80.dp)
-								.padding(0.dp, 8.dp)
-								.clip(CutCornerShape(16.dp, 0.dp, 0.dp, 16.dp))
-								.background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.47f))
-						)
-					}
-
-					Column(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(12.dp, 8.dp)
-					) {
-						Title(
-							showFullTime = showFullTime,
-							timestamp = timestamp,
-							title = title,
-							isLocked = isLocked,
-							isFavourite = isFavourite,
-							attachmentCount = attachmentCount
-						)
-
-						Spacer(modifier = Modifier.height(4.dp))
-
-						Content(
-							contentThumbnail = contentThumbnail,
-							attachmentCount = attachmentCount,
-							attachmentThumbnail = attachmentThumbnail
-						)
-
-						if (address != null || latLng != null) {
-							Spacer(modifier = Modifier.height(8.dp))
-							Location(
-								address = address,
-								latLng = latLng
+								.fillMaxWidth()
+								.height(with(LocalDensity.current) { cardHeight.toDp() }),
+						) {
+							Box(
+								modifier = Modifier
+									.width(6.dp)
+									.height(80.dp)
+									.padding(0.dp, 8.dp)
+									.clip(CutCornerShape(16.dp, 0.dp, 0.dp, 16.dp))
+									.background(
+										MaterialTheme
+											.colorScheme
+											.surface
+											.tone(isSystemInDarkTheme(), 1)
+											.copy(alpha = 0.71f)
+									)
 							)
+						}
+
+						Column(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(12.dp, 8.dp)
+						) {
+							Title(
+								showFullTime = showFullTime,
+								timestamp = timestamp,
+								title = title,
+								isLocked = isLocked,
+								isFavourite = isFavourite,
+								attachmentCount = attachmentCount
+							)
+
+							Spacer(modifier = Modifier.height(4.dp))
+
+							Content(
+								contentThumbnail = contentThumbnail,
+								attachmentCount = attachmentCount,
+								attachmentThumbnail = attachmentThumbnail
+							)
+
+							if (address != null || latLng != null) {
+								Spacer(modifier = Modifier.height(8.dp))
+								Location(
+									address = address,
+									latLng = latLng
+								)
+							}
 						}
 					}
 				}

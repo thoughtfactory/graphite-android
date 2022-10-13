@@ -1,10 +1,16 @@
 package com.syncodec.graphite.di.network
 
+import android.util.Log
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.json.JSONObject
 import java.io.Serializable
 import java.net.URLEncoder
 
@@ -15,21 +21,21 @@ enum class ApiStatus {
 	ERROR,
 }  // for your case might be simplify to use only sealed class
 
-sealed class ApiResult<out T>(val status: ApiStatus, val data: T?, val message: String?) {
+sealed class ApiResult<out T>(val status : ApiStatus, val data : T?, val message : String?) {
 
-	data class Loading<out R>(val _data: R?, val isLoading: Boolean) : ApiResult<R>(
+	data class Loading<out R>(val _data : R?, val isLoading : Boolean) : ApiResult<R>(
 		status = ApiStatus.LOADING,
 		data = _data,
 		message = null
 	)
 
-	data class Success<out R>(val _data: R?) : ApiResult<R>(
+	data class Success<out R>(val _data : R?) : ApiResult<R>(
 		status = ApiStatus.SUCCESS,
 		data = _data,
 		message = null
 	)
 
-	data class Error(val exception: String) : ApiResult<Nothing>(
+	data class Error(val exception : String) : ApiResult<Nothing>(
 		status = ApiStatus.ERROR,
 		data = null,
 		message = exception
@@ -38,40 +44,80 @@ sealed class ApiResult<out T>(val status: ApiStatus, val data: T?, val message: 
 
 
 class OpenLibraryApi {
+	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
 	private val client = OkHttpClient.Builder().build()
 
-	fun searchForTitle(title: String, onResponse: (Response?) -> Unit, ) {
-		val url = "https://openlibrary.org/search.json?title=${URLEncoder.encode(title, "utf-8")}&fields=key,title,author_name,cover_i,first_publish_year&limit=10&offset=0"
-
-		val request = Request.Builder()
-			.url(url)
-			.build()
-
-		onResponse(client.newCall(request).execute())
+	enum class OpenLibraryApiRequestType {
+		QUERY,
+		TITLE,
+		ISBN
 	}
 
-	fun retrieveBookCover(coverI: String?, onResponse: (Response?) -> Unit) {
-		if (coverI == null) onResponse(null)
-		else {
-			val url = "https://covers.openlibrary.org/b/id/${coverI}-M.jpg"
+	fun searchForBook(query : String, requestType : OpenLibraryApiRequestType, onResponse : (OpenLibraryTitleSearchResult?) -> Unit) {
+		try {
+			val url = when (requestType) {
+				OpenLibraryApiRequestType.QUERY -> "https://openlibrary.org/search.json?q="
+					.plus(URLEncoder.encode(query, "utf-8"))
+					.plus("&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median&limit=9&offset=0")
 
-			val request = Request.Builder()
-				.url(url)
-				.build()
+				OpenLibraryApiRequestType.TITLE -> "https://openlibrary.org/search.json?title="
+					.plus(URLEncoder.encode(query, "utf-8"))
+					.plus("&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median&limit=9&offset=0")
 
-			onResponse(client.newCall(request).execute())
+				OpenLibraryApiRequestType.ISBN -> "https://openlibrary.org/api/books?bibkeys=ISBN:$query&jscmd=details&format=json"
+			}
+			url.let {
+				val request = Request.Builder()
+					.url(it)
+					.build()
+
+				client.newCall(request).execute().body?.let { onResponse(objectMapper.readValue(it.string())) } ?: onResponse(null)
+			}
+		} catch (e : Exception) {
+			onResponse(null)
 		}
 	}
 
-	fun retrieveDataFromKey(key: String?, onResponse: (Response?) -> Unit) {
+	fun retrieveBookCover(coverI : String?, onResponse : (Response?) -> Unit) {
+		try {
+			if (coverI == null) onResponse(null)
+			else {
+				val url = "https://covers.openlibrary.org/b/id/${coverI}-M.jpg"
+
+				val request = Request.Builder()
+					.url(url)
+					.build()
+
+				onResponse(client.newCall(request).execute())
+			}
+		} catch (e : Exception) {
+			onResponse(null)
+		}
+	}
+
+	fun retrieveDescriptionFromKey(key : String?, onResponse : (String?) -> Unit) {
 		if (key == null) onResponse(null)
 		else {
-			val url = "https://openlibrary.org/$key.json"
-			val request = Request.Builder()
-				.url(url)
-				.build()
+			try {
+				val url = "https://openlibrary.org/$key.json"
 
-			onResponse(client.newCall(request).execute())
+				val request = Request.Builder()
+					.url(url)
+					.build()
+
+				client.newCall(request).execute().body?.let {
+					val jsonObject = JSONObject(it.string())
+					Log.i("npr71", jsonObject.toString())
+					Log.i("npr71", "${jsonObject.optJSONObject("description")}")
+					Log.i("npr71", "${jsonObject.optJSONObject("details")?.optJSONObject("description")?.optString("value")}")
+
+					jsonObject.optJSONObject("description")?.optString("value")?.let { onResponse(it) } ?: onResponse(null)
+				} ?: onResponse(null)
+			} catch (e : Exception) {
+				e.printStackTrace()
+				onResponse(null)
+			}
 		}
 	}
 }
@@ -79,39 +125,42 @@ class OpenLibraryApi {
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class OpenLibraryTitleSearchResult(
 	@JsonProperty("numFound")
-	val numFound: Int?,
+	val numFound : Int?,
 	@JsonProperty("start")
-	val start: Int?,
+	val start : Int?,
 	@JsonProperty("docs")
-	val docs: List<BookData>
+	val docs : List<BookData?>?
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class BookData(
 	@JsonProperty("key")
-	var key: String?,
+	var key : String?,
 	@JsonProperty("title")
-	var title: String?,
+	var title : String?,
 	@JsonProperty("cover_i")
-	var coverI: String?,    // Url for cover
+	var coverI : String?,    // Url for cover
 	@JsonProperty("author_name")
-	var authorList: List<String?>?,
+	var authorList : List<String?>?,
 	@JsonProperty("first_publish_year")
-	var firstPublishedYear: String?,
+	var firstPublishYear : String?,
+	@JsonProperty("number_of_pages_median")
+	var numberOfPages : Int?,
 	@JsonProperty("description")
-	var description: String?
+	var description : String?
 ) : Serializable {
-	override fun hashCode(): Int {
-		var result = key?.hashCode() ?: 0
-		result = 31 * result + (title?.hashCode() ?: 0)
-		result = 31 * result + (coverI?.hashCode() ?: 0)
-		result = 31 * result + (authorList?.hashCode() ?: 0)
-		result = 31 * result + (firstPublishedYear?.hashCode() ?: 0)
-		result = 31 * result + (description?.hashCode() ?: 0)
-		return result
+
+	fun toJsonString() : String {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			objectMapper.writeValueAsString(this)
+		} catch (e : Exception) {
+			e.printStackTrace()
+			"null"
+		}
 	}
 
-	override fun equals(other: Any?): Boolean {
+	override fun equals(other : Any?) : Boolean {
 		if (this === other) return true
 		if (other !is BookData) return false
 
@@ -119,33 +168,21 @@ data class BookData(
 		if (title != other.title) return false
 		if (coverI != other.coverI) return false
 		if (authorList != other.authorList) return false
-		if (firstPublishedYear != other.firstPublishedYear) return false
+		if (firstPublishYear != other.firstPublishYear) return false
+		if (numberOfPages != other.numberOfPages) return false
 		if (description != other.description) return false
 
 		return true
 	}
-}
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class BookDataDescription(
-	@JsonProperty("type")
-	var type: String?,
-	@JsonProperty("value")
-	var value: String?
-) {
-	override fun hashCode(): Int {
-		var result = type?.hashCode() ?: 0
-		result = 31 * result + (value?.hashCode() ?: 0)
+	override fun hashCode() : Int {
+		var result = key?.hashCode() ?: 0
+		result = 31 * result + (title?.hashCode() ?: 0)
+		result = 31 * result + (coverI?.hashCode() ?: 0)
+		result = 31 * result + (authorList?.hashCode() ?: 0)
+		result = 31 * result + (firstPublishYear?.hashCode() ?: 0)
+		result = 31 * result + (numberOfPages ?: 0)
+		result = 31 * result + (description?.hashCode() ?: 0)
 		return result
-	}
-
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (other !is BookDataDescription) return false
-
-		if (type != other.type) return false
-		if (value != other.value) return false
-
-		return true
 	}
 }

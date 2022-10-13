@@ -1,29 +1,45 @@
 package com.syncodec.graphite.presentation.notebook.composable.bottomSheet
 
+import android.content.Intent
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
-import com.syncodec.graphite.presentation.custom.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
+import com.syncodec.graphite.presentation.attachment.AttachmentActivity
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
+import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
+import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.notebook.NotebookViewModel
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.ObjectId
@@ -33,6 +49,7 @@ import io.realm.kotlin.types.ObjectId
 fun MenuBottomSheet(
 	closeSheet: () -> Unit
 ) {
+	val activity = LocalContext.current as NotebookActivity
 	val viewModel: NotebookViewModel = viewModel()
 
 	val chapterObject by viewModel.chapterObject
@@ -60,6 +77,27 @@ fun MenuBottomSheet(
 				contentColor = Color.DeleteContent,
 				onClick = {}
 			),
+			BottomSheetButtonData(
+				title = "Attachment",
+				icon = R.drawable.ic_attachment,
+				onClick = {
+					Intent(activity, AttachmentActivity::class.java).apply {
+						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterObject?.id.toString())
+
+						activity.startActivity(this)
+					}
+				}
+			),
+			BottomSheetButtonData(
+				title = "Calendar",
+				icon = R.drawable.ic_calendar,
+				onClick = {}
+			),
+			BottomSheetButtonData(
+				title = "Atlas",
+				icon = R.drawable.ic_atlas,
+				onClick = {}
+			)
 		)
 	}
 
@@ -86,7 +124,8 @@ fun MenuBottomSheet(
 			createdTimestamp = chapterObject?.createdTimestamp,
 			modifiedTimestamp = chapterObject?.modifiedTimestamp,
 			description = chapterObject?.description,
-			color = chapterObject?.color,
+			color = chapterObject?.color?.let { Color(it) },
+			thumbnail = chapterObject?.thumbnail?.decodeBase64ToBitmap(),
 		)
 
 		TagView(
@@ -160,18 +199,41 @@ private fun InfoView(
 	createdTimestamp: Long?,
 	modifiedTimestamp: Long?,
 	description: String?,
-	color: Int?
+	color: Color?,
+	thumbnail: Bitmap?,
 ) {
-	Card(
+
+	var size by remember { mutableStateOf<IntSize?>(null) }
+
+	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(24.dp, 0.dp),
-		shape = RoundedCornerShape(24.dp),
-		colors = CardDefaults.outlinedCardColors(
-			containerColor = color?.let { Color(it) } ?: MaterialTheme.colorScheme.background,
-			contentColor = color?.let { Color(it).getInverseBWColor() } ?: MaterialTheme.colorScheme.onBackground
-		)
+			.padding(24.dp, 0.dp)
+			.background(color ?: MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
+			.clip(RoundedCornerShape(24.dp))
+			.onGloballyPositioned { size = it.size }
 	) {
+		thumbnail?.let {
+			Image(
+				bitmap = it.asImageBitmap(),
+				contentDescription = null,
+				contentScale = ContentScale.Crop,
+				modifier = with(LocalDensity.current) {
+					Modifier.size(size?.width?.toDp() ?: 1.dp, size?.height?.toDp() ?: 1.dp)
+				}
+			)
+		}
+
+		if (thumbnail != null) {
+			Box(
+				modifier = with(LocalDensity.current) {
+					Modifier
+						.size(size?.width?.toDp() ?: 1.dp, size?.height?.toDp() ?: 1.dp)
+						.background(Color.Black.copy(alpha = 0.31f))
+				}
+			)
+		}
+
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -179,21 +241,24 @@ private fun InfoView(
 		) {
 			Text(
 				text = id?.toString() ?: "Loading...",
-				style = MaterialTheme.typography.bodyMedium
+				style = MaterialTheme.typography.bodyMedium,
+				color = color?.getInverseBWColor() ?: Color.White,
 			)
 			Spacer(modifier = Modifier.height(8.dp))
 
 			Text(
-				text = description ?: "No description",
-				style = if (description == null) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
-				fontWeight = if (description == null) FontWeight.Normal else FontWeight.Bold,
-				fontStyle = if (description == null) FontStyle.Italic else FontStyle.Normal
+				text = if (description.isNullOrBlank()) "No description" else description,
+				style = if (description.isNullOrBlank()) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+				color = color?.getInverseBWColor() ?: Color.White,
+				fontWeight = if (description.isNullOrBlank()) FontWeight.Normal else FontWeight.Bold,
+				fontStyle = if (description.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal
 			)
 			Spacer(modifier = Modifier.height(8.dp))
 
 			Text(
 				text = "Created on: ${createdTimestamp?.timeStampToPrettyFull() ?: "Loading..."}",
 				style = MaterialTheme.typography.bodyMedium,
+				color = color?.getInverseBWColor() ?: Color.White,
 				fontStyle = FontStyle.Italic
 			)
 			Spacer(modifier = Modifier.height(2.dp))
@@ -201,6 +266,7 @@ private fun InfoView(
 			Text(
 				text = "Modified on: ${modifiedTimestamp?.timeStampToPrettyFull() ?: "Loading..."}",
 				style = MaterialTheme.typography.bodyMedium,
+				color = color?.getInverseBWColor() ?: Color.White,
 				fontStyle = FontStyle.Italic
 			)
 		}

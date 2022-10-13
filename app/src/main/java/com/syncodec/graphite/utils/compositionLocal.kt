@@ -4,7 +4,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import com.syncodec.graphite.presentation.custom.richText.RichTextEditor
+import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 
 
 //val LocalVaultState =
@@ -17,7 +17,7 @@ val LocalRichTextEditor = compositionLocalOf<RichTextEditor> { error("No richtex
 val LocalModalBottomSheetState = compositionLocalOf<ModalBottomSheetState> { error("No modal bottom sheet state provided") }
 val LocalModalBottomSheetType = compositionLocalOf<Int> { error("No modal bottom sheet type provided") }
 val LocalSetModalBottomSheetType = compositionLocalOf<(Int) -> Unit> { error("No modal bottom sheet type setter provided") }
-
+val LocalSaveNote = compositionLocalOf<() -> Unit> { error("No save note provided") }
 
 //fun <T> stateSaver() = Saver<MutableState<T>, Any>(
 //	save = { state -> state.value ?: "null" },

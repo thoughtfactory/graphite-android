@@ -54,7 +54,8 @@ fun NotebookScreen(
 					item {
 						NotebookCard(
 							title = notebook.title,
-							color = Color(notebook.color),
+							color = notebook.color?.let { it1 -> Color(it1) },
+							thumbnail = notebook.thumbnail,
 							isSelected = false,
 							onClick = { onClickNotebook(notebook.id) },
 							onLongClick = { onLongClickNotebook(notebook.id) }

@@ -9,25 +9,29 @@ import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucket.composable.bar.TopBar
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetType
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.SheetLayout
-import com.syncodec.graphite.presentation.custom.LoadingView
-import com.syncodec.graphite.presentation.custom.button.PrimaryButton
+import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.button.PrimaryButton
 import kotlinx.coroutines.launch
 import com.syncodec.graphite.R
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class, ExperimentalPagerApi::class)
 @Composable
 fun BucketScreen() {
 	val scope = rememberCoroutineScope()
@@ -36,12 +40,17 @@ fun BucketScreen() {
 
 	val _bucketObject by viewModel.bucketObject
 
-	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+	val keyboardController = LocalSoftwareKeyboardController.current
+
 	var bottomSheetType: BucketBottomSheetType by rememberSaveable { mutableStateOf(BucketBottomSheetType.MENU) }
-
+	val modalBottomSheetState = rememberModalBottomSheetState(
+		initialValue = ModalBottomSheetValue.Hidden,
+		confirmStateChange = { keyboardController?.hide(); true }
+	)
 	val closeSheet = { scope.launch { modalBottomSheetState.hide() } }
-
 	val openSheet = { scope.launch { modalBottomSheetState.show() } }
+
+	var viewState by rememberSaveable { mutableStateOf(0) }
 
 	var bottomBarSpacingPx by remember { mutableStateOf(0) }
 
@@ -64,10 +73,10 @@ fun BucketScreen() {
 							bucketType = BucketType.BOOK,
 							isFavourite = bucketObject.isFavourite,
 							isLocked = bucketObject.isLocked,
-							itemState = 0,
+							viewState = viewState,
 							onClickFavourite = { viewModel.toggleFavourite() },
 							onClickLock = { viewModel.toggleLock() },
-							onStateChange = {}
+							onStateChange = { viewState = it }
 						)
 					},
 				) {
@@ -84,11 +93,16 @@ fun BucketScreen() {
 									.fillMaxWidth()
 									.weight(1f)
 							) {
-								when (bucketObject.bucketType) {
-									BucketType.TODO.name -> null
-									BucketType.BOOK.name -> BookListScreen()
-									BucketType.SHOW.name -> ShowListScreen()
-									BucketType.LINK.name -> null
+								HorizontalPager(
+									count = 4,
+									modifier = Modifier.fillMaxSize(),
+								) {
+									when (bucketObject.bucketType) {
+										BucketType.TODO.name -> null
+										BucketType.BOOK.name -> BookGridScreen()
+										BucketType.SHOW.name -> ShowGridScreen(it)
+										BucketType.LINK.name -> LinkListScreen()
+									}
 								}
 							}
 

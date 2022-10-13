@@ -52,6 +52,7 @@ class NotebookActivity : ComponentActivity() {
 		}
 	}
 
+	@Deprecated("MUST UPDATE IN NEXT UPDATE")
 	override fun onBackPressed() {
 		val chapterObject by viewModel.chapterObject
 		var showManageTagDialog by viewModel.showManageTagDialog

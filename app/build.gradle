@@ -3,6 +3,7 @@ plugins {
 	id 'org.jetbrains.kotlin.android'
 	id 'kotlin-android'
 	id 'kotlin-kapt'
+	id 'com.google.dagger.hilt.android'
 	id 'io.realm.kotlin'
 	id 'com.google.gms.google-services'
 	id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
@@ -29,14 +30,17 @@ android {
 			properties.load(rootProject.file('local.properties').newDataInputStream())
 		}
 
+		manifestPlaceholders.clientKey = properties.getProperty('CLIENT_KEY', '')
 		manifestPlaceholders.mapsApiKey = properties.getProperty('MAPS_API_KEY', '')
 		manifestPlaceholders.googleBookApiKey = properties.getProperty('GOOGLE_BOOK_API_KEY', '')
+		manifestPlaceholders.tmdbApiKey = properties.getProperty('TMDB_API_KEY', '')
+		manifestPlaceholders.revenueCatApiKey = properties.getProperty('REVENUE_CAT_API_KEY', '')
 
 		javaCompileOptions {
 			annotationProcessorOptions {
 				arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
-				arguments += [ "objectbox.myObjectBoxPackage" : "com.syncodec.graphite" ]
-				arguments += [ "objectbox.debug" : "true" ]
+				arguments += ["objectbox.myObjectBoxPackage": "com.syncodec.graphite"]
+				arguments += ["objectbox.debug": "true"]
 			}
 		}
 	}
@@ -78,23 +82,31 @@ android {
 		}
 	}
 
+	kapt {
+		correctErrorTypes true
+	}
+
 	namespace 'com.syncodec.graphite'
 }
 
 dependencies {
+	implementation "com.google.dagger:hilt-android:2.44"
+	kapt "com.google.dagger:hilt-compiler:2.44"
+
 	implementation 'androidx.core:core-ktx:1.9.0'
 
-	implementation 'androidx.activity:activity-compose:1.6.0-rc02'
-	implementation 'androidx.appcompat:appcompat:1.6.0-rc01'
+	implementation 'androidx.activity:activity-compose:1.6.0'
+	implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
 
-	implementation 'androidx.compose.material:material:1.3.0-beta02'
-	implementation 'androidx.compose.material3:material3:1.0.0-beta02'
-	implementation 'androidx.compose.ui:ui:1.3.0-beta02'
+	implementation 'androidx.compose.material:material:1.3.0-rc01'
+	implementation 'androidx.compose.material3:material3:1.0.0-rc01'
+	implementation 'androidx.compose.ui:ui:1.3.0-rc01'
 //	implementation 'androidx.compose.foundation:foundation:2.7.0-alpha03'
-	implementation 'androidx.compose.ui:ui-tooling-preview:1.3.0-beta02'
-	implementation 'androidx.compose.ui:ui-util:1.3.0-beta02'
+	implementation 'androidx.compose.ui:ui-tooling-preview:1.3.0-rc01'
+	implementation 'androidx.compose.ui:ui-util:1.3.0-rc01'
 
-	implementation "androidx.glance:glance-appwidget:1.0.0-alpha04"
+	implementation "androidx.work:work-runtime-ktx:2.8.0-beta01"
+	implementation "androidx.glance:glance-appwidget:1.0.0-alpha05"
 
 	implementation 'androidx.navigation:navigation-compose:2.5.2'
 	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.1'
@@ -114,6 +126,8 @@ dependencies {
 	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
 	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.1'
 	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1'
+
+	implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
 
 	implementation 'androidx.compose.runtime:runtime:1.2.1'
 
@@ -136,6 +150,8 @@ dependencies {
 	implementation 'io.coil-kt:coil-gif:2.1.0'
 	implementation 'io.coil-kt:coil-video:2.1.0'
 
+	implementation 'com.revenuecat.purchases:purchases:5.4.0'
+
 	implementation platform('com.google.firebase:firebase-bom:30.2.0')
 	implementation 'com.google.android.gms:play-services-auth:20.3.0'
 	implementation 'com.google.firebase:firebase-analytics'
@@ -157,9 +173,10 @@ dependencies {
 
 	implementation 'com.google.android.gms:play-services-location:20.0.0'
 //	implementation 'com.google.maps.android:maps-ktx:3.4.0'
-//	implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
+	implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
 
-	implementation 'com.google.maps.android:maps-compose:2.5.3'
+	implementation 'com.google.maps.android:maps-compose:2.7.2'
+//	implementation 'com.google.maps.android:android-maps-utils-v3:2.4.0'
 	implementation 'com.google.android.gms:play-services-maps:18.1.0'
 
 	implementation 'androidx.datastore:datastore-preferences-core:1.0.0'
@@ -177,7 +194,7 @@ dependencies {
 
 	implementation 'com.github.LucasFsc:Html2Pdf:0.2-beta'
 
-//	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.4'
+	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.5'
 
 	implementation "com.google.android.gms:play-services-oss-licenses:17.0.0"
 

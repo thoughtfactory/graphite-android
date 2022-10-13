@@ -1,19 +1,24 @@
 package com.syncodec.graphite
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.ui.graphics.toArgb
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
+import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.PurchasesConfiguration
+import com.revenuecat.purchases.getOfferingsWith
+import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.Repository
-import com.syncodec.graphite.utils.*
+import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.getRandomColor
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 
 
+@HiltAndroidApp
 class BaseApplication : Application() {
 
 	lateinit var dataStore: DataStoreInstance
@@ -32,6 +37,20 @@ class BaseApplication : Application() {
 		ROOT = applicationContext.filesDir.path
 		File(DATA).mkdirs()
 		File(ATTACHMENT_DIR).mkdirs()
+
+//		Purchases.debugLogsEnabled = true
+//		Purchases.configure(PurchasesConfiguration.Builder(this, BuildConfig.REVENUE_CAT_API_KEY).build())
+
+//		Purchases.sharedInstance.getOfferingsWith(
+//			onError = { error ->
+//				/* Optional error handling */
+//				Log.e("npr71", "Error getting offerings: $error")
+//			},
+//			onSuccess = { offerings ->
+//				// Display current offering with offerings.current
+//				Log.i("npr71", "onSuccess: ${offerings.all}")
+//			}
+//		)
 
 		dataStore = DataStoreInstance(this)
 

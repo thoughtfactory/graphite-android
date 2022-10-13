@@ -42,10 +42,15 @@
     @android.webkit.JavascriptInterface <methods>;
 }
 
--keep class com.syncodec.graphite.presentation.custom.richText.*
+-keep class com.syncodec.graphite.presentation.common.richText.*
 
 -keep class com.syncodec.graphite.database.** { *; }
 
 -keep class com.google.android.gms.maps.model.LatLng { *; }
 -keep class com.revenuecat.purchases.** { *; }
--keep class org.jsoup.**
+
+-keep public class org.jsoup.** {
+    public *;
+}
+
+-keep class com.revenuecat.purchases.** { *; }

@@ -1,23 +1,36 @@
 package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -36,25 +49,21 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.jsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.network.GoogleBookData
-import com.syncodec.graphite.di.network.GoogleBookSearchResult
+import com.syncodec.graphite.di.network.BookData
+import com.syncodec.graphite.di.network.OpenLibraryApi
+import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
-import com.syncodec.graphite.presentation.custom.ClimateChangeMessage
-import com.syncodec.graphite.presentation.custom.text.LargeTextField
-import com.syncodec.graphite.presentation.custom.LoadingView
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.ClimateChangeMessage
+import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.text.LargeTextField
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
@@ -65,14 +74,10 @@ import java.net.SocketTimeoutException
 @OptIn(ExperimentalAnimationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun AddBookBottomSheet(
-	closeSheet: () -> Unit
+	closeSheet : () -> Unit
 ) {
-	val context = LocalContext.current
-
-	val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-
-	val activity: BucketActivity = LocalContext.current as BucketActivity
-	val viewModel: BucketViewModel = viewModel()
+	val activity : BucketActivity = LocalContext.current as BucketActivity
+	val viewModel : BucketViewModel = viewModel()
 	val scope = rememberCoroutineScope()
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -80,17 +85,24 @@ fun AddBookBottomSheet(
 	var isTextFocused by remember { mutableStateOf(false) }
 	val focusRequester = remember { FocusRequester() }
 
-	var status: Status by remember { mutableStateOf(Status.INIT) }
-	var googleBooksSearchResult: GoogleBookSearchResult? by remember { mutableStateOf(null) }
+	var status : Status by remember { mutableStateOf(Status.INIT) }
+	var openLibraryTitleSearchResult : OpenLibraryTitleSearchResult? by remember { mutableStateOf(null) }
 
-	var currentState by rememberSaveable { mutableStateOf(0) }
 	val lazyGridState = rememberLazyGridState()
+
+	val openLibrarySearchTypeList = listOf(
+		StateData(title = "All", icon = R.drawable.ic_state,),
+		StateData(title = "Title", icon = R.drawable.ic_title,),
+		StateData(title = "Author", icon = R.drawable.ic_book,),
+		StateData(title = "ISBN", icon = R.drawable.ic_book,),
+	)
+	var openLibrarySearchType by rememberSaveable { mutableStateOf(0) }
+
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(360.dp)
 			.background(MaterialTheme.colorScheme.surface)
 	) {
 
@@ -122,26 +134,43 @@ fun AddBookBottomSheet(
 					status = Status.LOADING
 					focusRequester.freeFocus()
 					keyboardController?.hide()
-					googleBooksSearchResult = null
+					openLibraryTitleSearchResult = null
 					scope.launch(Dispatchers.IO) {
 						try {
-							Repository.googleBooksApi.searchForAll(queryText) {response ->
-								if (response?.body == null) {
+							val onSearchResult : (OpenLibraryTitleSearchResult?) -> Unit = {
+								if (it == null) {
 									status = Status.ERROR
 								} else {
-									googleBooksSearchResult = objectMapper.readValue(response.body!!.string())
-									Log.i("npr71", "googleBooksSearchResult: $googleBooksSearchResult")
+									openLibraryTitleSearchResult = it
 									status = Status.LOADED
 								}
 							}
-						} catch (e: SocketTimeoutException) {
+
+							when (openLibrarySearchType) {
+								0 -> Repository.openLibraryApi.searchForBook(
+									query = queryText,
+									requestType = OpenLibraryApi.OpenLibraryApiRequestType.QUERY,
+									onResponse = onSearchResult
+								)
+								1 -> Repository.openLibraryApi.searchForBook(
+									query = queryText,
+									requestType = OpenLibraryApi.OpenLibraryApiRequestType.TITLE,
+									onResponse = onSearchResult
+								)
+								2 -> Repository.openLibraryApi.searchForBook(
+									query = queryText,
+									requestType = OpenLibraryApi.OpenLibraryApiRequestType.QUERY,
+									onResponse = onSearchResult
+								)
+							}
+						} catch (e : SocketTimeoutException) {
 //							TODO update error message and image
 							scope.launch(Dispatchers.Main) {
 								Toast.makeText(activity, "Timeout getting search results", Toast.LENGTH_SHORT).show()
 							}
 							status = Status.ERROR
 							e.printStackTrace()
-						} catch (e: Exception) {
+						} catch (e : Exception) {
 //							TODO update error message and image
 							status = Status.ERROR
 							e.printStackTrace()
@@ -153,38 +182,17 @@ fun AddBookBottomSheet(
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		StateButton(
-			stateList = listOf(
-				StateData(
-					title = "All",
-					icon = R.drawable.ic_state,
-					stateTint = MaterialTheme.colorScheme.primary
-				),
-				StateData(
-					title = "Title",
-					icon = R.drawable.ic_title,
-					stateTint = MaterialTheme.colorScheme.primary
-				),
-				StateData(
-					title = "Author",
-					icon = R.drawable.ic_book,
-					stateTint = MaterialTheme.colorScheme.primary
-				),
-				StateData(
-					title = "ISBN",
-					icon = R.drawable.ic_book,
-					stateTint = MaterialTheme.colorScheme.primary
-				),
-			),
-			containerColor = MaterialTheme.colorScheme.background,
-			currentState = currentState,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(36.dp)
-				.padding(24.dp, 0.dp)
-		) { currentState = it }
-
-		Spacer(modifier = Modifier.height(4.dp))
+//		StateButton(
+//			stateList = openLibrarySearchTypeList,
+//			containerColor = MaterialTheme.colorScheme.background,
+//			currentState = openLibrarySearchType,
+//			modifier = Modifier
+//				.fillMaxWidth()
+//				.height(36.dp)
+//				.padding(24.dp, 0.dp)
+//		) { openLibrarySearchType = it }
+//
+//		Spacer(modifier = Modifier.height(4.dp))
 
 		AnimatedContent(targetState = status) {
 			when (it) {
@@ -197,6 +205,7 @@ fun AddBookBottomSheet(
 							.height(256.dp),
 					) { LoadingView() }
 				}
+
 				Status.LOADED -> {
 //					TODO    What if list is empty?
 					LazyVerticalGrid(
@@ -204,27 +213,27 @@ fun AddBookBottomSheet(
 						state = lazyGridState,
 						modifier = Modifier.padding(16.dp, 0.dp)
 					) {
-						googleBooksSearchResult?.items?.forEach { googleBookData ->
-							if (googleBookData!= null) {
+						openLibraryTitleSearchResult?.docs?.forEach { bookData ->
+							if (bookData != null) {
 								item {
 									BookCard(
-										googleBookData = googleBookData
+										bookData = bookData,
 									) {
 										focusRequester.freeFocus()
 										keyboardController?.hide()
 
-										if (viewModel.bucketObject.value != null && googleBookData.id != null) {
+										if (viewModel.bucketObject.value == null || bookData.key == null) {
+											Toast.makeText(activity, "Error adding book to bucket", Toast.LENGTH_SHORT).show()
+										} else {
 											Intent(activity, BucketItemActivity::class.java).apply {
 												putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-												putExtra(Extra.Companion.Constant.BUCKET_ID.name, viewModel.bucketObject.value!!.id.toString())
+												putExtra(Extra.Companion.Constant.BUCKET_ID.name, viewModel.bucketObject.value !!.id.toString())
 												putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.BOOK.name)
-												putExtra(Extra.Companion.Constant.BOOK_KEY.name, googleBookData.id)
-												putExtra(Extra.Companion.Constant.EXTRA_DATA.name, googleBookData)
+												putExtra(Extra.Companion.Constant.BOOK_ID.name, bookData.key)
+												putExtra(Extra.Companion.Constant.BUCKET_EXTRA_DATA.name, bookData)
 
 												activity.startActivity(this)
 											}
-										} else {
-											Toast.makeText(activity, "Error adding book to bucket", Toast.LENGTH_SHORT).show()
 										}
 									}
 								}
@@ -232,6 +241,7 @@ fun AddBookBottomSheet(
 						}
 					}
 				}
+
 				Status.ERROR -> {
 					Column(
 						modifier = Modifier.heightIn(256.dp),
@@ -262,8 +272,8 @@ fun AddBookBottomSheet(
 
 @Composable
 private fun BookCard(
-	googleBookData: GoogleBookData,
-	onClick: () -> Unit
+	bookData : BookData,
+	onClick : () -> Unit
 ) {
 	val context = LocalContext.current
 
@@ -273,19 +283,19 @@ private fun BookCard(
 	) {
 		Box(
 			modifier = Modifier
-				.aspectRatio(0.66666f)
+				.aspectRatio(0.6666f)
 				.background(MaterialTheme.colorScheme.background.copy(alpha = 0.47f), RoundedCornerShape(12.dp))
 				.clip(RoundedCornerShape(12.dp))
 				.clickable { onClick() }
 		) {
-			if (googleBookData.volumeInfo?.imageLinks?.thumbnail != null) {
+			if (bookData.coverI != null) {
 				AsyncImage(
 					model = ImageRequest.Builder(context)
-						.data("https://books.google.com/books/content?id=${googleBookData.id}&printsec=frontcover&img=1&zoom=10&edge=curl&source=gbs_api")
+						.data("https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg")
 						.crossfade(300)
 						.build(),
 					placeholder = null,
-					contentDescription = googleBookData.volumeInfo.title,
+					contentDescription = bookData.title,
 					contentScale = ContentScale.Crop,
 					modifier = Modifier.fillMaxSize(),
 				)
@@ -295,22 +305,23 @@ private fun BookCard(
 		Spacer(modifier = Modifier.height(4.dp))
 
 		Text(
-			text = googleBookData.volumeInfo?.title ?: "Untitled",
+			text = bookData.title ?: "Untitled",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurface,
-			fontStyle = if (googleBookData.volumeInfo?.title == null) FontStyle.Italic else FontStyle.Normal,
+			fontStyle = if (bookData.title == null) FontStyle.Italic else FontStyle.Normal,
 		)
 
 		Spacer(modifier = Modifier.height(4.dp))
 		var author = ""
-		googleBookData.volumeInfo?.authors?.forEachIndexed { index, s -> author += if (index == 0) s else ", $s" }
+
+		bookData.authorList?.forEachIndexed { index, s -> author += if (index == 0) s else ", $s" }
 		Text(
 			text = "~ $author",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onBackground,
 		)
 
-		googleBookData.volumeInfo?.publishedDate?.take( 4)?.let {
+		bookData.firstPublishYear?.take(4)?.let {
 			Spacer(modifier = Modifier.height(4.dp))
 			Text(
 				text = it,

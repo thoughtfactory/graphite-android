@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook
 
+import android.graphics.ImageDecoder
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
@@ -13,9 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
@@ -23,7 +27,8 @@ import com.syncodec.graphite.utils.getInverseBWColor
 @Composable
 fun NotebookCard(
 	title: String,
-	color: Color,
+	color: Color?,
+	thumbnail: String?,
 	isSelected: Boolean,
 	onClick: (() -> Unit)?,
 	onLongClick: (() -> Unit)?
@@ -35,7 +40,7 @@ fun NotebookCard(
 			.fillMaxSize()
 			.aspectRatio(0.75f)
 			.padding(16.dp)
-			.background(color, RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
+			.background(color ?: MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
 			.clip(RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
 			.combinedClickable(
 				enabled = onClick != null || onLongClick != null,
@@ -43,6 +48,23 @@ fun NotebookCard(
 				onLongClick = { onLongClick?.invoke() }
 			)
 	) {
+		thumbnail?.decodeBase64ToBitmap()?.let {
+			Image(
+				bitmap = it.asImageBitmap(),
+				contentDescription = title,
+				contentScale = ContentScale.Crop,
+				modifier = Modifier.fillMaxSize()
+			)
+		}
+
+		if (thumbnail != null) {
+			Box(
+				modifier = Modifier
+					.fillMaxSize()
+					.background(Color.Black.copy(alpha = 0.17f))
+			)
+		}
+
 		Row(
 			modifier = Modifier.fillMaxSize()
 		) {
@@ -66,71 +88,13 @@ fun NotebookCard(
 				Text(
 					text = title,
 					style = MaterialTheme.typography.titleLarge,
-					color = color.getInverseBWColor(),
+					color = color?.getInverseBWColor() ?: Color.White,
 					textAlign = TextAlign.Start,
 					fontWeight = FontWeight.Bold,
 					maxLines = 1,
 					modifier = Modifier.fillMaxWidth(),
 				)
-//				Text(
-//					text = if (notebook.notes.isEmpty()) "No entries" else if (notebook.notes.size == 1) "1 entry" else "${notebook.notes.size} entries",
-//					style = MaterialTheme.typography.bodyMedium,
-//					color = Color.White,
-//					textAlign = TextAlign.Start,
-//					modifier = Modifier.fillMaxWidth(),
-//				)
 			}
 		}
-	}
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun NotebookCard(
-	color: Int?,
-	isSelected: Boolean,
-	onClick: (() -> Unit)?,
-) {
-	val selectionColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-		animationSpec = tween(300)
-	)
-
-	Column(
-		modifier = Modifier,
-		horizontalAlignment = Alignment.CenterHorizontally
-	) {
-		Box(
-			modifier = Modifier
-				.width(96.dp)
-				.aspectRatio(0.75f)
-				.padding(8.dp)
-				.background(
-					if (color != null) Color(color) else Color.Transparent,
-					RoundedCornerShape(4.dp, 24.dp, 24.dp, 4.dp)
-				)
-				.combinedClickable(
-					enabled = onClick != null,
-					onClick = { onClick?.invoke() },
-				)
-		) {
-			Row(
-				modifier = Modifier.fillMaxSize()
-			) {
-				Box(
-					modifier = Modifier
-						.width(12.dp)
-						.fillMaxHeight()
-						.background(Color.Black.copy(alpha = 0.31f))
-				)
-			}
-		}
-
-		Box(
-			modifier = Modifier
-				.width(96.dp)
-				.height(4.dp)
-				.background(selectionColor, RoundedCornerShape(50))
-		)
 	}
 }

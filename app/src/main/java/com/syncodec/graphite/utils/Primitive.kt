@@ -1,5 +1,8 @@
 package com.syncodec.graphite.utils
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import com.google.android.gms.common.util.Base64Utils
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -23,6 +26,22 @@ fun String.containsAnyOfIgnoreCase(keywords: List<String>): Boolean {
 		if (this.contains(keyword, true)) return true
 	}
 	return false
+}
+
+fun String.decodeBase64ToBitmap(): Bitmap? {
+	return try {
+		Base64Utils.decode(this).let { BitmapFactory.decodeByteArray(it, 0, it.size)}
+	} catch (e: Exception) {
+		null
+	}
+}
+
+fun Bitmap.encodeBase64(): String? {
+	return try {
+		Base64Utils.encode(this.toByteArray())
+	} catch (e: Exception) {
+		null
+	}
 }
 
 @Deprecated("Remove in next version")

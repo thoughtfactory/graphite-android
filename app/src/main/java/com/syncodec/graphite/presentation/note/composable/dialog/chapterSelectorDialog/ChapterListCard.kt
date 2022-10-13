@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.dialog.chapterSelectorDialog
 
+import android.graphics.Bitmap
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -19,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.ExpandableBox
-import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.presentation.common.ExpandableBox
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.ObjectId
@@ -41,7 +42,8 @@ fun ChapterListCard(
 	isLast: Boolean,
 	title: String,
 	description: String?,
-	color: Color,
+	color: Color? = MaterialTheme.colorScheme.surface,
+	thumbnail: Bitmap?,
 	noteCount: Int,
 	chapterCount: Int,
 	isVisible: Boolean = false,
@@ -53,7 +55,7 @@ fun ChapterListCard(
 		when {
 			isSelected -> selectedColor
 			isFavourite -> Color(0x13FE3A58)
-			else -> color.copy(alpha = 0.47f)
+			else -> color!!.copy(alpha = 0.47f)
 		}
 	)
 
@@ -66,7 +68,7 @@ fun ChapterListCard(
 	) {
 		OutlinedCard(
 			shape = RoundedCornerShape(12.dp),
-			border = BorderStroke(2.dp, color),
+			border = BorderStroke(2.dp, color!!),
 			colors = CardDefaults.cardColors(containerColor),
 			elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 			modifier = Modifier

@@ -24,8 +24,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.presentation.custom.button.MenuButton
-import com.syncodec.graphite.presentation.custom.dialog.buildingBlock.DialogTextField
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DialogTextField
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.getRandomColor
 

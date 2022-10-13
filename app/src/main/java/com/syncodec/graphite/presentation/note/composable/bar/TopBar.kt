@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.note.NoteViewModel
 
@@ -20,10 +20,12 @@ import com.syncodec.graphite.presentation.note.NoteViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
-	onClickMetadata: () -> Unit
+	onClickSave : () -> Unit,
+	onClickBack : () -> Unit,
+	onClickMenu : () -> Unit
 ) {
-	val activity: NoteActivity = LocalContext.current as NoteActivity
-	val viewModel: NoteViewModel = viewModel()
+	val context = LocalContext.current
+	val viewModel : NoteViewModel = viewModel()
 
 	val isViewer by viewModel.isViewer
 	val isSaving by viewModel.isSaving
@@ -39,20 +41,16 @@ fun TopBar(
 						icon = R.drawable.ic_back,
 						contentDescription = "Back"
 					) {
-						if (isSaving)
-							Toast.makeText(activity, "Please wait while data is being saved", Toast.LENGTH_SHORT).show()
-						else
-							activity.onBackPressed()
+						if (isSaving) Toast.makeText(context, "Please wait while data is being saved", Toast.LENGTH_SHORT).show()
+						else onClickBack()
 					}
 				} else {
 					MenuButton(
-						icon = R.drawable.ic_close,
-						contentDescription = "Discard",
+						icon = R.drawable.ic_check,
+						contentDescription = "Save",
 					) {
-						if (isSaving)
-							Toast.makeText(activity, "Please wait while data is being saved", Toast.LENGTH_SHORT).show()
-						else
-							activity.onBackPressed()
+						if (isSaving) Toast.makeText(context, "Please wait while data is being saved", Toast.LENGTH_SHORT).show()
+						else onClickSave()
 					}
 				}
 			}
@@ -70,9 +68,9 @@ fun TopBar(
 				isChecked = isFavourite
 			) { viewModel.onUpdateFavorite() }
 			MenuButton(
-				icon = R.drawable.ic_info,
-				contentDescription = "Metadata",
-				onClick = onClickMetadata
+				icon = R.drawable.ic_menu,
+				contentDescription = "Menu",
+				onClick = onClickMenu
 			)
 			Spacer(modifier = Modifier.width(4.dp))
 		},

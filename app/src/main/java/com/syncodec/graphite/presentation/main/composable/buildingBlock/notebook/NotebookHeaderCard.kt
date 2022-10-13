@@ -47,7 +47,7 @@ fun NotebookHeaderCard(
 
 			Text(
 				text = title,
-				color = MaterialTheme.colorScheme.primary,
+				color = MaterialTheme.colorScheme.onBackground,
 				style = MaterialTheme.typography.titleLarge,
 			)
 

@@ -11,15 +11,16 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 class ChapterObject : RealmObject {
-	@PrimaryKey var id: ObjectId = ObjectId.create()
+	@PrimaryKey
+	var id: ObjectId = ObjectId.create()
 
 	var createdTimestamp: Long = System.currentTimeMillis()
 	var modifiedTimestamp: Long = System.currentTimeMillis()
 	var title: String = ""
 	var description: String? = null
-	var color: Int = getRandomColor().toArgb()
+	var color: Int? = getRandomColor().toArgb()
+	var thumbnail: String? = null
 
-	//	var thumbnail: ByteArray? = null
 	var isFavourite: Boolean = false
 	var isLocked: Boolean = false
 
@@ -28,23 +29,24 @@ class ChapterObject : RealmObject {
 
 	var parentChapterId: ObjectId? = null
 
-	fun toLite():ChapterObjectLite {
+	fun toLite(): ChapterObjectLite {
 		return ChapterObjectLite(
 			id = this.id,
-				createdTimestamp = this.createdTimestamp,
-				modifiedTimestamp = this.modifiedTimestamp,
-				title = this.title,
-				description = this.description,
-				color = this.color,
-				isFavourite = this.isFavourite,
-				isLocked = this.isLocked,
-				totalChapterDirect = this.chapterList.size,
-				totalNoteDirect = this.noteList.size,
-				totalChapter = this.countTotalChapter(),
-				totalNote = this.countTotalNote(),
-				parentChapterId = this.parentChapterId
+			createdTimestamp = this.createdTimestamp,
+			modifiedTimestamp = this.modifiedTimestamp,
+			title = this.title,
+			description = this.description,
+			color = this.color,
+			isFavourite = this.isFavourite,
+			isLocked = this.isLocked,
+			totalChapterDirect = this.chapterList.size,
+			totalNoteDirect = this.noteList.size,
+			totalChapter = this.countTotalChapter(),
+			totalNote = this.countTotalNote(),
+			parentChapterId = this.parentChapterId
 		)
 	}
+
 	fun getPath(): List<ChapterObjectLite> {
 		val path = mutableListOf<ChapterObjectLite>()
 		var chapter: ChapterObject? = this
@@ -53,6 +55,14 @@ class ChapterObject : RealmObject {
 			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
 		}
 		return path
+	}
+
+	fun getRootChapter(): ChapterObject {
+		var chapter: ChapterObject? = this
+		while (chapter?.parentChapterId != null) {
+			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
+		}
+		return chapter!!
 	}
 
 	fun countTotalChapter(): Int {
@@ -71,6 +81,15 @@ class ChapterObject : RealmObject {
 		return total + noteList.size
 	}
 
+	fun isParentChapter(): Boolean {
+		var chapter: ChapterObject? = this
+		while (chapter?.parentChapterId != null) {
+			if (chapter.isLocked) return true
+			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
+		}
+		return false
+	}
+
 	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
@@ -78,11 +97,12 @@ class ChapterObject : RealmObject {
 		result = 31 * result + title.hashCode()
 		result = 31 * result + (description?.hashCode() ?: 0)
 		result = 31 * result + (color ?: 0)
+		result = 31 * result + (thumbnail?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + chapterList.hashCode()
 		result = 31 * result + noteList.hashCode()
-		result = 31 * result + parentChapterId.hashCode()
+		result = 31 * result + (parentChapterId?.hashCode() ?: 0)
 		return result
 	}
 
@@ -112,7 +132,7 @@ data class ChapterObjectLite(
 	val modifiedTimestamp: Long,
 	val title: String,
 	val description: String?,
-	val color: Int,
+	val color: Int?,
 	val isFavourite: Boolean,
 	val isLocked: Boolean,
 	val totalChapterDirect: Int,

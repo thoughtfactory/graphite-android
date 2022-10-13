@@ -28,7 +28,14 @@ class DataStoreInstance(private val context: Context) {
 		private val PREFERENCE_THEME = intPreferencesKey("theme")
 		private val PREFERENCE_BACKGROUND = intPreferencesKey("background")
 		private val PREFERENCE_TYPOGRAPHY = intPreferencesKey("typography")
+		private val PREFERENCE_FOLLOW_SYSTEM_DARK_THEME = booleanPreferencesKey("follow_system_dark_theme")
+		private val PREFERENCE_FORCE_DARK_THEME = booleanPreferencesKey("force_dark_theme")
+		private val PREFERENCE_TINT_FAVORITE = booleanPreferencesKey("tint_favorite")
+		private val PREFERENCE_GEOLOCATION = booleanPreferencesKey("geolocation")
+		private val PREFERENCE_YEAR_PROGRESS = booleanPreferencesKey("year_progress")
+		private val PREFERENCE_LANGUAGE = stringPreferencesKey("language")
 		private val PREFERENCE_VAULT_KEY = stringPreferencesKey("vault_key")
+		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
 		private val PREFERENCE_ACTIVE_COMPONENT = intPreferencesKey("component")
 		private val PREFERENCE_DEFAULT_NOTE_KEY = stringPreferencesKey("default_notebook_key")
 		private val PREFERENCE_NOTE_SHOW_LOCATION_PERMISSION =
@@ -79,6 +86,36 @@ class DataStoreInstance(private val context: Context) {
 
 	fun putTypography(typography: Int) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_TYPOGRAPHY] = typography }
+	}
+
+	val getFollowSystemDarkTheme: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FOLLOW_SYSTEM_DARK_THEME] ?: true }
+
+	fun putFollowSystemDarkTheme(followSystemDarkTheme: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_FOLLOW_SYSTEM_DARK_THEME] = followSystemDarkTheme }
+	}
+
+	val getForceDarkTheme: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FORCE_DARK_THEME] ?: false }
+
+	fun putForceDarkTheme(forceDarkTheme: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_FORCE_DARK_THEME] = forceDarkTheme }
+	}
+
+	val getTintFavorite: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_TINT_FAVORITE] ?: true }
+
+	fun putTintFavorite(tintFavorite: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_TINT_FAVORITE] = tintFavorite }
+	}
+
+	val getGeolocation: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_GEOLOCATION] ?: true }
+
+	fun putGeolocation(geolocation: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_GEOLOCATION] = geolocation }
+	}
+
+	val getYearProgress: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_YEAR_PROGRESS] ?: true }
+
+	fun putYearProgress(yearProgress: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_YEAR_PROGRESS] = yearProgress }
 	}
 
 	val getPasscode =
@@ -142,6 +179,12 @@ class DataStoreInstance(private val context: Context) {
 					encrypted.toString(StandardCharsets.ISO_8859_1)
 
 		context.dataStore.edit { pref -> pref[PREFERENCE_VAULT_KEY] = data }
+	}
+
+	fun getUseBiometric(): Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_USE_BIOMETRIC] ?: false }
+
+	fun putUseBiometric(useBiometric: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_USE_BIOMETRIC] = useBiometric }
 	}
 
 	val getDefaultNotebookKey: Flow<String?> =

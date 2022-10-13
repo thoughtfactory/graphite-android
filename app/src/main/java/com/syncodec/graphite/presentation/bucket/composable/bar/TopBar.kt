@@ -13,9 +13,9 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketActivity
-import com.syncodec.graphite.presentation.custom.button.MenuButton
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 
 
 @Composable
@@ -24,7 +24,7 @@ fun TopBar(
 	bucketType: BucketType,
 	isFavourite: Boolean,
 	isLocked: Boolean,
-	itemState: Int,
+	viewState: Int,
 	onClickFavourite: () -> Unit,
 	onClickLock: () -> Unit,
 	onStateChange: (Int) -> Unit
@@ -45,7 +45,7 @@ fun TopBar(
 		StateSelector(
 			showStateSelector = true,
 			bucketType = bucketType,
-			currentState = itemState,
+			currentState = viewState,
 			onStateChange = onStateChange
 		)
 	}

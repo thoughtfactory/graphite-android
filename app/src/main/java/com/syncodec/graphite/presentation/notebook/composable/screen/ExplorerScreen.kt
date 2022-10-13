@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,20 +19,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.custom.LoadingView
+import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.NoteListCard
 import com.syncodec.graphite.presentation.notebook.NotebookViewModel
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.ChapterListCard
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -53,34 +58,38 @@ fun ExplorerScreen() {
 		if (_chapterObject == null) {
 			LoadingView()
 		} else {
-			LazyColumn(
-				modifier = Modifier.fillMaxSize()
-			) {
-				noteList(
-					noteList = _chapterObject.noteList.map { it.toLite() },
-					tagList = tagList,
-					isVisible = isNoteListVisible,
-					toggleVisibility = { isNoteListVisible = !isNoteListVisible },
-					onClick = {
-						Intent(activity, NoteActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterObject?.id.toString())
-							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.id.toString())
-							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.ordinal)
+			if (_chapterObject.noteList.isEmpty() && _chapterObject.chapterList.isEmpty()) {
+				EmptyView()
+			} else {
+				LazyColumn(
+					modifier = Modifier.fillMaxSize()
+				) {
+					noteList(
+						noteList = _chapterObject.noteList.map { it.toLite() },
+						tagList = tagList,
+						isVisible = isNoteListVisible,
+						toggleVisibility = { isNoteListVisible = !isNoteListVisible },
+						onClick = {
+							Intent(activity, NoteActivity::class.java).apply {
+								putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterObject?.id.toString())
+								putExtra(Extra.Companion.Constant.NOTE_ID.name, it.id.toString())
+								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
-							activity.startActivity(this)
-						}
-					},
-					onLongClick = { }
-				)
-				chapterList(
-					chapterList = _chapterObject.chapterList,
-					tagList = tagList,
-					isVisible = isChapterListVisible,
-					toggleVisibility = { isChapterListVisible = !isChapterListVisible },
-					onClick = { viewModel.loadChapter(chapterId = it.id) },
-					onLongClick = { }
-				)
+								activity.startActivity(this)
+							}
+						},
+						onLongClick = { }
+					)
+					chapterList(
+						chapterList = _chapterObject.chapterList,
+						tagList = tagList,
+						isVisible = isChapterListVisible,
+						toggleVisibility = { isChapterListVisible = !isChapterListVisible },
+						onClick = { viewModel.loadChapter(chapterId = it.id) },
+						onLongClick = { }
+					)
+				}
 			}
 		}
 	}
@@ -222,7 +231,8 @@ private fun LazyListScope.chapterList(
 				isLast = false,
 				title = chapterObject.title,
 				description = chapterObject.description,
-				color = Color(chapterObject.color),
+				color = chapterObject.color?.let { Color(it) },
+				thumbnail = chapterObject.thumbnail?.decodeBase64ToBitmap(),
 				noteCount = chapterObject.noteList.size,
 				chapterCount = chapterObject.chapterList.size,
 				tagList = tagList.filter { it.objectIdList.contains(chapterObject.id) }.map { it.toLite() },
@@ -232,5 +242,32 @@ private fun LazyListScope.chapterList(
 				onLongClick = { onLongClick(chapterObject) }
 			)
 		}
+	}
+}
+
+@Composable
+private fun EmptyView() {
+	val configuration = LocalConfiguration.current
+	val screenWidth = configuration.screenWidthDp.dp
+
+	Column(
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center,
+		modifier = Modifier
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.background)
+	) {
+		Image(
+			painter = painterResource(id = R.drawable.il_not_found),
+			contentDescription = "No entries found",
+			modifier = Modifier.size(screenWidth * 3 / 4)
+		)
+		Spacer(modifier = Modifier.height(16.dp))
+		Text(
+			text = "No entries found",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onBackground,
+			fontWeight = FontWeight.Bold
+		)
 	}
 }

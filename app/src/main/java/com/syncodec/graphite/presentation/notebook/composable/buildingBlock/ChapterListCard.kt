@@ -1,9 +1,11 @@
 package com.syncodec.graphite.presentation.notebook.composable.buildingBlock
 
+import android.graphics.Bitmap
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -14,15 +16,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.presentation.custom.ExpandableBox
-import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.presentation.common.ExpandableBox
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContent
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -45,7 +52,8 @@ fun ChapterListCard(
 	isLast: Boolean,
 	title: String,
 	description: String?,
-	color: Color,
+	color: Color?,
+	thumbnail: Bitmap?,
 	noteCount: Int,
 	chapterCount: Int,
 	tagList: List<TagObjectLite>,
@@ -58,17 +66,19 @@ fun ChapterListCard(
 		when {
 			isSelected -> selectedColor
 //			else -> color
-			isFavourite -> Color.FavouriteContainer.copy(alpha = 0.71f)
+			isFavourite -> Color.FavouriteContainer
 			else -> MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
 		}
 	)
 	val contentColor by animateColorAsState(
 		when {
 			isSelected -> selectedColor.getInverseBWColor()
-			isFavourite -> Color.FavouriteContent
+			isFavourite -> Color.FavouriteContent.getInverseBWColor()
 			else -> MaterialTheme.colorScheme.onSurface
 		}
 	)
+
+	var size by remember { mutableStateOf<IntSize?>(null) }
 
 	var isExpanded by remember { mutableStateOf(false) }
 
@@ -89,20 +99,45 @@ fun ChapterListCard(
 				.combinedClickable(
 					onClick = { onClick() },
 					onLongClick = { onLongClick?.invoke() }
-				),
+				)
 		) {
 			Box(
 				modifier = Modifier.fillMaxWidth()
 			) {
+
+				thumbnail?.let {
+					Image(
+						bitmap = it.asImageBitmap(),
+						contentDescription = null,
+						contentScale = ContentScale.Crop,
+						modifier = with(LocalDensity.current) {
+							Modifier.size(size?.width?.toDp()?.plus(12.dp) ?: 1.dp, size?.height?.toDp()?.plus(16.dp) ?: 1.dp)
+						}
+					)
+				}
+
+				if (thumbnail != null) {
+					Box(
+						modifier = with(LocalDensity.current) {
+							Modifier
+								.size(size?.width?.toDp()?.plus(12.dp) ?: 1.dp, size?.height?.toDp()?.plus(16.dp) ?: 1.dp)
+								.background(Color.Black.copy(alpha = 0.31f))
+						}
+					)
+				}
+
 				Column(
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(12.dp, 8.dp, 0.dp, 8.dp)
+						.onGloballyPositioned {
+							size = it.size
+						}
 				) {
 					Title(
 						timestamp = timestamp,
 						title = title,
-						contentColor = contentColor,
+						contentColor = if (thumbnail == null) contentColor else Color.White,
 						noteCount = noteCount,
 						chapterCount = chapterCount,
 						isExpanded = isExpanded,
@@ -116,7 +151,7 @@ fun ChapterListCard(
 							timestamp = timestamp,
 							title = title,
 							description = description,
-							contentColor = contentColor,
+							contentColor = if (thumbnail == null) contentColor else Color.White,
 						)
 					}
 
@@ -128,27 +163,28 @@ fun ChapterListCard(
 							text = id.toString(),
 							style = MaterialTheme.typography.bodySmall,
 							fontStyle = FontStyle.Italic,
-							color = contentColor,
+							color = if (thumbnail == null) contentColor else Color.White,
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 						)
 
 						Spacer(modifier = Modifier.width(12.dp))
 
-						Box(
-							modifier = Modifier
-								.weight(1f)
-								.height(8.dp)
-								.background(color = color, shape = RoundedCornerShape(50))
-						)
-
+						if (color != null) {
+							Box(
+								modifier = Modifier
+									.weight(1f)
+									.height(8.dp)
+									.background(color = color, shape = RoundedCornerShape(50))
+							)
+						}
 						if (isLocked) {
 							Spacer(modifier = Modifier.width(12.dp))
 
 							Icon(
 								painter = painterResource(id = R.drawable.ic_lock_close),
 								contentDescription = "Locked",
-								tint = contentColor,
+								tint = if (thumbnail == null) contentColor else Color.White,
 								modifier = Modifier.size(20.dp)
 							)
 						}

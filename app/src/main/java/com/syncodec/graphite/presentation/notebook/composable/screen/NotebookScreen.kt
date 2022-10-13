@@ -20,8 +20,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.LoadingView
-import com.syncodec.graphite.presentation.custom.button.PrimaryButton
+import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.button.PrimaryButton
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.notebook.NotebookViewModel
@@ -32,6 +32,7 @@ import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.SheetL
 import com.syncodec.graphite.presentation.notebook.composable.dialog.EditChapterDialog
 import com.syncodec.graphite.presentation.notebook.composable.dialog.ManageTagDialog
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import kotlinx.coroutines.launch
 
 
@@ -45,6 +46,9 @@ fun NotebookScreen() {
 	val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
 	val chapterObject by viewModel.chapterObject
+
+	val rootChapterId by viewModel.rootChapterId
+	val rootColor by viewModel.rootColor
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
@@ -83,14 +87,18 @@ fun NotebookScreen() {
 			topBar = {
 				TopBar(
 					title = chapterObject?.title,
+					rootChapterId = rootChapterId,
+					color = rootColor ?: MaterialTheme.colorScheme.surface,
 					isLocked = chapterObject?.isLocked ?: false,
 					isFavourite = chapterObject?.isFavourite ?: false,
+					chapterObjectLiteList = chapterObject?.getPath() ?: listOf(),
 					onClickLock = { viewModel.toggleLock() },
 					onClickFavourite = { viewModel.toggleFavourite() },
 					onClickMenu = {
 						bottomSheetType = BucketBottomSheetType.MENU
 						openSheet()
-					}
+					},
+					onClickNavigator = { viewModel.loadChapter(it) }
 				)
 			},
 		) {
@@ -140,7 +148,7 @@ fun NotebookScreen() {
 								Intent(activity, NoteActivity::class.java).apply {
 									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
 									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterObject?.id.toString())
-									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.ordinal)
+									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
 									activity.startActivity(this)
 								}
@@ -157,8 +165,9 @@ fun NotebookScreen() {
 								title = chapterObject?.title ?: "",
 								description = chapterObject?.description,
 								color = chapterObject?.color?.let { it1 -> Color(it1) } ?: MaterialTheme.colorScheme.primary,
+								thumbnail = chapterObject?.thumbnail?.decodeBase64ToBitmap(),
 								showDialog = showEditChapterDialog,
-								onSave = { title, description, color ->
+								onSave = { title, description, color, thumbnail ->
 									val isFavourite = chapterObject?.isFavourite
 									val isLocked = chapterObject?.isLocked
 
@@ -170,6 +179,7 @@ fun NotebookScreen() {
 												title = title,
 												description = description,
 												color = color,
+												thumbnail = thumbnail,
 												isFavourite = isFavourite,
 												isLocked = isLocked
 											)
@@ -184,7 +194,7 @@ fun NotebookScreen() {
 								chapterObject = chapterObject!!,
 								tagList = tagList,
 								showDialog = showManageTagDialog,
-								onClick = { viewModel.updateTag(it) }
+								onClick = { viewModel.updateTagConnection(it.id) }
 							) { showManageTagDialog = false }
 						}
 					}

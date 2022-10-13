@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.note
 
-import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -10,27 +9,29 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.syncodec.graphite.presentation.custom.dialog.DeleteDialog
-import com.syncodec.graphite.presentation.custom.dialog.DiscardDialog
-import com.syncodec.graphite.presentation.custom.printer.Printer
-import com.syncodec.graphite.presentation.custom.richText.RichTextEditor
-import com.syncodec.graphite.presentation.custom.richText.rememberRichTextEditor
+import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
+import com.syncodec.graphite.presentation.common.dialog.DiscardDialog
+import com.syncodec.graphite.presentation.common.printer.Printer
+import com.syncodec.graphite.presentation.common.richText.RichTextEditor
+import com.syncodec.graphite.presentation.common.richText.rememberRichTextEditor
 import com.syncodec.graphite.presentation.note.composable.dialog.LocationPermissionRationaleDialog
 import com.syncodec.graphite.presentation.note.composable.dialog.SetLocationDialog
+import com.syncodec.graphite.presentation.note.composable.dialog.TagDialog
 import com.syncodec.graphite.presentation.note.composable.dialog.chapterSelectorDialog.ChapterSelectorDialog
 import com.syncodec.graphite.presentation.note.composable.dialog.printDialog.PrintDialog
+import com.syncodec.graphite.presentation.note.composable.screen.NoteScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalCompositionPremium
 import com.syncodec.graphite.utils.LocalRichTextEditor
+import com.syncodec.graphite.utils.LocalSaveNote
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,44 +45,48 @@ class NoteActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		val hasIsNew = intent.hasExtra(Extra.Companion.Constant.IS_NEW.name)
-		val hasChapterId = intent.hasExtra(Extra.Companion.Constant.CHAPTER_ID.name)
-		val hasNoteId = intent.hasExtra(Extra.Companion.Constant.NOTE_ID.name)
-		val hasFilter = intent.hasExtra(Extra.Companion.Constant.FILTER.name)
+		try {
+			val hasIsNew = intent.hasExtra(Extra.Companion.Constant.IS_NEW.name)
+			val hasChapterId = intent.hasExtra(Extra.Companion.Constant.CHAPTER_ID.name)
+			val hasNoteId = intent.hasExtra(Extra.Companion.Constant.NOTE_ID.name)
+			val hasFilter = intent.hasExtra(Extra.Companion.Constant.FILTER.name)
 
-		if (hasIsNew && hasChapterId && hasFilter) {
-			val isNew = intent.getBooleanExtra(Extra.Companion.Constant.IS_NEW.name, true)
-			val chapterId = intent.getStringExtra(Extra.Companion.Constant.CHAPTER_ID.name)?.let { ObjectId.from(it) }
-			val filterId = intent.getIntExtra(Extra.Companion.Constant.FILTER.name, -1)
+			if (hasIsNew && hasChapterId && hasFilter) {
+				val isNew = intent.getBooleanExtra(Extra.Companion.Constant.IS_NEW.name, true)
+				val chapterId = intent.getStringExtra(Extra.Companion.Constant.CHAPTER_ID.name)?.let { ObjectId.from(it) }
+				val filter = intent.getStringExtra(Extra.Companion.Constant.FILTER.name)?.let { Extra.Companion.Filter.valueOf(it) }
 
-			if (filterId < 0) {
-				Log.i("npr71", "filterId not provided")
-				finish()
-			} else {
-				val filter = Extra.Companion.Filter.values()[filterId]
-				if (isNew && hasFilter) {
-					if (chapterId != null) {
-						viewModel.initNewData(chapterId, filter)
-					} else {
-						Log.i("npr71", "chapterId not provided")
-						finish()
-					}
-				} else if (hasNoteId && hasFilter) {
-					val noteId = intent.getStringExtra(Extra.Companion.Constant.NOTE_ID.name)?.let { ObjectId.from(it) }
-
-					if (filterId == -1 || chapterId == null || noteId == null) {
-						Log.i("npr71", "filterId is -1 || chapterId == null || noteId == null")
-						finish()
-					} else {
-						viewModel.loadAndViewData(chapterId, noteId, filter)
-					}
-
-				} else {
-					Log.i("npr71", "!isNew || !hasNoteId || !hasFilter")
+				if (filter == null) {
+					Log.i("npr71", "filterId not provided")
 					finish()
+				} else {
+					if (isNew) {
+						if (chapterId != null) {
+							viewModel.initNewData(chapterId, filter)
+						} else {
+							Log.i("npr71", "chapterId not provided")
+							finish()
+						}
+					} else if (hasNoteId && hasFilter) {
+						val noteId = intent.getStringExtra(Extra.Companion.Constant.NOTE_ID.name)?.let { ObjectId.from(it) }
+
+						if (filter == null || chapterId == null || noteId == null) {
+							Log.i("npr71", "filter is null || chapterId == null || noteId == null")
+							finish()
+						} else {
+							viewModel.loadAndViewData(chapterId, noteId, filter)
+						}
+
+					} else {
+						Log.i("npr71", "!isNew || !hasNoteId || !hasFilter")
+						finish()
+					}
 				}
+			} else {
+				Log.i("npr71", "super finish")
+				finish()
 			}
-		} else {
+		} catch (e: Exception) {
 			Log.i("npr71", "super finish")
 			finish()
 		}
@@ -89,8 +94,8 @@ class NoteActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.primary)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.primary)
+				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
 				val richTextEditor = rememberRichTextEditor()
 
@@ -120,20 +125,32 @@ class NoteActivity : ComponentActivity() {
 					}
 				)
 
+				val isSaving by viewModel.isSaving
+
 				var showDeleteDialog by viewModel.showDeleteDialog
 				var showDiscardDialog by viewModel.showDiscardDialog
 				var showChapterSelectorDialog by viewModel.showChapterSelectorDialog
+				var showTagDialog by viewModel.showTagDialog
 				var showLocationPermissionRationaleDialog by viewModel.showLocationPermissionRationaleDialog
 				var showSetLocationDialog by viewModel.showSetLocationDialog
 				var showPrintDialog by viewModel.showPrintDialog
 
 				val noteId by viewModel.noteId
-				var selectorParentChapterObject by viewModel.selectorChapterObject
-				val selectorChapterList by viewModel.selectorChapterList.collectAsState(initial = listOf())
+				val allChapterList by viewModel.allChapterList.collectAsState(initial = listOf())
+				var newParentChapterObject by viewModel.newParentChapterObject
+
+				val tagObjectList by viewModel.tagObjectList.collectAsState(initial = listOf())
 
 				CompositionLocalProvider(
 					LocalCompositionPremium provides true,
-					LocalRichTextEditor provides richTextEditor
+					LocalRichTextEditor provides richTextEditor,
+					LocalSaveNote provides {
+						when {
+							isSaving -> Toast.makeText(this, "Please wait while data is being saved", Toast.LENGTH_SHORT).show()
+							richTextEditor.isReady.value -> richTextEditor.exec("editor.getData();")
+							else -> Toast.makeText(this, "Please wait while editor is being loaded", Toast.LENGTH_SHORT).show()
+						}
+					}
 				) {
 					NoteScreen()
 
@@ -155,15 +172,31 @@ class NoteActivity : ComponentActivity() {
 						}
 					}
 
-					selectorParentChapterObject?.let {
-						ChapterSelectorDialog(
-							showDialog = showChapterSelectorDialog,
-							onDismiss = { showChapterSelectorDialog = false },
-							parentChapter = it,
-							chapterList = selectorChapterList,
-							onClickChapter = { selectorParentChapterObject = it },
-							onSelectChapter = { viewModel.chapterObject.value = it }
-						)
+					newParentChapterObject?.let {
+						viewModel.chapterObject.value?.let { it1 ->
+							ChapterSelectorDialog(
+								showDialog = showChapterSelectorDialog,
+								onDismiss = { showChapterSelectorDialog = false },
+								currentParentChapter = it1,
+								newParentChapter = it,
+								allChapterList = allChapterList,
+								onClickChapter = { viewModel.updateNewChapterObject(chapterId = it) },
+								onSelectChapter = {
+//									viewModel.newParentChapterObject.value = it
+//									viewModel.allChapterList
+								}
+							)
+						}
+					}
+
+					TagDialog(
+						showDialog = showTagDialog,
+						noteId = noteId,
+						allTagList = tagObjectList,
+						onAddTag = { tag, color -> viewModel.putTag(tag = tag, color = color) },
+						onClickTag = { viewModel.updateTagConnection(tagObjectId = it) },
+					) {
+						showTagDialog = false
 					}
 
 					LocationPermissionRationaleDialog(
@@ -219,6 +252,7 @@ class NoteActivity : ComponentActivity() {
 		}
 	}
 
+	@Deprecated("Must update to new version")
 	override fun onBackPressed() {
 
 		if (viewModel.showChapterSelectorDialog.value) {

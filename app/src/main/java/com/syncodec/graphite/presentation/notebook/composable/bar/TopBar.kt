@@ -8,21 +8,29 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
+import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.Navigator.Navigator
+import io.realm.kotlin.types.ObjectId
 
 
 @Composable
 fun TopBar(
 	title: String?,
+	rootChapterId: ObjectId?,
+	color: Color,
 	isLocked: Boolean,
 	isFavourite: Boolean,
+	chapterObjectLiteList: List<ChapterObjectLite>,
 	onClickLock: () -> Unit,
 	onClickFavourite: () -> Unit,
-	onClickMenu: () -> Unit
+	onClickMenu: () -> Unit,
+	onClickNavigator: (ObjectId) -> Unit,
 ) {
 	Column(
 		modifier = Modifier
@@ -35,6 +43,13 @@ fun TopBar(
 			isFavourite = isFavourite,
 			onClickLock = onClickLock,
 			onClickFavourite = onClickFavourite
+		)
+
+		Navigator(
+			chapterObjectLiteList = chapterObjectLiteList,
+			rootChapterId = rootChapterId,
+			color = color,
+			onClick = onClickNavigator
 		)
 	}
 }

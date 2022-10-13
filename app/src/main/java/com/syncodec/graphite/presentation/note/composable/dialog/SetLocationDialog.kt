@@ -4,6 +4,8 @@ import android.location.Address
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -17,7 +19,7 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.utils.locationAddressFilter
 import com.syncodec.graphite.utils.roundTo
 
@@ -59,9 +61,10 @@ fun SetLocationDialog(
 		enter = fadeIn(tween(300)),
 		exit = fadeOut(tween(300)),
 	) {
-
 		Box(
-			modifier = Modifier.fillMaxSize()
+			modifier = Modifier
+				.fillMaxSize()
+				.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
 		) {
 			GoogleMap(
 				modifier = Modifier.fillMaxSize(),

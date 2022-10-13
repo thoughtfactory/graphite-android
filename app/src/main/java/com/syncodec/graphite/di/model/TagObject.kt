@@ -25,22 +25,24 @@ class TagObject : RealmObject {
 		)
 	}
 
-	override fun equals(other: Any?): Boolean {
+	override fun hashCode() : Int {
+		var result = id.hashCode()
+		result = 31 * result + tag.hashCode()
+		result = 31 * result + color
+		result = 31 * result + objectIdList.hashCode()
+		return result
+	}
+
+	override fun equals(other : Any?) : Boolean {
 		if (this === other) return true
 		if (other !is TagObject) return false
 
 		if (id != other.id) return false
 		if (tag != other.tag) return false
 		if (color != other.color) return false
+		if (objectIdList != other.objectIdList) return false
 
 		return true
-	}
-
-	override fun hashCode(): Int {
-		var result = id.hashCode()
-		result = 31 * result + tag.hashCode()
-		result = 31 * result + (color ?: 0)
-		return result
 	}
 }
 

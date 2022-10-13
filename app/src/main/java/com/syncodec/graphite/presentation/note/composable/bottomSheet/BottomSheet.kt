@@ -4,9 +4,10 @@ import androidx.compose.runtime.Composable
 
 
 enum class NoteBottomSheetType {
+	MENU,
 	METADATA,
+	LOCATION,
 	ATTACHMENT,
-	TAG
 }
 
 @Composable
@@ -15,8 +16,9 @@ fun SheetLayout(
 	closeSheet: () -> Unit
 ) {
 	when (bottomSheetType) {
+		NoteBottomSheetType.MENU -> MenuBottomSheet(closeSheet = closeSheet)
 		NoteBottomSheetType.METADATA -> MetadataBottomSheet(closeSheet = closeSheet)
+		NoteBottomSheetType.LOCATION -> LocationBottomSheet(closeSheet = closeSheet)
 		NoteBottomSheetType.ATTACHMENT -> AttachmentBottomSheet(closeSheet = closeSheet)
-		NoteBottomSheetType.TAG -> TagBottomSheet(closeSheet = closeSheet)
 	}
 }

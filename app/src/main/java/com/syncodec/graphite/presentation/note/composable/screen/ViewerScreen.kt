@@ -1,9 +1,11 @@
 package com.syncodec.graphite.presentation.note.composable.screen
 
+import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -13,7 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
-import com.syncodec.graphite.presentation.custom.LoadingView
+import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.ViewerComponent
 import io.realm.kotlin.types.ObjectId
@@ -66,20 +68,25 @@ fun ViewerScreen(
 private fun Viewer() {
 	val viewModel: NoteViewModel = viewModel()
 
+	val noteId by viewModel.noteId
+	val title by viewModel.title
 	val content by viewModel.content
 	val userTimestamp by viewModel.userTimestamp
 	val latLng by viewModel.latLng
 	val address by viewModel.address
-	val attachmentList = viewModel.attachmentListVisible
+	val attachmentList = viewModel.attachmentListNew
+	val tagList by viewModel.tagObjectList.collectAsState(initial = listOf())
 
 	if (userTimestamp != null) {
 		ViewerComponent(
+			noteId = noteId,
 			content = content,
+			title = title,
 			userTimestamp = userTimestamp ?: 0,
 			latLng = null,
 			address = address,
 			attachmentList = attachmentList,
-			connectedTag = listOf()
+			connectedTag = tagList.filter { it.objectIdList.contains(noteId) }.map { it.toLite() }
 		)
 	}
 }

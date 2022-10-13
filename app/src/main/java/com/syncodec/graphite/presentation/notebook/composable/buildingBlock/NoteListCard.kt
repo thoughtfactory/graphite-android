@@ -59,7 +59,7 @@ fun NoteListCard(
 	) {
 		OutlinedCard(
 			onClick = onClick,
-			border = BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
+			border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
 			colors = CardDefaults.outlinedCardColors(
 				containerColor = Color.Transparent,
 				contentColor = MaterialTheme.colorScheme.onBackground,

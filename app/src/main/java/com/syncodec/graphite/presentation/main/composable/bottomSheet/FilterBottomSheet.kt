@@ -8,12 +8,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetKeyText
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.button.LargeButton
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateButton
-import com.syncodec.graphite.presentation.custom.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyText
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.button.LargeButton
+import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
@@ -31,24 +31,6 @@ fun FilterBottomSheet(
 	onUpdateViewType: (ViewType) -> Unit,
 	closeSheet: () -> Unit
 ) {
-	val filterStateList: List<StateData> = listOf(
-		StateData(
-			title = "Inclusive",
-			icon = null,
-			stateTint = MaterialTheme.colorScheme.primary
-		),
-		StateData(
-			title = "Exclusive",
-			icon = null,
-			stateTint = MaterialTheme.colorScheme.primary
-		),
-		StateData(
-			title = "One",
-			icon = null,
-			stateTint = MaterialTheme.colorScheme.primary
-		)
-	)
-
 	val sortOnStateList: List<StateData> = listOf(
 		StateData(
 			title = "Title",
@@ -96,7 +78,6 @@ fun FilterBottomSheet(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(360.dp)
 			.background(MaterialTheme.colorScheme.surface)
 	) {
 
@@ -108,22 +89,6 @@ fun FilterBottomSheet(
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
-
-		BottomSheetKeyText(text = "Tag Filtering Type")
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		StateButton(
-			stateList = filterStateList,
-			currentState = filterInclusivityState,
-			containerColor = MaterialTheme.colorScheme.background,
-			modifier = Modifier
-				.height(36.dp)
-				.padding(24.dp, 0.dp),
-			onStateChange = onTagFilterChange
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
 
 		BottomSheetKeyText(text = "Sort On")
 

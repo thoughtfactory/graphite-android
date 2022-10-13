@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.custom.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.BucketBottomSheetType
 import com.syncodec.graphite.utils.tone
 
@@ -19,7 +19,6 @@ fun BottomBar(
 	modifier: Modifier = Modifier,
 	openSheet: (BucketBottomSheetType) -> Unit
 ) {
-
 	val containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
 	val contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
 

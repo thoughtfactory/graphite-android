@@ -10,6 +10,8 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
+import com.syncodec.graphite.presentation.ui.authentication.AuthenticationContent
+import com.syncodec.graphite.utils.Authenticator
 
 
 @SuppressLint("NewApi")
@@ -17,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 fun BaseContent(
 	isDarkTheme: Boolean = isSystemInDarkTheme(),
 	isDynamicColor: Boolean = false,
+	authenticator: Authenticator = Authenticator.NONE,
 	content: @Composable () -> Unit
 ) {
 	val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -28,6 +31,7 @@ fun BaseContent(
 
 	val appTypography = UbuntuTypography
 
+
 	androidx.compose.material3.MaterialTheme(
 		colorScheme = appColorScheme,
 		typography = appTypography
@@ -37,7 +41,16 @@ fun BaseContent(
 
 		CompositionLocalProvider(
 			LocalIndication provides rippleIndication,
-			content = content
+			content = {
+				AuthenticationContent(
+					authenticator = authenticator,
+					onAuthentication = {},
+					onAddPasscode = {},
+					onChangePasscode = {},
+					onRemovePasscode = {},
+					content = content
+				)
+			}
 		)
 	}
 }

@@ -6,9 +6,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,11 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.custom.text.LargeTextField
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetKeyText
-import com.syncodec.graphite.presentation.custom.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.custom.button.LargeButton
+import com.syncodec.graphite.presentation.common.text.LargeTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyText
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.button.LargeButton
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.utils.bucketItemNameMap
 import com.syncodec.graphite.utils.bucketTypeToIcon
@@ -99,7 +100,6 @@ fun BucketBottomSheet(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxWidth()
-			.heightIn(360.dp)
 			.background(MaterialTheme.colorScheme.surface)
 	) {
 
@@ -125,13 +125,13 @@ fun BucketBottomSheet(
 		Spacer(modifier = Modifier.height(8.dp))
 
 		LargeTextField(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
 			text = bucketTitleText,
 			placeholder = "Umm... Let me think...",
 			isFocused = isBucketNameTitleFocused,
 			onFocusChanged = { isBucketNameTitleFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp),
 		) { bucketTitleText = it }
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -193,11 +193,10 @@ private fun BucketButton(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier.requiredWidth(160.dp)
 	) {
-		Card(
-			elevation = 0.dp,
+		OutlinedCard(
 			shape = RoundedCornerShape(12.dp),
-			backgroundColor = containerColor,
 			border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+			colors = CardDefaults.outlinedCardColors(containerColor = containerColor,),
 			modifier = Modifier
 				.width(160.dp)
 				.height(96.dp)
@@ -216,8 +215,7 @@ private fun BucketButton(
 			) {
 				Icon(
 					painter = painterResource(
-						id = bucketTypeToIcon[bucketButtonData.bucketType]
-							?: R.drawable.ic_state
+						id = bucketTypeToIcon[bucketButtonData.bucketType] ?: R.drawable.ic_state
 					),
 					contentDescription = null,
 					tint = contentColor,
@@ -237,6 +235,7 @@ private fun BucketButton(
 		Text(
 			text = bucketButtonData.subtitle,
 			style = MaterialTheme.typography.bodySmall,
+			color = MaterialTheme.colorScheme.onSurface,
 			maxLines = 3,
 			modifier = Modifier
 				.fillMaxWidth()

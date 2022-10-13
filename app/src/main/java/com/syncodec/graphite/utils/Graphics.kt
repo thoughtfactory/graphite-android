@@ -1,9 +1,16 @@
 package com.syncodec.graphite.utils
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.view.View
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.BitmapCompat.createScaledBitmap
 import androidx.core.graphics.ColorUtils
+import okio.ByteString.Companion.toByteString
 import java.io.ByteArrayOutputStream
 import kotlin.math.pow
 
@@ -44,4 +51,44 @@ fun Color.getInverseBW(): String {
 fun Color.getInverseBWColor(): Color {
 	val yiq = (this.red * 299 + this.green * 587 + this.blue * 114) * 0.255
 	return if (yiq >= 128) Color.Black else Color.White
+}
+
+fun Bitmap.scaleBitmap(maxSize: Int): Bitmap {
+	val aspectRatio = this.width.toFloat() / this.height.toFloat()
+
+	var scaled = this
+
+	while (scaled.width * scaled.height > maxSize) {
+		scaled = createScaledBitmap(
+			scaled,
+			(scaled.width * 0.8).toInt(),
+			(scaled.height * 0.8).toInt(),
+			Rect((scaled.width * 0.1).toInt(), (scaled.height * 0.1).toInt(), (scaled.width * 0.9).toInt(), (scaled.height * 0.9).toInt()),
+			true
+		)
+	}
+
+	return scaled
+}
+
+fun createBitmapFromView(view: View, width: Int, height: Int): Bitmap {
+	view.layoutParams = LinearLayoutCompat.LayoutParams(
+		LinearLayoutCompat.LayoutParams.WRAP_CONTENT,
+		LinearLayoutCompat.LayoutParams.WRAP_CONTENT
+	)
+
+	view.measure(
+		View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+		View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+	)
+
+	view.layout(0, 0, width, height)
+
+	val canvas = Canvas()
+	val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+	canvas.setBitmap(bitmap)
+	view.draw(canvas)
+
+	return bitmap
 }

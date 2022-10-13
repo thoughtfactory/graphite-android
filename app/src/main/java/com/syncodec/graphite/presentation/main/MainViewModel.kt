@@ -16,6 +16,8 @@ import com.syncodec.graphite.utils.*
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.*
 import org.json.JSONArray
+import org.json.JSONObject
+import kotlin.random.Random
 
 
 class MainViewModel : ViewModel() {
@@ -33,7 +35,7 @@ class MainViewModel : ViewModel() {
 	var filterInclusivityState: MutableState<Int> = mutableStateOf(0)
 	var sortOn: MutableState<SortOn> = mutableStateOf(SortOn.TIMESTAMP)
 	var sortBy: MutableState<SortBy> = mutableStateOf(SortBy.DESCENDING)
-	var viewType: MutableState<ViewType> = mutableStateOf(ViewType.LIST)
+	var viewType: MutableState<ViewType> = mutableStateOf(ViewType.GRID)
 
 	init {
 		initNotebook()
@@ -81,7 +83,8 @@ class MainViewModel : ViewModel() {
 				ChapterObject().apply {
 					this.title = title
 					this.description = description
-					this.color = color?.toArgb() ?: getRandomColor().toArgb()
+					this.color = color?.toArgb()
+					this.thumbnail = bitmap?.encodeBase64()
 
 					Repository.putChapter(null, this)
 				}
@@ -110,18 +113,20 @@ class MainViewModel : ViewModel() {
 //		return Repository.realm.query<NoteObject>("chapterId == $0", chapterId).find().asFlow().map { it.list.map { it.toLite() } }
 //	}
 
-	fun addDebugNotes(notebookId: String) {
+	fun addDebugNotes(debugNoteData: String) {
 		CoroutineScope(Dispatchers.IO).launch {
-			val jsonArray = JSONArray(debugNoteData)
+			val jsonObject = JSONObject(debugNoteData)
+			val jsonArray = jsonObject.getJSONArray("quotes")
 			for (i in 0 until jsonArray.length()) {
 				try {
 					NoteObject.getInstance().apply {
 						val obj = jsonArray.getJSONObject(i)
+						this.userTimestamp = System.currentTimeMillis() + Random.nextLong((- 1.5e+9).toLong(), 1.5e+9.toLong())
 						this.title = obj.optString("author")
-						this.contentThumbnail = obj.optString("text")
+						this.contentThumbnail = obj.optString("quote")
 						this.content =
 							"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-								obj.optString("text").repeat(500)
+								obj.optString("quote").repeat(500)
 							}\"}]}]}"
 
 						defaultNotebookId.value?.let { Repository.putNote(it, this){} }
@@ -132,9 +137,8 @@ class MainViewModel : ViewModel() {
 				} catch (exception: Exception) {
 					exception.printStackTrace()
 				}
-				delay(100)
+				delay(250)
 			}
-			Log.i("npr71", "done")
 		}
 	}
 }
