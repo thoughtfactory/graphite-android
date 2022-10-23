@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment
+package com.syncodec.graphite.presentation.note.composable.buildingBlock
 
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.RenderGeneric
+import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.RenderImage
+import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.RenderPdf
 import com.syncodec.graphite.utils.tone
 import java.io.File
 

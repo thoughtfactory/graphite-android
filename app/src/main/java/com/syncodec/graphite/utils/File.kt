@@ -3,6 +3,7 @@ package com.syncodec.graphite.utils
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import androidx.core.content.FileProvider
 import java.io.*
 
@@ -30,24 +31,24 @@ fun Context.getFileName(uri: Uri): String? {
 }
 
 @Throws(IOException::class)
-fun createTempFile(id : String, extension: String?): File =
-	File.createTempFile(
+fun createTempAttachmentFile(context : Context, id : String, extension: String?): File {
+	val directory = File(context.cacheDir, "images")
+	directory.mkdirs()
+	return File.createTempFile(
 		"attachment_",
-		"_$id${if (extension != null) ".$extension" else ""}"
+		"_$id${if (extension != null) "$extension" else ""}",
+		directory
 	)
+}
 
 @Throws(IOException::class)
-fun createTempFileToExpose(
+fun createTempAttachmentFileToExpose(
 	context: Context,
 	key: String,
 	extension: String?
 ): Pair<Uri, File> {
-	val file = createTempFile(key, extension)
-	val uri = FileProvider.getUriForFile(
-		context,
-		"com.syncodec.fileprovider",
-		file
-	)
+	val file = createTempAttachmentFile(context, key, extension)
+	val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 	return Pair(uri, file)
 }
 

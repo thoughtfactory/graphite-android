@@ -56,7 +56,9 @@ class BucketItemActivity: ComponentActivity() {
 				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
-				BucketItemScreen()
+				BucketItemScreen(
+					viewModel = viewModel
+				)
 			}
 		}
 	}

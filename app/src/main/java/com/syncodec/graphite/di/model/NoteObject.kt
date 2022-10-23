@@ -3,13 +3,12 @@ package com.syncodec.graphite.di.model
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.google.android.gms.common.util.Base64Utils
-import com.syncodec.graphite.di.Repository
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
+import java.util.Base64
 
 
 class NoteObject: RealmObject {
@@ -47,18 +46,6 @@ class NoteObject: RealmObject {
 			e.printStackTrace()
 			return null
 		}
-	}
-	fun getRootChapter(): ChapterObject? {
-		var chapter: ChapterObject? = parentChapterId?.let { Repository.getChapter(id = it) }
-		while (chapter?.parentChapterId != null) {
-			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
-		}
-		return chapter!!
-	}
-
-	fun isParentChapter(): Boolean {
-		val chapter: ChapterObject? = parentChapterId?.let { Repository.getChapter(id = it) }
-		return chapter?.isParentChapter() ?: false
 	}
 
 	override fun hashCode(): Int {
@@ -157,10 +144,10 @@ class NoteObject: RealmObject {
 			userTimestamp = this.userTimestamp,
 			title = this.title,
 			color = this.color,
-			latLng = this.getLatLng(),
+			latLng = try { this.getLatLng() } catch (e: Exception) { null },
 			address = this.address,
 			contentThumbnail = this.contentThumbnail,
-			thumbnail = this.thumbnail?.let { Base64Utils.decode(it) },
+			thumbnail = this.thumbnail?.let { try { Base64.getDecoder().decode(it) } catch (e: Exception) { e.printStackTrace(); null } },
 			thumbnailType = this.thumbnailType,
 			attachmentCount = this.attachmentList.size,
 			isFavourite = this.isFavourite,

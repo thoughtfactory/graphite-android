@@ -1,4 +1,5 @@
-package com.syncodec.graphite.presentation.note.composable.buildingBlock.snackbar
+package com.syncodec.graphite.presentation.note.composable.buildingBlock
+
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth

@@ -3,7 +3,6 @@ package com.syncodec.graphite.presentation.bucketItem
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -14,7 +13,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
@@ -24,6 +22,9 @@ import com.syncodec.graphite.di.network.MovieData
 import com.syncodec.graphite.di.network.ShowData
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TvData
+import com.syncodec.graphite.di.repository.RealmNotInitializedException
+import com.syncodec.graphite.di.repository.Repository2
+import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
@@ -31,10 +32,14 @@ import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.serializable
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
-class BucketItemViewModel : ViewModel() {
+class BucketItemViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
+
+	val repositoryState = repository2.repositoryState
 
 	val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -101,15 +106,25 @@ class BucketItemViewModel : ViewModel() {
 		this.bucketId.value = bucketId
 		this.bucketType.value = bucketType
 
-		if (isNew) {
-			initBucketItem(intent = intent)
-		} else {
-			if (bucketItemId == null) {
+		viewModelScope.launch(Dispatchers.IO) {
+			when(repositoryState.value) {
+				RepositoryState.INIT -> null
+				RepositoryState.LOADING -> null
+				RepositoryState.SUCCESS -> onRepositoryStateSuccess(bucketItemId, intent)
+				RepositoryState.ERROR -> null
+			}
+		}
+	}
+
+	private fun onRepositoryStateSuccess(bucketItemId : ObjectId?, intent: Intent) {
+		when(this.isNew.value) {
+			true -> initBucketItem(intent = intent)
+			false -> if (bucketItemId == null) {
 				status.value = Status.ERROR
-//				TODO Show error
 			} else {
 				loadBucketItem(id = bucketItemId)
 			}
+			null -> null
 		}
 	}
 
@@ -133,26 +148,37 @@ class BucketItemViewModel : ViewModel() {
 
 	private fun loadBucketItem(id : ObjectId) {
 		viewModelScope.launch(Dispatchers.IO) {
-			Repository.getBucketItemAsFlow(id = id).collect {
 
-				bucketItemObject.value = it
-				thumbnail.value = it?.thumbnail?.decodeBase64ToBitmap()
-				try {
-					state.value = BucketItemState.valueOf(it?.state ?: BucketItemState.ALPHA.name)
-				} catch (e : Exception) {
-					state.value = BucketItemState.ALPHA
-				}
-				isFavourite.value = it?.isFavourite
-				isLocked.value = it?.isLocked
+			if (repositoryState.value != RepositoryState.SUCCESS) {
+				status.value = Status.ERROR
+				this.cancel()
+			}
 
-				when (bucketType.value) {
-					BucketType.TODO -> null
-					BucketType.BOOK -> initBookItem(bookData = it?.toBookData())
-					BucketType.SHOW -> initShowItem(showData = it?.toShowData())
-					BucketType.LINK -> null
-					BucketType.UNKNOWN -> null
-					null -> null
+			try {
+				repository2.getBucketItemAsFlow(id = id).collect {
+					bucketItemObject.value = it
+					thumbnail.value = it?.thumbnail?.decodeBase64ToBitmap()
+					try {
+						state.value = BucketItemState.valueOf(it?.state ?: BucketItemState.ALPHA.name)
+					} catch (e : Exception) {
+						state.value = BucketItemState.ALPHA
+					}
+					isFavourite.value = it?.isFavourite
+					isLocked.value = it?.isLocked
+
+					when (bucketType.value) {
+						BucketType.TODO -> null
+						BucketType.BOOK -> initBookItem(bookData = it?.toBookData())
+						BucketType.SHOW -> initShowItem(showData = it?.toShowData())
+						BucketType.LINK -> null
+						BucketType.UNKNOWN -> null
+						null -> null
+					}
 				}
+			} catch (e : RealmNotInitializedException) {
+				status.value = Status.ERROR
+			} catch (e : Exception) {
+				status.value = Status.ERROR
 			}
 		}
 	}
@@ -169,7 +195,7 @@ class BucketItemViewModel : ViewModel() {
 				viewModelScope.launch(Dispatchers.IO) {
 					try {
 						initBookItem(bookData = bookData)
-						Repository.openLibraryApi.retrieveDescriptionFromKey(key = bookId) { description ->
+						repository2.openLibraryApi.retrieveDescriptionFromKey(key = bookId) { description ->
 							bookDescription.value = description
 						}
 						getBookThumbnail(coverI = bookData?.coverI) { thumbnail.value = it }
@@ -212,7 +238,7 @@ class BucketItemViewModel : ViewModel() {
 				if (movieId != null) {
 					viewModelScope.launch(Dispatchers.IO) {
 						try {
-							Repository.tmDbApi.retrieveMovieDataFromId(id = movieId) { response ->
+							repository2.tmDbApi.retrieveMovieDataFromId(id = movieId) { response ->
 								if (response == null) {
 //									TODO Show msg
 									status.value = Status.ERROR
@@ -241,7 +267,7 @@ class BucketItemViewModel : ViewModel() {
 				if (tvId != null) {
 					viewModelScope.launch(Dispatchers.IO) {
 						try {
-							Repository.tmDbApi.retrieveTvDataFromId(id = tvId) { response ->
+							repository2.tmDbApi.retrieveTvDataFromId(id = tvId) { response ->
 								if (response == null) {
 //                                  TODO Show msg
 									status.value = Status.ERROR
@@ -340,13 +366,13 @@ class BucketItemViewModel : ViewModel() {
 	}
 
 	fun updateBucketItem() {
-		Log.i("npr71", "updateBucketItem")
-		Repository.updateBucketItem(
-			id = bucketItemObject.value?.id ?: return,
-			state = state.value ?: return,
-			isFavourite = isFavourite.value ?: return,
-			isLocked = isLocked.value ?: return
-		)
+		TODO()
+//		Repository.updateBucketItem(
+//			id = bucketItemObject.value?.id ?: return,
+//			state = state.value ?: return,
+//			isFavourite = isFavourite.value ?: return,
+//			isLocked = isLocked.value ?: return
+//		)
 	}
 
 	fun putBook(onSuccess : () -> Unit) {
@@ -366,7 +392,8 @@ class BucketItemViewModel : ViewModel() {
 			).toJsonString()
 
 			try {
-				Repository.putBucketItem(bucketId = bucketId.value ?: return, bucketItemObject = bucketItemObject.value ?: return, onSuccess = onSuccess)
+				TODO()
+//				Repository.putBucketItem(bucketId = bucketId.value ?: return, bucketItemObject = bucketItemObject.value ?: return, onSuccess = onSuccess)
 			} catch (e : Exception) {
 //				TODO Show error
 				e.printStackTrace()
@@ -426,7 +453,8 @@ class BucketItemViewModel : ViewModel() {
 			}
 
 			try {
-				Repository.putBucketItem(bucketId = bucketId.value ?: return, bucketItemObject = bucketItemObject.value ?: return, onSuccess = onSuccess)
+				TODO()
+//				Repository.putBucketItem(bucketId = bucketId.value ?: return, bucketItemObject = bucketItemObject.value ?: return, onSuccess = onSuccess)
 			} catch (e : Exception) {
 //				TODO Show error
 				e.printStackTrace()
@@ -437,7 +465,7 @@ class BucketItemViewModel : ViewModel() {
 	fun getBookThumbnail(coverI : String?, onSuccess : (Bitmap) -> Unit) {
 		try {
 			viewModelScope.launch(Dispatchers.IO) {
-				Repository.openLibraryApi.retrieveBookCover(coverI = coverI) {
+				repository2.openLibraryApi.retrieveBookCover(coverI = coverI) {
 					it?.body?.byteStream()?.let { inputStream ->
 						val bitmap = BitmapFactory.decodeStream(inputStream)
 						this.launch(Dispatchers.Main) {
@@ -457,7 +485,7 @@ class BucketItemViewModel : ViewModel() {
 	fun getShowThumbnail(url : String?, onSuccess : (Bitmap) -> Unit) {
 		try {
 			viewModelScope.launch(Dispatchers.IO) {
-				Repository.tmDbApi.retrieveShowPoster(posterPath = url) {
+				repository2.tmDbApi.retrieveShowPoster(posterPath = url) {
 					it?.body?.byteStream()?.let { inputStream ->
 						val bitmap = BitmapFactory.decodeStream(inputStream)
 						this.launch(Dispatchers.Main) { onSuccess(bitmap) }

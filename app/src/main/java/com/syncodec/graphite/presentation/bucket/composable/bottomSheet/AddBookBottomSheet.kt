@@ -46,17 +46,14 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.Repository
+import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.BookData
-import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.presentation.bucket.BucketActivity
-import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.ClimateChangeMessage
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -74,10 +71,10 @@ import java.net.SocketTimeoutException
 @OptIn(ExperimentalAnimationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun AddBookBottomSheet(
+	bucketObject : BucketObject?,
 	closeSheet : () -> Unit
 ) {
 	val activity : BucketActivity = LocalContext.current as BucketActivity
-	val viewModel : BucketViewModel = viewModel()
 	val scope = rememberCoroutineScope()
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -146,23 +143,23 @@ fun AddBookBottomSheet(
 								}
 							}
 
-							when (openLibrarySearchType) {
-								0 -> Repository.openLibraryApi.searchForBook(
-									query = queryText,
-									requestType = OpenLibraryApi.OpenLibraryApiRequestType.QUERY,
-									onResponse = onSearchResult
-								)
-								1 -> Repository.openLibraryApi.searchForBook(
-									query = queryText,
-									requestType = OpenLibraryApi.OpenLibraryApiRequestType.TITLE,
-									onResponse = onSearchResult
-								)
-								2 -> Repository.openLibraryApi.searchForBook(
-									query = queryText,
-									requestType = OpenLibraryApi.OpenLibraryApiRequestType.QUERY,
-									onResponse = onSearchResult
-								)
-							}
+//							when (openLibrarySearchType) {
+//								0 -> Repository.openLibraryApi.searchForBook(
+//									query = queryText,
+//									requestType = OpenLibraryApi.OpenLibraryApiRequestType.QUERY,
+//									onResponse = onSearchResult
+//								)
+//								1 -> Repository.openLibraryApi.searchForBook(
+//									query = queryText,
+//									requestType = OpenLibraryApi.OpenLibraryApiRequestType.TITLE,
+//									onResponse = onSearchResult
+//								)
+//								2 -> Repository.openLibraryApi.searchForBook(
+//									query = queryText,
+//									requestType = OpenLibraryApi.OpenLibraryApiRequestType.QUERY,
+//									onResponse = onSearchResult
+//								)
+//							}
 						} catch (e : SocketTimeoutException) {
 //							TODO update error message and image
 							scope.launch(Dispatchers.Main) {
@@ -222,12 +219,12 @@ fun AddBookBottomSheet(
 										focusRequester.freeFocus()
 										keyboardController?.hide()
 
-										if (viewModel.bucketObject.value == null || bookData.key == null) {
+										if (bucketObject == null || bookData.key == null) {
 											Toast.makeText(activity, "Error adding book to bucket", Toast.LENGTH_SHORT).show()
 										} else {
 											Intent(activity, BucketItemActivity::class.java).apply {
 												putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-												putExtra(Extra.Companion.Constant.BUCKET_ID.name, viewModel.bucketObject.value !!.id.toString())
+												putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.toString())
 												putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.BOOK.name)
 												putExtra(Extra.Companion.Constant.BOOK_ID.name, bookData.key)
 												putExtra(Extra.Companion.Constant.BUCKET_EXTRA_DATA.name, bookData)

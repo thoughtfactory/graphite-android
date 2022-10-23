@@ -1,20 +1,36 @@
 package com.syncodec.graphite.presentation.notebook.composable.screen
 
 import android.content.Intent
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,7 +40,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
@@ -32,21 +47,19 @@ import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
-import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.NoteListCard
-import com.syncodec.graphite.presentation.notebook.NotebookViewModel
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.ChapterListCard
+import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.NoteListCard
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun ExplorerScreen() {
-	val activity: NotebookActivity = LocalContext.current as NotebookActivity
-	val viewModel: NotebookViewModel = viewModel()
-
-	val chapterObject by viewModel.chapterObject
-	val tagList = viewModel.tagObjectList
+fun ExplorerScreen(
+	chapterObject : ChapterObject?,
+	tagList : List<TagObject>
+) {
+	val activity : NotebookActivity = LocalContext.current as NotebookActivity
 
 	var isNoteListVisible by remember { mutableStateOf(true) }
 	var isChapterListVisible by remember { mutableStateOf(true) }
@@ -68,7 +81,7 @@ fun ExplorerScreen() {
 						noteList = _chapterObject.noteList.map { it.toLite() },
 						tagList = tagList,
 						isVisible = isNoteListVisible,
-						toggleVisibility = { isNoteListVisible = !isNoteListVisible },
+						toggleVisibility = { isNoteListVisible = ! isNoteListVisible },
 						onClick = {
 							Intent(activity, NoteActivity::class.java).apply {
 								putExtra(Extra.Companion.Constant.IS_NEW.name, false)
@@ -85,8 +98,11 @@ fun ExplorerScreen() {
 						chapterList = _chapterObject.chapterList,
 						tagList = tagList,
 						isVisible = isChapterListVisible,
-						toggleVisibility = { isChapterListVisible = !isChapterListVisible },
-						onClick = { viewModel.loadChapter(chapterId = it.id) },
+						toggleVisibility = { isChapterListVisible = ! isChapterListVisible },
+						onClick = {
+//							viewModel.loadChapter(chapterId = it.id)
+							TODO()
+						},
 						onLongClick = { }
 					)
 				}
@@ -97,12 +113,12 @@ fun ExplorerScreen() {
 
 @OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.noteList(
-	noteList: List<NoteObjectLite>,
-	tagList: SnapshotStateList<TagObject>,
-	isVisible: Boolean,
-	toggleVisibility: () -> Unit,
-	onClick: (NoteObjectLite) -> Unit,
-	onLongClick: (NoteObjectLite) -> Unit
+	noteList : List<NoteObjectLite>,
+	tagList : List<TagObject>,
+	isVisible : Boolean,
+	toggleVisibility : () -> Unit,
+	onClick : (NoteObjectLite) -> Unit,
+	onLongClick : (NoteObjectLite) -> Unit
 ) {
 	stickyHeader {
 		Box(
@@ -173,12 +189,12 @@ private fun LazyListScope.noteList(
 
 @OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.chapterList(
-	chapterList: List<ChapterObject>,
-	tagList: List<TagObject>,
-	isVisible: Boolean,
-	toggleVisibility: () -> Unit,
-	onClick: (ChapterObject) -> Unit,
-	onLongClick: (ChapterObject) -> Unit
+	chapterList : List<ChapterObject>,
+	tagList : List<TagObject>,
+	isVisible : Boolean,
+	toggleVisibility : () -> Unit,
+	onClick : (ChapterObject) -> Unit,
+	onLongClick : (ChapterObject) -> Unit
 ) {
 	stickyHeader {
 		Box(

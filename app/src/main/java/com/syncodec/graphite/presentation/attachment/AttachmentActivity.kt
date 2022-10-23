@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -53,7 +54,15 @@ class AttachmentActivity : ComponentActivity() {
 				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
-				AttachmentScreen()
+				val noteObject by viewModel.noteObject
+				val chapterObject by viewModel.chapterObject
+				val attachmentList = viewModel.attachmentList
+
+				AttachmentScreen(
+					noteObject = noteObject,
+					chapterObject = chapterObject,
+					attachmentList = attachmentList,
+				)
 			}
 		}
 	}

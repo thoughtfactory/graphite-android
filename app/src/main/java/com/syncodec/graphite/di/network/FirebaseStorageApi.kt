@@ -4,11 +4,7 @@ import android.util.Log
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
-import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.model.QuoteObject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.nio.charset.Charset
 

@@ -25,12 +25,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FixedThreshold
 import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.rememberSwipeableState
 import androidx.compose.material.swipeable
@@ -40,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +62,7 @@ import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
@@ -99,10 +99,16 @@ fun NoteListCard(
 	onClick: () -> Unit,
 	onLongClick: (() -> Unit)? = null,
 ) {
+	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
+	val isFavouriteTinted by dataStoreInstance.getTintFavorite.collectAsState(initial = false)
+
+
 	val containerColor by animateColorAsState(
 		when {
 			isSelected -> selectedColor
-			isFavourite -> Color.FavouriteContainer
+			isFavourite -> if (isFavouriteTinted) Color.FavouriteContainer else containerColor
 			else -> containerColor
 		}
 	)
@@ -157,8 +163,8 @@ fun NoteListCard(
 						.swipeable(
 							state = swipeableState,
 							anchors = anchors,
-							thresholds = { _, _ -> FractionalThreshold(0.31f) },
-							orientation = Orientation.Horizontal
+							orientation = Orientation.Horizontal,
+							thresholds = { _, _ -> FractionalThreshold(0.31f) }
 						)
 				) {
 					Box(modifier = Modifier) {
@@ -256,6 +262,11 @@ private fun Title(
 				tint = Color(0xFF5ACE8F),
 				modifier = Modifier.requiredSize(14.dp)
 			)
+			if (isFavourite || attachmentCount > 0) {
+				Spacer(modifier = Modifier.width(2.dp))
+				TitleText(text = "·")
+				Spacer(modifier = Modifier.width(2.dp))
+			}
 		}
 		if (isFavourite) {
 			Icon(
@@ -264,11 +275,11 @@ private fun Title(
 				tint = Color(0xFFFF5E78),
 				modifier = Modifier.requiredSize(14.dp)
 			)
-		}
-		if (isFavourite && attachmentCount != 0) {
-			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
-			Spacer(modifier = Modifier.width(2.dp))
+			if (attachmentCount > 0) {
+				Spacer(modifier = Modifier.width(2.dp))
+				TitleText(text = "·")
+				Spacer(modifier = Modifier.width(2.dp))
+			}
 		}
 		if (attachmentCount != 0) {
 			Icon(

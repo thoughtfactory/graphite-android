@@ -44,7 +44,7 @@ val Color.Companion.DeleteContent: Color
 	get() = Color.White
 
 val Color.Companion.FavouriteContainer: Color
-	get() = Color(0x31E78EA9)
+	get() = Color(0x47E78EA9)
 val Color.Companion.FavouriteContent: Color
 	get() = Color.White
 

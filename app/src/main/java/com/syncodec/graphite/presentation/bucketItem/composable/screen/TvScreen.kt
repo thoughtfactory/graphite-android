@@ -1,5 +1,6 @@
-package com.syncodec.graphite.presentation.bucketItem.composable.screen.showScreen
+package com.syncodec.graphite.presentation.bucketItem.composable.screen
 
+import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,13 +37,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
+import com.syncodec.graphite.di.network.Genre
 import com.syncodec.graphite.presentation.bucketItem.composable.dialog.ShowInfoDialog
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
@@ -50,6 +50,15 @@ import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 
 @Composable
 fun TvScreen(
+	tvId: String?,
+	tvGenres: List<Genre>,
+	tvName: String?,
+	tvOverview: String?,
+	tvNumberOfSeasons: Int?,
+	tvNumberOfEpisodes: Int?,
+	tvFirstAirDate: String?,
+	tvTagline: String?,
+	thumbnail:Bitmap?,
 	currentState : Int,
 	onChangeState : (Int) -> Unit,
 ) {
@@ -61,20 +70,6 @@ fun TvScreen(
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
 
-	val viewModel : BucketItemViewModel = viewModel()
-
-	val tvId by viewModel.tvId
-	val tvGenres = viewModel.tvGenres
-	val tvHomepage by viewModel.tvHomepage
-	val tvName by viewModel.tvName
-	val tvOriginalLanguage by viewModel.tvOriginalLanguage
-	val tvOriginalName by viewModel.tvOriginalName
-	val tvNumberOfSeasons by viewModel.tvNumberOfSeasons
-	val tvNumberOfEpisodes by viewModel.tvNumberOfEpisodes
-	val tvOverview by viewModel.tvOverview
-	val tvFirstAirDate by viewModel.tvFirstAirDate
-	val tvTagline by viewModel.tvTagline
-	val thumbnail by viewModel.thumbnail
 
 	val stateList = listOf(
 		StateData(

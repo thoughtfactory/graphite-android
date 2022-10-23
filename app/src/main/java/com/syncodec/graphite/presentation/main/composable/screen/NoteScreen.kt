@@ -2,13 +2,21 @@ package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,9 +26,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.lazyView.isScrollingUp
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteResreshing
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NoEntryCard
@@ -33,23 +47,33 @@ import com.syncodec.graphite.utils.timeStampToPrettyDay
 import io.realm.kotlin.types.ObjectId
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun NoteScreen(
-	notebookId : ObjectId? = null,
 	noteDayMap : Map<Long, List<NoteObjectLite>>,
 	viewType : ViewType,
 	onClickFab : () -> Unit,
 	onClickNote : (ObjectId) -> Unit,
 	onLongClickNote : (ObjectId) -> Unit
 ) {
+	val isNoteRefreshing = LocalCompositionIsNoteResreshing.current
+	val onRefresh = LocalCompositionOnRefresh.current
+
+	val isSelected = LocalCompositionIsSelected.current
+	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
 
 	val lazyListState = rememberLazyListState()
 	val lazyGridState = rememberLazyGridState()
 
 	Scaffold(
 		floatingActionButton = {
-			NoteFloatingActionButton(isExpanded = lazyListState.isScrollingUp() || lazyGridState.isScrollingUp(), onClick = onClickFab)
+			AnimatedVisibility(
+				visible = ! isSelected,
+				enter = fadeIn(tween(300)) + scaleIn(tween(300)),
+				exit = fadeOut(tween(300)) + scaleOut(tween(300))
+			) {
+				NoteFloatingActionButton(isExpanded = lazyListState.isScrollingUp() || lazyGridState.isScrollingUp(), onClick = onClickFab)
+			}
 		},
 		floatingActionButtonPosition = FabPosition.End
 	) {
@@ -61,20 +85,32 @@ fun NoteScreen(
 				if (it) {
 					NoEntryCard()
 				} else {
-					Crossfade(targetState = viewType) {
+					AnimatedContent(
+						targetState = viewType,
+						transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + scaleOut(tween(300), 0.71f) },
+						modifier = Modifier.fillMaxSize()
+					) {
 						when (it) {
 							ViewType.LIST -> ListView(
 								lazyListState = lazyListState,
+								isRefreshing = isNoteRefreshing,
+								isSelected = isSelected,
+								selectedObjectIdList = selectedObjectIdList,
 								noteDayMap = noteDayMap,
 								onClickNote = onClickNote,
-								onLongClickNote = onLongClickNote
+								onLongClickNote = onLongClickNote,
+								onRefresh = onRefresh
 							)
 
 							ViewType.GRID -> GridView(
-								lazyGridState = lazyGridState,
+								lazyListState = lazyListState,
+								isRefreshing = isNoteRefreshing,
+								isSelected = isSelected,
+								selectedObjectIdList = selectedObjectIdList,
 								noteDayMap = noteDayMap,
 								onClickNote = onClickNote,
-								onLongClickNote = onLongClickNote
+								onLongClickNote = onLongClickNote,
+								onRefresh = onRefresh
 							)
 						}
 					}
@@ -88,160 +124,211 @@ fun NoteScreen(
 @Composable
 private fun ListView(
 	lazyListState : LazyListState,
+	isRefreshing : Boolean,
+	isSelected : Boolean,
+	selectedObjectIdList : List<ObjectId>,
 	noteDayMap : Map<Long, List<NoteObjectLite>>,
 	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote : (ObjectId) -> Unit
+	onLongClickNote : (ObjectId) -> Unit,
+	onRefresh : () -> Unit
 ) {
-	LazyColumn(
-		modifier = Modifier.fillMaxSize(),
-		state = lazyListState
+	SwipeRefresh(
+		state = rememberSwipeRefreshState(isRefreshing = isRefreshing),
+		onRefresh = onRefresh
 	) {
-//		 item {
-//	         QuoteCard()
-//	 	}
-		item {
-			YearProgressBar(showCard = true)
-		}
-		noteDayMap.toSortedMap(Comparator.reverseOrder()).forEach { (day, noteList) ->
-			val sortedList = noteList.sortedBy { - it.userTimestamp }
-
-			val entrySize = sortedList.size
-
-			stickyHeader {
-				if (entrySize != 0) {
-					NotebookHeaderCard(
-						title = day.timeStampToPrettyDay(),
-						noEntries = "$entrySize ${if (entrySize == 1) "entry" else "entries"}",
-						color = MaterialTheme.colorScheme.background
-					)
-				}
+		LazyColumn(
+			modifier = Modifier.fillMaxSize(),
+			state = lazyListState
+		) {
+			item {
+				YearProgressBar(showCard = ! isSelected)
 			}
+			noteDayMap.toSortedMap(Comparator.reverseOrder()).forEach { (day, noteList) ->
+				val sortedList = noteList.sortedBy { - it.userTimestamp }
 
-			val lastEntryKey = if (entrySize != 0) sortedList.last().id else null
+				val entrySize = sortedList.size
 
-			sortedList.forEach { note ->
-				item {
-					var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
-
-					LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
-						try {
-							if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
-								thumbnail = note.thumbnail?.let { BitmapFactory.decodeByteArray(note.thumbnail, 0, it.size) }
-							}
-						} catch (e : Exception) {
-							e.printStackTrace()
-						}
+				stickyHeader {
+					if (entrySize != 0) {
+						NotebookHeaderCard(
+							title = day.timeStampToPrettyDay(),
+							noEntries = "$entrySize ${if (entrySize == 1) "entry" else "entries"}",
+							color = MaterialTheme.colorScheme.background
+						)
 					}
+				}
 
-					NoteListCard(
-						id = note.id,
-						timestamp = note.userTimestamp,
-						showFullTime = false,
-						isLocked = note.isLocked,
-						isSelected = false,
-						isFavourite = note.isFavourite,
-						isDeleted = false,
-						isLast = note.id == lastEntryKey,
-						title = note.title,
-						contentThumbnail = note.contentThumbnail,
-						attachmentCount = note.attachmentCount,
-						attachmentThumbnail = thumbnail,
-						address = note.address,
-						latLng = note.latLng,
-						isVisible = true,
-						containerColor = MaterialTheme.colorScheme.background,
-						selectedColor = MaterialTheme.colorScheme.surface,
-						onClick = { onClickNote(note.id) },
-						onLongClick = { onLongClickNote(note.id) },
-					)
+				val lastEntryKey = if (entrySize != 0) sortedList.last().id else null
 
-					NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
+				sortedList.forEach { note ->
+					item {
+						var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
+
+						LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
+							try {
+								if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
+									thumbnail = note.thumbnail?.let { BitmapFactory.decodeByteArray(note.thumbnail, 0, it.size) }
+								}
+							} catch (e : Exception) {
+								e.printStackTrace()
+							}
+						}
+
+						NoteListCard(
+							id = note.id,
+							timestamp = note.userTimestamp,
+							showFullTime = false,
+							isLocked = note.isLocked,
+							isSelected = selectedObjectIdList.contains(note.id),
+							isFavourite = note.isFavourite,
+							isDeleted = false,
+							isLast = note.id == lastEntryKey,
+							title = note.title,
+							contentThumbnail = note.contentThumbnail,
+							attachmentCount = note.attachmentCount,
+							attachmentThumbnail = thumbnail,
+							address = note.address,
+							latLng = note.latLng,
+							isVisible = true,
+							containerColor = MaterialTheme.colorScheme.background,
+							selectedColor = MaterialTheme.colorScheme.surface,
+							onClick = { onClickNote(note.id) },
+							onLongClick = { onLongClickNote(note.id) },
+						)
+
+						NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
+					}
 				}
 			}
-		}
 
-		item { Spacer(modifier = Modifier.height(128.dp)) }
+			item { Spacer(modifier = Modifier.height(128.dp)) }
+		}
 	}
 }
 
 @Composable
 private fun GridView(
-	lazyGridState : LazyGridState,
+	lazyListState : LazyListState,
+	isRefreshing : Boolean,
+	isSelected : Boolean,
+	selectedObjectIdList : List<ObjectId>,
 	noteDayMap : Map<Long, List<NoteObjectLite>>,
 	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote : (ObjectId) -> Unit
+	onLongClickNote : (ObjectId) -> Unit,
+	onRefresh : () -> Unit
 ) {
-	LazyColumn(
-		modifier = Modifier.fillMaxSize()
+	SwipeRefresh(
+		state = rememberSwipeRefreshState(isRefreshing = isRefreshing),
+		onRefresh = onRefresh
 	) {
-		noteDayMap.forEach { (day, noteList) ->
-			item {
-				NotebookHeaderCard(
-					title = day.timeStampToPrettyDay(),
-					noEntries = noteList.size.toString(),
-					color = MaterialTheme.colorScheme.background
-				)
-			}
-
-			for (i in 0 until (noteList.size / 2) + 1) {
+		LazyColumn(
+			modifier = Modifier.fillMaxSize(),
+			state = lazyListState
+		) {
+			noteDayMap.forEach { (day, noteList) ->
 				item {
-					Row(
-						modifier = Modifier.fillMaxWidth()
-					) {
-						val note1 = noteList.getOrNull(i * 2)
-						val note2 = noteList.getOrNull(i * 2 + 1)
+					NotebookHeaderCard(
+						title = day.timeStampToPrettyDay(),
+						noEntries = noteList.size.toString(),
+						color = MaterialTheme.colorScheme.background
+					)
+				}
 
-						Box(
-							modifier = Modifier.weight(1f)
+				for (i in 0 until (noteList.size / 2) + 1) {
+					item {
+						Row(
+							modifier = Modifier.fillMaxWidth()
 						) {
-							if (note1 != null) {
-								NoteGridCard(
-									id = note1.id,
-									timestamp = note1.userTimestamp,
-									showFullTime = false,
-									isLocked = note1.isLocked,
-									isSelected = false,
-									isFavourite = note1.isFavourite,
-									isDeleted = false,
-									isLast = false,
-									title = note1.title,
-									contentThumbnail = note1.contentThumbnail,
-									attachmentCount = note1.attachmentCount,
-									attachmentThumbnail = null,
-									address = note1.address,
-									latLng = note1.latLng,
-									isVisible = true,
-									selectedColor = MaterialTheme.colorScheme.surface,
-									onClick = { onClickNote(note1.id) },
-									onLongClick = { onLongClickNote(note1.id) },
-								)
+							val note1 = noteList.getOrNull(i * 2)
+							val note2 = noteList.getOrNull(i * 2 + 1)
+
+							var thumbnail1 by remember { mutableStateOf<Bitmap?>(null) }
+							var thumbnail2 by remember { mutableStateOf<Bitmap?>(null) }
+
+							LaunchedEffect(key1 = note1?.id.hashCode() + note1?.thumbnail.hashCode()) {
+								try {
+									if (note1?.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
+										thumbnail1 = note1.thumbnail?.let { BitmapFactory.decodeByteArray(note1.thumbnail, 0, it.size) }
+									}
+								} catch (e : Exception) {
+									e.printStackTrace()
+								}
 							}
-						}
-						Box(
-							modifier = Modifier.weight(1f)
-						) {
-							if (note2 != null) {
-								NoteGridCard(
-									id = note2.id,
-									timestamp = note2.userTimestamp,
-									showFullTime = false,
-									isLocked = note2.isLocked,
-									isSelected = false,
-									isFavourite = note2.isFavourite,
-									isDeleted = false,
-									isLast = false,
-									title = note2.title,
-									contentThumbnail = note2.contentThumbnail,
-									attachmentCount = note2.attachmentCount,
-									attachmentThumbnail = null,
-									address = note2.address,
-									latLng = note2.latLng,
-									isVisible = true,
-									selectedColor = MaterialTheme.colorScheme.surface,
-									onClick = { onClickNote(note2.id) },
-									onLongClick = { onLongClickNote(note2.id) },
-								)
+							LaunchedEffect(key1 = note2?.id.hashCode() + note2?.thumbnail.hashCode()) {
+								try {
+									if (note2?.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
+										thumbnail2 = note2.thumbnail?.let { BitmapFactory.decodeByteArray(note2.thumbnail, 0, it.size) }
+									}
+								} catch (e : Exception) {
+									e.printStackTrace()
+								}
 							}
+
+							Spacer(modifier = Modifier.width(14.dp))
+
+							Spacer(
+								modifier = Modifier
+									.width(4.dp)
+									.height(128.dp)
+									.background(MaterialTheme.colorScheme.surface)
+							)
+
+							Spacer(modifier = Modifier.width(6.dp))
+
+							Box(
+								modifier = Modifier.weight(1f)
+							) {
+								if (note1 != null) {
+									NoteGridCard(
+										id = note1.id,
+										timestamp = note1.userTimestamp,
+										showFullTime = false,
+										isLocked = note1.isLocked,
+										isSelected = selectedObjectIdList.contains(note1.id),
+										isFavourite = note1.isFavourite,
+										isDeleted = false,
+										isLast = false,
+										title = note1.title,
+										contentThumbnail = note1.contentThumbnail,
+										attachmentCount = note1.attachmentCount,
+										attachmentThumbnail = thumbnail1,
+										address = note1.address,
+										latLng = note1.latLng,
+										isVisible = true,
+										selectedColor = MaterialTheme.colorScheme.surface,
+										onClick = { onClickNote(note1.id) },
+										onLongClick = { onLongClickNote(note1.id) },
+									)
+								}
+							}
+							Box(
+								modifier = Modifier.weight(1f)
+							) {
+								if (note2 != null) {
+									NoteGridCard(
+										id = note2.id,
+										timestamp = note2.userTimestamp,
+										showFullTime = false,
+										isLocked = note2.isLocked,
+										isSelected = selectedObjectIdList.contains(note2.id),
+										isFavourite = note2.isFavourite,
+										isDeleted = false,
+										isLast = false,
+										title = note2.title,
+										contentThumbnail = note2.contentThumbnail,
+										attachmentCount = note2.attachmentCount,
+										attachmentThumbnail = thumbnail2,
+										address = note2.address,
+										latLng = note2.latLng,
+										isVisible = true,
+										selectedColor = MaterialTheme.colorScheme.surface,
+										onClick = { onClickNote(note2.id) },
+										onLongClick = { onLongClickNote(note2.id) },
+									)
+								}
+							}
+
+							Spacer(modifier = Modifier.width(8.dp))
 						}
 					}
 				}

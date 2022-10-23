@@ -1,6 +1,8 @@
 package com.syncodec.graphite.presentation.note.composable.bottomSheet
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
+import io.realm.kotlin.types.ObjectId
 
 
 enum class NoteBottomSheetType {
@@ -13,12 +15,22 @@ enum class NoteBottomSheetType {
 @Composable
 fun SheetLayout(
 	bottomSheetType: NoteBottomSheetType,
-	closeSheet: () -> Unit
+	onAddAttachmentToBuffer: (List<Uri>) -> Unit,
+	onRemoveAttachment: (ObjectId) -> Unit,
+	onUpdateTitle: (String?) -> Unit,
+	onRemoveLocation : () -> Unit,
+	onReloadLocation : () -> Unit,
 ) {
 	when (bottomSheetType) {
-		NoteBottomSheetType.MENU -> MenuBottomSheet(closeSheet = closeSheet)
-		NoteBottomSheetType.METADATA -> MetadataBottomSheet(closeSheet = closeSheet)
-		NoteBottomSheetType.LOCATION -> LocationBottomSheet(closeSheet = closeSheet)
-		NoteBottomSheetType.ATTACHMENT -> AttachmentBottomSheet(closeSheet = closeSheet)
+		NoteBottomSheetType.MENU -> MenuBottomSheet(false)
+		NoteBottomSheetType.METADATA -> MetadataBottomSheet(onUpdateTitle = onUpdateTitle)
+		NoteBottomSheetType.LOCATION -> LocationBottomSheet(
+			onRemoveLocation = onRemoveLocation,
+			onReloadLocation = onReloadLocation,
+		)
+		NoteBottomSheetType.ATTACHMENT -> AttachmentBottomSheet(
+			onAddAttachmentToBuffer = onAddAttachmentToBuffer,
+			onRemoveAttachment = onRemoveAttachment,
+		)
 	}
 }

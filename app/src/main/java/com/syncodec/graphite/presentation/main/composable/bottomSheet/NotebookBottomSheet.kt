@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.bottomSheet
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.media.ThumbnailUtils
@@ -28,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
@@ -39,7 +39,6 @@ import com.syncodec.graphite.presentation.common.dialog.ColorPickerDialog
 import com.syncodec.graphite.presentation.common.notebook.NotebookColorChooser
 import com.syncodec.graphite.presentation.common.notebook.NotebookImageChooser
 import com.syncodec.graphite.presentation.common.text.LargeTextField
-import com.syncodec.graphite.presentation.main.MainViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -47,12 +46,12 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun NotebookBottomSheet(
+	putNotebook: (String, String, Color?, Bitmap?) -> Unit,
 	closeSheet: () -> Unit
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
-
-	val viewModel: MainViewModel = viewModel()
+	
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var titleText by rememberSaveable { mutableStateOf("") }
@@ -198,7 +197,7 @@ fun NotebookBottomSheet(
 
 						val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192) }
 
-						viewModel.putNotebook(title = titleText, description = descriptionText, color = notebookColor, bitmap = thumbnail)
+						putNotebook(titleText, descriptionText, notebookColor, thumbnail)
 
 						titleTextFocusRequester.freeFocus()
 						descriptionTextFocusRequester.freeFocus()

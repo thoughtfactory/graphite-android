@@ -1,75 +1,94 @@
 package com.syncodec.graphite.presentation.attachment
 
-import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import androidx.core.content.FileProvider
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.BaseApplication
-import com.syncodec.graphite.di.Repository
-import com.syncodec.graphite.di.Repository.getAttachmentFile
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.repository.RealmNotInitializedException
+import com.syncodec.graphite.di.repository.Repository2
+import com.syncodec.graphite.di.repository.RepositoryState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import javax.inject.Inject
 
-class AttachmentViewModel(application: Application): AndroidViewModel(application) {
 
-	val noteObject: MutableState<NoteObject?> = mutableStateOf(null)
-	val chapterObject: MutableState<ChapterObject?> = mutableStateOf(null)
+@HiltViewModel
+class AttachmentViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
 
-	val attachmentList: SnapshotStateMap<ObjectId, Triple<Uri, File, AttachmentObject>> = mutableStateMapOf()
+	val repositoryState = repository2.repositoryState
+
+	val noteObject : MutableState<NoteObject?> = mutableStateOf(null)
+	val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
+
+	val attachmentList : SnapshotStateMap<ObjectId, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
 
 	fun loadAllAttachments() {
-		viewModelScope.launch {
-			Repository.getAllAttachmentAsFlow().collect {
-				attachmentList.clear()
-				it.forEach { attachmentObject ->
-					val file = getApplication<BaseApplication>().getAttachmentFile(attachmentObject.id, attachmentObject.extension)
-
-					file?.let { it1 ->
-						val uri = FileProvider.getUriForFile(getApplication<BaseApplication>(), "com.syncodec.fileprovider", it1)
-						attachmentList[attachmentObject.id] = Triple(uri, file, attachmentObject.clone().apply { this.isSaved = true })
+		viewModelScope.launch(Dispatchers.IO) {
+			repositoryState.collect {
+				when (it) {
+					RepositoryState.INIT -> Log.d("AttachmentViewModel", "Init")
+					RepositoryState.LOADING -> Log.d("AttachmentViewModel", "Loading")
+					RepositoryState.SUCCESS -> {
+						viewModelScope.launch {
+							if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+							try {
+								repository2.getAllAttachmentWithFileAsFlow().collect {
+									withContext(Dispatchers.Main) {
+										attachmentList.clear()
+										attachmentList.putAll(it.associate { (first, second, third) -> first.id to Triple(first, second, third) })
+									}
+								}
+							} catch (e: RealmNotInitializedException) {
+							} catch (e: Exception) {
+							}
+						}
 					}
+
+					RepositoryState.ERROR -> Log.d("AttachmentViewModel", "Error")
 				}
 			}
 		}
 	}
 
-	fun loadAndViewFromNoteData(noteId: ObjectId) {
+	fun loadAndViewFromNoteData(noteId : ObjectId) {
 		viewModelScope.launch(Dispatchers.IO) {
-			Repository.getNote(noteId)?.let { note ->
-				noteObject.value = note
-				note.attachmentList.forEach { attachmentObject ->
-					val file = getApplication<BaseApplication>().getAttachmentFile(attachmentObject.id, attachmentObject.extension)
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 
-					file?.let { it1 ->
-						val uri = FileProvider.getUriForFile(getApplication<BaseApplication>(), "com.syncodec.fileprovider", it1)
-						attachmentList[attachmentObject.id] = Triple(uri, file, attachmentObject.clone().apply { this.isSaved = true })
+			try {
+				repository2.getAttachmentFromNote(noteId).collect {
+					withContext(Dispatchers.Main) {
+						attachmentList.clear()
+//						attachmentList.putAll(it?.associate { (first, second, third) -> first.id to Triple(first, second, third) } ?: emptyMap())
 					}
 				}
+			} catch (e: RealmNotInitializedException) {
+			} catch (e: Exception) {
 			}
 		}
 	}
 
-	fun loadAndViewFromChapterData(chapterId: ObjectId) {
+	fun loadAndViewFromChapterData(chapterId : ObjectId) {
 		viewModelScope.launch(Dispatchers.IO) {
-			Repository.getChapter(chapterId)?.let { chapter ->
-				chapterObject.value = chapter
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 
-				chapter.chapterList.forEach {
-					loadAndViewFromChapterData(it.id)
-				}
+			repository2.getChapterFromIdAsFlow(chapterId).collect {
+				withContext(Dispatchers.Main) {
+					chapterObject.value = it
 
-				chapter.noteList.forEach {
-					loadAndViewFromNoteData(it.id)
+					it?.chapterList?.forEach { loadAndViewFromChapterData(it.id) }
+					it?.noteList?.forEach { loadAndViewFromNoteData(it.id) }
 				}
 			}
 		}

@@ -1,20 +1,8 @@
 package com.syncodec.graphite
 
 import android.app.Application
-import android.util.Log
-import androidx.compose.ui.graphics.toArgb
-import com.revenuecat.purchases.Purchases
-import com.revenuecat.purchases.PurchasesConfiguration
-import com.revenuecat.purchases.getOfferingsWith
-import com.syncodec.graphite.di.Repository
-import com.syncodec.graphite.di.model.BaseObject
-import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.getRandomColor
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 
 
@@ -34,9 +22,13 @@ class BaseApplication : Application() {
 	override fun onCreate() {
 		super.onCreate()
 
+//		repository = RepositoryModule_ProvideRepositoryFactory()
+
 		ROOT = applicationContext.filesDir.path
 		File(DATA).mkdirs()
 		File(ATTACHMENT_DIR).mkdirs()
+
+
 
 //		Purchases.debugLogsEnabled = true
 //		Purchases.configure(PurchasesConfiguration.Builder(this, BuildConfig.REVENUE_CAT_API_KEY).build())
@@ -54,36 +46,36 @@ class BaseApplication : Application() {
 
 		dataStore = DataStoreInstance(this)
 
-		migrate()
+//		migrate()
 
 		updateQuoteData()
 	}
 
 	private fun migrate() {
-		CoroutineScope(Dispatchers.Main).launch {
-			Repository.getDefaultNotebookId().collect {
-				when (it) {
-					null -> {
-						ChapterObject().also { chapterObject ->
-							chapterObject.title = "Diary"
-							chapterObject.description =
-								"Default diary. Every notes will be saved in this notebook by default"
-							chapterObject.color = getRandomColor().toArgb()
-
-							Repository.putChapter(null, chapterObject)
-
-							BaseObject().also { baseObject ->
-								baseObject.defaultChapterId = chapterObject.id
-
-								CoroutineScope(Dispatchers.IO).launch {
-									Repository.putBase(baseObject)
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+//		CoroutineScope(Dispatchers.Main).launch {
+//
+//			repository.noteRepository.getDefaultNotebookId().collect {
+//				when (it) {
+//					null -> {
+//						ChapterObject().also { chapterObject ->
+//							chapterObject.title = "Diary"
+//							chapterObject.description = "Default diary. Every notes will be saved in this notebook by default"
+//							chapterObject.color = getRandomColor().toArgb()
+//
+//							repository.noteRepository.putChapter(null, chapterObject)
+//
+//							BaseObject().also { baseObject ->
+//								baseObject.defaultChapterId = chapterObject.id
+//
+//								CoroutineScope(Dispatchers.IO).launch {
+//									repository.noteRepository.putBase(baseObject)
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
 	}
 
 	private fun updateQuoteData() {

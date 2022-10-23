@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,9 +21,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bucket.BucketViewModel
+import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.text.LargeTextField
@@ -32,10 +30,9 @@ import com.syncodec.graphite.presentation.common.text.LargeTextField
 
 @Composable
 fun AddLinkBottomSheet(
+	bucketObject : BucketObject?,
 	closeSheet: () -> Unit
 ) {
-	val viewModel: BucketViewModel = viewModel()
-
 	var urlText by remember { mutableStateOf("") }
 	var isTextFocused by remember { mutableStateOf(false) }
 
@@ -73,9 +70,9 @@ fun AddLinkBottomSheet(
 			onValueChanged = { urlText = it },
 			keyboardActions = KeyboardActions(
 				onGo = {
-					viewModel.putLink(urlText)
-					urlText = ""
-					closeSheet()
+//					viewModel.putLink(urlText)
+//					urlText = ""
+//					closeSheet()
 				}
 			)
 		)

@@ -1,26 +1,34 @@
 package com.syncodec.graphite.presentation.search
 
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.Repository2
+import com.syncodec.graphite.di.repository.RepositoryState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 
-class SearchViewModel : ViewModel() {
+@HiltViewModel
+class SearchViewModel @Inject constructor(private val repository2 : Repository2): ViewModel() {
 
-	val noteList = Repository.getAllNoteAsFlow()
-	val tagList = Repository.getAllTagAsFlow()
+	val repositoryState = repository2.repositoryState
+
+	private val noteList: SnapshotStateList<NoteObject> = mutableStateListOf()
+	val tagList: SnapshotStateList<TagObject> = mutableStateListOf()
 
 	val visibleNoteList : SnapshotStateList<NoteObject> = mutableStateListOf()
 
@@ -32,29 +40,49 @@ class SearchViewModel : ViewModel() {
 
 	init {
 		viewModelScope.launch(Dispatchers.IO) {
-			noteList.combine(showFavourite) { noteList, showFavourite ->
-				if (showFavourite) {
-					noteList.filter { it.isFavourite }
-				} else {
-					noteList
+			when(repositoryState.value) {
+				RepositoryState.INIT -> Log.d("SearchViewModel", "Init")
+				RepositoryState.LOADING -> Log.d("SearchViewModel", "Loading")
+				RepositoryState.SUCCESS -> onRepositoryStateSuccess()
+				RepositoryState.ERROR -> Log.d("SearchViewModel", "Error")
+			}
+		}
+	}
+
+	private fun onRepositoryStateSuccess() {
+		viewModelScope.launch(Dispatchers.IO) {
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			repository2.getAllNoteAsFlow().collect {
+				withContext(Dispatchers.Main) {
+					noteList.clear()
+					noteList.addAll(it)
 				}
-			}.combine(showWithAttachments) { noteList, showWithAttachments ->
-				if (showWithAttachments) {
-					noteList.filter { it.attachmentList.isNotEmpty() }
-				} else {
-					noteList
+			}
+		}
+
+		viewModelScope.launch(Dispatchers.IO) {
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			repository2.getAllTagAsFlow().collect {
+				withContext(Dispatchers.Main) {
+					tagList.clear()
+					tagList.addAll(it)
 				}
-			}.combine(showTag) { noteList, showTag ->
-				if (showTag != null) {
-					noteList.filter { showTag.objectIdList.contains(it.id) }
-				} else {
-					noteList
-				}
-			}.combine(searchQuery) { noteList, searchQuery ->
-				if(searchQuery != null) {
-					noteList.filter { it.title?.contains(searchQuery, true) == true || it.content?.contains(searchQuery, true) == true }
-				} else {
-					noteList
+			}
+		}
+
+		viewModelScope.launch(Dispatchers.IO) {
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			combine(
+				showFavourite,
+				showWithAttachments,
+				showTag,
+				searchQuery
+			) { favourite, attachment, tag, query ->
+				noteList.filter { note ->
+					(!favourite || note.isFavourite) &&
+					(!attachment || note.attachmentList.isNotEmpty()) &&
+					(tag == null || tag.objectIdList.contains(note.id)) &&
+					(query == null || note.title?.contains(query, true) == true || note.content?.contains(query, true) == true)
 				}
 			}.cancellable().collect {
 				withContext(Dispatchers.Main) {

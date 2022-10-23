@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.attachment.composable.screen
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,33 +22,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
-import com.syncodec.graphite.presentation.attachment.AttachmentViewModel
 import com.syncodec.graphite.presentation.attachment.composable.bar.TopBar
 import com.syncodec.graphite.presentation.attachment.composable.bottomSheet.MenuBottomSheet
 import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.AttachmentCard
+import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.launch
+import java.io.File
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun AttachmentScreen() {
+fun AttachmentScreen(
+	noteObject : NoteObject?,
+	chapterObject: ChapterObject?,
+	attachmentList: Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>
+) {
 	val activity = LocalContext.current as AttachmentActivity
 	val scope = rememberCoroutineScope()
-
-	val viewModel : AttachmentViewModel = viewModel()
-
-	val noteObject by viewModel.noteObject
-	val chapterObject by viewModel.chapterObject
-	val attachmentList = viewModel.attachmentList
 
 	val modalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
@@ -93,9 +92,9 @@ fun AttachmentScreen() {
 					attachmentList.forEach { (id, data) ->
 						item {
 							AttachmentCard(
-								uri = data.first,
+								uri = data.third,
 								file = data.second,
-								attachmentObject = data.third
+								attachmentObject = data.first
 							)
 						}
 					}

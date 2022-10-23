@@ -1,15 +1,25 @@
 package com.syncodec.graphite.presentation.bucketItem.composable.screen
 
+import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,38 +30,31 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
+import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.R
 
 
 @Composable
 fun BookScreen(
+	bookKey: String?,
+	bookTitle: String?,
+	bookAuthors: List<String>,
+	bookDescription: String?,
+	bookPageCount: Int?,
+	bookPublishedDate: String?,
+	thumbnail: Bitmap?,
 	currentState : Int,
 	onChangeState : (Int) -> Unit,
 ) {
-
 	val context = LocalContext.current
 
 	val uriHandler = LocalUriHandler.current
 
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
-	val screenHeight = configuration.screenHeightDp.dp
-
-	val viewModel : BucketItemViewModel = viewModel()
-
-	val bookKey by viewModel.bookKey
-	val bookTitle by viewModel.bookTitle
-	val bookAuthors = viewModel.bookAuthorList
-	val bookDescription by viewModel.bookDescription
-	val bookPageCount by viewModel.bookPageCount
-	val bookPublishedDate by viewModel.bookFirstPublishYear
-	val thumbnail by viewModel.thumbnail
 
 	val stateList = listOf(
 		StateData(

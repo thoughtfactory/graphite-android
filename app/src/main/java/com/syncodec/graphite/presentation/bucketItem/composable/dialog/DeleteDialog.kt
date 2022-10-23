@@ -14,6 +14,7 @@ import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualAction
 @Composable
 fun DeleteDialog(
 	showDeleteDialog: Boolean,
+	message: String? = null,
 	onDismiss: () -> Unit,
 	onDelete: () -> Unit
 ) {
@@ -30,7 +31,7 @@ fun DeleteDialog(
 		Spacer(modifier = Modifier.height(12.dp))
 
 		Text(
-			text = "Are you sure you want to delete item?",
+			text = message ?: "Are you sure you want to delete this item?",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurface,
 		)

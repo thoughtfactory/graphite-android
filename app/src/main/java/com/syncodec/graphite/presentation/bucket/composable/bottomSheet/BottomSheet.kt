@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
 import androidx.compose.runtime.*
+import com.syncodec.graphite.di.model.BucketObject
 
 
 enum class BucketBottomSheetType {
@@ -13,14 +14,15 @@ enum class BucketBottomSheetType {
 
 @Composable
 fun SheetLayout(
+	bucketObject : BucketObject?,
 	bottomSheetType: BucketBottomSheetType,
 	closeSheet: () -> Unit
 ) {
 	when (bottomSheetType) {
 		BucketBottomSheetType.MENU -> MenuBottomSheet(closeSheet = closeSheet)
-		BucketBottomSheetType.ADD_TODO -> AddTodoBottomSheet(closeSheet = closeSheet)
-		BucketBottomSheetType.ADD_BOOK -> AddBookBottomSheet(closeSheet = closeSheet)
-		BucketBottomSheetType.ADD_SHOW -> AddShowBottomSheet(closeSheet = closeSheet)
-		BucketBottomSheetType.ADD_LINK -> AddLinkBottomSheet(closeSheet = closeSheet)
+		BucketBottomSheetType.ADD_TODO -> AddTodoBottomSheet(bucketObject = bucketObject, closeSheet = closeSheet)
+		BucketBottomSheetType.ADD_BOOK -> AddBookBottomSheet(bucketObject = bucketObject, closeSheet = closeSheet)
+		BucketBottomSheetType.ADD_SHOW -> AddShowBottomSheet(bucketObject = bucketObject, closeSheet = closeSheet)
+		BucketBottomSheetType.ADD_LINK -> AddLinkBottomSheet(bucketObject = bucketObject, closeSheet = closeSheet)
 	}
 }

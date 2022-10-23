@@ -32,7 +32,7 @@ class RawActivity : ComponentActivity() {
 				val objectType = intent.getStringExtra(Extra.Companion.Constant.OBJECT_TYPE.name)?.let { Extra.Companion.ObjectType.valueOf(it) }
 
 				if (objectId != null && objectType != null) {
-					viewModel.readObject(objectId, objectType)
+//					viewModel.readObject(objectId, objectType)
 				} else {
 					Log.i("npr71", "objectId or objectType is null")
 					finish()

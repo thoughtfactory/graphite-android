@@ -171,7 +171,7 @@ dependencies {
 
 	implementation 'com.google.android.play:core:1.10.3'
 
-	implementation 'com.google.android.gms:play-services-location:20.0.0'
+	implementation 'com.google.android.gms:play-services-location:21.0.0'
 //	implementation 'com.google.maps.android:maps-ktx:3.4.0'
 	implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
 

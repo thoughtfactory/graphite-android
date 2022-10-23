@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -41,7 +42,9 @@ class BucketActivity: ComponentActivity() {
 				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
-				BucketScreen()
+				val bucketObject by viewModel.bucketObject
+
+				BucketScreen(bucketObject = bucketObject,)
 			}
 		}
 	}

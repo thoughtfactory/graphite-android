@@ -120,9 +120,7 @@ fun AtlasScreen(
 				zoomControlsEnabled = false,
 				zoomGesturesEnabled = true,
 			),
-			properties = MapProperties(
-				mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light)
-			),
+			properties = MapProperties(mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light)),
 		) {
 			MapEffect(key1 = isDataReady) {
 				if (isDataReady) {

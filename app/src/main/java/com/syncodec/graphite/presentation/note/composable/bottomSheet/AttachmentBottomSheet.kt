@@ -6,63 +6,77 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
-import com.syncodec.graphite.presentation.note.NoteActivity
-import com.syncodec.graphite.presentation.note.NoteViewModel
-import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.AttachmentPreview
-import com.syncodec.graphite.utils.createTempFileToExpose
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionAttachmentList
+import com.syncodec.graphite.presentation.note.composable.buildingBlock.AttachmentPreview
+import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
 import com.syncodec.graphite.utils.generatePrimaryKey
+import io.realm.kotlin.types.ObjectId
 
 
 @Composable
 fun AttachmentBottomSheet(
-	closeSheet: () -> Unit
+	onAddAttachmentToBuffer: (List<Uri>) -> Unit,
+	onRemoveAttachment: (ObjectId) -> Unit,
 ) {
-	val activity: NoteActivity = LocalContext.current as NoteActivity
-	val viewModel: NoteViewModel = viewModel()
+	val context = LocalContext.current
+	val attachmentList = LocalCompositionAttachmentList.current
 
-	val attachmentList = viewModel.attachmentListNew.toList().sortedBy { it.second.third.createdTimestamp }
+	var photoUri: Uri? by remember { mutableStateOf(null) }
 
-	var photoUri: Uri? = null
 	val takePicture =
 		rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
-			if (isCaptured) {
-				if (photoUri != null) {
-					viewModel.bufferAttachment(listOf(photoUri!!))
-					photoUri = null
+			try {
+				if (isCaptured) {
+					if (photoUri != null) {
+						onAddAttachmentToBuffer(listOf(photoUri!!))
+						photoUri = null
+					}
 				}
+			} catch (e: Exception) {
+				e.printStackTrace()
 			}
 		}
 	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
-		viewModel.bufferAttachment(uriList)
+		try {
+			onAddAttachmentToBuffer(uriList)
+		} catch (e: Exception) {
+		}
 	}
 
 	val buttonList: List<BottomSheetButtonData> = remember {
 		listOf(
 			BottomSheetButtonData(title = "Camera", icon = R.drawable.ic_camera) {
-				photoUri = createTempFileToExpose(
-					context = activity,
-					key = generatePrimaryKey(),
-					extension = ".jpg"
-				).first
+				photoUri = createTempAttachmentFileToExpose(context = context, key = generatePrimaryKey(), extension = ".jpg").first
 				takePicture.launch(photoUri)
 			},
 			BottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
@@ -115,7 +129,7 @@ fun AttachmentBottomSheet(
 				columns = GridCells.Adaptive(144.dp),
 				modifier = Modifier.padding(24.dp, 0.dp),
 			) {
-				attachmentList.forEachIndexed { index, (id, data) ->
+				attachmentList.forEach { id, (attachmentObject, file, uri) ->
 					item {
 						Box(
 							modifier = Modifier
@@ -123,28 +137,27 @@ fun AttachmentBottomSheet(
 								.clip(RoundedCornerShape(28.dp))
 						) {
 							AttachmentPreview(
-								attachment = data.third,
-								uri = data.first,
-								file = data.second,
+								attachment = attachmentObject,
+								uri = uri,
+								file = file,
 								clickable = false,
 								showActionButton = true,
 								modifier = Modifier
 									.fillMaxWidth()
 									.aspectRatio(1f),
-								onRemove = {
-									viewModel.attachmentListNew.remove(data.third.id)
-//									attachmentList.drop(index)
-								},
+								onRemove = { onRemoveAttachment(id)  },
 							) {
 								try {
-									Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(activity, "com.syncodec.fileprovider", data.second)).apply {
-										addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+									file?.let {
+										Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it)).apply {
+											addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-										activity.startActivity(this)
+											context.startActivity(this)
+										}
 									}
 								} catch (e: Exception) {
 									e.printStackTrace()
-									Toast.makeText(activity, "Error viewing file", Toast.LENGTH_SHORT).show()
+									Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
 								}
 							}
 						}

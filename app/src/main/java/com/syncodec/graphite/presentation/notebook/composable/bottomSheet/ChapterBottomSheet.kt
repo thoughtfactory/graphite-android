@@ -7,10 +7,19 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -30,8 +39,6 @@ import com.syncodec.graphite.presentation.common.dialog.ColorPickerDialog
 import com.syncodec.graphite.presentation.common.notebook.NotebookColorChooser
 import com.syncodec.graphite.presentation.common.notebook.NotebookImageChooser
 import com.syncodec.graphite.presentation.common.text.LargeTextField
-import com.syncodec.graphite.presentation.main.MainViewModel
-import com.syncodec.graphite.presentation.notebook.NotebookViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -148,7 +155,6 @@ fun ChapterBottomSheet(
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
-	val viewModel: NotebookViewModel = viewModel()
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var titleText by rememberSaveable { mutableStateOf("") }
@@ -294,7 +300,8 @@ fun ChapterBottomSheet(
 
 						val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192) }
 
-						viewModel.putChapter(title = titleText, description = descriptionText, color = notebookColor, bitmap = thumbnail)
+						TODO()
+//						viewModel.putChapter(title = titleText, description = descriptionText, color = notebookColor, bitmap = thumbnail)
 
 						titleTextFocusRequester.freeFocus()
 						descriptionTextFocusRequester.freeFocus()

@@ -7,7 +7,15 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,14 +23,18 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -32,38 +44,35 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.Repository
+import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.TMDbMovieSearchResult
 import com.syncodec.graphite.di.network.TMDbTvSearchResult
 import com.syncodec.graphite.presentation.bucket.BucketActivity
-import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.ClimateChangeMessage
-import com.syncodec.graphite.presentation.common.text.LargeTextField
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.text.LargeTextField
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.net.SocketTimeoutException
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun AddShowBottomSheet(
+	bucketObject : BucketObject?,
 	closeSheet : () -> Unit
 ) {
 	val activity : BucketActivity = LocalContext.current as BucketActivity
-	val viewModel : BucketViewModel = viewModel()
 	val scope = rememberCoroutineScope()
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -83,42 +92,42 @@ fun AddShowBottomSheet(
 		keyboardController?.hide()
 		tmDbMovieSearchResult = null
 		scope.launch(Dispatchers.IO) {
-			try {
-				if (currentState == 0) {
-					Repository
-						.tmDbApi
-						.searchForMovieTitle(queryText) {
-							if (it == null) {
-								status = Status.ERROR
-							} else {
-								tmDbMovieSearchResult = it
-								tmDbTvSearchResult = null
-								status = Status.LOADED
-							}
-						}
-				} else {
-					Repository
-						.tmDbApi
-						.searchForTvTitle(queryText) {
-							if (it == null) {
-								status = Status.ERROR
-							} else {
-								tmDbMovieSearchResult = null
-								tmDbTvSearchResult = it
-								status = Status.LOADED
-							}
-						}
-				}
-			} catch (e : SocketTimeoutException) {
-//				TODO update error message and image
-				scope.launch(Dispatchers.Main) { Toast.makeText(activity, "Timeout getting search results", Toast.LENGTH_SHORT).show() }
-				status = Status.ERROR
-				e.printStackTrace()
-			} catch (e : Exception) {
-//				TODO update error message and image
-				status = Status.ERROR
-				e.printStackTrace()
-			}
+//			try {
+//				if (currentState == 0) {
+//					Repository
+//						.tmDbApi
+//						.searchForMovieTitle(queryText) {
+//							if (it == null) {
+//								status = Status.ERROR
+//							} else {
+//								tmDbMovieSearchResult = it
+//								tmDbTvSearchResult = null
+//								status = Status.LOADED
+//							}
+//						}
+//				} else {
+//					Repository
+//						.tmDbApi
+//						.searchForTvTitle(queryText) {
+//							if (it == null) {
+//								status = Status.ERROR
+//							} else {
+//								tmDbMovieSearchResult = null
+//								tmDbTvSearchResult = it
+//								status = Status.LOADED
+//							}
+//						}
+//				}
+//			} catch (e : SocketTimeoutException) {
+////				TODO update error message and image
+//				scope.launch(Dispatchers.Main) { Toast.makeText(activity, "Timeout getting search results", Toast.LENGTH_SHORT).show() }
+//				status = Status.ERROR
+//				e.printStackTrace()
+//			} catch (e : Exception) {
+////				TODO update error message and image
+//				status = Status.ERROR
+//				e.printStackTrace()
+//			}
 		}
 	}
 
@@ -213,12 +222,12 @@ fun AddShowBottomSheet(
 											focusRequester.freeFocus()
 											keyboardController?.hide()
 
-											if (viewModel.bucketObject.value == null || movieDataResult.id == null) {
+											if (bucketObject == null || movieDataResult.id == null) {
 												Toast.makeText(activity, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
 											} else {
 												Intent(activity, BucketItemActivity::class.java).apply {
 													putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-													putExtra(Extra.Companion.Constant.BUCKET_ID.name, viewModel.bucketObject.value !!.id.toString())
+													putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.toString())
 													putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
 													putExtra(Extra.Companion.Constant.MOVIE_ID.name, movieDataResult.id)
 
@@ -244,12 +253,12 @@ fun AddShowBottomSheet(
 											focusRequester.freeFocus()
 											keyboardController?.hide()
 
-											if (viewModel.bucketObject.value == null || tvDataResult.id == null) {
+											if (bucketObject == null || tvDataResult.id == null) {
 												Toast.makeText(activity, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
 											} else {
 												Intent(activity, BucketItemActivity::class.java).apply {
 													putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-													putExtra(Extra.Companion.Constant.BUCKET_ID.name, viewModel.bucketObject.value !!.id.toString())
+													putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.toString())
 													putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
 													putExtra(Extra.Companion.Constant.TV_ID.name, tvDataResult.id)
 

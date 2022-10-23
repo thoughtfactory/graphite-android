@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
@@ -28,14 +27,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyCard
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTitleCard
-import com.syncodec.graphite.presentation.note.NoteViewModel
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseBottomSheet
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionCreatedTimestamp
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionModifiedTimestamp
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapterId
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
+import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,17 +48,18 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MetadataBottomSheet(
-	closeSheet: () -> Unit
+	onUpdateTitle : (String?) -> Unit
 ) {
-	val viewModel: NoteViewModel = viewModel()
+	val isViewing = LocalCompositionIsViewing.current
 
-	val isViewer by viewModel.isViewer
+	val id = LocalCompositionNoteId.current
+	val parentChapterId = LocalCompositionParentChapterId.current
+	val createdTimestamp = LocalCompositionCreatedTimestamp.current
+	val modifiedTimestamp = LocalCompositionModifiedTimestamp.current
+	val title = LocalCompositionTitle.current
 
-	val id by viewModel.noteId
-	val parentChapterId by viewModel.parentChapterId
-	val createdTimestamp by viewModel.createdTimestamp
-	val modifiedTimestamp by viewModel.modifiedTimestamp
-	val title by viewModel.title
+	val closeSheet = LocalCompositionCloseBottomSheet.current
+	val openDialog = LocalCompositionOpenDialog.current
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -78,15 +84,16 @@ fun MetadataBottomSheet(
 
 		BottomSheetTitleCard(
 			title = title,
-			placeholder = "Note title"
-		) { viewModel.updateTitle(it) }
+			placeholder = "Note title",
+			onUpdateTitle = onUpdateTitle
+		)
 
 		Spacer(modifier = Modifier.height(8.dp))
 
 		ParentCard(
 			parentChapterId = parentChapterId,
 		) {
-			viewModel.showChapterSelectorDialog.value = true
+			openDialog(NoteDialogType.CHAPTER_SELECTION)
 			closeSheet()
 		}
 
@@ -105,7 +112,7 @@ private fun ParentCard(
 
 	LaunchedEffect(key1 = parentChapterId) {
 		scope.launch(Dispatchers.IO) {
-			chapterTitle = parentChapterId?.let { Repository.getChapterTitle(id = it) }
+//			chapterTitle = parentChapterId?.let { Repository.getChapterTitle(id = it) }
 		}
 	}
 

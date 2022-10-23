@@ -1,5 +1,6 @@
-package com.syncodec.graphite.presentation.bucketItem.composable.screen.showScreen
+package com.syncodec.graphite.presentation.bucketItem.composable.screen
 
+import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,13 +37,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
+import com.syncodec.graphite.di.network.Genre
 import com.syncodec.graphite.presentation.bucketItem.composable.dialog.ShowInfoDialog
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
@@ -50,6 +50,16 @@ import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 
 @Composable
 fun MovieScreen(
+	movieId: String?,
+	movieGenres: List<Genre>,
+	movieImdbId: String?,
+	movieOriginalTitle: String?,
+	movieOverview: String?,
+	movieReleaseDate: String?,
+	movieRuntime: Int?,
+	movieTagline: String?,
+	movieTitle: String?,
+	thumbnail: Bitmap?,
 	currentState : Int,
 	onChangeState : (Int) -> Unit,
 ) {
@@ -59,19 +69,6 @@ fun MovieScreen(
 
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
-
-	val viewModel : BucketItemViewModel = viewModel()
-
-	val movieId by viewModel.movieId
-	val movieGenres = viewModel.movieGenres
-	val movieImdbId by viewModel.movieImdbId
-	val movieOriginalTitle by viewModel.movieOriginalTitle
-	val movieOverview by viewModel.movieOverview
-	val movieReleaseDate by viewModel.movieReleaseDate
-	val movieRuntime by viewModel.movieRuntime
-	val movieTagline by viewModel.movieTagline
-	val thumbnail by viewModel.thumbnail
-	val movieTitle by viewModel.movieTitle
 
 	val stateList = listOf(
 		StateData(

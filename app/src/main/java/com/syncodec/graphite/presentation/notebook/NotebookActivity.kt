@@ -20,7 +20,7 @@ class NotebookActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<NotebookViewModel>()
 
-	override fun onCreate(savedInstanceState: Bundle?) {
+	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		val hasChapterId = intent.hasExtra(Extra.Companion.Constant.CHAPTER_ID.name)
@@ -47,7 +47,21 @@ class NotebookActivity : ComponentActivity() {
 				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
-				NotebookScreen()
+				val rootChapterId by viewModel.rootChapterId
+				val chapterObject by viewModel.chapterObject
+				val rootColor by viewModel.rootColor
+				val tagList = viewModel.tagObjectList
+				val showEditChapterDialog by viewModel.showEditChapterDialog
+				val showManageTagDialog by viewModel.showManageTagDialog
+
+				NotebookScreen(
+					rootChapterId = rootChapterId,
+					chapterObject = chapterObject,
+					rootColor = rootColor,
+					tagList = tagList,
+					showEditChapterDialog = showEditChapterDialog,
+					showManageTagDialog = showManageTagDialog,
+				)
 			}
 		}
 	}
@@ -63,10 +77,10 @@ class NotebookActivity : ComponentActivity() {
 			if (showManageTagDialog) {
 				viewModel.showManageTagDialog.value = false
 			} else {
-				if (chapterObject!!.parentChapterId == null) {
+				if (chapterObject !!.parentChapterId == null) {
 					super.onBackPressed()
 				} else {
-					chapterObject!!.parentChapterId?.let { viewModel.loadChapter(it) }
+					chapterObject !!.parentChapterId?.let { viewModel.loadChapter(it) }
 				}
 			}
 		}

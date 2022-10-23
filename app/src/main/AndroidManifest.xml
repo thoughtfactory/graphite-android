@@ -37,7 +37,7 @@
 
 		<provider
 			android:name="androidx.core.content.FileProvider"
-			android:authorities="com.syncodec.fileprovider"
+			android:authorities="com.syncodec.graphite.fileprovider"
 			android:exported="false"
 			android:grantUriPermissions="true">
 			<meta-data

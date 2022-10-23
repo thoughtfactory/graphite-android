@@ -1,7 +1,6 @@
 package com.syncodec.graphite.di.model
 
 import androidx.compose.ui.graphics.toArgb
-import com.syncodec.graphite.di.Repository
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
@@ -12,24 +11,24 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 
 class ChapterObject : RealmObject {
 	@PrimaryKey
-	var id: ObjectId = ObjectId.create()
+	var id : ObjectId = ObjectId.create()
 
-	var createdTimestamp: Long = System.currentTimeMillis()
-	var modifiedTimestamp: Long = System.currentTimeMillis()
-	var title: String = ""
-	var description: String? = null
-	var color: Int? = getRandomColor().toArgb()
-	var thumbnail: String? = null
+	var createdTimestamp : Long = System.currentTimeMillis()
+	var modifiedTimestamp : Long = System.currentTimeMillis()
+	var title : String = ""
+	var description : String? = null
+	var color : Int? = getRandomColor().toArgb()
+	var thumbnail : String? = null
 
-	var isFavourite: Boolean = false
-	var isLocked: Boolean = false
+	var isFavourite : Boolean = false
+	var isLocked : Boolean = false
 
-	var chapterList: RealmList<ChapterObject> = realmListOf()
-	var noteList: RealmList<NoteObject> = realmListOf()
+	var chapterList : RealmList<ChapterObject> = realmListOf()
+	var noteList : RealmList<NoteObject> = realmListOf()
 
-	var parentChapterId: ObjectId? = null
+	var parentChapterId : ObjectId? = null
 
-	fun toLite(): ChapterObjectLite {
+	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
 			id = this.id,
 			createdTimestamp = this.createdTimestamp,
@@ -47,25 +46,7 @@ class ChapterObject : RealmObject {
 		)
 	}
 
-	fun getPath(): List<ChapterObjectLite> {
-		val path = mutableListOf<ChapterObjectLite>()
-		var chapter: ChapterObject? = this
-		while (chapter?.parentChapterId != null) {
-			path.add(0, chapter.toLite())
-			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
-		}
-		return path
-	}
-
-	fun getRootChapter(): ChapterObject {
-		var chapter: ChapterObject? = this
-		while (chapter?.parentChapterId != null) {
-			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
-		}
-		return chapter!!
-	}
-
-	fun countTotalChapter(): Int {
+	fun countTotalChapter() : Int {
 		var total = 0
 		for (chapter in chapterList) {
 			total += chapter.countTotalChapter()
@@ -73,7 +54,7 @@ class ChapterObject : RealmObject {
 		return total + chapterList.size
 	}
 
-	fun countTotalNote(): Int {
+	fun countTotalNote() : Int {
 		var total = 0
 		for (chapter in chapterList) {
 			total += chapter.countTotalNote()
@@ -81,16 +62,7 @@ class ChapterObject : RealmObject {
 		return total + noteList.size
 	}
 
-	fun isParentChapter(): Boolean {
-		var chapter: ChapterObject? = this
-		while (chapter?.parentChapterId != null) {
-			if (chapter.isLocked) return true
-			chapter = chapter.parentChapterId?.let { Repository.getChapter(it) }
-		}
-		return false
-	}
-
-	override fun hashCode(): Int {
+	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
@@ -106,7 +78,7 @@ class ChapterObject : RealmObject {
 		return result
 	}
 
-	override fun equals(other: Any?): Boolean {
+	override fun equals(other : Any?) : Boolean {
 		if (this === other) return true
 		if (other !is ChapterObject) return false
 
@@ -127,21 +99,21 @@ class ChapterObject : RealmObject {
 }
 
 data class ChapterObjectLite(
-	val id: ObjectId,
-	val createdTimestamp: Long,
-	val modifiedTimestamp: Long,
-	val title: String,
-	val description: String?,
-	val color: Int?,
-	val isFavourite: Boolean,
-	val isLocked: Boolean,
-	val totalChapterDirect: Int,
-	val totalNoteDirect: Int,
-	val totalChapter: Int,
-	val totalNote: Int,
-	val parentChapterId: ObjectId?
+	val id : ObjectId,
+	val createdTimestamp : Long,
+	val modifiedTimestamp : Long,
+	val title : String,
+	val description : String?,
+	val color : Int?,
+	val isFavourite : Boolean,
+	val isLocked : Boolean,
+	val totalChapterDirect : Int,
+	val totalNoteDirect : Int,
+	val totalChapter : Int,
+	val totalNote : Int,
+	val parentChapterId : ObjectId?
 ) {
-	override fun hashCode(): Int {
+	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
@@ -154,7 +126,7 @@ data class ChapterObjectLite(
 		return result
 	}
 
-	override fun equals(other: Any?): Boolean {
+	override fun equals(other : Any?) : Boolean {
 		if (this === other) return true
 		if (other !is ChapterObjectLite) return false
 

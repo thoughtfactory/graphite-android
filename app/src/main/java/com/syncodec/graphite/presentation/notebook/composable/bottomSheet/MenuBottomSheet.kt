@@ -4,9 +4,25 @@ import android.content.Intent
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,9 +41,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
@@ -35,7 +52,6 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
-import com.syncodec.graphite.presentation.notebook.NotebookViewModel
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 import com.syncodec.graphite.utils.Extra
@@ -47,13 +63,11 @@ import io.realm.kotlin.types.ObjectId
 
 @Composable
 fun MenuBottomSheet(
+	chapterObject : ChapterObject?,
+	tagList : List<TagObject>,
 	closeSheet: () -> Unit
 ) {
 	val activity = LocalContext.current as NotebookActivity
-	val viewModel: NotebookViewModel = viewModel()
-
-	val chapterObject by viewModel.chapterObject
-	val tagList = viewModel.tagObjectList
 
 	val buttonList: List<BottomSheetButtonData> = remember {
 		listOf(
@@ -66,7 +80,8 @@ fun MenuBottomSheet(
 				title = "Edit",
 				icon = R.drawable.ic_pencil,
 				onClick = {
-					viewModel.showEditChapterDialog.value = true
+					TODO()
+//					viewModel.showEditChapterDialog.value = true
 					closeSheet()
 				}
 			),
@@ -138,7 +153,8 @@ fun MenuBottomSheet(
 				.fillMaxWidth()
 				.padding(24.dp, 0.dp),
 			onClick = {
-				viewModel.showManageTagDialog.value = true
+				TODO()
+//				viewModel.showManageTagDialog.value = true
 				closeSheet()
 			},
 		) {

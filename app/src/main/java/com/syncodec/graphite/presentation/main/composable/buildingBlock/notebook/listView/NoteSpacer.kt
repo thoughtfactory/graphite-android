@@ -28,7 +28,7 @@ fun NoteSpacer(
 			modifier = Modifier
 				.width(4.dp)
 				.weight(1f)
-				.background(MaterialTheme.colorScheme.secondaryContainer)
+				.background(MaterialTheme.colorScheme.surface)
 		)
 		Box(
 			modifier = Modifier
@@ -36,13 +36,13 @@ fun NoteSpacer(
 				.height(16.dp)
 				.padding(2.dp)
 				.clip(CircleShape)
-				.background(MaterialTheme.colorScheme.secondaryContainer)
+				.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.71f))
 		)
 		Box(
 			modifier = Modifier
 				.width(4.dp)
 				.weight(4f)
-				.background(if (isLast) Color.Transparent else MaterialTheme.colorScheme.secondaryContainer)
+				.background(if (isLast) Color.Transparent else MaterialTheme.colorScheme.surface)
 		)
 	}
 }

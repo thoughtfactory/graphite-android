@@ -1,10 +1,12 @@
 package com.syncodec.graphite.presentation.main.composable.bottomSheet
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.syncodec.graphite.presentation.main.MainViewModel
+import androidx.compose.ui.graphics.Color
+import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.ViewType
 
 
 enum class MainBottomSheetType {
@@ -17,29 +19,24 @@ enum class MainBottomSheetType {
 @Composable
 fun SheetLayout(
 	bottomSheetType: MainBottomSheetType,
+	sortOn : SortOn,
+	sortBy : SortBy,
+	onSortOnChanged : (SortOn) -> Unit,
+	onSortByChanged : (SortBy) -> Unit,
+	putNotebook: (String, String, Color?, Bitmap?) -> Unit,
+	putBucket: (String?, String?, BucketType) -> Unit,
 	closeSheet: () -> Unit
 ) {
-	val viewModel: MainViewModel = viewModel()
-
-	var filterInclusivityState by viewModel.filterInclusivityState
-	var sortOn by viewModel.sortOn
-	var sortBy by viewModel.sortBy
-	var viewType by viewModel.viewType
-
 	when (bottomSheetType) {
 		MainBottomSheetType.MENU -> MenuBottomSheet(closeSheet = closeSheet)
 		MainBottomSheetType.FILTER -> FilterBottomSheet(
-			filterInclusivityState = filterInclusivityState,
 			sortOn = sortOn,
 			sortBy = sortBy,
-			viewType = viewType,
-			onTagFilterChange = { filterInclusivityState = it },
-			onUpdateSortOn = { sortOn = it },
-			onUpdateSortBy = { sortBy = it },
-			onUpdateViewType = { viewType = it },
+			onUpdateSortOn = onSortOnChanged,
+			onUpdateSortBy = onSortByChanged,
 			closeSheet = closeSheet
 		)
-		MainBottomSheetType.NOTEBOOK -> NotebookBottomSheet(closeSheet = closeSheet)
-		MainBottomSheetType.BUCKET -> BucketBottomSheet(closeSheet = closeSheet)
+		MainBottomSheetType.NOTEBOOK -> NotebookBottomSheet(putNotebook, closeSheet = closeSheet)
+		MainBottomSheetType.BUCKET -> BucketBottomSheet(putBucket, closeSheet = closeSheet)
 	}
 }

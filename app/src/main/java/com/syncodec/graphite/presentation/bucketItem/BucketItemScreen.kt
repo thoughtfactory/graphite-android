@@ -20,13 +20,13 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucketItem.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucketItem.composable.bar.TopBar
 import com.syncodec.graphite.presentation.bucketItem.composable.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BookScreen
-import com.syncodec.graphite.presentation.bucketItem.composable.screen.showScreen.ShowScreen
+import com.syncodec.graphite.presentation.bucketItem.composable.screen.MovieScreen
+import com.syncodec.graphite.presentation.bucketItem.composable.screen.TvScreen
 import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.utils.Status
@@ -35,20 +35,48 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun BucketItemScreen() {
+fun BucketItemScreen(
+	viewModel : BucketItemViewModel
+) {
 	val activity : BucketItemActivity = LocalContext.current as BucketItemActivity
 	val scope = rememberCoroutineScope()
-
-	val viewModel : BucketItemViewModel = viewModel()
 
 	val bucketType by viewModel.bucketType
 	val isNew by viewModel.isNew
 
-	val movieId by viewModel.movieId
-	val tvId by viewModel.tvId
 	val currentState by viewModel.state
 
 	val status by viewModel.status
+
+	val bookKey by viewModel.bookKey
+	val bookTitle by viewModel.bookTitle
+	val bookAuthors = viewModel.bookAuthorList
+	val bookDescription by viewModel.bookDescription
+	val bookPageCount by viewModel.bookPageCount
+	val bookPublishedDate by viewModel.bookFirstPublishYear
+
+	val tvId by viewModel.tvId
+	val tvGenres = viewModel.tvGenres
+	val tvHomepage by viewModel.tvHomepage
+	val tvName by viewModel.tvName
+	val tvNumberOfSeasons by viewModel.tvNumberOfSeasons
+	val tvNumberOfEpisodes by viewModel.tvNumberOfEpisodes
+	val tvOverview by viewModel.tvOverview
+	val tvFirstAirDate by viewModel.tvFirstAirDate
+	val tvTagline by viewModel.tvTagline
+
+	val movieId by viewModel.movieId
+	val movieGenres = viewModel.movieGenres
+	val movieImdbId by viewModel.movieImdbId
+	val movieOriginalTitle by viewModel.movieOriginalTitle
+	val movieOverview by viewModel.movieOverview
+	val movieReleaseDate by viewModel.movieReleaseDate
+	val movieRuntime by viewModel.movieRuntime
+	val movieTagline by viewModel.movieTagline
+	val movieTitle by viewModel.movieTitle
+
+	val thumbnail by viewModel.thumbnail
+
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 	val softwareKeyboardController = LocalSoftwareKeyboardController.current
@@ -92,27 +120,63 @@ fun BucketItemScreen() {
 				targetState = status,
 				animationSpec = tween(300)
 			) {
-				when(it){
+				when (it) {
 					Status.INIT -> LoadingView()
 					Status.LOADING -> LoadingView()
 					Status.LOADED -> {
 						when (bucketType) {
 							BucketType.TODO -> null
 							BucketType.BOOK -> BookScreen(
+								bookKey = bookKey,
+								bookTitle = bookTitle,
+								bookAuthors = bookAuthors.filterNotNull(),
+								bookDescription = bookDescription,
+								bookPageCount = bookPageCount,
+								bookPublishedDate = bookPublishedDate,
+								thumbnail = thumbnail,
 								currentState = currentState?.ordinal ?: 0,
 								onChangeState = viewModel::onChangeState,
 							)
-							BucketType.SHOW -> ShowScreen(
-								movieId = movieId,
-								tvId = tvId,
-								currentState = currentState?.ordinal ?: 0,
-								onChangeState = viewModel::onChangeState,
-							)
+
+							BucketType.SHOW -> when {
+								movieId != null -> MovieScreen(
+									movieId = movieId,
+									movieGenres = movieGenres.filterNotNull(),
+									movieImdbId = movieImdbId,
+									movieOriginalTitle = movieOriginalTitle,
+									movieOverview = movieOverview,
+									movieReleaseDate = movieReleaseDate,
+									movieRuntime = movieRuntime,
+									movieTagline = movieTagline,
+									movieTitle = movieTitle,
+									thumbnail = thumbnail,
+									currentState = currentState?.ordinal ?: 0,
+									onChangeState = viewModel::onChangeState
+								)
+
+								tvId != null -> TvScreen(
+									tvId = tvId,
+									tvGenres = tvGenres.filterNotNull(),
+									tvName = tvName,
+									tvNumberOfSeasons = tvNumberOfSeasons,
+									tvNumberOfEpisodes = tvNumberOfEpisodes,
+									tvOverview = tvOverview,
+									tvFirstAirDate = tvFirstAirDate,
+									tvTagline = tvTagline,
+									thumbnail = thumbnail,
+									currentState = currentState?.ordinal ?: 0,
+									onChangeState = viewModel::onChangeState
+								)
+
+								else -> ErrorView()
+							}
+
 							BucketType.LINK -> null
 							BucketType.UNKNOWN -> null
 							else -> null
 						}
 					}
+
 					Status.ERROR -> ErrorView()
 				}
 			}
@@ -120,7 +184,7 @@ fun BucketItemScreen() {
 			DeleteDialog(
 				showDeleteDialog = showDeleteDialog,
 				onDismiss = { showDeleteDialog = false },
-				onDelete = {  }
+				onDelete = { }
 			)
 		}
 	}

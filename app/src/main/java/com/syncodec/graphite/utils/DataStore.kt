@@ -34,6 +34,7 @@ class DataStoreInstance(private val context: Context) {
 		private val PREFERENCE_GEOLOCATION = booleanPreferencesKey("geolocation")
 		private val PREFERENCE_YEAR_PROGRESS = booleanPreferencesKey("year_progress")
 		private val PREFERENCE_LANGUAGE = stringPreferencesKey("language")
+		private val PREFERENCE_VIEW_TYPE = intPreferencesKey("view_type")
 		private val PREFERENCE_VAULT_KEY = stringPreferencesKey("vault_key")
 		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
 		private val PREFERENCE_ACTIVE_COMPONENT = intPreferencesKey("component")
@@ -116,6 +117,18 @@ class DataStoreInstance(private val context: Context) {
 
 	fun putYearProgress(yearProgress: Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_YEAR_PROGRESS] = yearProgress }
+	}
+
+	val getViewType: Flow<ViewType> = context.dataStore.data.map { preferences ->
+		when (preferences[PREFERENCE_VIEW_TYPE] ?: 0) {
+			0 -> ViewType.LIST
+			1 -> ViewType.GRID
+			else -> ViewType.LIST
+		}
+	}
+
+	fun putViewType(viewType: ViewType) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_VIEW_TYPE] = viewType.ordinal }
 	}
 
 	val getPasscode =

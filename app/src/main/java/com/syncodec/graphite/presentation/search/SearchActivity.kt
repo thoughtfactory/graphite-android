@@ -6,12 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.search.composable.screen.SearchScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 
 
-class SearchActivity: ComponentActivity() {
+class SearchActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<SearchViewModel>()
 
@@ -26,7 +28,19 @@ class SearchActivity: ComponentActivity() {
 					systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 					systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
-					SearchScreen()
+					val showResultScreen by viewModel.showResultScreen
+					val tagList = viewModel.tagList
+					val visibleNote = viewModel.visibleNoteList
+					val tag by viewModel.showTag.collectAsState(initial = null)
+					val query by viewModel.searchQuery.collectAsState(initial = null)
+
+					SearchScreen(
+						showResultScreen = showResultScreen,
+						tagList = tagList,
+						visibleNote = visibleNote,
+						tag = tag,
+						query = query,
+					)
 				}
 			}
 		}
@@ -34,7 +48,7 @@ class SearchActivity: ComponentActivity() {
 
 	@Deprecated("Must update in next release")
 	override fun onBackPressed() {
-		if(viewModel.showResultScreen.value) {
+		if (viewModel.showResultScreen.value) {
 			viewModel.showResultScreen.value = false
 			viewModel.showTag.value = null
 			viewModel.searchQuery.value = null

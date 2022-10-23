@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.buildingBlock
 
+
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -7,7 +8,17 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -15,8 +26,13 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,18 +55,22 @@ import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.pager.HorizontalPagerIndicator
-import com.syncodec.graphite.presentation.common.richText.viewer.*
+import com.syncodec.graphite.presentation.common.richText.viewer.BlockQuote
+import com.syncodec.graphite.presentation.common.richText.viewer.FormattedList
+import com.syncodec.graphite.presentation.common.richText.viewer.Heading
+import com.syncodec.graphite.presentation.common.richText.viewer.ListType
+import com.syncodec.graphite.presentation.common.richText.viewer.RichText
+import com.syncodec.graphite.presentation.common.richText.viewer.RichTextScope
+import com.syncodec.graphite.presentation.common.richText.viewer.RichTextStyle
+import com.syncodec.graphite.presentation.common.richText.viewer.RichTextThemeIntegration
 import com.syncodec.graphite.presentation.common.richText.viewer.string.RichTextString
 import com.syncodec.graphite.presentation.common.richText.viewer.string.RichTextStringStyle
 import com.syncodec.graphite.presentation.common.richText.viewer.string.Text
 import com.syncodec.graphite.presentation.common.richText.viewer.string.richTextString
-import com.syncodec.graphite.presentation.note.NoteActivity
-import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.AttachmentPreview
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.noteViewerTimestamp
@@ -97,15 +117,23 @@ fun ViewerComponent(
 	title : String?,
 	latLng : LatLng?,
 	address : String?,
-	attachmentList : SnapshotStateMap<ObjectId, Triple<Uri, File, AttachmentObject>>,
+	attachmentList : Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>,
 	connectedTag : List<TagObjectLite>,
 ) {
-	val tipTapData = content?.let { JSONObject(it) }
+	val context = LocalContext.current
+
+	val tipTapData = content?.let {
+		try {
+			JSONObject(it)
+		} catch (e : Exception) {
+			Toast.makeText(context, "Error reading data", Toast.LENGTH_SHORT).show()
+			null
+		}
+	}
 
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
-			.padding(0.dp, 0.dp)
 			.verticalScroll(rememberScrollState())
 	) {
 		if (attachmentList.isNotEmpty()) {
@@ -113,9 +141,8 @@ fun ViewerComponent(
 				noteId = noteId,
 				attachmentMap = attachmentList
 			)
+			Spacer(modifier = Modifier.height(8.dp))
 		}
-
-		Spacer(modifier = Modifier.height(8.dp))
 
 		Box(
 			modifier = Modifier.padding(12.dp, 0.dp)
@@ -150,9 +177,9 @@ fun ViewerComponent(
 @Composable
 private fun Thumbnail(
 	noteId : ObjectId?,
-	attachmentMap : SnapshotStateMap<ObjectId, Triple<Uri, File, AttachmentObject>>,
+	attachmentMap : Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>,
 ) {
-	val activity : NoteActivity = LocalContext.current as NoteActivity
+	val context = LocalContext.current
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
 
@@ -160,7 +187,7 @@ private fun Thumbnail(
 
 	if (attachmentMap.isNotEmpty()) {
 		attachmentMap.forEach { (id, data) ->
-			if (data.third.isRenderable()) {
+			if (data.first.isRenderable()) {
 				renderableAttachmentId = id
 				return@forEach
 			}
@@ -184,8 +211,8 @@ private fun Thumbnail(
 				.height(screenHeight * 0.31f)
 		) { pageIndex ->
 			AttachmentPreview(
-				attachment = attachmentList[pageIndex].second.third,
-				uri = attachmentList[pageIndex].second.first,
+				attachment = attachmentList[pageIndex].second.first,
+				uri = attachmentList[pageIndex].second.third,
 				file = attachmentList[pageIndex].second.second,
 				clickable = true,
 				showActionButton = false,
@@ -194,17 +221,17 @@ private fun Thumbnail(
 					try {
 						Intent(
 							Intent.ACTION_VIEW,
-							FileProvider.getUriForFile(activity, "com.syncodec.fileprovider", attachmentList[pageIndex].second.second)
+							attachmentList[pageIndex].second.second?.let { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it) }
 						).apply {
 							addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-							activity.startActivity(this)
+							context.startActivity(this)
 						}
 					} catch (e : ActivityNotFoundException) {
-						Toast.makeText(activity, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
+						Toast.makeText(context, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
 					} catch (e : Exception) {
 						e.printStackTrace()
-						Toast.makeText(activity, "Error viewing file", Toast.LENGTH_SHORT).show()
+						Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
 					}
 				},
 			)
@@ -225,10 +252,10 @@ private fun Thumbnail(
 					tint = MaterialTheme.colorScheme.onBackground,
 					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
 				) {
-					Intent(activity, AttachmentActivity::class.java).apply {
+					Intent(context, AttachmentActivity::class.java).apply {
 						putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.toString())
 
-						activity.startActivity(this)
+						context.startActivity(this)
 					}
 				}
 
@@ -271,17 +298,17 @@ private fun Thumbnail(
 					) {
 						Spacer(modifier = Modifier.width(12.dp))
 						Text(
-							text = it.third.name,
+							text = it.first.name,
 							modifier = Modifier.weight(1f),
 							style = MaterialTheme.typography.bodyMedium,
 							fontWeight = FontWeight.Bold
 						)
 
-						val size = it.second.length()
+						val size = it.second?.length()
 
-						val kb = size / 1024
-						val mb = kb / 1024
-						val gb = mb / 1024
+						val kb = size?.div(1024)
+						val mb = kb?.div(1024)
+						val gb = mb?.div(1024)
 
 						Text(
 							text = if (gb == 0L) {
@@ -312,17 +339,17 @@ private fun Thumbnail(
 								val data = attachmentList.getOrNull(pagerState.currentPage)
 								if (data != null) {
 									val sharingIntent = Intent(Intent.ACTION_SEND)
-									sharingIntent.type = data.second.third.mimeType ?: "*/*"
-									sharingIntent.putExtra(Intent.EXTRA_STREAM, data.second.first)
+									sharingIntent.type = data.second.first.mimeType ?: "*/*"
+									sharingIntent.putExtra(Intent.EXTRA_STREAM, data.second.third)
 
 									Intent.createChooser(sharingIntent, "Share using").apply {
 										addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-										activity.startActivity(this)
+										context.startActivity(this)
 									}
 								}
 							} catch (e : Exception) {
 								e.printStackTrace()
-								Toast.makeText(activity, "Error sharing file", Toast.LENGTH_SHORT).show()
+								Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
 							}
 						}
 

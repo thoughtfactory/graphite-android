@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -19,17 +20,22 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
+import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
+import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
+import com.syncodec.graphite.presentation.ui.DeleteContainer
 
 
 @Composable
 fun TopBar(
-	currentRoute: String?,
-	componentType: ComponentType,
-	onComponentChange: (Int) -> Unit,
-	onClickOpenMenu: () -> Unit,
-	onClickOpenFilter: () -> Unit,
-	onClickSearch: () -> Unit
+	currentRoute : String?,
+	componentType : ComponentType,
+	onComponentChange : (Int) -> Unit,
+	onClickSearch : () -> Unit
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
@@ -40,27 +46,24 @@ fun TopBar(
 		}
 	)
 
+	val isSelected = LocalCompositionIsSelected.current
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(containerColor)
 	) {
 		Bar(
-			isSelected = false,
-			selectedItemSize = 0,
 			currentRoute = currentRoute,
-			onClickOpenMenu = onClickOpenMenu,
-			onClickOpenFilter = onClickOpenFilter,
 			onClickSearch = onClickSearch
 		)
 
 		AnimatedVisibility(
-			visible = currentRoute == BottomNavigationItem.Home.route,
+			visible = currentRoute == BottomNavigationItem.Home.route && ! isSelected,
 			enter = expandVertically(tween(300)),
 			exit = shrinkVertically(tween(300))
 		) {
 			ComponentType(
-				showComponentChooser = true,
 				componentType = componentType,
 			) { onComponentChange(it) }
 		}
@@ -70,13 +73,16 @@ fun TopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Bar(
-	isSelected: Boolean,
-	selectedItemSize: Int,
-	currentRoute: String?,
-	onClickOpenMenu: () -> Unit,
-	onClickOpenFilter: () -> Unit,
-	onClickSearch: () -> Unit,
+	currentRoute : String?,
+	onClickSearch : () -> Unit,
 ) {
+	val openSheet = LocalCompositionOpenBottomSheet.current
+
+	val isSelected = LocalCompositionIsSelected.current
+	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+
+	val openDialog = LocalCompositionOpenDialog.current
+
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
 			"graphite" -> MaterialTheme.colorScheme.background
@@ -92,18 +98,18 @@ private fun Bar(
 			TopAppBar(
 				title = {
 					Text(
-						text = if (selectedItemSize == 0) "Select items to delete" else if (selectedItemSize == 1) "1 item selected" else "$selectedItemSize items selected",
-						modifier = Modifier,
-						style = MaterialTheme.typography.titleMedium,
+						text = if (selectedObjectIdList.size == 0) "Select items to delete" else if (selectedObjectIdList.size == 1) "1 item selected" else "${selectedObjectIdList.size} items selected",
 						color = MaterialTheme.colorScheme.onBackground
 					)
 				},
 				actions = {
-					IconButton(onClick = {  }) {
+					IconButton(
+						onClick = { openDialog(MainDialogType.DELETE) }
+					) {
 						Icon(
 							painter = painterResource(id = R.drawable.ic_delete),
 							contentDescription = "Delete items",
-							tint = Color(0xFFF05945)
+							tint = Color.DeleteContainer
 						)
 					}
 				},
@@ -115,8 +121,9 @@ private fun Bar(
 					MenuButton(
 						icon = R.drawable.ic_menu,
 						tint = MaterialTheme.colorScheme.onBackground,
-						onClick = onClickOpenMenu
-					)
+					) {
+						openSheet(MainBottomSheetType.MENU)
+					}
 				},
 				title = {
 					Text(
@@ -132,9 +139,9 @@ private fun Bar(
 				},
 				actions = {
 					MenuButton(
-						icon = R.drawable.ic_filter,
+						icon = R.drawable.ic_vault,
 						tint = MaterialTheme.colorScheme.onBackground,
-						onClick = onClickOpenFilter
+						onClick = {}
 					)
 					MenuButton(
 						icon = R.drawable.ic_search,
@@ -150,21 +157,20 @@ private fun Bar(
 
 @Composable
 private fun ComponentType(
-	showComponentChooser: Boolean,
-	componentType: ComponentType,
-	onStateChange: (Int) -> Unit
+	componentType : ComponentType,
+	onStateChange : (Int) -> Unit
 ) {
-	AnimatedVisibility(
-		visible = showComponentChooser,
-		enter = expandVertically(tween(600)) + fadeIn(tween(300)),
-		exit = shrinkVertically(tween(600)) + fadeOut(tween(300)),
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(12.dp, 0.dp),
+	val openSheet = LocalCompositionOpenBottomSheet.current
+	Column(
+		modifier = Modifier.fillMaxWidth(),
+		verticalArrangement = Arrangement.Center,
 	) {
-		Column(
-			modifier = Modifier.fillMaxWidth()
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.Center,
+			verticalAlignment = Alignment.CenterVertically
 		) {
+			Spacer(modifier = Modifier.width(12.dp))
 			StateButton(
 				stateList = listOf(
 					StateData(
@@ -184,10 +190,19 @@ private fun ComponentType(
 					),
 				),
 				currentState = componentType.ordinal,
-				modifier = Modifier.height(36.dp),
-				onStateChange = onStateChange
+				onStateChange = onStateChange,
+				modifier = Modifier
+					.height(36.dp)
+					.weight(1f)
 			)
-			Spacer(modifier = Modifier.height(6.dp))
+			MenuButton(
+				icon = R.drawable.ic_filter,
+				tint = MaterialTheme.colorScheme.onBackground,
+			) {
+				openSheet(MainBottomSheetType.FILTER)
+			}
+			Spacer(modifier = Modifier.width(4.dp))
 		}
+		Spacer(modifier = Modifier.height(6.dp))
 	}
 }

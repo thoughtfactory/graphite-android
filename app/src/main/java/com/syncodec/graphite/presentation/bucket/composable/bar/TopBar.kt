@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -20,7 +21,7 @@ import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 
 @Composable
 fun TopBar(
-	title: String,
+	title: String?,
 	bucketType: BucketType,
 	isFavourite: Boolean,
 	isLocked: Boolean,
@@ -54,7 +55,7 @@ fun TopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Bar(
-	title: String,
+	title: String?,
 	isFavourite: Boolean,
 	isLocked: Boolean,
 	onClickFavourite: () -> Unit,
@@ -76,9 +77,10 @@ private fun Bar(
 				animationSpec = tween(300)
 			) {
 				Text(
-					text = it,
+					text = it ?: "Untitled",
 					color = MaterialTheme.colorScheme.onBackground,
-					fontWeight = FontWeight.Bold
+					fontWeight = FontWeight.Bold,
+					fontStyle = if (it == null) FontStyle.Italic else FontStyle.Normal
 				)
 			}
 		},

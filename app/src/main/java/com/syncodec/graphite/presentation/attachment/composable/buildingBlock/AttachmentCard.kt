@@ -9,15 +9,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -26,7 +23,7 @@ import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.note.NoteActivity
-import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.AttachmentPreview
+import com.syncodec.graphite.presentation.note.composable.buildingBlock.AttachmentPreview
 import com.syncodec.graphite.utils.Extra
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,8 +32,8 @@ import java.io.File
 
 @Composable
 fun AttachmentCard(
-	uri : Uri,
-	file : File,
+	uri : Uri?,
+	file : File?,
 	attachmentObject : AttachmentObject
 ) {
 	val activity = LocalContext.current as AttachmentActivity
@@ -56,13 +53,12 @@ fun AttachmentCard(
 			modifier = Modifier.fillMaxSize(),
 			onClick = {
 				try {
-					Intent(
-						Intent.ACTION_VIEW,
-						FileProvider.getUriForFile(activity, "com.syncodec.fileprovider", file)
-					).apply {
-						addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+					if (file != null) {
+						Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(activity, "${activity.packageName}.fileprovider", file)).apply {
+							addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-						activity.startActivity(this)
+							activity.startActivity(this)
+						}
 					}
 				} catch (e : ActivityNotFoundException) {
 					Toast.makeText(activity, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
@@ -86,9 +82,8 @@ fun AttachmentCard(
 				scope.launch(Dispatchers.IO) {
 					Intent(activity, NoteActivity::class.java).apply {
 						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, attachmentObject.getParentChapterId().toString())
 						putExtra(Extra.Companion.Constant.NOTE_ID.name, attachmentObject.parentNoteId.toString())
-						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
 
 						activity.startActivity(this)
 					}

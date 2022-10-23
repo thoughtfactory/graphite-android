@@ -77,12 +77,15 @@ enum class ViewType {
 enum class LocationState {
 	INIT,
 	NO_PERMISSION,
+	LOADING,
+	DISABLED,
 	LATLNG,
 	ONLY_LATLNG,
 	ONLY_ADDRESS,
 	SUCCESS,
-	ERROR,
-	REMOVED
+	KNOWN_ERROR,
+	REMOVED,
+	UNKNOW_ERROR,
 }
 
 val genreIdMap: Map<Int, String> = mapOf(
@@ -204,7 +207,7 @@ class Extra {
 
 		enum class Filter {
 			SINGLE_READ,
-			READ_CHAPTER,
+			READ_CHAPTER
 		}
 	}
 }

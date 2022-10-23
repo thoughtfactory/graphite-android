@@ -5,31 +5,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.note.NoteViewModel
-import com.syncodec.graphite.utils.LocalRichTextEditor
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionContent
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
+import com.syncodec.graphite.utils.LocalCompositionRichTextEditor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
 @Composable
 fun EditorScreen() {
-	val viewModel: NoteViewModel = viewModel()
-	val scope = rememberCoroutineScope()
+	val richTextEditor = LocalCompositionRichTextEditor.current
 
-	val richTextEditor = LocalRichTextEditor.current
-
-	val noteId by viewModel.noteId
-	val isViewer by viewModel.isViewer
+	val noteId = LocalCompositionNoteId.current
+	val isViewing = LocalCompositionIsViewing.current
 	val isReady by richTextEditor.isReady
 
-	LaunchedEffect(key1 = noteId.hashCode() + isViewer.hashCode()) {
+	val content = LocalCompositionContent.current
+
+	LaunchedEffect(key1 = noteId.hashCode() + isViewing.hashCode()) {
 		withContext(Dispatchers.IO) {
-			richTextEditor.exec("editor.commands.setContent(${viewModel.content.value});")
+			if (isViewing == false) richTextEditor.exec("editor.commands.setContent(${content});")
 		}
 	}
 

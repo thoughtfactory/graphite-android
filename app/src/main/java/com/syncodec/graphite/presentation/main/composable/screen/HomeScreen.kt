@@ -22,7 +22,6 @@ import io.realm.kotlin.types.ObjectId
 @Composable
 fun HomeScreen(
 	componentType : ComponentType,
-	notebookId : ObjectId?,
 	noteDayMap : Map<Long, List<NoteObjectLite>>,
 	bucketList : List<BucketObject>?,
 	notebookList : List<ChapterObject>,
@@ -37,14 +36,11 @@ fun HomeScreen(
 ) {
 	AnimatedContent(
 		targetState = componentType,
-		transitionSpec = {
-			fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + scaleOut(tween(300), 0.71f)
-		},
+		transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + scaleOut(tween(300), 0.71f) },
 		modifier = Modifier.fillMaxSize()
 	) {
 		when (it) {
 			ComponentType.NOTE -> NoteScreen(
-				notebookId = notebookId,
 				noteDayMap = noteDayMap,
 				viewType = viewType,
 				onClickFab = onClickFab,

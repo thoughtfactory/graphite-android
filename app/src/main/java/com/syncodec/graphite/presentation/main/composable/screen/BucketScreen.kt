@@ -161,10 +161,11 @@ private fun BucketCard(
 				)
 			}
 			Text(
-				text = bucket.title,
+				text = bucket.title ?: "Untitled",
 				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onBackground,
-				fontWeight = FontWeight.ExtraBold
+				fontWeight = FontWeight.Bold,
+				fontStyle = if (bucket.title.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
 			)
 		}
 	}

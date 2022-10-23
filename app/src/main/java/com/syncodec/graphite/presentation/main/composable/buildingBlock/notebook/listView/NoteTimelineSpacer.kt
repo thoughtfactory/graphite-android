@@ -32,7 +32,7 @@ fun NotebookTimelineSpacer(
 					modifier = Modifier
 						.width(4.dp)
 						.fillMaxHeight()
-						.background(MaterialTheme.colorScheme.secondaryContainer)
+						.background(MaterialTheme.colorScheme.surface)
 				)
 			}
 		}

@@ -21,7 +21,7 @@ class BucketObject: RealmObject {
 
 	var createdTimestamp: Long = System.currentTimeMillis()
 	var modifiedTimestamp: Long = System.currentTimeMillis()
-	var title: String = ""
+	var title: String? = ""
 	var description: String? = null
 	var bucketType: String = ""
 	var isFavourite: Boolean = false

@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
@@ -14,6 +15,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.button.LargeButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
@@ -21,16 +23,17 @@ import com.syncodec.graphite.utils.ViewType
 
 @Composable
 fun FilterBottomSheet(
-	filterInclusivityState: Int,
-	sortOn: SortOn,
-	sortBy: SortBy,
-	viewType: ViewType,
-	onTagFilterChange: (Int) -> Unit,
-	onUpdateSortOn: (SortOn) -> Unit,
-	onUpdateSortBy: (SortBy) -> Unit,
-	onUpdateViewType: (ViewType) -> Unit,
-	closeSheet: () -> Unit
+	sortOn : SortOn,
+	sortBy : SortBy,
+	onUpdateSortOn : (SortOn) -> Unit,
+	onUpdateSortBy : (SortBy) -> Unit,
+	closeSheet : () -> Unit
 ) {
+	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
+	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.LIST)
+
 	val sortOnStateList: List<StateData> = listOf(
 		StateData(
 			title = "Title",
@@ -131,7 +134,9 @@ fun FilterBottomSheet(
 			modifier = Modifier
 				.height(36.dp)
 				.padding(24.dp, 0.dp),
-		) { onUpdateViewType(ViewType.values().getOrElse(it) { ViewType.LIST }) }
+		) {
+			dataStoreInstance.putViewType(ViewType.values().getOrElse(it) { ViewType.LIST })
+		}
 
 		LargeButton(
 			text = "Default",
@@ -140,7 +145,6 @@ fun FilterBottomSheet(
 				.fillMaxWidth()
 				.padding(24.dp)
 		) {
-			onTagFilterChange(0)
 			onUpdateSortOn(SortOn.TIMESTAMP)
 			onUpdateSortBy(SortBy.DESCENDING)
 		}

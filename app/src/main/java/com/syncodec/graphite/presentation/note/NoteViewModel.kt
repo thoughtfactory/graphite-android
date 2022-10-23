@@ -1,19 +1,13 @@
 package com.syncodec.graphite.presentation.note
 
 import android.Manifest
-import android.app.Application
-import android.content.ContentResolver
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.location.Address
-import android.location.Geocoder
-import android.location.Location
 import android.media.ThumbnailUtils
 import android.net.Uri
-import android.os.Build
-import android.util.Log
-import android.webkit.MimeTypeMap
 import android.widget.Toast
+import androidx.annotation.MainThread
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.MutableState
@@ -22,542 +16,485 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.FileProvider
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.syncodec.graphite.BaseApplication
-import com.syncodec.graphite.di.Repository
-import com.syncodec.graphite.di.Repository.getAttachmentFile
-import com.syncodec.graphite.di.model.*
-import com.syncodec.graphite.presentation.common.printer.Printer
-import com.syncodec.graphite.utils.*
+import com.syncodec.graphite.di.model.AttachmentObject
+import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.repository.RealmNotInitializedException
+import com.syncodec.graphite.di.repository.Repository2
+import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.presentation.note.util.reverseGeocode
+import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.LocationState
+import com.syncodec.graphite.utils.copyInputStreamToOutputStream
+import com.syncodec.graphite.utils.locationAddressFilter
+import com.syncodec.graphite.utils.toByteArray
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
-import java.io.IOException
-import java.util.*
+import java.util.Base64
+import javax.inject.Inject
 
 
-class NoteViewModel(application : Application) : AndroidViewModel(application) {
+@HiltViewModel
+class NoteViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
 
-	var isNew : MutableState<Boolean?> = mutableStateOf(null)
-	var isViewer : MutableState<Boolean> = mutableStateOf(true)
-	var isSaving : MutableState<Boolean> = mutableStateOf(false)
+	val repositoryState = repository2.repositoryState
 
-	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
-	val showDiscardDialog : MutableState<Boolean> = mutableStateOf(false)
-	val showChapterSelectorDialog : MutableState<Boolean> = mutableStateOf(false)
-	val showTagDialog : MutableState<Boolean> = mutableStateOf(false)
-	val showLocationPermissionRationaleDialog : MutableState<Boolean> = mutableStateOf(false)
-	val showSetLocationDialog : MutableState<Boolean> = mutableStateOf(false)
-	val showPrintDialog : MutableState<Boolean> = mutableStateOf(false)
-
-	val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
-
-	val allChapterList = Repository.getAllChapterAsFlow()
-	var newParentChapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
+	val isNew : MutableState<Boolean?> = mutableStateOf(null)
+	val isViewing : MutableState<Boolean?> = mutableStateOf(null)
+	val isOperationPending : MutableState<Boolean> = mutableStateOf(false)
+	val locationSnackbarHostState = SnackbarHostState()
 
 	val noteIdList : SnapshotStateList<ObjectId> = mutableStateListOf()
+	val noteId : MutableState<ObjectId?> = mutableStateOf(null)
+	val noteObject : MutableState<NoteObject?> = mutableStateOf(null)
+	val parentChapterId : MutableState<ObjectId?> = mutableStateOf(null)
 
-	var noteId : MutableState<ObjectId?> = mutableStateOf(null)
-	var parentChapterId : MutableState<ObjectId?> = mutableStateOf(null)
 	val createdTimestamp : MutableState<Long?> = mutableStateOf(null)
 	val modifiedTimestamp : MutableState<Long?> = mutableStateOf(null)
 	val userTimestamp : MutableState<Long?> = mutableStateOf(null)
+	val contentThumbnail : MutableState<String?> = mutableStateOf(null)
+	val content : MutableState<String?> = mutableStateOf(null)
 	val title : MutableState<String?> = mutableStateOf(null)
 	val color : MutableState<Int?> = mutableStateOf(null)
 	val latLng : MutableState<LatLng?> = mutableStateOf(null)
 	val address : MutableState<String?> = mutableStateOf(null)
-	val contentThumbnail : MutableState<String?> = mutableStateOf(null)
-	val content : MutableState<String?> = mutableStateOf(null)
+	val isFavourite : MutableState<Boolean?> = mutableStateOf(null)
+	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
 
-	//  Map<Id, Triple<Uri, File, AttachmentObject>>
-	val attachmentListStored : SnapshotStateMap<ObjectId, Triple<Uri, File, AttachmentObject>> = mutableStateMapOf()
-	val attachmentListNew : SnapshotStateMap<ObjectId, Triple<Uri, File, AttachmentObject>> = mutableStateMapOf()
-	val isFavourite : MutableState<Boolean> = mutableStateOf(false)
-	val isLocked : MutableState<Boolean> = mutableStateOf(false)
-
-	val tagObjectList = Repository.getAllTagAsFlow()
-
-	var isUserScrollEnabled : MutableState<Boolean> = mutableStateOf(false)
-	val locationSnackbarHostState = SnackbarHostState()
+	val attachmentListStored : SnapshotStateMap<ObjectId, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
+	val attachmentListBuffer : SnapshotStateMap<ObjectId, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
 
 	val locationState : MutableState<LocationState> = mutableStateOf(LocationState.INIT)
-
 	var locationCoroutine : CoroutineScope? = null
+	var locationCancellationSource : CancellationTokenSource? = null
 
-	fun initNewData(chapterId : ObjectId, filter : Extra.Companion.Filter) {
+	val showLocationPermissionDialog : MutableState<Boolean> = mutableStateOf(false)
+	val showLocationPickerDialog : MutableState<Boolean> = mutableStateOf(false)
+	val showNotificationPermissionDialog : MutableState<Boolean> = mutableStateOf(false)
+	val showDiscardDialog : MutableState<Boolean> = mutableStateOf(false)
+	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
 
+
+	fun singleRead(noteId : ObjectId) {
 		viewModelScope.launch(Dispatchers.IO) {
-
-			withContext(Dispatchers.Main) {
-				newParentChapterObject.value = Repository.getChapter(chapterId)
-			}
-
-			Repository.getChapterAsFlow(chapterId).collectLatest {
-				withContext(Dispatchers.Main) {
-					chapterObject.value = it
-				}
-			}
+			noteIdList.add(noteId)
+			getNote(id = noteId)
 		}
-
-//		TODO Is this use of timestamp current
-		this.createdTimestamp.value = System.currentTimeMillis()
-		this.modifiedTimestamp.value = System.currentTimeMillis()
-		this.userTimestamp.value = System.currentTimeMillis()
-		this.parentChapterId.value = chapterId
-		this.noteId.value = ObjectId.create()
-
-		getLocation()
-
-		isNew.value = true
-		isViewer.value = false
 	}
 
-	fun loadAndViewData(chapterId : ObjectId, noteId : ObjectId, filter : Extra.Companion.Filter) {
-		isNew.value = false
-		when (filter) {
-			Extra.Companion.Filter.SINGLE_READ -> {
-				viewModelScope.launch(Dispatchers.IO) {
-					withContext(Dispatchers.Main) {
-						newParentChapterObject.value = Repository.getChapter(chapterId)
-					}
-
+	fun chapterRead(chapterId : ObjectId, noteId : ObjectId) {
+		viewModelScope.launch(Dispatchers.IO) {
+			when (repositoryState.value) {
+				RepositoryState.INIT -> null
+				RepositoryState.LOADING -> null
+				RepositoryState.SUCCESS -> {
 					viewModelScope.launch(Dispatchers.IO) {
-						Repository.getChapterAsFlow(chapterId).collectLatest {
-							withContext(Dispatchers.Main) { chapterObject.value = it }
-						}
-					}
+						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+						try {
+							repository2.getChapterFromIdAsFlow(chapterId).collect {
+								withContext(Dispatchers.Main) {
+									noteIdList.clear()
+									noteIdList.addAll(it?.noteList?.map { it.id } ?: listOf())
 
-					withContext(Dispatchers.Main) {
-						noteIdList.clear()
-						noteIdList.add(noteId)
-					}
-				}
-			}
-			Extra.Companion.Filter.READ_CHAPTER -> {
-				viewModelScope.launch(Dispatchers.IO) {
-					isUserScrollEnabled.value = true
-
-					withContext(Dispatchers.Main) {
-						newParentChapterObject.value = Repository.getChapter(chapterId)
-					}
-
-					Repository
-						.getChapterAsFlow(id = chapterId)
-						.map {
-							viewModelScope.launch(Dispatchers.Main) { chapterObject.value = it }
-							it?.noteList?.sortedBy { - it.userTimestamp }?.map { it.id }
-						}
-						.collect {
-							viewModelScope.launch(Dispatchers.Main) {
-								noteIdList.clear()
-								it?.let { noteIdList.addAll(it) }
-							}
-						}
-				}
-			}
-		}
-		this.noteId.value = noteId
-		isViewer.value = true
-	}
-
-	fun updateNewChapterObject(chapterId : ObjectId) {
-		viewModelScope.launch(Dispatchers.IO) {
-			withContext(Dispatchers.Main) {
-				newParentChapterObject.value = Repository.getChapter(chapterId)
-			}
-		}
-	}
-
-	fun bufferAttachment(uriList : List<Uri>) {
-		uriList.forEach { uri ->
-			var extension : String? = null
-			val name = getApplication<BaseApplication>().getFileName(uri)
-			try {
-				extension =
-					if (uri.scheme.equals(ContentResolver.SCHEME_CONTENT))
-						MimeTypeMap.getSingleton().getExtensionFromMimeType(getApplication<BaseApplication>().applicationContext.contentResolver.getType(uri))
-					else
-						MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(uri.path?.let { File(it) }).toString())
-			} catch (e : Exception) {
-//		    	TODO Show error message
-				e.printStackTrace()
-			} finally {
-				AttachmentObject().apply {
-					this.name = name ?: this.id.toString()
-					this.extension = extension
-					this.mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-
-					this.parentNoteId = this@NoteViewModel.noteId.value
-
-					val uriAndFile = createTempFileToExpose(getApplication(), this.id.toString(), this.extension)
-					val inputStream = getApplication<BaseApplication>().contentResolver.openInputStream(uri)
-					val outputStream = getApplication<BaseApplication>().contentResolver.openOutputStream(uriAndFile.first)
-
-					if (inputStream != null && outputStream != null) copyInputStreamToOutputStream(inputStream, outputStream)
-
-					inputStream?.close()
-					outputStream?.close()
-
-					attachmentListNew[this.id] = Triple(uriAndFile.first, uriAndFile.second, this)
-				}
-			}
-		}
-	}
-
-	fun putNote(data : String) {
-		CoroutineScope(Dispatchers.IO).launch {
-			try {
-				locationCoroutine?.cancel()
-
-				val dataObject = JSONObject(data)
-				val dataJson = dataObject.getJSONObject("dataJson")
-				val dataText = dataObject.getString("dataText")
-
-				if (this@NoteViewModel.createdTimestamp.value == null ||
-					this@NoteViewModel.modifiedTimestamp.value == null ||
-					this@NoteViewModel.userTimestamp.value == null ||
-					this@NoteViewModel.chapterObject.value == null
-				) {
-//			    TODO    Show msg
-				} else {
-					NoteObject().apply {
-						withContext(Dispatchers.Main) { isSaving.value = true }
-
-						if (noteId.value != null) this.id = noteId.value !!
-						this.createdTimestamp = this@NoteViewModel.createdTimestamp.value !!
-						this.modifiedTimestamp = this@NoteViewModel.modifiedTimestamp.value !!
-						this.userTimestamp = this@NoteViewModel.userTimestamp.value !!
-						this.title = this@NoteViewModel.title.value
-						this.color = this@NoteViewModel.color.value
-						this.setLatLng(
-							if (this@NoteViewModel.latLng.value != null) LatLng().apply {
-								this.latitude = this@NoteViewModel.latLng.value?.latitude
-								this.longitude = this@NoteViewModel.latLng.value?.longitude
-							}
-							else null
-						)
-						this.address = this@NoteViewModel.address.value
-						this.contentThumbnail = dataText.substring(0, minOf(256, dataText.length))
-						this.content = dataJson.toString()
-						this.isFavourite = this@NoteViewModel.isFavourite.value
-						this.isLocked = this@NoteViewModel.isLocked.value
-
-						this.attachmentList.clear()
-						this@NoteViewModel.attachmentListNew.forEach { (id, data) ->
-							if (! data.third.isSaved) {
-								saveAttachment(id, data.second, data.third.extension)
-							}
-							this.attachmentList.add(data.third)
-
-							if (this.thumbnail == null || this.thumbnailType == null) {
-								if (data.third.getType() == AttachmentObject.Companion.Type.IMAGE) {
-									BitmapFactory.decodeFile(data.second.absolutePath)?.let {
-
-										val aspectRatio = it.width.toFloat() / it.height.toFloat()
-										val thumbnail = it.let { ThumbnailUtils.extractThumbnail(it, (256 * aspectRatio).toInt(), 256) }
-
-										this.thumbnail = Base64.getEncoder().encodeToString(thumbnail.toByteArray())
-										this.thumbnailType = data.third.getType().name
-									}
+									getNote(id = noteId)
 								}
 							}
+						} catch (e : RealmNotInitializedException) {
+						} catch (e : Exception) {
 						}
+					}
+				}
 
-						if (chapterObject.value != null) {
-							Repository.putNote(chapterObject.value !!.id, this) {
-								loadAndViewData(chapterObject.value !!.id, this.id, Extra.Companion.Filter.READ_CHAPTER)
-								isSaving.value = false
+				RepositoryState.ERROR -> null
+			}
+		}
+
+	}
+
+	fun chapterReadNew(chapterId : ObjectId) {
+		viewModelScope.launch(Dispatchers.IO) {
+			when (repositoryState.value) {
+				RepositoryState.INIT -> null
+				RepositoryState.LOADING -> null
+				RepositoryState.SUCCESS -> {
+					viewModelScope.launch(Dispatchers.IO) {
+						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+						try {
+							repository2.getChapterFromIdAsFlow(chapterId).collect {
+								withContext(Dispatchers.Main) {
+									noteIdList.clear()
+									noteIdList.addAll(it?.noteList?.map { it.id } ?: listOf())
+									initNewNote()
+									isNew.value = true
+									isViewing.value = false
+									this@NoteViewModel.parentChapterId.value = chapterId
+								}
+							}
+						} catch (e : RealmNotInitializedException) {
+						} catch (e : Exception) {
+						}
+					}
+				}
+
+				RepositoryState.ERROR -> null
+			}
+		}
+	}
+
+	@MainThread
+	fun initNewNote() {
+		createdTimestamp.value = System.currentTimeMillis()
+		modifiedTimestamp.value = System.currentTimeMillis()
+		userTimestamp.value = System.currentTimeMillis()
+		contentThumbnail.value = null
+		content.value = null
+		title.value = null
+		color.value = null
+		latLng.value = null
+		address.value = null
+		isFavourite.value = false
+		isLocked.value = false
+
+		attachmentListStored.clear()
+		attachmentListBuffer.clear()
+
+		locationState.value = LocationState.INIT
+		getLocation()
+	}
+
+	fun getNote(id : ObjectId) {
+		viewModelScope.launch(Dispatchers.IO) {
+//			val noteObject = repository2.getNoteFromId(id)
+
+			repository2.getNoteFromIdAsFlow(id).cancellable().collect { noteObject ->
+				this@NoteViewModel.noteId.value = noteObject?.id
+				if (noteObject?.id != this@NoteViewModel.noteId.value) cancel()
+				if (noteObject != null) {
+					withContext(Dispatchers.Main) {
+//						this@NoteViewModel.noteId.value = noteObject.id
+
+						this@NoteViewModel.createdTimestamp.value = noteObject.createdTimestamp
+						this@NoteViewModel.modifiedTimestamp.value = noteObject.modifiedTimestamp
+						this@NoteViewModel.userTimestamp.value = noteObject.userTimestamp
+						this@NoteViewModel.contentThumbnail.value = noteObject.contentThumbnail
+						this@NoteViewModel.content.value = noteObject.content
+						this@NoteViewModel.title.value = noteObject.title
+						this@NoteViewModel.color.value = noteObject.color
+						this@NoteViewModel.latLng.value = noteObject.getLatLng()
+						this@NoteViewModel.address.value = noteObject.address
+						this@NoteViewModel.isFavourite.value = noteObject.isFavourite
+						this@NoteViewModel.isLocked.value = noteObject.isLocked
+
+						this@NoteViewModel.parentChapterId.value = noteObject.parentChapterId
+
+						attachmentListStored.clear()
+						attachmentListBuffer.clear()
+						noteObject.attachmentList.forEach {
+							val attachmentObject = repository2.getAttachmentFromId(it.id)
+							if (attachmentObject != null) {
+								val file = repository2.getAttachmentFile(attachmentObject.id, attachmentObject.extension)
+								val uri =
+									file?.let { it1 -> FileProvider.getUriForFile(repository2.context, "${repository2.context.packageName}.fileprovider", it1) }
+								attachmentListStored[attachmentObject.id] = Triple(attachmentObject, file, uri)
+								attachmentListBuffer[attachmentObject.id] = Triple(attachmentObject, file, uri)
 							}
 						}
 
-						this@NoteViewModel.noteId.value = this.id
-						isViewer.value = true
+						when {
+							this@NoteViewModel.latLng.value != null && this@NoteViewModel.address.value != null -> locationState.value = LocationState.SUCCESS
+							this@NoteViewModel.latLng.value != null && this@NoteViewModel.address.value == null -> locationState.value =
+								LocationState.ONLY_LATLNG
+
+							this@NoteViewModel.latLng.value == null && this@NoteViewModel.address.value != null -> locationState.value =
+								LocationState.ONLY_ADDRESS
+
+							else -> locationState.value = LocationState.REMOVED
+						}
 					}
 				}
-			} catch (e : Exception) {
-//		    	TODO Show error message
-				isSaving.value = false
-				e.printStackTrace()
+
+				isNew.value = false
+				isViewing.value = true
 			}
-		}
-	}
-
-	private fun saveAttachment(id : ObjectId, second : File, extension : String?) {
-		val file = getApplication<BaseApplication>().getAttachmentFile(id, extension)
-
-		if (file != null) {
-			try {
-				val inputStream = second.inputStream()
-				val outputStream = file.outputStream()
-				copyInputStreamToOutputStream(inputStream, outputStream)
-			} catch (e : Exception) {
-				e.printStackTrace()
-//				TODO Show error message
-			}
-		}
-	}
-
-	private fun deleteAttachment(id : ObjectId, file : File) {
-		try {
-			Repository.deleteAttachment(id = id)
-			file.delete()
-		} catch (e : Exception) {
-			e.printStackTrace()
-//			TODO Show error message
 		}
 	}
 
 	fun editNote() {
-		isViewer.value = false
+		viewModelScope.launch(Dispatchers.IO) {
+			this@NoteViewModel.isViewing.value = false
+		}
 	}
 
-	fun updateNote(data : String? = null) {
+	fun putNote(data : String?) {
 		CoroutineScope(Dispatchers.IO).launch {
 			try {
-				locationCoroutine?.cancel()
-				isUserScrollEnabled.value = false
+				locationCancellationSource?.cancel()
+				locationCancellationSource = null
 
-//				Only update if the entry already exists
-				if (this@NoteViewModel.noteId.value != null) {
-					NoteObject().apply {
-						withContext(Dispatchers.Main) { isSaving.value = true }
+				val dataObject = JSONObject(data ?: "{}")
+				val dataJson = dataObject.optJSONObject("dataJson")
+				val dataText = dataObject.optString("dataText")
 
-						if (noteId.value != null) {
-							this.id = noteId.value !!
+				NoteObject().apply {
+					isOperationPending.value = true
 
-							this.createdTimestamp = this@NoteViewModel.createdTimestamp.value !!
-							this.modifiedTimestamp = this@NoteViewModel.modifiedTimestamp.value !!
-							this.userTimestamp = this@NoteViewModel.userTimestamp.value !!
-							this.title = this@NoteViewModel.title.value
-							this.color = this@NoteViewModel.color.value
-							this.setLatLng(
-								if (this@NoteViewModel.latLng.value != null) LatLng().apply {
-									this.latitude = this@NoteViewModel.latLng.value?.latitude
-									this.longitude = this@NoteViewModel.latLng.value?.longitude
-								}
-								else null
-							)
-							this.address = this@NoteViewModel.address.value
+					if (this@NoteViewModel.noteId.value != null) this.id = this@NoteViewModel.noteId.value !!
+					this.createdTimestamp = this@NoteViewModel.createdTimestamp.value ?: System.currentTimeMillis()
+					this.modifiedTimestamp = this@NoteViewModel.modifiedTimestamp.value ?: System.currentTimeMillis()
+					this.userTimestamp = this@NoteViewModel.userTimestamp.value ?: System.currentTimeMillis()
+					this.title = this@NoteViewModel.title.value
+					this.color = this@NoteViewModel.color.value
+					this.setLatLng(
+						if (this@NoteViewModel.latLng.value != null) LatLng().apply {
+							this.latitude = this@NoteViewModel.latLng.value?.latitude
+							this.longitude = this@NoteViewModel.latLng.value?.longitude
+						}
+						else null
+					)
+					this.address = this@NoteViewModel.address.value
+					this.contentThumbnail = dataText.substring(0, minOf(256, dataText.length))
+					this.content = dataJson?.toString()
+					this.isFavourite = this@NoteViewModel.isFavourite.value == true
+					this.isLocked = this@NoteViewModel.isLocked.value == true
 
-							if (data != null) {
-								try {
-									val dataObject = JSONObject(data)
-									val dataJson = dataObject.getJSONObject("dataJson")
-									val dataText = dataObject.getString("dataText")
-									this.contentThumbnail = dataText.substring(0, minOf(256, dataText.length))
-									this.content = dataJson.toString()
-								} catch (e : Exception) {
-									e.printStackTrace()
-								}
-							} else {
-								this.contentThumbnail = this@NoteViewModel.contentThumbnail.value
-								this.content = this@NoteViewModel.content.value
-							}
-							this.attachmentList.clear()
+					this.attachmentList.clear()
+					this.attachmentList.addAll(attachmentListStored.values.map { it.first })
+					val newAttachmentData = putAttachment()
+					this.thumbnail = newAttachmentData.second
+					this.thumbnailType = newAttachmentData.third
 
-							attachmentListStored.forEach { (id, data) ->
-								if (id !in attachmentListNew.keys) deleteAttachment(id, data.second)
-							}
-
-							this@NoteViewModel.attachmentListNew.forEach { (id, data) ->
-								if (!data.third.isSaved) {
-									saveAttachment(id, data.second, data.third.extension)
-									data.third.isSaved = true
-								}
-								this.attachmentList.add(data.third)
-
-								if (this.thumbnail.isNullOrBlank() || this.thumbnailType == null) {
-									if (data.third.getType() == AttachmentObject.Companion.Type.IMAGE) {
-										BitmapFactory.decodeFile(data.second.absolutePath)?.let {
-											val aspectRatio = it.width.toFloat() / it.height.toFloat()
-											val thumbnail = it.let { ThumbnailUtils.extractThumbnail(it, (256 * aspectRatio).toInt(), 256) }
-
-											this.thumbnail = Base64.getEncoder().encodeToString(thumbnail.toByteArray())
-											this.thumbnailType = data.third.getType().name
-										}
+					if (this@NoteViewModel.parentChapterId.value == null) {
+//				        TODO Show error
+						isOperationPending.value = false
+					} else {
+						this.parentChapterId = this@NoteViewModel.parentChapterId.value !!
+						repository2.putNote(noteObject = this) { _, e ->
+							repository2.putAttachment(this.id, newAttachmentData.first){ _, e ->
+								attachmentListStored.filterNot { it.key in attachmentListBuffer.keys }.let {
+									repository2.deleteAttachment(it.values.map { it.first }) { _, e ->
+										chapterRead(this.parentChapterId !!, this.id)
+										isOperationPending.value = false
 									}
 								}
 							}
-							this.isFavourite = this@NoteViewModel.isFavourite.value
-							this.isLocked = this@NoteViewModel.isLocked.value
-
-							if (chapterObject.value != null) {
-								Repository.putNote(chapterObject.value !!.id, this) {
-									Toast.makeText(getApplication(), "Note updated", Toast.LENGTH_SHORT).show()
-									loadAndViewData(chapterObject.value !!.id, this.id, Extra.Companion.Filter.READ_CHAPTER)
-									isSaving.value = false
-								}
-							}
-
-							withContext(Dispatchers.Main) { isViewer.value = true }
-						} else {
-//							TODO Show error message
-							withContext(Dispatchers.Main) { isViewer.value = true }
 						}
 					}
 				}
-
-				isUserScrollEnabled.value = true
 			} catch (e : Exception) {
-//				TODO Show error message
-				isUserScrollEnabled.value = true
-				e.printStackTrace()
+//				TODO Show error
+				isOperationPending.value = false
 			}
 		}
 	}
 
-	fun getNote(id : ObjectId) {
-		noteId.value = id
-		val noteObject = Repository.getNote(id = id)
-		if (noteObject == null || noteObject.id != this@NoteViewModel.noteId.value) {
-//			TODO Show error message
-		} else {
-			this.parentChapterId.value = noteObject.parentChapterId
-			this.createdTimestamp.value = noteObject.createdTimestamp
-			this.modifiedTimestamp.value = noteObject.modifiedTimestamp
-			this.userTimestamp.value = noteObject.userTimestamp
-			this.title.value = noteObject.title
-			this.color.value = noteObject.color
-			this.latLng.value = noteObject.getLatLng()
-			this.address.value = noteObject.address
-			this.contentThumbnail.value = noteObject.contentThumbnail
-			this.content.value = noteObject.content
-			this.attachmentListNew.clear()
-			noteObject.attachmentList.forEach { attachmentObject ->
-				val file = getApplication<BaseApplication>().getAttachmentFile(attachmentObject.id, attachmentObject.extension)
+	fun toggleFavourite() {
+		repository2.updateNoteFavourite(id = noteId.value !!)
+	}
 
-				file?.let { it1 ->
-					val uri = FileProvider.getUriForFile(getApplication<BaseApplication>(), "com.syncodec.fileprovider", it1)
-					attachmentListStored[attachmentObject.id] = Triple(uri, file, attachmentObject.clone().apply { this.isSaved = true })
-					attachmentListNew[attachmentObject.id] = Triple(uri, file, attachmentObject.clone().apply { this.isSaved = true })
+	fun toggleLock() {
+		repository2.updateNoteLock(id = noteId.value !!)
+	}
+
+	fun putAttachment(): Triple<List<AttachmentObject>, String?, String?> {
+		var thumbnail : String? = null
+		var thumbnailType : String? = null
+
+		val attachmentList : MutableList<AttachmentObject> = mutableListOf()
+
+		this@NoteViewModel.attachmentListBuffer.forEach { (id, data) ->
+			if (! attachmentListStored.containsKey(id)) {
+				saveAttachment(id = id, inputFile = data.second, extension = data.first.extension)
+				attachmentList.add(data.first)
+			}
+
+			if (thumbnail == null || thumbnailType == null) {
+				data.second?.let { getThumbnail(attachmentObject = data.first, file = it) }?.let {
+					BitmapFactory.decodeFile(data.second?.absolutePath)?.let {
+						val aspectRatio = it.width.toFloat() / it.height.toFloat()
+						val _thumbnail = it.let { ThumbnailUtils.extractThumbnail(it, (256 * aspectRatio).toInt(), 256) }
+
+						thumbnail = Base64.getEncoder().encodeToString(_thumbnail.toByteArray())
+						thumbnailType = data.first.getType().name
+					}
 				}
 			}
+		}
 
-			this.isFavourite.value = noteObject.isFavourite
-			this.isLocked.value = noteObject.isLocked
+		return Triple(attachmentList, thumbnail, thumbnailType)
+	}
 
-			if (this.latLng.value != null && this.address.value != null) {
-				this.locationState.value = LocationState.SUCCESS
-			}
-
-			when {
-				this.latLng.value != null && this.address.value != null -> this.locationState.value = LocationState.SUCCESS
-				this.latLng.value != null && this.address.value == null -> this.locationState.value = LocationState.ONLY_ADDRESS
-				this.latLng.value == null && this.address.value != null -> this.locationState.value = LocationState.ONLY_LATLNG
-				else -> this.locationState.value = LocationState.REMOVED
+	fun discardChanges() {
+		viewModelScope.launch(Dispatchers.IO) {
+			try {
+				if (noteId.value != null) {
+					getNote(id = noteId.value !!)
+				}
+			} catch (e : Exception) {
 			}
 		}
 	}
 
 	fun deleteNote() {
-		noteId.value?.let { Repository.deleteNote(it){} }
-		showDeleteDialog.value = false
-	}
-
-	private val fusedLocationClient : FusedLocationProviderClient = FusedLocationProviderClient(application.applicationContext)
-	private val cancellationToken = CancellationTokenSource().token
-
-	fun getLocation(
-		tryShowRationale : Boolean = false,
-	) {
-		locationState.value = LocationState.INIT
-
-		viewModelScope.launch(Dispatchers.IO) {
-
-			locationCoroutine?.cancel()
-			locationCoroutine = this
-
-			if (getApplication<BaseApplication>().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-				getApplication<BaseApplication>().checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-			) {
-				withContext(Dispatchers.Main) { locationState.value = LocationState.NO_PERMISSION }
-				showLocationPermissionRationaleDialog.value = tryShowRationale
-
-				return@launch
+		try {
+			isOperationPending.value = true
+			if (noteId.value != null) {
+				repository2.deleteNote(id = noteId.value !!) { _, e ->
+					isOperationPending.value = false
+				}
 			}
-
-			fusedLocationClient
-				.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken)
-				.addOnSuccessListener { location : Location? ->
-					if (location == null) {
-						this@NoteViewModel.latLng.value = null
-						if (isViewer.value) updateNote()
-						locationState.value = LocationState.ERROR
-						Toast.makeText(getApplication(), "Error getting location", Toast.LENGTH_SHORT).show()
-					} else {
-						onReceiveLocation(latitude = location.latitude, longitude = location.longitude)
-
-						reverseGeocode(
-							latitude = location.latitude,
-							longitude = location.longitude,
-							onAddressAvailable = { address ->
-								if (address == null) {
-									Toast.makeText(getApplication(), "Error getting address", Toast.LENGTH_SHORT).show()
-								} else {
-									onReceiveAddress(address = locationAddressFilter(address = address))
-								}
-							},
-							onIoException = {
-								CoroutineScope(Dispatchers.Main).launch {
-									locationSnackbarHostState.showSnackbar(
-										message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
-										duration = SnackbarDuration.Short
-									)
-									locationState.value = LocationState.ONLY_LATLNG
-								}
-							},
-							onException = {
-								CoroutineScope(Dispatchers.Main).launch {
-									locationSnackbarHostState.showSnackbar(
-										message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
-										duration = SnackbarDuration.Short
-									)
-									locationState.value = LocationState.ONLY_LATLNG
-								}
-							}
-						)
-					}
-				}
-				.addOnFailureListener {
-					viewModelScope.launch(Dispatchers.Main) {
-						locationSnackbarHostState.showSnackbar(
-							message = "Error getting location",
-							duration = SnackbarDuration.Short
-						)
-					}
-				}
+		} catch (e : Exception) {
+			isOperationPending.value = false
 		}
 	}
 
-	fun onReceiveLocation(
-		latitude : Double,
-		longitude : Double,
-	) {
-		this@NoteViewModel.latLng.value = LatLng(latitude, longitude)
-		if (isViewer.value) updateNote()
-		locationState.value = LocationState.LATLNG
+	fun addAttachmentToBuffer(uriList : List<Uri>) {
+		viewModelScope.launch(Dispatchers.IO) {
+			repository2.bufferAttachment(uriList).forEach {
+				withContext(Dispatchers.Main) {
+					attachmentListBuffer[it.key] = it.value
+				}
+			}
+		}
 	}
 
-	fun onReceiveAddress(
-		address : String?,
-	) {
-		viewModelScope.launch(Dispatchers.Main) {
-			this@NoteViewModel.address.value = address
-			if (isViewer.value) updateNote()
+	fun removeAttachmentFromBuffer(attachmentId : ObjectId) {
+		attachmentListBuffer.remove(attachmentId)
+	}
+
+	private fun saveAttachment(id : ObjectId, inputFile : File?, extension : String?) {
+		val file = repository2.getAttachmentFile(id, extension)
+
+		if (file != null) {
+			try {
+				val inputStream = inputFile?.inputStream()
+				val outputStream = file.outputStream()
+				if (inputStream != null) {
+					copyInputStreamToOutputStream(inputStream, outputStream)
+				}
+			} catch (e : Exception) {
+				e.printStackTrace()
+//				TODO Show error message
+			}
+		}
+	}
+
+	private fun getThumbnail(attachmentObject : AttachmentObject, file : File) : Pair<String?, String?>? {
+		if (attachmentObject.getType() == AttachmentObject.Companion.Type.IMAGE) {
+			BitmapFactory.decodeFile(file.absolutePath)?.let {
+
+				val aspectRatio = it.width.toFloat() / it.height.toFloat()
+				val thumbnail = it.let { ThumbnailUtils.extractThumbnail(it, (256 * aspectRatio).toInt(), 256) }
+
+				val thumbnailString = Base64.getEncoder().encodeToString(thumbnail.toByteArray())
+				val thumbnailType = attachmentObject.getType().name
+
+				return Pair(thumbnailType, thumbnailString)
+			}
+		}
+		return null
+	}
+
+	fun getLocation(showRationale : Boolean = false) {
+		viewModelScope.launch(Dispatchers.IO) {
+			locationCoroutine?.cancel()
+			locationCancellationSource?.cancel()
+			locationCancellationSource = CancellationTokenSource()
+			locationCoroutine = this
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+
+			val context = repository2.context
+
+			val dataStoreInstance = DataStoreInstance(context = context)
+			dataStoreInstance.getGeolocation.collect {
+				if (! it) {
+					withContext(Dispatchers.Main) { locationState.value = LocationState.DISABLED }
+					this.cancel()
+				} else {
+					withContext(Dispatchers.Main) {
+						locationState.value = LocationState.LOADING
+					}
+
+					if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+						context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+					) {
+						withContext(Dispatchers.Main) { locationState.value = LocationState.NO_PERMISSION }
+						showLocationPermissionDialog.value = showRationale
+					} else {
+						val fusedLocationClient : FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+
+						try {
+							fusedLocationClient
+								.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, locationCancellationSource?.token)
+								.addOnSuccessListener {
+									latLng.value = LatLng(it.latitude, it.longitude)
+									context.reverseGeocode(
+										latitude = it.latitude,
+										longitude = it.longitude,
+										onAddressAvailable = {
+											if (it == null) {
+												Toast.makeText(repository2.context, "Error getting address", Toast.LENGTH_SHORT).show()
+											} else {
+												onReceiveAddress(address = it)
+											}
+										},
+										onIoException = {
+											this.launch(Dispatchers.Main) {
+												locationSnackbarHostState.showSnackbar(
+													message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
+													duration = SnackbarDuration.Short
+												)
+												locationState.value = LocationState.ONLY_LATLNG
+											}
+										},
+										onException = {
+											this.launch(Dispatchers.Main) {
+												locationSnackbarHostState.showSnackbar(
+													message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
+													duration = SnackbarDuration.Short
+												)
+												locationState.value = LocationState.ONLY_LATLNG
+											}
+										}
+									)
+								}
+								.addOnFailureListener { this.launch(Dispatchers.Main) { locationState.value = LocationState.KNOWN_ERROR } }
+						} catch (e : Exception) {
+							e.printStackTrace()
+							withContext(Dispatchers.Main) { locationState.value = LocationState.KNOWN_ERROR }
+							this.cancel()
+						}
+					}
+				}
+			}
+		}
+	}
+
+	fun setLocation(latLng : LatLng, address : String?) {
+		this.latLng.value = latLng
+		this.address.value = address
+
+		if (address == null) locationState.value = LocationState.ONLY_LATLNG
+		else locationState.value = LocationState.SUCCESS
+	}
+
+	private fun onReceiveAddress(address : Address?) {
+		CoroutineScope(Dispatchers.Main).launch {
+			this@NoteViewModel.address.value = locationAddressFilter(address = address)
 
 			if (this@NoteViewModel.address.value == null) {
 				locationSnackbarHostState.showSnackbar(
@@ -575,74 +512,18 @@ class NoteViewModel(application : Application) : AndroidViewModel(application) {
 		}
 	}
 
-
-	fun removeLocation() {
-		latLng.value = null
-		address.value = null
-		locationState.value = LocationState.REMOVED
-		if (isViewer.value) updateNote()
-	}
-
-	fun reverseGeocode(
-		latitude : Double,
-		longitude : Double,
-		onAddressAvailable : (Address?) -> Unit,
-		onIoException : () -> Unit,
-		onException : () -> Unit
-	) {
-		viewModelScope.launch(Dispatchers.IO) {
-			try {
-				val geocoder = Geocoder(getApplication(), Locale.getDefault())
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-					geocoder.getFromLocation(latitude, longitude, 1) { addresses ->
-						onAddressAvailable(addresses.getOrNull(0))
-					}
-				} else {
-//					Deprecation is handled in upper block
-					val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-					onAddressAvailable(addresses?.firstOrNull())
-				}
-
-			} catch (exception : IOException) {
-				onIoException()
-			} catch (exception : Exception) {
-				onException()
-			}
-		}
-	}
-
-	fun onUpdateFavorite() {
-		isFavourite.value = ! isFavourite.value
-		if (isViewer.value) updateNote()
-	}
-
-	fun onUpdateLock() {
-		isLocked.value = ! isLocked.value
-		if (isViewer.value) updateNote()
-	}
-
-	fun updateTitle(title : String?) {
-		this.title.value = title
-		if (isViewer.value) updateNote()
-	}
-
-	fun putTag(tag : String, color : Color) {
-		TagObject().apply {
-			this.tag = tag
-			this.color = color.toArgb()
-			Repository.putTag(tagObject = this)
-		}
-	}
-
-	fun updateTagConnection(tagObjectId : ObjectId) {
-		Repository.updateTagConnection(tagObjectId = tagObjectId, objectId = noteId.value)
-	}
-
-	fun printNote(data : String) {
-		showPrintDialog.value = true
+	fun onRemoveLocation() {
 		viewModelScope.launch(Dispatchers.Main) {
-			val printer = Printer(getApplication())
-			printer.createWebPrintJob(data)
+			latLng.value = null
+			address.value = null
+			locationState.value = LocationState.REMOVED
 		}
+	}
+
+	override fun onCleared() {
+		super.onCleared()
+
+		this.locationCoroutine?.cancel()
+		this.viewModelScope.cancel()
 	}
 }

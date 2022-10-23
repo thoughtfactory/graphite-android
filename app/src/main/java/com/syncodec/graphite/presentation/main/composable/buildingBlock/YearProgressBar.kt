@@ -8,6 +8,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -48,7 +50,7 @@ import java.util.Calendar
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun YearProgressBar(
-	showCard: Boolean,
+	showCard : Boolean,
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
@@ -67,8 +69,8 @@ fun YearProgressBar(
 
 	AnimatedVisibility(
 		visible = showCard && isYearProgressEnabled == true,
-		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
-		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
+		enter = expandVertically(tween(300)),
+		exit = shrinkVertically(tween(300)),
 	) {
 		Card(
 			colors = CardDefaults.cardColors(Color.Transparent),
@@ -110,7 +112,7 @@ fun YearProgressBar(
 				Spacer(modifier = Modifier.width(12.dp))
 
 				AnimatedText(
-					animatedText = (progress.toFloat() * 100/ totalDays).toInt().toString(),
+					animatedText = (progress.toFloat() * 100 / totalDays).toInt().toString(),
 					staticText = "%",
 					color = MaterialTheme.colorScheme.onBackground
 				)
