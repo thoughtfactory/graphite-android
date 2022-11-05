@@ -7,11 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,12 +25,12 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class SearchViewModel @Inject constructor(private val repository2 : Repository2): ViewModel() {
+class SearchViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
 
 	val repositoryState = repository2.repositoryState
 
-	private val noteList: SnapshotStateList<NoteObject> = mutableStateListOf()
-	val tagList: SnapshotStateList<TagObject> = mutableStateListOf()
+	private val noteList : SnapshotStateList<NoteObject> = mutableStateListOf()
+	val tagList : SnapshotStateList<TagObject> = mutableStateListOf()
 
 	val visibleNoteList : SnapshotStateList<NoteObject> = mutableStateListOf()
 
@@ -38,9 +40,17 @@ class SearchViewModel @Inject constructor(private val repository2 : Repository2)
 	var showTag : MutableStateFlow<TagObject?> = MutableStateFlow(null)
 	var searchQuery : MutableStateFlow<String?> = MutableStateFlow(null)
 
+	val currentChapter : MutableState<ChapterObjectLite?> = mutableStateOf(null)
+	val chapterList : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
+	val chapterPath : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
+
+	init {
+		onWhere(null)
+	}
+
 	init {
 		viewModelScope.launch(Dispatchers.IO) {
-			when(repositoryState.value) {
+			when (repositoryState.value) {
 				RepositoryState.INIT -> Log.d("SearchViewModel", "Init")
 				RepositoryState.LOADING -> Log.d("SearchViewModel", "Loading")
 				RepositoryState.SUCCESS -> onRepositoryStateSuccess()
@@ -70,7 +80,7 @@ class SearchViewModel @Inject constructor(private val repository2 : Repository2)
 			}
 		}
 
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Main) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			combine(
 				showFavourite,
@@ -79,10 +89,10 @@ class SearchViewModel @Inject constructor(private val repository2 : Repository2)
 				searchQuery
 			) { favourite, attachment, tag, query ->
 				noteList.filter { note ->
-					(!favourite || note.isFavourite) &&
-					(!attachment || note.attachmentList.isNotEmpty()) &&
-					(tag == null || tag.objectIdList.contains(note.id)) &&
-					(query == null || note.title?.contains(query, true) == true || note.content?.contains(query, true) == true)
+					(! favourite || note.isFavourite) &&
+							(! attachment || note.attachmentList.isNotEmpty()) &&
+							(tag == null || tag.objectIdList.contains(note.id)) &&
+							(query == null || note.title?.contains(query, true) == true || note.content?.contains(query, true) == true)
 				}
 			}.cancellable().collect {
 				withContext(Dispatchers.Main) {
@@ -101,7 +111,7 @@ class SearchViewModel @Inject constructor(private val repository2 : Repository2)
 		searchQuery.tryEmit(null)
 	}
 
-	fun showWithAttachments() {
+	fun showWithAttachment() {
 		showResultScreen.value = true
 		showFavourite.tryEmit(false)
 		showWithAttachments.tryEmit(true)
@@ -123,5 +133,17 @@ class SearchViewModel @Inject constructor(private val repository2 : Repository2)
 		showWithAttachments.tryEmit(false)
 		showTag.tryEmit(null)
 		searchQuery.tryEmit(query)
+	}
+
+	fun onWhere(id : ObjectId?) {
+		viewModelScope.launch(Dispatchers.IO) {
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			repository2.getChapterWithParentId(id).let {
+				withContext(Dispatchers.Main) {
+					chapterList.clear()
+					chapterList.addAll(it.map { it.toLite() })
+				}
+			}
+		}
 	}
 }

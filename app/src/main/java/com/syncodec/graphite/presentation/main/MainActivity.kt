@@ -20,7 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -33,24 +33,25 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketResreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteResreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNotebookResreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnAddDebugData
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnExit
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSelected
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionPutBucket
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowExitDialog
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.DataStoreInstance
@@ -103,6 +104,8 @@ class MainActivity : ComponentActivity() {
 					Toast.makeText(this@MainActivity, "repositoryState: $repositoryState", Toast.LENGTH_SHORT).show()
 				}
 
+				val tagList = viewModel.tagList
+
 				val isNoteRefreshing by viewModel.isNoteRefreshing
 				val isBucketRefreshing by viewModel.isBucketRefreshing
 				val isNotebookRefreshing by viewModel.isNotebookRefreshing
@@ -113,7 +116,7 @@ class MainActivity : ComponentActivity() {
 				var showDeleteDialog by viewModel.showDeleteDialog
 				var showExitDialog by viewModel.showExitDialog
 
-				val navController = rememberAnimatedNavController()
+				val navController = rememberNavController()
 				val navBackStackEntry by navController.currentBackStackEntryAsState()
 				val currentRoute = navBackStackEntry?.destination?.route
 
@@ -133,7 +136,7 @@ class MainActivity : ComponentActivity() {
 					}
 				}
 
-				onBackPressedDispatcher.addCallback(
+				this.onBackPressedDispatcher.addCallback(
 					this, object : OnBackPressedCallback(true) {
 						override fun handleOnBackPressed() {
 							if (isSelected) {
@@ -143,7 +146,7 @@ class MainActivity : ComponentActivity() {
 								if (currentRoute == BottomNavigationItem.Home.route) {
 									openDialog(MainDialogType.EXIT)
 								} else {
-									navController.popBackStack(route = BottomNavigationItem.Home.route, inclusive =  false, saveState = true)
+									navController.popBackStack(route = BottomNavigationItem.Home.route, inclusive = false, saveState = true)
 								}
 							}
 						}
@@ -151,6 +154,7 @@ class MainActivity : ComponentActivity() {
 				)
 
 				CompositionLocalProvider(
+					LocalCompositionTagList provides tagList,
 					LocalCompositionIsNoteResreshing provides isNoteRefreshing,
 					LocalCompositionIsBucketResreshing provides isBucketRefreshing,
 					LocalCompositionIsNotebookResreshing provides isNotebookRefreshing,
@@ -158,12 +162,18 @@ class MainActivity : ComponentActivity() {
 					LocalCompositionIsSelected provides isSelected,
 					LocalCompositionOnSelected provides { isSelected = it },
 					LocalCompositionSelectedObjectIdList provides selectedObjectIdList,
+					LocalCompositionPutBucket provides viewModel::putBucket,
 					LocalCompositionOpenDialog provides ::openDialog,
 					LocalCompositionCloseDialog provides ::closeDialog,
 					LocalCompositionShowDeleteDialog provides showDeleteDialog,
 					LocalCompositionShowExitDialog provides showExitDialog,
 					LocalCompositionOnDelete provides { viewModel.delete() },
 					LocalCompositionOnExit provides { finishAndRemoveTask() },
+					LocalCompositionOnAddDebugData provides {
+						assets.open("tmp/quotes.json").bufferedReader().let {
+							viewModel.addDebugNotes(it.readText())
+						}
+					},
 				) {
 					AnimatedContent(targetState = isFirstTime) {
 						when (it) {
@@ -173,6 +183,7 @@ class MainActivity : ComponentActivity() {
 								currentRoute = currentRoute,
 								navController = navController,
 							)
+
 							else -> LoadingView()
 						}
 					}

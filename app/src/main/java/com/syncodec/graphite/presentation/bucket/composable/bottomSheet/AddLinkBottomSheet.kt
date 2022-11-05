@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,23 +22,26 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketObject
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnAddLink
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.text.LargeTextField
 
 
+@Preview
 @Composable
-fun AddLinkBottomSheet(
-	bucketObject : BucketObject?,
-	closeSheet: () -> Unit
-) {
+fun AddLinkBottomSheet() {
+	val onAddLink = LocalCompositionOnAddLink.current
 	var urlText by remember { mutableStateOf("") }
-	var isTextFocused by remember { mutableStateOf(false) }
 
+	var isTextFocused by remember { mutableStateOf(false) }
 	val focusRequester = remember { FocusRequester() }
+
+	val closeSheet = LocalCompositionCloseBottomSheet.current
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -49,7 +54,7 @@ fun AddLinkBottomSheet(
 
 		BottomSheetHeader(
 			title = "Add Link",
-			icon = R.drawable.ic_book,
+			icon = R.drawable.ic_link,
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -70,13 +75,13 @@ fun AddLinkBottomSheet(
 			onValueChanged = { urlText = it },
 			keyboardActions = KeyboardActions(
 				onGo = {
-//					viewModel.putLink(urlText)
-//					urlText = ""
-//					closeSheet()
+					onAddLink(urlText)
+					urlText = ""
+					closeSheet()
 				}
 			)
 		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(32.dp))
 	}
 }

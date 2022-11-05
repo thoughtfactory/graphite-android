@@ -82,7 +82,7 @@ fun NoteScreen(
 						onClickMetadata = { openSheet(NoteBottomSheetType.METADATA) },
 						onClickLocation = { openSheet(NoteBottomSheetType.LOCATION) },
 						onClickAttachment = { openSheet(NoteBottomSheetType.ATTACHMENT) },
-						onClickTag = { /*TODO*/ }
+						onClickTag = { openSheet(NoteBottomSheetType.TAG) },
 					)
 				},
 				snackbarHost = {

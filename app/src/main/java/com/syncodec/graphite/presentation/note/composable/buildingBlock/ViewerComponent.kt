@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,13 +20,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -35,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -54,6 +65,7 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.AttachmentObject
+import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
@@ -117,8 +129,10 @@ fun ViewerComponent(
 	title : String?,
 	latLng : LatLng?,
 	address : String?,
+	parentChapter : ChapterObject?,
 	attachmentList : Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>,
 	connectedTag : List<TagObjectLite>,
+	onClickChapter: () -> Unit,
 ) {
 	val context = LocalContext.current
 
@@ -152,7 +166,9 @@ fun ViewerComponent(
 				title = title,
 				latLng = latLng,
 				address = address,
+				parentChapter = parentChapter,
 				connectedTag = connectedTag,
+				onClickChapter = onClickChapter
 			)
 		}
 
@@ -368,7 +384,9 @@ private fun Header(
 	title : String?,
 	latLng : LatLng?,
 	address : String?,
+	parentChapter : ChapterObject?,
 	connectedTag : List<TagObjectLite>,
+	onClickChapter : () -> Unit
 ) {
 	val timestamp = noteViewerTimestamp(userTimestamp)
 	Column(
@@ -402,6 +420,36 @@ private fun Header(
 					color = MaterialTheme.colorScheme.primary
 				)
 			}
+			Spacer(modifier = Modifier.weight(1f))
+			if (parentChapter != null) {
+				Box(
+					modifier = Modifier
+						.widthIn(96.dp)
+						.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+						.clip(RoundedCornerShape(12.dp))
+						.clickable { onClickChapter() }
+				) {
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						modifier = Modifier.padding(12.dp, 8.dp)
+					) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_notebook),
+							contentDescription = "Chapter",
+							tint = MaterialTheme.colorScheme.onSurface,
+						)
+						Spacer(modifier = Modifier.width(8.dp))
+						Text(
+							text = parentChapter.title ?: "",
+							style = MaterialTheme.typography.bodyMedium,
+							color = MaterialTheme.colorScheme.onSurface,
+							fontWeight = FontWeight.Bold,
+							maxLines = 1,
+							overflow = TextOverflow.Ellipsis
+						)
+					}
+				}
+			}
 		}
 		if (! address.isNullOrBlank() || latLng != null) {
 			Spacer(modifier = Modifier.height(4.dp))
@@ -432,17 +480,17 @@ private fun Header(
 			FlowRow(
 				modifier = Modifier.fillMaxWidth(),
 				mainAxisSpacing = 8.dp,
-				crossAxisSpacing = 0.dp
+				crossAxisSpacing = 4.dp
 			) {
 				connectedTag.forEach {
 					Box(
 						modifier = Modifier.background(color = Color(it.color).copy(alpha = 0.71f), shape = RoundedCornerShape(8.dp))
 					) {
 						Text(
-							text = "#${it.tag}",
+							text = it.tag,
 							style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
 							color = Color(it.color).getInverseBWColor(),
-							modifier = Modifier.padding(4.dp)
+							modifier = Modifier.padding(8.dp)
 						)
 					}
 				}

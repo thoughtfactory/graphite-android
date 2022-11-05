@@ -13,7 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.notification.NotePinNotification
@@ -22,9 +24,13 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.LocalEditNote
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
+import com.syncodec.graphite.utils.Authenticator
+import com.syncodec.graphite.utils.LocalAuthenticatorAction
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.tone
 
 
+@Preview
 @Composable
 fun ViewerBottomBar() {
 
@@ -33,6 +39,9 @@ fun ViewerBottomBar() {
 
 	val noteId = LocalCompositionNoteId.current
 	val editNote = LocalEditNote.current
+
+	val isVaultOpened = LocalVaultIsOpened.current
+	val onAuthenticatorAction = LocalAuthenticatorAction.current
 
 	Column(
 		modifier = Modifier
@@ -52,7 +61,7 @@ fun ViewerBottomBar() {
 				icon = R.drawable.ic_pin,
 				contentDescription = "Pin Note in Notification",
 				isChecked = NotePinNotification.isNotificationPinned(context, noteId),
-				onClick = { openDialog(NoteDialogType.NOTIFICATION_PERMISSION) }
+				onClick = { openDialog(NoteDialogType.NOTIFICATION_PERMISSION, null) }
 			)
 
 			MenuButton(
@@ -68,6 +77,13 @@ fun ViewerBottomBar() {
 			)
 
 			Spacer(modifier = Modifier.weight(1f))
+
+			MenuButton(
+				icon = R.drawable.ic_vault,
+				contentDescription = "Vault",
+				tint = if (isVaultOpened) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface,
+				containerColor = if (isVaultOpened) MaterialTheme.colorScheme.background else Color.Companion.Transparent
+			) { onAuthenticatorAction(Authenticator.AUTHENTICATE) }
 
 			MenuButton(
 				icon = R.drawable.ic_pencil,

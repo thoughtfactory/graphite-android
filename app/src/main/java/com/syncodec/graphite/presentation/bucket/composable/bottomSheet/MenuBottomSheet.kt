@@ -36,9 +36,7 @@ import com.syncodec.graphite.presentation.ui.DeleteContent
 
 
 @Composable
-fun MenuBottomSheet(
-	closeSheet: () -> Unit
-) {
+fun MenuBottomSheet() {
 	val buttonList: List<BottomSheetButtonData> = remember {
 		listOf(
 			BottomSheetButtonData(

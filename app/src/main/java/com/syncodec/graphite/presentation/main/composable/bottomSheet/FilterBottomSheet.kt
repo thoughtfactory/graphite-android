@@ -22,19 +22,15 @@ import com.syncodec.graphite.utils.ViewType
 
 
 @Composable
-fun FilterBottomSheet(
-	sortOn : SortOn,
-	sortBy : SortBy,
-	onUpdateSortOn : (SortOn) -> Unit,
-	onUpdateSortBy : (SortBy) -> Unit,
-	closeSheet : () -> Unit
-) {
+fun FilterBottomSheet() {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
+	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.TIMESTAMP)
+	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.DESCENDING)
 	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.LIST)
 
-	val sortOnStateList: List<StateData> = listOf(
+	val sortOnStateList : List<StateData> = listOf(
 		StateData(
 			title = "Title",
 			icon = R.drawable.ic_title,
@@ -52,7 +48,7 @@ fun FilterBottomSheet(
 		)
 	)
 
-	val sortByStateList: List<StateData> = listOf(
+	val sortByStateList : List<StateData> = listOf(
 		StateData(
 			title = "Ascending",
 			icon = R.drawable.ic_sort_ascending,
@@ -64,7 +60,7 @@ fun FilterBottomSheet(
 			stateTint = MaterialTheme.colorScheme.primary
 		)
 	)
-	val viewTypeStateList: List<StateData> = listOf(
+	val viewTypeStateList : List<StateData> = listOf(
 		StateData(
 			title = "List",
 			icon = R.drawable.ic_list_view,
@@ -104,7 +100,7 @@ fun FilterBottomSheet(
 			modifier = Modifier
 				.height(36.dp)
 				.padding(24.dp, 0.dp)
-		) { onUpdateSortOn(SortOn.values().getOrElse(it) { SortOn.TITLE }) }
+		) { dataStoreInstance.putSortOn(SortOn.values().getOrElse(it) { SortOn.TIMESTAMP }) }
 
 		Spacer(modifier = Modifier.height(12.dp))
 
@@ -119,7 +115,7 @@ fun FilterBottomSheet(
 			modifier = Modifier
 				.height(36.dp)
 				.padding(24.dp, 0.dp),
-		) { onUpdateSortBy(SortBy.values().getOrElse(it) { SortBy.ASCENDING }) }
+		) { dataStoreInstance.putSortBy(SortBy.values().getOrElse(it) { SortBy.DESCENDING }) }
 
 		Spacer(modifier = Modifier.height(12.dp))
 
@@ -134,9 +130,7 @@ fun FilterBottomSheet(
 			modifier = Modifier
 				.height(36.dp)
 				.padding(24.dp, 0.dp),
-		) {
-			dataStoreInstance.putViewType(ViewType.values().getOrElse(it) { ViewType.LIST })
-		}
+		) { dataStoreInstance.putViewType(ViewType.values().getOrElse(it) { ViewType.LIST }) }
 
 		LargeButton(
 			text = "Default",
@@ -145,8 +139,8 @@ fun FilterBottomSheet(
 				.fillMaxWidth()
 				.padding(24.dp)
 		) {
-			onUpdateSortOn(SortOn.TIMESTAMP)
-			onUpdateSortBy(SortBy.DESCENDING)
+			dataStoreInstance.putSortOn(SortOn.TIMESTAMP)
+			dataStoreInstance.putSortBy(SortBy.DESCENDING)
 		}
 	}
 }

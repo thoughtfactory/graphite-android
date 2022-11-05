@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.calendar.Calendar
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NotebookTimelineSpacer
@@ -108,6 +109,8 @@ private fun BottomSheetContent(
 ) {
 	val lastEntryKey = if (noteList.isNotEmpty()) noteList.last().id else null
 
+	val tagList = LocalCompositionTagList.current
+
 	LazyColumn {
 		item { Spacer(modifier = Modifier.height(16.dp)) }
 		item {
@@ -133,6 +136,7 @@ private fun BottomSheetContent(
 
 				NoteListCard(
 					id = note.id,
+					parentChapterId = note.parentChapterId,
 					timestamp = note.userTimestamp,
 					showFullTime = false,
 					isLocked = note.isLocked,
@@ -146,7 +150,9 @@ private fun BottomSheetContent(
 					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,
+					tagList = tagList.filter { it.objectIdList.contains(note.id) },
 					isVisible = true,
+					isSwipable = false,
 					selectedColor = MaterialTheme.colorScheme.surface,
 					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
 					onClick = { onClickNote(note.id) },

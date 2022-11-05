@@ -5,11 +5,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -42,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.animation.AnimatedText
+import com.syncodec.graphite.presentation.common.animation.AnimatedScrollText
 import com.syncodec.graphite.utils.DataStoreInstance
 import java.util.Calendar
 
@@ -111,7 +107,7 @@ fun YearProgressBar(
 
 				Spacer(modifier = Modifier.width(12.dp))
 
-				AnimatedText(
+				AnimatedScrollText(
 					animatedText = (progress.toFloat() * 100 / totalDays).toInt().toString(),
 					staticText = "%",
 					color = MaterialTheme.colorScheme.onBackground

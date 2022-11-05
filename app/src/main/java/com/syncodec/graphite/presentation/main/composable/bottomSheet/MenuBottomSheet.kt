@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
@@ -20,33 +19,39 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
-import com.syncodec.graphite.presentation.main.MainActivity
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.settings.SettingsActivity
+import com.syncodec.graphite.presentation.tags.TagsActivity
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.FunctionPreviewParameter
 
 
 @Preview
 @Composable
-fun MenuBottomSheet(
-	@PreviewParameter(FunctionPreviewParameter::class) closeSheet : () -> Unit
-) {
-	val activity : MainActivity = LocalContext.current as MainActivity
+fun MenuBottomSheet() {
+	val context = LocalContext.current
+
+	val closeSheet = LocalCompositionCloseBottomSheet.current
 
 	val buttonList : List<BottomSheetButtonData> = listOf(
 		BottomSheetButtonData(
 			title = "Attachments",
 			icon = R.drawable.ic_gallery
 		) {
-			Intent(activity, AttachmentActivity::class.java).apply {
+			closeSheet()
+			Intent(context, AttachmentActivity::class.java).apply {
 				putExtra(Extra.Companion.Constant.SHOW_ALL_ATTACHMENTS.name, true)
-
-				activity.startActivity(this)
+				context.startActivity(this)
 			}
 		},
-		BottomSheetButtonData(title = "Tags", icon = R.drawable.ic_hashtag) {},
+		BottomSheetButtonData(title = "Tags", icon = R.drawable.ic_hashtag) {
+			closeSheet()
+			Intent(context, TagsActivity::class.java).apply {
+				context.startActivity(this)
+			}
+		},
 		BottomSheetButtonData(title = "Settings", icon = R.drawable.ic_settings) {
-			activity.startActivity(Intent(activity, SettingsActivity::class.java))
+			closeSheet()
+			context.startActivity(Intent(context, SettingsActivity::class.java))
 		},
 	)
 
@@ -68,5 +73,4 @@ fun MenuBottomSheet(
 
 		Spacer(modifier = Modifier.height(32.dp))
 	}
-
 }

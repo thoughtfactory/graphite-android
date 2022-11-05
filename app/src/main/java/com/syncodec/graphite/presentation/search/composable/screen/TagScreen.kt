@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.search.composable.screen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 
 
 @Composable
@@ -33,8 +35,11 @@ fun TagScreen(
 	tagList : List<TagObject>,
 	onClickFavorite : () -> Unit,
 	onClickWithAttachments: () -> Unit,
+	onClickLocked: () -> Unit,
 	onClickTag : (TagObject) -> Unit,
 ) {
+	val isVaultOpened = LocalVaultIsOpened.current
+
 	LazyColumn(
 		modifier = Modifier.fillMaxSize(),
 		horizontalAlignment = Alignment.CenterHorizontally
@@ -42,8 +47,9 @@ fun TagScreen(
 		item {
 			ListItem(
 				title = "Favourite",
-				icon = R.drawable.ic_favourite
-			) { onClickFavorite() }
+				icon = R.drawable.ic_favourite,
+				onClick = onClickFavorite
+			)
 		}
 		item {
 			Spacer(
@@ -53,11 +59,13 @@ fun TagScreen(
 					.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f))
 			)
 		}
+
 		item {
 			ListItem(
 				title = "With attachments",
-				icon = R.drawable.ic_attachment
-			) { onClickWithAttachments() }
+				icon = R.drawable.ic_attachment,
+				onClick = onClickWithAttachments
+			)
 		}
 		item {
 			Spacer(
@@ -67,6 +75,28 @@ fun TagScreen(
 					.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f))
 			)
 		}
+
+		item{
+			AnimatedVisibility(visible = isVaultOpened) {
+				Column(
+					horizontalAlignment = Alignment.CenterHorizontally,
+					modifier = Modifier.fillMaxWidth()
+				) {
+					ListItem(
+						title = "Locked Notes",
+						icon = R.drawable.ic_attachment,
+						onClick = onClickLocked
+					)
+					Spacer(
+						modifier = Modifier
+							.fillMaxWidth(0.71f)
+							.height(2.dp)
+							.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f))
+					)
+				}
+			}
+		}
+
 		if (tagList.isNotEmpty()) {
 			item {
 				Text(
@@ -129,7 +159,7 @@ private fun ListItem(
 			Text(
 				text = title,
 				color = MaterialTheme.colorScheme.onBackground,
-				fontWeight = FontWeight.Bold
+				style = MaterialTheme.typography.bodyMedium,
 			)
 
 			Spacer(modifier = Modifier.weight(1f))
@@ -137,9 +167,9 @@ private fun ListItem(
 			color?.let {
 				Box(
 					modifier = Modifier
-						.width(64.dp)
-						.height(8.dp)
-						.background(it, RoundedCornerShape(50))
+						.width(80.dp)
+						.height(12.dp)
+						.background(it, RoundedCornerShape(25))
 				)
 			}
 			Spacer(modifier = Modifier.width(16.dp))

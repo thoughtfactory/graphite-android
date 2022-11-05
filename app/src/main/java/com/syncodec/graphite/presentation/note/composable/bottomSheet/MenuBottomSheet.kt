@@ -29,7 +29,6 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseB
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteObject
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.note.composable.LocalDeleteNote
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.presentation.raw.RawActivity
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
@@ -39,9 +38,7 @@ import com.syncodec.graphite.utils.Extra
 
 
 @Composable
-fun MenuBottomSheet(
-	isViewingNote : Boolean,
-) {
+fun MenuBottomSheet() {
 	val context = LocalContext.current
 	val noteId = LocalCompositionNoteId.current
 	val noteObject = LocalCompositionNoteObject.current
@@ -71,7 +68,7 @@ fun MenuBottomSheet(
 			contentColor = Color.DeleteContent,
 		) {
 			closeBottomSheet()
-			openDialog(NoteDialogType.DELETE)
+			openDialog(NoteDialogType.DELETE, null)
 		  },
 		BottomSheetButtonData(title = "Copy", icon = R.drawable.ic_copy) {},
 		BottomSheetButtonData(title = "Duplicate", icon = R.drawable.ic_note) {},

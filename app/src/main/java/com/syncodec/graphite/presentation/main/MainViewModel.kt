@@ -15,12 +15,12 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
-import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.encodeBase64
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.ObjectId
@@ -47,22 +47,24 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	val noteList : SnapshotStateList<NoteObjectLite> = mutableStateListOf()
 	val bucketObjectList : SnapshotStateList<BucketObject> = mutableStateListOf()
 
-	val refresher: MutableStateFlow<Int> = MutableStateFlow(0)
+	val tagList: SnapshotStateList<TagObject> = mutableStateListOf()
+
+	val refresher : MutableStateFlow<Int> = MutableStateFlow(0)
 	private var _refresher = 0
-	private var refreshCoroutine: CoroutineScope? = null
+	private var refreshCoroutine : CoroutineScope? = null
 
 	val isNoteRefreshing : MutableState<Boolean> = mutableStateOf(true)
 	val isBucketRefreshing : MutableState<Boolean> = mutableStateOf(true)
 	val isNotebookRefreshing : MutableState<Boolean> = mutableStateOf(true)
 
-	val isSelected: MutableState<Boolean> = mutableStateOf(false)
-	val selectedObjectIdList: SnapshotStateList<ObjectId> = mutableStateListOf()
+	val isSelected : MutableState<Boolean> = mutableStateOf(false)
+	val selectedObjectIdList : SnapshotStateList<ObjectId> = mutableStateListOf()
 
-	val showDeleteDialog: MutableState<Boolean> = mutableStateOf(false)
-	val showExitDialog: MutableState<Boolean> = mutableStateOf(false)
+	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
+	val showExitDialog : MutableState<Boolean> = mutableStateOf(false)
 
 	init {
-		refresher.tryEmit(_refresher+1)
+		refresher.tryEmit(_refresher + 1)
 		viewModelScope.launch(Dispatchers.IO) {
 			refresher.collect {
 				refreshCoroutine?.cancel()
@@ -106,15 +108,20 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getBucketList()
 		}
+
+		viewModelScope.launch(Dispatchers.IO) {
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			getTagList()
+		}
 	}
 
 	private suspend fun getNoteList() {
 		try {
-			repository2.getDefaultNotebookId().collect { id ->
+			repository2.getDefaultChapterId().collect { id ->
 				withContext(Dispatchers.Main) { defaultNotebookId.value = id }
 				if (id != null) {
 					try {
-						repository2.getNotebookAsFlow(id).collect { notebook ->
+						repository2.getChapterFromIdAsFlow(id).collect { notebook ->
 							withContext(Dispatchers.Main) {
 								chapterObject.value = notebook
 								noteList.clear()
@@ -122,31 +129,31 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 								isNoteRefreshing.value = false
 							}
 						}
-					} catch(e: RealmNotInitializedException) {
+					} catch (e : RealmNotInitializedException) {
 						e.printStackTrace()
-					} catch (e: Exception) {
+					} catch (e : Exception) {
 						e.printStackTrace()
 					}
 				}
 			}
-		} catch(e: RealmNotInitializedException) {
+		} catch (e : RealmNotInitializedException) {
 			e.printStackTrace()
-		} catch (e: Exception) {
+		} catch (e : Exception) {
 			e.printStackTrace()
 		}
 	}
 
 	private suspend fun getNotebookList() {
 		try {
-			repository2.getAllNotebookAsFlow().collect { _notebookList ->
+			repository2.getChapterWithParentIdAsFlow(null).collect { _notebookList ->
 				withContext(Dispatchers.Main) {
 					notebookList.clear()
 					notebookList.addAll(_notebookList)
 					isNotebookRefreshing.value = false
 				}
 			}
-		} catch(e: RealmNotInitializedException) {
-		} catch (e: Exception) {
+		} catch (e : RealmNotInitializedException) {
+		} catch (e : Exception) {
 		}
 	}
 
@@ -159,12 +166,24 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 					isBucketRefreshing.value = false
 				}
 			}
-		} catch(e: RealmNotInitializedException) {
+		} catch (e : RealmNotInitializedException) {
 
-		} catch (e: Exception) {
+		} catch (e : Exception) {
 		}
 	}
 
+	private suspend fun getTagList() {
+		try {
+			repository2.getAllTagAsFlow().collect { _tagList ->
+				withContext(Dispatchers.Main) {
+					tagList.clear()
+					tagList.addAll(_tagList)
+				}
+			}
+		} catch (e : RealmNotInitializedException) {
+		} catch (e : Exception) {
+		}
+	}
 
 	var filterInclusivityState : MutableState<Int> = mutableStateOf(0)
 	var sortOn : MutableState<SortOn> = mutableStateOf(SortOn.TIMESTAMP)
@@ -198,6 +217,7 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 			this.description = description
 			this.bucketType = bucketType.name
 
+			repository2.putBucket(this) { _, _ -> }
 //			Repository.putBucket(this)
 		}
 	}
@@ -229,7 +249,8 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 								obj.optString("quote").repeat(500)
 							}\"}]}]}"
 
-//						defaultNotebookId.value?.let { Repository.putNote(it, this){} }
+						this.parentChapterId = defaultNotebookId.value
+						repository2.putNote(this) { _, _ -> }
 						if (i % 100 == 0) {
 							Log.i("npr71", "$i/${jsonArray.length()}")
 						}

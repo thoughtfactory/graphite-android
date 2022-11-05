@@ -12,7 +12,10 @@ import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.search.SearchActivity
+import com.syncodec.graphite.presentation.search.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.search.composable.bar.TopBar
+import com.syncodec.graphite.presentation.search.composable.dialog.Dialog
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,9 +26,14 @@ fun SearchScreen(
 	visibleNote: List<NoteObject>,
 	tag: TagObject?,
 	query: String?,
+	onClickBack: () -> Unit
 ) {
 
-	val activity : SearchActivity = LocalContext.current as SearchActivity
+	val showFavourite = SearchActivity.onShowFavourite.current
+	val showWithAttachment = SearchActivity.onShowWithAttachment.current
+	val showLocked = SearchActivity.onShowLocked.current
+	val onShowTag = SearchActivity.onShowTag.current
+	val onShowQuery = SearchActivity.onShowQuery.current
 
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -33,10 +41,11 @@ fun SearchScreen(
 			TopBar(
 				tag = tag?.tag,
 				query = query,
-				onClickBack = { activity.onBackPressed() },
-				onHitSearch = {  }
+				onClickBack = onClickBack,
+				onHitSearch = onShowQuery
 			)
-		}
+		},
+		bottomBar = { BottomBar() }
 	) {
 		Box(
 			modifier = Modifier
@@ -51,12 +60,15 @@ fun SearchScreen(
 				} else {
 					TagScreen(
 						tagList = tagList,
-						onClickFavorite = { },
-						onClickWithAttachments = {  },
-						onClickTag = {  }
+						onClickFavorite = showFavourite,
+						onClickWithAttachments = showWithAttachment,
+						onClickLocked = showLocked,
+						onClickTag = onShowTag
 					)
 				}
 			}
 		}
 	}
+
+	Dialog()
 }

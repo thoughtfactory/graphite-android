@@ -1,8 +1,8 @@
 package com.syncodec.graphite.presentation.note
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
-import android.window.OnBackInvokedDispatcher
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -20,7 +20,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.core.os.BuildCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.common.printer.Printer
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
@@ -47,14 +46,23 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionUserTimestamp
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionLatLng
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteIdList
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionOnMoveChapter
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionOnSelectChapter
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapter
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionSelectChapterList
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionSelectChapterPath
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowChapterSelectionDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowDiscardDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowLocationPickerDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowNotificationPermissionDialog
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionTagList
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionTagListBuffer
 import com.syncodec.graphite.presentation.note.composable.LocalDeleteNote
 import com.syncodec.graphite.presentation.note.composable.LocalDiscardChanges
 import com.syncodec.graphite.presentation.note.composable.LocalEditNote
 import com.syncodec.graphite.presentation.note.composable.LocalGetNote
+import com.syncodec.graphite.presentation.note.composable.LocalOnClickTag
 import com.syncodec.graphite.presentation.note.composable.LocalSaveNote
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.presentation.note.composable.bottomSheet.NoteBottomSheetType
@@ -68,6 +76,7 @@ import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 
 @AndroidEntryPoint
@@ -114,8 +123,14 @@ class NoteActivity : ComponentActivity() {
 				richTextEditor.setOnSaveData(object : RichTextEditor.OnSaveDataListener {
 					override fun onSaveData(data : String) {
 						when (isNew) {
-							true -> viewModel.putNote(data = data)
-							false -> viewModel.putNote(data = data)
+							true -> {
+								viewModel.setContent(data)
+								viewModel.putNote()
+							}
+							false -> {
+								viewModel.setContent(data)
+								viewModel.putNote()
+							}
 							null -> null
 						}
 					}
@@ -152,12 +167,21 @@ class NoteActivity : ComponentActivity() {
 				val isFavourite by viewModel.isFavourite
 				val isLocked by viewModel.isLocked
 
+				val chapterObjectLite by viewModel.parentChapterObject
+
 				val attachmentList = viewModel.attachmentListBuffer
 
 				val locationState by viewModel.locationState
 
+				val tagList = viewModel.tagList
+				val tagListBuffer = viewModel.tagListBuffer
+
+				val selectChapterList = viewModel.selectChapterList
+				val selectChapterPath = viewModel.selectChapterPath
+
 				var showLocationPickerDialog by viewModel.showLocationPickerDialog
 				var showNotificationPermissionDialog by viewModel.showNotificationPermissionDialog
+				var showChapterSelectionDialog by viewModel.showChapterSelectionDialog
 				var showDiscardDialog by viewModel.showDiscardDialog
 				var showDeleteDialog by viewModel.showDeleteDialog
 
@@ -171,12 +195,21 @@ class NoteActivity : ComponentActivity() {
 					scope.launch { modalBottomSheetState.hide() }
 				}
 
-				fun openDialog(_noteDialogType : NoteDialogType) {
+				fun openDialog(_noteDialogType : NoteDialogType, data : Any? = null) {
 					when (_noteDialogType) {
 						NoteDialogType.LOCATION_PICKER -> showLocationPickerDialog = true
 						NoteDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = true
 						NoteDialogType.DISCARD -> showDiscardDialog = true
 						NoteDialogType.DELETE -> showDeleteDialog = true
+						NoteDialogType.CHAPTER_SELECTION -> {
+							try {
+								viewModel.getSelectChapter(data as ObjectId)
+								showChapterSelectionDialog = true
+							} catch (e : Exception) {
+								e.printStackTrace()
+							}
+						}
+
 						else -> null
 					}
 				}
@@ -187,6 +220,7 @@ class NoteActivity : ComponentActivity() {
 						NoteDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = false
 						NoteDialogType.DISCARD -> showDiscardDialog = false
 						NoteDialogType.DELETE -> showDeleteDialog = false
+						NoteDialogType.CHAPTER_SELECTION -> showChapterSelectionDialog = false
 						else -> null
 					}
 				}
@@ -202,7 +236,9 @@ class NoteActivity : ComponentActivity() {
 				onBackPressedDispatcher.addCallback(
 					this, object : OnBackPressedCallback(true) {
 						override fun handleOnBackPressed() {
-							if (showNotificationPermissionDialog || showLocationPickerDialog || showDeleteDialog) {
+							if (showChapterSelectionDialog) {
+								viewModel.getSelectChapter(selectChapterPath.getOrNull(1)?.id)
+							} else if (showNotificationPermissionDialog || showLocationPickerDialog || showDeleteDialog) {
 								closeDialog(NoteDialogType.LOCATION_PICKER)
 								closeDialog(NoteDialogType.NOTIFICATION_PERMISSION)
 								closeDialog(NoteDialogType.DELETE)
@@ -238,19 +274,33 @@ class NoteActivity : ComponentActivity() {
 					LocalCompositionAddress provides address,
 					LocalCompositionIsLocked provides isLocked,
 					LocalCompositionIsFavourite provides isFavourite,
+					LocalCompositionParentChapter provides chapterObjectLite,
 					LocalCompositionAttachmentList provides attachmentList,
 					LocalCompositionLocationState provides locationState,
+					LocalCompositionTagList provides tagList,
+					LocalCompositionTagListBuffer provides tagListBuffer,
+					LocalCompositionSelectChapterList provides selectChapterList,
+					LocalCompositionSelectChapterPath provides selectChapterPath,
+					LocalCompositionOnSelectChapter provides { viewModel.getSelectChapter(it) },
+					LocalCompositionOnMoveChapter provides {
+						val id = selectChapterPath.firstOrNull()
+						if (id == null) Toast.makeText(this, "Please select a chapter", Toast.LENGTH_SHORT).show()
+						else viewModel.moveNoteToChapter(id.id)
+						closeDialog(NoteDialogType.CHAPTER_SELECTION)
+					},
 					LocalCompositionOpenBottomSheet provides ::openSheet,
 					LocalCompositionCloseBottomSheet provides ::closeSheet,
-					LocalCompositionOpenDialog provides ::openDialog,
+					LocalCompositionOpenDialog provides { _noteDialogType, data -> openDialog(_noteDialogType, data) },
 					LocalCompositionCloseDialog provides ::closeDialog,
 					LocalCompositionShowLocationPickerDialog provides showLocationPickerDialog,
 					LocalCompositionShowNotificationPermissionDialog provides showNotificationPermissionDialog,
+					LocalCompositionShowChapterSelectionDialog provides showChapterSelectionDialog,
 					LocalCompositionShowDiscardDialog provides showDiscardDialog,
 					LocalCompositionShowDeleteDialog provides showDeleteDialog,
 					LocalSaveNote provides ::onSave,
 					LocalGetNote provides this.viewModel::getNote,
 					LocalEditNote provides this.viewModel::editNote,
+					LocalOnClickTag provides this.viewModel::onConnectTag,
 					LocalDiscardChanges provides this.viewModel::discardChanges,
 					LocalDeleteNote provides this.viewModel::deleteNote,
 				) {

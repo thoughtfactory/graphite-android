@@ -23,6 +23,7 @@ class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteOb
 			System.currentTimeMillis() to listOf(
 				NoteObjectLite(
 					id = ObjectId.create(),
+					parentChapterId = null,
 					createdTimestamp = System.currentTimeMillis(),
 					modifiedTimestamp = System.currentTimeMillis(),
 					userTimestamp = System.currentTimeMillis(),

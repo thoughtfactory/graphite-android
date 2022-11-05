@@ -10,6 +10,7 @@ enum class NoteBottomSheetType {
 	METADATA,
 	LOCATION,
 	ATTACHMENT,
+	TAG
 }
 
 @Composable
@@ -22,7 +23,7 @@ fun SheetLayout(
 	onReloadLocation : () -> Unit,
 ) {
 	when (bottomSheetType) {
-		NoteBottomSheetType.MENU -> MenuBottomSheet(false)
+		NoteBottomSheetType.MENU -> MenuBottomSheet()
 		NoteBottomSheetType.METADATA -> MetadataBottomSheet(onUpdateTitle = onUpdateTitle)
 		NoteBottomSheetType.LOCATION -> LocationBottomSheet(
 			onRemoveLocation = onRemoveLocation,
@@ -32,5 +33,6 @@ fun SheetLayout(
 			onAddAttachmentToBuffer = onAddAttachmentToBuffer,
 			onRemoveAttachment = onRemoveAttachment,
 		)
+		NoteBottomSheetType.TAG -> TagBottomSheet()
 	}
 }

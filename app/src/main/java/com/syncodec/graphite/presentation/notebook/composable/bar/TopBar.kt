@@ -8,30 +8,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
-import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.Navigator.Navigator
-import io.realm.kotlin.types.ObjectId
+import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.NotebookBottomSheetType
+import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.navigator.Navigator
 
 
+@Preview
 @Composable
-fun TopBar(
-	title: String?,
-	rootChapterId: ObjectId?,
-	color: Color,
-	isLocked: Boolean,
-	isFavourite: Boolean,
-	chapterObjectLiteList: List<ChapterObjectLite>,
-	onClickLock: () -> Unit,
-	onClickFavourite: () -> Unit,
-	onClickMenu: () -> Unit,
-	onClickNavigator: (ObjectId) -> Unit,
-) {
+fun TopBar() {
+
+	val defaultChapterId = NotebookActivity.LocalDefaultChapterId.current
+
+	val title = NotebookActivity.LocalTitle.current
+	val isFavourite = NotebookActivity.LocalIsFavourite.current
+	val isLocked = NotebookActivity.LocalIsLocked.current
+
+	val getChapter = NotebookActivity.LocalGetChapter.current
+	val parentChapterObjectList = NotebookActivity.LocalParentChapterObjectList.current
+
+	val onToggleFavourite = NotebookActivity.LocalOnToggleFavourite.current
+	val onToggleLock = NotebookActivity.LocalOnToggleLock.current
+	val onBackPressed = NotebookActivity.LocalOnBackPressed.current
+
+	val onOpenSheet = NotebookActivity.LocalOpenBottomSheet.current
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -39,17 +43,18 @@ fun TopBar(
 	) {
 		Bar(
 			title = title ?: "",
-			isLocked = isLocked,
-			isFavourite = isFavourite,
-			onClickLock = onClickLock,
-			onClickFavourite = onClickFavourite
+			isLocked = isLocked ?: false,
+			isFavourite = isFavourite ?: false,
+			onClickLock = onToggleLock,
+			onClickFavourite = onToggleFavourite,
+			onClickFilter = { onOpenSheet(NotebookBottomSheetType.FILTER) },
+			onBackPressed = onBackPressed
 		)
 
 		Navigator(
-			chapterObjectLiteList = chapterObjectLiteList,
-			rootChapterId = rootChapterId,
-			color = color,
-			onClick = onClickNavigator
+			defaultChapterId = defaultChapterId,
+			chapterObjectLiteList = parentChapterObjectList,
+			onClick = getChapter
 		)
 	}
 }
@@ -62,18 +67,17 @@ private fun Bar(
 	isFavourite: Boolean,
 	onClickLock: () -> Unit,
 	onClickFavourite: () -> Unit,
+	onClickFilter: () -> Unit,
+	onBackPressed: () -> Unit
 ) {
-	val activity: NotebookActivity = LocalContext.current as NotebookActivity
-
 	TopAppBar(
 		navigationIcon = {
 			MenuButton(
 				icon = R.drawable.ic_back,
 				contentDescription = "Back",
-				tint = MaterialTheme.colorScheme.onBackground
-			) {
-				activity.onBackPressed()
-			}
+				tint = MaterialTheme.colorScheme.onBackground,
+				onClick = onBackPressed
+			)
 		},
 		title = {
 			Crossfade(
@@ -88,6 +92,12 @@ private fun Bar(
 			}
 		},
 		actions = {
+			MenuButton(
+				icon = R.drawable.ic_filter,
+				tint = MaterialTheme.colorScheme.onBackground,
+				onClick = onClickFilter
+			)
+
 			MenuButton(
 				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
 				contentDescription = if (isLocked) "Locked" else "Not locked",

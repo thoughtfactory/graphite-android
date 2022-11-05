@@ -88,7 +88,7 @@ fun LocationBottomSheet(
 			address = address,
 			onRemoveLocation = onRemoveLocation,
 			onReloadLocation = onReloadLocation
-		) { openDialog(NoteDialogType.LOCATION_PICKER) }
+		) { openDialog(NoteDialogType.LOCATION_PICKER, null) }
 
 		Spacer(modifier = Modifier.height(32.dp))
 	}

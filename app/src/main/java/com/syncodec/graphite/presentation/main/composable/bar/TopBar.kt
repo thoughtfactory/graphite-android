@@ -21,6 +21,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSelected
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
@@ -28,6 +29,9 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottom
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
+import com.syncodec.graphite.utils.Authenticator
+import com.syncodec.graphite.utils.LocalAuthenticatorAction
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 
 
 @Composable
@@ -81,6 +85,10 @@ private fun Bar(
 	val isSelected = LocalCompositionIsSelected.current
 	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
 
+	val onSelect = LocalCompositionOnSelected.current
+
+	val isVaultOpened = LocalVaultIsOpened.current
+
 	val openDialog = LocalCompositionOpenDialog.current
 
 	val containerColor by animateColorAsState(
@@ -93,9 +101,23 @@ private fun Bar(
 		}
 	)
 
-	Crossfade(targetState = isSelected) {
+	val onAuthenticatorAction = LocalAuthenticatorAction.current
+
+	Crossfade(
+		targetState = isSelected,
+		animationSpec = tween(300)
+	) {
 		if (it) {
 			TopAppBar(
+				navigationIcon = {
+					MenuButton(
+						icon = R.drawable.ic_close,
+						tint = MaterialTheme.colorScheme.onBackground,
+					) {
+						onSelect(false)
+						selectedObjectIdList.clear()
+					}
+				},
 				title = {
 					Text(
 						text = if (selectedObjectIdList.size == 0) "Select items to delete" else if (selectedObjectIdList.size == 1) "1 item selected" else "${selectedObjectIdList.size} items selected",
@@ -121,9 +143,7 @@ private fun Bar(
 					MenuButton(
 						icon = R.drawable.ic_menu,
 						tint = MaterialTheme.colorScheme.onBackground,
-					) {
-						openSheet(MainBottomSheetType.MENU)
-					}
+					) { openSheet(MainBottomSheetType.MENU) }
 				},
 				title = {
 					Text(
@@ -140,8 +160,9 @@ private fun Bar(
 				actions = {
 					MenuButton(
 						icon = R.drawable.ic_vault,
-						tint = MaterialTheme.colorScheme.onBackground,
-						onClick = {}
+						tint = if (isVaultOpened) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+						containerColor = if (isVaultOpened) MaterialTheme.colorScheme.primary else Color.Transparent,
+						onClick = { onAuthenticatorAction(Authenticator.AUTHENTICATE) }
 					)
 					MenuButton(
 						icon = R.drawable.ic_search,
@@ -161,6 +182,7 @@ private fun ComponentType(
 	onStateChange : (Int) -> Unit
 ) {
 	val openSheet = LocalCompositionOpenBottomSheet.current
+
 	Column(
 		modifier = Modifier.fillMaxWidth(),
 		verticalArrangement = Arrangement.Center,
@@ -198,9 +220,8 @@ private fun ComponentType(
 			MenuButton(
 				icon = R.drawable.ic_filter,
 				tint = MaterialTheme.colorScheme.onBackground,
-			) {
-				openSheet(MainBottomSheetType.FILTER)
-			}
+			) { openSheet(MainBottomSheetType.FILTER) }
+
 			Spacer(modifier = Modifier.width(4.dp))
 		}
 		Spacer(modifier = Modifier.height(6.dp))

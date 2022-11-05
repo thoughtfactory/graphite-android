@@ -1,6 +1,13 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -21,27 +28,47 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketResreshing
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
+import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.bucketTypeToIcon
 import io.realm.kotlin.types.ObjectId
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun BucketScreen(
-	bucketList: List<BucketObject>?,
-	onClickFab: () -> Unit,
-	onClickBucket: (ObjectId) -> Unit,
-	onLongClickBucket: (ObjectId) -> Unit
+	bucketList : List<BucketObject>,
+	onClickFab : () -> Unit,
+	onClickBucket : (ObjectId) -> Unit,
+	onLongClickBucket : (ObjectId) -> Unit
 ) {
+	val isBucketRefreshing = LocalCompositionIsBucketResreshing.current
+	val onRefresh = LocalCompositionOnRefresh.current
+
+	val isSelected = LocalCompositionIsSelected.current
+	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
-			BucketFloatingActionButton(isExpanded = true, onClick = onClickFab)
+			AnimatedVisibility(
+				visible = ! isSelected,
+				enter = fadeIn(tween(300)) + scaleIn(tween(300)),
+				exit = fadeOut(tween(300)) + scaleOut(tween(300))
+			) {
+				BucketFloatingActionButton(isExpanded = true, onClick = onClickFab)
+			}
 		}
 	) {
 		Box(
@@ -49,21 +76,32 @@ fun BucketScreen(
 				.fillMaxSize()
 				.padding(it)
 		) {
-			if (bucketList.isNullOrEmpty()) {
+			if (bucketList.isEmpty()) {
 				NoBucketCard()
 			} else {
-				LazyVerticalGrid(
-					columns = GridCells.Adaptive(minSize = 144.dp),
-					modifier = Modifier
-						.padding(4.dp)
-						.fillMaxSize(),
+				SwipeRefresh(
+					state = rememberSwipeRefreshState(isRefreshing = isBucketRefreshing == true),
+					onRefresh = onRefresh
 				) {
-					bucketList.forEach {
-						item {
-							BucketCard(
-								bucket = it,
-								isSelected = false,
-							) { onClickBucket(it.id) }
+					LazyVerticalGrid(
+						columns = GridCells.Adaptive(minSize = 144.dp),
+						modifier = Modifier
+							.padding(4.dp)
+							.fillMaxSize(),
+					) {
+						bucketList.forEach {
+							item {
+								BucketCard(
+									title = it.title,
+									bucketSize = it.bucketItemList.size,
+									bucketType = it.bucketType.let { BucketType.valueOf(it) },
+									isLocked = it.isLocked,
+									isFavourite = it.isFavourite,
+									isSelected = it.id in selectedObjectIdList,
+									onClick = { onClickBucket(it.id) },
+									onLongClick = { onLongClickBucket(it.id) }
+								)
+							}
 						}
 					}
 				}
@@ -113,9 +151,14 @@ private fun NoBucketCard() {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BucketCard(
-	bucket: BucketObject,
-	isSelected: Boolean,
-	onClick: () -> Unit
+	title : String?,
+	bucketSize : Int,
+	bucketType : BucketType,
+	isLocked: Boolean,
+	isFavourite: Boolean,
+	isSelected : Boolean,
+	onClick : () -> Unit,
+	onLongClick : () -> Unit
 ) {
 	val containerColor by animateColorAsState(
 		if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent
@@ -131,8 +174,8 @@ private fun BucketCard(
 			.padding(4.dp)
 			.clip(RoundedCornerShape(4.dp, 4.dp, 16.dp, 16.dp))
 			.combinedClickable(
-				onClick = { onClick() },
-				onLongClick = { }
+				onClick = onClick,
+				onLongClick = onLongClick
 			),
 	) {
 		Column(
@@ -144,28 +187,65 @@ private fun BucketCard(
 			horizontalAlignment = Alignment.Start
 		) {
 			Row(
-				horizontalArrangement = Arrangement.SpaceBetween,
 				verticalAlignment = Alignment.CenterVertically,
 				modifier = Modifier.fillMaxWidth()
 			) {
 				Icon(
-					painter = painterResource(id = bucketTypeToIcon[BucketType.valueOf(bucket.bucketType)]!!),
+					painter = painterResource(id = bucketTypeToIcon.getOrElse(bucketType) { R.drawable.ic_bucket }),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.size(24.dp)
 				)
+				Spacer(modifier = Modifier.weight(1f))
+				if (isFavourite) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_favourite),
+						contentDescription = "Favourite",
+						tint = Color.FavouriteContainer,
+						modifier = Modifier.requiredSize(14.dp)
+					)
+					Spacer(modifier = Modifier.width(2.dp))
+					Text(
+						text = "·",
+						style = MaterialTheme.typography.bodyMedium,
+						color = MaterialTheme.colorScheme.onBackground,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						modifier = Modifier
+					)
+					Spacer(modifier = Modifier.width(2.dp))
+				}
+				if (isLocked) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_lock_close),
+						contentDescription = "Locked",
+						tint = Color.LockClosedContainer,
+						modifier = Modifier.requiredSize(14.dp)
+					)
+					Spacer(modifier = Modifier.width(2.dp))
+					Text(
+						text = "·",
+						style = MaterialTheme.typography.bodyMedium,
+						color = MaterialTheme.colorScheme.onBackground,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						modifier = Modifier
+					)
+					Spacer(modifier = Modifier.width(2.dp))
+				}
+
 				Text(
-					text = "${bucket.bucketItemList.size}",
+					text = "$bucketSize",
 					style = MaterialTheme.typography.bodyMedium,
 					color = MaterialTheme.colorScheme.onBackground,
 				)
 			}
 			Text(
-				text = bucket.title ?: "Untitled",
+				text = title ?: "Untitled",
 				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onBackground,
 				fontWeight = FontWeight.Bold,
-				fontStyle = if (bucket.title.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
+				fontStyle = if (title.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
 			)
 		}
 	}

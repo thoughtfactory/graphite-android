@@ -17,7 +17,7 @@ enum class ShowType {
 	TV
 }
 
-class TMDbApi {
+object TMDbApi {
 	val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	private val client = OkHttpClient.Builder().build()

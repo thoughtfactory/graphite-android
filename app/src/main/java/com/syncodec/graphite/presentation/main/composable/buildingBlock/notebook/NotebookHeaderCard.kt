@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 
@@ -48,7 +49,8 @@ fun NotebookHeaderCard(
 			Text(
 				text = title,
 				color = MaterialTheme.colorScheme.onBackground,
-				style = MaterialTheme.typography.titleLarge,
+				style = MaterialTheme.typography.titleMedium,
+				fontWeight = FontWeight.Bold
 			)
 
 			Spacer(modifier = Modifier.weight(1f))

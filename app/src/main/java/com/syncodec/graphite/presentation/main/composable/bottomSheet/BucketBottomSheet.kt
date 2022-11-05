@@ -41,6 +41,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
@@ -49,6 +50,8 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyText
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.button.LargeButton
 import com.syncodec.graphite.presentation.common.text.LargeTextField
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionPutBucket
 import com.syncodec.graphite.utils.bucketItemNameMap
 import com.syncodec.graphite.utils.bucketTypeToIcon
 
@@ -61,12 +64,14 @@ private data class BucketButtonData(
 )
 
 @OptIn(ExperimentalComposeUiApi::class)
+@Preview
 @Composable
-fun BucketBottomSheet(
-	putBucket:(String?, String?, BucketType) -> Unit,
-	closeSheet: () -> Unit
-) {
+fun BucketBottomSheet() {
 	val context = LocalContext.current
+
+	val closeSheet = LocalCompositionCloseBottomSheet.current
+
+	val putBucket = LocalCompositionPutBucket.current
 
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -208,7 +213,7 @@ private fun BucketButton(
 		OutlinedCard(
 			shape = RoundedCornerShape(12.dp),
 			border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-			colors = CardDefaults.outlinedCardColors(containerColor = containerColor,),
+			colors = CardDefaults.outlinedCardColors(containerColor = containerColor),
 			modifier = Modifier
 				.width(160.dp)
 				.height(96.dp)

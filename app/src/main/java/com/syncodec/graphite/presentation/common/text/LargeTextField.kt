@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -40,17 +41,17 @@ fun LargeTextField(
 	placeholder: String,
 	isFocused: Boolean,
 	focusRequester: FocusRequester = FocusRequester(),
-	onFocusChanged: (Boolean) -> Unit,
+	onFocusChanged: (Boolean) -> Unit = {},
 	keyboardOptions: KeyboardOptions? = null,
 	keyboardActions: KeyboardActions? = null,
+	containerColor: Color = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
+	contentColor: Color = MaterialTheme.colorScheme.onBackground,
 	onValueChanged: (String) -> Unit
 ) {
-	val textColor = MaterialTheme.colorScheme.onBackground
-
 	Row(
 		modifier = modifier
 			.clip(RoundedCornerShape(12.dp))
-			.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f)),
+			.background(containerColor),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Spacer(modifier = Modifier.width(12.dp))
@@ -71,7 +72,7 @@ fun LargeTextField(
 				TransformedText(
 					AnnotatedString(
 						text.toString(),
-						SpanStyle(color = textColor, fontWeight = FontWeight.Bold)
+						SpanStyle(color = contentColor, fontWeight = FontWeight.Bold)
 					),
 					OffsetMapping.Identity
 				)
@@ -86,7 +87,7 @@ fun LargeTextField(
 						Text(
 							text = it,
 							style = MaterialTheme.typography.bodyMedium,
-							color = textColor.copy(alpha = 0.31f),
+							color = contentColor.copy(alpha = 0.31f),
 						)
 					}
 				}

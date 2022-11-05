@@ -2,10 +2,13 @@ package com.syncodec.graphite.presentation.main.composable
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import io.realm.kotlin.types.ObjectId
 
+val LocalCompositionTagList = compositionLocalOf<SnapshotStateList<TagObject>> { error("CompositionLocal not found") }
 
 val LocalCompositionIsNoteResreshing = compositionLocalOf<Boolean> { error("No data provided") }
 val LocalCompositionIsBucketResreshing = compositionLocalOf<Boolean?> { error("No data provided") }
@@ -24,5 +27,9 @@ val LocalCompositionIsSelected = compositionLocalOf<Boolean> { error("No data pr
 val LocalCompositionOnSelected = compositionLocalOf<(Boolean) -> Unit> { error("No data provided") }
 val LocalCompositionSelectedObjectIdList = compositionLocalOf<SnapshotStateList<ObjectId>> { error("No data provided") }
 
+val LocalCompositionPutBucket = compositionLocalOf<(String?, String?, BucketType) -> Unit> { error("No data provided") }
+
 val LocalCompositionOnDelete = compositionLocalOf<() -> Unit> { error("No data provided") }
 val LocalCompositionOnExit = compositionLocalOf<() -> Unit> { error("No data provided") }
+
+val LocalCompositionOnAddDebugData = compositionLocalOf<() -> Unit> { error("No data provided") }

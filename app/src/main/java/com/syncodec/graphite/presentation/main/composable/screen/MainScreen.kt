@@ -65,8 +65,6 @@ fun MainScreen(
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-
 
 	var bottomSheetType : MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.MENU) }
 	var currentComponentType : ComponentType by remember { mutableStateOf(ComponentType.NOTE) }
@@ -80,10 +78,6 @@ fun MainScreen(
 	fun closeSheet() {
 		scope.launch { modalBottomSheetState.hide() }
 	}
-
-	var sortOn : SortOn by viewModel.sortOn
-	var sortBy : SortBy by viewModel.sortBy
-	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.LIST)
 
 	val defaultNotebookId by viewModel.defaultNotebookId
 	val chapterObject by viewModel.chapterObject
@@ -107,15 +101,8 @@ fun MainScreen(
 			sheetContent = {
 				SheetLayout(
 					bottomSheetType = bottomSheetType,
-					sortOn = sortOn,
-					sortBy = sortBy,
-					onSortOnChanged = { sortOn = it },
-					onSortByChanged = { sortBy = it },
 					putNotebook = viewModel::putNotebook,
-					putBucket = viewModel::putBucket
-				) {
-					closeSheet()
-				}
+				)
 			}
 		) {
 			Scaffold(
@@ -143,7 +130,6 @@ fun MainScreen(
 					MainNavigation(
 						navController = navController,
 						componentType = currentComponentType,
-						viewType = viewType,
 						defaultNotebookId = defaultNotebookId,
 						chapterObject = chapterObject,
 						notebookList = notebookList,

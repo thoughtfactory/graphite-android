@@ -22,9 +22,11 @@ import io.realm.kotlin.types.ObjectId
 @Composable
 fun HomeScreen(
 	componentType : ComponentType,
-	noteDayMap : Map<Long, List<NoteObjectLite>>,
-	bucketList : List<BucketObject>?,
+	noteList : List<NoteObjectLite>,
+	bucketList : List<BucketObject>,
 	notebookList : List<ChapterObject>,
+	sortOn : SortOn,
+	sortBy : SortBy,
 	viewType : ViewType,
 	onClickFab : () -> Unit,
 	onClickNote : (ObjectId) -> Unit,
@@ -41,7 +43,9 @@ fun HomeScreen(
 	) {
 		when (it) {
 			ComponentType.NOTE -> NoteScreen(
-				noteDayMap = noteDayMap,
+				noteList = noteList,
+				sortOn = sortOn,
+				sortBy = sortBy,
 				viewType = viewType,
 				onClickFab = onClickFab,
 				onClickNote = onClickNote,

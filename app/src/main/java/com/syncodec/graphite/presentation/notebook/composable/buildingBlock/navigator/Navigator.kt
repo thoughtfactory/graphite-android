@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.notebook.composable.buildingBlock.Navigator
+package com.syncodec.graphite.presentation.notebook.composable.buildingBlock.navigator
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -8,8 +8,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,10 +38,9 @@ import io.realm.kotlin.types.ObjectId
 
 @Composable
 fun Navigator(
-	chapterObjectLiteList: List<ChapterObjectLite>,
-	rootChapterId: ObjectId?,
-	color: Color,
-	onClick: (ObjectId) -> Unit
+	defaultChapterId : ObjectId?,
+	chapterObjectLiteList : List<ChapterObjectLite>,
+	onClick : (ObjectId) -> Unit
 ) {
 	Box(
 		modifier = Modifier.fillMaxWidth()
@@ -50,20 +49,15 @@ fun Navigator(
 			verticalAlignment = Alignment.CenterVertically,
 			modifier = Modifier.horizontalScroll(rememberScrollState())
 		) {
-			Spacer(modifier = Modifier.width(8.dp))
-
-			NavigatorItem(
-				title = "/",
-				color = color
-			) { if (rootChapterId != null) onClick(rootChapterId) }
-
-			chapterObjectLiteList.forEach {
+			Spacer(modifier = Modifier.width(12.dp))
+			chapterObjectLiteList.reversed().forEach {
 				NavigatorItem(
 					title = it.title,
-					color = it.color?.let { it1 -> Color(it1) }
+					color = it.color?.let { it1 -> Color(it1) },
+					isDefault = it.id == defaultChapterId
 				) { onClick(it.id) }
 			}
-			Spacer(modifier = Modifier.width(8.dp))
+			Spacer(modifier = Modifier.width(12.dp))
 		}
 	}
 }
@@ -71,9 +65,10 @@ fun Navigator(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NavigatorItem(
-	title: String,
-	color: Color?,
-	onClick: () -> Unit
+	title : String?,
+	color : Color?,
+	isDefault : Boolean = false,
+	onClick : () -> Unit
 ) {
 	var isVisible by remember { mutableStateOf(false) }
 
@@ -92,15 +87,23 @@ private fun NavigatorItem(
 		) {
 			SuggestionChip(
 				onClick = onClick,
+				icon = {
+					if (isDefault) Icon(
+						painter = painterResource(id = R.drawable.ic_state),
+						contentDescription = "check",
+					)
+					else null
+				},
 				label = {
 					Text(
-						text = title,
+						text = title ?: "",
 						fontWeight = FontWeight.Bold
 					)
 				},
 				colors = SuggestionChipDefaults.suggestionChipColors(
 					containerColor = if (color == null || color == Color.Unspecified) MaterialTheme.colorScheme.surface else color,
 					labelColor = if (color == null || color == Color.Unspecified) MaterialTheme.colorScheme.onSurface else color.getInverseBWColor(),
+					iconContentColor = if (color == null || color == Color.Unspecified) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f) else color.getInverseBWColor().copy(alpha = 0.47f),
 				),
 				border = SuggestionChipDefaults.suggestionChipBorder(borderColor = color ?: MaterialTheme.colorScheme.surface),
 			)

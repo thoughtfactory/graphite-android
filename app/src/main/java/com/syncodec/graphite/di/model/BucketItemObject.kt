@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import android.util.Log
 import androidx.room.PrimaryKey
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
@@ -29,9 +30,11 @@ class BucketItemObject: RealmObject {
 	var isFavourite: Boolean = false
 	var isLocked: Boolean = false
 
+	var key: String? = null
+
 	var data: String? = null
 
-	fun toBookData(): BookData? {
+	fun getBookData(): BookData? {
 		return try {
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.readValue(data, BookData::class.java)
@@ -41,7 +44,7 @@ class BucketItemObject: RealmObject {
 		}
 	}
 
-	fun toShowData(): ShowData? {
+	fun getShowData(): ShowData? {
 		return try {
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.readValue(data, ShowData::class.java)
@@ -51,7 +54,7 @@ class BucketItemObject: RealmObject {
 		}
 	}
 
-	fun toOpenGraphResult(): OpenGraphResult? {
+	fun getOpenGraphResult(): OpenGraphResult? {
 		return try {
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.readValue(data, OpenGraphResult::class.java)
@@ -61,8 +64,24 @@ class BucketItemObject: RealmObject {
 		}
 	}
 
-	fun setOpenGraphResult(openGraphResult: OpenGraphResult) {
+	fun putOpenGraphResult(openGraphResult: OpenGraphResult) {
 		this.data = jsonMapper { addModule(kotlinModule()) }.writeValueAsString(openGraphResult)
+	}
+
+	fun clone(): BucketItemObject {
+		return BucketItemObject().apply {
+			this.id = this@BucketItemObject.id
+			this.createdTimestamp = this@BucketItemObject.createdTimestamp
+			this.modifiedTimestamp = this@BucketItemObject.modifiedTimestamp
+			this.bucketType = this@BucketItemObject.bucketType
+			this.title = this@BucketItemObject.title
+			this.state = this@BucketItemObject.state
+			this.thumbnail = this@BucketItemObject.thumbnail
+			this.isFavourite = this@BucketItemObject.isFavourite
+			this.isLocked = this@BucketItemObject.isLocked
+			this.key = this@BucketItemObject.key
+			this.data = this@BucketItemObject.data
+		}
 	}
 
 	override fun hashCode(): Int {

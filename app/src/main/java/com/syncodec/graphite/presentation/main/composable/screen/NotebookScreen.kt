@@ -1,7 +1,21 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,25 +31,43 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNotebookResreshing
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
 import io.realm.kotlin.types.ObjectId
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun NotebookScreen(
-	notebookList: List<ChapterObject>,
-	onClickFab: () -> Unit,
-	onClickNotebook: (ObjectId) -> Unit,
-	onLongClickNotebook: (ObjectId) -> Unit
+	notebookList : List<ChapterObject>,
+	onClickFab : () -> Unit,
+	onClickNotebook : (ObjectId) -> Unit,
+	onLongClickNotebook : (ObjectId) -> Unit
 ) {
+	val isNotebookRefreshing = LocalCompositionIsNotebookResreshing.current
+	val onRefresh = LocalCompositionOnRefresh.current
+
+	val isSelected = LocalCompositionIsSelected.current
+	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
-			NotebookFloatingActionButton(isExpanded = true, onClick = onClickFab)
+			AnimatedVisibility(
+				visible = ! isSelected,
+				enter = fadeIn(tween(300)) + scaleIn(tween(300)),
+				exit = fadeOut(tween(300)) + scaleOut(tween(300))
+			) {
+				NotebookFloatingActionButton(isExpanded = true, onClick = onClickFab)
+			}
 		}
 	) {
 		Box(
@@ -43,27 +75,32 @@ fun NotebookScreen(
 				.fillMaxSize()
 				.padding(it)
 		) {
-			LazyVerticalGrid(
-				columns = GridCells.Adaptive(144.dp),
-				horizontalArrangement = Arrangement.Center,
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(12.dp, 0.dp),
+			SwipeRefresh(
+				state = rememberSwipeRefreshState(isRefreshing = isNotebookRefreshing == true),
+				onRefresh = onRefresh
 			) {
-				notebookList.forEach { notebook ->
-					item {
-						NotebookCard(
-							title = notebook.title,
-							color = notebook.color?.let { it1 -> Color(it1) },
-							thumbnail = notebook.thumbnail,
-							isSelected = false,
-							onClick = { onClickNotebook(notebook.id) },
-							onLongClick = { onLongClickNotebook(notebook.id) }
-						)
+				LazyVerticalGrid(
+					columns = GridCells.Adaptive(144.dp),
+					horizontalArrangement = Arrangement.Center,
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(12.dp, 0.dp),
+				) {
+					notebookList.forEach { notebook ->
+						item {
+							NotebookCard(
+								title = notebook.title,
+								color = notebook.color?.let { it1 -> Color(it1) },
+								thumbnail = notebook.thumbnail,
+								isSelected = notebook.id in selectedObjectIdList,
+								onClick = { onClickNotebook(notebook.id) },
+								onLongClick = { onLongClickNotebook(notebook.id) }
+							)
+						}
 					}
+					item { Spacer(modifier = Modifier.height(96.dp)) }
+					item { Spacer(modifier = Modifier.height(96.dp)) }
 				}
-				item { Spacer(modifier = Modifier.height(96.dp)) }
-				item { Spacer(modifier = Modifier.height(96.dp)) }
 			}
 		}
 	}

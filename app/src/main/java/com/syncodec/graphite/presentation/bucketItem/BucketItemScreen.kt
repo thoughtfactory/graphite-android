@@ -11,6 +11,7 @@ import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,14 +22,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsFavourite
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsLocked
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsNew
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickFavourite
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickLock
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickNavigationIcon
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickSave
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.bucketItem.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucketItem.composable.bar.TopBar
-import com.syncodec.graphite.presentation.bucketItem.composable.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BookScreen
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.MovieScreen
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.TvScreen
 import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.launch
 
@@ -36,9 +45,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun BucketItemScreen(
-	viewModel : BucketItemViewModel
+	viewModel : BucketItemViewModel,
+	onClickNavigationIcon: () -> Unit,
 ) {
-	val activity : BucketItemActivity = LocalContext.current as BucketItemActivity
+	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
 	val bucketType by viewModel.bucketType
@@ -90,102 +100,103 @@ fun BucketItemScreen(
 
 	var showDeleteDialog by remember { mutableStateOf(false) }
 
-	Scaffold(
-		modifier = Modifier.fillMaxSize(),
-		topBar = {
-			TopBar(
-				title = bucketItem?.title,
-				isNew = isNew ?: true,
-				isLocked = isLocked ?: false,
-				isFavourite = isFavourite ?: false,
-				onClickSave = viewModel::putBucketItem,
-				onClickLock = viewModel::onClickLock,
-				onClickFavourite = viewModel::onClickFavourite,
-			) { activity.onBackPressed() }
-		},
-		bottomBar = {
-			BottomBar(
-				onClickShare = {},
-				onClickDelete = { showDeleteDialog = true },
-				onClickMove = {}
-			)
-		}
+	CompositionLocalProvider(
+		LocalCompositionTitle provides bucketItem?.title,
+		LocalCompositionIsNew provides (isNew == true),
+		LocalCompositionIsLocked provides (isLocked == true),
+		LocalCompositionIsFavourite provides (isFavourite == true),
+		LocalCompositionOnClickSave provides viewModel::putBucketItem,
+		LocalCompositionOnClickLock provides viewModel::onClickLock,
+		LocalCompositionOnClickFavourite provides viewModel::onClickFavourite,
+		LocalCompositionOnClickNavigationIcon provides onClickNavigationIcon,
 	) {
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(it)
-		) {
-			Crossfade(
-				targetState = status,
-				animationSpec = tween(300)
-			) {
-				when (it) {
-					Status.INIT -> LoadingView()
-					Status.LOADING -> LoadingView()
-					Status.LOADED -> {
-						when (bucketType) {
-							BucketType.TODO -> null
-							BucketType.BOOK -> BookScreen(
-								bookKey = bookKey,
-								bookTitle = bookTitle,
-								bookAuthors = bookAuthors.filterNotNull(),
-								bookDescription = bookDescription,
-								bookPageCount = bookPageCount,
-								bookPublishedDate = bookPublishedDate,
-								thumbnail = thumbnail,
-								currentState = currentState?.ordinal ?: 0,
-								onChangeState = viewModel::onChangeState,
-							)
-
-							BucketType.SHOW -> when {
-								movieId != null -> MovieScreen(
-									movieId = movieId,
-									movieGenres = movieGenres.filterNotNull(),
-									movieImdbId = movieImdbId,
-									movieOriginalTitle = movieOriginalTitle,
-									movieOverview = movieOverview,
-									movieReleaseDate = movieReleaseDate,
-									movieRuntime = movieRuntime,
-									movieTagline = movieTagline,
-									movieTitle = movieTitle,
-									thumbnail = thumbnail,
-									currentState = currentState?.ordinal ?: 0,
-									onChangeState = viewModel::onChangeState
-								)
-
-								tvId != null -> TvScreen(
-									tvId = tvId,
-									tvGenres = tvGenres.filterNotNull(),
-									tvName = tvName,
-									tvNumberOfSeasons = tvNumberOfSeasons,
-									tvNumberOfEpisodes = tvNumberOfEpisodes,
-									tvOverview = tvOverview,
-									tvFirstAirDate = tvFirstAirDate,
-									tvTagline = tvTagline,
-									thumbnail = thumbnail,
-									currentState = currentState?.ordinal ?: 0,
-									onChangeState = viewModel::onChangeState
-								)
-
-								else -> ErrorView()
-							}
-
-							BucketType.LINK -> null
-							BucketType.UNKNOWN -> null
-							else -> null
-						}
-					}
-
-					Status.ERROR -> ErrorView()
-				}
+		Scaffold(
+			modifier = Modifier.fillMaxSize(),
+			topBar = { TopBar() },
+			bottomBar = {
+				BottomBar(
+					onClickShare = {},
+					onClickDelete = { showDeleteDialog = true },
+					onClickMove = {}
+				)
 			}
+		) {
+			Box(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(it)
+			) {
+				Crossfade(
+					targetState = status,
+					animationSpec = tween(300)
+				) {
+					when (it) {
+						Status.INIT -> LoadingView()
+						Status.LOADING -> LoadingView()
+						Status.LOADED -> {
+							when (bucketType) {
+								BucketType.TODO -> null
+								BucketType.BOOK -> BookScreen(
+									bookKey = bookKey,
+									bookTitle = bookTitle,
+									bookAuthors = bookAuthors.filterNotNull(),
+									bookDescription = bookDescription,
+									bookPageCount = bookPageCount,
+									bookPublishedDate = bookPublishedDate,
+									thumbnail = thumbnail,
+									currentState = currentState?.ordinal ?: 0,
+									onChangeState = viewModel::onChangeState,
+								)
 
-			DeleteDialog(
-				showDeleteDialog = showDeleteDialog,
-				onDismiss = { showDeleteDialog = false },
-				onDelete = { }
-			)
+								BucketType.SHOW -> when {
+									movieId != null -> MovieScreen(
+										movieId = movieId,
+										movieGenres = movieGenres.filterNotNull(),
+										movieImdbId = movieImdbId,
+										movieOriginalTitle = movieOriginalTitle,
+										movieOverview = movieOverview,
+										movieReleaseDate = movieReleaseDate,
+										movieRuntime = movieRuntime,
+										movieTagline = movieTagline,
+										movieTitle = movieTitle,
+										thumbnail = thumbnail,
+										currentState = currentState?.ordinal ?: 0,
+										onChangeState = viewModel::onChangeState
+									)
+
+									tvId != null -> TvScreen(
+										tvId = tvId,
+										tvGenres = tvGenres.filterNotNull(),
+										tvName = tvName,
+										tvNumberOfSeasons = tvNumberOfSeasons,
+										tvNumberOfEpisodes = tvNumberOfEpisodes,
+										tvOverview = tvOverview,
+										tvFirstAirDate = tvFirstAirDate,
+										tvTagline = tvTagline,
+										thumbnail = thumbnail,
+										currentState = currentState?.ordinal ?: 0,
+										onChangeState = viewModel::onChangeState
+									)
+
+									else -> ErrorView()
+								}
+
+								BucketType.LINK -> null
+								BucketType.UNKNOWN -> null
+								else -> null
+							}
+						}
+
+						Status.ERROR -> ErrorView()
+					}
+				}
+
+				DeleteDialog(
+					showDialog = showDeleteDialog,
+					onDismiss = { showDeleteDialog = false },
+					onDelete = { }
+				)
+			}
 		}
 	}
 }

@@ -43,16 +43,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TMDbMovieSearchResult
 import com.syncodec.graphite.di.network.TMDbTvSearchResult
-import com.syncodec.graphite.presentation.bucket.BucketActivity
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
+import com.syncodec.graphite.presentation.bucketItem2.BucketItemActivity2
 import com.syncodec.graphite.presentation.common.ClimateChangeMessage
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
@@ -64,16 +66,18 @@ import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.net.SocketTimeoutException
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalAnimationApi::class)
+@Preview
 @Composable
-fun AddShowBottomSheet(
-	bucketObject : BucketObject?,
-	closeSheet : () -> Unit
-) {
-	val activity : BucketActivity = LocalContext.current as BucketActivity
+fun AddShowBottomSheet() {
+	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+
+	val bucketObject = LocalCompositionBucketObject.current
+
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var queryText by rememberSaveable { mutableStateOf("") }
@@ -92,42 +96,40 @@ fun AddShowBottomSheet(
 		keyboardController?.hide()
 		tmDbMovieSearchResult = null
 		scope.launch(Dispatchers.IO) {
-//			try {
-//				if (currentState == 0) {
-//					Repository
-//						.tmDbApi
-//						.searchForMovieTitle(queryText) {
-//							if (it == null) {
-//								status = Status.ERROR
-//							} else {
-//								tmDbMovieSearchResult = it
-//								tmDbTvSearchResult = null
-//								status = Status.LOADED
-//							}
-//						}
-//				} else {
-//					Repository
-//						.tmDbApi
-//						.searchForTvTitle(queryText) {
-//							if (it == null) {
-//								status = Status.ERROR
-//							} else {
-//								tmDbMovieSearchResult = null
-//								tmDbTvSearchResult = it
-//								status = Status.LOADED
-//							}
-//						}
-//				}
-//			} catch (e : SocketTimeoutException) {
-////				TODO update error message and image
-//				scope.launch(Dispatchers.Main) { Toast.makeText(activity, "Timeout getting search results", Toast.LENGTH_SHORT).show() }
-//				status = Status.ERROR
-//				e.printStackTrace()
-//			} catch (e : Exception) {
-////				TODO update error message and image
-//				status = Status.ERROR
-//				e.printStackTrace()
-//			}
+			try {
+				if (currentState == 0) {
+					TMDbApi
+						.searchForMovieTitle(queryText) {
+							if (it == null) {
+								status = Status.ERROR
+							} else {
+								tmDbMovieSearchResult = it
+								tmDbTvSearchResult = null
+								status = Status.LOADED
+							}
+						}
+				} else {
+					TMDbApi
+						.searchForTvTitle(queryText) {
+							if (it == null) {
+								status = Status.ERROR
+							} else {
+								tmDbMovieSearchResult = null
+								tmDbTvSearchResult = it
+								status = Status.LOADED
+							}
+						}
+				}
+			} catch (e : SocketTimeoutException) {
+//				TODO update error message and image
+				scope.launch(Dispatchers.Main) { Toast.makeText(context, "Timeout getting search results", Toast.LENGTH_SHORT).show() }
+				status = Status.ERROR
+				e.printStackTrace()
+			} catch (e : Exception) {
+//				TODO update error message and image
+				status = Status.ERROR
+				e.printStackTrace()
+			}
 		}
 	}
 
@@ -223,15 +225,15 @@ fun AddShowBottomSheet(
 											keyboardController?.hide()
 
 											if (bucketObject == null || movieDataResult.id == null) {
-												Toast.makeText(activity, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
+												Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
 											} else {
-												Intent(activity, BucketItemActivity::class.java).apply {
+												Intent(context, BucketItemActivity2::class.java).apply {
 													putExtra(Extra.Companion.Constant.IS_NEW.name, true)
 													putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.toString())
 													putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
 													putExtra(Extra.Companion.Constant.MOVIE_ID.name, movieDataResult.id)
 
-													activity.startActivity(this)
+													context.startActivity(this)
 												}
 											}
 										}
@@ -254,15 +256,15 @@ fun AddShowBottomSheet(
 											keyboardController?.hide()
 
 											if (bucketObject == null || tvDataResult.id == null) {
-												Toast.makeText(activity, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
+												Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
 											} else {
-												Intent(activity, BucketItemActivity::class.java).apply {
+												Intent(context, BucketItemActivity2::class.java).apply {
 													putExtra(Extra.Companion.Constant.IS_NEW.name, true)
 													putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.toString())
 													putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
 													putExtra(Extra.Companion.Constant.TV_ID.name, tvDataResult.id)
 
-													activity.startActivity(this)
+													context.startActivity(this)
 												}
 											}
 										}

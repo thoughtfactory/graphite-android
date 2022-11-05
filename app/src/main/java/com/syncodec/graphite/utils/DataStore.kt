@@ -18,9 +18,9 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore("dataStore")
+val Context.dataStore : DataStore<Preferences> by preferencesDataStore("dataStore")
 
-class DataStoreInstance(private val context: Context) {
+class DataStoreInstance(private val context : Context) {
 	companion object {
 		private val IS_FIRST_TIME = booleanPreferencesKey("is_first_time")
 		private val STORED_VERSION = intPreferencesKey("stored_version")
@@ -34,6 +34,8 @@ class DataStoreInstance(private val context: Context) {
 		private val PREFERENCE_GEOLOCATION = booleanPreferencesKey("geolocation")
 		private val PREFERENCE_YEAR_PROGRESS = booleanPreferencesKey("year_progress")
 		private val PREFERENCE_LANGUAGE = stringPreferencesKey("language")
+		private val PREFERENCE_SORT_ON = intPreferencesKey("sort_on")
+		private val PREFERENCE_SORT_BY = intPreferencesKey("sort_by")
 		private val PREFERENCE_VIEW_TYPE = intPreferencesKey("view_type")
 		private val PREFERENCE_VAULT_KEY = stringPreferencesKey("vault_key")
 		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
@@ -45,81 +47,111 @@ class DataStoreInstance(private val context: Context) {
 		private val PREFERENCE_EXPIRY_TIME = stringPreferencesKey("expiry_time")
 	}
 
-	val getIsFirstTime: Flow<Boolean> =
+	val getIsFirstTime : Flow<Boolean> =
 		context.dataStore.data.map { preferences -> preferences[IS_FIRST_TIME] ?: true }
 
-	fun putIsFirstTime(isFirstTime: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun putIsFirstTime(isFirstTime : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[IS_FIRST_TIME] = isFirstTime }
 	}
 
-	val storedVersion: Flow<Int> =
+	val storedVersion : Flow<Int> =
 		context.dataStore.data.map { preferences -> preferences[STORED_VERSION] ?: 0 }
 
-	fun storeVersion(version: Int) = CoroutineScope(Dispatchers.IO).launch {
+	fun storeVersion(version : Int) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[STORED_VERSION] = version }
 	}
 
-	val showReleaseNotes: Flow<Boolean> =
+	val showReleaseNotes : Flow<Boolean> =
 		context.dataStore.data.map { preferences ->
 			preferences[PREFERENCE_SHOW_RELEASE_NOTES] ?: true
 		}
 
-	fun setShowReleaseNotes(showReleaseNotes: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun setShowReleaseNotes(showReleaseNotes : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_RELEASE_NOTES] = showReleaseNotes }
 	}
 
-	val getTheme: Flow<Int> =
+	val getTheme : Flow<Int> =
 		context.dataStore.data.map { preferences -> preferences[PREFERENCE_THEME] ?: 0 }
 
-	fun putTheme(theme: Int) = CoroutineScope(Dispatchers.IO).launch {
+	fun putTheme(theme : Int) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_THEME] = theme }
 	}
 
-	val getBackground: Flow<Int> =
+	val getBackground : Flow<Int> =
 		context.dataStore.data.map { preferences -> preferences[PREFERENCE_BACKGROUND] ?: 0 }
 
-	fun putBackground(background: Int) = CoroutineScope(Dispatchers.IO).launch {
+	fun putBackground(background : Int) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_BACKGROUND] = background }
 	}
 
-	val getTypography: Flow<Int> =
+	val getTypography : Flow<Int> =
 		context.dataStore.data.map { preferences -> preferences[PREFERENCE_TYPOGRAPHY] ?: 0 }
 
-	fun putTypography(typography: Int) = CoroutineScope(Dispatchers.IO).launch {
+	fun putTypography(typography : Int) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_TYPOGRAPHY] = typography }
 	}
 
-	val getFollowSystemDarkTheme: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FOLLOW_SYSTEM_DARK_THEME] ?: true }
+	val getFollowSystemDarkTheme : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FOLLOW_SYSTEM_DARK_THEME] ?: true }
 
-	fun putFollowSystemDarkTheme(followSystemDarkTheme: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun putFollowSystemDarkTheme(followSystemDarkTheme : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_FOLLOW_SYSTEM_DARK_THEME] = followSystemDarkTheme }
 	}
 
-	val getForceDarkTheme: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FORCE_DARK_THEME] ?: false }
+	val getForceDarkTheme : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FORCE_DARK_THEME] ?: false }
 
-	fun putForceDarkTheme(forceDarkTheme: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun putForceDarkTheme(forceDarkTheme : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_FORCE_DARK_THEME] = forceDarkTheme }
 	}
 
-	val getTintFavorite: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_TINT_FAVORITE] ?: true }
+	val getTintFavorite : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_TINT_FAVORITE] ?: true }
 
-	fun putTintFavorite(tintFavorite: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun putTintFavorite(tintFavorite : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_TINT_FAVORITE] = tintFavorite }
 	}
 
-	val getGeolocation: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_GEOLOCATION] ?: true }
+	val getGeolocation : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_GEOLOCATION] ?: true }
 
-	fun putGeolocation(geolocation: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun putGeolocation(geolocation : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_GEOLOCATION] = geolocation }
 	}
 
-	val getYearProgress: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_YEAR_PROGRESS] ?: true }
+	val getYearProgress : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_YEAR_PROGRESS] ?: true }
 
-	fun putYearProgress(yearProgress: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun putYearProgress(yearProgress : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_YEAR_PROGRESS] = yearProgress }
 	}
 
-	val getViewType: Flow<ViewType> = context.dataStore.data.map { preferences ->
+	val getSortOn : Flow<SortOn> = context.dataStore.data.map { preferences ->
+		when (preferences[PREFERENCE_SORT_ON] ?: 0) {
+			0 -> SortOn.TITLE
+			1 -> SortOn.TIMESTAMP
+			2 -> SortOn.MODIFIED
+			3 -> SortOn.PRIORITY
+			4 -> SortOn.COMPLETED
+			5 -> SortOn.DUE
+			6 -> SortOn.CREATED
+			7 -> SortOn.DONE
+			else -> SortOn.TIMESTAMP
+		}
+	}
+
+	fun putSortOn(sortOn : SortOn) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SORT_ON] = sortOn.ordinal }
+	}
+
+	val getSortBy : Flow<SortBy> = context.dataStore.data.map { preferences ->
+		when (preferences[PREFERENCE_SORT_BY] ?: 0) {
+			0 -> SortBy.ASCENDING
+			1 -> SortBy.DESCENDING
+			else -> SortBy.ASCENDING
+		}
+	}
+
+	fun putSortBy(sortBy : SortBy) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SORT_BY] = sortBy.ordinal }
+	}
+
+	val getViewType : Flow<ViewType> = context.dataStore.data.map { preferences ->
 		when (preferences[PREFERENCE_VIEW_TYPE] ?: 0) {
 			0 -> ViewType.LIST
 			1 -> ViewType.GRID
@@ -127,7 +159,7 @@ class DataStoreInstance(private val context: Context) {
 		}
 	}
 
-	fun putViewType(viewType: ViewType) = CoroutineScope(Dispatchers.IO).launch {
+	fun putViewType(viewType : ViewType) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_VIEW_TYPE] = viewType.ordinal }
 	}
 
@@ -161,12 +193,12 @@ class DataStoreInstance(private val context: Context) {
 					} else {
 						""
 					}
-				} catch (exception: Exception) {
+				} catch (exception : Exception) {
 					""
 				}
 			}
 
-	fun putPasscode(code: String) = CoroutineScope(Dispatchers.IO).launch {
+	fun putPasscode(code : String) = CoroutineScope(Dispatchers.IO).launch {
 		val random = SecureRandom()
 		val salt = ByteArray(256)
 		random.nextBytes(salt)
@@ -194,16 +226,16 @@ class DataStoreInstance(private val context: Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_VAULT_KEY] = data }
 	}
 
-	fun getUseBiometric(): Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_USE_BIOMETRIC] ?: false }
+	fun getUseBiometric() : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_USE_BIOMETRIC] ?: false }
 
-	fun putUseBiometric(useBiometric: Boolean) = CoroutineScope(Dispatchers.IO).launch {
+	fun putUseBiometric(useBiometric : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_USE_BIOMETRIC] = useBiometric }
 	}
 
-	val getDefaultNotebookKey: Flow<String?> =
+	val getDefaultNotebookKey : Flow<String?> =
 		context.dataStore.data.map { preferences -> preferences[PREFERENCE_DEFAULT_NOTE_KEY] }
 
-	fun putDefaultNotebookKey(notebookKey: String) =
+	fun putDefaultNotebookKey(notebookKey : String) =
 		CoroutineScope(Dispatchers.IO).launch {
 			context.dataStore.edit { pref -> pref[PREFERENCE_DEFAULT_NOTE_KEY] = notebookKey }
 		}
@@ -212,19 +244,19 @@ class DataStoreInstance(private val context: Context) {
 		context.dataStore.data.map { preferences ->
 			try {
 				preferences[PREFERENCE_SUPER_EXPIRY_TIME]?.decrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")
-			} catch (exception: Exception) {
+			} catch (exception : Exception) {
 				exception.printStackTrace()
 				null
 			}
 		}
 
-	fun putSuperExpiryTime(expiryTime: Long) =
+	fun putSuperExpiryTime(expiryTime : Long) =
 		CoroutineScope(Dispatchers.IO).launch {
 			try {
 				expiryTime.toString().encrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")?.apply {
 					context.dataStore.edit { pref -> pref[PREFERENCE_SUPER_EXPIRY_TIME] = this }
 				}
-			} catch (exception: Exception) {
+			} catch (exception : Exception) {
 				exception.printStackTrace()
 			}
 		}
@@ -233,19 +265,19 @@ class DataStoreInstance(private val context: Context) {
 		context.dataStore.data.map { preferences ->
 			try {
 				preferences[PREFERENCE_EXPIRY_TIME]?.decrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")
-			} catch (exception: Exception) {
+			} catch (exception : Exception) {
 				exception.printStackTrace()
 				null
 			}
 		}
 
-	fun putExpiryTime(expiryTime: Long) =
+	fun putExpiryTime(expiryTime : Long) =
 		CoroutineScope(Dispatchers.IO).launch {
 			try {
 				expiryTime.toString().encrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")?.apply {
 					context.dataStore.edit { pref -> pref[PREFERENCE_EXPIRY_TIME] = this }
 				}
-			} catch (exception: Exception) {
+			} catch (exception : Exception) {
 				exception.printStackTrace()
 			}
 		}

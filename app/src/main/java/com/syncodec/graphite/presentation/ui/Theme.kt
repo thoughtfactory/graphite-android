@@ -44,7 +44,7 @@ val Color.Companion.DeleteContent: Color
 	get() = Color.White
 
 val Color.Companion.FavouriteContainer: Color
-	get() = Color(0x47E78EA9)
+	get() = Color(0xFFE53F8B)
 val Color.Companion.FavouriteContent: Color
 	get() = Color.White
 
@@ -58,5 +58,16 @@ val Color.Companion.LockClosedContainer:Color
 val Color.Companion.LockClosedContent:Color
 	get() = Color.White
 
+val Color.Companion.AttachmentContainer:Color
+	get() = Color(0xFFF5B971)
+
+val Color.Companion.AttachmentContent:Color
+	get() = Color.Black
+
+val Color.Companion.LocationContainer:Color
+	get() = Color(0xFF318DFD)
+
+val Color.Companion.LocationContent:Color
+	get() = Color.White
 
 val dialogPadding = PaddingValues(24.dp, 24.dp, 24.dp, 12.dp)

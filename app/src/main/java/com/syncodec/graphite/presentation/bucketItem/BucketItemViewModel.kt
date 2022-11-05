@@ -19,8 +19,10 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.BookData
 import com.syncodec.graphite.di.network.Genre
 import com.syncodec.graphite.di.network.MovieData
+import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.network.ShowData
 import com.syncodec.graphite.di.network.ShowType
+import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TvData
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
@@ -30,6 +32,7 @@ import com.syncodec.graphite.utils.Status
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.serializable
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -37,6 +40,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
+@HiltViewModel
 class BucketItemViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
 
 	val repositoryState = repository2.repositoryState
@@ -107,7 +111,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 		this.bucketType.value = bucketType
 
 		viewModelScope.launch(Dispatchers.IO) {
-			when(repositoryState.value) {
+			when (repositoryState.value) {
 				RepositoryState.INIT -> null
 				RepositoryState.LOADING -> null
 				RepositoryState.SUCCESS -> onRepositoryStateSuccess(bucketItemId, intent)
@@ -116,14 +120,15 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 		}
 	}
 
-	private fun onRepositoryStateSuccess(bucketItemId : ObjectId?, intent: Intent) {
-		when(this.isNew.value) {
+	private fun onRepositoryStateSuccess(bucketItemId : ObjectId?, intent : Intent) {
+		when (this.isNew.value) {
 			true -> initBucketItem(intent = intent)
 			false -> if (bucketItemId == null) {
 				status.value = Status.ERROR
 			} else {
 				loadBucketItem(id = bucketItemId)
 			}
+
 			null -> null
 		}
 	}
@@ -168,8 +173,8 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 
 					when (bucketType.value) {
 						BucketType.TODO -> null
-						BucketType.BOOK -> initBookItem(bookData = it?.toBookData())
-						BucketType.SHOW -> initShowItem(showData = it?.toShowData())
+						BucketType.BOOK -> initBookItem(bookData = it?.getBookData())
+						BucketType.SHOW -> initShowItem(showData = it?.getShowData())
 						BucketType.LINK -> null
 						BucketType.UNKNOWN -> null
 						null -> null
@@ -195,7 +200,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 				viewModelScope.launch(Dispatchers.IO) {
 					try {
 						initBookItem(bookData = bookData)
-						repository2.openLibraryApi.retrieveDescriptionFromKey(key = bookId) { description ->
+						OpenLibraryApi.retrieveDescriptionFromKey(key = bookId) { description ->
 							bookDescription.value = description
 						}
 						getBookThumbnail(coverI = bookData?.coverI) { thumbnail.value = it }
@@ -238,7 +243,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 				if (movieId != null) {
 					viewModelScope.launch(Dispatchers.IO) {
 						try {
-							repository2.tmDbApi.retrieveMovieDataFromId(id = movieId) { response ->
+							TMDbApi.retrieveMovieDataFromId(id = movieId) { response ->
 								if (response == null) {
 //									TODO Show msg
 									status.value = Status.ERROR
@@ -267,7 +272,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 				if (tvId != null) {
 					viewModelScope.launch(Dispatchers.IO) {
 						try {
-							repository2.tmDbApi.retrieveTvDataFromId(id = tvId) { response ->
+							TMDbApi.retrieveTvDataFromId(id = tvId) { response ->
 								if (response == null) {
 //                                  TODO Show msg
 									status.value = Status.ERROR
@@ -359,14 +364,18 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 
 	fun putBucketItem() {
 		when (bucketType.value) {
-			BucketType.BOOK -> putBook{isNew.value = false}
-			BucketType.SHOW -> putShow{isNew.value = false}
+			BucketType.BOOK -> putBook {
+				isNew.value = false
+				bucketItemObject.value?.let {
+					loadBucketItem(id = it.id)
+				}
+			}
+			BucketType.SHOW -> putShow { isNew.value = false }
 			else -> return
 		}
 	}
 
 	fun updateBucketItem() {
-		TODO()
 //		Repository.updateBucketItem(
 //			id = bucketItemObject.value?.id ?: return,
 //			state = state.value ?: return,
@@ -381,6 +390,10 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 		} else {
 			bucketItemObject.value?.thumbnail = thumbnail.value?.encodeBase64()
 			bucketItemObject.value?.title = this.bookTitle.value
+
+			bucketItemObject.value?.isFavourite = isFavourite.value ?: false
+			bucketItemObject.value?.isLocked = isLocked.value ?: false
+
 			bucketItemObject.value?.data = BookData(
 				key = bookKey.value,
 				title = bookTitle.value,
@@ -392,8 +405,13 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 			).toJsonString()
 
 			try {
-				TODO()
-//				Repository.putBucketItem(bucketId = bucketId.value ?: return, bucketItemObject = bucketItemObject.value ?: return, onSuccess = onSuccess)
+				bucketItemObject.value?.let { it1 ->
+					bucketId.value?.let { it2 ->
+						repository2.putBucketItem(it2, it1) { _, e ->
+							onSuccess()
+						}
+					}
+				}
 			} catch (e : Exception) {
 //				TODO Show error
 				e.printStackTrace()
@@ -465,7 +483,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 	fun getBookThumbnail(coverI : String?, onSuccess : (Bitmap) -> Unit) {
 		try {
 			viewModelScope.launch(Dispatchers.IO) {
-				repository2.openLibraryApi.retrieveBookCover(coverI = coverI) {
+				OpenLibraryApi.retrieveBookCover(coverI = coverI) {
 					it?.body?.byteStream()?.let { inputStream ->
 						val bitmap = BitmapFactory.decodeStream(inputStream)
 						this.launch(Dispatchers.Main) {
@@ -485,7 +503,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 	fun getShowThumbnail(url : String?, onSuccess : (Bitmap) -> Unit) {
 		try {
 			viewModelScope.launch(Dispatchers.IO) {
-				repository2.tmDbApi.retrieveShowPoster(posterPath = url) {
+				TMDbApi.retrieveShowPoster(posterPath = url) {
 					it?.body?.byteStream()?.let { inputStream ->
 						val bitmap = BitmapFactory.decodeStream(inputStream)
 						this.launch(Dispatchers.Main) { onSuccess(bitmap) }
@@ -507,11 +525,13 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 
 	fun onClickLock() {
 		isLocked.value = ! (isLocked.value ?: return)
-		if (isNew.value == false) updateBucketItem() else putBucketItem()
+//		if (isNew.value == false) updateBucketItem() else putBucketItem()
+		putBucketItem()
 	}
 
 	fun onClickFavourite() {
 		isFavourite.value = ! (isFavourite.value ?: return)
-		if (isNew.value == false) updateBucketItem() else putBucketItem()
+//		if (isNew.value == false) updateBucketItem() else putBucketItem()
+		putBucketItem()
 	}
 }

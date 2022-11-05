@@ -82,7 +82,7 @@ fun NoteGridCard(
 			modifier = Modifier.padding(8.dp)
 		) {
 			Title(
-				showFullTime = false,
+				showFullTime = showFullTime,
 				timestamp = timestamp,
 				title = title,
 				isLocked = isLocked,
@@ -116,64 +116,84 @@ private fun Title(
 	isFavourite : Boolean,
 	attachmentCount : Int
 ) {
-	Row(
-		modifier = Modifier,
-		verticalAlignment = Alignment.CenterVertically,
+	Column(
+		modifier = Modifier
 	) {
-		if (showFullTime) {
-			TitleText(text = entryTimestamp0(timestamp))
-			TitleText(text = entryTimestamp1(timestamp))
-		} else {
-			TitleText(text = timeStampToTime(timestamp))
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier,
+		) {
+			if (showFullTime) {
+				TimestampText(text = entryTimestamp0(timestamp))
+				TimestampText(text = entryTimestamp1(timestamp))
+			} else {
+				TimestampText(text = timeStampToTime(timestamp))
+			}
 		}
-		if (! title.isNullOrBlank()) {
-			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
-			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = title)
-		}
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier,
+		) {
+			if (title != null) {
+				Box(
+					modifier = Modifier.weight(1f)
+				) {
+					TitleText(text = title)
+				}
+			}
 
-		Spacer(modifier = Modifier.weight(1f))
-
-		if (isLocked) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_shield),
-				contentDescription = "Locked",
-				tint = Color(0xFF5ACE8F),
-				modifier = Modifier.requiredSize(14.dp)
-			)
-			if (isFavourite || attachmentCount > 0) {
+			if (isLocked) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_shield),
+					contentDescription = "Locked",
+					tint = Color(0xFF5ACE8F),
+					modifier = Modifier.requiredSize(14.dp)
+				)
+				if (isFavourite || attachmentCount > 0) {
+					Spacer(modifier = Modifier.width(2.dp))
+					TitleText(text = "·")
+					Spacer(modifier = Modifier.width(2.dp))
+				}
+			}
+			if (isFavourite) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_favourite),
+					contentDescription = "Favourite",
+					tint = Color(0xFFFF5E78),
+					modifier = Modifier.requiredSize(14.dp)
+				)
+				if (attachmentCount > 0) {
+					Spacer(modifier = Modifier.width(2.dp))
+					TitleText(text = "·")
+					Spacer(modifier = Modifier.width(2.dp))
+				}
+			}
+			if (attachmentCount != 0) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_attachment),
+					contentDescription = "Attachment count",
+					tint = Color(0xFFF5B971),
+					modifier = Modifier.requiredSize(14.dp)
+				)
 				Spacer(modifier = Modifier.width(2.dp))
 				TitleText(text = "·")
 				Spacer(modifier = Modifier.width(2.dp))
+				TitleText(text = "$attachmentCount")
 			}
-		}
-		if (isFavourite) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_favourite),
-				contentDescription = "Favourite",
-				tint = Color(0xFFFF5E78),
-				modifier = Modifier.requiredSize(14.dp)
-			)
-			if (attachmentCount > 0) {
-				Spacer(modifier = Modifier.width(2.dp))
-				TitleText(text = "·")
-				Spacer(modifier = Modifier.width(2.dp))
-			}
-		}
-		if (attachmentCount != 0) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_attachment),
-				contentDescription = "Attachment count",
-				tint = Color(0xFFF5B971),
-				modifier = Modifier.requiredSize(14.dp)
-			)
-			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
-			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "$attachmentCount")
+
 		}
 	}
+}
+
+@Composable
+private fun TimestampText(text : String) {
+	Text(
+		text = text,
+		style = MaterialTheme.typography.bodySmall,
+		color = MaterialTheme.colorScheme.onBackground,
+		maxLines = 1,
+		modifier = Modifier
+	)
 }
 
 @Composable
@@ -203,7 +223,7 @@ private fun Content(
 	) {
 		if (attachmentCount == 0 || attachmentThumbnail == null) {
 			Text(
-				text = (contentThumbnail ?: "").addEmptyLines(4),
+				text = (contentThumbnail ?: ""),
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurface,
 				maxLines = 4,
@@ -211,7 +231,7 @@ private fun Content(
 			)
 		} else {
 			Text(
-				text = (contentThumbnail ?: "").addEmptyLines(4),
+				text = (contentThumbnail ?: ""),
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurface,
 				maxLines = 4,

@@ -15,46 +15,34 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsFavourite
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsLocked
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsNew
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickFavourite
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickLock
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickNavigationIcon
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickSave
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.common.button.MenuButton
 
 
-@Composable
-fun TopBar(
-	title : String?,
-	isNew : Boolean,
-	isLocked : Boolean,
-	isFavourite : Boolean,
-	onClickSave : () -> Unit,
-	onClickLock : () -> Unit,
-	onClickFavourite : () -> Unit,
-	onClickNavigationIcon : () -> Unit
-) {
-	Bar(
-		title = title,
-		isNew = isNew,
-		isLocked = isLocked,
-		onClickSave = onClickSave,
-		isFavourite = isFavourite,
-		onClickLock = onClickLock,
-		onClickFavourite = onClickFavourite,
-		onClickNavigationIcon = onClickNavigationIcon
-	)
-}
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@Preview
 @Composable
-private fun Bar(
-	title : String?,
-	isNew : Boolean,
-	isLocked : Boolean,
-	isFavourite : Boolean,
-	onClickSave: () -> Unit,
-	onClickLock : () -> Unit,
-	onClickFavourite : () -> Unit,
-	onClickNavigationIcon : () -> Unit
-) {
+fun TopBar() {
+
+	val title = LocalCompositionTitle.current
+	val onClickNavigationIcon = LocalCompositionOnClickNavigationIcon.current
+	val isNew = LocalCompositionIsNew.current
+	val isLocked = LocalCompositionIsLocked.current
+	val isFavourite = LocalCompositionIsFavourite.current
+	val onClickSave = LocalCompositionOnClickSave.current
+	val onClickLock = LocalCompositionOnClickLock.current
+	val onClickFavourite = LocalCompositionOnClickFavourite.current
+
 	TopAppBar(
 		navigationIcon = {
 			MenuButton(
@@ -117,5 +105,4 @@ private fun Bar(
 			actionIconContentColor = MaterialTheme.colorScheme.onSurface,
 		)
 	)
-
 }

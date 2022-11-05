@@ -93,7 +93,7 @@ fun MetadataBottomSheet(
 		ParentCard(
 			parentChapterId = parentChapterId,
 		) {
-			openDialog(NoteDialogType.CHAPTER_SELECTION)
+			openDialog(NoteDialogType.CHAPTER_SELECTION, null)
 			closeSheet()
 		}
 

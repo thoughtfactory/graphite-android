@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,21 +40,28 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.di.model.BucketObject
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.BucketActivity
-import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnSelected
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSelectedObjectIdList
+import com.syncodec.graphite.presentation.bucketItem2.BucketItemActivity2
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 
 @Composable
 fun ShowGridScreen(
-	bucketObject: BucketObject,
-	viewState: Int
+	bucketItemList: List<BucketItemObject> = listOf(),
 ) {
-	val activity: BucketActivity = LocalContext.current as BucketActivity
+	val context = LocalContext.current
+
+	val isSelected = LocalCompositionIsSelected.current
+	val onSelected = LocalCompositionOnSelected.current
+	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+
+	val bucketObjectId = LocalCompositionBucketObject.current?.id
 
 	LazyVerticalGrid(
 		columns = GridCells.Adaptive(128.dp),
@@ -58,21 +70,30 @@ fun ShowGridScreen(
 			.fillMaxSize()
 			.padding(4.dp, 0.dp),
 	) {
-		bucketObject.bucketItemList.filter { it.state == BucketItemState.values()[viewState].name }?.forEach { bucketItemObject ->
+		bucketItemList.forEach { bucketItemObject ->
 			item {
 				GridItem(
 					title = bucketItemObject.title,
-					thumbnail = bucketItemObject.thumbnail?.decodeBase64ToBitmap(),
-					highlight = false,
-					onLongClick = { /*TODO*/ }
+					thumbnail = bucketItemObject.thumbnail,
+					isSelected = bucketItemObject.id in selectedObjectIdList,
+					onLongClick = {
+						if (bucketItemObject.id in selectedObjectIdList) selectedObjectIdList.remove(bucketItemObject.id)
+						else selectedObjectIdList.add(bucketItemObject.id)
+						onSelected(true)
+					}
 				) {
-					Intent(activity, BucketItemActivity::class.java).apply {
-						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-						putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.toString())
-						putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
-						putExtra(Extra.Companion.Constant.BUCKET_ITEM_ID.name, bucketItemObject.id.toString())
+					if (isSelected) {
+						if (bucketItemObject.id in selectedObjectIdList) selectedObjectIdList.remove(bucketItemObject.id)
+						else selectedObjectIdList.add(bucketItemObject.id)
+					} else {
+						Intent(context, BucketItemActivity2::class.java).apply {
+							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+							putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObjectId.toString())
+							putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
+							putExtra(Extra.Companion.Constant.BUCKET_ITEM_ID.name, bucketItemObject.id.toString())
 
-						activity.startActivity(this)
+							context.startActivity(this)
+						}
 					}
 				}
 			}
@@ -84,18 +105,23 @@ fun ShowGridScreen(
 @Composable
 private fun GridItem(
 	title: String?,
-	thumbnail: Bitmap?,
-	highlight: Boolean,
+	thumbnail: String?,
+	isSelected: Boolean,
 	onLongClick: () -> Unit,
 	onClick: () -> Unit
 ) {
 	val context = LocalContext.current
 
 	val borderColor by animateColorAsState(
-		targetValue = if (highlight) MaterialTheme.colorScheme.onBackground else Color.Transparent,
+		targetValue = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent,
 		animationSpec = tween(300)
 	)
-	val scaleContent by animateFloatAsState(targetValue = if (highlight) 0.9f else 1f)
+	val scaleContent by animateFloatAsState(targetValue = if (isSelected) 0.9f else 1f)
+
+	var _thumbnail by remember { mutableStateOf<Bitmap?>(null) }
+	LaunchedEffect(key1 = thumbnail) {
+		_thumbnail = thumbnail?.decodeBase64ToBitmap()
+	}
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,8 +130,9 @@ private fun GridItem(
 		Box(
 			modifier = Modifier
 				.fillMaxWidth()
-				.aspectRatio(0.75f)
+				.aspectRatio(0.6666f)
 				.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+				.border(2.dp, borderColor, RoundedCornerShape(12.dp))
 				.clip(RoundedCornerShape(12.dp))
 				.combinedClickable(
 					onClick = { onClick() },
@@ -122,10 +149,10 @@ private fun GridItem(
 					},
 				contentAlignment = Alignment.Center
 			) {
-				if (thumbnail != null) {
+				if (_thumbnail != null) {
 					AsyncImage(
 						model = ImageRequest.Builder(context)
-							.data(thumbnail)
+							.data(_thumbnail)
 							.crossfade(300)
 							.build(),
 						placeholder = null,

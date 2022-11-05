@@ -43,7 +43,7 @@ sealed class ApiResult<out T>(val status : ApiStatus, val data : T?, val message
 }
 
 
-class OpenLibraryApi {
+object OpenLibraryApi {
 	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	private val client = OkHttpClient.Builder().build()
@@ -108,9 +108,6 @@ class OpenLibraryApi {
 
 				client.newCall(request).execute().body?.let {
 					val jsonObject = JSONObject(it.string())
-					Log.i("npr71", jsonObject.toString())
-					Log.i("npr71", "${jsonObject.optJSONObject("description")}")
-					Log.i("npr71", "${jsonObject.optJSONObject("details")?.optJSONObject("description")?.optString("value")}")
 
 					jsonObject.optJSONObject("description")?.optString("value")?.let { onResponse(it) } ?: onResponse(null)
 				} ?: onResponse(null)

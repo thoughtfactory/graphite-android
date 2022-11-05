@@ -98,9 +98,7 @@ class SettingsActivity : ComponentActivity() {
 			CompositionLocalProvider(
 				LocalAuthenticatorAction provides authenticatorAction
 			) {
-				BaseContent(
-					authenticator = authenticator,
-				) {
+				BaseContent() {
 					val scope = rememberCoroutineScope()
 					val systemUiController = rememberSystemUiController()
 					systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
@@ -186,7 +184,6 @@ class SettingsActivity : ComponentActivity() {
 	private val signInIntentResultLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
 		if (result.data != null) {
 			try {
-
 				val googleCredential = oneTapClient.getSignInCredentialFromIntent(result.data)
 				val displayName = googleCredential.displayName
 				val username = googleCredential.id
@@ -211,7 +208,7 @@ class SettingsActivity : ComponentActivity() {
 						}
 				}
 			} catch (e : ApiException) {
-//					e.printStackTrace()
+					e.printStackTrace()
 				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 			}
 		}
@@ -225,10 +222,12 @@ class SettingsActivity : ComponentActivity() {
 						signInIntentResultLauncher.launch(it)
 					}
 				} catch (e : IntentSender.SendIntentException) {
+					e.printStackTrace()
 					Log.e("npr71", "Couldn't start One Tap UI: ${e.localizedMessage}")
 				}
 			}
 			.addOnFailureListener(this) { e ->
+				e.printStackTrace()
 				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 			}
 	}

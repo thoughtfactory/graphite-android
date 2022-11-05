@@ -5,9 +5,6 @@ import com.syncodec.graphite.di.model.BucketObject
 
 
 @Composable
-fun AddTodoBottomSheet(
-	bucketObject : BucketObject?,
-	closeSheet: () -> Unit
-) {
+fun AddTodoBottomSheet() {
 
 }

@@ -10,9 +10,11 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
+import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.ObjectId
 
 
+@AndroidEntryPoint
 class BucketItemActivity: ComponentActivity() {
 
 	val viewModel by viewModels<BucketItemViewModel>()
@@ -58,7 +60,9 @@ class BucketItemActivity: ComponentActivity() {
 
 				BucketItemScreen(
 					viewModel = viewModel
-				)
+				) {
+					onBackPressed()
+				}
 			}
 		}
 	}

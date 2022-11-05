@@ -113,7 +113,7 @@
 			android:windowSoftInputMode="adjustResize" />
 
 		<activity
-			android:name=".presentation.bucketItem.BucketItemActivity"
+			android:name=".presentation.bucketItem2.BucketItemActivity2"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
 			android:windowSoftInputMode="adjustResize" />

@@ -15,11 +15,10 @@ class ChapterObject : RealmObject {
 
 	var createdTimestamp : Long = System.currentTimeMillis()
 	var modifiedTimestamp : Long = System.currentTimeMillis()
-	var title : String = ""
+	var title : String? = null
 	var description : String? = null
 	var color : Int? = getRandomColor().toArgb()
 	var thumbnail : String? = null
-
 	var isFavourite : Boolean = false
 	var isLocked : Boolean = false
 
@@ -102,7 +101,7 @@ data class ChapterObjectLite(
 	val id : ObjectId,
 	val createdTimestamp : Long,
 	val modifiedTimestamp : Long,
-	val title : String,
+	val title : String?,
 	val description : String?,
 	val color : Int?,
 	val isFavourite : Boolean,

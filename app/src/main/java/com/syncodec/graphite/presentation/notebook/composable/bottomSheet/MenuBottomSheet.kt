@@ -39,11 +39,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
@@ -52,37 +52,51 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
+import com.syncodec.graphite.presentation.notebook.composable.dialog.NotebookDialogType
+import com.syncodec.graphite.presentation.tags.TagsActivity
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.ObjectId
 
 
+@Preview
 @Composable
-fun MenuBottomSheet(
-	chapterObject : ChapterObject?,
-	tagList : List<TagObject>,
-	closeSheet: () -> Unit
-) {
-	val activity = LocalContext.current as NotebookActivity
+fun MenuBottomSheet() {
+	val context = LocalContext.current
 
-	val buttonList: List<BottomSheetButtonData> = remember {
+	val chapterObject = NotebookActivity.LocalChapterObject.current
+	val id = NotebookActivity.LocalId.current
+	val createdTimestamp = NotebookActivity.LocalCreatedTimestamp.current
+	val modifiedTimestamp = NotebookActivity.LocalModifiedTimestamp.current
+	val title = NotebookActivity.LocalTitle.current
+	val description = NotebookActivity.LocalDescription.current
+	val color = NotebookActivity.LocalColor.current
+	val thumbnail = NotebookActivity.LocalThumbnail.current
+
+	val tagList = listOf<TagObject>()
+
+	val onSetDefaultChapter = NotebookActivity.LocalOnSetDefaultChapter.current
+
+	val onDeleteChapter = NotebookActivity.LocalOnDeleteChapter.current
+	val openDialog = NotebookActivity.LocalOpenDialog.current
+	val closeSheet = NotebookActivity.LocalCloseBottomSheet.current
+
+	val buttonList : List<BottomSheetButtonData> = remember {
 		listOf(
 			BottomSheetButtonData(
 				title = "Set as Default",
 				icon = R.drawable.ic_state,
-				onClick = {}
+				onClick = onSetDefaultChapter
 			),
 			BottomSheetButtonData(
 				title = "Edit",
 				icon = R.drawable.ic_pencil,
 				onClick = {
-					TODO()
-//					viewModel.showEditChapterDialog.value = true
 					closeSheet()
+					openDialog(NotebookDialogType.EDIT_CHAPTER)
 				}
 			),
 			BottomSheetButtonData(
@@ -90,16 +104,15 @@ fun MenuBottomSheet(
 				icon = R.drawable.ic_delete,
 				containerColor = Color.DeleteContainer,
 				contentColor = Color.DeleteContent,
-				onClick = {}
+				onClick = onDeleteChapter
 			),
 			BottomSheetButtonData(
 				title = "Attachment",
 				icon = R.drawable.ic_attachment,
 				onClick = {
-					Intent(activity, AttachmentActivity::class.java).apply {
-						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterObject?.id.toString())
-
-						activity.startActivity(this)
+					Intent(context, AttachmentActivity::class.java).apply {
+						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, id.toString())
+						context.startActivity(this)
 					}
 				}
 			),
@@ -135,16 +148,16 @@ fun MenuBottomSheet(
 		BottomSheetButtonGrid(buttonList = buttonList)
 
 		InfoView(
-			id = chapterObject?.id,
-			createdTimestamp = chapterObject?.createdTimestamp,
-			modifiedTimestamp = chapterObject?.modifiedTimestamp,
-			description = chapterObject?.description,
-			color = chapterObject?.color?.let { Color(it) },
-			thumbnail = chapterObject?.thumbnail?.decodeBase64ToBitmap(),
+			id = id,
+			createdTimestamp = createdTimestamp,
+			modifiedTimestamp = modifiedTimestamp,
+			description = description,
+			color = color,
+			thumbnail = thumbnail,
 		)
 
 		TagView(
-			tagList = tagList.filter { it.objectIdList.contains(chapterObject?.id) }.map { it.toLite() },
+			tagList = tagList.filter { it.objectIdList.contains(id) }.map { it.toLite() },
 		)
 
 		Spacer(modifier = Modifier.height(4.dp))
@@ -153,9 +166,10 @@ fun MenuBottomSheet(
 				.fillMaxWidth()
 				.padding(24.dp, 0.dp),
 			onClick = {
-				TODO()
-//				viewModel.showManageTagDialog.value = true
 				closeSheet()
+				Intent(context, TagsActivity::class.java).apply {
+					context.startActivity(this)
+				}
 			},
 		) {
 			Text(
@@ -178,7 +192,7 @@ fun MenuBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TagView(
-	tagList: List<TagObjectLite>
+	tagList : List<TagObjectLite>
 ) {
 	FlowRow(
 		modifier = Modifier
@@ -211,12 +225,12 @@ fun TagView(
 
 @Composable
 private fun InfoView(
-	id: ObjectId?,
-	createdTimestamp: Long?,
-	modifiedTimestamp: Long?,
-	description: String?,
-	color: Color?,
-	thumbnail: Bitmap?,
+	id : ObjectId?,
+	createdTimestamp : Long?,
+	modifiedTimestamp : Long?,
+	description : String?,
+	color : Color?,
+	thumbnail : Bitmap?,
 ) {
 
 	var size by remember { mutableStateOf<IntSize?>(null) }
@@ -291,8 +305,8 @@ private fun InfoView(
 
 @Composable
 private fun DataView(
-	totalChapter: Int?,
-	totalNote: Int?
+	totalChapter : Int?,
+	totalNote : Int?
 ) {
 	Row(
 		modifier = Modifier
@@ -313,8 +327,8 @@ private fun DataView(
 
 @Composable
 private fun DataItemView(
-	modifier: Modifier = Modifier,
-	text: String,
+	modifier : Modifier = Modifier,
+	text : String,
 ) {
 	Card(
 		shape = RoundedCornerShape(24.dp),

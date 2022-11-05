@@ -1,7 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.dialog
 
 import androidx.compose.runtime.Composable
-import com.syncodec.graphite.presentation.bucketItem.composable.dialog.DeleteDialog
+import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnExit
@@ -25,7 +25,7 @@ fun MainDialog() {
 	val onExit = LocalCompositionOnExit.current
 
 	DeleteDialog(
-		showDeleteDialog = showDeleteDialog,
+		showDialog = showDeleteDialog,
 		message = "Are you sure you want to delete selected notes?",
 		onDismiss = { closeDialog(MainDialogType.DELETE) },
 	) {

@@ -6,7 +6,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.notification.NotePinNotification
-import com.syncodec.graphite.presentation.bucketItem.composable.dialog.DeleteDialog
+import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.DiscardDialog
 import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAddress
@@ -15,8 +15,12 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionConten
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionLatLng
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionOnMoveChapter
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionOnSelectChapter
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapterId
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionSelectChapterList
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionSelectChapterPath
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowChapterSelectionDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowDiscardDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowLocationPickerDialog
@@ -57,13 +61,19 @@ fun NoteDialog(
 	val latLng = LocalCompositionLatLng.current
 	val address = LocalCompositionAddress.current
 
+	val chapterList = LocalCompositionSelectChapterList.current
+	val chapterPath = LocalCompositionSelectChapterPath.current
+
 	val showLocationPickerDialog = LocalCompositionShowLocationPickerDialog.current
 
 	val showNotificationPermissionDialog = LocalCompositionShowNotificationPermissionDialog.current
+	val showChapterSelectionDialog = LocalCompositionShowChapterSelectionDialog.current
 	val showDiscardDialog = LocalCompositionShowDiscardDialog.current
 	val showDeleteDialog = LocalCompositionShowDeleteDialog.current
 
-	val openDialog = LocalCompositionOpenDialog.current
+	val onSelectChapter = LocalCompositionOnSelectChapter.current
+	val onMoveChapter = LocalCompositionOnMoveChapter.current
+
 	val closeDialog = LocalCompositionCloseDialog.current
 
 	val deleteNote = LocalDeleteNote.current
@@ -115,8 +125,17 @@ fun NoteDialog(
 		}
 	}
 
+	ChapterSelectionDialog(
+		showDialog = showChapterSelectionDialog,
+		chapterList = chapterList,
+		chapterPath = chapterPath,
+		onSelectChapter = onSelectChapter,
+		onMove = onMoveChapter,
+		onDismiss = { closeDialog(NoteDialogType.CHAPTER_SELECTION) }
+	)
+
 	DeleteDialog(
-		showDeleteDialog = showDeleteDialog,
+		showDialog = showDeleteDialog,
 		message = "Are you sure you want to delete this note? This operation is non reversible.",
 		onDismiss = { closeDialog(NoteDialogType.DELETE) },
 	) {

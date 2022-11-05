@@ -11,16 +11,20 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.note.composable.buildingBlock.ViewerComponent
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAddress
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAttachmentList
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionContent
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionLatLng
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteIdList
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapter
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionTagListBuffer
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionUserTimestamp
 import com.syncodec.graphite.presentation.note.composable.LocalGetNote
+import com.syncodec.graphite.presentation.note.composable.buildingBlock.ViewerComponent
+import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -75,8 +79,12 @@ private fun Viewer(currentNoteId : ObjectId?) {
 	val address = LocalCompositionAddress.current
 	val attachmentList = LocalCompositionAttachmentList.current
 //	val tagList by viewModel.tagObjectList.collectAsState(initial = listOf())
-
+	val parentChapter = LocalCompositionParentChapter.current
 	val getNote = LocalGetNote.current
+
+	val tagList = LocalCompositionTagListBuffer.current
+
+	val openDialog = LocalCompositionOpenDialog.current
 
 	if (currentNoteId == noteId) {
 		ViewerComponent(
@@ -86,9 +94,10 @@ private fun Viewer(currentNoteId : ObjectId?) {
 			userTimestamp = userTimestamp ?: 0,
 			latLng = latLng,
 			address = address,
+			parentChapter = parentChapter,
 			attachmentList = attachmentList,
-			connectedTag = emptyList()
-		)
+			connectedTag = tagList.map { it.toLite() }
+		) { openDialog(NoteDialogType.CHAPTER_SELECTION, parentChapter?.id) }
 	} else {
 		LoadingView { getNote(currentNoteId ?: return@LoadingView) }
 	}

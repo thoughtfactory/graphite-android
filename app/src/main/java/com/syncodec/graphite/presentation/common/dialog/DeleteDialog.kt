@@ -1,7 +1,12 @@
 package com.syncodec.graphite.presentation.common.dialog
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 import io.realm.kotlin.types.ObjectId
 
 
@@ -93,6 +98,42 @@ fun DeleteDialog(
 					Text("Dismiss",)
 				}
 			}
+		)
+	}
+}
+
+@Composable
+fun DeleteDialog(
+	showDialog: Boolean,
+	message: String? = null,
+	onDismiss: () -> Unit,
+	onDelete: () -> Unit
+) {
+	GenericDialog(
+		showDialog = showDialog,
+		onDismissRequest = onDismiss
+	) {
+		Text(
+			text = "Delete",
+			style = MaterialTheme.typography.headlineMedium,
+			color = MaterialTheme.colorScheme.onSurface,
+		)
+
+		Spacer(modifier = Modifier.height(12.dp))
+
+		Text(
+			text = message ?: "Are you sure you want to delete this item?",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurface,
+		)
+
+		Spacer(modifier = Modifier.height(12.dp))
+
+		DualActionButtons(
+			primaryText = "Delete",
+			secondaryText = "Dismiss",
+			onPrimaryClick = onDelete,
+			onSecondaryClick = onDismiss
 		)
 	}
 }

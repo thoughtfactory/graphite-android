@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.presentation.common.ExpandableBox
@@ -43,30 +45,29 @@ import io.realm.kotlin.types.ObjectId
 )
 @Composable
 fun ChapterListCard(
-	id: ObjectId,
-	timestamp: Long,
-	isSelected: Boolean,
-	isLocked: Boolean,
-	isFavourite: Boolean,
-	isDeleted: Boolean,
-	isLast: Boolean,
-	title: String,
-	description: String?,
-	color: Color?,
-	thumbnail: Bitmap?,
-	noteCount: Int,
-	chapterCount: Int,
-	tagList: List<TagObjectLite>,
-	isVisible: Boolean = false,
-	selectedColor: Color,
-	onClick: () -> Unit,
-	onLongClick: (() -> Unit)? = null,
+	id : ObjectId,
+	timestamp : Long,
+	isSelected : Boolean,
+	isLocked : Boolean,
+	isFavourite : Boolean,
+	isDeleted : Boolean,
+	isLast : Boolean,
+	title : String?,
+	description : String?,
+	color : Color?,
+	thumbnail : Bitmap?,
+	noteCount : Int,
+	chapterCount : Int,
+	tagList : List<TagObjectLite>,
+	isVisible : Boolean = false,
+	selectedColor : Color,
+	onClick : () -> Unit,
+	onLongClick : (() -> Unit)? = null,
 ) {
 	val containerColor by animateColorAsState(
 		when {
 			isSelected -> selectedColor
-//			else -> color
-			isFavourite -> Color.FavouriteContainer
+			isFavourite -> Color(ColorUtils.blendARGB(Color.FavouriteContainer.toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.71f))
 			else -> MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
 		}
 	)
@@ -87,11 +88,11 @@ fun ChapterListCard(
 		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
 		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
-		Card(
+		OutlinedCard(
 			shape = RoundedCornerShape(12.dp),
+			border = BorderStroke(1.dp, if (isFavourite) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
 			colors = CardDefaults.cardColors(containerColor = containerColor),
 			elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
-			border = BorderStroke(2.dp, if (isFavourite) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(12.dp, 4.dp)
@@ -120,7 +121,14 @@ fun ChapterListCard(
 					Box(
 						modifier = with(LocalDensity.current) {
 							Modifier
-								.size(size?.width?.toDp()?.plus(12.dp) ?: 1.dp, size?.height?.toDp()?.plus(16.dp) ?: 1.dp)
+								.size(
+									size?.width
+										?.toDp()
+										?.plus(12.dp) ?: 1.dp,
+									size?.height
+										?.toDp()
+										?.plus(16.dp) ?: 1.dp
+								)
 								.background(Color.Black.copy(alpha = 0.31f))
 						}
 					)
@@ -141,7 +149,7 @@ fun ChapterListCard(
 						noteCount = noteCount,
 						chapterCount = chapterCount,
 						isExpanded = isExpanded,
-					) { isExpanded = !isExpanded }
+					) { isExpanded = ! isExpanded }
 
 					ExpandableBox(
 						isVisible = isExpanded,
@@ -200,22 +208,23 @@ fun ChapterListCard(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun Title(
-	timestamp: Long,
-	title: String,
-	contentColor: Color,
-	noteCount: Int,
-	chapterCount: Int,
-	isExpanded: Boolean,
-	onMoreInfo: () -> Unit,
+	timestamp : Long,
+	title : String?,
+	contentColor : Color,
+	noteCount : Int,
+	chapterCount : Int,
+	isExpanded : Boolean,
+	onMoreInfo : () -> Unit,
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		Text(
-			text = title,
+			text = title ?: "Untitled",
 			style = MaterialTheme.typography.titleLarge,
-			fontWeight = FontWeight.Bold,
+			fontWeight = if (title.isNullOrEmpty()) FontWeight.Normal else FontWeight.Bold,
+			fontStyle = if (title.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
 			color = contentColor,
 			overflow = TextOverflow.Ellipsis,
 			modifier = Modifier.weight(1f),
@@ -283,18 +292,19 @@ private fun Title(
 
 @Composable
 private fun ExpandedContent(
-	id: ObjectId,
-	timestamp: Long,
-	title: String,
-	description: String?,
-	contentColor: Color
+	id : ObjectId,
+	timestamp : Long,
+	title : String?,
+	description : String?,
+	contentColor : Color
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
 		Text(
-			text = title,
+			text = title ?: "",
 			style = MaterialTheme.typography.bodyMedium,
+			fontStyle = if (title.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
 			color = contentColor,
 		)
 

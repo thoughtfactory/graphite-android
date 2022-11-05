@@ -15,12 +15,10 @@ import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.network.FirebaseStorageApi
-import com.syncodec.graphite.di.network.Network
-import com.syncodec.graphite.di.network.OpenLibraryApi
-import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
 import com.syncodec.graphite.utils.getFileName
@@ -74,7 +72,9 @@ enum class RepositoryState {
 class RealmNotInitializedException : Exception("Realm not initialized")
 class ParentChapterNotFoundException : Exception("Parent chapter not found")
 class ChapterNotFoundException : Exception("Chapter not found")
+class BucketNotFoundException : Exception("Bucket not found")
 class NoteNotFoundException : Exception("Note not found")
+class SameBookException : Exception("Same book")
 
 enum class CallbackStatus {
 	SUCCESS, ERROR, UNINITIALIZED
@@ -86,10 +86,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 
 	private var realm : Realm? = null
 
-	val network = Network()
 	val firebaseStorageApi = FirebaseStorageApi()
-	val openLibraryApi = OpenLibraryApi()
-	val tmDbApi = TMDbApi()
 
 	val passcode = ByteArray(64)
 
@@ -143,9 +140,111 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun getDefaultNotebookId() : Flow<ObjectId?> {
+	fun putDefaultChapterId(id : ObjectId, callback : (CallbackStatus) -> Unit) {
+		CoroutineScope(Dispatchers.IO).launch {
+			if (realm == null) {
+				callback(CallbackStatus.UNINITIALIZED)
+			} else {
+				realm?.write {
+					val baseObject = this.query(BaseObject::class).first().find()
+					baseObject?.let { findLatest(it)?.defaultChapterId = id }
+					callback(CallbackStatus.SUCCESS)
+				}
+			}
+		}
+	}
+
+	fun getDefaultChapterId() : Flow<ObjectId?> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BaseObject::class).first().asFlow().map { it.obj?.defaultChapterId }
+	}
+
+	fun putChapter(parentChapterId : ObjectId?, chapterObject : ChapterObject, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.IO).launch {
+			if (realm == null) {
+				callback(false, RealmNotInitializedException())
+				return@launch
+			}
+			try {
+				realm !!.write {
+					val storedChapterObject = getChapterFromId(chapterObject.id)
+					if (storedChapterObject == null) {
+						if (parentChapterId == null) {
+							copyToRealm(chapterObject)
+							callback(true, null)
+						} else {
+							val parentChapter = getChapterFromId(parentChapterId)
+							parentChapter?.let {
+								findLatest(it)?.chapterList?.add(chapterObject)
+								callback(true, null)
+							}
+						}
+					} else {
+						findLatest(storedChapterObject)?.let { latestChapterObject ->
+							if (parentChapterId != latestChapterObject.parentChapterId) {
+								val oldParentChapter = latestChapterObject.parentChapterId?.let { getChapterFromId(it) }
+								val newParentChapter = parentChapterId?.let { getChapterFromId(it) }
+
+								oldParentChapter?.let { findLatest(it)?.chapterList?.remove(latestChapterObject) }
+								newParentChapter?.let { findLatest(it)?.chapterList?.add(latestChapterObject) }
+							}
+
+							latestChapterObject.modifiedTimestamp = System.currentTimeMillis()
+							latestChapterObject.title = chapterObject.title
+							latestChapterObject.description = chapterObject.description
+							latestChapterObject.color = chapterObject.color
+							latestChapterObject.thumbnail = chapterObject.thumbnail
+							latestChapterObject.isFavourite = chapterObject.isFavourite
+							latestChapterObject.isLocked = chapterObject.isLocked
+
+							latestChapterObject.parentChapterId = chapterObject.parentChapterId
+
+							callback(true, null)
+						}
+					}
+				}
+			} catch (e : Exception) {
+				callback(false, e)
+			}
+		}
+	}
+
+	fun getChapterFromIdAsFlow(id : ObjectId) : Flow<ChapterObject?> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+	}
+
+	fun getChapterFromId(id : ObjectId?) : ChapterObject? {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().find()
+	}
+
+	fun getChapterWithParentIdAsFlow(parentChapterId : ObjectId?) : Flow<List<ChapterObject>> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(ChapterObject::class, "parentChapterId == $0 ", parentChapterId).asFlow().map { it.list }
+	}
+
+	fun getChapterWithParentId(parentChapterId : ObjectId?) : List<ChapterObject> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(ChapterObject::class, "parentChapterId == $0 ", parentChapterId).find().toList()
+	}
+
+	fun getParentChapterList(id : ObjectId?, includeEdge : Boolean = false, callback : (List<ChapterObjectLite>?, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.IO).launch {
+			try {
+				val chapterObject = getChapterFromId(id)
+				val chapterObjectList = mutableListOf<ChapterObjectLite>()
+				if (includeEdge) chapterObject?.toLite()?.let { chapterObjectList.add(it) }
+				var parentChapterObject = chapterObject?.parentChapterId?.let { it1 -> getChapterFromId(it1) }
+				while (parentChapterObject != null) {
+					chapterObjectList.add(parentChapterObject.toLite())
+					parentChapterObject = parentChapterObject.parentChapterId?.let { it1 -> getChapterFromId(it1) }
+				}
+				callback(chapterObjectList, null)
+			} catch (e : Exception) {
+				callback(null, e)
+			}
+		}
 	}
 
 	fun putNote(noteObject : NoteObject, callback : (Boolean, Exception?) -> Unit) {
@@ -159,16 +258,18 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					if (noteObject.parentChapterId == null) {
 						callback(false, ParentChapterNotFoundException())
 					} else {
-						val chapterObject = getChapterFromId(noteObject.parentChapterId !!)
-						if (chapterObject == null) {
+						val newChapterObject = getChapterFromId(noteObject.parentChapterId !!)
+						if (newChapterObject == null) {
 							callback(false, ParentChapterNotFoundException())
 							return@write
 						} else {
-							findLatest(chapterObject)
+							findLatest(newChapterObject)
 								?.noteList
 								?.let {
-									val storedNoteObject = it.find { it.id == noteObject.id }
-									if (storedNoteObject == null) {
+									val storedNoteObject = getNoteFromId(noteObject.id)
+									val currentChapterObject = storedNoteObject?.parentChapterId?.let { it1 -> getChapterFromId(it1) }
+									if (currentChapterObject?.id != newChapterObject.id) {
+										currentChapterObject?.let { findLatest(it)?.noteList?.remove(storedNoteObject) }
 										it.add(noteObject)
 									} else {
 										findLatest(storedNoteObject)
@@ -201,29 +302,26 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun updateNoteFavourite(id : ObjectId) {
-		if (realm == null) throw RealmNotInitializedException()
-		else CoroutineScope(Dispatchers.IO).launch {
-			realm !!.write {
-				val noteObject = getNoteFromId(id)
-				if (noteObject == null) throw NoteNotFoundException()
-				else {
-					findLatest(noteObject)?.isFavourite = ! noteObject.isFavourite
+	fun moveNoteToChapter(noteId : ObjectId, chapterId : ObjectId) {
+		try {
+			if (realm == null) throw RealmNotInitializedException()
+			else CoroutineScope(Dispatchers.IO).launch {
+				realm !!.write {
+					val storedNoteObject = getNoteFromId(noteId)
+					val moveToStoredChapterObject = getChapterFromId(chapterId)
+//  				val moveFromStoredChapterObject = getChapterFromId(storedNoteObject?.parentChapterId)
+					Log.i("npr71", "storedNoteObject = ${storedNoteObject?.id}")
+					Log.i("npr71", "moveToStoredChapterObject = ${moveToStoredChapterObject?.id}")
+					moveToStoredChapterObject?.let {
+						if (storedNoteObject != null) {
+//							findLatest(it)?.noteList?.add(storedNoteObject)
+							findLatest(it)?.title = it.title
+						}
+					}
 				}
 			}
-		}
-	}
+		} catch (e : Exception) {
 
-	fun updateNoteLock(id : ObjectId) {
-		if (realm == null) throw RealmNotInitializedException()
-		else CoroutineScope(Dispatchers.IO).launch {
-			realm !!.write {
-				val noteObject = getNoteFromId(id)
-				if (noteObject == null) throw NoteNotFoundException()
-				else {
-					findLatest(noteObject)?.isLocked = ! noteObject.isLocked
-				}
-			}
 		}
 	}
 
@@ -268,51 +366,69 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(NoteObject::class).asFlow().map { it.list }
 	}
 
-	fun delete(objectIdList : List<ObjectId>) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.IO).launch {
-				Log.d("npr71", "Deleting ${objectIdList.size} objects")
-				objectIdList.forEach {
-					delete(it)
+	fun putBucket(bucketObject : BucketObject, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.IO).launch {
+			if (realm == null) {
+				callback(false, RealmNotInitializedException())
+				return@launch
+			}
+			try {
+				realm !!.write {
+					val storedBucketObject = getBucketFromId(bucketObject.id)
+					if (storedBucketObject == null) {
+						this.copyToRealm(bucketObject)
+					} else {
+						findLatest(storedBucketObject)
+							?.let { latestBucketObject ->
+								latestBucketObject.modifiedTimestamp = bucketObject.modifiedTimestamp
+								latestBucketObject.title = bucketObject.title
+								latestBucketObject.description = bucketObject.description
+								latestBucketObject.bucketType = bucketObject.bucketType
+								latestBucketObject.isFavourite = bucketObject.isFavourite
+								latestBucketObject.isLocked = bucketObject.isLocked
+							}
+					}
 				}
+			} catch (e : Exception) {
+				e.printStackTrace()
+				callback(false, e)
 			}
 		}
 	}
 
-	suspend fun delete(objectId : ObjectId) {
-		realm?.write {
-			val noteObject = getNoteFromId(objectId)
-			val chapterObject = noteObject?.parentChapterId?.let { getChapterFromId(it) }
-
-			if (chapterObject != null) {
-				findLatest(chapterObject)
-					?.noteList
-					?.removeIf { it.id == objectId }
+	fun putBucketItem(bucketId : ObjectId, bucketItemObject : BucketItemObject, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.IO).launch {
+			if (realm == null) {
+				callback(false, RealmNotInitializedException())
+				return@launch
 			}
-			noteObject?.let { findLatest(it)?.let { this.delete(it) } }
+			try {
+				realm !!.write {
+					getBucketFromId(bucketId)?.let { bucket ->
+						val storedBucketItem = bucket.bucketItemList.find { it.id == bucketItemObject.id }
+
+						if (storedBucketItem == null) {
+							findLatest(bucket)?.bucketItemList?.add(bucketItemObject)
+							callback(true, null)
+						} else {
+							findLatest(storedBucketItem)?.let { latestBucketItemObject ->
+								latestBucketItemObject.modifiedTimestamp = bucketItemObject.modifiedTimestamp
+								latestBucketItemObject.title = bucketItemObject.title
+								latestBucketItemObject.state = bucketItemObject.state
+								latestBucketItemObject.thumbnail = bucketItemObject.thumbnail
+								latestBucketItemObject.isFavourite = bucketItemObject.isFavourite
+								latestBucketItemObject.isLocked = bucketItemObject.isLocked
+								latestBucketItemObject.data = bucketItemObject.data
+							}
+							callback(true, null)
+						}
+					} ?: callback(false, BucketNotFoundException())
+				}
+			} catch (e : Exception) {
+				e.printStackTrace()
+				callback(false, e)
+			}
 		}
-	}
-
-	fun getAllTagAsFlow() : Flow<RealmResults<TagObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(TagObject::class).asFlow().map { it.list }
-	}
-
-	fun getChapterFromIdAsFlow(id : ObjectId) : Flow<ChapterObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
-	}
-
-
-	fun getAllNotebookAsFlow() : Flow<List<ChapterObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class).asFlow().map { it.list.filter { it.parentChapterId == null } }
-	}
-
-	fun getNotebookAsFlow(id : ObjectId) : Flow<ChapterObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
 
 	fun getAllBucketAsFlow() : Flow<RealmResults<BucketObject>> {
@@ -325,69 +441,19 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(BucketObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
 
+	fun getBucketFromId(id : ObjectId) : BucketObject? {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(BucketObject::class, "id == $0 ", id).first().find()
+	}
+
 	fun getBucketItemAsFlow(id : ObjectId) : Flow<BucketItemObject?> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
 
-	fun putBase(baseObject : BaseObject, callback : (CallbackStatus, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.IO).launch {
-			if (realm == null) {
-				callback(CallbackStatus.UNINITIALIZED, RealmNotInitializedException())
-				return@launch
-			} else {
-				try {
-					realm !!.write {
-						copyToRealm(baseObject)
-						callback(CallbackStatus.SUCCESS, null)
-						return@write
-					}
-				} catch (e : Exception) {
-					callback(CallbackStatus.ERROR, e)
-					return@launch
-				}
-			}
-		}
-	}
-
-	fun putChapter(parentChapterId : ObjectId?, chapterObject : ChapterObject, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.IO).launch {
-			if (realm == null) {
-				callback(false, RealmNotInitializedException())
-				return@launch
-			}
-			try {
-				realm !!.write {
-					if (parentChapterId == null) {
-						copyToRealm(chapterObject)
-						callback(true, null)
-						return@write
-					} else {
-						try {
-							val parentChapter = realm !!.query(ChapterObject::class, "id == $0", parentChapterId).first().find()
-							if (parentChapter == null) {
-								callback(false, ParentChapterNotFoundException())
-								return@write
-							} else {
-								findLatest(parentChapter)?.chapterList?.add(chapterObject)
-								callback(true, null)
-								return@write
-							}
-						} catch (e : Exception) {
-							callback(false, e)
-							return@write
-						}
-					}
-				}
-			} catch (e : Exception) {
-				callback(false, e)
-			}
-		}
-	}
-
-	fun getChapterFromId(id : ObjectId) : ChapterObject? {
+	fun getBucketItem(id : ObjectId) : BucketItemObject? {
 		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().find()
+		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().find()
 	}
 
 	fun getAttachmentFromId(id : ObjectId) : AttachmentObject? {
@@ -555,6 +621,148 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
+	fun delete(objectIdList : List<ObjectId>) {
+		if (realm == null) throw RealmNotInitializedException()
+		else {
+			CoroutineScope(Dispatchers.IO).launch {
+				objectIdList.forEach {
+					delete(it)
+				}
+			}
+		}
+	}
+
+	private suspend fun delete(objectId : ObjectId) {
+		realm?.write {
+			val noteObject = getNoteFromId(objectId)
+			val chapterObject = noteObject?.parentChapterId?.let { getChapterFromId(it) }
+
+			if (chapterObject != null) {
+				findLatest(chapterObject)
+					?.noteList
+					?.removeIf { it.id == objectId }
+			}
+			noteObject?.let { findLatest(it)?.let { this.delete(it) } }
+
+			val bucketObject = getBucketFromId(objectId)
+			bucketObject?.bucketItemList?.map { it.id }?.let { delete(it) }
+			bucketObject?.let { findLatest(it)?.let { this.delete(it) } }
+
+			val bucketItemObject = getBucketItem(objectId)
+			bucketItemObject?.let { findLatest(it)?.let { this.delete(it) } }
+		}
+	}
+
+	fun putTag(tagObject : TagObject) {
+		if (realm == null) throw RealmNotInitializedException()
+		else {
+			CoroutineScope(Dispatchers.IO).launch {
+				realm?.write {
+					val storedTagObject = getTagFromId(tagObject.id)
+					if (storedTagObject != null) {
+						findLatest(storedTagObject)?.let {
+							it.tag = tagObject.tag
+							it.color = tagObject.color
+						}
+					} else {
+						copyToRealm(tagObject)
+					}
+				}
+			}
+		}
+	}
+
+	fun deleteTag(id : ObjectId?) {
+		if (realm == null) throw RealmNotInitializedException()
+		else {
+			CoroutineScope(Dispatchers.IO).launch {
+				realm?.write {
+					val tagObject = getTagFromId(id)
+					tagObject?.let { findLatest(it)?.let { this.delete(it) } }
+				}
+			}
+		}
+	}
+
+	fun getTagFromId(id : ObjectId?) : TagObject? {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm!!.query(TagObject::class, "id == $0", id).first().find()
+	}
+
+	fun getTagFromIdAsFlow(id : ObjectId) : Flow<TagObject?> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm!!.query(TagObject::class, "id == $0", id).first().asFlow().map { it.obj }
+	}
+
+	fun connectTag(noteId : ObjectId, tagIdList:List<ObjectId>, callback : (Boolean, Exception?) -> Unit) {
+		if (realm == null) throw RealmNotInitializedException()
+		else {
+			CoroutineScope(Dispatchers.IO).launch {
+				try {
+					realm?.write {
+						getAllTag().forEach { findLatest(it)?.objectIdList?.remove(noteId) }
+						tagIdList.forEach {
+							val tagObject = getTagFromId(it)
+							if (tagObject != null) {
+								findLatest(tagObject)?.let {
+									if (it.objectIdList.contains(noteId)) it.objectIdList.remove(noteId)
+									else {
+										it.objectIdList.add(noteId)
+									}
+								}
+							}
+						}
+						callback(true, null)
+					}
+				} catch (e : Exception) {
+					e.printStackTrace()
+					callback(false, e)
+				}
+			}
+		}
+	}
+
+	fun connectTag(noteId : ObjectId, tagId : ObjectId) {
+		if (realm == null) throw RealmNotInitializedException()
+		else {
+			CoroutineScope(Dispatchers.IO).launch {
+				realm?.write {
+					val tagObject = getTagFromId(tagId)
+					if (tagObject != null) {
+						findLatest(tagObject)?.let {
+							if (it.objectIdList.contains(noteId)) it.objectIdList.remove(noteId)
+							else it.objectIdList.add(noteId)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	fun getTagFromName(tag: String) : TagObject? {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm!!.query(TagObject::class, "tag == $0", tag).first().find()
+	}
+
+	fun getTagFromNameAsFlow(tag: String) : Flow<TagObject?> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm!!.query(TagObject::class, "tag == $0", tag).first().asFlow().map { it.obj }
+	}
+
+	fun getAllTagAsFlow() : Flow<RealmResults<TagObject>> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(TagObject::class).asFlow().map { it.list }
+	}
+
+	fun getAllTag() : RealmResults<TagObject> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(TagObject::class).find()
+	}
+
+	fun isKeyPresentInBucketItem(key : String?) : Boolean {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(BucketItemObject::class, "key == $0 ", key).count().find() > 0
+	}
 
 	fun getNewKey(context : Context) : ByteArray {
 		// open a connection to the android keystore

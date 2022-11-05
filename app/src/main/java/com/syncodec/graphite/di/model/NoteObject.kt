@@ -48,6 +48,10 @@ class NoteObject: RealmObject {
 		}
 	}
 
+	override fun toString() : String {
+		return this.id.toString()
+	}
+
 	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
@@ -139,6 +143,7 @@ class NoteObject: RealmObject {
 	fun toLite(): NoteObjectLite {
 		return NoteObjectLite(
 			id = this.id,
+			parentChapterId = this.parentChapterId,
 			createdTimestamp = this.createdTimestamp,
 			modifiedTimestamp = this.modifiedTimestamp,
 			userTimestamp = this.userTimestamp,
@@ -242,6 +247,7 @@ data class NoteObjectRaw(
 
 data class NoteObjectLite(
 	val id: ObjectId,
+	val parentChapterId : ObjectId?,
 	val createdTimestamp: Long,
 	val modifiedTimestamp: Long,
 	val userTimestamp: Long,
@@ -261,6 +267,7 @@ data class NoteObjectLite(
 		if (other !is NoteObjectLite) return false
 
 		if (id != other.id) return false
+		if (parentChapterId != other.parentChapterId) return false
 		if (createdTimestamp != other.createdTimestamp) return false
 		if (modifiedTimestamp != other.modifiedTimestamp) return false
 		if (userTimestamp != other.userTimestamp) return false
@@ -282,6 +289,7 @@ data class NoteObjectLite(
 
 	override fun hashCode(): Int {
 		var result = id.hashCode()
+		result = 31 * result + parentChapterId.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
 		result = 31 * result + userTimestamp.hashCode()

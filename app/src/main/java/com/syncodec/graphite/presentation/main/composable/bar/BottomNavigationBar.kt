@@ -2,10 +2,7 @@ package com.syncodec.graphite.presentation.main.composable.bar
 
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -14,16 +11,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -33,17 +22,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavHostController
-import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.google.accompanist.navigation.animation.composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.bucket.BucketActivity
-import com.syncodec.graphite.presentation.main.MainActivity
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnAddDebugData
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSelected
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
@@ -54,10 +43,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.main.composable.screen.HomeScreen
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
-import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.ViewType
-import com.syncodec.graphite.utils.timestampToCalendarDay
-import com.syncodec.graphite.utils.tone
+import com.syncodec.graphite.utils.*
 import io.realm.kotlin.types.ObjectId
 
 
@@ -92,7 +78,7 @@ fun BottomNavigationBar(
 		) {
 			screens.forEach { screen ->
 				NavigationBarItem(
-					onClick = { onNavigation(screen.route) },
+					onClick = { if (currentRoute != screen.route) onNavigation(screen.route) },
 					icon = {
 						Icon(
 							painter = painterResource(id = screen.icon),
@@ -126,7 +112,6 @@ fun BottomNavigationBar(
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @ExperimentalPagerApi
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
@@ -134,7 +119,6 @@ fun BottomNavigationBar(
 fun MainNavigation(
 	navController : NavHostController,
 	componentType : ComponentType,
-	viewType : ViewType,
 	defaultNotebookId : ObjectId?,
 	chapterObject : ChapterObject?,
 	notebookList : List<ChapterObject>,
@@ -142,28 +126,31 @@ fun MainNavigation(
 	bucketList : List<BucketObject>,
 ) {
 	val context = LocalContext.current
+
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
 	val scope = rememberCoroutineScope()
 
 	val openSheet = LocalCompositionOpenBottomSheet.current
 	val closeSheet = LocalCompositionCloseBottomSheet.current
 
-	val noteDayMap : MutableMap<Long, MutableList<NoteObjectLite>> = mutableMapOf()
-	noteList.forEach { note ->
-		val timestamp = timestampToCalendarDay(note.userTimestamp)
-		if (noteDayMap.containsKey(timestamp)) noteDayMap[timestamp] !!.add(note)
-		else noteDayMap[timestamp] = mutableListOf(note)
-	}
+	val isVaultOpened = LocalVaultIsOpened.current
 
 	val isSelected = LocalCompositionIsSelected.current
 	val onSelected = LocalCompositionOnSelected.current
 	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
 
+	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.TIMESTAMP)
+	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.DESCENDING)
+	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.LIST)
+
 	val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) { "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner" }
-	AnimatedNavHost(
+
+	val addDebugData = LocalCompositionOnAddDebugData.current
+
+	NavHost(
 		navController = navController,
 		startDestination = BottomNavigationItem.Home.route,
-		enterTransition = { fadeIn(tween(600)) },
-		exitTransition = { fadeOut(tween(600)) },
 	) {
 		composable(BottomNavigationItem.Home.route) {
 			CompositionLocalProvider(
@@ -171,20 +158,23 @@ fun MainNavigation(
 			) {
 				HomeScreen(
 					componentType = componentType,
-					noteDayMap = noteDayMap,
-					bucketList = bucketList,
+					noteList = noteList,
+					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
 					notebookList = notebookList.filter { it.parentChapterId == null },
+					sortOn = sortOn,
+					sortBy = sortBy,
 					viewType = viewType,
 					onClickFab = {
 						when (componentType) {
 							ComponentType.NOTE -> {
-								Intent(context, NoteActivity::class.java).apply {
-									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-//          						TODO    Check if notebookId is not null
-									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId.toString())
-									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-									context.startActivity(this)
-								}
+//								Intent(context, NoteActivity::class.java).apply {
+//									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+////          						TODO    Check if notebookId is not null
+//									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId.toString())
+//									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+//									context.startActivity(this)
+//								}
+								addDebugData()
 							}
 
 							ComponentType.BUCKET -> openSheet(MainBottomSheetType.BUCKET)
@@ -213,22 +203,40 @@ fun MainNavigation(
 						else selectedObjectIdList.add(it)
 					},
 					onClickBucket = {
-						Intent(context, BucketActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.toString())
-
-							context.startActivity(this)
+						if (isSelected) {
+							onSelected(true)
+							if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
+							else selectedObjectIdList.add(it)
+						} else {
+							Intent(context, BucketActivity::class.java).apply {
+								putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.toString())
+								context.startActivity(this)
+							}
 						}
 					},
-					onLongClickBucket = {},
+					onLongClickBucket = {
+						onSelected(true)
+						if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
+						else selectedObjectIdList.add(it)
+					},
 					onClickNotebook = {
-						Intent(context, NotebookActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.toString())
-							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-
-							context.startActivity(this)
+						if (isSelected) {
+							onSelected(true)
+							if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
+							else selectedObjectIdList.add(it)
+						} else {
+							Intent(context, NotebookActivity::class.java).apply {
+								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.toString())
+								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+								context.startActivity(this)
+							}
 						}
 					},
-					onLongClickNotebook = {}
+					onLongClickNotebook = {
+						onSelected(true)
+						if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
+						else selectedObjectIdList.add(it)
+					}
 				)
 			}
 		}
@@ -237,7 +245,7 @@ fun MainNavigation(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
 				CalendarScreen(
-					noteList = noteList,
+					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
 					selectedItemList = emptyList(),
 					onClickNote = {
 						Intent(context, NoteActivity::class.java).apply {
@@ -258,7 +266,7 @@ fun MainNavigation(
 				LocalViewModelStoreOwner provides viewModelStoreOwner
 			) {
 				AtlasScreen(
-					noteList = noteList,
+					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
 					onClickNote = {
 						Intent(context, NoteActivity::class.java).apply {
 							putExtra(Extra.Companion.Constant.IS_NEW.name, false)

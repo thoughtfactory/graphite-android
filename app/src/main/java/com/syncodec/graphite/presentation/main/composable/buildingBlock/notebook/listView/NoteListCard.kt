@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView
 
 import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
@@ -14,7 +15,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -47,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -57,64 +60,90 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.notification.NotePinNotification
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.presentation.ui.FavouriteContent
+import com.syncodec.graphite.presentation.ui.LocationContainer
+import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
+import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo
 import com.syncodec.graphite.utils.timeStampToTime
-import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.ObjectId
 import kotlin.math.roundToInt
 
 
 @OptIn(
 	ExperimentalFoundationApi::class,
-	ExperimentalAnimationApi::class, ExperimentalMaterialApi::class
+	ExperimentalAnimationApi::class,
+	ExperimentalMaterialApi::class
 )
 @Composable
 fun NoteListCard(
-	id: ObjectId,
-	timestamp: Long,
-	showFullTime: Boolean,
-	isLocked: Boolean,
-	isSelected: Boolean,
-	isFavourite: Boolean,
-	isDeleted: Boolean,
-	isLast: Boolean,
-	title: String?,
-	contentThumbnail: String?,
-	attachmentCount: Int,
-	attachmentThumbnail: Bitmap?,
-	address: String?,
-	latLng: LatLng?,
-	isVisible: Boolean = false,
+	id : ObjectId,
+	parentChapterId : ObjectId?,
+	timestamp : Long,
+	showFullTime : Boolean,
+	isLocked : Boolean,
+	isSelected : Boolean,
+	isFavourite : Boolean,
+	isDeleted : Boolean,
+	isLast : Boolean,
+	title : String?,
+	contentThumbnail : String?,
+	attachmentCount : Int,
+	attachmentThumbnail : Bitmap?,
+	address : String?,
+	latLng : LatLng?,
+	tagList: List<TagObject>,
+	isVisible : Boolean = false,
+	isSwipable : Boolean,
 	containerColor : Color = Color.Transparent,
-	selectedColor: Color,
-	onClick: () -> Unit,
-	onLongClick: (() -> Unit)? = null,
+	selectedColor : Color,
+	onClick : () -> Unit,
+	onLongClick : (() -> Unit)? = null,
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
 	val isFavouriteTinted by dataStoreInstance.getTintFavorite.collectAsState(initial = false)
 
-
 	val containerColor by animateColorAsState(
 		when {
 			isSelected -> selectedColor
-			isFavourite -> if (isFavouriteTinted) Color.FavouriteContainer else containerColor
-			else -> containerColor
+			isFavourite -> if (isFavouriteTinted) Color(
+				ColorUtils.blendARGB(
+					MaterialTheme.colorScheme.background.toArgb(),
+					Color.FavouriteContainer.toArgb(),
+					0.31f
+				)
+			) else MaterialTheme.colorScheme.background
+
+			else -> MaterialTheme.colorScheme.background
+		}
+	)
+	val contentColor by animateColorAsState(
+		when {
+			isSelected -> selectedColor.getInverseBWColor()
+			isFavourite -> if (isFavouriteTinted) Color.FavouriteContent else MaterialTheme.colorScheme.onBackground
+			else -> MaterialTheme.colorScheme.onSurface
 		}
 	)
 
+	val anchorWidth = 128.dp
 	val swipeableState = rememberSwipeableState(0)
-	val anchors = mapOf(0f to 0, with(LocalDensity.current) { 128.dp.toPx() } to 1)
+	val anchors = mapOf(0f to 0, with(LocalDensity.current) { anchorWidth.toPx() } to 1)
 
 	var cardHeight by remember { mutableStateOf(0) }
 
@@ -127,9 +156,7 @@ fun NoteListCard(
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(8.dp, 0.dp, 12.dp, if (isLast) 8.dp else 0.dp)
-				.onGloballyPositioned {
-					cardHeight = it.size.height
-				},
+				.onGloballyPositioned { cardHeight = it.size.height },
 		) {
 			NoteSpacer(
 				isLast = isLast,
@@ -139,18 +166,48 @@ fun NoteListCard(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.swipeable(
-						state = swipeableState,
-						anchors = anchors,
-						thresholds = { _, _ -> FractionalThreshold(0.31f) },
-						orientation = Orientation.Horizontal
-					)
 					.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
 			) {
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier
+						.width(anchorWidth)
+						.height(with(LocalDensity.current) { cardHeight.toDp() }),
+					horizontalArrangement = Arrangement.SpaceEvenly
+				) {
+					MenuButton(
+						icon = R.drawable.ic_pin,
+						tint = MaterialTheme.colorScheme.onSurface
+					) {
+						if (parentChapterId != null) {
+							NotePinNotification.showSimpleNotification(
+								context = context,
+								noteId = id,
+								chapterId = parentChapterId,
+								title = title ?: "Untitled",
+								content = contentThumbnail ?: "No content",
+								notificationId = id.hashCode(),
+							) {
+								Toast.makeText(context, "Notification permission not available. Please enable permission from settings", Toast.LENGTH_SHORT).show()
+							}
+						}
+					}
+
+					MenuButton(
+						icon = R.drawable.ic_share,
+						tint = MaterialTheme.colorScheme.onSurface
+					) {
+
+					}
+				}
+
 				OutlinedCard(
 					shape = RoundedCornerShape(12.dp),
-					border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.17f)),
-					colors = CardDefaults.cardColors(containerColor),
+					border = BorderStroke(
+						1.dp,
+						if (isFavourite && isFavouriteTinted) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)
+					),
+					colors = CardDefaults.cardColors(containerColor = containerColor),
 					elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 					modifier = Modifier
 						.fillMaxWidth()
@@ -164,6 +221,7 @@ fun NoteListCard(
 							state = swipeableState,
 							anchors = anchors,
 							orientation = Orientation.Horizontal,
+							enabled = isSwipable,
 							thresholds = { _, _ -> FractionalThreshold(0.31f) }
 						)
 				) {
@@ -180,13 +238,7 @@ fun NoteListCard(
 									.height(80.dp)
 									.padding(0.dp, 8.dp)
 									.clip(CutCornerShape(16.dp, 0.dp, 0.dp, 16.dp))
-									.background(
-										MaterialTheme
-											.colorScheme
-											.surface
-											.tone(isSystemInDarkTheme(), 1)
-											.copy(alpha = 0.71f)
-									)
+									.background(contentColor.copy(alpha = 0.71f))
 							)
 						}
 
@@ -201,7 +253,9 @@ fun NoteListCard(
 								title = title,
 								isLocked = isLocked,
 								isFavourite = isFavourite,
-								attachmentCount = attachmentCount
+								attachmentCount = attachmentCount,
+								contentColor = contentColor,
+								isFavouriteTinted = isFavouriteTinted
 							)
 
 							Spacer(modifier = Modifier.height(4.dp))
@@ -209,14 +263,20 @@ fun NoteListCard(
 							Content(
 								contentThumbnail = contentThumbnail,
 								attachmentCount = attachmentCount,
-								attachmentThumbnail = attachmentThumbnail
+								attachmentThumbnail = attachmentThumbnail,
+								contentColor = contentColor,
 							)
+
+							TagView(tagList = tagList)
 
 							if (address != null || latLng != null) {
 								Spacer(modifier = Modifier.height(8.dp))
 								Location(
 									address = address,
-									latLng = latLng
+									latLng = latLng,
+									contentColor = contentColor,
+									isFavouriteTinted = isFavouriteTinted,
+									isFavourite = isFavourite
 								)
 							}
 						}
@@ -229,28 +289,30 @@ fun NoteListCard(
 
 @Composable
 private fun Title(
-	showFullTime: Boolean,
-	timestamp: Long,
-	title: String?,
-	isLocked: Boolean,
-	isFavourite: Boolean,
-	attachmentCount: Int
+	showFullTime : Boolean,
+	timestamp : Long,
+	title : String?,
+	isLocked : Boolean,
+	isFavourite : Boolean,
+	attachmentCount : Int,
+	contentColor : Color,
+	isFavouriteTinted : Boolean,
 ) {
 	Row(
 		modifier = Modifier,
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		if (showFullTime) {
-			TitleText(text = entryTimestamp0(timestamp))
-			TitleText(text = entryTimestamp1(timestamp))
+			TitleText(text = entryTimestamp0(timestamp), contentColor = contentColor)
+			TitleText(text = entryTimestamp1(timestamp), contentColor = contentColor)
 		} else {
-			TitleText(text = timeStampToTime(timestamp))
+			TitleText(text = timeStampToTime(timestamp), contentColor = contentColor)
 		}
-		if (!title.isNullOrBlank()) {
+		if (! title.isNullOrBlank()) {
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
+			TitleText(text = "·", contentColor = contentColor)
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = title)
+			TitleText(text = title, contentColor = contentColor)
 		}
 
 		Spacer(modifier = Modifier.weight(1f))
@@ -259,12 +321,12 @@ private fun Title(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_shield),
 				contentDescription = "Locked",
-				tint = Color(0xFF5ACE8F),
+				tint = if (isFavouriteTinted && isFavourite) contentColor else Color.LockClosedContainer,
 				modifier = Modifier.requiredSize(14.dp)
 			)
 			if (isFavourite || attachmentCount > 0) {
 				Spacer(modifier = Modifier.width(2.dp))
-				TitleText(text = "·")
+				TitleText(text = "·", contentColor = contentColor)
 				Spacer(modifier = Modifier.width(2.dp))
 			}
 		}
@@ -272,12 +334,12 @@ private fun Title(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_favourite),
 				contentDescription = "Favourite",
-				tint = Color(0xFFFF5E78),
+				tint = if (isFavouriteTinted) contentColor else Color.FavouriteContainer,
 				modifier = Modifier.requiredSize(14.dp)
 			)
 			if (attachmentCount > 0) {
 				Spacer(modifier = Modifier.width(2.dp))
-				TitleText(text = "·")
+				TitleText(text = "·", contentColor = contentColor)
 				Spacer(modifier = Modifier.width(2.dp))
 			}
 		}
@@ -285,23 +347,26 @@ private fun Title(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_attachment),
 				contentDescription = "Attachment count",
-				tint = Color(0xFFF5B971),
+				tint = if (isFavouriteTinted && isFavourite) contentColor else Color.AttachmentContainer,
 				modifier = Modifier.requiredSize(14.dp)
 			)
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
+			TitleText(text = "·", contentColor = contentColor)
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "$attachmentCount")
+			TitleText(text = "$attachmentCount", contentColor = contentColor)
 		}
 	}
 }
 
 @Composable
-private fun TitleText(text: String) {
+private fun TitleText(
+	text : String,
+	contentColor : Color
+) {
 	Text(
 		text = text,
 		style = MaterialTheme.typography.bodyMedium,
-		color = MaterialTheme.colorScheme.onBackground,
+		color = contentColor,
 		fontWeight = FontWeight.Bold,
 		maxLines = 1,
 		modifier = Modifier
@@ -310,9 +375,10 @@ private fun TitleText(text: String) {
 
 @Composable
 private fun Content(
-	contentThumbnail: String?,
-	attachmentCount: Int,
-	attachmentThumbnail: Bitmap?
+	contentThumbnail : String?,
+	attachmentCount : Int,
+	attachmentThumbnail : Bitmap?,
+	contentColor : Color
 ) {
 	val context = LocalContext.current
 
@@ -325,7 +391,7 @@ private fun Content(
 			Text(
 				text = (contentThumbnail ?: "").addEmptyLines(6),
 				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onSurface,
+				color = contentColor,
 				maxLines = 6,
 				modifier = Modifier
 			)
@@ -333,7 +399,7 @@ private fun Content(
 			Text(
 				text = (contentThumbnail ?: "").addEmptyLines(6),
 				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onSurface,
+				color = contentColor,
 				maxLines = 6,
 				modifier = Modifier.weight(1f)
 			)
@@ -357,9 +423,42 @@ private fun Content(
 }
 
 @Composable
+private fun TagView(
+	tagList : List<TagObject>
+) {
+	Column(
+		modifier = Modifier.fillMaxWidth()
+	) {
+		if (tagList.isNotEmpty()) Spacer(modifier = Modifier.height(4.dp))
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.horizontalScroll(rememberScrollState()),
+		) {
+			tagList.forEach { tag ->
+				Box(
+					modifier = Modifier.background(Color(tag.color).copy(alpha = 0.47f), RoundedCornerShape(25))
+				) {
+					Text(
+						text = tag.tag,
+						style = MaterialTheme.typography.bodySmall,
+						color = Color(tag.color).getInverseBWColor(),
+						modifier = Modifier.padding(8.dp, 4.dp)
+					)
+				}
+				Spacer(modifier = Modifier.width(2.dp))
+			}
+		}
+	}
+}
+
+@Composable
 private fun Location(
-	address: String?,
-	latLng: LatLng?
+	address : String?,
+	latLng : LatLng?,
+	contentColor : Color,
+	isFavouriteTinted : Boolean,
+	isFavourite : Boolean
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
@@ -368,17 +467,17 @@ private fun Location(
 		Icon(
 			painter = painterResource(id = R.drawable.ic_map_marker),
 			contentDescription = null,
-			tint = Color(0xFF318DFD),
+			tint = if (isFavouriteTinted && isFavourite) contentColor else Color.LocationContainer,
 			modifier = Modifier.requiredSize(14.dp)
 		)
 
 		Spacer(modifier = Modifier.width(4.dp))
 
-		if (!address.isNullOrBlank()) {
+		if (! address.isNullOrBlank()) {
 			Text(
 				text = address,
 				style = MaterialTheme.typography.labelMedium,
-				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+				color = contentColor,
 				fontStyle = FontStyle.Italic,
 				overflow = TextOverflow.Ellipsis,
 				maxLines = 1
@@ -387,7 +486,7 @@ private fun Location(
 			Text(
 				text = "${latLng.latitude?.roundTo(6)}, ${latLng.longitude?.roundTo(6)}",
 				style = MaterialTheme.typography.labelMedium,
-				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+				color = contentColor,
 				fontStyle = FontStyle.Italic,
 				overflow = TextOverflow.Ellipsis,
 				maxLines = 1

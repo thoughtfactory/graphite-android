@@ -24,8 +24,11 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.graphite.di.model.AttachmentObject
+import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
@@ -63,6 +66,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 	val noteId : MutableState<ObjectId?> = mutableStateOf(null)
 	val noteObject : MutableState<NoteObject?> = mutableStateOf(null)
 	val parentChapterId : MutableState<ObjectId?> = mutableStateOf(null)
+	val parentChapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
 
 	val createdTimestamp : MutableState<Long?> = mutableStateOf(null)
 	val modifiedTimestamp : MutableState<Long?> = mutableStateOf(null)
@@ -83,12 +87,43 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 	var locationCoroutine : CoroutineScope? = null
 	var locationCancellationSource : CancellationTokenSource? = null
 
+	val tagList : SnapshotStateList<TagObject> = mutableStateListOf()
+	val tagListBuffer : SnapshotStateList<TagObject> = mutableStateListOf()
+
+	val selectChapterList : SnapshotStateList<ChapterObject> = mutableStateListOf()
+	val selectParentChapter : MutableState<ChapterObject?> = mutableStateOf(null)
+	val selectChapterPath : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
+
 	val showLocationPermissionDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showLocationPickerDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showNotificationPermissionDialog : MutableState<Boolean> = mutableStateOf(false)
+	val showChapterSelectionDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showDiscardDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
 
+	var chapterCoroutine : CoroutineScope? = null
+
+	init {
+		viewModelScope.launch(Dispatchers.IO) {
+			when (repositoryState.value) {
+				RepositoryState.INIT -> null
+				RepositoryState.LOADING -> null
+				RepositoryState.SUCCESS -> {
+					viewModelScope.launch(Dispatchers.IO) {
+						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+						repository2.getAllTagAsFlow().collect {
+							withContext(Dispatchers.Main) {
+								tagList.clear()
+								tagList.addAll(it)
+							}
+						}
+					}
+				}
+
+				RepositoryState.ERROR -> null
+			}
+		}
+	}
 
 	fun singleRead(noteId : ObjectId) {
 		viewModelScope.launch(Dispatchers.IO) {
@@ -179,8 +214,6 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 
 	fun getNote(id : ObjectId) {
 		viewModelScope.launch(Dispatchers.IO) {
-//			val noteObject = repository2.getNoteFromId(id)
-
 			repository2.getNoteFromIdAsFlow(id).cancellable().collect { noteObject ->
 				this@NoteViewModel.noteId.value = noteObject?.id
 				if (noteObject?.id != this@NoteViewModel.noteId.value) cancel()
@@ -201,6 +234,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 						this@NoteViewModel.isLocked.value = noteObject.isLocked
 
 						this@NoteViewModel.parentChapterId.value = noteObject.parentChapterId
+						getChapter()
 
 						attachmentListStored.clear()
 						attachmentListBuffer.clear()
@@ -232,6 +266,33 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 				isViewing.value = true
 			}
 		}
+		viewModelScope.launch(Dispatchers.IO) {
+			withContext(Dispatchers.Main) {
+				tagListBuffer.clear()
+			}
+			tagList.forEach {
+				if (it.objectIdList.contains(id)) {
+					withContext(Dispatchers.Main) {
+						if (!tagListBuffer.contains(it)) tagListBuffer.add(it)
+					}
+				}
+			}
+		}
+	}
+
+	fun getChapter() {
+		viewModelScope.launch(Dispatchers.IO) {
+
+			chapterCoroutine?.cancel()
+			chapterCoroutine = this
+
+			parentChapterId.value?.let {
+				repository2.getChapterFromIdAsFlow(it).cancellable().collect { chapterObject ->
+					parentChapterObject.value = chapterObject
+					selectParentChapter.value = chapterObject
+				}
+			}
+		}
 	}
 
 	fun editNote() {
@@ -240,15 +301,11 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
-	fun putNote(data : String?) {
+	fun putNote() {
 		CoroutineScope(Dispatchers.IO).launch {
 			try {
 				locationCancellationSource?.cancel()
 				locationCancellationSource = null
-
-				val dataObject = JSONObject(data ?: "{}")
-				val dataJson = dataObject.optJSONObject("dataJson")
-				val dataText = dataObject.optString("dataText")
 
 				NoteObject().apply {
 					isOperationPending.value = true
@@ -267,8 +324,8 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 						else null
 					)
 					this.address = this@NoteViewModel.address.value
-					this.contentThumbnail = dataText.substring(0, minOf(256, dataText.length))
-					this.content = dataJson?.toString()
+					this.contentThumbnail = this@NoteViewModel.contentThumbnail.value
+					this.content = this@NoteViewModel.content.value
 					this.isFavourite = this@NoteViewModel.isFavourite.value == true
 					this.isLocked = this@NoteViewModel.isLocked.value == true
 
@@ -284,11 +341,16 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 					} else {
 						this.parentChapterId = this@NoteViewModel.parentChapterId.value !!
 						repository2.putNote(noteObject = this) { _, e ->
-							repository2.putAttachment(this.id, newAttachmentData.first){ _, e ->
+							repository2.putAttachment(this.id, newAttachmentData.first) { _, e ->
 								attachmentListStored.filterNot { it.key in attachmentListBuffer.keys }.let {
 									repository2.deleteAttachment(it.values.map { it.first }) { _, e ->
-										chapterRead(this.parentChapterId !!, this.id)
-										isOperationPending.value = false
+										repository2.connectTag(this.id, tagListBuffer.map { it.id }) { _, e ->
+											chapterRead(this.parentChapterId !!, this.id)
+											isOperationPending.value = false
+											viewModelScope.launch(Dispatchers.Main) {
+												Toast.makeText(repository2.context, "Note saved", Toast.LENGTH_SHORT).show()
+											}
+										}
 									}
 								}
 							}
@@ -302,15 +364,26 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
+	fun setContent(data : String?) {
+		val dataObject = JSONObject(data ?: "{}")
+		val dataJson = dataObject.optJSONObject("dataJson")
+		val dataText = dataObject.optString("dataText")
+
+		this.contentThumbnail.value = dataText.substring(0, minOf(256, dataText.length))
+		this.content.value = dataJson?.toString()
+	}
+
 	fun toggleFavourite() {
-		repository2.updateNoteFavourite(id = noteId.value !!)
+		this.isFavourite.value = this.isFavourite.value?.not()
+		this.putNote()
 	}
 
 	fun toggleLock() {
-		repository2.updateNoteLock(id = noteId.value !!)
+		this.isLocked.value = this.isLocked.value?.not()
+		this.putNote()
 	}
 
-	fun putAttachment(): Triple<List<AttachmentObject>, String?, String?> {
+	fun putAttachment() : Triple<List<AttachmentObject>, String?, String?> {
 		var thumbnail : String? = null
 		var thumbnailType : String? = null
 
@@ -517,6 +590,39 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 			latLng.value = null
 			address.value = null
 			locationState.value = LocationState.REMOVED
+		}
+	}
+
+	fun getSelectChapter(parentChapterId : ObjectId?) {
+		viewModelScope.launch(Dispatchers.IO) {
+			repository2.getChapterWithParentId(parentChapterId = parentChapterId).let {
+				withContext(Dispatchers.Main) {
+					selectChapterList.clear()
+					selectChapterList.addAll(it)
+				}
+			}
+			repository2.getChapterFromId(id = parentChapterId).let {
+				repository2.getParentChapterList(id = it?.id, true) { list, _ ->
+					viewModelScope.launch(Dispatchers.Main) {
+						selectChapterPath.clear()
+						list?.let { selectChapterPath.addAll(it) }
+					}
+				}
+			}
+		}
+	}
+
+	fun moveNoteToChapter(chapterId : ObjectId) {
+		this@NoteViewModel.parentChapterId.value = chapterId
+		if (isViewing.value == true) this@NoteViewModel.putNote()
+	}
+
+	fun onConnectTag(tagObject : TagObject) {
+		if (isViewing.value == true) {
+//			noteId.value?.let { repository2.connectTag(noteId = it, tagId = tagObject.id) }
+		} else {
+			if (tagListBuffer.contains(tagObject)) tagListBuffer.remove(tagObject)
+			else tagListBuffer.add(tagObject)
 		}
 	}
 
