@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -31,7 +33,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMapOptions
@@ -147,7 +151,16 @@ private fun LocationCard(
 					onSetLocationManually = onSetLocationManually
 				)
 
-				LocationState.DISABLED -> LocationViewDisabled(onSetLocationManually = onSetLocationManually)
+				LocationState.NOT_PRO -> LocationViewNotPro(
+					onReloadLocation = onReloadLocation,
+					onSetLocationManually = onSetLocationManually
+				)
+
+				LocationState.DISABLED -> LocationViewGeneric(
+					message = "Auto location tagging is disabled. Get location or set manually.",
+					onReloadLocation = onReloadLocation,
+					onSetLocationManually = onSetLocationManually
+				)
 				LocationState.LATLNG -> LocationViewSuccess(
 					latLng = latLng,
 					address = address,
@@ -232,24 +245,6 @@ private fun LocationViewGeneric(
 }
 
 @Composable
-private fun LocationViewDisabled(
-	onSetLocationManually : () -> Unit
-) {
-	Column(
-		modifier = Modifier.fillMaxWidth(),
-	) {
-		Text(
-			text = "Location is disabled. Enable it from settings or set location manually.",
-			style = MaterialTheme.typography.bodyMedium
-		)
-		Spacer(modifier = Modifier.height(8.dp))
-		Button(onClick = onSetLocationManually) {
-			Text(text = "Set location")
-		}
-	}
-}
-
-@Composable
 private fun LocationViewNoPermission(
 	onRequestPermission : () -> Unit,
 	onSetLocationManually : () -> Unit
@@ -268,6 +263,46 @@ private fun LocationViewNoPermission(
 		) {
 			OutlinedButton(onClick = onRequestPermission) {
 				Text(text = "Request permission")
+			}
+			Spacer(modifier = Modifier.width(8.dp))
+			Button(onClick = onSetLocationManually) {
+				Text(text = "Set location")
+			}
+		}
+	}
+}
+
+@Composable
+private fun LocationViewNotPro(
+	onReloadLocation : () -> Unit,
+	onSetLocationManually : () -> Unit
+) {
+	Column(
+		modifier = Modifier.fillMaxWidth(),
+	) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier.fillMaxWidth()
+		) {
+			Icon(
+				painterResource(id = R.drawable.ic_pro),
+				contentDescription = "Pro",
+				tint = Color.Companion.Unspecified,
+				modifier = Modifier.size(36.dp)
+			)
+			Spacer(modifier = Modifier.width(8.dp))
+			Text(
+				text = "Join Graphite Pro to connect your notes with location automatically",
+				style = MaterialTheme.typography.bodyMedium
+			)
+		}
+		Spacer(modifier = Modifier.height(8.dp))
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.End
+		) {
+			OutlinedButton(onClick = onReloadLocation) {
+				Text(text = "Load location")
 			}
 			Spacer(modifier = Modifier.width(8.dp))
 			Button(onClick = onSetLocationManually) {

@@ -53,7 +53,7 @@ import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.tone
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
@@ -62,7 +62,7 @@ fun ChapterSelectionDialog(
 	showDialog : Boolean,
 	chapterList : List<ChapterObject>,
 	chapterPath : List<ChapterObjectLite>,
-	onSelectChapter : (ObjectId) -> Unit,
+	onSelectChapter : (RealmUUID?) -> Unit,
 	onMove : () -> Unit,
 	onDismiss : () -> Unit,
 ) {
@@ -202,7 +202,7 @@ private fun ChapterItem(
 @Composable
 private fun TopBar(
 	chapterPath : List<ChapterObjectLite>,
-	onSelectChapter : (ObjectId) -> Unit,
+	onSelectChapter : (RealmUUID?) -> Unit,
 	onDismiss : () -> Unit
 ) {
 	Column(

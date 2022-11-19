@@ -18,6 +18,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshState
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlin.math.min
 
 
@@ -25,12 +28,18 @@ import kotlin.math.min
 fun GenericSettingsScreen(
 	title: String,
 	scrollState: ScrollState,
+	refreshState : SwipeRefreshState? = null,
+	onRefresh : () -> Unit = {},
 	content: @Composable () -> Unit
 ) {
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
 
-	Box {
+	SwipeRefresh(
+		state = refreshState ?: rememberSwipeRefreshState(isRefreshing = false),
+		swipeEnabled = refreshState != null,
+		onRefresh = onRefresh
+	) {
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -75,5 +84,4 @@ fun GenericSettingsScreen(
 			Spacer(modifier = Modifier.height(screenHeight / 3))
 		}
 	}
-
 }

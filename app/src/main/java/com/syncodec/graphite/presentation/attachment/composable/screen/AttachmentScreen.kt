@@ -33,7 +33,7 @@ import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.attachment.composable.bar.TopBar
 import com.syncodec.graphite.presentation.attachment.composable.bottomSheet.MenuBottomSheet
 import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.AttachmentCard
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -43,7 +43,7 @@ import java.io.File
 fun AttachmentScreen(
 	noteObject : NoteObject?,
 	chapterObject: ChapterObject?,
-	attachmentList: Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>
+	attachmentList: Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>
 ) {
 	val activity = LocalContext.current as AttachmentActivity
 	val scope = rememberCoroutineScope()

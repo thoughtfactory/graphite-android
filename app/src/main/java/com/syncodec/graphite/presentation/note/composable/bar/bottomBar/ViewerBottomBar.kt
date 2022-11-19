@@ -23,6 +23,8 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.LocalEditNote
+import com.syncodec.graphite.presentation.note.composable.LocalOnPrint
+import com.syncodec.graphite.presentation.note.composable.LocalOnShareText
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
@@ -42,6 +44,8 @@ fun ViewerBottomBar() {
 
 	val isVaultOpened = LocalVaultIsOpened.current
 	val onAuthenticatorAction = LocalAuthenticatorAction.current
+
+	val onPrint = LocalOnPrint.current
 
 	Column(
 		modifier = Modifier
@@ -67,13 +71,13 @@ fun ViewerBottomBar() {
 			MenuButton(
 				icon = R.drawable.ic_share,
 				contentDescription = "Share Note",
-				onClick = {}
+				onClick = { openDialog(NoteDialogType.SHARE, null) }
 			)
 
 			MenuButton(
 				icon = R.drawable.ic_printer,
 				contentDescription = "Print Note",
-				onClick = {}
+				onClick = onPrint
 			)
 
 			Spacer(modifier = Modifier.weight(1f))

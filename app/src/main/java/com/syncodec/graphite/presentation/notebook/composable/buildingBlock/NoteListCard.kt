@@ -4,35 +4,46 @@ import android.graphics.Bitmap
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObjectLite
+import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.presentation.ui.FavouriteContent
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
+import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToTime
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun NoteListCard(
-	id: ObjectId,
+	id: RealmUUID,
 	timestamp: Long,
 	showFullTime: Boolean,
 	isLocked: Boolean,
@@ -52,19 +63,46 @@ fun NoteListCard(
 	onClick: () -> Unit,
 	onLongClick: (() -> Unit)? = null
 ) {
-	AnimatedVisibility(
-		visible = isVisible,
-		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
-		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
-	) {
+	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
+	val isFavouriteTinted by dataStoreInstance.getTintFavorite.collectAsState(initial = false)
+
+	val containerColor by animateColorAsState(
+		when {
+			isSelected -> selectedColor
+			isFavourite -> if (isFavouriteTinted) Color(
+				ColorUtils.blendARGB(
+					MaterialTheme.colorScheme.background.toArgb(),
+					Color.FavouriteContainer.toArgb(),
+					0.31f
+				)
+			) else MaterialTheme.colorScheme.background
+
+			else -> MaterialTheme.colorScheme.background
+		}
+	)
+	val contentColor by animateColorAsState(
+		when {
+			isSelected -> selectedColor.getInverseBWColor()
+			isFavourite -> if (isFavouriteTinted) Color.FavouriteContent else MaterialTheme.colorScheme.onBackground
+			else -> MaterialTheme.colorScheme.onSurface
+		}
+	)
+
+	if (isVisible) {
 		OutlinedCard(
-			onClick = onClick,
 			border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
 			colors = CardDefaults.outlinedCardColors(
-				containerColor = Color.Transparent,
-				contentColor = MaterialTheme.colorScheme.onBackground,
+				containerColor = containerColor,
+				contentColor = contentColor,
 			),
-			modifier = Modifier.padding(12.dp, 4.dp)
+			modifier = Modifier
+				.padding(12.dp, 4.dp)
+				.combinedClickable(
+					onClick = { onClick() },
+					onLongClick = { onLongClick?.invoke() }
+				)
 		) {
 			Column(
 				modifier = Modifier

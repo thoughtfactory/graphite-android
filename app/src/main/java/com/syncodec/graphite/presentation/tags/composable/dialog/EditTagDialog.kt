@@ -65,16 +65,9 @@ fun EditTagDialog(
 
 	GenericDialog(
 		showDialog = showDialog,
+		title = "Edit Tag",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = "Edit Tag",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		TextField(
 			text = _tag,
 			placeholder = "Add a tag",

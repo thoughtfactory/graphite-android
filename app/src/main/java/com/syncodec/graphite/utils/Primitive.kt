@@ -104,7 +104,3 @@ fun String.decrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
 }
 
 fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-
-inline fun <reified T : Enum<T>> safeValueOf(type: String?): T? {
-	return type?.let { java.lang.Enum.valueOf(T::class.java, it) }
-}

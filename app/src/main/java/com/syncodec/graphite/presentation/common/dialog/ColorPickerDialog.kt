@@ -35,6 +35,7 @@ fun ColorPickerDialog(
 
 	GenericDialog(
 		showDialog = showDialog,
+		title = "Color Picker",
 		onDismissRequest = onDismiss
 	) {
 		ClassicColorPicker(

@@ -284,6 +284,8 @@ editor.getData = () => {
     data = {};
     data.dataJson = editor.getJSON();
     data.dataText = editor.getText();
+    // data.title = document.getElementById("title").value;
+    data.title = "title";
 
     bridge.saveData(JSON.stringify(data));
 };
@@ -292,11 +294,14 @@ editor.setBaseFontFamily = (fontFamily) => {
     document.getElementById("base").style.fontFamily = fontFamily;
 };
 
-editor.setBaseFontColor = (fontColor) => {
-    document.getElementById("base").style.color = fontColor;
+editor.setBaseColor = (containerColor, contentColor) => {
+    document.getElementById("base").style.color = contentColor;
+    document.getElementById("base").style.background = containerColor;
+    document.getElementById("input__label").style.color = contentColor;
+    document.getElementById("input__label").style.background = containerColor;
 };
 
-editor.reCalculateSize = (height) => {
+editor.reCalculateHeight = (height) => {
     document.getElementsByClassName("ProseMirror")[0].style.height = (height + "px")
 }
 

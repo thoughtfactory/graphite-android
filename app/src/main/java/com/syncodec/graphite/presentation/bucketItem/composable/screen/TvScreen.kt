@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.bucketItem.composable.screen
 
-import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,10 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,34 +37,55 @@ import coil.request.ImageRequest
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.network.Genre
-import com.syncodec.graphite.presentation.bucketItem.composable.dialog.ShowInfoDialog
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnChangeState
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionState
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionThumbnail
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvAdult
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvFirstAirDate
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvGenres
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvHomepage
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvId
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvName
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvNumberOfEpisodes
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvNumberOfSeasons
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvOriginalLanguage
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvOriginalName
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvOverview
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvPosterPath
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvTagline
+import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.dialog.DialogType
 
 
 @Composable
-fun TvScreen(
-	tvId: String?,
-	tvGenres: List<Genre>,
-	tvName: String?,
-	tvOverview: String?,
-	tvNumberOfSeasons: Int?,
-	tvNumberOfEpisodes: Int?,
-	tvFirstAirDate: String?,
-	tvTagline: String?,
-	thumbnail:Bitmap?,
-	currentState : Int,
-	onChangeState : (Int) -> Unit,
-) {
-
+fun TvScreen() {
 	val context = LocalContext.current
+
+	val tvId = LocalCompositionTvId.current
+	val tvAdult = LocalCompositionTvAdult.current
+	val tvFirstAirDate = LocalCompositionTvFirstAirDate.current
+	val tvGenres = LocalCompositionTvGenres.current
+	val tvHomepage = LocalCompositionTvHomepage.current
+	val tvNumberOfSeasons = LocalCompositionTvNumberOfSeasons.current
+	val tvNumberOfEpisodes = LocalCompositionTvNumberOfEpisodes.current
+	val tvOriginalLanguage = LocalCompositionTvOriginalLanguage.current
+	val tvName = LocalCompositionTvName.current
+	val tvOriginalName = LocalCompositionTvOriginalName.current
+	val tvOverview = LocalCompositionTvOverview.current
+	val tvPosterPath = LocalCompositionTvPosterPath.current
+	val tvTagline = LocalCompositionTvTagline.current
+
+	val thumbnail = LocalCompositionThumbnail.current
+
+	val currentState = LocalCompositionState.current ?: 0
+	val onChangeState = LocalCompositionOnChangeState.current
 
 	val uriHandler = LocalUriHandler.current
 
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
-
 
 	val stateList = listOf(
 		StateData(
@@ -87,19 +103,12 @@ fun TvScreen(
 	)
 
 	val scrollState = rememberScrollState()
-	var showDialog by remember { mutableStateOf(false) }
+
+	val openDialog = LocalCompositionOpenDialog.current
 
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
-		ShowInfoDialog(
-			showDialog = showDialog,
-			movieId = null,
-			tvId = tvId,
-			movieImdbId = tvId,
-			movieOriginalTitle = tvName,
-		) { showDialog = false }
-
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally,
 			modifier = Modifier
@@ -136,7 +145,7 @@ fun TvScreen(
 					.padding(16.dp, 0.dp)
 					.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), RoundedCornerShape(16.dp))
 					.clip(RoundedCornerShape(16.dp))
-					.clickable { showDialog = true }
+					.clickable { openDialog(DialogType.SHOW_INFO) }
 			) {
 				Column(
 					modifier = Modifier
@@ -244,7 +253,7 @@ fun TvScreen(
 				mainAxisSpacing = 8.dp,
 			) {
 				tvGenres.forEach { genre ->
-					if (genre?.name != null) {
+					if (genre.name != null) {
 						Box(
 							modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), RoundedCornerShape(8.dp))
 						) {

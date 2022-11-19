@@ -15,7 +15,7 @@ import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -32,13 +32,14 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 	val noteObject : MutableState<NoteObject?> = mutableStateOf(null)
 	val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
 
-	val attachmentList : SnapshotStateMap<ObjectId, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
+	val attachmentList : SnapshotStateMap<RealmUUID, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
 
-	fun loadAllAttachments() {
+	fun loadAllData() {
 		viewModelScope.launch(Dispatchers.IO) {
 			repositoryState.collect {
 				when (it) {
 					RepositoryState.INIT -> Log.d("AttachmentViewModel", "Init")
+					RepositoryState.LOCKED -> null
 					RepositoryState.LOADING -> Log.d("AttachmentViewModel", "Loading")
 					RepositoryState.SUCCESS -> {
 						viewModelScope.launch {
@@ -50,8 +51,8 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 										attachmentList.putAll(it.associate { (first, second, third) -> first.id to Triple(first, second, third) })
 									}
 								}
-							} catch (e: RealmNotInitializedException) {
-							} catch (e: Exception) {
+							} catch (e : RealmNotInitializedException) {
+							} catch (e : Exception) {
 							}
 						}
 					}
@@ -62,7 +63,7 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 		}
 	}
 
-	fun loadAndViewFromNoteData(noteId : ObjectId) {
+	fun loadDataFromNote(noteId : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 
@@ -70,16 +71,16 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 				repository2.getAttachmentFromNote(noteId).collect {
 					withContext(Dispatchers.Main) {
 						attachmentList.clear()
-//						attachmentList.putAll(it?.associate { (first, second, third) -> first.id to Triple(first, second, third) } ?: emptyMap())
+						it?.associate { (first, second, third) -> first.id to Triple(first, second, third) }?.let { it1 -> attachmentList.putAll(it1) }
 					}
 				}
-			} catch (e: RealmNotInitializedException) {
-			} catch (e: Exception) {
+			} catch (e : RealmNotInitializedException) {
+			} catch (e : Exception) {
 			}
 		}
 	}
 
-	fun loadAndViewFromChapterData(chapterId : ObjectId) {
+	fun loadDataFromChapter(chapterId : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 
@@ -87,8 +88,8 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 				withContext(Dispatchers.Main) {
 					chapterObject.value = it
 
-					it?.chapterList?.forEach { loadAndViewFromChapterData(it.id) }
-					it?.noteList?.forEach { loadAndViewFromNoteData(it.id) }
+					it?.chapterList?.forEach { loadDataFromChapter(it.id) }
+					it?.noteList?.forEach { loadDataFromNote(it.id) }
 				}
 			}
 		}

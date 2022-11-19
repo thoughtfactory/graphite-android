@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.bucket.composable.bar
 
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -9,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,17 +18,18 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickFavourite
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickLock
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnPagerStateChange
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionPagerState
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSelectedObjectIdList
-import com.syncodec.graphite.presentation.bucket.composable.dialog.BucketDialogType
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 
 
@@ -150,27 +151,40 @@ private fun Bar(
 @Composable
 private fun SelectionBar() {
 
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val context = LocalContext.current
+
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
 
 	val openDialog = LocalCompositionOpenDialog.current
+	val onShare = LocalCompositionOnShare.current
 
 	TopAppBar(
 		title = {
 			Text(
-				text = if (selectedObjectIdList.size == 0) "Select items to delete" else if (selectedObjectIdList.size == 1) "1 item selected" else "${selectedObjectIdList.size} items selected",
+				text = if (selectedRealmUUIDList.size == 0) "No items selected" else if (selectedRealmUUIDList.size == 1) "1 item selected" else "${selectedRealmUUIDList.size} items selected",
 				color = MaterialTheme.colorScheme.onBackground
 			)
 		},
 		actions = {
-			IconButton(
-				onClick = { openDialog(BucketDialogType.DELETE) }
-			) {
-				Icon(
-					painter = painterResource(id = R.drawable.ic_delete),
-					contentDescription = "Delete items",
-					tint = Color.DeleteContainer
-				)
-			}
+			MenuButton(
+				icon = R.drawable.ic_share,
+				contentDescription = "Share items",
+				tint = MaterialTheme.colorScheme.onBackground,
+				onClick = {
+					if (selectedRealmUUIDList.isEmpty()) Toast.makeText(context, "No items selected", Toast.LENGTH_SHORT).show()
+					else onShare()
+				},
+			)
+
+			MenuButton(
+				icon = R.drawable.ic_delete,
+				contentDescription = "Delete items",
+				tint = Color.DeleteContainer,
+				onClick = {
+					if (selectedRealmUUIDList.isEmpty()) Toast.makeText(context, "No items selected", Toast.LENGTH_SHORT).show()
+					else openDialog(DialogType.DELETE)
+				},
+			)
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 	)
@@ -253,7 +267,9 @@ private fun StateView(
 				)
 			),
 			currentState = currentState,
-			modifier = Modifier.height(36.dp),
+			modifier = Modifier
+				.height(36.dp)
+				.padding(12.dp, 0.dp),
 			onStateChange = onStateChange
 		)
 		Spacer(modifier = Modifier.height(8.dp))

@@ -2,7 +2,7 @@ package com.syncodec.graphite.presentation.note.composable.bottomSheet
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 enum class NoteBottomSheetType {
@@ -17,7 +17,7 @@ enum class NoteBottomSheetType {
 fun SheetLayout(
 	bottomSheetType: NoteBottomSheetType,
 	onAddAttachmentToBuffer: (List<Uri>) -> Unit,
-	onRemoveAttachment: (ObjectId) -> Unit,
+	onRemoveAttachment: (RealmUUID) -> Unit,
 	onUpdateTitle: (String?) -> Unit,
 	onRemoveLocation : () -> Unit,
 	onReloadLocation : () -> Unit,

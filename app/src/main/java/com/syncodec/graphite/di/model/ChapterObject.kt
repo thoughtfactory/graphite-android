@@ -3,15 +3,14 @@ package com.syncodec.graphite.di.model
 import androidx.compose.ui.graphics.toArgb
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 class ChapterObject : RealmObject {
-	@PrimaryKey
-	var id : ObjectId = ObjectId.create()
+	@PrimaryKey var id : RealmUUID = RealmUUID.random()
 
 	var createdTimestamp : Long = System.currentTimeMillis()
 	var modifiedTimestamp : Long = System.currentTimeMillis()
@@ -25,7 +24,7 @@ class ChapterObject : RealmObject {
 	var chapterList : RealmList<ChapterObject> = realmListOf()
 	var noteList : RealmList<NoteObject> = realmListOf()
 
-	var parentChapterId : ObjectId? = null
+	var parentChapterId : RealmUUID? = null
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
@@ -60,6 +59,21 @@ class ChapterObject : RealmObject {
 		}
 		return total + noteList.size
 	}
+
+	fun toSnapshot() = ChapterSnapshot(
+		id = this.id.toString(),
+		createdTimestamp = this.createdTimestamp,
+		modifiedTimestamp = this.modifiedTimestamp,
+		title = this.title,
+		description = this.description,
+		color = this.color,
+		thumbnail = this.thumbnail,
+		isFavourite = this.isFavourite,
+		isLocked = this.isLocked,
+		chapterList = this.chapterList.map { it.id.toString() },
+		noteList = this.noteList.map { it.id.toString() },
+		parentChapterId = this.parentChapterId?.toString()
+	)
 
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -98,7 +112,7 @@ class ChapterObject : RealmObject {
 }
 
 data class ChapterObjectLite(
-	val id : ObjectId,
+	val id : RealmUUID,
 	val createdTimestamp : Long,
 	val modifiedTimestamp : Long,
 	val title : String?,
@@ -110,7 +124,7 @@ data class ChapterObjectLite(
 	val totalNoteDirect : Int,
 	val totalChapter : Int,
 	val totalNote : Int,
-	val parentChapterId : ObjectId?
+	val parentChapterId : RealmUUID?
 ) {
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -140,5 +154,33 @@ data class ChapterObjectLite(
 		if (parentChapterId != other.parentChapterId) return false
 
 		return true
+	}
+}
+
+data class ChapterSnapshot(
+	val id : String,
+	val createdTimestamp : Long,
+	val modifiedTimestamp : Long,
+	val title : String?,
+	val description : String?,
+	val color : Int?,
+	val thumbnail : String?,
+	val isFavourite : Boolean,
+	val isLocked : Boolean,
+	val chapterList : List<String>,
+	val noteList : List<String>,
+	val parentChapterId : String?
+) {
+	fun toObject() : ChapterObject = ChapterObject().apply {
+		this.id = RealmUUID.from(this@ChapterSnapshot.id)
+		this.createdTimestamp = this@ChapterSnapshot.createdTimestamp
+		this.modifiedTimestamp = this@ChapterSnapshot.modifiedTimestamp
+		this.title = this@ChapterSnapshot.title
+		this.description = this@ChapterSnapshot.description
+		this.color = this@ChapterSnapshot.color
+		this.thumbnail = this@ChapterSnapshot.thumbnail
+		this.isFavourite = this@ChapterSnapshot.isFavourite
+		this.isLocked = this@ChapterSnapshot.isLocked
+		this.parentChapterId = this@ChapterSnapshot.parentChapterId?.let { RealmUUID.from(this@ChapterSnapshot.id) }
 	}
 }

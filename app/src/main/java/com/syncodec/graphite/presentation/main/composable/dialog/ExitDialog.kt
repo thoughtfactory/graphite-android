@@ -19,16 +19,9 @@ fun ExitDialog(
 ) {
 	GenericDialog(
 		showDialog = showDialog,
+		title = "Exit",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = "Exit",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		Text(
 			text = "Exit and lock vault?",
 			style = MaterialTheme.typography.bodyMedium,

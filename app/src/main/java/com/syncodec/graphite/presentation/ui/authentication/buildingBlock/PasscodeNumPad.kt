@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,8 +28,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
 
 
 @Composable
@@ -179,12 +182,9 @@ fun PasscodeNumPad(
 				.fillMaxWidth()
 				.height(72.dp),
 		) {
-			NumPadButton(
-				text = "BK",
+			NumPadBackspaceButton(
 				modifier = Modifier.weight(1f)
-			) {
-				passcode = passcode.dropLast(1)
-			}
+			) { passcode = passcode.dropLast(1) }
 
 			NumPadButton(
 				text = "0",
@@ -198,13 +198,7 @@ fun PasscodeNumPad(
 				}
 			}
 
-			NumPadButton(
-				modifier = Modifier.weight(1f),
-				text = "EN"
-			) {
-				onEnter(passcode)
-				passcode = ""
-			}
+			Spacer(modifier = Modifier.weight(1f))
 		}
 	}
 }
@@ -239,6 +233,38 @@ private fun NumPadButton(
 				style = MaterialTheme.typography.titleMedium,
 				color = MaterialTheme.colorScheme.onBackground,
 				fontWeight = FontWeight.Bold
+			)
+		}
+	}
+}
+
+@Composable
+private fun NumPadBackspaceButton(
+	modifier : Modifier = Modifier,
+	onClick : () -> Unit
+) {
+	val interactionSource = remember { MutableInteractionSource() }
+
+	Box(
+		contentAlignment = Alignment.Center,
+		modifier = modifier
+			.clickable(
+				indication = null,
+				interactionSource = interactionSource,
+				onClick = onClick
+			)
+	) {
+		Box(
+			contentAlignment = Alignment.Center,
+			modifier = Modifier
+				.requiredSize(64.dp)
+				.clip(CircleShape)
+				.indication(interactionSource, rememberRipple(color = MaterialTheme.colorScheme.onBackground))
+		) {
+			Icon(
+				painter = painterResource(id = R.drawable.ic_backspace),
+				contentDescription = "Backspace",
+				tint = MaterialTheme.colorScheme.onBackground
 			)
 		}
 	}

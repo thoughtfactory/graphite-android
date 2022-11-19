@@ -13,15 +13,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -35,13 +38,9 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottom
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialog
 import com.syncodec.graphite.presentation.search.SearchActivity
-import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocalModalBottomSheetState
 import com.syncodec.graphite.utils.LocalModalBottomSheetType
 import com.syncodec.graphite.utils.LocalSetModalBottomSheetType
-import com.syncodec.graphite.utils.SortBy
-import com.syncodec.graphite.utils.SortOn
-import com.syncodec.graphite.utils.ViewType
 import kotlinx.coroutines.launch
 
 
@@ -55,7 +54,7 @@ enum class ComponentType {
 	ExperimentalMaterialApi::class,
 	ExperimentalMaterial3Api::class,
 	ExperimentalPagerApi::class,
-	ExperimentalFoundationApi::class
+	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class
 )
 @Composable
 fun MainScreen(
@@ -65,11 +64,23 @@ fun MainScreen(
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val keyboardController = LocalSoftwareKeyboardController.current
+	val focusManager = LocalFocusManager.current
 
 	var bottomSheetType : MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.MENU) }
 	var currentComponentType : ComponentType by remember { mutableStateOf(ComponentType.NOTE) }
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+
+	LaunchedEffect(key1 = modalBottomSheetState.currentValue) {
+		if (modalBottomSheetState.currentValue == ModalBottomSheetValue.Hidden) {
+			try {
+				keyboardController?.hide()
+				focusManager.clearFocus()
+			} catch (e : Exception) {
+			}
+		}
+	}
 
 	fun openSheet(_bottomSheetType : MainBottomSheetType) {
 		scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
@@ -84,7 +95,6 @@ fun MainScreen(
 	val notebookList = viewModel.notebookList
 	val noteList = viewModel.noteList
 	val bucketList = viewModel.bucketObjectList
-
 
 	CompositionLocalProvider(
 		LocalModalBottomSheetState provides modalBottomSheetState,

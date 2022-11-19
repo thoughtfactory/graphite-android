@@ -35,13 +35,13 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNotebookResreshing
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNotebookRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -49,14 +49,14 @@ import io.realm.kotlin.types.ObjectId
 fun NotebookScreen(
 	notebookList : List<ChapterObject>,
 	onClickFab : () -> Unit,
-	onClickNotebook : (ObjectId) -> Unit,
-	onLongClickNotebook : (ObjectId) -> Unit
+	onClickNotebook : (RealmUUID) -> Unit,
+	onLongClickNotebook : (RealmUUID) -> Unit
 ) {
-	val isNotebookRefreshing = LocalCompositionIsNotebookResreshing.current
+	val isNotebookRefreshing = LocalCompositionIsNotebookRefreshing.current
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
 
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -92,7 +92,7 @@ fun NotebookScreen(
 								title = notebook.title,
 								color = notebook.color?.let { it1 -> Color(it1) },
 								thumbnail = notebook.thumbnail,
-								isSelected = notebook.id in selectedObjectIdList,
+								isSelected = notebook.id in selectedRealmUUIDList,
 								onClick = { onClickNotebook(notebook.id) },
 								onLongClick = { onLongClickNotebook(notebook.id) }
 							)

@@ -1,53 +1,129 @@
 package com.syncodec.graphite.presentation.note.composable.bar.bottomBar.editorBottomBar
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.composable.bar.bottomBar.editorBottomBar.buildingBlock.ToolbarSpacer
 import com.syncodec.graphite.utils.tone
+import java.util.Calendar
 
 
 @Composable
 fun FormatBar(
-	richTextEditor: RichTextEditor,
-	textFormat: RichTextEditor.TextFormat,
-	onClickMetadata: () -> Unit,
-	onClickLocation: () -> Unit,
-	onClickAttachment: () -> Unit,
-	onClickTag: () -> Unit,
-	onClickCloseToolbar: () -> Unit,
-	onClickHeadingToolbar: () -> Unit,
+	richTextEditor : RichTextEditor,
+	textFormat : RichTextEditor.TextFormat,
+	userTimestamp : Long?,
+	onClickTimePicker : () -> Unit,
+	onClickMetadata : () -> Unit,
+	onClickLocation : () -> Unit,
+	onClickAttachment : () -> Unit,
+	onClickTag : () -> Unit,
+	onClickCloseToolbar : () -> Unit,
+	onClickHeadingToolbar : () -> Unit,
 ) {
+
+	val calendar = remember { Calendar.getInstance() }
+
 	Row(
-		modifier = Modifier.horizontalScroll(rememberScrollState())
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = Modifier.horizontalScroll(rememberScrollState()),
 	) {
 		Spacer(modifier = Modifier.width(16.dp))
-		Row(
+
+		Box(
+			contentAlignment = Alignment.Center,
 			modifier = Modifier
+				.height(48.dp)
 				.background(
-					color = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.31f),
-					shape =  RoundedCornerShape(50)
+					color = MaterialTheme.colorScheme.surface
+						.tone(isSystemInDarkTheme(), 1)
+						.copy(alpha = 0.31f),
+					shape = RoundedCornerShape(50)
 				)
 				.clip(RoundedCornerShape(50))
+				.clickable { onClickTimePicker() }
 		) {
 			Row(
-				modifier = Modifier.padding(2.dp)
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier.fillMaxHeight(),
 			) {
+				Spacer(modifier = Modifier.width(12.dp))
+
+				Text(
+					text = DateFormat.format("dd", userTimestamp ?: calendar.timeInMillis).toString(),
+					style = MaterialTheme.typography.headlineMedium,
+					color = MaterialTheme.colorScheme.onSurface,
+					fontWeight = FontWeight.Bold
+				)
+
+				Spacer(modifier = Modifier.width(4.dp))
+
+				Column(
+					verticalArrangement = Arrangement.Center,
+					modifier = Modifier.fillMaxHeight(),
+				) {
+					Text(
+						text = DateFormat.format("MMM, yyyy", userTimestamp ?: calendar.timeInMillis).toString(),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onSurface,
+					)
+
+					Text(
+						text = DateFormat.format("hh:mm aa", userTimestamp ?: calendar.timeInMillis).toString(),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onSurface,
+					)
+				}
+
+				Spacer(modifier = Modifier.width(12.dp))
+			}
+		}
+
+		Spacer(modifier = Modifier.width(8.dp))
+
+		Box(
+			contentAlignment = Alignment.Center,
+			modifier = Modifier
+				.height(48.dp)
+				.background(
+					color = MaterialTheme.colorScheme.surface
+						.tone(isSystemInDarkTheme(), 1)
+						.copy(alpha = 0.31f),
+					shape = RoundedCornerShape(50)
+				)
+				.clip(RoundedCornerShape(50)),
+		) {
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier.fillMaxHeight(),
+			) {
+				Spacer(modifier = Modifier.width(12.dp))
 
 				MenuButton(
 					icon = R.drawable.ic_info,
@@ -81,9 +157,25 @@ fun FormatBar(
 					onClick = onClickTag
 				)
 
+				Spacer(modifier = Modifier.width(12.dp))
+			}
+		}
 
-				ToolbarSpacer()
+		Spacer(modifier = Modifier.width(8.dp))
 
+		Row(
+			modifier = Modifier
+				.background(
+					color = MaterialTheme.colorScheme.surface
+						.tone(isSystemInDarkTheme(), 1)
+						.copy(alpha = 0.31f),
+					shape = RoundedCornerShape(50)
+				)
+				.clip(RoundedCornerShape(50))
+		) {
+			Row(
+				modifier = Modifier.padding(2.dp)
+			) {
 				MenuButton(
 					icon = R.drawable.ic_format_undo,
 					contentDescription = "Undo",

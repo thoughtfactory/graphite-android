@@ -6,11 +6,9 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.security.InvalidAlgorithmParameterException
 import java.security.InvalidKeyException
 import java.security.KeyStore
 import java.security.KeyStoreException
-import java.security.NoSuchAlgorithmException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -30,16 +28,15 @@ data class AliceRequest(
 	val error : Exception? = null
 )
 
-fun Context.putData(key : String, value : ByteArray) {
+fun Context.putSecretData(key : String, value : ByteArray) {
 	val keyStore = KeyStore.getInstance("AndroidKeyStore")
 	keyStore.load(null)
 	var secretKey = keyStore.getKey("grey_alice", null) as SecretKey?
 	if (secretKey == null) generateSecretKey()
 	secretKey = keyStore.getKey("grey_alice", null) as SecretKey?
 
-	if (secretKey!=null) {
+	if (secretKey != null) {
 		val cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7)
-
 
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey)
 		val encryptedKeyForRealm : ByteArray = cipher.doFinal(value)
@@ -56,7 +53,7 @@ fun Context.putData(key : String, value : ByteArray) {
 	}
 }
 
-fun Context.getData(key: String): AliceRequest {
+fun Context.getSecretData(key : String) : AliceRequest {
 	val keyStore : KeyStore = KeyStore.getInstance("AndroidKeyStore")
 	keyStore.load(null)
 	val hasData = getSharedPreferences("alice", Context.MODE_PRIVATE).contains("${key}_iv_and_encrypted_key")
@@ -89,11 +86,11 @@ fun Context.getData(key: String): AliceRequest {
 		}
 		return AliceRequest(AliceRequestResult.SUCCESS, decryptedKey)
 	} else {
-		return AliceRequest(result = AliceRequestResult.KEY_NOT_FOUND,)
+		return AliceRequest(result = AliceRequestResult.KEY_NOT_FOUND)
 	}
 }
 
-fun Context.generateSecretKey() {
+fun generateSecretKey() {
 	val keyStore = KeyStore.getInstance("AndroidKeyStore")
 	keyStore.load(null)
 
@@ -103,15 +100,13 @@ fun Context.generateSecretKey() {
 	val keySpec = KeyGenParameterSpec.Builder("grey_alice", KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
 		.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
 		.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-		.setUserAuthenticationRequired(false)
-//			.setUserAuthenticationValidityDurationSeconds(300)
+//		.setUserAuthenticationRequired(true)
 		.build()
 
 	keyGenerator.init(keySpec)
 
 	keyGenerator.generateKey()
 }
-
 
 
 fun Context.deleteKey(keyAlias : String) {

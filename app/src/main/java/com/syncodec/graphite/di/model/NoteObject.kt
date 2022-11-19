@@ -4,55 +4,74 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import java.util.Base64
 
 
-class NoteObject: RealmObject {
-	@PrimaryKey var id: ObjectId = ObjectId.create()
+class NoteObject : RealmObject {
+	@PrimaryKey var id : RealmUUID = RealmUUID.random()
 
-	var createdTimestamp: Long = System.currentTimeMillis()
-	var modifiedTimestamp: Long = System.currentTimeMillis()
-	var userTimestamp: Long = System.currentTimeMillis()
-	var title: String? = null
-	var color: Int? = null
-	var latLng: String? = null
-	var address: String? = null
-	var contentThumbnail: String? = null
-	var content: String? = null
-	var thumbnail: String? = null
-	var thumbnailType: String? = null
-	var isFavourite: Boolean = false
-	var isLocked: Boolean = false
+	var createdTimestamp : Long = System.currentTimeMillis()
+	var modifiedTimestamp : Long = System.currentTimeMillis()
+	var userTimestamp : Long = System.currentTimeMillis()
+	var title : String? = null
+	var color : Int? = null
+	var latLng : String? = null
+	var address : String? = null
+	var contentThumbnail : String? = null
+	var content : String? = null
+	var thumbnail : String? = null
+	var thumbnailType : String? = null
+	var isFavourite : Boolean = false
+	var isLocked : Boolean = false
 
-	var attachmentList: RealmList<AttachmentObject> = realmListOf()
+	var attachmentList : RealmList<AttachmentObject> = realmListOf()
 
-	var parentChapterId: ObjectId? = null
+	var parentChapterId : RealmUUID? = null
 
 	fun setLatLng(latLng : LatLng?) {
 		val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 		this.latLng = objectMapper.writeValueAsString(latLng)
 	}
 
-	fun getLatLng(): LatLng? {
+	fun getLatLng() : LatLng? {
 		try {
 			if (latLng == null) return null
 			val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 			return objectMapper.readValue(latLng, LatLng::class.java)
-		} catch (e: Exception) {
+		} catch (e : Exception) {
 			e.printStackTrace()
 			return null
 		}
 	}
 
+	fun toSnapshot() = NoteSnapshot(
+		id = this.id.toString(),
+		createdTimestamp = this.createdTimestamp,
+		modifiedTimestamp = this.modifiedTimestamp,
+		userTimestamp = this.userTimestamp,
+		title = this.title,
+		color = this.color,
+		latLng = this.latLng,
+		address = this.address,
+		contentThumbnail = this.contentThumbnail,
+		content = this.content,
+		thumbnail = this.thumbnail,
+		thumbnailType = this.thumbnailType,
+		isFavourite = this.isFavourite,
+		isLocked = this.isLocked,
+		attachmentList = this.attachmentList.map { it.id.toString() },
+		parentChapterId = this.parentChapterId?.toString(),
+	)
+
 	override fun toString() : String {
 		return this.id.toString()
 	}
 
-	override fun hashCode(): Int {
+	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
@@ -72,7 +91,7 @@ class NoteObject: RealmObject {
 		return result
 	}
 
-	override fun equals(other: Any?): Boolean {
+	override fun equals(other : Any?) : Boolean {
 		if (this === other) return true
 		if (other !is NoteObject) return false
 
@@ -96,7 +115,7 @@ class NoteObject: RealmObject {
 		return true
 	}
 
-	fun toRaw(): NoteObjectRaw = NoteObjectRaw(
+	fun toRaw() : NoteObjectRaw = NoteObjectRaw(
 		id = id.toString(),
 		createdTimestamp = createdTimestamp,
 		modifiedTimestamp = modifiedTimestamp,
@@ -116,7 +135,7 @@ class NoteObject: RealmObject {
 	)
 
 
-	fun clone(): NoteObject {
+	fun clone() : NoteObject {
 		return NoteObject().apply {
 //			id = this@NoteObject.id
 
@@ -140,7 +159,7 @@ class NoteObject: RealmObject {
 		}
 	}
 
-	fun toLite(): NoteObjectLite {
+	fun toLite() : NoteObjectLite {
 		return NoteObjectLite(
 			id = this.id,
 			parentChapterId = this.parentChapterId,
@@ -149,10 +168,20 @@ class NoteObject: RealmObject {
 			userTimestamp = this.userTimestamp,
 			title = this.title,
 			color = this.color,
-			latLng = try { this.getLatLng() } catch (e: Exception) { null },
+			latLng = try {
+				this.getLatLng()
+			} catch (e : Exception) {
+				null
+			},
 			address = this.address,
 			contentThumbnail = this.contentThumbnail,
-			thumbnail = this.thumbnail?.let { try { Base64.getDecoder().decode(it) } catch (e: Exception) { e.printStackTrace(); null } },
+			thumbnail = this.thumbnail?.let {
+				try {
+					Base64.getDecoder().decode(it)
+				} catch (e : Exception) {
+					e.printStackTrace(); null
+				}
+			},
 			thumbnailType = this.thumbnailType,
 			attachmentCount = this.attachmentList.size,
 			isFavourite = this.isFavourite,
@@ -162,7 +191,7 @@ class NoteObject: RealmObject {
 
 
 	companion object {
-		fun getInstance(): NoteObject {
+		fun getInstance() : NoteObject {
 			return NoteObject().apply {
 				this.createdTimestamp = System.currentTimeMillis()
 				this.modifiedTimestamp = System.currentTimeMillis()
@@ -182,22 +211,22 @@ class NoteObject: RealmObject {
 }
 
 data class NoteObjectRaw(
-	val id: String,
-	val createdTimestamp: Long,
-	val modifiedTimestamp: Long,
-	val userTimestamp: Long,
-	val title: String?,
-	val color: Int?,
-	val latLng: LatLng?,
-	val address: String?,
-	val contentThumbnail: String?,
-	val content: String?,
-	val thumbnail: String?,
-	val thumbnailType: String?,
-	val isFavourite: Boolean,
-	val isLocked: Boolean,
-	val attachmentList: List<ObjectId>,
-	val parentChapterId: String?
+	val id : String,
+	val createdTimestamp : Long,
+	val modifiedTimestamp : Long,
+	val userTimestamp : Long,
+	val title : String?,
+	val color : Int?,
+	val latLng : LatLng?,
+	val address : String?,
+	val contentThumbnail : String?,
+	val content : String?,
+	val thumbnail : String?,
+	val thumbnailType : String?,
+	val isFavourite : Boolean,
+	val isLocked : Boolean,
+	val attachmentList : List<RealmUUID>,
+	val parentChapterId : String?
 ) {
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -246,23 +275,23 @@ data class NoteObjectRaw(
 
 
 data class NoteObjectLite(
-	val id: ObjectId,
-	val parentChapterId : ObjectId?,
-	val createdTimestamp: Long,
-	val modifiedTimestamp: Long,
-	val userTimestamp: Long,
-	val title: String?,
-	val color: Int?,
-	val latLng: LatLng?,
-	val address: String?,
-	val contentThumbnail: String?,
-	val thumbnail: ByteArray? = null,
-	val thumbnailType: String? = null,
-	val attachmentCount: Int,
-	val isFavourite: Boolean,
-	val isLocked: Boolean
+	val id : RealmUUID,
+	val parentChapterId : RealmUUID?,
+	val createdTimestamp : Long,
+	val modifiedTimestamp : Long,
+	val userTimestamp : Long,
+	val title : String?,
+	val color : Int?,
+	val latLng : LatLng?,
+	val address : String?,
+	val contentThumbnail : String?,
+	val thumbnail : ByteArray? = null,
+	val thumbnailType : String? = null,
+	val attachmentCount : Int,
+	val isFavourite : Boolean,
+	val isLocked : Boolean
 ) {
-	override fun equals(other: Any?): Boolean {
+	override fun equals(other : Any?) : Boolean {
 		if (this === other) return true
 		if (other !is NoteObjectLite) return false
 
@@ -278,7 +307,7 @@ data class NoteObjectLite(
 		if (contentThumbnail != other.contentThumbnail) return false
 		if (thumbnail != null) {
 			if (other.thumbnail == null) return false
-			if (!thumbnail.contentEquals(other.thumbnail)) return false
+			if (! thumbnail.contentEquals(other.thumbnail)) return false
 		} else if (other.thumbnail != null) return false
 		if (thumbnailType != other.thumbnailType) return false
 		if (isFavourite != other.isFavourite) return false
@@ -287,7 +316,7 @@ data class NoteObjectLite(
 		return true
 	}
 
-	override fun hashCode(): Int {
+	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + parentChapterId.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
@@ -306,13 +335,50 @@ data class NoteObjectLite(
 	}
 }
 
+data class NoteSnapshot(
+	val id : String,
+	val createdTimestamp : Long,
+	val modifiedTimestamp : Long,
+	val userTimestamp : Long,
+	val title : String?,
+	val color : Int?,
+	val latLng : String?,
+	val address : String?,
+	val contentThumbnail : String?,
+	val content : String?,
+	val thumbnail : String?,
+	val thumbnailType : String?,
+	val isFavourite : Boolean,
+	val isLocked : Boolean,
+	var attachmentList : List<String>,
+	var parentChapterId : String?
+) {
+	fun toObject() = NoteObject().apply {
+		this.id = RealmUUID.from(this@NoteSnapshot.id)
+		this.createdTimestamp = this@NoteSnapshot.createdTimestamp
+		this.modifiedTimestamp = this@NoteSnapshot.modifiedTimestamp
+		this.userTimestamp = this@NoteSnapshot.userTimestamp
+		this.title = this@NoteSnapshot.title
+		this.color = this@NoteSnapshot.color
+		this.latLng = this@NoteSnapshot.latLng
+		this.address = this@NoteSnapshot.address
+		this.contentThumbnail = this@NoteSnapshot.contentThumbnail
+		this.content = this@NoteSnapshot.content
+		this.thumbnail = this@NoteSnapshot.thumbnail
+		this.thumbnailType = this@NoteSnapshot.thumbnailType
+		this.isFavourite = this@NoteSnapshot.isFavourite
+		this.isLocked = this@NoteSnapshot.isLocked
+		this.parentChapterId = this@NoteSnapshot.parentChapterId?.let { RealmUUID.from(it) }
+	}
+}
+
 
 data class LatLng(
-	var latitude: Double? = null,
-	var longitude: Double? = null
+	var latitude : Double? = null,
+	var longitude : Double? = null
 ) {
-	fun toGLatLng(): com.google.android.gms.maps.model.LatLng? {
+	fun toGLatLng() : com.google.android.gms.maps.model.LatLng? {
 		return if (latitude == null || longitude == null) null
-		else com.google.android.gms.maps.model.LatLng(latitude!!, longitude!!)
+		else com.google.android.gms.maps.model.LatLng(latitude !!, longitude !!)
 	}
 }

@@ -23,7 +23,7 @@ import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.encodeBase64
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -41,13 +41,13 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 
 	val repositoryState = repository2.repositoryState
 
-	val defaultNotebookId : MutableState<ObjectId?> = mutableStateOf(null)
+	val defaultNotebookId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
 	val notebookList : SnapshotStateList<ChapterObject> = mutableStateListOf()
 	val noteList : SnapshotStateList<NoteObjectLite> = mutableStateListOf()
 	val bucketObjectList : SnapshotStateList<BucketObject> = mutableStateListOf()
 
-	val tagList: SnapshotStateList<TagObject> = mutableStateListOf()
+	val tagList : SnapshotStateList<TagObject> = mutableStateListOf()
 
 	val refresher : MutableStateFlow<Int> = MutableStateFlow(0)
 	private var _refresher = 0
@@ -58,7 +58,7 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	val isNotebookRefreshing : MutableState<Boolean> = mutableStateOf(true)
 
 	val isSelected : MutableState<Boolean> = mutableStateOf(false)
-	val selectedObjectIdList : SnapshotStateList<ObjectId> = mutableStateListOf()
+	val selectedRealmUUIDList : SnapshotStateList<RealmUUID> = mutableStateListOf()
 
 	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showExitDialog : MutableState<Boolean> = mutableStateOf(false)
@@ -85,6 +85,7 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 			repositoryState.collect {
 				when (it) {
 					RepositoryState.INIT -> Log.d("MainViewModel", "Init")
+					RepositoryState.LOCKED -> Log.d("MainViewModel", "Locked")
 					RepositoryState.LOADING -> Log.d("MainViewModel", "Loading")
 					RepositoryState.SUCCESS -> onRepositoryStateSuccess()
 					RepositoryState.ERROR -> Log.d("MainViewModel", "Error")
@@ -198,7 +199,7 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 					this.color = color?.toArgb()
 					this.thumbnail = bitmap?.encodeBase64()
 
-//					Repository.putChapter(null, this)
+					repository2.putChapter(null, this) { _, _ -> }
 				}
 			} catch (e : Exception) {
 //	    		TODO Show error message
@@ -218,15 +219,14 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 			this.bucketType = bucketType.name
 
 			repository2.putBucket(this) { _, _ -> }
-//			Repository.putBucket(this)
 		}
 	}
 
 	fun delete() {
 		try {
-			val toDeleteObjectIdList = selectedObjectIdList.toList()
-			repository2.delete(toDeleteObjectIdList)
-			selectedObjectIdList.clear()
+			val toDeleteRealmUUIDList = selectedRealmUUIDList.toList()
+			repository2.delete(toDeleteRealmUUIDList)
+			selectedRealmUUIDList.clear()
 			isSelected.value = false
 		} catch (e : Exception) {
 
@@ -235,31 +235,37 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 
 	fun addDebugNotes(debugNoteData : String) {
 		CoroutineScope(Dispatchers.IO).launch {
-			val jsonObject = JSONObject(debugNoteData)
-			val jsonArray = jsonObject.getJSONArray("quotes")
-			for (i in 0 until jsonArray.length()) {
-				try {
-					NoteObject.getInstance().apply {
-						val obj = jsonArray.getJSONObject(i)
-						this.userTimestamp = System.currentTimeMillis() + Random.nextLong((- 1.5e+9).toLong(), 1.5e+9.toLong())
-						this.title = obj.optString("author")
-						this.contentThumbnail = obj.optString("quote")
-						this.content =
-							"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-								obj.optString("quote").repeat(500)
-							}\"}]}]}"
+			for (i in 0 .. 100) {
+				val jsonObject = JSONObject(debugNoteData)
+				val jsonArray = jsonObject.getJSONArray("quotes")
+				for (i in 0 until jsonArray.length()) {
+					try {
+						NoteObject.getInstance().apply {
+							val obj = jsonArray.getJSONObject(i)
+							this.userTimestamp = System.currentTimeMillis() + Random.nextLong((- 1.5e+9).toLong(), 1.5e+9.toLong())
+							this.title = obj.optString("author")
+							this.contentThumbnail = obj.optString("quote")
+							this.content =
+								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+									obj.optString("quote").repeat(500)
+								}\"}]}]}"
 
-						this.parentChapterId = defaultNotebookId.value
-						repository2.putNote(this) { _, _ -> }
-						if (i % 100 == 0) {
-							Log.i("npr71", "$i/${jsonArray.length()}")
+							this.parentChapterId = defaultNotebookId.value
+							repository2.putNote(this) { _, _ -> }
+							if (i % 100 == 0) {
+								Log.i("npr71", "$i/${jsonArray.length()}")
+							}
 						}
+					} catch (exception : Exception) {
+						exception.printStackTrace()
 					}
-				} catch (exception : Exception) {
-					exception.printStackTrace()
+					delay(250)
 				}
-				delay(250)
 			}
 		}
+	}
+
+	fun onAuthenticate() {
+		repository2.isAuthenticated.tryEmit(true)
 	}
 }

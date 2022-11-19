@@ -12,14 +12,14 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.utils.timeStampToPrettyFull
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 
 @Composable
 fun BottomSheetKeyCard(
-	id: ObjectId?,
+	id: RealmUUID?,
 	createdTimestamp: Long,
 	modifiedTimestamp: Long
 ) {

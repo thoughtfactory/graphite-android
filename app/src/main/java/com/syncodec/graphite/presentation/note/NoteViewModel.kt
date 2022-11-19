@@ -23,6 +23,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
@@ -39,15 +40,18 @@ import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.locationAddressFilter
 import com.syncodec.graphite.utils.toByteArray
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
+import java.time.Clock
 import java.util.Base64
 import javax.inject.Inject
 
@@ -62,10 +66,10 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 	val isOperationPending : MutableState<Boolean> = mutableStateOf(false)
 	val locationSnackbarHostState = SnackbarHostState()
 
-	val noteIdList : SnapshotStateList<ObjectId> = mutableStateListOf()
-	val noteId : MutableState<ObjectId?> = mutableStateOf(null)
+	val noteIdList : SnapshotStateList<RealmUUID> = mutableStateListOf()
+	val noteId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val noteObject : MutableState<NoteObject?> = mutableStateOf(null)
-	val parentChapterId : MutableState<ObjectId?> = mutableStateOf(null)
+	val parentChapterId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val parentChapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
 
 	val createdTimestamp : MutableState<Long?> = mutableStateOf(null)
@@ -80,8 +84,8 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 	val isFavourite : MutableState<Boolean?> = mutableStateOf(null)
 	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
 
-	val attachmentListStored : SnapshotStateMap<ObjectId, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
-	val attachmentListBuffer : SnapshotStateMap<ObjectId, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
+	val attachmentListStored : SnapshotStateMap<RealmUUID, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
+	val attachmentListBuffer : SnapshotStateMap<RealmUUID, Triple<AttachmentObject, File?, Uri?>> = mutableStateMapOf()
 
 	val locationState : MutableState<LocationState> = mutableStateOf(LocationState.INIT)
 	var locationCoroutine : CoroutineScope? = null
@@ -107,6 +111,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		viewModelScope.launch(Dispatchers.IO) {
 			when (repositoryState.value) {
 				RepositoryState.INIT -> null
+				RepositoryState.LOCKED -> null
 				RepositoryState.LOADING -> null
 				RepositoryState.SUCCESS -> {
 					viewModelScope.launch(Dispatchers.IO) {
@@ -125,17 +130,18 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
-	fun singleRead(noteId : ObjectId) {
+	fun singleRead(noteId : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			noteIdList.add(noteId)
 			getNote(id = noteId)
 		}
 	}
 
-	fun chapterRead(chapterId : ObjectId, noteId : ObjectId) {
+	fun chapterRead(chapterId : RealmUUID, noteId : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			when (repositoryState.value) {
 				RepositoryState.INIT -> null
+				RepositoryState.LOCKED -> null
 				RepositoryState.LOADING -> null
 				RepositoryState.SUCCESS -> {
 					viewModelScope.launch(Dispatchers.IO) {
@@ -161,10 +167,11 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 
 	}
 
-	fun chapterReadNew(chapterId : ObjectId) {
+	fun chapterReadNew(chapterId : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			when (repositoryState.value) {
 				RepositoryState.INIT -> null
+				RepositoryState.LOCKED -> null
 				RepositoryState.LOADING -> null
 				RepositoryState.SUCCESS -> {
 					viewModelScope.launch(Dispatchers.IO) {
@@ -195,7 +202,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 	fun initNewNote() {
 		createdTimestamp.value = System.currentTimeMillis()
 		modifiedTimestamp.value = System.currentTimeMillis()
-		userTimestamp.value = System.currentTimeMillis()
+		userTimestamp.value = Clock.systemDefaultZone().millis()
 		contentThumbnail.value = null
 		content.value = null
 		title.value = null
@@ -209,61 +216,83 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		attachmentListBuffer.clear()
 
 		locationState.value = LocationState.INIT
-		getLocation()
+
+		viewModelScope.launch(Dispatchers.IO) {
+			val getGeolocation = DataStoreInstance(context = repository2.context)
+				.getGeolocation
+				.first()
+
+			val isPro = BaseApplication.isPro.value
+
+			when {
+				isPro && getGeolocation -> getLocation()
+				isPro && ! getGeolocation -> withContext(Dispatchers.Main) { locationState.value = LocationState.DISABLED }
+				else -> withContext(Dispatchers.Main) { locationState.value = LocationState.NOT_PRO }
+			}
+		}
 	}
 
-	fun getNote(id : ObjectId) {
+	fun getNote(id : RealmUUID, retry: Int = 10) {
 		viewModelScope.launch(Dispatchers.IO) {
-			repository2.getNoteFromIdAsFlow(id).cancellable().collect { noteObject ->
-				this@NoteViewModel.noteId.value = noteObject?.id
-				if (noteObject?.id != this@NoteViewModel.noteId.value) cancel()
-				if (noteObject != null) {
-					withContext(Dispatchers.Main) {
-//						this@NoteViewModel.noteId.value = noteObject.id
+			repository2.isAuthenticated.tryEmit(true)
+			try {
+				repository2.getNoteFromIdAsFlow(id).cancellable().collect { noteObject ->
+					this@NoteViewModel.noteId.value = noteObject?.id
+					if (noteObject?.id != this@NoteViewModel.noteId.value) cancel()
+					if (noteObject != null) {
+						withContext(Dispatchers.Main) {
+							this@NoteViewModel.createdTimestamp.value = noteObject.createdTimestamp
+							this@NoteViewModel.modifiedTimestamp.value = noteObject.modifiedTimestamp
+							this@NoteViewModel.userTimestamp.value = noteObject.userTimestamp
+							this@NoteViewModel.contentThumbnail.value = noteObject.contentThumbnail
+							this@NoteViewModel.content.value = noteObject.content
+							this@NoteViewModel.title.value = noteObject.title
+							this@NoteViewModel.color.value = noteObject.color
+							this@NoteViewModel.latLng.value = noteObject.getLatLng()
+							this@NoteViewModel.address.value = noteObject.address
+							this@NoteViewModel.isFavourite.value = noteObject.isFavourite
+							this@NoteViewModel.isLocked.value = noteObject.isLocked
 
-						this@NoteViewModel.createdTimestamp.value = noteObject.createdTimestamp
-						this@NoteViewModel.modifiedTimestamp.value = noteObject.modifiedTimestamp
-						this@NoteViewModel.userTimestamp.value = noteObject.userTimestamp
-						this@NoteViewModel.contentThumbnail.value = noteObject.contentThumbnail
-						this@NoteViewModel.content.value = noteObject.content
-						this@NoteViewModel.title.value = noteObject.title
-						this@NoteViewModel.color.value = noteObject.color
-						this@NoteViewModel.latLng.value = noteObject.getLatLng()
-						this@NoteViewModel.address.value = noteObject.address
-						this@NoteViewModel.isFavourite.value = noteObject.isFavourite
-						this@NoteViewModel.isLocked.value = noteObject.isLocked
+							this@NoteViewModel.parentChapterId.value = noteObject.parentChapterId
+							getChapter()
 
-						this@NoteViewModel.parentChapterId.value = noteObject.parentChapterId
-						getChapter()
+							attachmentListStored.clear()
+							attachmentListBuffer.clear()
+							noteObject.attachmentList.forEach {
+								val attachmentObject = repository2.getAttachmentFromId(it.id)
+								if (attachmentObject != null) {
+									val file = repository2.getAttachmentFile(attachmentObject.id, attachmentObject.extension)
+									val uri =
+										file?.let { it1 -> FileProvider.getUriForFile(repository2.context, "${repository2.context.packageName}.fileprovider", it1) }
+									attachmentListStored[attachmentObject.id] = Triple(attachmentObject, file, uri)
+									attachmentListBuffer[attachmentObject.id] = Triple(attachmentObject, file, uri)
+								}
+							}
 
-						attachmentListStored.clear()
-						attachmentListBuffer.clear()
-						noteObject.attachmentList.forEach {
-							val attachmentObject = repository2.getAttachmentFromId(it.id)
-							if (attachmentObject != null) {
-								val file = repository2.getAttachmentFile(attachmentObject.id, attachmentObject.extension)
-								val uri =
-									file?.let { it1 -> FileProvider.getUriForFile(repository2.context, "${repository2.context.packageName}.fileprovider", it1) }
-								attachmentListStored[attachmentObject.id] = Triple(attachmentObject, file, uri)
-								attachmentListBuffer[attachmentObject.id] = Triple(attachmentObject, file, uri)
+							when {
+								this@NoteViewModel.latLng.value != null && this@NoteViewModel.address.value != null -> locationState.value = LocationState.SUCCESS
+								this@NoteViewModel.latLng.value != null && this@NoteViewModel.address.value == null -> locationState.value =
+									LocationState.ONLY_LATLNG
+
+								this@NoteViewModel.latLng.value == null && this@NoteViewModel.address.value != null -> locationState.value =
+									LocationState.ONLY_ADDRESS
+
+								else -> locationState.value = LocationState.REMOVED
 							}
 						}
-
-						when {
-							this@NoteViewModel.latLng.value != null && this@NoteViewModel.address.value != null -> locationState.value = LocationState.SUCCESS
-							this@NoteViewModel.latLng.value != null && this@NoteViewModel.address.value == null -> locationState.value =
-								LocationState.ONLY_LATLNG
-
-							this@NoteViewModel.latLng.value == null && this@NoteViewModel.address.value != null -> locationState.value =
-								LocationState.ONLY_ADDRESS
-
-							else -> locationState.value = LocationState.REMOVED
-						}
 					}
-				}
 
-				isNew.value = false
-				isViewing.value = true
+					isNew.value = false
+					isViewing.value = true
+				}
+			} catch (e : RealmNotInitializedException) {
+				if (retry > 0) {
+					repository2.isAuthenticated.tryEmit(true)
+					delay(470)
+					getNote(id, retry - 1)
+				} else {
+					Toast.makeText(repository2.context, "Error reading data", Toast.LENGTH_SHORT).show()
+				}
 			}
 		}
 		viewModelScope.launch(Dispatchers.IO) {
@@ -271,9 +300,9 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 				tagListBuffer.clear()
 			}
 			tagList.forEach {
-				if (it.objectIdList.contains(id)) {
+				if (it.RealmUUIDList.contains(id)) {
 					withContext(Dispatchers.Main) {
-						if (!tagListBuffer.contains(it)) tagListBuffer.add(it)
+						if (! tagListBuffer.contains(it)) tagListBuffer.add(it)
 					}
 				}
 			}
@@ -371,6 +400,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 
 		this.contentThumbnail.value = dataText.substring(0, minOf(256, dataText.length))
 		this.content.value = dataJson?.toString()
+		this.title.value = dataObject.optString("title")
 	}
 
 	fun toggleFavourite() {
@@ -411,13 +441,16 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		return Triple(attachmentList, thumbnail, thumbnailType)
 	}
 
-	fun discardChanges() {
+	fun discardChanges(callback: (Boolean) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
-				if (noteId.value != null) {
-					getNote(id = noteId.value !!)
+				if (isNew.value == false) {
+					if (noteId.value != null) getNote(id = noteId.value !!)
+					callback(false)
 				}
+				else callback(true)
 			} catch (e : Exception) {
+				callback(false)
 			}
 		}
 	}
@@ -445,11 +478,11 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
-	fun removeAttachmentFromBuffer(attachmentId : ObjectId) {
+	fun removeAttachmentFromBuffer(attachmentId : RealmUUID) {
 		attachmentListBuffer.remove(attachmentId)
 	}
 
-	private fun saveAttachment(id : ObjectId, inputFile : File?, extension : String?) {
+	private fun saveAttachment(id : RealmUUID, inputFile : File?, extension : String?) {
 		val file = repository2.getAttachmentFile(id, extension)
 
 		if (file != null) {
@@ -492,66 +525,56 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 
 			val context = repository2.context
 
-			val dataStoreInstance = DataStoreInstance(context = context)
-			dataStoreInstance.getGeolocation.collect {
-				if (! it) {
-					withContext(Dispatchers.Main) { locationState.value = LocationState.DISABLED }
-					this.cancel()
-				} else {
-					withContext(Dispatchers.Main) {
-						locationState.value = LocationState.LOADING
-					}
+			withContext(Dispatchers.Main) { locationState.value = LocationState.LOADING }
 
-					if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-						context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-					) {
-						withContext(Dispatchers.Main) { locationState.value = LocationState.NO_PERMISSION }
-						showLocationPermissionDialog.value = showRationale
-					} else {
-						val fusedLocationClient : FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+			if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+				context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+			) {
+				withContext(Dispatchers.Main) { locationState.value = LocationState.NO_PERMISSION }
+				showLocationPermissionDialog.value = showRationale
+			} else {
+				val fusedLocationClient : FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
-						try {
-							fusedLocationClient
-								.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, locationCancellationSource?.token)
-								.addOnSuccessListener {
-									latLng.value = LatLng(it.latitude, it.longitude)
-									context.reverseGeocode(
-										latitude = it.latitude,
-										longitude = it.longitude,
-										onAddressAvailable = {
-											if (it == null) {
-												Toast.makeText(repository2.context, "Error getting address", Toast.LENGTH_SHORT).show()
-											} else {
-												onReceiveAddress(address = it)
-											}
-										},
-										onIoException = {
-											this.launch(Dispatchers.Main) {
-												locationSnackbarHostState.showSnackbar(
-													message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
-													duration = SnackbarDuration.Short
-												)
-												locationState.value = LocationState.ONLY_LATLNG
-											}
-										},
-										onException = {
-											this.launch(Dispatchers.Main) {
-												locationSnackbarHostState.showSnackbar(
-													message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
-													duration = SnackbarDuration.Short
-												)
-												locationState.value = LocationState.ONLY_LATLNG
-											}
-										}
-									)
+				try {
+					fusedLocationClient
+						.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, locationCancellationSource?.token)
+						.addOnSuccessListener {
+							latLng.value = LatLng(it.latitude, it.longitude)
+							context.reverseGeocode(
+								latitude = it.latitude,
+								longitude = it.longitude,
+								onAddressAvailable = {
+									if (it == null) {
+										Toast.makeText(repository2.context, "Error getting address", Toast.LENGTH_SHORT).show()
+									} else {
+										onReceiveAddress(address = it)
+									}
+								},
+								onIoException = {
+									this.launch(Dispatchers.Main) {
+										locationSnackbarHostState.showSnackbar(
+											message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
+											duration = SnackbarDuration.Short
+										)
+										locationState.value = LocationState.ONLY_LATLNG
+									}
+								},
+								onException = {
+									this.launch(Dispatchers.Main) {
+										locationSnackbarHostState.showSnackbar(
+											message = "Lat : ${latLng.value?.latitude}\nLng : ${latLng.value?.longitude}",
+											duration = SnackbarDuration.Short
+										)
+										locationState.value = LocationState.ONLY_LATLNG
+									}
 								}
-								.addOnFailureListener { this.launch(Dispatchers.Main) { locationState.value = LocationState.KNOWN_ERROR } }
-						} catch (e : Exception) {
-							e.printStackTrace()
-							withContext(Dispatchers.Main) { locationState.value = LocationState.KNOWN_ERROR }
-							this.cancel()
+							)
 						}
-					}
+						.addOnFailureListener { this.launch(Dispatchers.Main) { locationState.value = LocationState.KNOWN_ERROR } }
+				} catch (e : Exception) {
+					e.printStackTrace()
+					withContext(Dispatchers.Main) { locationState.value = LocationState.KNOWN_ERROR }
+					this.cancel()
 				}
 			}
 		}
@@ -593,12 +616,12 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
-	fun getSelectChapter(parentChapterId : ObjectId?) {
+	fun getSelectChapter(parentChapterId : RealmUUID?) {
 		viewModelScope.launch(Dispatchers.IO) {
 			repository2.getChapterWithParentId(parentChapterId = parentChapterId).let {
 				withContext(Dispatchers.Main) {
 					selectChapterList.clear()
-					selectChapterList.addAll(it)
+					selectChapterList.addAll(it.second)
 				}
 			}
 			repository2.getChapterFromId(id = parentChapterId).let {
@@ -612,7 +635,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
-	fun moveNoteToChapter(chapterId : ObjectId) {
+	fun moveNoteToChapter(chapterId : RealmUUID) {
 		this@NoteViewModel.parentChapterId.value = chapterId
 		if (isViewing.value == true) this@NoteViewModel.putNote()
 	}
@@ -624,6 +647,14 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 			if (tagListBuffer.contains(tagObject)) tagListBuffer.remove(tagObject)
 			else tagListBuffer.add(tagObject)
 		}
+	}
+
+	fun setUserTimestamp(timestamp : Long) {
+		this.userTimestamp.value = timestamp
+	}
+
+	fun onSetTitle(title : String?) {
+		this.title.value = title
 	}
 
 	override fun onCleared() {

@@ -39,12 +39,7 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_VIEW_TYPE = intPreferencesKey("view_type")
 		private val PREFERENCE_VAULT_KEY = stringPreferencesKey("vault_key")
 		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
-		private val PREFERENCE_ACTIVE_COMPONENT = intPreferencesKey("component")
-		private val PREFERENCE_DEFAULT_NOTE_KEY = stringPreferencesKey("default_notebook_key")
-		private val PREFERENCE_NOTE_SHOW_LOCATION_PERMISSION =
-			booleanPreferencesKey("show_location_permission_card")
-		private val PREFERENCE_SUPER_EXPIRY_TIME = stringPreferencesKey("super_expiry_time")
-		private val PREFERENCE_EXPIRY_TIME = stringPreferencesKey("expiry_time")
+		private val PREFERENCE_NOTE_SHOW_LOCATION_PERMISSION = booleanPreferencesKey("show_location_permission_card")
 	}
 
 	val getIsFirstTime : Flow<Boolean> =
@@ -122,15 +117,15 @@ class DataStoreInstance(private val context : Context) {
 	}
 
 	val getSortOn : Flow<SortOn> = context.dataStore.data.map { preferences ->
-		when (preferences[PREFERENCE_SORT_ON] ?: 0) {
+		when (preferences[PREFERENCE_SORT_ON] ?: 1) {
 			0 -> SortOn.TITLE
 			1 -> SortOn.TIMESTAMP
 			2 -> SortOn.MODIFIED
-			3 -> SortOn.PRIORITY
-			4 -> SortOn.COMPLETED
-			5 -> SortOn.DUE
-			6 -> SortOn.CREATED
-			7 -> SortOn.DONE
+//			3 -> SortOn.PRIORITY
+//			4 -> SortOn.COMPLETED
+//			5 -> SortOn.DUE
+//			6 -> SortOn.CREATED
+//			7 -> SortOn.DONE
 			else -> SortOn.TIMESTAMP
 		}
 	}
@@ -140,10 +135,10 @@ class DataStoreInstance(private val context : Context) {
 	}
 
 	val getSortBy : Flow<SortBy> = context.dataStore.data.map { preferences ->
-		when (preferences[PREFERENCE_SORT_BY] ?: 0) {
+		when (preferences[PREFERENCE_SORT_BY] ?: 1) {
 			0 -> SortBy.ASCENDING
 			1 -> SortBy.DESCENDING
-			else -> SortBy.ASCENDING
+			else -> SortBy.DESCENDING
 		}
 	}
 
@@ -231,56 +226,6 @@ class DataStoreInstance(private val context : Context) {
 	fun putUseBiometric(useBiometric : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_USE_BIOMETRIC] = useBiometric }
 	}
-
-	val getDefaultNotebookKey : Flow<String?> =
-		context.dataStore.data.map { preferences -> preferences[PREFERENCE_DEFAULT_NOTE_KEY] }
-
-	fun putDefaultNotebookKey(notebookKey : String) =
-		CoroutineScope(Dispatchers.IO).launch {
-			context.dataStore.edit { pref -> pref[PREFERENCE_DEFAULT_NOTE_KEY] = notebookKey }
-		}
-
-	val getSuperExpiryTime =
-		context.dataStore.data.map { preferences ->
-			try {
-				preferences[PREFERENCE_SUPER_EXPIRY_TIME]?.decrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")
-			} catch (exception : Exception) {
-				exception.printStackTrace()
-				null
-			}
-		}
-
-	fun putSuperExpiryTime(expiryTime : Long) =
-		CoroutineScope(Dispatchers.IO).launch {
-			try {
-				expiryTime.toString().encrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")?.apply {
-					context.dataStore.edit { pref -> pref[PREFERENCE_SUPER_EXPIRY_TIME] = this }
-				}
-			} catch (exception : Exception) {
-				exception.printStackTrace()
-			}
-		}
-
-	val getExpiryTime =
-		context.dataStore.data.map { preferences ->
-			try {
-				preferences[PREFERENCE_EXPIRY_TIME]?.decrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")
-			} catch (exception : Exception) {
-				exception.printStackTrace()
-				null
-			}
-		}
-
-	fun putExpiryTime(expiryTime : Long) =
-		CoroutineScope(Dispatchers.IO).launch {
-			try {
-				expiryTime.toString().encrypt("V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")?.apply {
-					context.dataStore.edit { pref -> pref[PREFERENCE_EXPIRY_TIME] = this }
-				}
-			} catch (exception : Exception) {
-				exception.printStackTrace()
-			}
-		}
 
 	fun clearDatastore() = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref.clear() }

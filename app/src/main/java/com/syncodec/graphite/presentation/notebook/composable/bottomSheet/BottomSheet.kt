@@ -7,18 +7,14 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.FilterBott
 enum class NotebookBottomSheetType {
 	MENU,
 	CHAPTER,
-	NOTE,
 	FILTER
 }
 
 @Composable
-fun SheetLayout(
-	bottomSheetType : NotebookBottomSheetType
-) {
+fun SheetLayout(bottomSheetType : NotebookBottomSheetType) {
 	when (bottomSheetType) {
 		NotebookBottomSheetType.MENU -> MenuBottomSheet()
 		NotebookBottomSheetType.CHAPTER -> ChapterBottomSheet()
-		NotebookBottomSheetType.NOTE -> NoteBottomSheet()
-		NotebookBottomSheetType.FILTER -> FilterBottomSheet()
+		NotebookBottomSheetType.FILTER -> FilterBottomSheet(showViewTypeOption = false)
 	}
 }

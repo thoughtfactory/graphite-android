@@ -1,6 +1,16 @@
 package com.syncodec.graphite
 
 import android.app.Application
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import com.revenuecat.purchases.CacheFetchPolicy
+import com.revenuecat.purchases.CustomerInfo
+import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.PurchasesConfiguration
+import com.revenuecat.purchases.PurchasesError
+import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.utils.DataStoreInstance
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
@@ -9,11 +19,11 @@ import java.io.File
 @HiltAndroidApp
 class BaseApplication : Application() {
 
-	lateinit var dataStore: DataStoreInstance
+	lateinit var dataStore : DataStoreInstance
 
-	private lateinit var ROOT: String
+	private lateinit var ROOT : String
 
-	private val DATA: String = "data"
+	private val DATA : String = "data"
 		get() = "$ROOT/$field"
 
 	private val ATTACHMENT_DIR = "attachment"
@@ -22,31 +32,34 @@ class BaseApplication : Application() {
 	override fun onCreate() {
 		super.onCreate()
 
-//		repository = RepositoryModule_ProvideRepositoryFactory()
-
 		ROOT = applicationContext.filesDir.path
 		File(DATA).mkdirs()
 		File(ATTACHMENT_DIR).mkdirs()
 
-
-
-//		Purchases.debugLogsEnabled = true
-//		Purchases.configure(PurchasesConfiguration.Builder(this, BuildConfig.REVENUE_CAT_API_KEY).build())
-
-//		Purchases.sharedInstance.getOfferingsWith(
-//			onError = { error ->
-//				/* Optional error handling */
-//				Log.e("npr71", "Error getting offerings: $error")
-//			},
-//			onSuccess = { offerings ->
-//				// Display current offering with offerings.current
-//				Log.i("npr71", "onSuccess: ${offerings.all}")
-//			}
-//		)
-
 		dataStore = DataStoreInstance(this)
 
-//		migrate()
+		Purchases.debugLogsEnabled = true
+		val auth = Firebase.auth
+		val purchasesConfiguration = PurchasesConfiguration
+			.Builder(this, BuildConfig.REVENUE_CAT_API_KEY)
+			.appUserID(auth.currentUser?.uid)
+			.build()
+		Purchases.configure(purchasesConfiguration)
+
+
+		if (auth.currentUser != null) {
+			Purchases.sharedInstance.getCustomerInfo(
+				fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
+				callback = object : ReceiveCustomerInfoCallback {
+					override fun onError(error : PurchasesError) {
+					}
+
+					override fun onReceived(customerInfo : CustomerInfo) {
+						isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+					}
+				}
+			)
+		}
 
 		updateQuoteData()
 	}
@@ -106,5 +119,9 @@ class BaseApplication : Application() {
 //					}
 //			}
 //		}
+	}
+
+	companion object {
+		val isPro: MutableState<Boolean> = mutableStateOf(false)
 	}
 }

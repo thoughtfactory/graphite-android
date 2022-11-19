@@ -30,16 +30,20 @@ fun SettingsButton(
 	title: String,
 	icon: Int? = null,
 	subTitle: String? = null,
-	containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
+	containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
 	contentColor: Color = MaterialTheme.colorScheme.onSurface,
+	enabled: Boolean = true,
 	onClick: () -> Unit
 ) {
 	Card(
 		colors = CardDefaults.cardColors(
 			containerColor = containerColor,
 			contentColor = contentColor,
+			disabledContainerColor = containerColor.copy(alpha = 0.47f),
+			disabledContentColor = contentColor.copy(alpha = 0.47f),
 		),
 		modifier = Modifier.padding(12.dp, 4.dp),
+		enabled = enabled,
 		onClick = onClick
 	) {
 		Row(
@@ -65,7 +69,6 @@ fun SettingsButton(
 				Text(
 					text = title,
 					style = MaterialTheme.typography.titleMedium,
-					color = MaterialTheme.colorScheme.onSurface,
 					fontWeight = FontWeight.Bold
 				)
 				if (subTitle != null) {
@@ -73,7 +76,6 @@ fun SettingsButton(
 					Text(
 						text = subTitle,
 						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 					)
 				}
 			}
@@ -83,7 +85,6 @@ fun SettingsButton(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_chevron_right),
 				contentDescription = title,
-				tint = MaterialTheme.colorScheme.onSurface,
 				modifier = Modifier.requiredSize(24.dp)
 			)
 		}

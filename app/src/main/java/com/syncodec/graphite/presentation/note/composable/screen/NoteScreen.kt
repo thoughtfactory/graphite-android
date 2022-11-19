@@ -20,13 +20,15 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenBottomSheet
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.bar.TopBar
 import com.syncodec.graphite.presentation.note.composable.bar.bottomBar.BottomBar
 import com.syncodec.graphite.presentation.note.composable.bottomSheet.NoteBottomSheetType
 import com.syncodec.graphite.presentation.note.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.LocationSnackbarHost
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialog
-import io.realm.kotlin.types.ObjectId
+import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
@@ -39,13 +41,15 @@ fun NoteScreen(
 	onClickLock : () -> Unit,
 	onClickFavourite : () -> Unit,
 	onAddAttachmentToBuffer : (List<Uri>) -> Unit,
-	onRemoveAttachment : (ObjectId) -> Unit,
+	onRemoveAttachment : (RealmUUID) -> Unit,
 	onUpdateTitle : (String?) -> Unit,
 	onRemoveLocation : () -> Unit,
 	onReloadLocation : () -> Unit,
 	setLocation: (LatLng, String?) -> Unit,
 ) {
 	val isViewing = LocalCompositionIsViewing.current
+
+	val openDialog = LocalCompositionOpenDialog.current
 	val openSheet = LocalCompositionOpenBottomSheet.current
 
 	Box(
@@ -79,6 +83,7 @@ fun NoteScreen(
 				},
 				bottomBar = {
 					BottomBar(
+						onClickTimePicker = { openDialog(NoteDialogType.DATE_PICKER, null) },
 						onClickMetadata = { openSheet(NoteBottomSheetType.METADATA) },
 						onClickLocation = { openSheet(NoteBottomSheetType.LOCATION) },
 						onClickAttachment = { openSheet(NoteBottomSheetType.ATTACHMENT) },

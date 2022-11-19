@@ -11,9 +11,11 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
-import io.realm.kotlin.types.ObjectId
+import dagger.hilt.android.AndroidEntryPoint
+import io.realm.kotlin.types.RealmUUID
 
 
+@AndroidEntryPoint
 class AttachmentActivity : ComponentActivity() {
 
 	private val viewModel by viewModels<AttachmentViewModel>()
@@ -21,25 +23,25 @@ class AttachmentActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		val showAllAttachments = intent.getBooleanExtra(Extra.Companion.Constant.SHOW_ALL_ATTACHMENTS.name, false)
+		val showAll = intent.getBooleanExtra(Extra.Companion.Constant.SHOW_ALL.name, false)
 		val hasNoteId = intent.hasExtra(Extra.Companion.Constant.NOTE_ID.name)
 		val hasChapterId = intent.hasExtra(Extra.Companion.Constant.CHAPTER_ID.name)
 
 		when {
-			showAllAttachments -> viewModel.loadAllAttachments()
+			showAll -> viewModel.loadAllData()
 			hasNoteId -> {
-				val noteId = intent.getStringExtra(Extra.Companion.Constant.NOTE_ID.name)?.let { ObjectId.from(it) }
+				val noteId = intent.getStringExtra(Extra.Companion.Constant.NOTE_ID.name)?.let { RealmUUID.from(it) }
 				if (noteId != null) {
-					viewModel.loadAndViewFromNoteData(noteId)
+					viewModel.loadDataFromNote(noteId)
 				} else {
 					finish()
 				}
 			}
 
 			hasChapterId -> {
-				val chapterId = intent.getStringExtra(Extra.Companion.Constant.CHAPTER_ID.name)?.let { ObjectId.from(it) }
+				val chapterId = intent.getByteArrayExtra(Extra.Companion.Constant.CHAPTER_ID.name)?.let { RealmUUID.from(it) }
 				if (chapterId != null) {
-					viewModel.loadAndViewFromChapterData(chapterId)
+					viewModel.loadDataFromChapter(chapterId)
 				} else {
 					finish()
 				}

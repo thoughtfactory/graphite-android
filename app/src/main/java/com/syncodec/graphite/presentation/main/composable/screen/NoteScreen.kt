@@ -31,11 +31,11 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.common.lazyView.isScrollingUp
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteResreshing
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
@@ -44,13 +44,12 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.gridView.NoteGridCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NotebookTimelineSpacer
-import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.timeStampToPrettyDay
 import com.syncodec.graphite.utils.timestampToCalendarDay
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -61,19 +60,17 @@ fun NoteScreen(
 	sortBy : SortBy,
 	viewType : ViewType,
 	onClickFab : () -> Unit,
-	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote : (ObjectId) -> Unit
+	onClickNote : (RealmUUID) -> Unit,
+	onLongClickNote : (RealmUUID) -> Unit
 ) {
-	val isNoteRefreshing = LocalCompositionIsNoteResreshing.current
+	val isNoteRefreshing = LocalCompositionIsNoteRefreshing.current
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
 
 	val lazyListState = rememberLazyListState()
 	val lazyGridState = rememberLazyGridState()
-
-	val isVaultOpened = LocalVaultIsOpened.current
 
 	val noteMap : MutableMap<String, MutableList<NoteObjectLite>> = mutableMapOf()
 	when(sortOn) {
@@ -83,7 +80,7 @@ fun NoteScreen(
 			} else {
 				noteList.sortedByDescending { it.title }
 			}
-			_noteList.filter { if (it.isLocked) isVaultOpened else true }.forEach { note ->
+			_noteList.forEach { note ->
 				val sorter = note.title?.firstOrNull()?.uppercase() ?: "."
 				if (noteMap.containsKey(sorter)) noteMap[sorter] !!.add(note)
 				else noteMap[sorter] = mutableListOf(note)
@@ -95,7 +92,7 @@ fun NoteScreen(
 			} else {
 				noteList.sortedByDescending { it.userTimestamp }
 			}
-			_noteList.filter { if (it.isLocked) isVaultOpened else true }.forEach { note ->
+			_noteList.forEach { note ->
 				val sorter = timestampToCalendarDay(note.userTimestamp).timeStampToPrettyDay()
 				if (noteMap.containsKey(sorter)) noteMap[sorter] !!.add(note)
 				else noteMap[sorter] = mutableListOf(note)
@@ -107,7 +104,7 @@ fun NoteScreen(
 			} else {
 				noteList.sortedByDescending { it.modifiedTimestamp }
 			}
-			_noteList.filter { if (it.isLocked) isVaultOpened else true }.forEach { note ->
+			_noteList.forEach { note ->
 				val timestamp = timestampToCalendarDay(note.modifiedTimestamp).timeStampToPrettyDay()
 				if (noteMap.containsKey(timestamp)) noteMap[timestamp] !!.add(note)
 				else noteMap[timestamp] = mutableListOf(note)
@@ -128,7 +125,9 @@ fun NoteScreen(
 		},
 		floatingActionButtonPosition = FabPosition.End
 	) {
-		Box(modifier = Modifier.padding(it)) {
+		Box(
+			modifier = Modifier.padding(it)
+		) {
 			Crossfade(
 				targetState = noteMap.isEmpty(),
 				animationSpec = tween(600)
@@ -146,7 +145,7 @@ fun NoteScreen(
 								lazyListState = lazyListState,
 								isRefreshing = isNoteRefreshing,
 								isSelected = isSelected,
-								selectedObjectIdList = selectedObjectIdList,
+								selectedRealmUUIDList = selectedRealmUUIDList,
 								noteDayMap = noteMap,
 								onClickNote = onClickNote,
 								onLongClickNote = onLongClickNote,
@@ -157,7 +156,7 @@ fun NoteScreen(
 								lazyListState = lazyListState,
 								isRefreshing = isNoteRefreshing,
 								isSelected = isSelected,
-								selectedObjectIdList = selectedObjectIdList,
+								selectedRealmUUIDList = selectedRealmUUIDList,
 								noteDayMap = noteMap,
 								onClickNote = onClickNote,
 								onLongClickNote = onLongClickNote,
@@ -177,10 +176,10 @@ private fun ListView(
 	lazyListState : LazyListState,
 	isRefreshing : Boolean,
 	isSelected : Boolean,
-	selectedObjectIdList : List<ObjectId>,
+	selectedRealmUUIDList : List<RealmUUID>,
 	noteDayMap : Map<String, List<NoteObjectLite>>,
-	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote : (ObjectId) -> Unit,
+	onClickNote : (RealmUUID) -> Unit,
+	onLongClickNote : (RealmUUID) -> Unit,
 	onRefresh : () -> Unit
 ) {
 	val tagList = LocalCompositionTagList.current
@@ -196,6 +195,7 @@ private fun ListView(
 			item {
 				YearProgressBar(showCard = ! isSelected)
 			}
+
 			noteDayMap.forEach { (day, noteList) ->
 				val sortedList = noteList.sortedBy { - it.userTimestamp }
 
@@ -242,7 +242,7 @@ private fun ListView(
 								timestamp = note.userTimestamp,
 								showFullTime = false,
 								isLocked = note.isLocked,
-								isSelected = selectedObjectIdList.contains(note.id),
+								isSelected = selectedRealmUUIDList.contains(note.id),
 								isFavourite = note.isFavourite,
 								isDeleted = false,
 								isLast = note.id == lastEntryKey,
@@ -251,7 +251,7 @@ private fun ListView(
 								attachmentCount = note.attachmentCount,
 								attachmentThumbnail = thumbnail,
 								address = note.address,
-								tagList = tagList.filter { it.objectIdList.contains(note.id) },
+								tagList = tagList.filter { it.RealmUUIDList.contains(note.id) },
 								latLng = note.latLng,
 								isVisible = true,
 								isSwipable = true,
@@ -278,10 +278,10 @@ private fun GridView(
 	lazyListState : LazyListState,
 	isRefreshing : Boolean,
 	isSelected : Boolean,
-	selectedObjectIdList : List<ObjectId>,
+	selectedRealmUUIDList : List<RealmUUID>,
 	noteDayMap : Map<String, List<NoteObjectLite>>,
-	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote : (ObjectId) -> Unit,
+	onClickNote : (RealmUUID) -> Unit,
+	onLongClickNote : (RealmUUID) -> Unit,
 	onRefresh : () -> Unit
 ) {
 	SwipeRefresh(
@@ -316,7 +316,7 @@ private fun GridView(
 							timestamp = note.userTimestamp,
 							showFullTime = true,
 							isLocked = note.isLocked,
-							isSelected = note.id in selectedObjectIdList,
+							isSelected = note.id in selectedRealmUUIDList,
 							isFavourite = note.isFavourite,
 							isDeleted = false,
 							isLast = false,
@@ -397,7 +397,7 @@ private fun GridView(
 //										timestamp = note1.userTimestamp,
 //										showFullTime = false,
 //										isLocked = note1.isLocked,
-//										isSelected = selectedObjectIdList.contains(note1.id),
+//										isSelected = selectedRealmUUIDList.contains(note1.id),
 //										isFavourite = note1.isFavourite,
 //										isDeleted = false,
 //										isLast = false,
@@ -423,7 +423,7 @@ private fun GridView(
 //										timestamp = note2.userTimestamp,
 //										showFullTime = false,
 //										isLocked = note2.isLocked,
-//										isSelected = selectedObjectIdList.contains(note2.id),
+//										isSelected = selectedRealmUUIDList.contains(note2.id),
 //										isFavourite = note2.isFavourite,
 //										isDeleted = false,
 //										isLast = false,

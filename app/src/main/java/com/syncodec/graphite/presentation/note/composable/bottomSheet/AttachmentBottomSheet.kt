@@ -40,13 +40,13 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionAttach
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.AttachmentPreview
 import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
 import com.syncodec.graphite.utils.generatePrimaryKey
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @Composable
 fun AttachmentBottomSheet(
 	onAddAttachmentToBuffer: (List<Uri>) -> Unit,
-	onRemoveAttachment: (ObjectId) -> Unit,
+	onRemoveAttachment: (RealmUUID) -> Unit,
 ) {
 	val context = LocalContext.current
 	val attachmentList = LocalCompositionAttachmentList.current

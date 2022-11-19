@@ -87,7 +87,7 @@ import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.noteViewerTimestamp
 import com.syncodec.graphite.utils.roundTo
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -123,14 +123,14 @@ private const val SUBSCRIPT = "subscript"
 
 @Composable
 fun ViewerComponent(
-	noteId : ObjectId?,
+	noteId : RealmUUID?,
 	content : String?,
 	userTimestamp : Long,
 	title : String?,
 	latLng : LatLng?,
 	address : String?,
 	parentChapter : ChapterObject?,
-	attachmentList : Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>,
+	attachmentList : Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>,
 	connectedTag : List<TagObjectLite>,
 	onClickChapter: () -> Unit,
 ) {
@@ -192,14 +192,14 @@ fun ViewerComponent(
 @OptIn(ExperimentalPagerApi::class, ExperimentalAnimationApi::class)
 @Composable
 private fun Thumbnail(
-	noteId : ObjectId?,
-	attachmentMap : Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>,
+	noteId : RealmUUID?,
+	attachmentMap : Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>,
 ) {
 	val context = LocalContext.current
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
 
-	var renderableAttachmentId : ObjectId? by remember { mutableStateOf(null) }
+	var renderableAttachmentId : RealmUUID? by remember { mutableStateOf(null) }
 
 	if (attachmentMap.isNotEmpty()) {
 		attachmentMap.forEach { (id, data) ->
@@ -269,8 +269,7 @@ private fun Thumbnail(
 					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
 				) {
 					Intent(context, AttachmentActivity::class.java).apply {
-						putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.toString())
-
+						putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId?.bytes)
 						context.startActivity(this)
 					}
 				}
@@ -554,7 +553,6 @@ private fun RenderDoc(
 		color = MaterialTheme.colorScheme.background
 	) {
 		CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
-
 			SelectionContainer {
 				MaterialRichText(
 					style = richTextStyle,

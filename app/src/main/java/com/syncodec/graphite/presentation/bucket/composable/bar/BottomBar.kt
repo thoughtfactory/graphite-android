@@ -19,9 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetType
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
@@ -32,7 +33,7 @@ import com.syncodec.graphite.utils.tone
 @Preview
 @Composable
 fun BottomBar(
-	modifier: Modifier = Modifier,
+	modifier : Modifier = Modifier,
 ) {
 	val containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
 	val contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
@@ -43,6 +44,8 @@ fun BottomBar(
 
 	val isVaultOpened = LocalVaultIsOpened.current
 	val onAuthenticatorAction = LocalAuthenticatorAction.current
+
+	val onShare = LocalCompositionOnShare.current
 
 	AnimatedVisibility(
 		visible = ! isSelected,
@@ -59,17 +62,11 @@ fun BottomBar(
 		) {
 			Spacer(modifier = Modifier.width(16.dp))
 
-			MenuButton(
-				icon = R.drawable.ic_share,
-				contentDescription = "Share bucket",
-				tint = contentColor
-			) {}
-
-			MenuButton(
-				icon = R.drawable.ic_export,
-				contentDescription = "Export bucket",
-				tint = contentColor
-			) {}
+//			MenuButton(
+//				icon = R.drawable.ic_share,
+//				contentDescription = "Share bucket",
+//				tint = contentColor
+//			) { onShare() }
 
 			Spacer(modifier = Modifier.weight(1f))
 

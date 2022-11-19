@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,10 +33,10 @@ fun DualActionButtons(
 	) {
 		Spacer(modifier = Modifier.weight(1f))
 		if (isOutlinedButton) {
-			OutlinedButton(
+			Button(
 				onClick = onSecondaryClick,
 				modifier = Modifier,
-				colors = ButtonDefaults.outlinedButtonColors(
+				colors = ButtonDefaults.buttonColors(
 					containerColor = secondaryColor ?: MaterialTheme.colorScheme.background,
 					contentColor = secondaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
 				),

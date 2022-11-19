@@ -5,6 +5,7 @@
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
 		android:name="com.syncodec.graphite.BaseApplication"
@@ -70,6 +71,7 @@
 
 		<activity
 			android:name=".presentation.note.NoteActivity"
+			android:parentActivityName=".presentation.main.MainActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
 			android:windowSoftInputMode="adjustResize" >
@@ -101,6 +103,18 @@
 			android:windowSoftInputMode="adjustResize" />
 
 		<activity
+			android:name=".presentation.atlas.AtlasActivity"
+			android:exported="false"
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
+
+		<activity
+			android:name=".presentation.calendar.CalendarActivity"
+			android:exported="false"
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
+
+		<activity
 			android:name=".presentation.notebook.NotebookActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
@@ -113,7 +127,7 @@
 			android:windowSoftInputMode="adjustResize" />
 
 		<activity
-			android:name=".presentation.bucketItem2.BucketItemActivity2"
+			android:name=".presentation.bucketItem.BucketItemActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
 			android:windowSoftInputMode="adjustResize" />
@@ -126,6 +140,12 @@
 
 		<activity
 			android:name=".presentation.raw.RawActivity"
+			android:exported="false"
+			android:theme="@style/Theme.Graphite.NoActionBar"
+			android:windowSoftInputMode="adjustResize" />
+
+		<activity
+			android:name=".presentation.pro.ProActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
 			android:windowSoftInputMode="adjustResize" />
@@ -144,7 +164,6 @@
 
 		<service
 			android:name=".notification.NotePinNotificationService"
-			android:enabled="true"
-			/>
+			android:enabled="true" />
 	</application>
 </manifest>

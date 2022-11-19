@@ -1,13 +1,13 @@
 package com.syncodec.graphite.di.model
 
 import androidx.room.PrimaryKey
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 
 class BaseObject: RealmObject {
-	@PrimaryKey var id: ObjectId = ObjectId.create()
-	var defaultChapterId: ObjectId? = null
+	@PrimaryKey var id : RealmUUID = RealmUUID.random()
+	var defaultChapterId: RealmUUID? = null
 
 	override fun hashCode(): Int {
 		var result = id.hashCode()

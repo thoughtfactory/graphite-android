@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -26,35 +27,45 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
+import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
+import com.syncodec.graphite.presentation.common.dialog.DialogType
+import com.syncodec.graphite.presentation.common.info.InfoView
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 
 
 @Composable
 fun MenuBottomSheet() {
-	val buttonList: List<BottomSheetButtonData> = remember {
+
+	val bucketObject = LocalCompositionBucketObject.current
+
+	val openDialog = LocalCompositionOpenDialog.current
+
+	val buttonList : List<BottomSheetButtonData> = remember {
 		listOf(
 			BottomSheetButtonData(
 				title = "Edit",
 				icon = R.drawable.ic_pencil,
-				onClick = {}
+				onClick = { openDialog(DialogType.EDIT) }
 			),
 			BottomSheetButtonData(
-				title = "Pin",
-				icon = R.drawable.ic_pencil,
-				onClick = {}
+				title = "Share",
+				icon = R.drawable.ic_share,
+				onClick = { }
 			),
 			BottomSheetButtonData(
 				title = "Delete",
 				icon = R.drawable.ic_delete,
 				containerColor = Color.DeleteContainer,
 				contentColor = Color.DeleteContent,
-				onClick = {}
+				onClick = { openDialog(DialogType.DELETE) }
 			),
 		)
 	}
@@ -77,14 +88,28 @@ fun MenuBottomSheet() {
 
 		BottomSheetButtonGrid(buttonList = buttonList)
 
+		InfoView(
+			id = bucketObject?.id,
+			createdTimestamp = bucketObject?.createdTimestamp,
+			modifiedTimestamp = null,
+			description = bucketObject?.description,
+			thumbnail = null
+		)
+
 		Spacer(modifier = Modifier.height(6.dp))
 
 		DataView(
-			allCount = 0,
-			alphaCount = 0,
-			betaCount = 0,
-			gammaCount = 0,
-			bucketType = BucketType.BOOK.name
+			allCount = bucketObject?.bucketItemList?.size ?: 0,
+			alphaCount = bucketObject?.bucketItemList?.count { it.state == BucketItemState.ALPHA.name } ?: 0,
+			betaCount = bucketObject?.bucketItemList?.count { it.state == BucketItemState.BETA.name } ?: 0,
+			gammaCount = bucketObject?.bucketItemList?.count { it.state == BucketItemState.GAMMA.name } ?: 0,
+			bucketType = bucketObject?.bucketType.let {
+				try {
+					BucketType.valueOf(it ?: BucketType.UNKNOWN.name)
+				} catch (e : Exception) {
+					BucketType.UNKNOWN
+				}
+			}
 		)
 
 		Spacer(modifier = Modifier.height(32.dp))
@@ -93,11 +118,11 @@ fun MenuBottomSheet() {
 
 @Composable
 private fun ColumnScope.DataView(
-	allCount: Int,
-	alphaCount: Int,
-	betaCount: Int,
-	gammaCount: Int,
-	bucketType: String
+	allCount : Int,
+	alphaCount : Int,
+	betaCount : Int,
+	gammaCount : Int,
+	bucketType : BucketType
 ) {
 	this.apply {
 		Row(
@@ -115,10 +140,10 @@ private fun ColumnScope.DataView(
 			DataItemView(
 				text = alphaCount.toString(),
 				contentDescription = when (bucketType) {
-					BucketType.TODO.name -> "Todo count"
-					BucketType.BOOK.name -> "To read count"
-					BucketType.SHOW.name -> "To watch count"
-					BucketType.LINK.name -> "Todo count"
+					BucketType.TODO -> "Todo count"
+					BucketType.BOOK -> "To read count"
+					BucketType.SHOW -> "To watch count"
+					BucketType.LINK -> "Todo count"
 					else -> "ERROR"
 				},
 				icon = R.drawable.ic_clock,
@@ -136,29 +161,31 @@ private fun ColumnScope.DataView(
 			DataItemView(
 				text = betaCount.toString(),
 				contentDescription = when (bucketType) {
-					BucketType.TODO.name -> "Doing count"
-					BucketType.BOOK.name -> "Reading count"
-					BucketType.SHOW.name -> "Watching count"
-					BucketType.LINK.name -> "Doing count"
+					BucketType.TODO -> "Doing count"
+					BucketType.BOOK -> "Reading count"
+					BucketType.SHOW -> "Watching count"
+					BucketType.LINK -> "Doing count"
 					else -> "ERROR"
 				},
 				icon = when (bucketType) {
-					BucketType.TODO.name -> R.drawable.ic_todo
-					BucketType.BOOK.name -> R.drawable.ic_book
-					BucketType.SHOW.name -> R.drawable.ic_show
-					BucketType.LINK.name -> R.drawable.ic_link
+					BucketType.TODO -> R.drawable.ic_todo
+					BucketType.BOOK -> R.drawable.ic_book
+					BucketType.SHOW -> R.drawable.ic_show
+					BucketType.LINK -> R.drawable.ic_link
 					else -> R.drawable.ic_warning
 				},
 				modifier = Modifier.weight(1f)
 			)
+
 			Spacer(modifier = Modifier.width(4.dp))
+
 			DataItemView(
 				text = gammaCount.toString(),
 				contentDescription = when (bucketType) {
-					BucketType.TODO.name -> "Done count"
-					BucketType.BOOK.name -> "Read count"
-					BucketType.SHOW.name -> "Watched count"
-					BucketType.LINK.name -> "Done count"
+					BucketType.TODO -> "Done count"
+					BucketType.BOOK -> "Read count"
+					BucketType.SHOW -> "Watched count"
+					BucketType.LINK -> "Done count"
 					else -> "ERROR"
 				},
 				icon = R.drawable.ic_check,
@@ -170,14 +197,14 @@ private fun ColumnScope.DataView(
 
 @Composable
 private fun DataItemView(
-	modifier: Modifier = Modifier,
-	text: String,
-	icon: Int,
-	contentDescription: String,
+	modifier : Modifier = Modifier,
+	text : String,
+	icon : Int,
+	contentDescription : String,
 ) {
 	Card(
-		shape = RoundedCornerShape(24.dp),
-		colors = CardDefaults.outlinedCardColors(
+		shape = RoundedCornerShape(12.dp),
+		colors = CardDefaults.cardColors(
 			containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
 			contentColor = MaterialTheme.colorScheme.onBackground
 		),
@@ -190,7 +217,8 @@ private fun DataItemView(
 		) {
 			Icon(
 				painter = painterResource(id = icon),
-				contentDescription = contentDescription
+				contentDescription = contentDescription,
+				modifier = Modifier.requiredSize(20.dp)
 			)
 			Spacer(modifier = Modifier.width(8.dp))
 			Text(

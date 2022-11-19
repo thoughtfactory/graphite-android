@@ -8,14 +8,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.search.SearchActivity
 import com.syncodec.graphite.presentation.search.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.search.composable.bar.TopBar
 import com.syncodec.graphite.presentation.search.composable.dialog.Dialog
-import com.syncodec.graphite.utils.LocalVaultIsOpened
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +37,7 @@ fun SearchScreen(
 		modifier = Modifier.fillMaxSize(),
 		topBar = {
 			TopBar(
-				tag = tag?.tag,
+				tagObject = tag,
 				query = query,
 				onClickBack = onClickBack,
 				onHitSearch = onShowQuery

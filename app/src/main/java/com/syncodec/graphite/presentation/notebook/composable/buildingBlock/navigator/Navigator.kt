@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,14 +33,15 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.utils.getInverseBWColor
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @Composable
 fun Navigator(
-	defaultChapterId : ObjectId?,
-	chapterObjectLiteList : List<ChapterObjectLite>,
-	onClick : (ObjectId) -> Unit
+	showRoot : Boolean = false,
+	defaultChapterId : RealmUUID?,
+	chapterObjectLiteList : List<ChapterObjectLite?>,
+	onClick : (RealmUUID?) -> Unit
 ) {
 	Box(
 		modifier = Modifier.fillMaxWidth()
@@ -49,13 +50,24 @@ fun Navigator(
 			verticalAlignment = Alignment.CenterVertically,
 			modifier = Modifier.horizontalScroll(rememberScrollState())
 		) {
-			Spacer(modifier = Modifier.width(12.dp))
+			Spacer(
+				modifier = Modifier
+					.width(12.dp)
+					.height(48.dp)
+			)
+			if (showRoot) {
+				NavigatorItem(
+					title = "/",
+					color = MaterialTheme.colorScheme.onBackground,
+					isDefault = false
+				) { onClick(null) }
+			}
 			chapterObjectLiteList.reversed().forEach {
 				NavigatorItem(
-					title = it.title,
-					color = it.color?.let { it1 -> Color(it1) },
-					isDefault = it.id == defaultChapterId
-				) { onClick(it.id) }
+					title = it?.title,
+					color = it?.color?.let { it1 -> Color(it1) },
+					isDefault = it?.id == defaultChapterId
+				) { onClick(it?.id) }
 			}
 			Spacer(modifier = Modifier.width(12.dp))
 		}
@@ -72,9 +84,7 @@ private fun NavigatorItem(
 ) {
 	var isVisible by remember { mutableStateOf(false) }
 
-	LaunchedEffect(key1 = isVisible) {
-		isVisible = true
-	}
+	LaunchedEffect(key1 = isVisible) { isVisible = true }
 
 	AnimatedVisibility(
 		visible = isVisible,
@@ -103,7 +113,8 @@ private fun NavigatorItem(
 				colors = SuggestionChipDefaults.suggestionChipColors(
 					containerColor = if (color == null || color == Color.Unspecified) MaterialTheme.colorScheme.surface else color,
 					labelColor = if (color == null || color == Color.Unspecified) MaterialTheme.colorScheme.onSurface else color.getInverseBWColor(),
-					iconContentColor = if (color == null || color == Color.Unspecified) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f) else color.getInverseBWColor().copy(alpha = 0.47f),
+					iconContentColor = if (color == null || color == Color.Unspecified) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f) else color.getInverseBWColor()
+						.copy(alpha = 0.47f),
 				),
 				border = SuggestionChipDefaults.suggestionChipBorder(borderColor = color ?: MaterialTheme.colorScheme.surface),
 			)

@@ -1,8 +1,8 @@
 package com.syncodec.graphite.presentation.bucketItem.composable.screen
 
-import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,28 +33,43 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookAuthorList
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookDescription
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookFirstPublishYear
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookKey
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookPageCount
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookTitle
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnChangeState
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionState
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionThumbnail
+import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.dialog.DialogType
 
 
 @Composable
-fun BookScreen(
-	bookKey: String?,
-	bookTitle: String?,
-	bookAuthors: List<String>,
-	bookDescription: String?,
-	bookPageCount: Int?,
-	bookPublishedDate: String?,
-	thumbnail: Bitmap?,
-	currentState : Int,
-	onChangeState : (Int) -> Unit,
-) {
+fun BookScreen() {
 	val context = LocalContext.current
+
+	val bookKey = LocalCompositionBookKey.current
+	val bookTitle = LocalCompositionBookTitle.current
+	val bookAuthors = LocalCompositionBookAuthorList.current
+	val bookDescription = LocalCompositionBookDescription.current
+	val bookPageCount = LocalCompositionBookPageCount.current
+	val bookPublishedDate = LocalCompositionBookFirstPublishYear.current
+
+	val thumbnail = LocalCompositionThumbnail.current
+
+	val currentState = LocalCompositionState.current ?: 0
+	val onChangeState = LocalCompositionOnChangeState.current
 
 	val uriHandler = LocalUriHandler.current
 
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
+
+	val openDialog = LocalCompositionOpenDialog.current
 
 	val stateList = listOf(
 		StateData(
@@ -108,6 +123,8 @@ fun BookScreen(
 				.fillMaxWidth()
 				.padding(16.dp, 0.dp)
 				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), RoundedCornerShape(16.dp))
+				.clip(RoundedCornerShape(16.dp))
+				.clickable { openDialog(DialogType.BOOK_INFO) }
 		) {
 			Column(
 				modifier = Modifier

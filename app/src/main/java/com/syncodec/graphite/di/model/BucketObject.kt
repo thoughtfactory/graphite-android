@@ -2,9 +2,9 @@ package com.syncodec.graphite.di.model
 
 import androidx.room.PrimaryKey
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 
 enum class BucketType {
@@ -17,18 +17,29 @@ enum class BucketType {
 
 
 class BucketObject: RealmObject {
-	@PrimaryKey var id: ObjectId = ObjectId.create()
+	@PrimaryKey var id: RealmUUID = RealmUUID.random()
 
 	var createdTimestamp: Long = System.currentTimeMillis()
 	var modifiedTimestamp: Long = System.currentTimeMillis()
-	var title: String? = ""
+	var title: String? = null
 	var description: String? = null
-	var bucketType: String = ""
+	var bucketType: String = BucketType.UNKNOWN.name
 	var isFavourite: Boolean = false
 	var isLocked: Boolean = false
 
 	var bucketItemList: RealmList<BucketItemObject> = realmListOf()
 
+	fun toSnapshot() = BucketSnapshot(
+		id = id,
+		createdTimestamp = createdTimestamp,
+		modifiedTimestamp = modifiedTimestamp,
+		title = title,
+		description = description,
+		bucketType = bucketType,
+		isFavourite = isFavourite,
+		isLocked = isLocked,
+		bucketItemList = bucketItemList.map { it.id }
+	)
 
 	override fun hashCode(): Int {
 		var result = id.hashCode()
@@ -58,5 +69,28 @@ class BucketObject: RealmObject {
 		if (bucketItemList != other.bucketItemList) return false
 
 		return true
+	}
+}
+
+data class BucketSnapshot(
+	val id: RealmUUID,
+	val createdTimestamp: Long,
+	val modifiedTimestamp: Long,
+	val title: String?,
+	val description: String?,
+	val bucketType: String,
+	val isFavourite: Boolean,
+	val isLocked: Boolean,
+	val bucketItemList: List<RealmUUID>
+) {
+	fun toObject() = BucketObject().apply {
+		this.id = this@BucketSnapshot.id
+		this.createdTimestamp = this@BucketSnapshot.createdTimestamp
+		this.modifiedTimestamp = this@BucketSnapshot.modifiedTimestamp
+		this.title = this@BucketSnapshot.title
+		this.description = this@BucketSnapshot.description
+		this.bucketType = this@BucketSnapshot.bucketType
+		this.isFavourite = this@BucketSnapshot.isFavourite
+		this.isLocked = this@BucketSnapshot.isLocked
 	}
 }

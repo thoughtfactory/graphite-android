@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.note.composable
 
 import android.net.Uri
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
@@ -11,54 +12,62 @@ import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.presentation.note.composable.bottomSheet.NoteBottomSheetType
 import com.syncodec.graphite.utils.LocationState
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import java.io.File
 
 
 val LocalCompositionNoteObject = compositionLocalOf<NoteObject?> { null }
-val LocalCompositionNoteId = compositionLocalOf<ObjectId?> { error("No data provided") }
-val LocalCompositionNoteIdList = compositionLocalOf<SnapshotStateList<ObjectId>> { error("No data provided") }
-val LocalCompositionIsViewing = compositionLocalOf<Boolean?> { error("No data provided") }
-val LocalCompositionIsOperationPending = compositionLocalOf<Boolean> { error("No data provided") }
-val LocalCompositionContentThumbnail = compositionLocalOf<String?> { error("No data provided") }
-val LocalCompositionContent = compositionLocalOf<String?> { error("No data provided") }
-val LocalCompositionCreatedTimestamp = compositionLocalOf<Long?> { error("No data provided") }
-val LocalCompositionModifiedTimestamp = compositionLocalOf<Long?> { error("No data provided") }
-val LocalCompositionUserTimestamp = compositionLocalOf<Long?> { error("No data provided") }
-val LocalCompositionTitle = compositionLocalOf<String?> { error("No data provided") }
-val LocalCompositionColor = compositionLocalOf<Int?> { error("No data provided") }
-val LocalCompositionLatLng = compositionLocalOf<com.syncodec.graphite.di.model.LatLng?> { error("No data provided") }
-val LocalCompositionAddress = compositionLocalOf<String?> { error("No data provided") }
-val LocalCompositionIsLocked = compositionLocalOf<Boolean?> { error("No data provided") }
-val LocalCompositionIsFavourite = compositionLocalOf<Boolean?> { error("No data provided") }
-val LocalCompositionParentChapterId = compositionLocalOf<ObjectId?> { error("No data provided") }
+val LocalCompositionNoteId = compositionLocalOf<RealmUUID?> { null }
+val LocalCompositionNoteIdList = compositionLocalOf<SnapshotStateList<RealmUUID>> { mutableStateListOf() }
+val LocalCompositionIsViewing = compositionLocalOf<Boolean?> { null }
+val LocalCompositionIsOperationPending = compositionLocalOf<Boolean> { false }
+val LocalCompositionContentThumbnail = compositionLocalOf<String?> { null }
+val LocalCompositionContent = compositionLocalOf<String?> { null }
+val LocalCompositionCreatedTimestamp = compositionLocalOf<Long?> { null }
+val LocalCompositionModifiedTimestamp = compositionLocalOf<Long?> { null }
+val LocalCompositionUserTimestamp = compositionLocalOf<Long?> { null }
+val LocalCompositionTitle = compositionLocalOf<String?> { null }
+val LocalCompositionColor = compositionLocalOf<Int?> { null }
+val LocalCompositionLatLng = compositionLocalOf<com.syncodec.graphite.di.model.LatLng?> { null }
+val LocalCompositionAddress = compositionLocalOf<String?> { null }
+val LocalCompositionIsLocked = compositionLocalOf<Boolean?> { null }
+val LocalCompositionIsFavourite = compositionLocalOf<Boolean?> { null }
+val LocalCompositionParentChapterId = compositionLocalOf<RealmUUID?> { null }
 val LocalCompositionParentChapter = compositionLocalOf<ChapterObject?> { null }
-val LocalCompositionAttachmentList = compositionLocalOf< Map<ObjectId, Triple<AttachmentObject, File?, Uri?>>> { error("No data provided") }
+val LocalCompositionAttachmentList = compositionLocalOf< Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>> { mapOf() }
 
-val LocalCompositionTagList = compositionLocalOf<SnapshotStateList<TagObject>> { error("No data provided") }
-val LocalCompositionTagListBuffer = compositionLocalOf<SnapshotStateList<TagObject>> { error("No data provided") }
+val LocalCompositionTagList = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }
+val LocalCompositionTagListBuffer = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }
 
-val LocalCompositionSelectChapterList = compositionLocalOf<SnapshotStateList<ChapterObject>> { error("No data provided") }
-val LocalCompositionSelectChapterPath = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { error("No data provided") }
-val LocalCompositionOnSelectChapter = compositionLocalOf<(ObjectId) -> Unit> { error("No data provided") }
-val LocalCompositionOnMoveChapter = compositionLocalOf<() -> Unit> { error("No data provided") }
+val LocalCompositionSelectChapterList = compositionLocalOf<SnapshotStateList<ChapterObject>> { mutableStateListOf() }
+val LocalCompositionSelectChapterPath = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { mutableStateListOf() }
+val LocalCompositionOnSelectChapter = compositionLocalOf<(RealmUUID?) -> Unit> { {} }
+val LocalCompositionOnMoveChapter = compositionLocalOf<() -> Unit> { {} }
+val LocalCompositionSetUserTimestamp = compositionLocalOf<(Long) -> Unit> { {} }
 
 val LocalCompositionLocationState = compositionLocalOf<LocationState> { LocationState.UNKNOW_ERROR }
 
-val LocalCompositionOpenBottomSheet = compositionLocalOf<(NoteBottomSheetType) -> Unit> { error("No data provided") }
-val LocalCompositionCloseBottomSheet = compositionLocalOf<() -> Unit> { error("No data provided") }
-val LocalCompositionOpenDialog = compositionLocalOf<(NoteDialogType, Any?) -> Unit> { error("No data provided") }
-val LocalCompositionCloseDialog = compositionLocalOf<(NoteDialogType) -> Unit> { error("No data provided") }
+val LocalCompositionOpenBottomSheet = compositionLocalOf<(NoteBottomSheetType) -> Unit> { {} }
+val LocalCompositionCloseBottomSheet = compositionLocalOf<() -> Unit> { {} }
+val LocalCompositionOpenDialog = compositionLocalOf<(NoteDialogType, Any?) -> Unit> { {_, _ ->} }
+val LocalCompositionCloseDialog = compositionLocalOf<(NoteDialogType) -> Unit> { {} }
 
-val LocalCompositionShowLocationPickerDialog = compositionLocalOf<Boolean> { error("No data provided") }
-val LocalCompositionShowNotificationPermissionDialog = compositionLocalOf<Boolean> { error("No data provided") }
-val LocalCompositionShowChapterSelectionDialog = compositionLocalOf<Boolean> { error("No data provided") }
-val LocalCompositionShowDiscardDialog = compositionLocalOf<Boolean> { error("No data provided") }
-val LocalCompositionShowDeleteDialog = compositionLocalOf<Boolean> { error("No data provided") }
+val LocalCompositionShowDatePickerDialog = compositionLocalOf<Boolean> { false }
+val LocalCompositionShowTimePickerDialog = compositionLocalOf<Boolean> { false }
+val LocalCompositionShowLocationPickerDialog = compositionLocalOf<Boolean> { false }
+val LocalCompositionShowNotificationPermissionDialog = compositionLocalOf<Boolean> { false }
+val LocalCompositionShowChapterSelectionDialog = compositionLocalOf<Boolean> { false }
+val LocalCompositionShowShareDialog = compositionLocalOf<Boolean> { false }
+val LocalCompositionShowDiscardDialog = compositionLocalOf<Boolean> { false }
+val LocalCompositionShowDeleteDialog = compositionLocalOf<Boolean> { false }
 
-val LocalSaveNote = compositionLocalOf<() -> Unit> { error("No save note provided") }
-val LocalGetNote = compositionLocalOf<(ObjectId) -> Unit> { error("No get note provided") }
-val LocalEditNote = compositionLocalOf<() -> Unit> { error("No edit note provided") }
-val LocalOnClickTag = compositionLocalOf<(TagObject) -> Unit> { error("No click tag provided") }
-val LocalDiscardChanges = compositionLocalOf<() -> Unit> { error("No discard changes provided") }
-val LocalDeleteNote = compositionLocalOf<() -> Unit> { error("No delete note provided") }
+val LocalSaveNote = compositionLocalOf<() -> Unit> { {} }
+val LocalGetNote = compositionLocalOf<(RealmUUID) -> Unit> { {} }
+val LocalEditNote = compositionLocalOf<() -> Unit> { {} }
+val LocalOnClickTag = compositionLocalOf<(TagObject) -> Unit> { {} }
+val LocalDiscardChanges = compositionLocalOf<() -> Unit> { {} }
+val LocalDeleteNote = compositionLocalOf<() -> Unit> { {} }
+val LocalOnShareText = compositionLocalOf<() -> Unit> { {} }
+val LocalOnShareAttachment = compositionLocalOf<() -> Unit> { {} }
+val LocalOnPrint = compositionLocalOf<() -> Unit> { {} }
+val LocalOnExportMarkdown = compositionLocalOf<() -> Unit> { {} }

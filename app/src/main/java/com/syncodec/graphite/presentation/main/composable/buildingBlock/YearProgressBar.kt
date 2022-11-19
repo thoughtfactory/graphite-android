@@ -9,6 +9,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,7 +44,6 @@ import com.syncodec.graphite.utils.DataStoreInstance
 import java.util.Calendar
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun YearProgressBar(
 	showCard : Boolean,
@@ -68,51 +68,57 @@ fun YearProgressBar(
 		enter = expandVertically(tween(300)),
 		exit = shrinkVertically(tween(300)),
 	) {
-		Card(
-			colors = CardDefaults.cardColors(Color.Transparent),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(12.dp, 8.dp, 12.dp, 4.dp),
+		Column(
+			modifier = Modifier.fillMaxWidth()
 		) {
-			Row(
-				modifier = Modifier.fillMaxWidth(),
-				verticalAlignment = Alignment.CenterVertically
+			Card(
+				colors = CardDefaults.cardColors(Color.Transparent),
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(12.dp, 8.dp, 12.dp, 4.dp),
 			) {
-				Text(
-					text = calendar.get(Calendar.YEAR).toString(),
-					fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-					fontWeight = FontWeight.Bold,
-					fontSize = 20.sp,
-					lineHeight = 24.sp,
-					letterSpacing = 2.sp,
-					color = MaterialTheme.colorScheme.onBackground
-				)
-
-				Spacer(modifier = Modifier.width(12.dp))
-
-				Box(
-					modifier = Modifier
-						.weight(1f)
-						.clip(RoundedCornerShape(50))
-						.background(Color.Transparent)
-						.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50)),
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					verticalAlignment = Alignment.CenterVertically
 				) {
+					Text(
+						text = calendar.get(Calendar.YEAR).toString(),
+						fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
+						fontWeight = FontWeight.Bold,
+						fontSize = 20.sp,
+						lineHeight = 24.sp,
+						letterSpacing = 2.sp,
+						color = MaterialTheme.colorScheme.onBackground
+					)
+
+					Spacer(modifier = Modifier.width(12.dp))
+
 					Box(
 						modifier = Modifier
-							.fillMaxWidth(progress.toFloat() / totalDays)
-							.height(12.dp)
-							.background(MaterialTheme.colorScheme.primary)
+							.weight(1f)
+							.clip(RoundedCornerShape(50))
+							.background(Color.Transparent)
+							.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50)),
+					) {
+						Box(
+							modifier = Modifier
+								.fillMaxWidth(progress.toFloat() / totalDays)
+								.height(12.dp)
+								.background(MaterialTheme.colorScheme.primary)
+						)
+					}
+
+					Spacer(modifier = Modifier.width(12.dp))
+
+					AnimatedScrollText(
+						animatedText = (progress.toFloat() * 100 / totalDays).toInt().toString(),
+						staticText = "%",
+						color = MaterialTheme.colorScheme.onBackground
 					)
 				}
-
-				Spacer(modifier = Modifier.width(12.dp))
-
-				AnimatedScrollText(
-					animatedText = (progress.toFloat() * 100 / totalDays).toInt().toString(),
-					staticText = "%",
-					color = MaterialTheme.colorScheme.onBackground
-				)
 			}
+
+			Spacer(modifier = Modifier.height(8.dp))
 		}
 	}
 }

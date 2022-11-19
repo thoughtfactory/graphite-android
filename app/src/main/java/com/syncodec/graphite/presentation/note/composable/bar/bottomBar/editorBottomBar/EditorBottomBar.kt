@@ -12,17 +12,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionUserTimestamp
 import com.syncodec.graphite.utils.LocalCompositionRichTextEditor
 
 
 @Composable
 fun EditorBottomBar(
+	onClickTimePicker: () -> Unit,
 	onClickMetadata: () -> Unit,
 	onClickLocation: () -> Unit,
 	onClickAttachment: () -> Unit,
-	onClickTag: () -> Unit
+	onClickTag: () -> Unit,
 ) {
 	val richTextEditor = LocalCompositionRichTextEditor.current
+
+	val userTimestamp = LocalCompositionUserTimestamp.current
 
 	var textFormat by remember { mutableStateOf(RichTextEditor.TextFormat()) }
 
@@ -41,6 +45,8 @@ fun EditorBottomBar(
 		FormatBar(
 			richTextEditor = richTextEditor,
 			textFormat = textFormat,
+			userTimestamp = userTimestamp,
+			onClickTimePicker = onClickTimePicker,
 			onClickMetadata = onClickMetadata,
 			onClickLocation = onClickLocation,
 			onClickAttachment = onClickAttachment,

@@ -5,7 +5,7 @@ import androidx.navigation.NavHostController
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObjectLite
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlin.random.Random
 
 
@@ -22,7 +22,7 @@ class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteOb
 		mapOf(
 			System.currentTimeMillis() to listOf(
 				NoteObjectLite(
-					id = ObjectId.create(),
+					id = RealmUUID.random(),
 					parentChapterId = null,
 					createdTimestamp = System.currentTimeMillis(),
 					modifiedTimestamp = System.currentTimeMillis(),

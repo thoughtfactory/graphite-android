@@ -44,16 +44,9 @@ fun LocationPermissionDialog(
 
 	GenericDialog(
 		showDialog = showDialog && !notificationPermission.status.isGranted,
+		title = "Location Permission",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = "Location Permission",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		Text(
 			text = "We will need this permission to access current location.",
 			style = MaterialTheme.typography.bodyMedium,

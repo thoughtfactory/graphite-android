@@ -35,7 +35,7 @@ fun SettingsSwitch(
 ) {
 	Card(
 		colors = CardDefaults.cardColors(
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
+			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
 			contentColor = MaterialTheme.colorScheme.onSurface,
 		),
 		modifier = Modifier.padding(12.dp, 4.dp),

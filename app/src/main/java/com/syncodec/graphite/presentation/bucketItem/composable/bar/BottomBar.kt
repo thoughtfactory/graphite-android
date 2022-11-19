@@ -2,21 +2,20 @@ package com.syncodec.graphite.presentation.bucketItem.composable.bar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.ui.DeleteContainer
-import com.syncodec.graphite.presentation.ui.DeleteContent
 import com.syncodec.graphite.utils.tone
 
 
@@ -24,7 +23,7 @@ import com.syncodec.graphite.utils.tone
 fun BottomBar(
 	onClickShare : () -> Unit,
 	onClickDelete : () -> Unit,
-	onClickMove : () -> Unit,
+	onClickAddReminder : () -> Unit,
 ) {
 	val containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1)
 	val contentColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1)
@@ -48,7 +47,7 @@ fun BottomBar(
 		MenuButton(
 			icon = R.drawable.ic_delete,
 			contentDescription = "Delete",
-			tint = Color.Companion.DeleteContainer,
+			tint = Color.DeleteContainer,
 			onClick = onClickDelete
 		)
 
@@ -57,10 +56,10 @@ fun BottomBar(
 		Spacer(modifier = Modifier.width(16.dp))
 
 		MenuButton(
-			icon = R.drawable.ic_folder,
-			contentDescription = "Move to",
+			icon = R.drawable.ic_clock,
+			contentDescription = "Add reminder",
 			tint = contentColor,
-			onClick = onClickMove
+			onClick = onClickAddReminder
 		)
 
 		Spacer(modifier = Modifier.width(16.dp))

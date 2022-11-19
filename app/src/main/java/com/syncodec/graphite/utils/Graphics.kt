@@ -48,9 +48,13 @@ fun Color.getInverseBW(): String {
 	return if (luminance < 140) "#fff" else "#000"
 }
 
+fun Color.isDark(): Boolean {
+	val luminance = (this.red * 299 + this.green * 587 + this.blue * 114) * 0.255
+	return luminance < 140
+}
+
 fun Color.getInverseBWColor(): Color {
-	val yiq = (this.red * 299 + this.green * 587 + this.blue * 114) * 0.255
-	return if (yiq >= 128) Color.Black else Color.White
+	return if (isDark()) Color.White else Color.Black
 }
 
 fun Bitmap.scaleBitmap(maxSize: Int): Bitmap {

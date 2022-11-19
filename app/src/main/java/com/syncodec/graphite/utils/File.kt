@@ -3,31 +3,33 @@ package com.syncodec.graphite.utils
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import androidx.core.content.FileProvider
 import java.io.*
 
 
 fun Context.getFileName(uri: Uri): String? {
-	var result: String? = null
-	if (uri.getScheme().equals("content")) {
-
-		contentResolver.query(uri, null, null, null, null).use { cursor ->
-			if (cursor != null && cursor.moveToFirst()) {
-				cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME).let {
-					if (it >= 0) result = cursor.getString(it)
+	try {
+		var result: String? = null
+		if (uri.getScheme().equals("content")) {
+			contentResolver.query(uri, null, null, null, null).use { cursor ->
+				if (cursor != null && cursor.moveToFirst()) {
+					cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME).let {
+						if (it >= 0) result = cursor.getString(it)
+					}
 				}
 			}
 		}
-	}
-	if (result == null) {
-		result = uri.path
-		val cut = result?.lastIndexOf('/')
-		if (cut != null && cut != -1) {
-			result = result?.substring(cut + 1)
+		if (result == null) {
+			result = uri.path
+			val cut = result?.lastIndexOf('/')
+			if (cut != null && cut != -1) {
+				result = result?.substring(cut + 1)
+			}
 		}
+		return result
+	} catch (e: Exception) {
+		return null
 	}
-	return result
 }
 
 @Throws(IOException::class)

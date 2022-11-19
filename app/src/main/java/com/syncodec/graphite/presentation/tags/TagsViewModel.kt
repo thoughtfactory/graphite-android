@@ -9,7 +9,7 @@ import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
@@ -30,6 +30,7 @@ class TagsViewModel @Inject constructor(private val repository2 : Repository2) :
 			when (repositoryState.value) {
 				RepositoryState.INIT -> null
 				RepositoryState.LOADING -> null
+				RepositoryState.LOCKED -> null
 				RepositoryState.SUCCESS -> {
 					viewModelScope.launch(Dispatchers.IO) {
 						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()

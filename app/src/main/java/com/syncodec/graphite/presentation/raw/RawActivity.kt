@@ -14,7 +14,7 @@ import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 class RawActivity : ComponentActivity() {
 
@@ -24,21 +24,21 @@ class RawActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		try {
-			val hasObjectId = intent.hasExtra(Extra.Companion.Constant.OBJECT_ID.name)
+			val hasRealmUUID = intent.hasExtra(Extra.Companion.Constant.OBJECT_ID.name)
 			val hasObjectType = intent.hasExtra(Extra.Companion.Constant.OBJECT_TYPE.name)
 
-			if (hasObjectId && hasObjectType) {
-				val objectId = intent.getStringExtra(Extra.Companion.Constant.OBJECT_ID.name)?.let { ObjectId.from(it) }
+			if (hasRealmUUID && hasObjectType) {
+				val RealmUUID = intent.getStringExtra(Extra.Companion.Constant.OBJECT_ID.name)?.let { RealmUUID.from(it) }
 				val objectType = intent.getStringExtra(Extra.Companion.Constant.OBJECT_TYPE.name)?.let { Extra.Companion.ObjectType.valueOf(it) }
 
-				if (objectId != null && objectType != null) {
-//					viewModel.readObject(objectId, objectType)
+				if (RealmUUID != null && objectType != null) {
+//					viewModel.readObject(RealmUUID, objectType)
 				} else {
-					Log.i("npr71", "objectId or objectType is null")
+					Log.i("npr71", "RealmUUID or objectType is null")
 					finish()
 				}
 			} else {
-				Log.i("npr71", "hasObjectId or hasObjectType is false")
+				Log.i("npr71", "hasRealmUUID or hasObjectType is false")
 				finish()
 			}
 		} catch (e : Exception) {

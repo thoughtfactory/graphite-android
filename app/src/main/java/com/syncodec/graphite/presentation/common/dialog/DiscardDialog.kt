@@ -11,19 +11,15 @@ import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualAction
 
 @Composable
 fun DiscardDialog(
-	showDiscardDialog: Boolean,
-	onDismiss: () -> Unit,
-	onDelete: () -> Unit
+	showDiscardDialog : Boolean,
+	onDismiss : () -> Unit,
+	onDiscard : () -> Unit
 ) {
-	GenericDialog(showDialog = showDiscardDialog, onDismissRequest = onDismiss) {
-		Text(
-			text = "Discard",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
+	GenericDialog(
+		showDialog = showDiscardDialog,
+		title = "Discard",
+		onDismissRequest = onDismiss
+	) {
 		Text(
 			text = "Are you sure you want to discard changes?",
 			style = MaterialTheme.typography.bodyMedium,
@@ -33,10 +29,10 @@ fun DiscardDialog(
 		Spacer(modifier = Modifier.height(12.dp))
 
 		DualActionButtons(
-			primaryText = "Dismiss",
-			secondaryText = "Discard",
-			onPrimaryClick = onDismiss,
-			onSecondaryClick = onDelete
+			primaryText = "Discard",
+			secondaryText = "Dismiss",
+			onPrimaryClick = onDiscard,
+			onSecondaryClick = onDismiss
 		)
 	}
 }

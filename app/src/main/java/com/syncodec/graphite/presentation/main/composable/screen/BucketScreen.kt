@@ -18,7 +18,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,31 +37,47 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketResreshing
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.bucketTypeToIcon
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun BucketScreen(
 	bucketList : List<BucketObject>,
+	sortOn : SortOn,
+	sortBy : SortBy,
 	onClickFab : () -> Unit,
-	onClickBucket : (ObjectId) -> Unit,
-	onLongClickBucket : (ObjectId) -> Unit
+	onClickBucket : (RealmUUID) -> Unit,
+	onLongClickBucket : (RealmUUID) -> Unit
 ) {
-	val isBucketRefreshing = LocalCompositionIsBucketResreshing.current
+	val isBucketRefreshing = LocalCompositionIsBucketRefreshing.current
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+
+	val _bucketList : SnapshotStateList<BucketObject> = remember{ mutableStateListOf() }
+
+	LaunchedEffect(key1 = bucketList, key2 = sortOn, key3 = sortBy) {
+		_bucketList.clear()
+		when (sortOn) {
+			SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.title } else bucketList.sortedByDescending { it.title }
+			SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.createdTimestamp } else bucketList.sortedByDescending { it.createdTimestamp }
+			SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.modifiedTimestamp } else bucketList.sortedByDescending { it.modifiedTimestamp }
+			else -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.title } else bucketList.sortedByDescending { it.title }
+		}.apply { _bucketList.addAll(this) }
+	}
 
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -76,7 +96,7 @@ fun BucketScreen(
 				.fillMaxSize()
 				.padding(it)
 		) {
-			if (bucketList.isEmpty()) {
+			if (_bucketList.isEmpty()) {
 				NoBucketCard()
 			} else {
 				SwipeRefresh(
@@ -89,18 +109,24 @@ fun BucketScreen(
 							.padding(4.dp)
 							.fillMaxSize(),
 					) {
-						bucketList.forEach {
-							item {
-								BucketCard(
-									title = it.title,
-									bucketSize = it.bucketItemList.size,
-									bucketType = it.bucketType.let { BucketType.valueOf(it) },
-									isLocked = it.isLocked,
-									isFavourite = it.isFavourite,
-									isSelected = it.id in selectedObjectIdList,
-									onClick = { onClickBucket(it.id) },
-									onLongClick = { onLongClickBucket(it.id) }
-								)
+						_bucketList.forEach {
+							item(
+								key = it.id.toString(),
+							) {
+								Box(
+									modifier = Modifier.animateItemPlacement()
+								) {
+									BucketCard(
+										title = it.title,
+										bucketSize = it.bucketItemList.size,
+										bucketType = it.bucketType.let { BucketType.valueOf(it) },
+										isLocked = it.isLocked,
+										isFavourite = it.isFavourite,
+										isSelected = it.id in selectedRealmUUIDList,
+										onClick = { onClickBucket(it.id) },
+										onLongClick = { onLongClickBucket(it.id) }
+									)
+								}
 							}
 						}
 					}
@@ -154,8 +180,8 @@ private fun BucketCard(
 	title : String?,
 	bucketSize : Int,
 	bucketType : BucketType,
-	isLocked: Boolean,
-	isFavourite: Boolean,
+	isLocked : Boolean,
+	isFavourite : Boolean,
 	isSelected : Boolean,
 	onClick : () -> Unit,
 	onLongClick : () -> Unit

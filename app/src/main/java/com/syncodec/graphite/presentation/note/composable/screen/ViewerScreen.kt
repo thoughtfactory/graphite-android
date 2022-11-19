@@ -25,7 +25,7 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionUserTi
 import com.syncodec.graphite.presentation.note.composable.LocalGetNote
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.ViewerComponent
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -69,7 +69,7 @@ fun ViewerScreen() {
 }
 
 @Composable
-private fun Viewer(currentNoteId : ObjectId?) {
+private fun Viewer(currentNoteId : RealmUUID?) {
 
 	val noteId = LocalCompositionNoteId.current
 	val title = LocalCompositionTitle.current

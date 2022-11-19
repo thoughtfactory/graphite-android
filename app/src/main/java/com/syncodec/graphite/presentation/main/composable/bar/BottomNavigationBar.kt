@@ -1,6 +1,9 @@
 package com.syncodec.graphite.presentation.main.composable.bar
 
 import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -30,12 +33,13 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.bucket.BucketActivity
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnAddDebugData
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSelected
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
 import com.syncodec.graphite.presentation.main.composable.screen.AtlasScreen
 import com.syncodec.graphite.presentation.main.composable.screen.CalendarScreen
@@ -44,7 +48,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.HomeScreen
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.utils.*
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 open class BottomNavigationItem(val route : String, val icon : Int, val title : String) {
@@ -119,7 +123,7 @@ fun BottomNavigationBar(
 fun MainNavigation(
 	navController : NavHostController,
 	componentType : ComponentType,
-	defaultNotebookId : ObjectId?,
+	defaultNotebookId : RealmUUID?,
 	chapterObject : ChapterObject?,
 	notebookList : List<ChapterObject>,
 	noteList : List<NoteObjectLite>,
@@ -137,16 +141,45 @@ fun MainNavigation(
 	val isVaultOpened = LocalVaultIsOpened.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val onSelected = LocalCompositionOnSelected.current
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val onSelected = LocalCompositionOnSelect.current
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
 
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.TIMESTAMP)
 	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.DESCENDING)
 	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.LIST)
 
+	val onDelete = LocalCompositionOnDelete.current
+
 	val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) { "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner" }
 
 	val addDebugData = LocalCompositionOnAddDebugData.current
+
+	val activityLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+		try {
+			it.data?.let {
+				val hasIntentAction = it.hasExtra(Extra.Companion.Constant.INTENT_ACTION.name)
+				if (hasIntentAction) {
+					val intentAction = it.getStringExtra(Extra.Companion.Constant.INTENT_ACTION.name)?.let { it1 ->
+						Extra.Companion.IntentAction.valueOf(it1)
+					}
+					if (intentAction == Extra.Companion.IntentAction.DELETE) {
+						val hasObjectId = it.hasExtra(Extra.Companion.Constant.OBJECT_ID.name)
+						if(hasObjectId) {
+							val realmUUID = it.getByteArrayExtra(Extra.Companion.Constant.OBJECT_ID.name)?.let { RealmUUID.from(it) }
+							if (realmUUID != null) {
+								selectedRealmUUIDList.add(realmUUID)
+								onDelete()
+							}
+						}
+					}
+				}
+				Extra.Companion.Constant.INTENT_ACTION.name
+				Extra.Companion.Constant.OBJECT_ID.name
+			}
+		} catch (e: Exception) {
+			Toast.makeText(context, "Error performing action", Toast.LENGTH_SHORT).show()
+		}
+	}
 
 	NavHost(
 		navController = navController,
@@ -158,7 +191,7 @@ fun MainNavigation(
 			) {
 				HomeScreen(
 					componentType = componentType,
-					noteList = noteList,
+					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
 					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
 					notebookList = notebookList.filter { it.parentChapterId == null },
 					sortOn = sortOn,
@@ -167,14 +200,15 @@ fun MainNavigation(
 					onClickFab = {
 						when (componentType) {
 							ComponentType.NOTE -> {
-//								Intent(context, NoteActivity::class.java).apply {
-//									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-////          						TODO    Check if notebookId is not null
-//									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId.toString())
-//									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-//									context.startActivity(this)
-//								}
-								addDebugData()
+								Intent(context, NoteActivity::class.java).apply {
+									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+//          						TODO    Check if notebookId is not null
+									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+
+									activityLauncher.launch(this)
+								}
+//								addDebugData()
 							}
 
 							ComponentType.BUCKET -> openSheet(MainBottomSheetType.BUCKET)
@@ -184,58 +218,58 @@ fun MainNavigation(
 					onClickNote = {
 						if (isSelected) {
 							onSelected(true)
-							if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
-							else selectedObjectIdList.add(it)
+							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+							else selectedRealmUUIDList.add(it)
 						} else {
 							Intent(context, NoteActivity::class.java).apply {
 								putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId.toString())
-								putExtra(Extra.Companion.Constant.NOTE_ID.name, it.toString())
+								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+								putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
 								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
-								context.startActivity(this)
+								activityLauncher.launch(this)
 							}
 						}
 					},
 					onLongClickNote = {
 						onSelected(true)
-						if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
-						else selectedObjectIdList.add(it)
+						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+						else selectedRealmUUIDList.add(it)
 					},
 					onClickBucket = {
 						if (isSelected) {
 							onSelected(true)
-							if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
-							else selectedObjectIdList.add(it)
+							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+							else selectedRealmUUIDList.add(it)
 						} else {
 							Intent(context, BucketActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.toString())
-								context.startActivity(this)
+								putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.bytes)
+								activityLauncher.launch(this)
 							}
 						}
 					},
 					onLongClickBucket = {
 						onSelected(true)
-						if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
-						else selectedObjectIdList.add(it)
+						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+						else selectedRealmUUIDList.add(it)
 					},
 					onClickNotebook = {
 						if (isSelected) {
 							onSelected(true)
-							if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
-							else selectedObjectIdList.add(it)
+							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+							else selectedRealmUUIDList.add(it)
 						} else {
 							Intent(context, NotebookActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.toString())
+								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
 								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-								context.startActivity(this)
+								activityLauncher.launch(this)
 							}
 						}
 					},
 					onLongClickNotebook = {
 						onSelected(true)
-						if (selectedObjectIdList.contains(it)) selectedObjectIdList.remove(it)
-						else selectedObjectIdList.add(it)
+						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+						else selectedRealmUUIDList.add(it)
 					}
 				)
 			}
@@ -250,11 +284,11 @@ fun MainNavigation(
 					onClickNote = {
 						Intent(context, NoteActivity::class.java).apply {
 							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId.toString())
-							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.toString())
+							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
 							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
 
-							context.startActivity(this)
+							activityLauncher.launch(this)
 						}
 					},
 					onLongClickNote = {},
@@ -270,11 +304,11 @@ fun MainNavigation(
 					onClickNote = {
 						Intent(context, NoteActivity::class.java).apply {
 							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId.toString())
-							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.toString())
+							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+							putExtra(Extra.Companion.Constant.NOTE_ID.name, it?.bytes)
 							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
 
-							context.startActivity(this)
+							activityLauncher.launch(this)
 						}
 					},
 					onLongClickNote = {}

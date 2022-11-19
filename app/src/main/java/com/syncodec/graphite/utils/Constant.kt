@@ -78,6 +78,7 @@ enum class LocationState {
 	INIT,
 	NO_PERMISSION,
 	LOADING,
+	NOT_PRO,
 	DISABLED,
 	LATLNG,
 	ONLY_LATLNG,
@@ -180,12 +181,13 @@ val mimeSubTypeIconMap: Map<String, Int> = mapOf(
 class Extra {
 	companion object {
 		enum class Constant {
+			INTENT_ACTION,
 			OBJECT_ID,
 			OBJECT_TYPE,
 			IS_NEW,
 			CHAPTER_ID,
 			NOTE_ID,
-			SHOW_ALL_ATTACHMENTS,
+			SHOW_ALL,
 			BUCKET_ID,
 			BUCKET_ITEM_ID,
 			BUCKET_TYPE,
@@ -208,6 +210,10 @@ class Extra {
 		enum class Filter {
 			SINGLE_READ,
 			READ_CHAPTER
+		}
+
+		enum class IntentAction {
+			DELETE
 		}
 	}
 }

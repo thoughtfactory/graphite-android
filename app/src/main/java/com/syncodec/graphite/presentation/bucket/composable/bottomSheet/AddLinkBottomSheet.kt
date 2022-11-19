@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnAddLink
+import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.text.LargeTextField
@@ -80,6 +81,14 @@ fun AddLinkBottomSheet() {
 					closeSheet()
 				}
 			)
+		)
+
+		Spacer(modifier = Modifier.height(8.dp))
+
+		SearchResultStatusView(
+			imageId = R.drawable.il_bucket_link_search,
+			text = "Spotify, YouTube, Netflix anything you want!",
+			contentDescription = "Add Link",
 		)
 
 		Spacer(modifier = Modifier.height(32.dp))

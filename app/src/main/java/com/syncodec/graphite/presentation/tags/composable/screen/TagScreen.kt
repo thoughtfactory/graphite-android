@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.tags.composable.screen
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.tags.TagsActivity
 import com.syncodec.graphite.presentation.tags.composable.bar.TopBar
+import com.syncodec.graphite.presentation.tags.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.SearchView
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItem
 import com.syncodec.graphite.presentation.tags.composable.dialog.TagDialog
@@ -77,23 +77,27 @@ fun TagScreen() {
 
 				Spacer(modifier = Modifier.height(8.dp))
 
-				LazyColumn(
-					modifier = Modifier
-						.fillMaxWidth()
-						.weight(1f)
-				) {
-					tagList.forEach {
-						item(key = it.id.toString()) {
-							Box(
-								modifier = Modifier.animateItemPlacement()
-							) {
-								TagItem(
-									tag = it,
-									onDelete = { openDialog(TagDialogType.DELETE, it) },
+				if (tagList.isEmpty()) {
+					EmptyView()
+				} else {
+					LazyColumn(
+						modifier = Modifier
+							.fillMaxWidth()
+							.weight(1f)
+					) {
+						tagList.forEach {
+							item(key = it.id.toString()) {
+								Box(
+									modifier = Modifier.animateItemPlacement()
 								) {
-									onChangeTag(it.tag)
-									onChangeColor(Color(it.color))
-									openDialog(TagDialogType.EDIT, it)
+									TagItem(
+										tag = it,
+										onDelete = { openDialog(TagDialogType.DELETE, it) },
+									) {
+										onChangeTag(it.tag)
+										onChangeColor(Color(it.color))
+										openDialog(TagDialogType.EDIT, it)
+									}
 								}
 							}
 						}

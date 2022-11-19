@@ -15,7 +15,7 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.utils.*
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -29,12 +29,12 @@ fun HomeScreen(
 	sortBy : SortBy,
 	viewType : ViewType,
 	onClickFab : () -> Unit,
-	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote : (ObjectId) -> Unit,
-	onClickBucket : (ObjectId) -> Unit,
-	onLongClickBucket : (ObjectId) -> Unit,
-	onClickNotebook : (ObjectId) -> Unit,
-	onLongClickNotebook : (ObjectId) -> Unit
+	onClickNote : (RealmUUID) -> Unit,
+	onLongClickNote : (RealmUUID) -> Unit,
+	onClickBucket : (RealmUUID) -> Unit,
+	onLongClickBucket : (RealmUUID) -> Unit,
+	onClickNotebook : (RealmUUID) -> Unit,
+	onLongClickNotebook : (RealmUUID) -> Unit
 ) {
 	AnimatedContent(
 		targetState = componentType,
@@ -54,6 +54,8 @@ fun HomeScreen(
 
 			ComponentType.BUCKET -> BucketScreen(
 				bucketList = bucketList,
+				sortOn = sortOn,
+				sortBy = sortBy,
 				onClickFab = onClickFab,
 				onClickBucket = onClickBucket,
 				onLongClickBucket = onLongClickBucket

@@ -70,8 +70,8 @@ fun NotebookImageChooser(
 					Box(
 						contentAlignment = Alignment.Center,
 						modifier = Modifier
-							.width(80.dp)
-							.height(48.dp)
+							.width(64.dp)
+							.height(40.dp)
 							.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp))
 							.clip(RoundedCornerShape(16.dp))
 							.clickable { openFilePicker.launch(arrayOf("image/*")) }
@@ -103,8 +103,8 @@ fun NotebookImageChooser(
 				Box(
 					contentAlignment = Alignment.Center,
 					modifier = Modifier
-						.width(80.dp)
-						.height(48.dp)
+						.width(64.dp)
+						.height(40.dp)
 						.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp))
 						.clip(RoundedCornerShape(16.dp))
 						.clickable { openFilePicker.launch(arrayOf("image/*")) }
@@ -140,8 +140,8 @@ fun NotebookImageChooser(
 		for (image in imageList) {
 			Box(
 				modifier = Modifier
-					.width(80.dp)
-					.height(48.dp)
+					.width(64.dp)
+					.height(40.dp)
 					.background(MaterialTheme.colorScheme.background, RoundedCornerShape(16.dp))
 					.border(
 						width = 4.dp,

@@ -16,8 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
@@ -63,7 +61,9 @@ fun NotebookCard(
 					bitmap = it.asImageBitmap(),
 					contentDescription = title,
 					contentScale = ContentScale.Crop,
-					modifier = Modifier.fillMaxSize()
+					modifier = Modifier
+						.fillMaxSize()
+						.clip(RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
 				)
 			}
 

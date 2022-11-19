@@ -44,16 +44,9 @@ fun NotificationPermissionDialog(
 
 	GenericDialog(
 		showDialog = showDialog && !notificationPermission.status.isGranted,
+		title = "Notification Permission",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = "Notification Permission",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		Text(
 			text = "We will need this permission to show you notifications.",
 			style = MaterialTheme.typography.bodyMedium,

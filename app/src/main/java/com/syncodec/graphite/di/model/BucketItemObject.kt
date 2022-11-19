@@ -1,6 +1,5 @@
 package com.syncodec.graphite.di.model
 
-import android.util.Log
 import androidx.room.PrimaryKey
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
@@ -8,8 +7,8 @@ import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.di.network.BookData
 import com.syncodec.graphite.di.network.ShowData
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 
 enum class BucketItemState {
@@ -19,7 +18,7 @@ enum class BucketItemState {
 }
 
 class BucketItemObject: RealmObject {
-	@PrimaryKey var id: ObjectId = ObjectId.create()
+	@PrimaryKey var id: RealmUUID = RealmUUID.random()
 
 	var createdTimestamp: Long = System.currentTimeMillis()
 	var modifiedTimestamp: Long = System.currentTimeMillis()
@@ -84,6 +83,20 @@ class BucketItemObject: RealmObject {
 		}
 	}
 
+	fun toSnapshot() = BucketItemSnapshot(
+		id = this.id,
+		createdTimestamp = this.createdTimestamp,
+		modifiedTimestamp = this.modifiedTimestamp,
+		bucketType = this.bucketType,
+		title = this.title,
+		state = this.state,
+		thumbnail = this.thumbnail,
+		isFavourite = this.isFavourite,
+		isLocked = this.isLocked,
+		key = this.key,
+		data = this.data
+	)
+
 	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
@@ -115,17 +128,16 @@ class BucketItemObject: RealmObject {
 	}
 }
 
-
-
-data class BucketItemPreview(
-	val id: String,
-	val createdTimestamp: String,
-	val modifiedTimestamp: String,
-	val bucketId: String,
+data class BucketItemSnapshot(
+	val id: RealmUUID,
+	val createdTimestamp: Long,
+	val modifiedTimestamp: Long,
 	val bucketType: String,
-	val title: String,
+	val title: String?,
 	val state: String,
-	val thumbnail: String,
+	val thumbnail: String?,
 	val isFavourite: Boolean,
-	val isLocked: Boolean
+	val isLocked: Boolean,
+	val key: String?,
+	val data: String?
 )

@@ -3,9 +3,6 @@ package com.syncodec.graphite.di.repository
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import android.util.Base64
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.compose.ui.graphics.toArgb
@@ -17,8 +14,12 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.network.FirebaseStorageApi
+import com.syncodec.graphite.utils.alice.AliceRequestResult
+import com.syncodec.graphite.utils.alice.getSecretData
+import com.syncodec.graphite.utils.alice.putSecretData
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
 import com.syncodec.graphite.utils.getFileName
@@ -31,7 +32,7 @@ import dagger.hilt.components.SingletonComponent
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -41,17 +42,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.security.InvalidAlgorithmParameterException
-import java.security.InvalidKeyException
-import java.security.KeyStore
-import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.IvParameterSpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -66,7 +57,11 @@ object RepositoryModule {
 
 
 enum class RepositoryState {
-	INIT, LOADING, SUCCESS, ERROR
+	INIT,
+	LOCKED,
+	LOADING,
+	SUCCESS,
+	ERROR
 }
 
 class RealmNotInitializedException : Exception("Realm not initialized")
@@ -84,82 +79,111 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 
 	val repositoryState : MutableStateFlow<RepositoryState> = MutableStateFlow(RepositoryState.INIT)
 
+	private var realmConfiguration : RealmConfiguration? = null
 	private var realm : Realm? = null
 
 	val firebaseStorageApi = FirebaseStorageApi()
 
-	val passcode = ByteArray(64)
+	val isAuthenticated : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 
 	init {
-		for (i in 0 until 64) {
-			passcode[i] = i.toByte()
-		}
-		val a = passcode.joinToString("") {
-			java.lang.String.format("%02x", it)
-		}
-		Log.i("npr71", "passcode: $a")
-
-		try {
-			realm = Realm
-				.open(
-					RealmConfiguration.Builder(
-						setOf(
-							BaseObject::class,
-							ChapterObject::class,
-							NoteObject::class,
-							AttachmentObject::class,
-							BucketObject::class,
-							BucketItemObject::class,
-							TagObject::class
-						)
-					)
-//					    .encryptionKey(getNewKey(context))
-						.encryptionKey(passcode)
-						.initialData {
-							ChapterObject().also { chapterObject ->
-								chapterObject.title = "Diary"
-								chapterObject.description = "Default diary. Every notes will be saved in this notebook by default"
-								chapterObject.color = getRandomColor().toArgb()
-
-								copyToRealm(chapterObject)
-
-								BaseObject().also { baseObject ->
-									baseObject.defaultChapterId = chapterObject.id
-
-									copyToRealm(baseObject)
-								}
+		CoroutineScope(Dispatchers.IO).launch {
+			isAuthenticated.collect {
+				when (it) {
+					null -> repositoryState.value = RepositoryState.LOADING
+					false -> repositoryState.value = RepositoryState.LOCKED
+					true -> {
+						var key : ByteArray
+						context.getSecretData("realmKey").let {
+							if (it.result == AliceRequestResult.KEY_NOT_FOUND) {
+								val realmKey = ByteArray(Realm.ENCRYPTION_KEY_LENGTH)
+								SecureRandom().nextBytes(realmKey)
+								context.putSecretData("realmKey", realmKey)
+								key = context.getSecretData("realmKey").data !!
+							} else {
+								key = it.data !!
 							}
 						}
-						.build()
-				)
 
-			repositoryState.tryEmit(RepositoryState.SUCCESS)
-		} catch (e : Exception) {
-			e.printStackTrace()
-			repositoryState.tryEmit(RepositoryState.ERROR)
+						Log.i("npr71", "key: ${key.joinToString("") { java.lang.String.format("%02x", it) }}")
+
+						try {
+							realmConfiguration = RealmConfiguration.Builder(
+								setOf(
+									BaseObject::class,
+									ChapterObject::class,
+									NoteObject::class,
+									AttachmentObject::class,
+									BucketObject::class,
+									BucketItemObject::class,
+									TagObject::class
+								)
+							)
+//			    .encryptionKey(getNewKey(context))
+								.encryptionKey(key)
+								.initialData {
+									ChapterObject().also { chapterObject ->
+										chapterObject.title = "Diary"
+										chapterObject.description = "Default diary. Every notes will be saved in this notebook by default"
+										chapterObject.color = getRandomColor().toArgb()
+
+										copyToRealm(chapterObject)
+
+										BaseObject().also { baseObject ->
+											baseObject.defaultChapterId = chapterObject.id
+
+											copyToRealm(baseObject)
+										}
+									}
+								}
+								.build()
+
+							realm = Realm.open(realmConfiguration !!)
+
+							repositoryState.tryEmit(RepositoryState.SUCCESS)
+						} catch (e : Exception) {
+							e.printStackTrace()
+							repositoryState.tryEmit(RepositoryState.ERROR)
+						}
+					}
+				}
+			}
 		}
 	}
 
-	fun putDefaultChapterId(id : ObjectId, callback : (CallbackStatus) -> Unit) {
+	fun putDefaultChapterId(id : RealmUUID, callback : (CallbackStatus) -> Unit) {
 		CoroutineScope(Dispatchers.IO).launch {
 			if (realm == null) {
 				callback(CallbackStatus.UNINITIALIZED)
 			} else {
 				realm?.write {
 					val baseObject = this.query(BaseObject::class).first().find()
-					baseObject?.let { findLatest(it)?.defaultChapterId = id }
-					callback(CallbackStatus.SUCCESS)
+					if (baseObject == null) {
+						BaseObject().also { _baseObject ->
+							_baseObject.defaultChapterId = id
+							copyToRealm(_baseObject)
+						}
+						callback(CallbackStatus.ERROR)
+					} else {
+						baseObject.let { findLatest(it)?.defaultChapterId = id }
+						callback(CallbackStatus.SUCCESS)
+					}
 				}
 			}
 		}
 	}
 
-	fun getDefaultChapterId() : Flow<ObjectId?> {
+	fun getDefaultChapterId() : Flow<RealmUUID?> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BaseObject::class).first().asFlow().map { it.obj?.defaultChapterId }
 	}
 
-	fun putChapter(parentChapterId : ObjectId?, chapterObject : ChapterObject, callback : (Boolean, Exception?) -> Unit) {
+	fun getBaseObject() : BaseObject? {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(BaseObject::class).first().find()
+	}
+
+	fun putChapter(parentChapterId : RealmUUID?, chapterObject : ChapterObject, callback : (Boolean, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.IO).launch {
 			if (realm == null) {
 				callback(false, RealmNotInitializedException())
@@ -209,27 +233,32 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun getChapterFromIdAsFlow(id : ObjectId) : Flow<ChapterObject?> {
+	fun getChapterFromIdAsFlow(id : RealmUUID?) : Flow<ChapterObject?> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
 
-	fun getChapterFromId(id : ObjectId?) : ChapterObject? {
+	fun getAllChapter() : RealmResults<ChapterObject> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(ChapterObject::class).find()
+	}
+
+	fun getChapterFromId(id : RealmUUID?) : ChapterObject? {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().find()
 	}
 
-	fun getChapterWithParentIdAsFlow(parentChapterId : ObjectId?) : Flow<List<ChapterObject>> {
+	fun getChapterWithParentIdAsFlow(parentChapterId : RealmUUID?) : Flow<List<ChapterObject>> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(ChapterObject::class, "parentChapterId == $0 ", parentChapterId).asFlow().map { it.list }
 	}
 
-	fun getChapterWithParentId(parentChapterId : ObjectId?) : List<ChapterObject> {
+	fun getChapterWithParentId(parentChapterId : RealmUUID?) : Pair<ChapterObject?, List<ChapterObject>> {
 		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class, "parentChapterId == $0 ", parentChapterId).find().toList()
+		else Pair(getChapterFromId(parentChapterId), realm !!.query(ChapterObject::class, "parentChapterId == $0 ", parentChapterId).find().toList())
 	}
 
-	fun getParentChapterList(id : ObjectId?, includeEdge : Boolean = false, callback : (List<ChapterObjectLite>?, Exception?) -> Unit) {
+	fun getParentChapterList(id : RealmUUID?, includeEdge : Boolean = false, callback : (List<ChapterObjectLite>?, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.IO).launch {
 			try {
 				val chapterObject = getChapterFromId(id)
@@ -302,7 +331,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun moveNoteToChapter(noteId : ObjectId, chapterId : ObjectId) {
+	fun moveNoteToChapter(noteId : RealmUUID, chapterId : RealmUUID) {
 		try {
 			if (realm == null) throw RealmNotInitializedException()
 			else CoroutineScope(Dispatchers.IO).launch {
@@ -310,8 +339,6 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					val storedNoteObject = getNoteFromId(noteId)
 					val moveToStoredChapterObject = getChapterFromId(chapterId)
 //  				val moveFromStoredChapterObject = getChapterFromId(storedNoteObject?.parentChapterId)
-					Log.i("npr71", "storedNoteObject = ${storedNoteObject?.id}")
-					Log.i("npr71", "moveToStoredChapterObject = ${moveToStoredChapterObject?.id}")
 					moveToStoredChapterObject?.let {
 						if (storedNoteObject != null) {
 //							findLatest(it)?.noteList?.add(storedNoteObject)
@@ -325,7 +352,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun deleteNote(id : ObjectId, callback : (Boolean, Exception?) -> Unit) {
+	fun deleteNote(id : RealmUUID, callback : (Boolean, Exception?) -> Unit) {
 		if (realm == null) throw RealmNotInitializedException()
 		else CoroutineScope(Dispatchers.IO).launch {
 			try {
@@ -351,12 +378,12 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun getNoteFromId(id : ObjectId) : NoteObject? {
+	fun getNoteFromId(id : RealmUUID) : NoteObject? {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(NoteObject::class, "id == $0 ", id).first().find()
 	}
 
-	fun getNoteFromIdAsFlow(id : ObjectId) : Flow<NoteObject?> {
+	fun getNoteFromIdAsFlow(id : RealmUUID) : Flow<NoteObject?> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(NoteObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
@@ -364,6 +391,16 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 	fun getAllNoteAsFlow() : Flow<RealmResults<NoteObject>> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(NoteObject::class).asFlow().map { it.list }
+	}
+
+	fun getAllNoteLiteAsFlow() : Flow<List<NoteObjectLite>> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(NoteObject::class).asFlow().map { it.list.map { it.toLite() } }
+	}
+
+	fun getAllNote() : RealmResults<NoteObject> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(NoteObject::class).find()
 	}
 
 	fun putBucket(bucketObject : BucketObject, callback : (Boolean, Exception?) -> Unit) {
@@ -396,7 +433,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun putBucketItem(bucketId : ObjectId, bucketItemObject : BucketItemObject, callback : (Boolean, Exception?) -> Unit) {
+	fun putBucketItem(bucketId : RealmUUID, bucketItemObject : BucketItemObject, callback : (Boolean, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.IO).launch {
 			if (realm == null) {
 				callback(false, RealmNotInitializedException())
@@ -436,27 +473,37 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(BucketObject::class).asFlow().map { it.list }
 	}
 
-	fun getBucketAsFlow(id : ObjectId) : Flow<BucketObject?> {
+	fun getAllBucket() : RealmResults<BucketObject> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(BucketObject::class).find()
+	}
+
+	fun getBucketAsFlow(id : RealmUUID) : Flow<BucketObject?> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BucketObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
 
-	fun getBucketFromId(id : ObjectId) : BucketObject? {
+	fun getBucketFromId(id : RealmUUID) : BucketObject? {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BucketObject::class, "id == $0 ", id).first().find()
 	}
 
-	fun getBucketItemAsFlow(id : ObjectId) : Flow<BucketItemObject?> {
+	fun getBucketItemAsFlow(id : RealmUUID) : Flow<BucketItemObject?> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
 
-	fun getBucketItem(id : ObjectId) : BucketItemObject? {
+	fun getAllBucketItem() : RealmResults<BucketItemObject> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(BucketItemObject::class).find()
+	}
+
+	fun getBucketItem(id : RealmUUID) : BucketItemObject? {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().find()
 	}
 
-	fun getAttachmentFromId(id : ObjectId) : AttachmentObject? {
+	fun getAttachmentFromId(id : RealmUUID) : AttachmentObject? {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(AttachmentObject::class, "id == $0 ", id).first().find()
 	}
@@ -466,7 +513,12 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(AttachmentObject::class).asFlow().map { it.list }
 	}
 
-	fun putAttachment(noteId : ObjectId, attachmentObjectList : List<AttachmentObject>, callback : (CallbackStatus, Exception?) -> Unit) {
+	fun getAllAttachment() : RealmResults<AttachmentObject> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(AttachmentObject::class).find()
+	}
+
+	fun putAttachment(noteId : RealmUUID, attachmentObjectList : List<AttachmentObject>, callback : (CallbackStatus, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.IO).launch {
 			try {
 				runBlocking {
@@ -483,7 +535,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	suspend fun putAttachment(noteId : ObjectId, attachmentObject : AttachmentObject, retry : Int, callback : (Boolean, Exception?) -> Unit) {
+	suspend fun putAttachment(noteId : RealmUUID, attachmentObject : AttachmentObject, retry : Int, callback : (Boolean, Exception?) -> Unit) {
 		try {
 			attachmentObject.parentNoteId = noteId
 			realm?.write {
@@ -548,18 +600,26 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 			}
 	}
 
-	fun getAttachmentFromNote(noteId : ObjectId) : Flow<List<Triple<AttachmentObject?, File?, Uri?>>?> {
+	fun getAllAttachmentWithFile() : List<Triple<AttachmentObject, File?, Uri?>> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else getAllAttachment().map {
+			val file = getAttachmentFile(context, it.id, it.extension)
+			val uri = file?.let { it1 -> FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it1) }
+			Triple(it, file, uri)
+		}
+	}
+
+	fun getAttachmentFromNote(noteId : RealmUUID) : Flow<List<Triple<AttachmentObject, File?, Uri?>>?> {
 		return getNoteFromIdAsFlow(noteId).map {
 			it?.attachmentList?.map {
-				val attachmentObject = getAttachmentFromId(it.id)
-				val file = attachmentObject?.id?.let { it1 -> getAttachmentFile(context, it1, attachmentObject?.extension) }
+				val file = it.id.let { it1 -> getAttachmentFile(context, it1, it.extension) }
 				val uri = file?.let { it1 -> FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it1) }
-				Triple(attachmentObject, file, uri)
+				Triple(it, file, uri)
 			}
 		}
 	}
 
-	fun getAttachmentFile(context : Context, id : ObjectId, extension : String?) : File? {
+	fun getAttachmentFile(context : Context, id : RealmUUID, extension : String?) : File? {
 		return try {
 			val attachmentDirPath = "${context.filesDir.path}/data/attachment"
 			val filePath = "$attachmentDirPath/$id${if (extension != null) ".$extension" else ""}"
@@ -570,8 +630,8 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun bufferAttachment(uriList : List<Uri>) : MutableMap<ObjectId, Triple<AttachmentObject, File?, Uri>> {
-		val attachmentList : MutableMap<ObjectId, Triple<AttachmentObject, File?, Uri>> = mutableMapOf()
+	fun bufferAttachment(uriList : List<Uri>) : MutableMap<RealmUUID, Triple<AttachmentObject, File?, Uri>> {
+		val attachmentList : MutableMap<RealmUUID, Triple<AttachmentObject, File?, Uri>> = mutableMapOf()
 		uriList.forEach { uri ->
 			var extension : String? = null
 			val name = context.getFileName(uri)
@@ -609,7 +669,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		return attachmentList
 	}
 
-	fun getAttachmentFile(id : ObjectId, extension : String?) : File? {
+	fun getAttachmentFile(id : RealmUUID, extension : String?) : File? {
 		return try {
 			val attachmentDirPath = "${context.filesDir.path}/data/attachment"
 			val filePath = "$attachmentDirPath/$id${if (extension != null) ".$extension" else ""}"
@@ -618,38 +678,6 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 //  		TODO Show error message
 			e.printStackTrace()
 			null
-		}
-	}
-
-	fun delete(objectIdList : List<ObjectId>) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.IO).launch {
-				objectIdList.forEach {
-					delete(it)
-				}
-			}
-		}
-	}
-
-	private suspend fun delete(objectId : ObjectId) {
-		realm?.write {
-			val noteObject = getNoteFromId(objectId)
-			val chapterObject = noteObject?.parentChapterId?.let { getChapterFromId(it) }
-
-			if (chapterObject != null) {
-				findLatest(chapterObject)
-					?.noteList
-					?.removeIf { it.id == objectId }
-			}
-			noteObject?.let { findLatest(it)?.let { this.delete(it) } }
-
-			val bucketObject = getBucketFromId(objectId)
-			bucketObject?.bucketItemList?.map { it.id }?.let { delete(it) }
-			bucketObject?.let { findLatest(it)?.let { this.delete(it) } }
-
-			val bucketItemObject = getBucketItem(objectId)
-			bucketItemObject?.let { findLatest(it)?.let { this.delete(it) } }
 		}
 	}
 
@@ -672,7 +700,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun deleteTag(id : ObjectId?) {
+	fun deleteTag(id : RealmUUID?) {
 		if (realm == null) throw RealmNotInitializedException()
 		else {
 			CoroutineScope(Dispatchers.IO).launch {
@@ -684,30 +712,30 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun getTagFromId(id : ObjectId?) : TagObject? {
+	fun getTagFromId(id : RealmUUID?) : TagObject? {
 		return if (realm == null) throw RealmNotInitializedException()
-		else realm!!.query(TagObject::class, "id == $0", id).first().find()
+		else realm !!.query(TagObject::class, "id == $0", id).first().find()
 	}
 
-	fun getTagFromIdAsFlow(id : ObjectId) : Flow<TagObject?> {
+	fun getTagFromIdAsFlow(id : RealmUUID) : Flow<TagObject?> {
 		return if (realm == null) throw RealmNotInitializedException()
-		else realm!!.query(TagObject::class, "id == $0", id).first().asFlow().map { it.obj }
+		else realm !!.query(TagObject::class, "id == $0", id).first().asFlow().map { it.obj }
 	}
 
-	fun connectTag(noteId : ObjectId, tagIdList:List<ObjectId>, callback : (Boolean, Exception?) -> Unit) {
+	fun connectTag(noteId : RealmUUID, tagIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
 		if (realm == null) throw RealmNotInitializedException()
 		else {
 			CoroutineScope(Dispatchers.IO).launch {
 				try {
 					realm?.write {
-						getAllTag().forEach { findLatest(it)?.objectIdList?.remove(noteId) }
+						getAllTag().forEach { findLatest(it)?.RealmUUIDList?.remove(noteId) }
 						tagIdList.forEach {
 							val tagObject = getTagFromId(it)
 							if (tagObject != null) {
 								findLatest(tagObject)?.let {
-									if (it.objectIdList.contains(noteId)) it.objectIdList.remove(noteId)
+									if (it.RealmUUIDList.contains(noteId)) it.RealmUUIDList.remove(noteId)
 									else {
-										it.objectIdList.add(noteId)
+										it.RealmUUIDList.add(noteId)
 									}
 								}
 							}
@@ -722,7 +750,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun connectTag(noteId : ObjectId, tagId : ObjectId) {
+	fun connectTag(noteId : RealmUUID, tagId : RealmUUID) {
 		if (realm == null) throw RealmNotInitializedException()
 		else {
 			CoroutineScope(Dispatchers.IO).launch {
@@ -730,8 +758,8 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					val tagObject = getTagFromId(tagId)
 					if (tagObject != null) {
 						findLatest(tagObject)?.let {
-							if (it.objectIdList.contains(noteId)) it.objectIdList.remove(noteId)
-							else it.objectIdList.add(noteId)
+							if (it.RealmUUIDList.contains(noteId)) it.RealmUUIDList.remove(noteId)
+							else it.RealmUUIDList.add(noteId)
 						}
 					}
 				}
@@ -739,14 +767,14 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun getTagFromName(tag: String) : TagObject? {
+	fun getTagFromName(tag : String) : TagObject? {
 		return if (realm == null) throw RealmNotInitializedException()
-		else realm!!.query(TagObject::class, "tag == $0", tag).first().find()
+		else realm !!.query(TagObject::class, "tag == $0", tag).first().find()
 	}
 
-	fun getTagFromNameAsFlow(tag: String) : Flow<TagObject?> {
+	fun getTagFromNameAsFlow(tag : String) : Flow<TagObject?> {
 		return if (realm == null) throw RealmNotInitializedException()
-		else realm!!.query(TagObject::class, "tag == $0", tag).first().asFlow().map { it.obj }
+		else realm !!.query(TagObject::class, "tag == $0", tag).first().asFlow().map { it.obj }
 	}
 
 	fun getAllTagAsFlow() : Flow<RealmResults<TagObject>> {
@@ -764,148 +792,53 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(BucketItemObject::class, "key == $0 ", key).count().find() > 0
 	}
 
-	fun getNewKey(context : Context) : ByteArray {
-		// open a connection to the android keystore
-		val keyStore : KeyStore
-		try {
-			keyStore = KeyStore.getInstance("AndroidKeyStore")
-			keyStore.load(null)
-		} catch (e : Exception) {
-			Log.v("EXAMPLE", "Failed to open the keystore.")
-			throw RuntimeException(e)
+	fun delete(RealmUUIDList : List<RealmUUID>) {
+		if (realm == null) throw RealmNotInitializedException()
+		else {
+			CoroutineScope(Dispatchers.IO).launch {
+				RealmUUIDList.forEach {
+					delete(it)
+				}
+			}
 		}
-		// create a securely generated random asymmetric RSA key
-		val realmKey = ByteArray(Realm.ENCRYPTION_KEY_LENGTH)
-		SecureRandom().nextBytes(realmKey)
-		// create a cipher that uses AES encryption -- we'll use this to encrypt our key
-		val cipher : Cipher = try {
-			Cipher.getInstance(
-				KeyProperties.KEY_ALGORITHM_AES
-						+ "/" + KeyProperties.BLOCK_MODE_CBC
-						+ "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7
-			)
-		} catch (e : Exception) {
-			Log.e("EXAMPLE", "Failed to create a cipher.")
-			throw RuntimeException(e)
-		}
-		// generate secret key
-		val keyGenerator : KeyGenerator = try {
-			KeyGenerator.getInstance(
-				KeyProperties.KEY_ALGORITHM_AES,
-				"AndroidKeyStore"
-			)
-		} catch (e : NoSuchAlgorithmException) {
-			Log.e("EXAMPLE", "Failed to access the key generator.")
-			throw RuntimeException(e)
-		}
-		val keySpec = KeyGenParameterSpec.Builder(
-			"realm_key",
-			KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-		)
-			.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-			.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-			.setUserAuthenticationRequired(false)
-//			.setUserAuthenticationValidityDurationSeconds(300)
-			.build()
-		try {
-			keyGenerator.init(keySpec)
-		} catch (e : InvalidAlgorithmParameterException) {
-			Log.e("EXAMPLE", "Failed to generate a secret key.")
-			throw RuntimeException(e)
-		}
-		keyGenerator.generateKey()
-		// access the generated key in the android keystore, then
-		// use the cipher to create an encrypted version of the key
-		val initializationVector : ByteArray
-		val encryptedKeyForRealm : ByteArray
-		try {
-			val secretKey = keyStore.getKey("realm_key", null) as SecretKey
-			cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-			encryptedKeyForRealm = cipher.doFinal(realmKey)
-			initializationVector = cipher.iv
-		} catch (e : Exception) {
-			Log.e("EXAMPLE", "Failed encrypting the key with the secret key.")
-			throw RuntimeException(e)
-		}
-		// keep the encrypted key in shared preferences
-		// to persist it across application runs
-		val initializationVectorAndEncryptedKey = ByteArray(
-			Integer.BYTES +
-					initializationVector.size +
-					encryptedKeyForRealm.size
-		)
-		val buffer = ByteBuffer.wrap(initializationVectorAndEncryptedKey)
-		buffer.order(ByteOrder.BIG_ENDIAN)
-		buffer.putInt(initializationVector.size)
-		buffer.put(initializationVector)
-		buffer.put(encryptedKeyForRealm)
-		context.getSharedPreferences("realm_key", Context.MODE_PRIVATE).edit()
-			.putString("iv_and_encrypted_key", Base64.encodeToString(initializationVectorAndEncryptedKey, Base64.NO_WRAP))
-			.apply()
-		return realmKey // pass to a realm configuration via encryptionKey()
 	}
 
-	// Access the encrypted key in the keystore, decrypt it with the secret,
-// and use it to open and read from the realm again
-	fun getExistingKey(context : Context) : ByteArray {
-		// open a connection to the android keystore
-		val keyStore : KeyStore
-		try {
-			keyStore = KeyStore.getInstance("AndroidKeyStore")
-			keyStore.load(null)
-		} catch (e : Exception) {
-			Log.e("EXAMPLE", "Failed to open the keystore.")
-			throw RuntimeException(e)
+	private suspend fun delete(RealmUUID : RealmUUID) {
+		realm?.write {
+			val noteObject = getNoteFromId(RealmUUID)
+			val chapterObject = noteObject?.parentChapterId?.let { getChapterFromId(it) }
+
+			if (chapterObject != null) {
+				findLatest(chapterObject)
+					?.noteList
+					?.removeIf { it.id == RealmUUID }
+			}
+			noteObject?.let { findLatest(it)?.let { this.delete(it) } }
+
+			val bucketObject = getBucketFromId(RealmUUID)
+			bucketObject?.bucketItemList?.map { it.id }?.let { this@Repository2.delete(it) }
+			bucketObject?.let { findLatest(it)?.let { this.delete(it) } }
+
+			val bucketItemObject = getBucketItem(RealmUUID)
+			bucketItemObject?.let { findLatest(it)?.let { this.delete(it) } }
 		}
-		// access the encrypted key that's stored in shared preferences
-		val initializationVectorAndEncryptedKey = Base64.decode(
-			context
-				?.getSharedPreferences("realm_key", Context.MODE_PRIVATE)
-				?.getString("iv_and_encrypted_key", null), Base64.DEFAULT
-		)
-		val buffer = ByteBuffer.wrap(initializationVectorAndEncryptedKey)
-		buffer.order(ByteOrder.BIG_ENDIAN)
-		// extract the length of the initialization vector from the buffer
-		val initializationVectorLength = buffer.int
-		// extract the initialization vector based on that length
-		val initializationVector = ByteArray(initializationVectorLength)
-		buffer[initializationVector]
-		// extract the encrypted key
-		val encryptedKey = ByteArray(
-			initializationVectorAndEncryptedKey.size
-					- Integer.BYTES
-					- initializationVectorLength
-		)
-		buffer[encryptedKey]
-		// create a cipher that uses AES encryption to decrypt our key
-		val cipher : Cipher
-		cipher = try {
-			Cipher.getInstance(
-				KeyProperties.KEY_ALGORITHM_AES
-						+ "/" + KeyProperties.BLOCK_MODE_CBC
-						+ "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7
-			)
-		} catch (e : Exception) {
-			Log.e("EXAMPLE", "Failed to create cipher.")
-			throw RuntimeException(e)
-		}
-		// decrypt the encrypted key with the secret key stored in the keystore
-		val decryptedKey : ByteArray = try {
-			val secretKey = keyStore.getKey("realm_key", null) as SecretKey
-			val initializationVectorSpec = IvParameterSpec(initializationVector)
-			cipher.init(Cipher.DECRYPT_MODE, secretKey, initializationVectorSpec)
-			cipher.doFinal(encryptedKey)
-		} catch (e : InvalidKeyException) {
-			Log.e("EXAMPLE", "Failed to decrypt. Invalid key.")
-			throw RuntimeException(e)
-		} catch (e : Exception) {
-			Log.e(
-				"EXAMPLE",
-				"Failed to decrypt the encrypted realm key with the secret key."
-			)
-			throw RuntimeException(e)
-		}
-		return decryptedKey // pass to a realm configuration via encryptionKey()
 	}
 
+	fun clearRealm(callback : (Boolean, Exception?) -> Unit) {
+		if (realm == null) throw RealmNotInitializedException()
+		else {
+			CoroutineScope(Dispatchers.IO).launch {
+				try {
+					realm !!.write {
+						realmConfiguration !!.schema.forEach {
+							this.query(it).find().let { this.delete(it) }
+						}
+					}
+					callback(true, null)
+				} catch (e : Exception) {
+					callback(false, e)
+				}
+			}
+		}
+	}
 }

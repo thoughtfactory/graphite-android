@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.notebook.composable.screen
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -48,16 +49,17 @@ import kotlinx.coroutines.launch
 fun NotebookScreen() {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
-
-	val softwareKeyboardController = LocalSoftwareKeyboardController.current
+	val keyboardController = LocalSoftwareKeyboardController.current
+	val focusManager = LocalFocusManager.current
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 	var bottomSheetType by remember { mutableStateOf(NotebookBottomSheetType.MENU) }
 
+	val chapterId = NotebookActivity.LocalChapterId.current
+
 	fun openSheet(_bottomSheetType : NotebookBottomSheetType) {
 		scope.launch {
 			bottomSheetType = _bottomSheetType
-			softwareKeyboardController?.hide()
 			modalBottomSheetState.show()
 		}
 	}
@@ -66,9 +68,15 @@ fun NotebookScreen() {
 		scope.launch { modalBottomSheetState.hide() }
 	}
 
-	var bottomBarSpacingPx by remember { mutableStateOf(0) }
+	LaunchedEffect(key1 = modalBottomSheetState.currentValue) {
+		try {
+			keyboardController?.hide()
+			focusManager.clearFocus()
+		} catch (e : Exception) {
+		}
+	}
 
-	val chapterObject = NotebookActivity.LocalChapterObject.current
+	var bottomBarSpacingPx by remember { mutableStateOf<Int?>(null) }
 
 	CompositionLocalProvider(
 		NotebookActivity.LocalOpenBottomSheet provides ::openSheet,
@@ -86,7 +94,7 @@ fun NotebookScreen() {
 				topBar = { TopBar() },
 			) {
 				Crossfade(
-					targetState = chapterObject,
+					targetState = chapterId,
 					modifier = Modifier
 						.fillMaxSize()
 						.padding(it)
@@ -108,10 +116,7 @@ fun NotebookScreen() {
 									ExplorerScreen()
 								}
 								BottomBar(
-									modifier = Modifier
-										.onGloballyPositioned {
-											bottomBarSpacingPx = it.positionInParent().y.toInt()
-										}
+									modifier = Modifier.onGloballyPositioned { bottomBarSpacingPx = it.positionInParent().y.toInt() }
 								)
 							}
 
@@ -125,7 +130,7 @@ fun NotebookScreen() {
 								onClickPrimary = {
 									Intent(context, NoteActivity::class.java).apply {
 										putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-										putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterObject?.id.toString())
+										putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
 										putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
 										context.startActivity(this)

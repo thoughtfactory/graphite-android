@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @Composable
@@ -59,7 +59,7 @@ fun DeleteDialog(
 @Composable
 fun DeleteDialog(
 	showDeleteDialog: Boolean,
-	id: ObjectId?,
+	id: RealmUUID?,
 	onDismiss: () -> Unit,
 	onDelete: () -> Unit
 ) {
@@ -111,16 +111,9 @@ fun DeleteDialog(
 ) {
 	GenericDialog(
 		showDialog = showDialog,
+		title = "Delete",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = "Delete",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		Text(
 			text = message ?: "Are you sure you want to delete this item?",
 			style = MaterialTheme.typography.bodyMedium,

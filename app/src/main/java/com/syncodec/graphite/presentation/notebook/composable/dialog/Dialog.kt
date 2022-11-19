@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.notebook.composable.dialog
 
 import androidx.compose.runtime.Composable
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.FilterBottomSheet
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
@@ -22,7 +23,7 @@ fun NotebookDialog() {
 	val color = NotebookActivity.LocalColor.current
 	val thumbnail = NotebookActivity.LocalThumbnail.current
 
-	val selectedItemSize = NotebookActivity.LocalCompositionSelectedObjectIdList.current.size
+	val selectedItemSize = LocalCompositionSelectedRealmUUIDList.current.size
 
 	val onUpdateChapter = NotebookActivity.LocalOnUpdateChapter.current
 	val onDelete = NotebookActivity.LocalOnDelete.current

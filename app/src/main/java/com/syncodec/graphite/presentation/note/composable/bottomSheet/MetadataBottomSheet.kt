@@ -17,15 +17,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
@@ -38,22 +34,18 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsView
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionModifiedTimestamp
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapterId
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapter
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
-import io.realm.kotlin.types.ObjectId
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import io.realm.kotlin.types.RealmUUID
 
 
 @Composable
 fun MetadataBottomSheet(
 	onUpdateTitle : (String?) -> Unit
 ) {
-	val isViewing = LocalCompositionIsViewing.current
-
 	val id = LocalCompositionNoteId.current
-	val parentChapterId = LocalCompositionParentChapterId.current
+	val parentChapter = LocalCompositionParentChapter.current
 	val createdTimestamp = LocalCompositionCreatedTimestamp.current
 	val modifiedTimestamp = LocalCompositionModifiedTimestamp.current
 	val title = LocalCompositionTitle.current
@@ -91,7 +83,8 @@ fun MetadataBottomSheet(
 		Spacer(modifier = Modifier.height(8.dp))
 
 		ParentCard(
-			parentChapterId = parentChapterId,
+			chapterId = parentChapter?.id,
+			chapterTitle = parentChapter?.title,
 		) {
 			openDialog(NoteDialogType.CHAPTER_SELECTION, null)
 			closeSheet()
@@ -104,18 +97,10 @@ fun MetadataBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ParentCard(
-	parentChapterId: ObjectId?,
+	chapterId: RealmUUID?,
+	chapterTitle: String?,
 	onClick: () -> Unit
 ) {
-	val scope = rememberCoroutineScope()
-	var chapterTitle by remember { mutableStateOf<String?>(null) }
-
-	LaunchedEffect(key1 = parentChapterId) {
-		scope.launch(Dispatchers.IO) {
-//			chapterTitle = parentChapterId?.let { Repository.getChapterTitle(id = it) }
-		}
-	}
-
 	Card(
 		shape = RoundedCornerShape(12.dp),
 		colors = CardDefaults.cardColors(
@@ -137,12 +122,15 @@ private fun ParentCard(
 				modifier = Modifier
 			) {
 				Text(
-					text = "$chapterTitle",
-					style = MaterialTheme.typography.headlineMedium,
+					text = chapterTitle ?: "Chapter Untitled",
+					style = MaterialTheme.typography.titleMedium,
+					fontStyle = if (chapterTitle == null) FontStyle.Italic else FontStyle.Normal,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis
 				)
 
 				Text(
-					text = "$parentChapterId",
+					text = "$chapterId",
 					style = MaterialTheme.typography.bodyMedium,
 				)
 			}

@@ -39,7 +39,7 @@ fun MenuBottomSheet() {
 		) {
 			closeSheet()
 			Intent(context, AttachmentActivity::class.java).apply {
-				putExtra(Extra.Companion.Constant.SHOW_ALL_ATTACHMENTS.name, true)
+				putExtra(Extra.Companion.Constant.SHOW_ALL.name, true)
 				context.startActivity(this)
 			}
 		},

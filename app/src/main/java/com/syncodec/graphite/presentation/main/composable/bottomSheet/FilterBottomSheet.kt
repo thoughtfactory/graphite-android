@@ -22,7 +22,9 @@ import com.syncodec.graphite.utils.ViewType
 
 
 @Composable
-fun FilterBottomSheet() {
+fun FilterBottomSheet(
+	showViewTypeOption: Boolean = true,
+) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
@@ -60,6 +62,7 @@ fun FilterBottomSheet() {
 			stateTint = MaterialTheme.colorScheme.primary
 		)
 	)
+
 	val viewTypeStateList : List<StateData> = listOf(
 		StateData(
 			title = "List",
@@ -119,18 +122,20 @@ fun FilterBottomSheet() {
 
 		Spacer(modifier = Modifier.height(12.dp))
 
-		BottomSheetKeyText(text = "View Type")
+		if (showViewTypeOption) {
+			BottomSheetKeyText(text = "View Type")
 
-		Spacer(modifier = Modifier.height(8.dp))
+			Spacer(modifier = Modifier.height(8.dp))
 
-		StateButton(
-			stateList = viewTypeStateList,
-			currentState = viewType.ordinal,
-			containerColor = MaterialTheme.colorScheme.background,
-			modifier = Modifier
-				.height(36.dp)
-				.padding(24.dp, 0.dp),
-		) { dataStoreInstance.putViewType(ViewType.values().getOrElse(it) { ViewType.LIST }) }
+			StateButton(
+				stateList = viewTypeStateList,
+				currentState = viewType.ordinal,
+				containerColor = MaterialTheme.colorScheme.background,
+				modifier = Modifier
+					.height(36.dp)
+					.padding(24.dp, 0.dp),
+			) { dataStoreInstance.putViewType(ViewType.values().getOrElse(it) { ViewType.LIST }) }
+		}
 
 		LargeButton(
 			text = "Default",

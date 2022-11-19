@@ -4,11 +4,8 @@ import android.util.Log
 import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +13,7 @@ import com.kedia.ogparser.OpenGraphCallback
 import com.kedia.ogparser.OpenGraphParser
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.Network
@@ -23,8 +21,7 @@ import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.encodeBase64
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.ext.isFrozen
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -39,9 +36,8 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 	val repositoryState = repository2.repositoryState
 
 	val bucketObject : MutableState<BucketObject?> = mutableStateOf(null)
-	val bucketItemObjectList : SnapshotStateList<BucketItemObject> = mutableStateListOf()
 
-	val id : MutableState<ObjectId?> = mutableStateOf(null)
+	val id : MutableState<RealmUUID?> = mutableStateOf(null)
 	val title : MutableState<String?> = mutableStateOf(null)
 	val description : MutableState<String?> = mutableStateOf(null)
 	val bucketType : MutableState<String?> = mutableStateOf(null)
@@ -49,9 +45,9 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
 
 	val isSelected : MutableState<Boolean> = mutableStateOf(false)
-	val selectedObjectIdList : SnapshotStateList<ObjectId> = mutableStateListOf()
+	val selectedRealmUUIDList : SnapshotStateList<RealmUUID> = mutableStateListOf()
 
-	val bucketItemObjectId : MutableState<ObjectId?> = mutableStateOf(null)
+	val bucketItemRealmUUID : MutableState<RealmUUID?> = mutableStateOf(null)
 	val bucketItemObject : MutableState<BucketItemObject?> = mutableStateOf(null)
 
 	private var refreshCoroutine : CoroutineScope? = null
@@ -64,13 +60,14 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 		}
 	}
 
-	fun loadAndViewData(id : ObjectId) {
+	fun loadAndViewData(id : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			this@BucketViewModel.refreshCoroutine?.cancel()
 			this@BucketViewModel.refreshCoroutine = this
 			repositoryState.collect {
 				when (it) {
 					RepositoryState.INIT -> Log.d("BucketViewModel", "Init")
+					RepositoryState.LOCKED -> null
 					RepositoryState.LOADING -> Log.d("BucketViewModel", "Loading")
 					RepositoryState.SUCCESS -> {
 						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
@@ -135,6 +132,26 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 		}
 	}
 
+	fun putTodo(
+		realmUUID : RealmUUID?,
+		todo : String,
+		state : BucketItemState
+	) {
+		BucketItemObject().apply {
+			if (realmUUID != null) this.id = realmUUID
+			this.bucketType = BucketType.TODO.name
+			this.title = todo
+			this.state = state.name
+			this.key = todo
+
+			this@BucketViewModel.id.value?.let {
+				repository2.putBucketItem(it, this) { _, _ ->
+					refresh()
+				}
+			}
+		}
+	}
+
 	fun putBucket() {
 		CoroutineScope(Dispatchers.IO).launch {
 			BucketObject().apply {
@@ -153,22 +170,27 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 		}
 	}
 
-	fun getBucketItem(id : ObjectId) {
+	fun getBucketItem(id : RealmUUID?) {
 		viewModelScope.launch(Dispatchers.IO) {
 			if (id != bucketItemObject.value?.id) bucketItemObjectCoroutine?.cancel()
 			bucketItemObjectCoroutine = this
-			repository2.getBucketItemAsFlow(id).collect {
-				this@BucketViewModel.bucketItemObject.value = it
-				this@BucketViewModel.bucketItemObjectId.value = it?.id
+			if (id != null) {
+				repository2.getBucketItemAsFlow(id).collect {
+					this@BucketViewModel.bucketItemObject.value = it
+					this@BucketViewModel.bucketItemRealmUUID.value = it?.id
+				}
+			} else {
+				this@BucketViewModel.bucketItemObject.value = null
+				this@BucketViewModel.bucketItemRealmUUID.value = null
 			}
 		}
 	}
 
 	fun deleteBucketItem() {
 		try {
-			val toDeleteObjectIdList = selectedObjectIdList.toList()
-			repository2.delete(toDeleteObjectIdList)
-			selectedObjectIdList.clear()
+			val toDeleteRealmUUIDList = selectedRealmUUIDList.toList()
+			repository2.delete(toDeleteRealmUUIDList)
+			selectedRealmUUIDList.clear()
 			isSelected.value = false
 		} catch (e : Exception) {
 
@@ -215,5 +237,11 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 		CoroutineScope(Dispatchers.IO).launch {
 			repository2.delete(listOf(bucketItemObject.id))
 		}
+	}
+
+	fun updateBucket(title : String?, description : String?) {
+		this.title.value = title
+		this.description.value = description
+		putBucket()
 	}
 }

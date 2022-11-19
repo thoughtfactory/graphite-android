@@ -50,6 +50,7 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.ChapterListCard
+import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.NoteListCard
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
@@ -66,12 +67,15 @@ fun ExplorerScreen() {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
+	val chapterId = NotebookActivity.LocalChapterId.current
+
 	val getChapter = NotebookActivity.LocalGetChapter.current
 
 	var isNoteListVisible by remember { mutableStateOf(true) }
 	var isChapterListVisible by remember { mutableStateOf(true) }
 
-	val chapterObject = NotebookActivity.LocalChapterObject.current
+	val noteObjectList = NotebookActivity.LocalNoteObjectList.current
+	val chapterObjectList = NotebookActivity.LocalChapterObjectList.current
 	val tagList = listOf<TagObject>()
 
 	val isVaultOpened = LocalVaultIsOpened.current
@@ -79,67 +83,58 @@ fun ExplorerScreen() {
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.TIMESTAMP)
 	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.DESCENDING)
 
-	AnimatedContent(
-		targetState = chapterObject,
-		transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
-	) { _chapterObject ->
-		if (_chapterObject == null) {
-			LoadingView()
-		} else {
-			if (_chapterObject.noteList.isEmpty() && _chapterObject.chapterList.isEmpty()) {
-				EmptyView()
-			} else {
-				LazyColumn(
-					modifier = Modifier.fillMaxSize()
-				) {
-					noteList(
-						noteList = _chapterObject.noteList
-							.map { it.toLite() }
-							.filter { if (it.isLocked) isVaultOpened else true }
-							.sortedWith(
-								when (sortOn) {
-									SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) compareBy { it.title } else compareByDescending { it.title }
-									SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) compareBy { it.userTimestamp } else compareByDescending { it.userTimestamp }
-									SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
-									else -> compareBy { it.title }
-								}
-							),
-						tagList = tagList,
-						isVisible = isNoteListVisible,
-						toggleVisibility = { isNoteListVisible = ! isNoteListVisible },
-						onClick = {
-							Intent(context, NoteActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterObject?.id.toString())
-								putExtra(Extra.Companion.Constant.NOTE_ID.name, it.id.toString())
-								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+	if (noteObjectList.isEmpty() && chapterObjectList.isEmpty()) {
+		EmptyView()
+	} else {
+		LazyColumn(
+			modifier = Modifier.fillMaxSize()
+		) {
+			noteList(
+				noteList = noteObjectList
+					.filter { if (it.isLocked) isVaultOpened else true }
+					.sortedWith(
+						when (sortOn) {
+							SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) compareBy { it.title } else compareByDescending { it.title }
+							SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) compareBy { it.userTimestamp } else compareByDescending { it.userTimestamp }
+							SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
+							else -> compareBy { it.title }
+						}
+					),
+				tagList = tagList,
+				isVisible = isNoteListVisible,
+				toggleVisibility = { isNoteListVisible = ! isNoteListVisible },
+				onClick = {
+					Intent(context, NoteActivity::class.java).apply {
+						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId?.bytes)
+						putExtra(Extra.Companion.Constant.NOTE_ID.name, it.id.bytes)
+						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
-								context.startActivity(this)
-							}
-						},
-						onLongClick = { }
-					)
-					chapterList(
-						chapterList = _chapterObject
-							.chapterList
-							.filter { if (it.isLocked) isVaultOpened else true }
-							.sortedWith(
-								when (sortOn) {
-									SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) compareBy { it.title } else compareByDescending { it.title }
-									SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) compareBy { it.createdTimestamp } else compareByDescending { it.createdTimestamp }
-									SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
-									else -> compareBy { it.title }
-								}
-							),
-						tagList = tagList,
-						isVisible = isChapterListVisible,
-						isVaultOpened = isVaultOpened,
-						toggleVisibility = { isChapterListVisible = ! isChapterListVisible },
-						onClick = { getChapter(it.id) },
-						onLongClick = { }
-					)
-				}
-			}
+						context.startActivity(this)
+					}
+				},
+				onLongClick = { }
+			)
+			chapterList(
+				chapterList = chapterObjectList
+					.filter { if (it.isLocked) isVaultOpened else true }
+					.sortedWith(
+						when (sortOn) {
+							SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) compareBy { it.title } else compareByDescending { it.title }
+							SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) compareBy { it.createdTimestamp } else compareByDescending { it.createdTimestamp }
+							SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
+							else -> compareBy { it.title }
+						}
+					),
+				tagList = tagList,
+				isVisible = isChapterListVisible,
+				isVaultOpened = isVaultOpened,
+				toggleVisibility = { isChapterListVisible = ! isChapterListVisible },
+				onClick = { getChapter(it.id) },
+				onLongClick = { }
+			)
+
+			item { Spacer(modifier = Modifier.height(32.dp)) }
 		}
 	}
 }
@@ -194,7 +189,9 @@ private fun LazyListScope.noteList(
 	}
 
 	noteList.forEach { note ->
-		item(key = note.id.toString()) {
+		item(
+			key = note.id.toString()
+		) {
 			Box(
 				modifier = Modifier.animateItemPlacement(tween(300))
 			) {
@@ -213,7 +210,7 @@ private fun LazyListScope.noteList(
 					attachmentThumbnail = null,
 					address = note.address,
 					latLng = note.latLng,
-					tagList = tagList.filter { it.objectIdList.contains(note.id) }.map { it.toLite() },
+					tagList = tagList.filter { it.RealmUUIDList.contains(note.id) }.map { it.toLite() },
 					isVisible = isVisible,
 					selectedColor = MaterialTheme.colorScheme.surface,
 					onClick = { onClick(note) },
@@ -274,7 +271,9 @@ private fun LazyListScope.chapterList(
 	}
 
 	chapterList.forEach { chapterObject ->
-		item(key = chapterObject.id.toString()) {
+		item(
+			key = chapterObject.id.toString()
+		) {
 			Box(
 				modifier = Modifier.animateItemPlacement(tween(300))
 			) {
@@ -292,7 +291,7 @@ private fun LazyListScope.chapterList(
 					thumbnail = chapterObject.thumbnail?.decodeBase64ToBitmap(),
 					noteCount = chapterObject.noteList.filter { if (it.isLocked) isVaultOpened else true }.size,
 					chapterCount = chapterObject.chapterList.filter { if (it.isLocked) isVaultOpened else true }.size,
-					tagList = tagList.filter { it.objectIdList.contains(chapterObject.id) }.map { it.toLite() },
+					tagList = tagList.filter { it.RealmUUIDList.contains(chapterObject.id) }.map { it.toLite() },
 					isVisible = isVisible,
 					selectedColor = MaterialTheme.colorScheme.surface,
 					onClick = { onClick(chapterObject) },
@@ -300,32 +299,5 @@ private fun LazyListScope.chapterList(
 				)
 			}
 		}
-	}
-}
-
-@Composable
-private fun EmptyView() {
-	val configuration = LocalConfiguration.current
-	val screenWidth = configuration.screenWidthDp.dp
-
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		verticalArrangement = Arrangement.Center,
-		modifier = Modifier
-			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.background)
-	) {
-		Image(
-			painter = painterResource(id = R.drawable.il_not_found),
-			contentDescription = "No entries found",
-			modifier = Modifier.size(screenWidth * 3 / 4)
-		)
-		Spacer(modifier = Modifier.height(16.dp))
-		Text(
-			text = "No entries found",
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onBackground,
-			fontWeight = FontWeight.Bold
-		)
 	}
 }

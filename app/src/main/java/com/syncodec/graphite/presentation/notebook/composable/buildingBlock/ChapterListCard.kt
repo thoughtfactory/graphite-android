@@ -36,7 +36,7 @@ import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContent
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(
@@ -45,7 +45,7 @@ import io.realm.kotlin.types.ObjectId
 )
 @Composable
 fun ChapterListCard(
-	id : ObjectId,
+	id : RealmUUID,
 	timestamp : Long,
 	isSelected : Boolean,
 	isLocked : Boolean,
@@ -83,11 +83,7 @@ fun ChapterListCard(
 
 	var isExpanded by remember { mutableStateOf(false) }
 
-	AnimatedVisibility(
-		visible = isVisible,
-		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
-		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
-	) {
+	if (isVisible) {
 		OutlinedCard(
 			shape = RoundedCornerShape(12.dp),
 			border = BorderStroke(1.dp, if (isFavourite) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)),
@@ -292,7 +288,7 @@ private fun Title(
 
 @Composable
 private fun ExpandedContent(
-	id : ObjectId,
+	id : RealmUUID,
 	timestamp : Long,
 	title : String?,
 	description : String?,

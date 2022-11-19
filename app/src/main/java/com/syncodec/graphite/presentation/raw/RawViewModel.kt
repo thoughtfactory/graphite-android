@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.utils.Extra
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,38 +21,38 @@ class RawViewModel: ViewModel() {
 
 	val jsonObject: MutableState<JSONObject?> = mutableStateOf(null)
 
-//	fun readObject(objectId: ObjectId, objectType: Extra.Companion.ObjectType) {
+//	fun readObject(RealmUUID: RealmUUID, objectType: Extra.Companion.ObjectType) {
 //		viewModelScope.launch(Dispatchers.IO) {
 //			when (objectType) {
 //				Extra.Companion.ObjectType.ATTAHCMENT -> {
-//					Repository.getAttachment(objectId)?.let {
+//					Repository.getAttachment(RealmUUID)?.let {
 //						jsonObject.value = JSONObject(objectMapper.writeValueAsString(it))
 //					}
 //				}
 //				Extra.Companion.ObjectType.BUCKET_ITEM -> {
-//					Repository.getBucketItem(objectId)?.let {
+//					Repository.getBucketItem(RealmUUID)?.let {
 //						jsonObject.value = JSONObject(objectMapper.writeValueAsString(it))
 //					}
 //				}
 //				Extra.Companion.ObjectType.BUCKET -> {
-//					Repository.getBucket(objectId)?.let {
+//					Repository.getBucket(RealmUUID)?.let {
 //						jsonObject.value = JSONObject(objectMapper.writeValueAsString(it))
 //					}
 //				}
 //				Extra.Companion.ObjectType.CHAPTER -> {
-//					Repository.getChapter(objectId)?.let {
+//					Repository.getChapter(RealmUUID)?.let {
 //						jsonObject.value = JSONObject(objectMapper.writeValueAsString(it))
 //					}
 //				}
 //				Extra.Companion.ObjectType.NOTE -> {
-//					Repository.getNote(objectId)?.let {
+//					Repository.getNote(RealmUUID)?.let {
 //						withContext(Dispatchers.Main) {
 //							jsonObject.value = JSONObject(objectMapper.writeValueAsString(it.toRaw()))
 //						}
 //					}
 //				}
 //				Extra.Companion.ObjectType.TAG -> {
-//					Repository.getTag(objectId)?.let {
+//					Repository.getTag(RealmUUID)?.let {
 //						jsonObject.value = objectMapper.writeValueAsString(it).let { json -> JSONObject(json) }
 //					}
 //				}

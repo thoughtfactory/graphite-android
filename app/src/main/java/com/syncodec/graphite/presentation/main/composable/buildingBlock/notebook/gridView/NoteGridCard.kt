@@ -30,13 +30,13 @@ import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
 import com.syncodec.graphite.utils.roundTo
 import com.syncodec.graphite.utils.timeStampToTime
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NoteGridCard(
-	id : ObjectId,
+	id : RealmUUID,
 	timestamp : Long,
 	showFullTime : Boolean,
 	isLocked : Boolean,

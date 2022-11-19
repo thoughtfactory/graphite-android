@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -18,7 +19,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlin.random.Random
 
 
@@ -56,8 +57,8 @@ class NotePinNotification {
 
 		fun showSimpleNotification(
 			context : Context,
-			noteId : ObjectId,
-			chapterId : ObjectId,
+			noteId : RealmUUID,
+			chapterId : RealmUUID,
 			title : String,
 			content : String,
 			notificationId : Int = Random.nextInt(),
@@ -66,19 +67,34 @@ class NotePinNotification {
 		) {
 			createNotificationChannel(context)
 
-			val openActivityActionIntent = PendingIntent.getActivity(
-				context,
-				Random.nextInt(),
+//			val openActivityActionIntent = PendingIntent.getActivity(
+//				context,
+//				Random.nextInt(),
+//				Intent(context, NoteActivity::class.java).apply {
+//					putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+//					putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId.bytes)
+//					putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
+//					putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+//
+//					flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//				},
+//				PendingIntent.FLAG_IMMUTABLE
+//			)
+
+			val openActivityActionIntent = TaskStackBuilder.create(context).run {
+//				addNextIntentWithParentStack(resultIntent)
 				Intent(context, NoteActivity::class.java).apply {
 					putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-					putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId.toString())
-					putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.toString())
+					putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId.bytes)
+					putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
 					putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
 
 					flags = Intent.FLAG_ACTIVITY_NEW_TASK
-				},
-				PendingIntent.FLAG_IMMUTABLE
-			)
+
+					addNextIntentWithParentStack(this)
+				}
+				getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+			}
 
 			val unpinActionIntent = PendingIntent.getService(
 				context,
@@ -101,7 +117,7 @@ class NotePinNotification {
 				)
 				.addExtras(
 					Bundle().apply {
-						putString(Extra.Companion.Constant.NOTE_ID.name, noteId.toString())
+						putByteArray(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
 					}
 				)
 				.setContentIntent(openActivityActionIntent)
@@ -128,9 +144,11 @@ class NotePinNotification {
 			notificationManager.createNotificationChannel(channel)
 		}
 
-		fun isNotificationPinned(context : Context, noteId : ObjectId?) : Boolean {
+		fun isNotificationPinned(context : Context, noteId : RealmUUID?) : Boolean {
 			val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-			return notificationManager.activeNotifications.any { it.notification.extras.getString(Extra.Companion.Constant.NOTE_ID.name) == noteId.toString() }
+			return notificationManager.activeNotifications.any {
+				it.notification.extras.getByteArray(Extra.Companion.Constant.NOTE_ID.name).contentEquals(noteId?.bytes)
+			}
 		}
 	}
 }

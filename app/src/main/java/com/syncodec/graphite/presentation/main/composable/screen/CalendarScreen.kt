@@ -35,7 +35,7 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook
 import com.syncodec.graphite.utils.getToday
 import com.syncodec.graphite.utils.timestampToCalendarDay
 import com.syncodec.graphite.utils.timestampToDate
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
@@ -43,8 +43,8 @@ import io.realm.kotlin.types.ObjectId
 fun CalendarScreen(
 	noteList: List<NoteObjectLite>,
 	selectedItemList: List<String>,
-	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote : (ObjectId) -> Unit,
+	onClickNote : (RealmUUID) -> Unit,
+	onLongClickNote : (RealmUUID) -> Unit,
 ) {
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
@@ -104,8 +104,8 @@ private fun BottomSheetContent(
 	noteList: List<NoteObjectLite>,
 	selectedTimestamp: Long,
 	selectedItemList: List<String>,
-	onClickNote: (ObjectId) -> Unit,
-	onLongClickNote: (ObjectId) -> Unit,
+	onClickNote: (RealmUUID) -> Unit,
+	onLongClickNote: (RealmUUID) -> Unit,
 ) {
 	val lastEntryKey = if (noteList.isNotEmpty()) noteList.last().id else null
 
@@ -150,7 +150,7 @@ private fun BottomSheetContent(
 					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,
-					tagList = tagList.filter { it.objectIdList.contains(note.id) },
+					tagList = tagList.filter { it.RealmUUIDList.contains(note.id) },
 					isVisible = true,
 					isSwipable = false,
 					selectedColor = MaterialTheme.colorScheme.surface,

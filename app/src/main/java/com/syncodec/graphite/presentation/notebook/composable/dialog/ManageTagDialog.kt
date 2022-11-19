@@ -73,7 +73,7 @@ fun ManageTagDialog(
 
 			TagListView(
 				allTag = tagList,
-				selectedTag = tagList.filter { it.objectIdList.contains(chapterObject.id) }.map { it.toLite() },
+				selectedTag = tagList.filter { it.RealmUUIDList.contains(chapterObject.id) }.map { it.toLite() },
 				onClick = onClick
 			)
 		}

@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.di.model.TagObject
@@ -44,7 +45,8 @@ class TagsActivity : ComponentActivity() {
 				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onBackground)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
-				val softwareKeyboardController = LocalSoftwareKeyboardController.current
+				val keyboardController = LocalSoftwareKeyboardController.current
+				val focusManager = LocalFocusManager.current
 
 				var tagName by remember { mutableStateOf("") }
 				var tagColor by remember { mutableStateOf(getRandomColor()) }
@@ -73,11 +75,21 @@ class TagsActivity : ComponentActivity() {
 						TagDialogType.EDIT -> showEditTagDialog = false
 						TagDialogType.DELETE -> showDeleteTagDialog = false
 					}
+					try {
+						keyboardController?.hide()
+						focusManager.clearFocus()
+					} catch (e : Exception) {
+					}
 				}
 
 				this.onBackPressedDispatcher.addCallback(
 					this, object : OnBackPressedCallback(true) {
 						override fun handleOnBackPressed() {
+							try {
+								keyboardController?.hide()
+								focusManager.clearFocus()
+							} catch (e : Exception) {
+							}
 							if (showEditTagDialog || showDeleteTagDialog) {
 								closeDialog(TagDialogType.EDIT)
 								closeDialog(TagDialogType.DELETE)
@@ -97,18 +109,26 @@ class TagsActivity : ComponentActivity() {
 						tagName = ""
 						viewModel.putTag(it)
 						closeDialog(TagDialogType.EDIT)
-						softwareKeyboardController?.hide()
+						try {
+							keyboardController?.hide()
+							focusManager.clearFocus()
+						} catch (e : Exception) {
+						}
 					},
 					LocalShowEditTagDialog provides showEditTagDialog,
 					LocalShowDeleteTagDialog provides showDeleteTagDialog,
 					LocalDeleteTag provides {
 						viewModel.deleteTag(currentTag)
 						closeDialog(TagDialogType.DELETE)
-						softwareKeyboardController?.hide()
+						try {
+							keyboardController?.hide()
+							focusManager.clearFocus()
+						} catch (e : Exception) {
+						}
 					},
 					LocalOpenDialog provides { dialogType, data -> openDialog(dialogType, data) },
 					LocalCloseDialog provides ::closeDialog,
-					LocalOnBackPressed provides { onBackPressed() }
+					LocalOnBackPressed provides { this.onBackPressedDispatcher.onBackPressed() }
 				) {
 					TagScreen()
 				}

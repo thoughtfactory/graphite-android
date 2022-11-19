@@ -39,6 +39,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
@@ -46,20 +47,22 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook
 import com.syncodec.graphite.utils.AtlasClusterItem
 import com.syncodec.graphite.utils.ClusterRenderer
 import com.syncodec.graphite.utils.isMarkerVisible
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterialApi::class, MapsComposeExperimentalApi::class)
 @Composable
 fun AtlasScreen(
 	noteList : List<NoteObjectLite>,
-	onClickNote: (ObjectId) -> Unit,
-	onLongClickNote: (ObjectId) -> Unit,
+	onClickNote: (RealmUUID) -> Unit,
+	onLongClickNote: (RealmUUID) -> Unit,
 ) {
 //	TODO note update not reflected in atlas directly
 	val context = LocalContext.current
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
+
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
 
 	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
 
@@ -94,19 +97,18 @@ fun AtlasScreen(
 	}
 
 	BottomSheetScaffold(
-		scaffoldState = bottomSheetScaffoldState, sheetContent = {
+		scaffoldState = bottomSheetScaffoldState,
+		sheetContent = {
 			BottomSheetContent(
 				noteList = markerMap,
-				selectedItemList = listOf(),
+				selectedItemList = selectedRealmUUIDList,
 				onClickNote = onClickNote,
 				onLongClickNote = onLongClickNote
 			)
-		}, modifier = Modifier, sheetElevation = 32.dp, sheetPeekHeight = screenHeight.times(0.2f), sheetBackgroundColor = MaterialTheme.colorScheme.surface
+		},
+		modifier = Modifier, sheetElevation = 32.dp, sheetPeekHeight = screenHeight.times(0.2f), sheetBackgroundColor = MaterialTheme.colorScheme.surface
 	) {
 		GoogleMap(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(0.dp, 0.dp, 0.dp, screenHeight.times(0.2f)),
 			googleMapOptionsFactory = { GoogleMapOptions() },
 			cameraPositionState = cameraPositionState,
 			uiSettings = MapUiSettings(
@@ -122,6 +124,9 @@ fun AtlasScreen(
 				zoomGesturesEnabled = true,
 			),
 			properties = MapProperties(mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light)),
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(0.dp, 0.dp, 0.dp, screenHeight.times(0.2f)),
 		) {
 			MapEffect(key1 = isDataReady) {
 				if (isDataReady) {
@@ -129,25 +134,25 @@ fun AtlasScreen(
 						try {
 							cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(LatLngBounds(swLatLng.toGLatLng() !!, neLatLng.toGLatLng() !!), 128))
 						} catch (e : Exception) {
-							e.printStackTrace()
+//							e.printStackTrace()
 						}
 					}
 				}
 			}
 			MapEffect(key1 = noteList) {
+				it.clear()
 				val clusterManager : ClusterManager<AtlasClusterItem> = ClusterManager(context, it)
 				val clusterRenderer : ClusterRenderer<AtlasClusterItem> = ClusterRenderer(context, it, clusterManager)
 
 				clusterManager.renderer = clusterRenderer
+				clusterManager.cluster()
 
 				it.setOnCameraMoveListener { clusterManager.cluster() }
 				it.setOnCameraIdleListener {
 					markerMap.clear()
 					noteList.forEach { note ->
 						val latLng = note.latLng
-						if (latLng != null && it.isMarkerVisible(latLng.toGLatLng())) {
-							markerMap.add(note)
-						}
+						if (latLng != null && it.isMarkerVisible(latLng.toGLatLng())) markerMap.add(note)
 					}
 				}
 
@@ -162,10 +167,12 @@ fun AtlasScreen(
 @Composable
 private fun BottomSheetContent(
 	noteList : List<NoteObjectLite>,
-	selectedItemList : List<String>,
-	onClickNote : (ObjectId) -> Unit,
-	onLongClickNote: (ObjectId) -> Unit,
+	selectedItemList : List<RealmUUID>,
+	onClickNote : (RealmUUID) -> Unit,
+	onLongClickNote: (RealmUUID) -> Unit,
 ) {
+	val context = LocalContext.current
+
 	val lastEntryKey = if (noteList.isNotEmpty()) noteList.last().id else null
 
 	val tagList = LocalCompositionTagList.current
@@ -199,7 +206,7 @@ private fun BottomSheetContent(
 					timestamp = note.userTimestamp,
 					showFullTime = false,
 					isLocked = note.isLocked,
-					isSelected = false,
+					isSelected = note.id in selectedItemList,
 					isFavourite = note.isFavourite,
 					isDeleted = false,
 					isLast = note.id == lastEntryKey,
@@ -209,7 +216,7 @@ private fun BottomSheetContent(
 					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,
-					tagList = tagList.filter { it.objectIdList.contains(note.id) },
+					tagList = tagList.filter { it.RealmUUIDList.contains(note.id) },
 					isVisible = true,
 					isSwipable = false,
 					selectedColor = MaterialTheme.colorScheme.surface,

@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.CallbackStatus
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
@@ -22,11 +23,10 @@ import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.Notebo
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.encodeBase64
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -37,11 +37,9 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	val repositoryState = repository2.repositoryState
 
-	val defaultChapterId : MutableState<ObjectId?> = mutableStateOf(null)
+	val defaultChapterId : MutableState<RealmUUID?> = mutableStateOf(null)
 
-	val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
-
-	val id : MutableState<ObjectId?> = mutableStateOf(null)
+	val chapterId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val createdTimestamp : MutableState<Long?> = mutableStateOf(null)
 	val modifiedTimestamp : MutableState<Long?> = mutableStateOf(null)
 	val title : MutableState<String?> = mutableStateOf(null)
@@ -51,19 +49,24 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	val isFavourite : MutableState<Boolean?> = mutableStateOf(null)
 	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
 
-	val currentChapterId : MutableState<ObjectId?> = mutableStateOf(null)
-	val parentChapterId : MutableState<ObjectId?> = mutableStateOf(null)
+	val chapterObjectLite: MutableState<ChapterObjectLite?> = mutableStateOf(null)
+
+	val chapterObjectList: SnapshotStateList<ChapterObject> = mutableStateListOf()
+	val noteObjectList : SnapshotStateList<NoteObjectLite> = mutableStateListOf()
+
+	val currentChapterId : MutableState<RealmUUID?> = mutableStateOf(null)
+	val parentChapterId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val parentChapterObjectList : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
 
 	val tagObjectList : SnapshotStateList<TagObject> = mutableStateListOf()
 
 	var bottomSheetType : MutableState<NotebookBottomSheetType> = mutableStateOf(NotebookBottomSheetType.MENU)
 
-	val rootChapterId : MutableState<ObjectId?> = mutableStateOf(null)
+	val rootChapterId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val rootColor : MutableState<Color?> = mutableStateOf(null)
 
 	val isSelected : MutableState<Boolean> = mutableStateOf(false)
-	val selectedObjectIdList : SnapshotStateList<ObjectId> = mutableStateListOf()
+	val selectedRealmUUIDList : SnapshotStateList<RealmUUID> = mutableStateListOf()
 
 
 	init {
@@ -71,6 +74,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 			repositoryState.collect {
 				when (it) {
 					RepositoryState.INIT -> Log.d("NotebookViewModel", "Init")
+					RepositoryState.LOCKED -> null
 					RepositoryState.LOADING -> Log.d("NotebookViewModel", "Loading")
 					RepositoryState.SUCCESS -> repository2.getDefaultChapterId().collect { defaultChapterId.value = it }
 					RepositoryState.ERROR -> Log.d("NotebookViewModel", "Error")
@@ -79,11 +83,12 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-	fun initNotebook(chapterId : ObjectId) {
+	fun initNotebook(chapterId : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			repositoryState.collect {
 				when (it) {
 					RepositoryState.INIT -> Log.d("NotebookViewModel", "Init")
+					RepositoryState.LOCKED -> null
 					RepositoryState.LOADING -> Log.d("NotebookViewModel", "Loading")
 					RepositoryState.SUCCESS -> onRepositoryStateSuccess(chapterId = chapterId)
 					RepositoryState.ERROR -> Log.d("NotebookViewModel", "Error")
@@ -92,7 +97,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-	private fun onRepositoryStateSuccess(chapterId : ObjectId) {
+	private fun onRepositoryStateSuccess(chapterId : RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getAndLoadChapter(chapterId = chapterId)
@@ -114,7 +119,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 
 	fun putChapter(title : String?, description : String?, color : Color?, bitmap : Bitmap?) {
-		if (chapterObject.value != null) {
+		if (this.currentChapterId.value != null) {
 			CoroutineScope(Dispatchers.IO).launch {
 				try {
 					ChapterObject().apply {
@@ -123,7 +128,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 						this.color = color?.toArgb()
 						this.thumbnail = bitmap?.encodeBase64()
 
-						this.parentChapterId = chapterObject.value?.id
+						this.parentChapterId = this@NotebookViewModel.currentChapterId.value
 
 						repository2.putChapter(this.parentChapterId, this) { _, _ -> }
 					}
@@ -138,7 +143,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	}
 
 	private fun updateChapter() {
-		this.id.value?.let {
+		this.chapterId.value?.let {
 			CoroutineScope(Dispatchers.IO).launch {
 				try {
 					ChapterObject().apply {
@@ -169,7 +174,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 		updateChapter()
 	}
 
-	fun getAndLoadChapter(chapterId : ObjectId) {
+	fun getAndLoadChapter(chapterId : RealmUUID?) {
 		this.currentChapterId.value = chapterId
 
 		viewModelScope.launch(Dispatchers.IO) {
@@ -179,10 +184,10 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 				if (it != null) {
 					getParentChapter(it.id)
 					if (it.id == currentChapterId.value) {
-						withContext(Dispatchers.Main) {
-							this@NotebookViewModel.chapterObject.value = it
+						withContext(Dispatchers.IO) {
+							this@NotebookViewModel.chapterObjectLite.value = it.toLite()
 
-							this@NotebookViewModel.id.value = it.id
+							this@NotebookViewModel.chapterId.value = it.id
 							this@NotebookViewModel.createdTimestamp.value = it.createdTimestamp
 							this@NotebookViewModel.modifiedTimestamp.value = it.modifiedTimestamp
 							this@NotebookViewModel.title.value = it.title
@@ -193,6 +198,11 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 							this@NotebookViewModel.isLocked.value = it.isLocked
 
 							this@NotebookViewModel.parentChapterId.value = it.parentChapterId
+
+							this@NotebookViewModel.chapterObjectList.clear()
+							this@NotebookViewModel.chapterObjectList.addAll(it.chapterList)
+							this@NotebookViewModel.noteObjectList.clear()
+							this@NotebookViewModel.noteObjectList.addAll(it.noteList.map { it.toLite() })
 
 							if (rootChapterId.value == null) {
 								rootChapterId.value = it.id
@@ -209,13 +219,13 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-	private fun getParentChapter(id : ObjectId) {
+	private fun getParentChapter(id : RealmUUID) {
 		repository2.getParentChapterList(id = id) { list, e ->
 			viewModelScope.launch(Dispatchers.Main) {
 				parentChapterObjectList.clear()
 				list?.let {
 					parentChapterObjectList.addAll(it)
-					chapterObject.value?.let { parentChapterObjectList.add(0, it.toLite()) }
+					chapterObjectLite.value?.let { parentChapterObjectList.add(0, it) }
 				}
 			}
 		}
@@ -232,14 +242,14 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	}
 
 	fun setDefaultChapter() {
-		this.id.value?.let {
+		this.chapterId.value?.let {
 			repository2.putDefaultChapterId(it) { callbackStatus ->
 				if (callbackStatus == CallbackStatus.SUCCESS) Toast.makeText(repository2.context, "Default chapter updated", Toast.LENGTH_SHORT).show()
 			}
 		}
 	}
 
-	fun updateTagConnection(tagObjectId : ObjectId) {
-//		Repository.updateTagConnection(tagObjectId = tagObjectId, chapterObject.value?.id)
+	fun updateTagConnection(tagRealmUUID : RealmUUID) {
+//		Repository.updateTagConnection(tagRealmUUID = tagRealmUUID, chapterObject.value?.id)
 	}
 }

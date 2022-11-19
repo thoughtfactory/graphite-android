@@ -1,7 +1,9 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -46,18 +48,21 @@ import coil.request.ImageRequest
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnSelected
+import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenBottomSheet
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSetBucketItemObject
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSetOpenGraphResult
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetType
+import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LinkListScreen(
 	bucketItemList : List<BucketItemObject> = listOf(),
@@ -65,58 +70,69 @@ fun LinkListScreen(
 	val setOpenGraphResult = LocalCompositionSetOpenGraphResult.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val onSelected = LocalCompositionOnSelected.current
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val onSelected = LocalCompositionOnSelect.current
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
 
 	val setBucketItemObject = LocalCompositionSetBucketItemObject.current
 	val openSheet = LocalCompositionOpenBottomSheet.current
 
-	LazyColumn(
-		modifier = Modifier.fillMaxSize()
-	) {
-		bucketItemList.forEach { bucketItemObject ->
-			item {
-				val openGraphResult = bucketItemObject.getOpenGraphResult()
-				LinkItem(
-					title = bucketItemObject.title,
-					thumbnail = bucketItemObject.thumbnail,
-					openGraphResult = openGraphResult,
-					url = bucketItemObject.key,
-					isLocked = bucketItemObject.isLocked,
-					isFavourite = bucketItemObject.isFavourite,
-					isSelected = bucketItemObject.id in selectedObjectIdList,
-					onClick = {
-						if (isSelected) {
-							if (bucketItemObject.id in selectedObjectIdList) selectedObjectIdList.remove(bucketItemObject.id)
-							else selectedObjectIdList.add(bucketItemObject.id)
-						} else {
-							setBucketItemObject(bucketItemObject)
-							setOpenGraphResult(openGraphResult)
-							openSheet(BucketBottomSheetType.CURRENT_LINK)
-						}
-					},
-					onLongClick = {
-						if (bucketItemObject.id in selectedObjectIdList) selectedObjectIdList.remove(bucketItemObject.id)
-						else selectedObjectIdList.add(bucketItemObject.id)
-						onSelected(true)
+	if (bucketItemList.isEmpty()) {
+		EmptyView(bucketType = BucketType.LINK)
+	} else {
+		LazyColumn(
+			modifier = Modifier.fillMaxSize()
+		) {
+			bucketItemList.forEach { bucketItemObject ->
+				item(
+					key = bucketItemObject.id.toString(),
+				) {
+					val openGraphResult = bucketItemObject.getOpenGraphResult()
+					Box(
+						modifier = Modifier.animateItemPlacement()
+					) {
+						LinkItem(
+							title = bucketItemObject.title,
+							thumbnail = bucketItemObject.thumbnail,
+							openGraphResult = openGraphResult,
+							url = bucketItemObject.key,
+							isLocked = bucketItemObject.isLocked,
+							isFavourite = bucketItemObject.isFavourite,
+							isSelected = bucketItemObject.id in selectedRealmUUIDList,
+							onClick = {
+								if (isSelected) {
+									if (bucketItemObject.id in selectedRealmUUIDList) selectedRealmUUIDList.remove(bucketItemObject.id)
+									else selectedRealmUUIDList.add(bucketItemObject.id)
+								} else {
+									setBucketItemObject(bucketItemObject)
+									setOpenGraphResult(openGraphResult)
+									openSheet(BucketBottomSheetType.CURRENT_LINK)
+								}
+							},
+							onLongClick = {
+								if (bucketItemObject.id in selectedRealmUUIDList) selectedRealmUUIDList.remove(bucketItemObject.id)
+								else selectedRealmUUIDList.add(bucketItemObject.id)
+								onSelected(true)
+							}
+						)
 					}
-				)
+				}
+
+				item {
+					Spacer(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(2.dp)
+							.padding(24.dp, 0.dp)
+							.background(MaterialTheme.colorScheme.onBackground.copy(0.13f))
+					)
+				}
 			}
 
-			item {
-				Spacer(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(2.dp)
-						.padding(24.dp, 0.dp)
-						.background(MaterialTheme.colorScheme.onBackground.copy(0.13f))
-				)
-			}
+			item { Spacer(modifier = Modifier.height(32.dp)) }
 		}
-
-		item { Spacer(modifier = Modifier.height(32.dp)) }
 	}
 }
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -133,7 +149,7 @@ private fun LinkItem(
 ) {
 
 	val containerColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.surface else Color.Companion.Transparent,
+		targetValue = if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
 		animationSpec = tween(300)
 	)
 	val contentColor by animateColorAsState(

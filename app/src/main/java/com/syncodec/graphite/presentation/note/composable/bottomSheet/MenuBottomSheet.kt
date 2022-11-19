@@ -55,7 +55,7 @@ fun MenuBottomSheet() {
 			icon = R.drawable.ic_raw_data
 		) {
 			Intent(context, RawActivity::class.java).apply {
-				putExtra(Extra.Companion.Constant.OBJECT_ID.name, noteId.toString())
+				putExtra(Extra.Companion.Constant.OBJECT_ID.name, noteId?.bytes)
 				putExtra(Extra.Companion.Constant.OBJECT_TYPE.name, Extra.Companion.ObjectType.NOTE.name)
 
 				context.startActivity(this)

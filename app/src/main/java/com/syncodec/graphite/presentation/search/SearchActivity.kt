@@ -19,11 +19,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.search.composable.dialog.SearchDialogType
 import com.syncodec.graphite.presentation.search.composable.screen.SearchScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import dagger.hilt.android.AndroidEntryPoint
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 
 @AndroidEntryPoint
@@ -48,11 +51,14 @@ class SearchActivity : ComponentActivity() {
 					val tag by viewModel.showTag.collectAsState(initial = null)
 					val query by viewModel.searchQuery.collectAsState(initial = null)
 
-					val currentChapter by viewModel.currentChapter
+					val parentChapterId by viewModel.parentChapter
 					val chapterList = viewModel.chapterList
 					val chapterPath = viewModel.chapterPath
 
 					var showWhereDialog by remember { mutableStateOf(false) }
+
+					var isSelected by viewModel.isSelected
+					val selectedRealmUUIDList = viewModel.selectedRealmUUIDList
 
 					fun openDialog(dialogType : SearchDialogType) {
 						when (dialogType) {
@@ -69,31 +75,45 @@ class SearchActivity : ComponentActivity() {
 					this.onBackPressedDispatcher.addCallback(
 						this, object : OnBackPressedCallback(true) {
 							override fun handleOnBackPressed() {
-								if (viewModel.showResultScreen.value) {
-									viewModel.showResultScreen.value = false
-									viewModel.showTag.value = null
-									viewModel.searchQuery.value = null
+								if (isSelected) {
+									isSelected = false
+									selectedRealmUUIDList.clear()
 								} else {
-									finish()
+									if (showWhereDialog) {
+										if (parentChapterId != null) {
+											viewModel.onWhere(chapterPath.getOrNull(1)?.id)
+										} else {
+											closeDialog(SearchDialogType.WHERE)
+										}
+									} else if (viewModel.showResultScreen.value) {
+										viewModel.showResultScreen.value = false
+										viewModel.showTag.value = null
+										viewModel.searchQuery.value = null
+									} else {
+										finish()
+									}
 								}
 							}
 						}
 					)
 
 					CompositionLocalProvider(
-						onSearchWhere provides {},
 						onShowFavourite provides viewModel::showFavourite,
 						onShowWithAttachment provides viewModel::showWithAttachment,
 						onShowLocked provides {},
 						onShowTag provides viewModel::showTag,
 						onShowQuery provides viewModel::searchInNotes,
-						Companion.currentChapter provides currentChapter,
+						Companion.parentChapter provides parentChapterId,
 						Companion.chapterList provides chapterList,
 						Companion.chapterPath provides chapterPath,
 						Companion.showWhereDialog provides showWhereDialog,
 						openDialog provides ::openDialog,
 						closeDialog provides ::closeDialog,
+						LocalCompositionIsSelected provides isSelected,
+						LocalCompositionSelectedRealmUUIDList provides selectedRealmUUIDList,
+						LocalCompositionOnSelect provides { isSelected = it },
 						onWhere provides viewModel::onWhere,
+						setOnWhere provides viewModel::setOnWhere,
 					) {
 						SearchScreen(
 							showResultScreen = showResultScreen,
@@ -101,9 +121,7 @@ class SearchActivity : ComponentActivity() {
 							visibleNote = visibleNote,
 							tag = tag,
 							query = query,
-						) {
-							this.onBackPressedDispatcher.onBackPressed()
-						}
+						) { this.onBackPressedDispatcher.onBackPressed() }
 					}
 				}
 			}
@@ -111,14 +129,13 @@ class SearchActivity : ComponentActivity() {
 	}
 
 	companion object {
-		val onSearchWhere = compositionLocalOf<(ObjectId?) -> Unit> { {} }
 		val onShowFavourite = compositionLocalOf<() -> Unit> { {} }
 		val onShowWithAttachment = compositionLocalOf<() -> Unit> { {} }
 		val onShowLocked = compositionLocalOf<() -> Unit> { {} }
 		val onShowTag = compositionLocalOf<(TagObject) -> Unit> { {} }
 		val onShowQuery = compositionLocalOf<(String) -> Unit> { {} }
 
-		val currentChapter = compositionLocalOf<ChapterObjectLite?> { null }
+		val parentChapter = compositionLocalOf<ChapterObjectLite?> { null }
 		val chapterList = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { mutableStateListOf() }
 		val chapterPath = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { mutableStateListOf() }
 
@@ -127,6 +144,7 @@ class SearchActivity : ComponentActivity() {
 		val openDialog = compositionLocalOf<(SearchDialogType) -> Unit> { {} }
 		val closeDialog = compositionLocalOf<(SearchDialogType) -> Unit> { {} }
 
-		val onWhere = compositionLocalOf<(ObjectId?) -> Unit> { {} }
+		val onWhere = compositionLocalOf<(RealmUUID?) -> Unit> { {} }
+		val setOnWhere = compositionLocalOf<(ChapterObjectLite?) -> Unit> { {} }
 	}
 }

@@ -28,7 +28,7 @@ fun ShowInfoDialog(
 	movieId : String?,
 	tvId: String?,
 	movieImdbId : String?,
-	movieOriginalTitle : String?,
+	title : String?,
 	onDismiss : () -> Unit,
 ) {
 	val context = LocalContext.current
@@ -36,16 +36,9 @@ fun ShowInfoDialog(
 
 	GenericDialog(
 		showDialog = showDialog,
+		title = "Info",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = movieOriginalTitle ?: "Info",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		Box(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -60,7 +53,7 @@ fun ShowInfoDialog(
 				Text(
 					text = "TMDB ID: $movieId",
 					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurface,
+					color = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier
 				)
 

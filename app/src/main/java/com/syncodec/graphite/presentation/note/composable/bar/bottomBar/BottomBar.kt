@@ -8,6 +8,7 @@ import com.syncodec.graphite.presentation.note.composable.bar.bottomBar.editorBo
 
 @Composable
 fun BottomBar(
+	onClickTimePicker: () -> Unit,
 	onClickMetadata : () -> Unit,
 	onClickLocation : () -> Unit,
 	onClickAttachment : () -> Unit,
@@ -19,10 +20,11 @@ fun BottomBar(
 		when (it) {
 			true -> ViewerBottomBar()
 			false -> EditorBottomBar(
+				onClickTimePicker = onClickTimePicker,
+				onClickTag = onClickTag,
 				onClickMetadata = onClickMetadata,
 				onClickLocation = onClickLocation,
-				onClickAttachment = onClickAttachment,
-				onClickTag = onClickTag
+				onClickAttachment = onClickAttachment
 			)
 
 			null -> Unit

@@ -54,8 +54,6 @@ fun EditChapterDialog(
 
 	var showColorPickerDialog by remember { mutableStateOf(false) }
 
-	var showImagePicker by remember { mutableStateOf(false) }
-
 	LaunchedEffect(key1 = title) {
 		_title = title
 	}
@@ -84,16 +82,9 @@ fun EditChapterDialog(
 
 	GenericDialog(
 		showDialog = showDialog,
+		title = "Edit Chapter",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = "Edit Chapter",
-			style = MaterialTheme.typography.headlineMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		DialogTextField(
 			text = _title,
 			label = "Title",
@@ -159,21 +150,22 @@ fun EditChapterDialog(
 			}
 		)
 
+		Spacer(modifier = Modifier.height(8.dp))
+
 		DualActionButtons(
 			primaryText = "Save",
 			onPrimaryClick = {
 
-				val bitmap = if (currentImage != null) {
-					BitmapFactory.decodeResource(context.resources, currentImage!!)
-				} else {
-					currentImageUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
-				}
+				val bitmap = if (currentImage != null) BitmapFactory.decodeResource(context.resources, currentImage!!)
+				else currentImageUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
 
 				val aspectRatio = if (bitmap != null) { bitmap.width.toFloat() / bitmap.height.toFloat() } else { 1f }
 
-				val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (512 * aspectRatio).toInt(), 512) }
+				val _thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (512 * aspectRatio).toInt(), 512) }
 
-				onSave(_title, _description, _color, thumbnail)
+				if (_thumbnail == null) onSave(_title, _description, _color, null)
+				else onSave(_title, _description, null, _thumbnail)
+
 				onDismiss()
 			},
 			secondaryText = "Discard",
@@ -185,7 +177,11 @@ fun EditChapterDialog(
 	ColorPickerDialog(
 		color = _color ?: MaterialTheme.colorScheme.primary,
 		showDialog = showColorPickerDialog,
-		onSelectColor = { _color = it }
+		onSelectColor = {
+			_color = it
+			currentImage = null
+			currentImageUri = null
+		}
 	) {
 		showColorPickerDialog = false
 	}

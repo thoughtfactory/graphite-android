@@ -17,14 +17,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSelected
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
@@ -83,9 +83,9 @@ private fun Bar(
 	val openSheet = LocalCompositionOpenBottomSheet.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
 
-	val onSelect = LocalCompositionOnSelected.current
+	val onSelect = LocalCompositionOnSelect.current
 
 	val isVaultOpened = LocalVaultIsOpened.current
 
@@ -115,12 +115,12 @@ private fun Bar(
 						tint = MaterialTheme.colorScheme.onBackground,
 					) {
 						onSelect(false)
-						selectedObjectIdList.clear()
+						selectedRealmUUIDList.clear()
 					}
 				},
 				title = {
 					Text(
-						text = if (selectedObjectIdList.size == 0) "Select items to delete" else if (selectedObjectIdList.size == 1) "1 item selected" else "${selectedObjectIdList.size} items selected",
+						text = if (selectedRealmUUIDList.isEmpty()) "No items selected" else if (selectedRealmUUIDList.size == 1) "1 item selected" else "${selectedRealmUUIDList.size} items selected",
 						color = MaterialTheme.colorScheme.onBackground
 					)
 				},

@@ -1,206 +1,120 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
-import android.net.Uri
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.google.firebase.auth.FirebaseUser
-import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.SettingsActivity
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScreen
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
+import com.syncodec.graphite.presentation.settings.composable.bar.TopBar
+import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
+import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetLayout
+import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
+import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
-fun SettingsScreen(
-	scrollState : ScrollState,
-	currentUser : FirebaseUser?,
-	onClickLogin: () -> Unit,
-	onClickProfile: () -> Unit,
-) {
-	val activity = LocalContext.current as SettingsActivity
+fun SettingsScreen() {
 
-	val uriHandler = LocalUriHandler.current
-	
-	GenericSettingsScreen(
-		title = "Settings",
-		scrollState = scrollState
-	) {
-		Crossfade(targetState = currentUser) {
-			if (it == null) {
-				SettingsButton(
-					title = "Login",
-					icon = R.drawable.ic_account,
-					onClick = onClickLogin
-				)
-			} else {
-				ProfileButton(
-					displayName = it.displayName ?: "Anonymous",
-					email = it.email ?: "Anonymous",
-					photoUrl = it.photoUrl,
-					onClick = onClickProfile
-				)
-			}
-		}
+	val scope = rememberCoroutineScope()
 
-		SettingsButton(
-			title = "Subscription",
-			subTitle = "Get access to all the features",
-			icon = R.drawable.ic_subscription
-		) {}
+	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+	var bottomSheetType : SettingsBottomSheetType by remember { mutableStateOf(SettingsBottomSheetType.PROFILE) }
 
-		SettingsButton(
-			title = "Preferences",
-			subTitle = "Themes, font style, etc.",
-			icon = R.drawable.ic_preference
-		) { activity.navigator.value = SettingsActivity.Companion.Navigator.PREFERENCES }
-
-		SettingsButton(
-			title = "Security",
-			subTitle = "Don't let intruders see your data",
-			icon = R.drawable.ic_lock_close
-		) { activity.navigator.value = SettingsActivity.Companion.Navigator.SECURITY }
-
-		SettingsButton(
-			title = "Extensions",
-			subTitle = "Manage extensions",
-			icon = R.drawable.ic_extensions
-		) { activity.navigator.value = SettingsActivity.Companion.Navigator.PREFERENCES }
-
-		SettingsButton(
-			title = "Backup & Restore",
-			subTitle = "Backup your data to the cloud and local storage",
-			icon = R.drawable.ic_data
-		) { activity.navigator.value = SettingsActivity.Companion.Navigator.BACKUP }
-
-		SettingsButton(
-			title = "Synchronization",
-			subTitle = "Keep your data in sync across all your devices",
-			icon = R.drawable.ic_sync
-		) { activity.navigator.value = SettingsActivity.Companion.Navigator.SYNC }
-
-		SettingsButton(
-			title = "Terms of Service",
-			subTitle = "Read our terms of service",
-			icon = R.drawable.ic_terms
-		) {
-			uriHandler.openUri("https://graphite.syncodec.com/terms.html")
-		}
-
-		SettingsButton(
-			title = "Privacy Policy",
-			subTitle = "Read our privacy policy",
-			icon = R.drawable.ic_policy
-		) {
-			uriHandler.openUri("https://graphite.syncodec.com/policy.html")
-		}
-
-		SettingsButton(
-			title = "About Us",
-			subTitle = "Hello there...",
-			icon = R.drawable.ic_info
-		) {}
+	fun openSheet(_bottomSheetType : SettingsBottomSheetType) {
+		scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
 	}
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ProfileButton(
-	displayName: String,
-	email: String,
-	photoUrl: Uri?,
-	onClick: () -> Unit
-) {
-	val context = LocalContext.current
+	fun closeSheet() {
+		scope.launch { modalBottomSheetState.hide() }
+	}
 
-	Card(
-		colors = CardDefaults.cardColors(
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
-			contentColor = MaterialTheme.colorScheme.onSurface,
-		),
-		modifier = Modifier.padding(12.dp, 4.dp),
-		onClick = onClick
+	val navigatorPath = SettingsActivity.navigatorPath.current
+	val scrollState = SettingsActivity.scrollState.current
+
+	val onBackPressed = SettingsActivity.onBackPressed.current
+
+	val title = when (navigatorPath.last()) {
+		SettingsActivity.Companion.Navigator.BASE -> "Settings"
+		SettingsActivity.Companion.Navigator.PREFERENCES -> "Preferences"
+		SettingsActivity.Companion.Navigator.SECURITY -> "Security"
+		SettingsActivity.Companion.Navigator.EXTENSIONS -> "Extensions"
+		SettingsActivity.Companion.Navigator.BACKUP -> "Backup & Restore"
+		SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> "Local Backup"
+		SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> "Snapshot Warehouse"
+		SettingsActivity.Companion.Navigator.SYNC -> "Synchronization"
+		SettingsActivity.Companion.Navigator.ABOUT -> "About Us"
+	}
+
+	CompositionLocalProvider(
+		SettingsActivity.openBottomSheet provides ::openSheet,
+		SettingsActivity.closeBottomSheet provides ::closeSheet,
 	) {
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp)
+		ModalBottomSheetLayout(
+			sheetContent = {
+				SheetLayout(bottomSheetType = bottomSheetType) { closeSheet() }
+			},
+			sheetState = modalBottomSheetState,
+			sheetElevation = 0.dp,
+			sheetBackgroundColor = Color.Transparent,
+			modifier = Modifier.fillMaxSize(),
 		) {
-			if (photoUrl == null) {
-				Icon(
-					painter = painterResource(id = R.drawable.ic_account),
-					contentDescription = email,
-					modifier = Modifier.requiredSize(48.dp)
-				)
-
-			} else {
-				AsyncImage(
-					model = ImageRequest.Builder(context)
-						.data(photoUrl)
-						.crossfade(300)
-						.build(),
-					placeholder = null,
-					contentDescription = email,
-					contentScale = ContentScale.Crop,
-					modifier = Modifier
-						.requiredSize(48.dp)
-						.clip(CircleShape),
-				)
-			}
-
-			Spacer(modifier = Modifier.width(12.dp))
-
-			Column(
-				modifier = Modifier.weight(1f)
+			Scaffold(
+				modifier = Modifier.fillMaxSize(),
+				topBar = {
+					TopBar(
+						title = title,
+						scrollState = scrollState,
+					) { onBackPressed() }
+				}
 			) {
-				Text(
-					text = displayName,
-					style = MaterialTheme.typography.titleMedium,
-					color = MaterialTheme.colorScheme.onSurface,
-					fontWeight = FontWeight.Bold
-				)
-				Spacer(modifier = Modifier.height(4.dp))
-				Text(
-					text = email,
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
-				)
+				Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(it)
+				) {
+					AnimatedContent(
+						targetState = navigatorPath.last(),
+						transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) },
+						modifier = Modifier.fillMaxSize()
+					) {
+						when (it) {
+							SettingsActivity.Companion.Navigator.BASE -> BaseScreen()
+							SettingsActivity.Companion.Navigator.PREFERENCES -> PreferencesScreen()
+							SettingsActivity.Companion.Navigator.SECURITY -> SecurityScreen()
+							SettingsActivity.Companion.Navigator.EXTENSIONS -> ExtensionsScreen()
+							SettingsActivity.Companion.Navigator.BACKUP -> BackupAndRestoreScreen()
+							SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> LocalBackupScreen()
+							SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen()
+							SettingsActivity.Companion.Navigator.SYNC -> SynchronizationScreen()
+							SettingsActivity.Companion.Navigator.ABOUT -> null
+						}
+					}
+				}
 			}
-			Spacer(modifier = Modifier.width(16.dp))
+
+			SettingsDialog()
 		}
 	}
 }

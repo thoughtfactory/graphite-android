@@ -95,7 +95,7 @@ fun ChapterBottomSheet() {
 		BottomSheetStrip()
 
 		BottomSheetHeader(
-			title = "Writing a new book?",
+			title = "Writing a new chapter?",
 			icon = R.drawable.ic_notebook,
 			subTitle = "Keep your notes organized in notebooks"
 		)
@@ -103,27 +103,27 @@ fun ChapterBottomSheet() {
 		Spacer(modifier = Modifier.height(8.dp))
 
 		LargeTextField(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
 			text = titleText,
 			placeholder = "Give your book a title",
 			isFocused = isTitleTextFocused,
 			focusRequester = titleTextFocusRequester,
 			onFocusChanged = { isTitleTextFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp),
 		) { titleText = it }
 
 		Spacer(modifier = Modifier.height(8.dp))
 
 		LargeTextField(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
 			text = descriptionText,
 			placeholder = "And a little description",
 			isFocused = isDescriptionTextFocused,
 			focusRequester = descriptionTextFocusRequester,
 			onFocusChanged = { isDescriptionTextFocused = it },
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(24.dp, 0.dp),
 		) { descriptionText = it }
 
 		Spacer(modifier = Modifier.height(8.dp))

@@ -11,29 +11,31 @@ import androidx.compose.animation.with
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsNew
+import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsFavourite
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsLocked
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsNew
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickFavourite
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickLock
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickNavigationIcon
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickSave
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.common.button.MenuButton
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
-@Preview
 @Composable
 fun TopBar() {
-
 	val title = LocalCompositionTitle.current
 	val onClickNavigationIcon = LocalCompositionOnClickNavigationIcon.current
 	val isNew = LocalCompositionIsNew.current
@@ -52,49 +54,46 @@ fun TopBar() {
 				onClick = onClickNavigationIcon
 			)
 		},
-		title = {
-			Crossfade(
-				targetState = title,
-				animationSpec = tween(300)
-			) {
-				Text(
-					text = it ?: "",
-					color = MaterialTheme.colorScheme.onBackground,
-					fontWeight = FontWeight.Bold
-				)
-			}
-		},
+		title = {},
 		actions = {
 			AnimatedContent(
 				targetState = isNew,
 				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + fadeOut(tween(300), 0.71f) }
 			) {
-				if (it) {
-					Row(modifier = Modifier) {
-						Button(onClick = onClickSave) {
-							Text(text = "Save")
+				when(it) {
+					true -> {
+						Row(
+							modifier = Modifier
+						) {
+							Button(onClick = onClickSave) {
+								Text(text = "Save")
+							}
+							Spacer(modifier = Modifier.width(4.dp))
 						}
-						Spacer(modifier = Modifier.width(8.dp))
 					}
-				} else {
-					Row(modifier = Modifier) {
-						MenuButton(
-							icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
-							contentDescription = if (isLocked) "Locked" else "Not locked",
-							tint = MaterialTheme.colorScheme.onBackground,
-							isChecked = isLocked,
-							isEnabled = true,
-							onClick = onClickLock
-						)
-						MenuButton(
-							icon = R.drawable.ic_favourite,
-							contentDescription = "Favourite",
-							tint = MaterialTheme.colorScheme.onBackground,
-							isChecked = isFavourite,
-							isEnabled = true,
-							onClick = onClickFavourite,
-						)
-					}
+					 false -> {
+						 Row(
+							 modifier = Modifier
+						 ) {
+							 MenuButton(
+								 icon = if (isLocked == true) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
+								 contentDescription = if (isLocked == true) "Locked" else "Not locked",
+								 tint = MaterialTheme.colorScheme.onBackground,
+								 isChecked = isLocked == true,
+								 isEnabled = true,
+								 onClick = onClickLock
+							 )
+							 MenuButton(
+								 icon = R.drawable.ic_favourite,
+								 contentDescription = "Favourite",
+								 tint = MaterialTheme.colorScheme.onBackground,
+								 isChecked = isFavourite == true,
+								 isEnabled = true,
+								 onClick = onClickFavourite,
+							 )
+						 }
+					 }
+					null -> null
 				}
 			}
 		},

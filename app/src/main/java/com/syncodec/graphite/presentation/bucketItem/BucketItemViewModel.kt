@@ -24,7 +24,6 @@ import com.syncodec.graphite.di.network.ShowData
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TvData
-import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.Extra
@@ -33,7 +32,8 @@ import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.serializable
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -43,37 +43,40 @@ import javax.inject.Inject
 @HiltViewModel
 class BucketItemViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
 
-	val repositoryState = repository2.repositoryState
-
 	val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-	var isNew : MutableState<Boolean?> = mutableStateOf(null)
-	var bucketId : MutableState<ObjectId?> = mutableStateOf(null)
-	var bucketType : MutableState<BucketType?> = mutableStateOf(null)
+	val repositoryState = repository2.repositoryState
+	val status : MutableState<Status> = mutableStateOf(Status.INIT)
 
+	val isNew = mutableStateOf<Boolean?>(null)
+	val bucketId = mutableStateOf<RealmUUID?>(null)
 
-	//	common
-	var bucketItemObject : MutableState<BucketItemObject?> = mutableStateOf(null)
+	val objectId : MutableState<RealmUUID?> = mutableStateOf(null)
+	val createdTimestamp : MutableState<Long?> = mutableStateOf(null)
+	val modifiedTimestamp : MutableState<Long?> = mutableStateOf(null)
+	val bucketType : MutableState<BucketType?> = mutableStateOf(null)
+	val title : MutableState<String?> = mutableStateOf(null)
 	val state : MutableState<BucketItemState?> = mutableStateOf(null)
-	val showType : MutableState<ShowType?> = mutableStateOf(null)
 	val thumbnail : MutableState<Bitmap?> = mutableStateOf(null)
 	val isFavourite : MutableState<Boolean?> = mutableStateOf(null)
 	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
-
 
 	//  Book
 	var bookKey : MutableState<String?> = mutableStateOf(null)
 	var bookTitle : MutableState<String?> = mutableStateOf(null)
 	var bookCoverI : MutableState<String?> = mutableStateOf(null)
-	var bookAuthorList : SnapshotStateList<String?> = mutableStateListOf()
+	var bookAuthorList : SnapshotStateList<String> = mutableStateListOf()
 	var bookDescription : MutableState<String?> = mutableStateOf(null)
 	var bookPageCount : MutableState<Int?> = mutableStateOf(null)
 	var bookFirstPublishYear : MutableState<String?> = mutableStateOf(null)
 
+
+	val showType : MutableState<ShowType?> = mutableStateOf(null)
+
 	//  Movie
-	var movieId : MutableState<String?> = mutableStateOf(null)
+	val movieId : MutableState<String?> = mutableStateOf(null)
 	val movieAdult : MutableState<Boolean?> = mutableStateOf(false)
-	val movieGenres : SnapshotStateList<Genre?> = mutableStateListOf()
+	val movieGenres : SnapshotStateList<Genre> = mutableStateListOf()
 	val movieHomepage : MutableState<String?> = mutableStateOf(null)
 	val movieImdbId : MutableState<String?> = mutableStateOf(null)
 	val movieOriginalLanguage : MutableState<String?> = mutableStateOf(null)
@@ -89,7 +92,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 	val tvId : MutableState<String?> = mutableStateOf(null)
 	val tvAdult : MutableState<Boolean?> = mutableStateOf(null)
 	val tvFirstAirDate : MutableState<String?> = mutableStateOf(null)
-	val tvGenres : SnapshotStateList<Genre?> = mutableStateListOf()
+	val tvGenres : SnapshotStateList<Genre> = mutableStateListOf()
 	val tvHomepage : MutableState<String?> = mutableStateOf(null)
 	val tvNumberOfSeasons : MutableState<Int?> = mutableStateOf(null)
 	val tvNumberOfEpisodes : MutableState<Int?> = mutableStateOf(null)
@@ -100,384 +103,341 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 	val tvPosterPath : MutableState<String?> = mutableStateOf(null)
 	val tvTagline : MutableState<String?> = mutableStateOf(null)
 
-	val status : MutableState<Status> = mutableStateOf(Status.INIT)
+	fun initData(bucketId : RealmUUID, bucketType : BucketType, intent : Intent) {
+		isNew.value = true
 
-	fun initData(isNew : Boolean, bucketId : ObjectId, bucketItemId : ObjectId?, bucketType : BucketType, intent : Intent) {
-
-		status.value = Status.LOADING
-
-		this.isNew.value = isNew
 		this.bucketId.value = bucketId
 		this.bucketType.value = bucketType
 
 		viewModelScope.launch(Dispatchers.IO) {
+			when (bucketType) {
+				BucketType.TODO -> null
+				BucketType.BOOK -> {
+					val hasBookId = intent.hasExtra(Extra.Companion.Constant.BOOK_ID.name)
+					val hasExtraData = intent.hasExtra(Extra.Companion.Constant.BUCKET_EXTRA_DATA.name)
+
+					if (hasBookId && hasExtraData) {
+						val bookId = intent.getStringExtra(Extra.Companion.Constant.BOOK_ID.name)
+						val bookData = intent.serializable<BookData>(Extra.Companion.Constant.BUCKET_EXTRA_DATA.name)
+
+						loadBook(bookData)
+						OpenLibraryApi.retrieveDescriptionFromKey(key = bookId) { description ->
+							this.launch(Dispatchers.Main) {
+								bookDescription.value = description
+							}
+						}
+						getBookThumbnail(coverI = bookData?.coverI) {
+							thumbnail.value = it
+						}
+					}
+				}
+
+				BucketType.SHOW -> {
+					val hasMovieId = intent.hasExtra(Extra.Companion.Constant.MOVIE_ID.name)
+					val hasTvId = intent.hasExtra(Extra.Companion.Constant.TV_ID.name)
+
+					if (hasMovieId) {
+						val movieId = intent.getStringExtra(Extra.Companion.Constant.MOVIE_ID.name)
+						if (movieId != null) {
+							viewModelScope.launch(Dispatchers.IO) {
+								try {
+									TMDbApi.retrieveMovieDataFromId(id = movieId) { response ->
+										if (response == null) {
+//									        TODO Show msg
+											status.value = Status.ERROR
+										} else {
+											response.body?.string()?.let {
+												val movieData : MovieData = objectMapper.readValue(it)
+												loadMovie(movieData = movieData)
+												getShowThumbnail(url = movieData.posterPath) { thumbnail.value = it }
+											}
+										}
+									}
+								} catch (e : Exception) {
+//				                    TODO    Show description not retrieved message
+									e.printStackTrace()
+									status.value = Status.ERROR
+								}
+							}
+						} else {
+//					        TODO Show error
+							status.value = Status.ERROR
+						}
+
+					} else if (hasTvId) {
+						val tvId = intent.getStringExtra(Extra.Companion.Constant.TV_ID.name)
+						if (tvId != null) {
+							viewModelScope.launch(Dispatchers.IO) {
+								try {
+									TMDbApi.retrieveTvDataFromId(id = tvId) { response ->
+										if (response == null) {
+//									        TODO Show msg
+											status.value = Status.ERROR
+										} else {
+											response.body?.string()?.let {
+												val tvData : TvData = objectMapper.readValue(it)
+												loadTv(tvData = tvData)
+												getShowThumbnail(url = tvData.posterPath) { thumbnail.value = it }
+											}
+										}
+									}
+								} catch (e : Exception) {
+//				                    TODO    Show description not retrieved message
+									e.printStackTrace()
+									status.value = Status.ERROR
+								}
+							}
+						} else {
+//					        TODO Show error
+							status.value = Status.ERROR
+						}
+					}
+				}
+
+				BucketType.LINK -> null
+				BucketType.UNKNOWN -> null
+			}
+		}
+	}
+
+	fun loadData(bucketItemId : RealmUUID, bucketId : RealmUUID) {
+		viewModelScope.launch(Dispatchers.IO) {
+			this@BucketItemViewModel.bucketId.value = bucketId
 			when (repositoryState.value) {
 				RepositoryState.INIT -> null
+				RepositoryState.LOCKED -> null
 				RepositoryState.LOADING -> null
-				RepositoryState.SUCCESS -> onRepositoryStateSuccess(bucketItemId, intent)
+				RepositoryState.SUCCESS -> onRepositoryStateSuccess(bucketItemId)
 				RepositoryState.ERROR -> null
 			}
 		}
 	}
 
-	private fun onRepositoryStateSuccess(bucketItemId : ObjectId?, intent : Intent) {
-		when (this.isNew.value) {
-			true -> initBucketItem(intent = intent)
-			false -> if (bucketItemId == null) {
+	private fun onRepositoryStateSuccess(bucketItemId : RealmUUID) {
+		viewModelScope.launch(Dispatchers.IO) {
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+
+			isNew.value = false
+			repository2.getBucketItemAsFlow(id = bucketItemId).collect {
+				this@BucketItemViewModel.objectId.value = it?.id
+				this@BucketItemViewModel.createdTimestamp.value = it?.createdTimestamp
+				this@BucketItemViewModel.modifiedTimestamp.value = it?.modifiedTimestamp
+				this@BucketItemViewModel.bucketType.value = try {
+					BucketType.valueOf(it?.bucketType ?: BucketType.UNKNOWN.name)
+				} catch (e : Exception) {
+					BucketType.UNKNOWN
+				}
+				this@BucketItemViewModel.title.value = it?.title
+				this@BucketItemViewModel.state.value = BucketItemState.valueOf(it?.state ?: BucketItemState.ALPHA.name)
+				this@BucketItemViewModel.thumbnail.value = it?.thumbnail?.decodeBase64ToBitmap()
+				this@BucketItemViewModel.isFavourite.value = it?.isFavourite
+				this@BucketItemViewModel.isLocked.value = it?.isLocked
+
+				when (this@BucketItemViewModel.bucketType.value) {
+					BucketType.TODO -> null
+					BucketType.BOOK -> loadBook(bookData = it?.getBookData())
+					BucketType.SHOW -> it?.getShowData()?.let { (type, tvData, movieData) ->
+						when (type) {
+							ShowType.MOVIE -> loadMovie(movieData = movieData)
+							ShowType.TV -> loadTv(tvData = tvData)
+							null -> null
+						}
+					}
+					BucketType.LINK -> null
+					BucketType.UNKNOWN -> null
+					else -> null
+				}
+			}
+		}
+	}
+
+	private fun loadBook(bookData : BookData?) {
+		viewModelScope.launch(Dispatchers.Main) {
+			if (bookData == null) {
+//			    TODO Show error
 				status.value = Status.ERROR
 			} else {
-				loadBucketItem(id = bucketItemId)
+				this@BucketItemViewModel.bookKey.value = bookData.key
+				this@BucketItemViewModel.bookTitle.value = bookData.title
+				this@BucketItemViewModel.bookCoverI.value = bookData.coverI
+				this@BucketItemViewModel.bookAuthorList.clear()
+				this@BucketItemViewModel.bookAuthorList.addAll(bookData.authorList?.filterNotNull() ?: listOf())
+				this@BucketItemViewModel.bookDescription.value = bookData.description
+				this@BucketItemViewModel.bookPageCount.value = bookData.numberOfPages
+				this@BucketItemViewModel.bookFirstPublishYear.value = bookData.firstPublishYear
+
+				this@BucketItemViewModel.title.value = bookData.title
+
+				status.value = Status.LOADED
 			}
-
-			null -> null
 		}
 	}
 
-	private fun initBucketItem(intent : Intent) {
-		bucketItemObject.value = BucketItemObject().apply {
-			this.bucketType = this@BucketItemViewModel.bucketType.value?.name ?: BucketType.UNKNOWN.name
-			this.state = BucketItemState.ALPHA.name
-			this.isFavourite = false
-			this.isLocked = false
-		}
-
-		when (bucketType.value) {
-			BucketType.TODO -> null
-			BucketType.BOOK -> initNewBookItem(intent = intent)
-			BucketType.SHOW -> initNewShowItem(intent = intent)
-			BucketType.LINK -> null
-			BucketType.UNKNOWN -> null
-			null -> null
-		}
-	}
-
-	private fun loadBucketItem(id : ObjectId) {
-		viewModelScope.launch(Dispatchers.IO) {
-
-			if (repositoryState.value != RepositoryState.SUCCESS) {
+	private fun loadMovie(movieData : MovieData?) {
+		viewModelScope.launch(Dispatchers.Main) {
+			if (movieData == null) {
+//			    TODO Show error
 				status.value = Status.ERROR
-				this.cancel()
+			} else {
+				this@BucketItemViewModel.showType.value = ShowType.MOVIE
+
+				this@BucketItemViewModel.movieId.value = movieData.id
+				this@BucketItemViewModel.movieAdult.value = movieData.adult
+				this@BucketItemViewModel.movieGenres.clear(); movieGenres.addAll(movieData.genres?.filterNotNull() ?: listOf())
+				this@BucketItemViewModel.movieHomepage.value = movieData.homepage
+				this@BucketItemViewModel.movieImdbId.value = movieData.imdbId
+				this@BucketItemViewModel.movieOriginalLanguage.value = movieData.originalLanguage
+				this@BucketItemViewModel.movieOriginalTitle.value = movieData.originalTitle
+				this@BucketItemViewModel.movieOverview.value = movieData.overview
+				this@BucketItemViewModel.moviePosterPath.value = movieData.posterPath
+				this@BucketItemViewModel.movieReleaseDate.value = movieData.releaseDate
+				this@BucketItemViewModel.movieRuntime.value = movieData.runtime
+				this@BucketItemViewModel.movieTitle.value = movieData.title
+				this@BucketItemViewModel.movieTagline.value = movieData.tagline
+
+				this@BucketItemViewModel.title.value = movieData.title
+
+				status.value = Status.LOADED
 			}
+		}
+	}
 
-			try {
-				repository2.getBucketItemAsFlow(id = id).collect {
-					bucketItemObject.value = it
-					thumbnail.value = it?.thumbnail?.decodeBase64ToBitmap()
-					try {
-						state.value = BucketItemState.valueOf(it?.state ?: BucketItemState.ALPHA.name)
-					} catch (e : Exception) {
-						state.value = BucketItemState.ALPHA
-					}
-					isFavourite.value = it?.isFavourite
-					isLocked.value = it?.isLocked
-
-					when (bucketType.value) {
-						BucketType.TODO -> null
-						BucketType.BOOK -> initBookItem(bookData = it?.getBookData())
-						BucketType.SHOW -> initShowItem(showData = it?.getShowData())
-						BucketType.LINK -> null
-						BucketType.UNKNOWN -> null
-						null -> null
-					}
-				}
-			} catch (e : RealmNotInitializedException) {
+	private fun loadTv(tvData : TvData?) {
+		viewModelScope.launch(Dispatchers.Main) {
+			if (tvData == null) {
+//			    TODO Show error
 				status.value = Status.ERROR
-			} catch (e : Exception) {
-				status.value = Status.ERROR
+			} else {
+				this@BucketItemViewModel.showType.value = ShowType.TV
+
+				this@BucketItemViewModel.tvId.value = tvData.id
+				this@BucketItemViewModel.tvAdult.value = tvData.adult
+				this@BucketItemViewModel.tvFirstAirDate.value = tvData.firstAirDate
+				this@BucketItemViewModel.tvGenres.clear(); tvGenres.addAll(tvData.genres?.filterNotNull() ?: listOf())
+				this@BucketItemViewModel.tvHomepage.value = tvData.homepage
+				this@BucketItemViewModel.tvNumberOfSeasons.value = tvData.numberOfSeasons
+				this@BucketItemViewModel.tvNumberOfEpisodes.value = tvData.numberOfEpisodes
+				this@BucketItemViewModel.tvOriginalLanguage.value = tvData.originalLanguage
+				this@BucketItemViewModel.tvName.value = tvData.name
+				this@BucketItemViewModel.tvOriginalName.value = tvData.originalName
+				this@BucketItemViewModel.tvOverview.value = tvData.overview
+				this@BucketItemViewModel.tvPosterPath.value = tvData.posterPath
+				this@BucketItemViewModel.tvTagline.value = tvData.tagline
+
+				this@BucketItemViewModel.title.value = tvData.name
+
+				status.value = Status.LOADED
 			}
-		}
-	}
-
-	private fun initNewBookItem(intent : Intent) {
-		val hasBookId = intent.hasExtra(Extra.Companion.Constant.BOOK_ID.name)
-		val hasExtraData = intent.hasExtra(Extra.Companion.Constant.BUCKET_EXTRA_DATA.name)
-
-		if (hasBookId && hasExtraData) {
-			val bookId = intent.getStringExtra(Extra.Companion.Constant.BOOK_ID.name)
-			val bookData = intent.serializable<BookData>(Extra.Companion.Constant.BUCKET_EXTRA_DATA.name)
-
-			if (bookId != null) {
-				viewModelScope.launch(Dispatchers.IO) {
-					try {
-						initBookItem(bookData = bookData)
-						OpenLibraryApi.retrieveDescriptionFromKey(key = bookId) { description ->
-							bookDescription.value = description
-						}
-						getBookThumbnail(coverI = bookData?.coverI) { thumbnail.value = it }
-					} catch (e : Exception) {
-						status.value = Status.ERROR
-					}
-				}
-			}
-		} else {
-			status.value = Status.ERROR
-		}
-	}
-
-	private fun initBookItem(bookData : BookData?) {
-		if (bookData == null) {
-			status.value = Status.ERROR
-			return
-		} else {
-			bookKey.value = bookData.key
-			bookTitle.value = bookData.title
-			bookCoverI.value = bookData.coverI
-			if (bookData.description != null) bookDescription.value = bookData.description
-			bookAuthorList.clear()
-			bookAuthorList.addAll(bookData.authorList?.map { it } ?: listOf())
-			bookPageCount.value = bookData.numberOfPages
-			bookFirstPublishYear.value = bookData.firstPublishYear
-
-			status.value = Status.LOADED
-		}
-	}
-
-	private fun initNewShowItem(intent : Intent) {
-
-		val hasMovieId = intent.hasExtra(Extra.Companion.Constant.MOVIE_ID.name)
-		val hasTvId = intent.hasExtra(Extra.Companion.Constant.TV_ID.name)
-
-		when {
-			hasMovieId -> {
-				val movieId = intent.getStringExtra(Extra.Companion.Constant.MOVIE_ID.name)
-				if (movieId != null) {
-					viewModelScope.launch(Dispatchers.IO) {
-						try {
-							TMDbApi.retrieveMovieDataFromId(id = movieId) { response ->
-								if (response == null) {
-//									TODO Show msg
-									status.value = Status.ERROR
-								} else {
-									response.body?.string()?.let {
-										val movieData : MovieData = objectMapper.readValue(it)
-										initMovieData(movieData = movieData)
-										getShowThumbnail(url = movieData.posterPath) { thumbnail.value = it }
-									}
-								}
-							}
-						} catch (e : Exception) {
-//				            TODO    Show description not retrieved message
-							e.printStackTrace()
-							status.value = Status.ERROR
-						}
-					}
-				} else {
-//					TODO Show error
-					status.value = Status.ERROR
-				}
-			}
-
-			hasTvId -> {
-				val tvId = intent.getStringExtra(Extra.Companion.Constant.TV_ID.name)
-				if (tvId != null) {
-					viewModelScope.launch(Dispatchers.IO) {
-						try {
-							TMDbApi.retrieveTvDataFromId(id = tvId) { response ->
-								if (response == null) {
-//                                  TODO Show msg
-									status.value = Status.ERROR
-								} else {
-									response.body?.string()?.let {
-										val tvData : TvData = objectMapper.readValue(it)
-										initTvData(tvData = tvData)
-										getShowThumbnail(url = tvData.posterPath) { thumbnail.value = it }
-									}
-								}
-							}
-						} catch (e : Exception) {
-//				            TODO    Show description not retrieved message
-							e.printStackTrace()
-							status.value = Status.ERROR
-						}
-					}
-				}
-			}
-
-			else -> {
-//				TODO Show error
-				status.value = Status.ERROR
-			}
-		}
-	}
-
-	fun initShowItem(showData : ShowData?) {
-		if (showData == null) {
-//			TODO Show error
-			status.value = Status.ERROR
-		} else {
-			when (showData.type) {
-				ShowType.MOVIE -> initMovieData(movieData = showData.movieData)
-				ShowType.TV -> initTvData(tvData = showData.tvData)
-				else -> {
-//					TODO Show error
-					status.value = Status.ERROR
-				}
-			}
-		}
-	}
-
-	private fun initMovieData(movieData : MovieData?) {
-		if (movieData == null) {
-//			TODO Show error
-			status.value = Status.ERROR
-		} else {
-			movieId.value = movieData.id
-			movieAdult.value = movieData.adult
-			movieGenres.clear(); movieGenres.addAll(movieData.genres ?: listOf())
-			movieHomepage.value = movieData.homepage
-			movieImdbId.value = movieData.imdbId
-			movieOriginalLanguage.value = movieData.originalLanguage
-			movieOriginalTitle.value = movieData.originalTitle
-			movieOverview.value = movieData.overview
-			moviePosterPath.value = movieData.posterPath
-			movieReleaseDate.value = movieData.releaseDate
-			movieRuntime.value = movieData.runtime
-			movieTitle.value = movieData.title
-			movieTagline.value = movieData.tagline
-
-			status.value = Status.LOADED
-		}
-	}
-
-	private fun initTvData(tvData : TvData?) {
-		if (tvData == null) {
-//          TODO Show error
-			status.value = Status.ERROR
-		} else {
-			tvId.value = tvData.id
-			tvAdult.value = tvData.adult
-			tvFirstAirDate.value = tvData.firstAirDate
-			tvGenres.clear(); tvGenres.addAll(tvData.genres ?: listOf())
-			tvHomepage.value = tvData.homepage
-			tvNumberOfSeasons.value = tvData.numberOfSeasons
-			tvNumberOfEpisodes.value = tvData.numberOfEpisodes
-			tvOriginalLanguage.value = tvData.originalLanguage
-			tvOriginalName.value = tvData.originalName
-			tvOverview.value = tvData.overview
-			tvPosterPath.value = tvData.posterPath
-			tvTagline.value = tvData.tagline
-			tvName.value = tvData.name
-
-			status.value = Status.LOADED
 		}
 	}
 
 	fun putBucketItem() {
-		when (bucketType.value) {
-			BucketType.BOOK -> putBook {
-				isNew.value = false
-				bucketItemObject.value?.let {
-					loadBucketItem(id = it.id)
-				}
-			}
-			BucketType.SHOW -> putShow { isNew.value = false }
-			else -> return
-		}
-	}
-
-	fun updateBucketItem() {
-//		Repository.updateBucketItem(
-//			id = bucketItemObject.value?.id ?: return,
-//			state = state.value ?: return,
-//			isFavourite = isFavourite.value ?: return,
-//			isLocked = isLocked.value ?: return
-//		)
-	}
-
-	fun putBook(onSuccess : () -> Unit) {
-		if (bucketItemObject.value == null || bucketId.value == null) {
-//			Show error
-		} else {
-			bucketItemObject.value?.thumbnail = thumbnail.value?.encodeBase64()
-			bucketItemObject.value?.title = this.bookTitle.value
-
-			bucketItemObject.value?.isFavourite = isFavourite.value ?: false
-			bucketItemObject.value?.isLocked = isLocked.value ?: false
-
-			bucketItemObject.value?.data = BookData(
-				key = bookKey.value,
-				title = bookTitle.value,
-				coverI = bookCoverI.value,
-				authorList = bookAuthorList,
-				firstPublishYear = bookFirstPublishYear.value,
-				numberOfPages = bookPageCount.value,
-				description = bookDescription.value,
-			).toJsonString()
-
+		CoroutineScope(Dispatchers.IO).launch {
 			try {
-				bucketItemObject.value?.let { it1 ->
-					bucketId.value?.let { it2 ->
-						repository2.putBucketItem(it2, it1) { _, e ->
-							onSuccess()
+				BucketItemObject().apply {
+					if (this@BucketItemViewModel.objectId.value != null) this.id = this@BucketItemViewModel.objectId.value ?: RealmUUID.random()
+					this.modifiedTimestamp = System.currentTimeMillis()
+					this.bucketType = this@BucketItemViewModel.bucketType.value?.name ?: BucketType.UNKNOWN.name
+					this.title = this@BucketItemViewModel.title.value
+					this.state = this@BucketItemViewModel.state.value?.name ?: BucketItemState.ALPHA.name
+					this.thumbnail = this@BucketItemViewModel.thumbnail.value?.encodeBase64()
+					this.isFavourite = this@BucketItemViewModel.isFavourite.value ?: false
+					this.isLocked = this@BucketItemViewModel.isLocked.value ?: false
+
+					when (this@BucketItemViewModel.bucketType.value) {
+						BucketType.TODO -> null
+						BucketType.BOOK -> {
+							this.key = bookKey.value
+							this.data = BookData(
+								key = bookKey.value,
+								title = bookTitle.value,
+								coverI = bookCoverI.value,
+								authorList = bookAuthorList,
+								firstPublishYear = bookFirstPublishYear.value,
+								numberOfPages = bookPageCount.value,
+								description = bookDescription.value,
+							).toJsonString()
 						}
+
+						BucketType.SHOW -> {
+							this.key = when(showType.value) {
+								ShowType.MOVIE -> movieId.value
+								ShowType.TV -> tvId.value
+								else -> null
+							}
+							this.data = when(showType.value) {
+								ShowType.MOVIE -> ShowData(
+									type = ShowType.MOVIE,
+									movieData = MovieData(
+										adult = this@BucketItemViewModel.movieAdult.value,
+										genres = this@BucketItemViewModel.movieGenres.toList(),
+										homepage = this@BucketItemViewModel.movieHomepage.value,
+										id = this@BucketItemViewModel.movieId.value,
+										imdbId = this@BucketItemViewModel.movieImdbId.value,
+										originalLanguage = this@BucketItemViewModel.movieOriginalLanguage.value,
+										originalTitle = this@BucketItemViewModel.movieOriginalTitle.value,
+										overview = this@BucketItemViewModel.movieOverview.value,
+										posterPath = this@BucketItemViewModel.moviePosterPath.value,
+										releaseDate = this@BucketItemViewModel.movieReleaseDate.value,
+										runtime = this@BucketItemViewModel.movieRuntime.value,
+										tagline = this@BucketItemViewModel.movieTagline.value,
+										title = this@BucketItemViewModel.movieTitle.value
+									),
+								).toJsonString()
+								ShowType.TV -> ShowData(
+									type = ShowType.TV,
+									tvData = TvData(
+										adult = this@BucketItemViewModel.tvAdult.value,
+										firstAirDate = this@BucketItemViewModel.tvFirstAirDate.value,
+										genres = this@BucketItemViewModel.tvGenres.toList(),
+										homepage = this@BucketItemViewModel.tvHomepage.value,
+										id = this@BucketItemViewModel.tvId.value,
+										name = this@BucketItemViewModel.tvName.value,
+										numberOfEpisodes = this@BucketItemViewModel.tvNumberOfEpisodes.value,
+										numberOfSeasons = this@BucketItemViewModel.tvNumberOfSeasons.value,
+										originalLanguage = this@BucketItemViewModel.tvOriginalLanguage.value,
+										originalName = this@BucketItemViewModel.tvOriginalName.value,
+										overview = this@BucketItemViewModel.tvOverview.value,
+										posterPath = this@BucketItemViewModel.tvPosterPath.value,
+										tagline = this@BucketItemViewModel.tvTagline.value,
+									)
+								).toJsonString()
+								else -> null
+							}
+						}
+
+						BucketType.LINK -> null
+						BucketType.UNKNOWN -> null
+						else -> null
+					}
+
+					this@BucketItemViewModel.bucketId.value?.let { bucketId ->
+						repository2.putBucketItem(bucketId = bucketId, bucketItemObject = this) { _, _ -> onSuccess(this.id, bucketId) }
 					}
 				}
 			} catch (e : Exception) {
-//				TODO Show error
 				e.printStackTrace()
 			}
 		}
 	}
 
-	fun putShow(onSuccess : () -> Unit) {
-		if (bucketItemObject.value == null || bucketId.value == null) {
-//			Show error
-		} else {
-			bucketItemObject.value?.data = if (tvId.value != null) {
-				bucketItemObject.value?.thumbnail = thumbnail.value?.encodeBase64()
-				bucketItemObject.value?.title = this.tvName.value
-				ShowData(
-					type = ShowType.TV,
-					tvData = TvData(
-						id = this.tvId.value,
-						adult = this.tvAdult.value,
-						firstAirDate = this.tvFirstAirDate.value,
-						genres = this.tvGenres.toList(),
-						homepage = this.tvHomepage.value,
-						numberOfSeasons = this.tvNumberOfSeasons.value,
-						numberOfEpisodes = this.tvNumberOfEpisodes.value,
-						originalLanguage = this.tvOriginalLanguage.value,
-						originalName = this.tvOriginalName.value,
-						overview = this.tvOverview.value,
-						posterPath = this.tvPosterPath.value,
-						tagline = this.tvTagline.value,
-						name = this.tvName.value
-					),
-				).toJsonString()
-			} else if (movieId.value != null) {
-				bucketItemObject.value?.thumbnail = thumbnail.value?.encodeBase64()
-				bucketItemObject.value?.title = this.movieTitle.value
-				ShowData(
-					type = ShowType.MOVIE,
-					movieData = MovieData(
-						id = this.movieId.value,
-						adult = this.movieAdult.value,
-						genres = this.movieGenres.toList(),
-						homepage = this.movieHomepage.value,
-						imdbId = this.movieImdbId.value,
-						originalLanguage = this.movieOriginalLanguage.value,
-						originalTitle = this.movieOriginalTitle.value,
-						overview = this.movieOverview.value,
-						posterPath = this.moviePosterPath.value,
-						releaseDate = this.movieReleaseDate.value,
-						runtime = this.movieRuntime.value,
-						title = this.movieTitle.value,
-						tagline = this.movieTagline.value
-					)
-				).toJsonString()
-			} else {
-//				TODO Show error
-				return
-			}
+	private fun onSuccess(bucketItemId : RealmUUID, bucketId : RealmUUID) {
+		loadData(bucketItemId, bucketId)
+	}
 
-			try {
-				TODO()
-//				Repository.putBucketItem(bucketId = bucketId.value ?: return, bucketItemObject = bucketItemObject.value ?: return, onSuccess = onSuccess)
-			} catch (e : Exception) {
-//				TODO Show error
-				e.printStackTrace()
-			}
-		}
+	fun onToggleFavourite() {
+		isFavourite.value = isFavourite.value?.not()
+		putBucketItem()
+	}
+
+	fun onToggleLocked() {
+		isLocked.value = isLocked.value?.not()
+		putBucketItem()
+	}
+
+	fun onToggleState(state : Int) {
+		this.state.value = BucketItemState.values()[state]
+		putBucketItem()
 	}
 
 	fun getBookThumbnail(coverI : String?, onSuccess : (Bitmap) -> Unit) {
@@ -516,22 +476,5 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 //			TODO Show error
 			e.printStackTrace()
 		}
-	}
-
-	fun onChangeState(state : Int) {
-		this.state.value = BucketItemState.values().getOrElse(state) { BucketItemState.ALPHA }
-		if (isNew.value == false) updateBucketItem() else putBucketItem()
-	}
-
-	fun onClickLock() {
-		isLocked.value = ! (isLocked.value ?: return)
-//		if (isNew.value == false) updateBucketItem() else putBucketItem()
-		putBucketItem()
-	}
-
-	fun onClickFavourite() {
-		isFavourite.value = ! (isFavourite.value ?: return)
-//		if (isNew.value == false) updateBucketItem() else putBucketItem()
-		putBucketItem()
 	}
 }

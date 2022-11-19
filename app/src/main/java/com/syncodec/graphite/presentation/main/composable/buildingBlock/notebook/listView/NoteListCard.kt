@@ -80,7 +80,7 @@ import com.syncodec.graphite.utils.entryTimestamp1
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo
 import com.syncodec.graphite.utils.timeStampToTime
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 import kotlin.math.roundToInt
 
 
@@ -91,8 +91,8 @@ import kotlin.math.roundToInt
 )
 @Composable
 fun NoteListCard(
-	id : ObjectId,
-	parentChapterId : ObjectId?,
+	id : RealmUUID,
+	parentChapterId : RealmUUID?,
 	timestamp : Long,
 	showFullTime : Boolean,
 	isLocked : Boolean,
