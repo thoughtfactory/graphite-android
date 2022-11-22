@@ -1,18 +1,20 @@
 package com.syncodec.graphite.di.model
 
+import android.graphics.Bitmap
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
-import java.util.Base64
 
 
 class NoteObject : RealmObject {
-	@PrimaryKey var id : RealmUUID = RealmUUID.random()
+	@PrimaryKey
+	var id : RealmUUID = RealmUUID.random()
 
 	var createdTimestamp : Long = System.currentTimeMillis()
 	var modifiedTimestamp : Long = System.currentTimeMillis()
@@ -28,7 +30,7 @@ class NoteObject : RealmObject {
 	var isFavourite : Boolean = false
 	var isLocked : Boolean = false
 
-	var attachmentList : RealmList<AttachmentObject> = realmListOf()
+	var attachmentList : RealmList<String> = realmListOf()
 
 	var parentChapterId : RealmUUID? = null
 
@@ -48,6 +50,12 @@ class NoteObject : RealmObject {
 		}
 	}
 
+	fun addAttachment(attachmentObject : AttachmentObject) = attachmentObject.serialize()?.let { attachmentList.add(it) }
+
+	fun removeAttachment(attachmentObject : AttachmentObject) {
+		attachmentList.removeIf { AttachmentObject.deserialize(it) == attachmentObject }
+	}
+
 	fun toSnapshot() = NoteSnapshot(
 		id = this.id.toString(),
 		createdTimestamp = this.createdTimestamp,
@@ -63,7 +71,7 @@ class NoteObject : RealmObject {
 		thumbnailType = this.thumbnailType,
 		isFavourite = this.isFavourite,
 		isLocked = this.isLocked,
-		attachmentList = this.attachmentList.map { it.id.toString() },
+		attachmentList = this.attachmentList.toList(),
 		parentChapterId = this.parentChapterId?.toString(),
 	)
 
@@ -130,7 +138,7 @@ class NoteObject : RealmObject {
 		thumbnailType = thumbnailType,
 		isFavourite = isFavourite,
 		isLocked = isLocked,
-		attachmentList = attachmentList.map { it.id },
+		attachmentList = listOf(),
 		parentChapterId = parentChapterId?.toString()
 	)
 
@@ -177,7 +185,7 @@ class NoteObject : RealmObject {
 			contentThumbnail = this.contentThumbnail,
 			thumbnail = this.thumbnail?.let {
 				try {
-					Base64.getDecoder().decode(it)
+					it.decodeBase64ToBitmap()
 				} catch (e : Exception) {
 					e.printStackTrace(); null
 				}
@@ -285,7 +293,7 @@ data class NoteObjectLite(
 	val latLng : LatLng?,
 	val address : String?,
 	val contentThumbnail : String?,
-	val thumbnail : ByteArray? = null,
+	val thumbnail : Bitmap? = null,
 	val thumbnailType : String? = null,
 	val attachmentCount : Int,
 	val isFavourite : Boolean,
@@ -305,11 +313,9 @@ data class NoteObjectLite(
 		if (latLng != other.latLng) return false
 		if (address != other.address) return false
 		if (contentThumbnail != other.contentThumbnail) return false
-		if (thumbnail != null) {
-			if (other.thumbnail == null) return false
-			if (! thumbnail.contentEquals(other.thumbnail)) return false
-		} else if (other.thumbnail != null) return false
+		if (thumbnail != other.thumbnail) return false
 		if (thumbnailType != other.thumbnailType) return false
+		if (attachmentCount != other.attachmentCount) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 
@@ -318,7 +324,7 @@ data class NoteObjectLite(
 
 	override fun hashCode() : Int {
 		var result = id.hashCode()
-		result = 31 * result + parentChapterId.hashCode()
+		result = 31 * result + (parentChapterId?.hashCode() ?: 0)
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
 		result = 31 * result + userTimestamp.hashCode()
@@ -327,8 +333,9 @@ data class NoteObjectLite(
 		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
-		result = 31 * result + (thumbnail?.contentHashCode() ?: 0)
+		result = 31 * result + (thumbnail?.hashCode() ?: 0)
 		result = 31 * result + (thumbnailType?.hashCode() ?: 0)
+		result = 31 * result + attachmentCount
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		return result
@@ -368,6 +375,7 @@ data class NoteSnapshot(
 		this.thumbnailType = this@NoteSnapshot.thumbnailType
 		this.isFavourite = this@NoteSnapshot.isFavourite
 		this.isLocked = this@NoteSnapshot.isLocked
+		this.attachmentList = realmListOf<String>().apply { addAll(this@NoteSnapshot.attachmentList) }
 		this.parentChapterId = this@NoteSnapshot.parentChapterId?.let { RealmUUID.from(it) }
 	}
 }

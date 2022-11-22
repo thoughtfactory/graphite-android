@@ -140,4 +140,18 @@ data class BucketItemSnapshot(
 	val isLocked: Boolean,
 	val key: String?,
 	val data: String?
-)
+) {
+	fun toObject() = BucketItemObject().apply {
+		this.id = this@BucketItemSnapshot.id
+		this.createdTimestamp = this@BucketItemSnapshot.createdTimestamp
+		this.modifiedTimestamp = this@BucketItemSnapshot.modifiedTimestamp
+		this.bucketType = this@BucketItemSnapshot.bucketType
+		this.title = this@BucketItemSnapshot.title
+		this.state = this@BucketItemSnapshot.state
+		this.thumbnail = this@BucketItemSnapshot.thumbnail
+		this.isFavourite = this@BucketItemSnapshot.isFavourite
+		this.isLocked = this@BucketItemSnapshot.isLocked
+		this.key = this@BucketItemSnapshot.key
+		this.data = this@BucketItemSnapshot.data
+	}
+}

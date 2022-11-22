@@ -9,10 +9,8 @@ import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -23,7 +21,7 @@ class TagsViewModel @Inject constructor(private val repository2 : Repository2) :
 
 	val repositoryState = repository2.repositoryState
 
-	val tagList:SnapshotStateList<TagObject> = mutableStateListOf()
+	val tagList : SnapshotStateList<TagObject> = mutableStateListOf()
 
 	init {
 		viewModelScope.launch(Dispatchers.IO) {
@@ -51,7 +49,7 @@ class TagsViewModel @Inject constructor(private val repository2 : Repository2) :
 	fun putTag(tagObject : TagObject) {
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
-				repository2.putTag(tagObject)
+				repository2.putTag(tagObject) { _, _ -> }
 			} catch (e : RealmNotInitializedException) {
 			} catch (e : Exception) {
 			}

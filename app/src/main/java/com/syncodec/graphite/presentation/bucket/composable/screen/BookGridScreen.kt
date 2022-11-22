@@ -25,7 +25,7 @@ import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.GridIt
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 
@@ -40,7 +40,7 @@ fun BookGridScreen(
 
 	val isSelected = LocalCompositionIsSelected.current
 	val onSelected = LocalCompositionOnSelect.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val bucketRealmUUID = LocalCompositionBucketObject.current?.id
 

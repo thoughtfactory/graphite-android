@@ -32,6 +32,7 @@ fun SettingsButton(
 	subTitle: String? = null,
 	containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
 	contentColor: Color = MaterialTheme.colorScheme.onSurface,
+	iconColor : Color = MaterialTheme.colorScheme.onSurface,
 	enabled: Boolean = true,
 	onClick: () -> Unit
 ) {
@@ -56,6 +57,7 @@ fun SettingsButton(
 				Icon(
 					painter = painterResource(id = icon),
 					contentDescription = title,
+					tint = iconColor,
 					modifier = Modifier.requiredSize(24.dp)
 				)
 				Spacer(modifier = Modifier.width(16.dp))

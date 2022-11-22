@@ -8,7 +8,7 @@ import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionShow
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionShowEditBucketDialog
 import com.syncodec.graphite.presentation.common.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.DialogType
 
@@ -18,7 +18,7 @@ fun BucketDialog() {
 
 	val bucketObject = LocalCompositionBucketObject.current
 
-	val selectedIdList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedIdList = LocalCompositionSelectedObjectIdList.current
 
 	val showDeleteDialog = LocalCompositionShowDeleteDialog.current
 	val showEditBucketDialog = LocalCompositionShowEditBucketDialog.current

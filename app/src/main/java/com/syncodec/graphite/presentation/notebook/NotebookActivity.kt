@@ -1,5 +1,7 @@
 package com.syncodec.graphite.presentation.notebook
 
+import android.app.Activity
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.widget.Toast
@@ -25,9 +27,10 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.NotebookBottomSheetType
 import com.syncodec.graphite.presentation.notebook.composable.dialog.NotebookDialogType
 import com.syncodec.graphite.presentation.notebook.composable.screen.NotebookScreen
@@ -82,7 +85,8 @@ class NotebookActivity : ComponentActivity() {
 				val tagList = viewModel.tagObjectList
 
 				var showEditChapterDialog by remember { mutableStateOf(false) }
-				var showDeleteDialog by remember { mutableStateOf(false) }
+				var showSelectedDeleteDialog by remember { mutableStateOf(false) }
+				var showChapterDeleteDialog by remember { mutableStateOf(false) }
 
 				val chapterId by viewModel.chapterId
 				val createdTimestamp by viewModel.createdTimestamp
@@ -100,7 +104,7 @@ class NotebookActivity : ComponentActivity() {
 				val noteObjectList = viewModel.noteObjectList
 
 				var isSelected by viewModel.isSelected
-				val selectedRealmUUIDList = viewModel.selectedRealmUUIDList
+				val selectedObjectIdList = viewModel.selectedObjectIdList
 
 				val isVaultOpened = LocalVaultIsOpened.current
 				val authenticator = LocalAuthenticatorAction.current
@@ -108,14 +112,16 @@ class NotebookActivity : ComponentActivity() {
 				fun openDialog(dialogType : NotebookDialogType) {
 					when (dialogType) {
 						NotebookDialogType.EDIT_CHAPTER -> showEditChapterDialog = true
-						NotebookDialogType.DELETE -> showDeleteDialog = true
+						NotebookDialogType.DELETE_SELECTED -> showSelectedDeleteDialog = true
+						NotebookDialogType.DELETE_CHAPTER -> showChapterDeleteDialog = true
 					}
 				}
 
 				fun closeDialog(dialogType : NotebookDialogType) {
 					when (dialogType) {
 						NotebookDialogType.EDIT_CHAPTER -> showEditChapterDialog = false
-						NotebookDialogType.DELETE -> showDeleteDialog = false
+						NotebookDialogType.DELETE_SELECTED -> showSelectedDeleteDialog = false
+						NotebookDialogType.DELETE_CHAPTER -> showChapterDeleteDialog = false
 					}
 					try {
 						keyboardController?.hide()
@@ -130,9 +136,12 @@ class NotebookActivity : ComponentActivity() {
 							if (chapterObject == null) {
 								finish()
 							} else {
-								if (showEditChapterDialog || showDeleteDialog) {
+								if (showEditChapterDialog || showSelectedDeleteDialog) {
 									showEditChapterDialog = false
-									showDeleteDialog = false
+									showSelectedDeleteDialog = false
+								} else if (isSelected) {
+									isSelected = false
+									selectedObjectIdList.clear()
 								} else {
 									if (chapterObject?.parentChapterId == null) {
 										finish()
@@ -160,16 +169,19 @@ class NotebookActivity : ComponentActivity() {
 					LocalIsLocked provides isLocked,
 					LocalChapterObjectList provides chapterObjectList,
 					LocalNoteObjectList provides noteObjectList,
+					LocalTagList provides tagList,
 					LocalParentChapterObjectList provides parentChapterObjectList,
 					LocalPutNewChapter provides viewModel::putChapter,
 					LocalGetChapter provides viewModel::getAndLoadChapter,
 					LocalCompositionIsSelected provides isSelected,
 					LocalCompositionOnSelect provides { isSelected = it },
-					LocalCompositionSelectedRealmUUIDList provides selectedRealmUUIDList,
+					LocalCompositionSelectedObjectIdList provides selectedObjectIdList,
 					LocalShowEditChapterDialog provides showEditChapterDialog,
-					LocalShowDeleteDialog provides showDeleteDialog,
+					LocalShowSelectedDeleteDialog provides showSelectedDeleteDialog,
+					LocalShowChapterDeleteDialog provides showChapterDeleteDialog,
 					LocalOpenDialog provides ::openDialog,
 					LocalCloseDialog provides ::closeDialog,
+					LocalOnRefresh provides { viewModel.getAndLoadChapter(chapterId) },
 					LocalOnToggleFavourite provides viewModel::toggleFavourite,
 					LocalOnToggleLock provides {
 						if (chapterId == defaultChapterId) Toast.makeText(this@NotebookActivity, "Cannot lock default chapter", Toast.LENGTH_SHORT).show()
@@ -180,8 +192,22 @@ class NotebookActivity : ComponentActivity() {
 						else viewModel.setDefaultChapter()
 					},
 					LocalOnUpdateChapter provides viewModel::updateChapter,
-					LocalOnDelete provides {},
-					LocalOnDeleteChapter provides {},
+					LocalOnDelete provides viewModel::delete,
+					LocalOnDeleteChapter provides {
+						if (chapterId == defaultChapterId) Toast.makeText(this@NotebookActivity, "Cannot delete default chapter", Toast.LENGTH_SHORT).show()
+						else if (chapterObject?.parentChapterId == null) {
+							Intent().apply {
+								putExtra(Extra.Companion.Constant.INTENT_ACTION.name, Extra.Companion.IntentAction.DELETE.name)
+								putExtra(Extra.Companion.Constant.OBJECT_ID.name, chapterObject?.id?.bytes)
+								setResult(Activity.RESULT_OK, this)
+								this@NotebookActivity.finish()
+							}
+						} else {
+							val parentChapterId = chapterObject?.parentChapterId
+							chapterId?.let { viewModel.delete(it) }
+							viewModel.getAndLoadChapter(parentChapterId)
+						}
+					},
 					LocalOnBackPressed provides { this.onBackPressedDispatcher.onBackPressed() },
 				) {
 					NotebookScreen()
@@ -207,6 +233,7 @@ class NotebookActivity : ComponentActivity() {
 
 		val LocalChapterObjectList = compositionLocalOf<SnapshotStateList<ChapterObject>> { mutableStateListOf() }
 		val LocalNoteObjectList = compositionLocalOf<SnapshotStateList<NoteObjectLite>> { mutableStateListOf() }
+		val LocalTagList = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }
 
 		val LocalParentChapterObjectList = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { mutableStateListOf() }
 
@@ -214,13 +241,15 @@ class NotebookActivity : ComponentActivity() {
 		val LocalGetChapter = compositionLocalOf<(RealmUUID?) -> Unit> { {} }
 
 		val LocalShowEditChapterDialog = compositionLocalOf<Boolean> { false }
-		val LocalShowDeleteDialog = compositionLocalOf<Boolean> { false }
+		val LocalShowSelectedDeleteDialog = compositionLocalOf<Boolean> { false }
+		val LocalShowChapterDeleteDialog = compositionLocalOf<Boolean> { false }
 
 		val LocalOpenBottomSheet = compositionLocalOf<(NotebookBottomSheetType) -> Unit> { {} }
 		val LocalCloseBottomSheet = compositionLocalOf { { } }
 		val LocalOpenDialog = compositionLocalOf<(NotebookDialogType) -> Unit> { error("No data provided") }
 		val LocalCloseDialog = compositionLocalOf<(NotebookDialogType) -> Unit> { error("No data provided") }
 
+		val LocalOnRefresh = compositionLocalOf<() -> Unit> { {} }
 		val LocalOnToggleFavourite = compositionLocalOf { {} }
 		val LocalOnToggleLock = compositionLocalOf { {} }
 		val LocalOnSetDefaultChapter = compositionLocalOf { {} }

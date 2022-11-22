@@ -26,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
@@ -36,10 +35,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickBucketItemFavourite
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickBucketItemLock
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnPutTodo
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSetBucketItemObject
@@ -47,7 +44,7 @@ import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBo
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.button.MenuButton
 
 
@@ -59,7 +56,7 @@ fun TodoScreen(
 ) {
 	val isSelected = LocalCompositionIsSelected.current
 	val onSelected = LocalCompositionOnSelect.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val setBucketItemObject = LocalCompositionSetBucketItemObject.current
 	val openSheet = LocalCompositionOpenBottomSheet.current

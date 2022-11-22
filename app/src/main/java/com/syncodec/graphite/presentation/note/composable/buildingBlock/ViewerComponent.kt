@@ -6,9 +6,14 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +34,7 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +70,15 @@ import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMapOptions
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
@@ -123,16 +139,16 @@ private const val SUBSCRIPT = "subscript"
 
 @Composable
 fun ViewerComponent(
-	noteId : RealmUUID?,
+	noteId : RealmUUID,
 	content : String?,
 	userTimestamp : Long,
 	title : String?,
 	latLng : LatLng?,
 	address : String?,
 	parentChapter : ChapterObject?,
-	attachmentList : Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>,
+	attachmentList : List<Triple<AttachmentObject, File?, Uri?>>,
 	connectedTag : List<TagObjectLite>,
-	onClickChapter: () -> Unit,
+	onClickChapter : () -> Unit,
 ) {
 	val context = LocalContext.current
 
@@ -151,9 +167,9 @@ fun ViewerComponent(
 			.verticalScroll(rememberScrollState())
 	) {
 		if (attachmentList.isNotEmpty()) {
-			Thumbnail(
+			AttachmentView(
 				noteId = noteId,
-				attachmentMap = attachmentList
+				attachmentList = attachmentList
 			)
 			Spacer(modifier = Modifier.height(8.dp))
 		}
@@ -191,26 +207,13 @@ fun ViewerComponent(
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalAnimationApi::class)
 @Composable
-private fun Thumbnail(
-	noteId : RealmUUID?,
-	attachmentMap : Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>,
+private fun AttachmentView(
+	noteId : RealmUUID,
+	attachmentList : List<Triple<AttachmentObject, File?, Uri?>>,
 ) {
 	val context = LocalContext.current
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
-
-	var renderableAttachmentId : RealmUUID? by remember { mutableStateOf(null) }
-
-	if (attachmentMap.isNotEmpty()) {
-		attachmentMap.forEach { (id, data) ->
-			if (data.first.isRenderable()) {
-				renderableAttachmentId = id
-				return@forEach
-			}
-		}
-	}
-
-	val attachmentList = attachmentMap.toList()
 
 	val pagerState = rememberPagerState()
 
@@ -220,25 +223,23 @@ private fun Thumbnail(
 			.height(screenHeight * 0.31f)
 	) {
 		HorizontalPager(
-			count = attachmentMap.size,
+			count = attachmentList.size,
 			state = pagerState,
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(screenHeight * 0.31f)
 		) { pageIndex ->
+			val (attachmentObject, file, uri) = attachmentList.getOrNull(pageIndex) ?: return@HorizontalPager
 			AttachmentPreview(
-				attachment = attachmentList[pageIndex].second.first,
-				uri = attachmentList[pageIndex].second.third,
-				file = attachmentList[pageIndex].second.second,
+				attachment = attachmentObject,
+				uri = uri,
+				file = file,
 				clickable = true,
 				showActionButton = false,
 				modifier = Modifier.fillMaxSize(),
 				onClick = {
 					try {
-						Intent(
-							Intent.ACTION_VIEW,
-							attachmentList[pageIndex].second.second?.let { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it) }
-						).apply {
+						Intent(Intent.ACTION_VIEW, file?.let { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it) }).apply {
 							addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
 							context.startActivity(this)
@@ -259,17 +260,16 @@ private fun Thumbnail(
 				.fillMaxSize()
 				.padding(12.dp)
 		) {
-
 			Row(
 				modifier = Modifier.fillMaxWidth()
 			) {
 				MenuButton(
 					icon = R.drawable.ic_attachment,
 					tint = MaterialTheme.colorScheme.onBackground,
-					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
+					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.47f)
 				) {
 					Intent(context, AttachmentActivity::class.java).apply {
-						putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId?.bytes)
+						putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
 						context.startActivity(this)
 					}
 				}
@@ -283,7 +283,7 @@ private fun Thumbnail(
 				) {
 					AnimatedContent(targetState = pagerState.currentPage) { page ->
 						Text(
-							text = "${page + 1}/${attachmentMap.size}",
+							text = "${page + 1}/${attachmentList.size}",
 							style = MaterialTheme.typography.bodyMedium,
 							color = MaterialTheme.colorScheme.onBackground,
 							fontWeight = FontWeight.Bold,
@@ -295,16 +295,26 @@ private fun Thumbnail(
 
 			Spacer(modifier = Modifier.weight(1f))
 
-			HorizontalPagerIndicator(pagerState = pagerState)
+			Box(
+				modifier = Modifier.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(50))
+			) {
+				HorizontalPagerIndicator(
+					pagerState = pagerState,
+					pageCount = attachmentList.size,
+					modifier = Modifier.padding(8.dp, 4.dp)
+				)
+			}
 
 			Spacer(modifier = Modifier.height(12.dp))
 
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(8.dp))
+					.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(12.dp))
 			) {
-				AnimatedContent(targetState = attachmentList[pagerState.currentPage].second) {
+				AnimatedContent(
+					targetState = attachmentList[pagerState.currentPage].second
+				) {
 					Row(
 						modifier = Modifier
 							.fillMaxWidth()
@@ -313,13 +323,13 @@ private fun Thumbnail(
 					) {
 						Spacer(modifier = Modifier.width(12.dp))
 						Text(
-							text = it.first.name,
+							text = it?.name ?: "Unknown",
 							modifier = Modifier.weight(1f),
 							style = MaterialTheme.typography.bodyMedium,
 							fontWeight = FontWeight.Bold
 						)
 
-						val size = it.second?.length()
+						val size = it?.length()
 
 						val kb = size?.div(1024)
 						val mb = kb?.div(1024)
@@ -354,8 +364,8 @@ private fun Thumbnail(
 								val data = attachmentList.getOrNull(pagerState.currentPage)
 								if (data != null) {
 									val sharingIntent = Intent(Intent.ACTION_SEND)
-									sharingIntent.type = data.second.first.mimeType ?: "*/*"
-									sharingIntent.putExtra(Intent.EXTRA_STREAM, data.second.third)
+									sharingIntent.type = data.first.mimeType ?: "*/*"
+									sharingIntent.putExtra(Intent.EXTRA_STREAM, data.third)
 
 									Intent.createChooser(sharingIntent, "Share using").apply {
 										addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -371,7 +381,6 @@ private fun Thumbnail(
 						Spacer(modifier = Modifier.width(12.dp))
 					}
 				}
-
 			}
 		}
 	}
@@ -388,6 +397,9 @@ private fun Header(
 	onClickChapter : () -> Unit
 ) {
 	val timestamp = noteViewerTimestamp(userTimestamp)
+
+	var showMap by remember { mutableStateOf(false) }
+
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
@@ -453,9 +465,8 @@ private fun Header(
 		if (! address.isNullOrBlank() || latLng != null) {
 			Spacer(modifier = Modifier.height(4.dp))
 			Row(
-				modifier = Modifier,
 				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.SpaceBetween
+				modifier = Modifier
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_map_marker),
@@ -470,8 +481,22 @@ private fun Header(
 					style = MaterialTheme.typography.bodySmall,
 					color = MaterialTheme.colorScheme.onSurface,
 					maxLines = 1,
-					overflow = TextOverflow.Ellipsis
+					overflow = TextOverflow.Ellipsis,
+					modifier = Modifier.weight(1f)
 				)
+
+				Spacer(modifier = Modifier.width(4.dp))
+
+				IconButton(
+					onClick = { showMap = ! showMap },
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_atlas),
+						contentDescription = "Location",
+						tint = MaterialTheme.colorScheme.onBackground,
+						modifier = Modifier.requiredSize(16.dp)
+					)
+				}
 			}
 		}
 		if (connectedTag.isNotEmpty()) {
@@ -496,6 +521,13 @@ private fun Header(
 			}
 			Spacer(modifier = Modifier.height(4.dp))
 		}
+		AnimatedVisibility(
+			visible = showMap,
+			enter = expandVertically(tween(300)),
+			exit = shrinkVertically(tween(300))
+		) {
+			LocationMap(latLng = latLng)
+		}
 		if (! title.isNullOrBlank()) {
 			Spacer(modifier = Modifier.height(8.dp))
 			Text(
@@ -508,6 +540,56 @@ private fun Header(
 				overflow = TextOverflow.Ellipsis
 			)
 		}
+	}
+}
+
+@Composable
+private fun LocationMap(
+	latLng : LatLng?,
+) {
+	val context = LocalContext.current
+	val cameraPositionState = rememberCameraPositionState()
+
+	LaunchedEffect(key1 = latLng) {
+		latLng?.toGLatLng()?.let {
+			cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(it, 13f))
+		}
+	}
+
+	GoogleMap(
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(128.dp)
+			.clip(RoundedCornerShape(12.dp)),
+		cameraPositionState = cameraPositionState,
+		googleMapOptionsFactory = {
+			GoogleMapOptions().apply {
+				this.rotateGesturesEnabled(false)
+				this.rotateGesturesEnabled(false)
+				this.scrollGesturesEnabledDuringRotateOrZoom(false)
+				this.tiltGesturesEnabled(false)
+				this.zoomGesturesEnabled(false)
+			}
+		},
+		uiSettings = MapUiSettings(
+			compassEnabled = false,
+			indoorLevelPickerEnabled = false,
+			mapToolbarEnabled = false,
+			myLocationButtonEnabled = false,
+			rotationGesturesEnabled = false,
+			scrollGesturesEnabled = false,
+			scrollGesturesEnabledDuringRotateOrZoom = false,
+			tiltGesturesEnabled = false,
+			zoomControlsEnabled = false,
+			zoomGesturesEnabled = false
+		),
+		properties = MapProperties(
+			mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light)
+		),
+	) {
+		Marker(
+			state = MarkerState(position = cameraPositionState.position.target),
+		)
 	}
 }
 

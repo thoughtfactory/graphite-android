@@ -1,7 +1,12 @@
 package com.syncodec.graphite.presentation.notebook.composable.screen
 
 import android.content.Intent
+import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +37,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.button.PrimaryButton
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
@@ -56,6 +62,8 @@ fun NotebookScreen() {
 	var bottomSheetType by remember { mutableStateOf(NotebookBottomSheetType.MENU) }
 
 	val chapterId = NotebookActivity.LocalChapterId.current
+
+	val isSelected = LocalCompositionIsSelected.current
 
 	fun openSheet(_bottomSheetType : NotebookBottomSheetType) {
 		scope.launch {
@@ -115,29 +123,33 @@ fun NotebookScreen() {
 								) {
 									ExplorerScreen()
 								}
-								BottomBar(
-									modifier = Modifier.onGloballyPositioned { bottomBarSpacingPx = it.positionInParent().y.toInt() }
-								)
+								BottomBar(modifier = Modifier.onGloballyPositioned { bottomBarSpacingPx = it.positionInParent().y.toInt() })
 							}
 
-							PrimaryButton(
-								primaryText = "Add Note",
-								primaryIcon = R.drawable.ic_pencil,
-								primaryDescription = "Add a new note",
-								secondaryIcon = R.drawable.ic_notebook,
-								secondaryDescription = "Add a new chapter",
-								bottomBarSpacingPx = bottomBarSpacingPx,
-								onClickPrimary = {
-									Intent(context, NoteActivity::class.java).apply {
-										putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-										putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
-										putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+							AnimatedVisibility(
+								visible = ! isSelected,
+								enter = fadeIn(tween(300)),
+								exit = fadeOut(tween(300))
+							) {
+								PrimaryButton(
+									primaryText = "Add Note",
+									primaryIcon = R.drawable.ic_pencil,
+									primaryDescription = "Add a new note",
+									secondaryIcon = R.drawable.ic_notebook,
+									secondaryDescription = "Add a new chapter",
+									bottomSpacing = 60.dp,
+									onClickPrimary = {
+										Intent(context, NoteActivity::class.java).apply {
+											putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+											putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
+											putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
-										context.startActivity(this)
-									}
-								},
-								onClickSecondary = { openSheet(NotebookBottomSheetType.CHAPTER) }
-							)
+											context.startActivity(this)
+										}
+									},
+									onClickSecondary = { openSheet(NotebookBottomSheetType.CHAPTER) }
+								)
+							}
 						}
 					}
 				}

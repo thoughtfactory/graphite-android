@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.settings
 
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -11,9 +12,12 @@ import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.syncodec.graphite.di.model.BucketSnapshot
 import com.syncodec.graphite.di.model.ChapterSnapshot
 import com.syncodec.graphite.di.model.NoteSnapshot
+import com.syncodec.graphite.di.model.TagSnapshot
 import com.syncodec.graphite.di.repository.Repository2
+import com.syncodec.graphite.utils.copyInDirectory
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.RealmUUID
@@ -58,27 +62,27 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 		if (documentUri != null) getSnapshot(documentUri)
 	}
 
-	fun takeSnapshot(uri : Uri, onResult : (Boolean) -> Unit) {
+	fun takeSnapshot(uri : Uri, callback : (Boolean) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
 			val documentTree = DocumentFile.fromTreeUri(repository2.context, uri)
 
 			when {
 				documentTree == null -> viewModelScope.launch(Dispatchers.Main) {
 					Toast.makeText(repository2.context, "Error generating snapshot. Try setting backup folder again.", Toast.LENGTH_SHORT).show()
-					onResult(false)
+					callback(false)
 				}
 
-				documentTree.canWrite() -> takeSnapshot(documentTree = documentTree, onResult = onResult)
+				documentTree.canWrite() -> takeSnapshot(documentTree = documentTree, callback = callback)
 
 				else -> viewModelScope.launch(Dispatchers.Main) {
 					Toast.makeText(repository2.context, "Error generating snapshot. Try setting backup folder again.", Toast.LENGTH_SHORT).show()
-					onResult(false)
+					callback(false)
 				}
 			}
 		}
 	}
 
-	private fun takeSnapshot(documentTree : DocumentFile, onResult : (Boolean) -> Unit) {
+	private fun takeSnapshot(documentTree : DocumentFile, callback : (Boolean) -> Unit) {
 		try {
 			val snapshotFolder = File(repository2.context.cacheDir, "snapshot").apply { mkdirs() }
 			val currentSnapshotFolder = File(snapshotFolder, "snapshot_${System.currentTimeMillis()}")
@@ -101,20 +105,10 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 					baseFile.writeText(jsonObject.toString())
 				}
 
-			repository2.getAllAttachmentWithFile()
-				.let { attachmentList ->
-					viewModelScope.launch(Dispatchers.Main) {
-						attachmentCount.value = attachmentList.size
-						attachmentProcessed.value = 0
-					}
-					attachmentList.forEachIndexed { index, (attachmentObject, file, uri) ->
-						val snapshot = attachmentObject.toSnapshot().apply { data = file?.readBytes() }
-						val snapshotString = objectMapper.writeValueAsString(snapshot)
-						val snapshotFile = File(attachmentFolder.path, "${snapshot.id}.json")
-						snapshotFile.writeText(snapshotString)
-						viewModelScope.launch(Dispatchers.Main) { attachmentProcessed.value = index + 1 }
-					}
-				}
+
+			File(repository2.attachmentDirPath).let { attachmentDir ->
+				copyInDirectory(attachmentDir, attachmentFolder)
+			}
 
 			repository2.getAllBucketItem()
 				.let { bucketItemList ->
@@ -197,14 +191,14 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 				outputStream.close()
 			}
 
-			onResult(true)
+			callback(true)
 			viewModelScope.launch(Dispatchers.Main) {
 				noteCount.value = 0
 				noteProcessed.value = 0
 			}
 		} catch (e : Exception) {
 			e.printStackTrace()
-			onResult(false)
+			callback(false)
 		}
 	}
 
@@ -224,7 +218,7 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-	fun restoreSnapshot(documentFile : DocumentFile) {
+	fun restoreSnapshot(documentFile : DocumentFile, callback : (Boolean) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
 
 			val snapshotFolder = File(repository2.context.cacheDir, "snapshot").apply { mkdirs() }
@@ -254,7 +248,7 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 								}
 
 								val baseFile = File(restoreSnapshotFolder, "base.json")
-								val attachmentFolderIterator = File(restoreSnapshotFolder, "attachment").listFiles()?.iterator()
+								val attachmentFolder = File(restoreSnapshotFolder, "attachment")
 								val bucketItemFolderIterator = File(restoreSnapshotFolder, "bucketItem").listFiles()?.iterator()
 								val bucketFileListIterator = File(restoreSnapshotFolder, "bucket").listFiles()?.iterator()
 								val chapterFileListIterator = File(restoreSnapshotFolder, "chapter").listFiles()?.iterator()
@@ -274,14 +268,15 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 								}
 
 								while (true) {
-									if(!lock) {
+									if (! lock) {
 										if (chapterFileListIterator != null) {
 											if (chapterFileListIterator.hasNext()) {
 												try {
 													lock = true
-													val chapterSnapshot = objectMapper.readValue(chapterFileListIterator.next().readBytes(), ChapterSnapshot::class.java)
+													val chapterSnapshot =
+														objectMapper.readValue(chapterFileListIterator.next().readBytes(), ChapterSnapshot::class.java)
 													val chapterObject = chapterSnapshot.toObject()
-													repository2.putChapter(chapterObject.parentChapterId, chapterObject) { _,  e ->
+													repository2.putChapter(chapterObject.parentChapterId, chapterObject) { _, e ->
 														lock = false
 													}
 												} catch (e : Exception) {
@@ -296,13 +291,66 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 										}
 									}
 								}
+
 								while (true) {
-									if(!lock) {
+									if (! lock) {
 										if (noteFileListIterator != null) {
 											if (noteFileListIterator.hasNext()) {
 												lock = true
 												val noteSnapshot = objectMapper.readValue(noteFileListIterator.next().readText(), NoteSnapshot::class.java)
-												repository2.putNote(noteSnapshot.toObject()) { _,  _ -> lock = false }
+												noteSnapshot.toObject().let { noteObject ->
+													repository2.putNote(noteObject) { _, e ->
+														lock = false
+													}
+												}
+											} else {
+												break
+											}
+										} else {
+											break
+										}
+									}
+								}
+
+								try {
+									copyInDirectory(attachmentFolder, File(repository2.attachmentDirPath))
+								} catch (e : Exception) {
+								}
+
+								while (true) {
+									if (! lock) {
+										if (bucketFileListIterator != null) {
+											if (bucketFileListIterator.hasNext()) {
+												lock = true
+												val bucketSnapshot = objectMapper.readValue(bucketFileListIterator.next().readText(), BucketSnapshot::class.java)
+												bucketSnapshot.toObject().let { bucketObject ->
+													repository2.putBucket(bucketObject) { _, e ->
+														lock = false
+													}
+												}
+											} else {
+												break
+											}
+										} else {
+											break
+										}
+									}
+								}
+
+								while (true) {
+									if (! lock) {
+										if (tagFolderIterator != null) {
+											if (tagFolderIterator.hasNext()) {
+												lock = true
+												val tagString = tagFolderIterator.next().readText()
+												val tagSnapshot = objectMapper.readValue(tagString, TagSnapshot::class.java)
+												tagSnapshot.toObject().let { tagObject ->
+													Log.i("npr71", "tagObject = $tagObject")
+													repository2.putTag(tagObject) { _, e ->
+														e?.printStackTrace()
+														lock = false
+													}
+												}
 											} else {
 												break
 											}
@@ -318,12 +366,17 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 					}
 				} catch (e : IOException) {
 					e.printStackTrace()
+					callback(false)
 				} catch (e : Exception) {
 					e.printStackTrace()
+					callback(false)
 				}
+			} else {
+				callback(false)
 			}
 
 			inputStream?.close()
+			callback(true)
 		}
 	}
 

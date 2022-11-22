@@ -44,8 +44,7 @@ fun FormatBar(
 	onClickLocation : () -> Unit,
 	onClickAttachment : () -> Unit,
 	onClickTag : () -> Unit,
-	onClickCloseToolbar : () -> Unit,
-	onClickHeadingToolbar : () -> Unit,
+	onClickHeading : () -> Unit,
 ) {
 
 	val calendar = remember { Calendar.getInstance() }
@@ -54,7 +53,7 @@ fun FormatBar(
 		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier.horizontalScroll(rememberScrollState()),
 	) {
-		Spacer(modifier = Modifier.width(16.dp))
+		Spacer(modifier = Modifier.width(12.dp))
 
 		Box(
 			contentAlignment = Alignment.Center,
@@ -265,7 +264,7 @@ fun FormatBar(
 					contentDescription = "Format heading",
 					tint = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1).copy(alpha = 0.71f),
 					isChecked = textFormat.heading1 || textFormat.heading2 || textFormat.heading3 || textFormat.heading4 || textFormat.heading5 || textFormat.heading6,
-					onClick = onClickHeadingToolbar
+					onClick = onClickHeading
 				)
 				MenuButton(
 					icon = R.drawable.ic_format_blockquote,
@@ -309,6 +308,7 @@ fun FormatBar(
 				)
 			}
 		}
-		Spacer(modifier = Modifier.width(16.dp))
+
+		Spacer(modifier = Modifier.width(12.dp))
 	}
 }

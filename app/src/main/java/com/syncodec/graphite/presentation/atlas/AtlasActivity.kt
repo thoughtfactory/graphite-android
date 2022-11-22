@@ -26,7 +26,7 @@ import com.syncodec.graphite.presentation.common.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -150,7 +150,7 @@ class AtlasActivity : ComponentActivity() {
 					LocalChapterPath provides chapterPath,
 					LocalCompositionIsSelected provides isSelected,
 					LocalCompositionOnSelect provides { isSelected = it },
-					LocalCompositionSelectedRealmUUIDList provides selectedRealmUUIDList,
+					LocalCompositionSelectedObjectIdList provides selectedRealmUUIDList,
 					LocalShowDeleteDialog provides showDeleteDialog,
 					LocalShowWhereDialog provides showWhereDialog,
 					LocalCompositionOpenDialog provides ::openDialog,

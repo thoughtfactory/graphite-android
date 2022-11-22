@@ -36,7 +36,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNotebookRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
@@ -56,7 +56,7 @@ fun NotebookScreen(
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),

@@ -44,6 +44,7 @@ import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -131,6 +132,7 @@ class SettingsActivity : ComponentActivity() {
 									restoreSnapshotFile = data as DocumentFile
 									showRestoreSnapshotDialog = true
 								} catch (e : Exception) {
+									e.printStackTrace()
 									Toast.makeText(this@SettingsActivity, "Error reading snapshot file", Toast.LENGTH_SHORT).show()
 								}
 							}
@@ -213,6 +215,8 @@ class SettingsActivity : ComponentActivity() {
 										if (it) Toast.makeText(this@SettingsActivity, "Snapshot saved", Toast.LENGTH_SHORT).show()
 										else Toast.makeText(this@SettingsActivity, "Error taking snapshot", Toast.LENGTH_SHORT).show()
 										closeDialog(SettingsDialogType.TAKE_SNAPSHOT)
+
+										viewModel.getSnapshot(uri)
 									}
 								}
 								openDialog(SettingsDialogType.TAKE_SNAPSHOT, null)
@@ -226,9 +230,16 @@ class SettingsActivity : ComponentActivity() {
 							else viewModel.getSnapshot(uri)
 						},
 						restoreSnapshot provides {
+							openDialog(SettingsDialogType.RESTORING_SNAPSHOT, null)
 							try {
 								if (restoreSnapshotFile == null) Toast.makeText(this, "Error restoring snapshot. Try again.", Toast.LENGTH_SHORT).show()
-								else viewModel.restoreSnapshot(restoreSnapshotFile !!)
+								else viewModel.restoreSnapshot(restoreSnapshotFile !!) {
+									CoroutineScope(Dispatchers.Main).launch {
+										if (it) Toast.makeText(this@SettingsActivity, "Snapshot restored", Toast.LENGTH_SHORT).show()
+										else Toast.makeText(this@SettingsActivity, "Error restoring snapshot", Toast.LENGTH_SHORT).show()
+										closeDialog(SettingsDialogType.RESTORING_SNAPSHOT)
+									}
+								}
 							} catch (e : Exception) {
 								Toast.makeText(this@SettingsActivity, "Error restoring snapshot", Toast.LENGTH_SHORT).show()
 							}
@@ -342,7 +353,7 @@ class SettingsActivity : ComponentActivity() {
 			LOCAL_BACKUP,
 			SNAPSHOT_WAREHOUSE,
 			SYNC,
-			ABOUT
+			ABOUT_US
 		}
 
 		val onNavigate = compositionLocalOf<(Navigator) -> Unit> { {} }

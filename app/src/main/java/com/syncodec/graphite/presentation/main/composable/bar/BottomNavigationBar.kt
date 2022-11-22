@@ -35,7 +35,7 @@ import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnAddDebugData
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
@@ -142,7 +142,7 @@ fun MainNavigation(
 
 	val isSelected = LocalCompositionIsSelected.current
 	val onSelected = LocalCompositionOnSelect.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.TIMESTAMP)
 	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.DESCENDING)

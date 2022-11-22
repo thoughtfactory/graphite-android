@@ -59,7 +59,7 @@ fun BaseScreen() {
 	val isPro = LocalIsPro.current
 
 	val onSignIn = SettingsActivity.signIn.current
-	val  currentUser= Firebase.auth.currentUser
+	val currentUser = Firebase.auth.currentUser
 
 	val openSheet = SettingsActivity.openBottomSheet.current
 
@@ -84,7 +84,7 @@ fun BaseScreen() {
 			}
 		}
 
-		if (!isPro) {
+		if (! isPro) {
 			SettingsButton(
 				title = "Subscription",
 				subTitle = "Get access to all the features",
@@ -130,34 +130,30 @@ fun BaseScreen() {
 			title = "Terms of Service",
 			subTitle = "Read our terms of service",
 			icon = R.drawable.ic_terms
-		) {
-			uriHandler.openUri("https://graphite.syncodec.com/terms.html")
-		}
+		) { uriHandler.openUri("https://graphite.syncodec.com/terms.html") }
 
 		SettingsButton(
 			title = "Privacy Policy",
 			subTitle = "Read our privacy policy",
 			icon = R.drawable.ic_policy
-		) {
-			uriHandler.openUri("https://graphite.syncodec.com/policy.html")
-		}
+		) { uriHandler.openUri("https://graphite.syncodec.com/policy.html") }
 
 		SettingsButton(
 			title = "About Us",
 			subTitle = "Hello there...",
 			icon = R.drawable.ic_info
-		) {}
+		) { onNavigate(SettingsActivity.Companion.Navigator.ABOUT_US) }
 	}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileButton(
-	displayName: String,
-	email: String,
-	photoUrl: Uri?,
-	isPro: Boolean,
-	onClick: () -> Unit
+	displayName : String,
+	email : String,
+	photoUrl : Uri?,
+	isPro : Boolean,
+	onClick : () -> Unit
 ) {
 	val context = LocalContext.current
 

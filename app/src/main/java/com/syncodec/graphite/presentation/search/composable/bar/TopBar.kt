@@ -37,7 +37,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.search.composable.buildingBlock.SearchBar
 import com.syncodec.graphite.presentation.ui.DeleteContainer
@@ -54,7 +54,7 @@ fun TopBar(
 ) {
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 	val onSelect = LocalCompositionOnSelect.current
 
 	val containerColor by animateColorAsState(

@@ -2,13 +2,6 @@ package com.syncodec.graphite.presentation.search.composable.screen
 
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,101 +30,88 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.NoteListCard
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun SearchResultScreen(
 	visibleNote : List<NoteObject>,
+	tagList: List<TagObject>,
 ) {
 	val context = LocalContext.current
 
 	val isVaultOpened = LocalVaultIsOpened.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 	val onSelect = LocalCompositionOnSelect.current
 
 	val _visibleNote = visibleNote.filter { if (it.isLocked) isVaultOpened else true }
 
-	AnimatedContent(
-		targetState = _visibleNote,
-		transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
-	) {
-		if (it.isEmpty()) {
-			EmptyView()
-		} else {
-			LazyColumn(
-				modifier = Modifier.fillMaxSize(),
-				horizontalAlignment = Alignment.CenterHorizontally,
-				contentPadding = PaddingValues(0.dp, 8.dp, 0.dp, 0.dp)
-			) {
-				it.forEach { _noteObject ->
-					val noteObject = _noteObject.toLite()
+	if (_visibleNote.isEmpty()) {
+		EmptyView()
+	} else {
+		LazyColumn(
+			modifier = Modifier.fillMaxSize(),
+			horizontalAlignment = Alignment.CenterHorizontally,
+			contentPadding = PaddingValues(0.dp, 8.dp, 0.dp, 0.dp)
+		) {
+			_visibleNote.forEach { noteObject ->
 
-					try {
-						item {
-							var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
+				item {
+					var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
 
-							LaunchedEffect(key1 = noteObject.id.hashCode() + noteObject.thumbnail.hashCode()) {
-								try {
-									if (noteObject.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
-										thumbnail = noteObject.thumbnail?.let { BitmapFactory.decodeByteArray(noteObject.thumbnail, 0, it.size) }
-									}
-								} catch (e : Exception) {
-									e.printStackTrace()
+					LaunchedEffect(key1 = noteObject.id.hashCode() + noteObject.thumbnail.hashCode()) {
+						try {
+							if (noteObject.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = noteObject.thumbnail?.decodeBase64ToBitmap()
+						} catch (e : Exception) {
+							e.printStackTrace()
+						}
+					}
+
+					NoteListCard(
+						id = noteObject.id,
+						timestamp = noteObject.userTimestamp,
+						isLocked = noteObject.isLocked,
+						isSelected = noteObject.id in selectedRealmUUIDList,
+						isFavourite = noteObject.isFavourite,
+						isLast = false,
+						title = noteObject.title,
+						contentThumbnail = noteObject.contentThumbnail,
+						attachmentCount = noteObject.attachmentList.size,
+						attachmentThumbnail = thumbnail,
+						address = noteObject.address,
+						latLng = noteObject.getLatLng(),
+						tagList = tagList.filter { noteObject.id in it.objectIdList },
+						isVisible = true,
+						selectedColor = MaterialTheme.colorScheme.surface,
+						onClick = {
+							if (isSelected) {
+								if (selectedRealmUUIDList.contains(noteObject.id)) selectedRealmUUIDList.remove(noteObject.id)
+								else selectedRealmUUIDList.add(noteObject.id)
+							} else {
+								Intent(context, NoteActivity::class.java).apply {
+									putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, noteObject.parentChapterId?.bytes)
+									putExtra(Extra.Companion.Constant.NOTE_ID.name, noteObject.id?.bytes)
+									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+
+									context.startActivity(this)
 								}
 							}
-
-							NoteListCard(
-								id = noteObject.id,
-								timestamp = noteObject.userTimestamp,
-								showFullTime = true,
-								isLocked = noteObject.isLocked,
-								isSelected = noteObject.id in selectedRealmUUIDList,
-								isFavourite = noteObject.isFavourite,
-								isDeleted = false,
-								isLast = false,
-								title = noteObject.title,
-								contentThumbnail = noteObject.contentThumbnail,
-								attachmentCount = noteObject.attachmentCount,
-								attachmentThumbnail = thumbnail,
-								address = noteObject.address,
-								latLng = noteObject.latLng,
-								tagList = listOf(),
-								isVisible = true,
-								selectedColor = MaterialTheme.colorScheme.surface,
-								onClick = {
-									if (isSelected) {
-										if (selectedRealmUUIDList.contains(noteObject.id)) selectedRealmUUIDList.remove(noteObject.id)
-										else selectedRealmUUIDList.add(noteObject.id)
-									} else {
-										Intent(context, NoteActivity::class.java).apply {
-											putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-											putExtra(Extra.Companion.Constant.CHAPTER_ID.name, noteObject.parentChapterId?.bytes)
-											putExtra(Extra.Companion.Constant.NOTE_ID.name, noteObject.id?.bytes)
-											putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
-
-											context.startActivity(this)
-										}
-									}
-								},
-								onLongClick = {
-									onSelect(true)
-									if (selectedRealmUUIDList.contains(noteObject.id)) selectedRealmUUIDList.remove(noteObject.id)
-									else selectedRealmUUIDList.add(noteObject.id)
-								},
-							)
-						}
-					} catch (e : Exception) {
-
+						},
+					) {
+						onSelect(true)
+						if (selectedRealmUUIDList.contains(noteObject.id)) selectedRealmUUIDList.remove(noteObject.id)
+						else selectedRealmUUIDList.add(noteObject.id)
 					}
 				}
 			}

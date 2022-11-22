@@ -85,9 +85,7 @@ import kotlin.math.roundToInt
 
 
 @OptIn(
-	ExperimentalFoundationApi::class,
-	ExperimentalAnimationApi::class,
-	ExperimentalMaterialApi::class
+	ExperimentalFoundationApi::class, ExperimentalAnimationApi::class, ExperimentalMaterialApi::class
 )
 @Composable
 fun NoteListCard(
@@ -98,7 +96,6 @@ fun NoteListCard(
 	isLocked : Boolean,
 	isSelected : Boolean,
 	isFavourite : Boolean,
-	isDeleted : Boolean,
 	isLast : Boolean,
 	title : String?,
 	contentThumbnail : String?,
@@ -106,10 +103,9 @@ fun NoteListCard(
 	attachmentThumbnail : Bitmap?,
 	address : String?,
 	latLng : LatLng?,
-	tagList: List<TagObject>,
+	tagList : List<TagObject>,
 	isVisible : Boolean = false,
 	isSwipable : Boolean,
-	containerColor : Color = Color.Transparent,
 	selectedColor : Color,
 	onClick : () -> Unit,
 	onLongClick : (() -> Unit)? = null,
@@ -123,11 +119,7 @@ fun NoteListCard(
 		when {
 			isSelected -> selectedColor
 			isFavourite -> if (isFavouriteTinted) Color(
-				ColorUtils.blendARGB(
-					MaterialTheme.colorScheme.background.toArgb(),
-					Color.FavouriteContainer.toArgb(),
-					0.31f
-				)
+				ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), Color.FavouriteContainer.toArgb(), 0.31f)
 			) else MaterialTheme.colorScheme.background
 
 			else -> MaterialTheme.colorScheme.background
@@ -148,9 +140,7 @@ fun NoteListCard(
 	var cardHeight by remember { mutableStateOf(0) }
 
 	AnimatedVisibility(
-		visible = isVisible,
-		enter = expandVertically(tween(600)) + scaleIn(tween(600)),
-		exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
+		visible = isVisible, enter = expandVertically(tween(600)) + scaleIn(tween(600)), exit = shrinkVertically(tween(600)) + scaleOut(tween(600))
 	) {
 		Row(
 			modifier = Modifier
@@ -176,8 +166,7 @@ fun NoteListCard(
 					horizontalArrangement = Arrangement.SpaceEvenly
 				) {
 					MenuButton(
-						icon = R.drawable.ic_pin,
-						tint = MaterialTheme.colorScheme.onSurface
+						icon = R.drawable.ic_pin, tint = MaterialTheme.colorScheme.onSurface
 					) {
 						if (parentChapterId != null) {
 							NotePinNotification.showSimpleNotification(
@@ -188,14 +177,18 @@ fun NoteListCard(
 								content = contentThumbnail ?: "No content",
 								notificationId = id.hashCode(),
 							) {
-								Toast.makeText(context, "Notification permission not available. Please enable permission from settings", Toast.LENGTH_SHORT).show()
+								Toast
+									.makeText(
+										context,
+										"Notification permission not available. Please enable permission from settings",
+										Toast.LENGTH_SHORT
+									).show()
 							}
 						}
 					}
 
 					MenuButton(
-						icon = R.drawable.ic_share,
-						tint = MaterialTheme.colorScheme.onSurface
+						icon = R.drawable.ic_share, tint = MaterialTheme.colorScheme.onSurface
 					) {
 
 					}
@@ -204,26 +197,20 @@ fun NoteListCard(
 				OutlinedCard(
 					shape = RoundedCornerShape(12.dp),
 					border = BorderStroke(
-						1.dp,
-						if (isFavourite && isFavouriteTinted) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)
+						1.dp, if (isFavourite && isFavouriteTinted) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)
 					),
 					colors = CardDefaults.cardColors(containerColor = containerColor),
 					elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 					modifier = Modifier
 						.fillMaxWidth()
-						.offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
 						.clip(RoundedCornerShape(12.dp))
-						.combinedClickable(
-							onClick = { onClick() },
-							onLongClick = { onLongClick?.invoke() }
-						)
-						.swipeable(
-							state = swipeableState,
+						.offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
+						.combinedClickable(onClick = { onClick() }, onLongClick = { onLongClick?.invoke() })
+						.swipeable(state = swipeableState,
 							anchors = anchors,
 							orientation = Orientation.Horizontal,
 							enabled = isSwipable,
-							thresholds = { _, _ -> FractionalThreshold(0.31f) }
-						)
+							thresholds = { _, _ -> FractionalThreshold(0.31f) })
 				) {
 					Box(modifier = Modifier) {
 						Box(
@@ -360,16 +347,10 @@ private fun Title(
 
 @Composable
 private fun TitleText(
-	text : String,
-	contentColor : Color
+	text : String, contentColor : Color
 ) {
 	Text(
-		text = text,
-		style = MaterialTheme.typography.bodyMedium,
-		color = contentColor,
-		fontWeight = FontWeight.Bold,
-		maxLines = 1,
-		modifier = Modifier
+		text = text, style = MaterialTheme.typography.bodyMedium, color = contentColor, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier
 	)
 }
 
@@ -383,9 +364,7 @@ private fun Content(
 	val context = LocalContext.current
 
 	Row(
-		modifier = Modifier.fillMaxWidth(),
-		horizontalArrangement = Arrangement.SpaceBetween,
-		verticalAlignment = Alignment.CenterVertically
+		modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
 	) {
 		if (attachmentCount == 0 || attachmentThumbnail == null) {
 			Text(
@@ -407,10 +386,7 @@ private fun Content(
 			Spacer(modifier = Modifier.width(8.dp))
 
 			AsyncImage(
-				model = ImageRequest.Builder(context)
-					.data(attachmentThumbnail)
-					.crossfade(300)
-					.build(),
+				model = ImageRequest.Builder(context).data(attachmentThumbnail).crossfade(300).build(),
 				placeholder = null,
 				contentDescription = null,
 				contentScale = ContentScale.Crop,
@@ -454,15 +430,10 @@ private fun TagView(
 
 @Composable
 private fun Location(
-	address : String?,
-	latLng : LatLng?,
-	contentColor : Color,
-	isFavouriteTinted : Boolean,
-	isFavourite : Boolean
+	address : String?, latLng : LatLng?, contentColor : Color, isFavouriteTinted : Boolean, isFavourite : Boolean
 ) {
 	Row(
-		modifier = Modifier.fillMaxWidth(),
-		verticalAlignment = Alignment.CenterVertically
+		modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
 			painter = painterResource(id = R.drawable.ic_map_marker),

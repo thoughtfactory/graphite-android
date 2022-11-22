@@ -1,9 +1,7 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -56,7 +54,7 @@ import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBo
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
@@ -71,7 +69,7 @@ fun LinkListScreen(
 
 	val isSelected = LocalCompositionIsSelected.current
 	val onSelected = LocalCompositionOnSelect.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val setBucketItemObject = LocalCompositionSetBucketItemObject.current
 	val openSheet = LocalCompositionOpenBottomSheet.current

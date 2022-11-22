@@ -13,9 +13,9 @@ class FunctionPreviewParameter: PreviewParameterProvider<() -> Unit> {
 	override val values = sequenceOf({})
 }
 
-class StringPreviewParameter: PreviewParameterProvider<String> {
-	override val values: Sequence<String> = sequenceOf(generatePrimaryKey(), generatePrimaryKey(), generatePrimaryKey())
-}
+//class StringPreviewParameter: PreviewParameterProvider<String> {
+//	override val values: Sequence<String> = sequenceOf(generatePrimaryKey(), generatePrimaryKey(), generatePrimaryKey())
+//}
 
 class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteObjectLite>>> {
 	override val values: Sequence<Map<Long, List<NoteObjectLite>>> = sequenceOf(

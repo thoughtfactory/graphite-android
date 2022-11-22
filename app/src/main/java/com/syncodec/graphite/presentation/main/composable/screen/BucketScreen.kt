@@ -38,12 +38,13 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.bucketTypeToIcon
@@ -65,9 +66,11 @@ fun BucketScreen(
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val _bucketList : SnapshotStateList<BucketObject> = remember{ mutableStateListOf() }
+
+	val isVaultOpened = LocalVaultIsOpened.current
 
 	LaunchedEffect(key1 = bucketList, key2 = sortOn, key3 = sortBy) {
 		_bucketList.clear()
@@ -118,7 +121,7 @@ fun BucketScreen(
 								) {
 									BucketCard(
 										title = it.title,
-										bucketSize = it.bucketItemList.size,
+										bucketSize = it.bucketItemList.count { if (it.isLocked) isVaultOpened else true },
 										bucketType = it.bucketType.let { BucketType.valueOf(it) },
 										isLocked = it.isLocked,
 										isFavourite = it.isFavourite,

@@ -56,7 +56,7 @@ import com.syncodec.graphite.presentation.common.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Authenticator
@@ -190,7 +190,7 @@ class BucketActivity : ComponentActivity() {
 					LocalCompositionOnAddLink provides viewModel::putLink,
 					LocalCompositionOnPutTodo provides viewModel::putTodo,
 					LocalCompositionIsSelected provides isSelected,
-					LocalCompositionSelectedRealmUUIDList provides selectedRealmUUIDList,
+					LocalCompositionSelectedObjectIdList provides selectedRealmUUIDList,
 					LocalCompositionOnSelect provides { isSelected = it },
 					LocalCompositionOpenBottomSheet provides ::openSheet,
 					LocalCompositionCloseBottomSheet provides ::closeSheet,

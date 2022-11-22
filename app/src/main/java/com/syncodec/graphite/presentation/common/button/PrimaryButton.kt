@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 
@@ -106,5 +107,83 @@ fun PrimaryButton(
 				}
 			}
 		}
+	}
+}
+
+@Composable
+fun PrimaryButton(
+	primaryText: String,
+	primaryIcon: Int,
+	primaryDescription: String,
+	secondaryIcon: Int? = null,
+	secondaryDescription: String? = null,
+	bottomSpacing: Dp = 0.dp,
+	onClickPrimary: () -> Unit,
+	onClickSecondary: (() -> Unit)? = null,
+) {
+	Column(
+		modifier = Modifier.fillMaxSize(),
+		horizontalAlignment = Alignment.CenterHorizontally
+	) {
+		Spacer(modifier = Modifier.weight(1f))
+
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.height(40.dp)
+				.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
+				.clip(RoundedCornerShape(50)),
+		) {
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier
+					.fillMaxHeight()
+					.clickable { onClickPrimary() }
+			) {
+				Spacer(modifier = Modifier.width(if (secondaryIcon == null) 24.dp else 16.dp))
+				Icon(
+					painter = painterResource(id = primaryIcon),
+					contentDescription = primaryDescription,
+					tint = MaterialTheme.colorScheme.onPrimary,
+				)
+
+				Spacer(modifier = Modifier.width(8.dp))
+
+				Text(
+					text = primaryText,
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.onPrimary
+				)
+
+				Spacer(modifier = Modifier.width(if (secondaryIcon == null) 24.dp else 12.dp))
+			}
+
+			if (onClickSecondary != null && secondaryIcon != null) {
+				Box(
+					modifier = Modifier
+						.width(2.dp)
+						.height(16.dp)
+						.background(MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(50))
+				)
+
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier
+						.fillMaxHeight()
+						.clickable { onClickSecondary() }
+				) {
+					Spacer(modifier = Modifier.width(12.dp))
+					Icon(
+						painter = painterResource(id = secondaryIcon),
+						contentDescription = secondaryDescription,
+						tint = MaterialTheme.colorScheme.onPrimary,
+					)
+					Spacer(modifier = Modifier.width(16.dp))
+				}
+			}
+		}
+
+		Spacer(modifier = Modifier.height(bottomSpacing))
 	}
 }

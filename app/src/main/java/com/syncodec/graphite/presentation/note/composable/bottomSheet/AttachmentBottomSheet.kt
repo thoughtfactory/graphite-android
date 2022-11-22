@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
@@ -39,44 +40,43 @@ import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGr
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAttachmentList
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.AttachmentPreview
 import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
-import com.syncodec.graphite.utils.generatePrimaryKey
 import io.realm.kotlin.types.RealmUUID
 
 
 @Composable
 fun AttachmentBottomSheet(
-	onAddAttachmentToBuffer: (List<Uri>) -> Unit,
-	onRemoveAttachment: (RealmUUID) -> Unit,
+	onAddAttachmentToBuffer : (List<Uri>) -> Unit,
+	onRemoveAttachment : (AttachmentObject) -> Unit,
 ) {
 	val context = LocalContext.current
 	val attachmentList = LocalCompositionAttachmentList.current
 
-	var photoUri: Uri? by remember { mutableStateOf(null) }
+	var photoUri : Uri? by remember { mutableStateOf(null) }
 
 	val takePicture =
 		rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
 			try {
 				if (isCaptured) {
 					if (photoUri != null) {
-						onAddAttachmentToBuffer(listOf(photoUri!!))
+						onAddAttachmentToBuffer(listOf(photoUri !!))
 						photoUri = null
 					}
 				}
-			} catch (e: Exception) {
+			} catch (e : Exception) {
 				e.printStackTrace()
 			}
 		}
 	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
 		try {
 			onAddAttachmentToBuffer(uriList)
-		} catch (e: Exception) {
+		} catch (e : Exception) {
 		}
 	}
 
-	val buttonList: List<BottomSheetButtonData> = remember {
+	val buttonList : List<BottomSheetButtonData> = remember {
 		listOf(
 			BottomSheetButtonData(title = "Camera", icon = R.drawable.ic_camera) {
-				photoUri = createTempAttachmentFileToExpose(context = context, key = generatePrimaryKey(), extension = ".jpg").first
+				photoUri = createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first
 				takePicture.launch(photoUri)
 			},
 			BottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
@@ -116,9 +116,7 @@ fun AttachmentBottomSheet(
 					onClick = buttonData.onClick
 				)
 
-				if (index != buttonList.size - 1) {
-					Spacer(modifier = Modifier.width(8.dp))
-				}
+				if (index != buttonList.size - 1) Spacer(modifier = Modifier.width(8.dp))
 			}
 		}
 
@@ -129,7 +127,7 @@ fun AttachmentBottomSheet(
 				columns = GridCells.Adaptive(144.dp),
 				modifier = Modifier.padding(24.dp, 0.dp),
 			) {
-				attachmentList.forEach { id, (attachmentObject, file, uri) ->
+				attachmentList.forEach { (attachmentObject, file, uri) ->
 					item {
 						Box(
 							modifier = Modifier
@@ -145,7 +143,7 @@ fun AttachmentBottomSheet(
 								modifier = Modifier
 									.fillMaxWidth()
 									.aspectRatio(1f),
-								onRemove = { onRemoveAttachment(id)  },
+								onRemove = { onRemoveAttachment(attachmentObject) },
 							) {
 								try {
 									file?.let {
@@ -155,7 +153,7 @@ fun AttachmentBottomSheet(
 											context.startActivity(this)
 										}
 									}
-								} catch (e: Exception) {
+								} catch (e : Exception) {
 									e.printStackTrace()
 									Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
 								}

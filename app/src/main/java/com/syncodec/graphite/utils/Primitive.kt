@@ -3,6 +3,7 @@ package com.syncodec.graphite.utils
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.google.android.gms.common.util.Base64Utils
+import java.io.Serializable
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -10,6 +11,7 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.Triple
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -42,6 +44,15 @@ fun Bitmap.encodeBase64(): String? {
 	} catch (e: Exception) {
 		null
 	}
+}
+
+data class Quadruple<out A, out B, out C, out D>(
+	val first: A,
+	val second: B,
+	val third: C,
+	val fourth: D
+) : Serializable {
+	override fun toString(): String = "($first, $second, $third)"
 }
 
 @Deprecated("Remove in next version")

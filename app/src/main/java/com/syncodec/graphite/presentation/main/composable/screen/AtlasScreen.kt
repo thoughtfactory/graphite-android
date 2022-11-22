@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,7 +38,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
@@ -62,7 +61,7 @@ fun AtlasScreen(
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
 
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
 
@@ -192,9 +191,7 @@ private fun BottomSheetContent(
 
 				LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
 					try {
-						if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
-							thumbnail = note.thumbnail?.let { BitmapFactory.decodeByteArray(note.thumbnail, 0, it.size) }
-						}
+						if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
 					} catch (e : Exception) {
 						e.printStackTrace()
 					}
@@ -208,7 +205,6 @@ private fun BottomSheetContent(
 					isLocked = note.isLocked,
 					isSelected = note.id in selectedItemList,
 					isFavourite = note.isFavourite,
-					isDeleted = false,
 					isLast = note.id == lastEntryKey,
 					title = note.title,
 					contentThumbnail = note.contentThumbnail,
@@ -216,14 +212,12 @@ private fun BottomSheetContent(
 					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,
-					tagList = tagList.filter { it.RealmUUIDList.contains(note.id) },
+					tagList = tagList.filter { it.objectIdList.contains(note.id) },
 					isVisible = true,
 					isSwipable = false,
 					selectedColor = MaterialTheme.colorScheme.surface,
-					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
 					onClick = { onClickNote(note.id) },
-					onLongClick = { onLongClickNote(note.id) },
-				)
+				) { onLongClickNote(note.id) }
 
 				NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
 

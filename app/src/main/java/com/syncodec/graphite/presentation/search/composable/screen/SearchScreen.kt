@@ -54,6 +54,7 @@ fun SearchScreen(
 				if (it) {
 					SearchResultScreen(
 						visibleNote = visibleNote,
+						tagList = tagList,
 					)
 				} else {
 					TagScreen(

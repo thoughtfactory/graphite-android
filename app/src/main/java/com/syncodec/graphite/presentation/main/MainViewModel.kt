@@ -234,35 +234,35 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	}
 
 	fun addDebugNotes(debugNoteData : String) {
-		CoroutineScope(Dispatchers.IO).launch {
-			for (i in 0 .. 100) {
-				val jsonObject = JSONObject(debugNoteData)
-				val jsonArray = jsonObject.getJSONArray("quotes")
-				for (i in 0 until jsonArray.length()) {
-					try {
-						NoteObject.getInstance().apply {
-							val obj = jsonArray.getJSONObject(i)
-							this.userTimestamp = System.currentTimeMillis() + Random.nextLong((- 1.5e+9).toLong(), 1.5e+9.toLong())
-							this.title = obj.optString("author")
-							this.contentThumbnail = obj.optString("quote")
-							this.content =
-								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-									obj.optString("quote").repeat(500)
-								}\"}]}]}"
-
-							this.parentChapterId = defaultNotebookId.value
-							repository2.putNote(this) { _, _ -> }
-							if (i % 100 == 0) {
-								Log.i("npr71", "$i/${jsonArray.length()}")
-							}
-						}
-					} catch (exception : Exception) {
-						exception.printStackTrace()
-					}
-					delay(250)
-				}
-			}
-		}
+//		CoroutineScope(Dispatchers.IO).launch {
+//			for (i in 0 .. 100) {
+//				val jsonObject = JSONObject(debugNoteData)
+//				val jsonArray = jsonObject.getJSONArray("quotes")
+//				for (i in 0 until jsonArray.length()) {
+//					try {
+//						NoteObject.getInstance().apply {
+//							val obj = jsonArray.getJSONObject(i)
+//							this.userTimestamp = System.currentTimeMillis() + Random.nextLong((- 1.5e+9).toLong(), 1.5e+9.toLong())
+//							this.title = obj.optString("author")
+//							this.contentThumbnail = obj.optString("quote")
+//							this.content =
+//								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+//									obj.optString("quote").repeat(500)
+//								}\"}]}]}"
+//
+//							this.parentChapterId = defaultNotebookId.value
+//							repository2.putNote(this) { _, _ -> }
+//							if (i % 100 == 0) {
+//								Log.i("npr71", "$i/${jsonArray.length()}")
+//							}
+//						}
+//					} catch (exception : Exception) {
+//						exception.printStackTrace()
+//					}
+//					delay(250)
+//				}
+//			}
+//		}
 	}
 
 	fun onAuthenticate() {

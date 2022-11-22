@@ -33,23 +33,18 @@ fun Context.getFileName(uri: Uri): String? {
 }
 
 @Throws(IOException::class)
-fun createTempAttachmentFile(context : Context, id : String, extension: String?): File {
-	val directory = File(context.cacheDir, "images")
+fun createTempAttachmentFile(context : Context, id : String): File {
+	val directory = File(context.cacheDir, "attachment")
 	directory.mkdirs()
-	return File.createTempFile(
-		"attachment_",
-		"_$id${if (extension != null) "$extension" else ""}",
-		directory
-	)
+	return File.createTempFile("attachment_", "_$id", directory)
 }
 
 @Throws(IOException::class)
 fun createTempAttachmentFileToExpose(
 	context: Context,
-	key: String,
-	extension: String?
+	name: String,
 ): Pair<Uri, File> {
-	val file = createTempAttachmentFile(context, key, extension)
+	val file = createTempAttachmentFile(context, name)
 	val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 	return Pair(uri, file)
 }
@@ -90,4 +85,38 @@ fun Context.getFileFromUri(uri: Uri?): File? {
 
 	copyInputStreamToOutputStream(inputStream, outputStream)
 	return tempFile
+}
+
+fun copyDirectory(srcDir: File, destDir: File) {
+	if (!destDir.exists()) {
+		destDir.mkdirs()
+	}
+	srcDir.listFiles()?.forEach { file ->
+		if (file.isDirectory) {
+			copyDirectory(file, File(destDir, file.name))
+		} else {
+			val destFile = File(destDir, file.name)
+			file.inputStream().use { input ->
+				destFile.outputStream().use { output ->
+					input.copyTo(output)
+				}
+			}
+		}
+	}
+}
+
+fun copyInDirectory(srcDir: File, destDir: File) {
+	srcDir.listFiles()?.forEach { file ->
+		if (file.isDirectory) {
+			copyInDirectory(file, File(destDir, file.name))
+		} else {
+			val destFile = File(destDir, file.name)
+			file.inputStream().use { input ->
+				destFile.parentFile?.mkdirs()
+				destFile.outputStream().use { output ->
+					copyInputStreamToOutputStream(input, output)
+				}
+			}
+		}
+	}
 }

@@ -34,7 +34,7 @@ val LocalCompositionIsLocked = compositionLocalOf<Boolean?> { null }
 val LocalCompositionIsFavourite = compositionLocalOf<Boolean?> { null }
 val LocalCompositionParentChapterId = compositionLocalOf<RealmUUID?> { null }
 val LocalCompositionParentChapter = compositionLocalOf<ChapterObject?> { null }
-val LocalCompositionAttachmentList = compositionLocalOf< Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>> { mapOf() }
+val LocalCompositionAttachmentList = compositionLocalOf< List<Triple<AttachmentObject, File?, Uri?>>> { listOf() }
 
 val LocalCompositionTagList = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }
 val LocalCompositionTagListBuffer = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }

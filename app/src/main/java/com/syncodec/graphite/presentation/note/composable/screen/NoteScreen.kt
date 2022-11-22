@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
@@ -41,7 +42,7 @@ fun NoteScreen(
 	onClickLock : () -> Unit,
 	onClickFavourite : () -> Unit,
 	onAddAttachmentToBuffer : (List<Uri>) -> Unit,
-	onRemoveAttachment : (RealmUUID) -> Unit,
+	onRemoveAttachment : (AttachmentObject) -> Unit,
 	onUpdateTitle : (String?) -> Unit,
 	onRemoveLocation : () -> Unit,
 	onReloadLocation : () -> Unit,

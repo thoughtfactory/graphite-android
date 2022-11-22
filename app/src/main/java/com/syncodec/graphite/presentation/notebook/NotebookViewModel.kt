@@ -66,11 +66,11 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	val rootColor : MutableState<Color?> = mutableStateOf(null)
 
 	val isSelected : MutableState<Boolean> = mutableStateOf(false)
-	val selectedRealmUUIDList : SnapshotStateList<RealmUUID> = mutableStateListOf()
+	val selectedObjectIdList : SnapshotStateList<RealmUUID> = mutableStateListOf()
 
 
 	init {
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
 					RepositoryState.INIT -> Log.d("NotebookViewModel", "Init")
@@ -84,7 +84,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	}
 
 	fun initNotebook(chapterId : RealmUUID) {
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
 					RepositoryState.INIT -> Log.d("NotebookViewModel", "Init")
@@ -98,11 +98,11 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	}
 
 	private fun onRepositoryStateSuccess(chapterId : RealmUUID) {
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getAndLoadChapter(chapterId = chapterId)
 		}
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			try {
 				repository2.getAllTagAsFlow().collect {
@@ -120,7 +120,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	fun putChapter(title : String?, description : String?, color : Color?, bitmap : Bitmap?) {
 		if (this.currentChapterId.value != null) {
-			CoroutineScope(Dispatchers.IO).launch {
+			CoroutineScope(Dispatchers.Default).launch {
 				try {
 					ChapterObject().apply {
 						this.title = title
@@ -144,7 +144,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	private fun updateChapter() {
 		this.chapterId.value?.let {
-			CoroutineScope(Dispatchers.IO).launch {
+			CoroutineScope(Dispatchers.Default).launch {
 				try {
 					ChapterObject().apply {
 						this.id = it
@@ -177,14 +177,14 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	fun getAndLoadChapter(chapterId : RealmUUID?) {
 		this.currentChapterId.value = chapterId
 
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			repository2.getChapterFromIdAsFlow(id = chapterId).collect {
-//				WARN: Is it correct to not cancel the flow if chapterObject is null?
+//				!! Is it correct to not cancel the flow if chapterObject is null?
 				if (it != null) {
 					getParentChapter(it.id)
 					if (it.id == currentChapterId.value) {
-						withContext(Dispatchers.IO) {
+						withContext(Dispatchers.Default) {
 							this@NotebookViewModel.chapterObjectLite.value = it.toLite()
 
 							this@NotebookViewModel.chapterId.value = it.id
@@ -246,6 +246,25 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 			repository2.putDefaultChapterId(it) { callbackStatus ->
 				if (callbackStatus == CallbackStatus.SUCCESS) Toast.makeText(repository2.context, "Default chapter updated", Toast.LENGTH_SHORT).show()
 			}
+		}
+	}
+
+	fun delete() {
+		try {
+			val toDeleteRealmUUIDList = selectedObjectIdList.toList()
+			repository2.delete(toDeleteRealmUUIDList)
+			selectedObjectIdList.clear()
+			isSelected.value = false
+		} catch (e : Exception) {
+
+		}
+	}
+
+	fun delete(objectId: RealmUUID) {
+		try {
+			repository2.delete(listOf(objectId))
+		} catch (e : Exception) {
+
 		}
 	}
 

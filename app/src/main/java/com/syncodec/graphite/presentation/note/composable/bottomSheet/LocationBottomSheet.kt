@@ -407,6 +407,7 @@ private fun LocationGoogleMap(
 				state = MarkerState(position = cameraPositionState.position.target),
 			)
 		}
+
 		Box(
 			modifier = Modifier
 				.fillMaxWidth()

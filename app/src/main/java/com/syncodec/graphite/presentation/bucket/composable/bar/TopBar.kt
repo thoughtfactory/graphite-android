@@ -25,7 +25,7 @@ import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnSh
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionPagerState
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
@@ -153,7 +153,7 @@ private fun SelectionBar() {
 
 	val context = LocalContext.current
 
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val openDialog = LocalCompositionOpenDialog.current
 	val onShare = LocalCompositionOnShare.current

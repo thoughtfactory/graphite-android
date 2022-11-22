@@ -1,31 +1,27 @@
 package com.syncodec.graphite.di.model
 
-import androidx.room.PrimaryKey
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.RealmUUID
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 
 
-class AttachmentObject : RealmObject {
-	@PrimaryKey var id: RealmUUID = RealmUUID.random()
-
-	var createdTimestamp : Long = System.currentTimeMillis()
+class AttachmentObject {
 	var name : String = ""
 	var extension : String? = null
 	var mimeType : String? = null
-	var isSaved : Boolean = false
-	var isFavourite : Boolean = false
-	var isLocked : Boolean = false
 
-	var parentNoteId : RealmUUID? = null
-
+	@JsonIgnore
 	fun getTypeString() : String? {
 		return mimeType?.split("/")?.getOrNull(0)
 	}
 
+	@JsonIgnore
 	fun getSubTypeString() : String? {
 		return mimeType?.split("/")?.getOrNull(1)
 	}
 
+	@JsonIgnore
 	fun getType() : Type {
 		return getTypeString()?.let {
 			when (it) {
@@ -41,10 +37,18 @@ class AttachmentObject : RealmObject {
 		return getTypeString() == "image" || getTypeString() == "video" || getTypeString() == "audio" || getSubTypeString() == "pdf"
 	}
 
+	@JsonIgnore
+	fun serialize() : String? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			return objectMapper.writeValueAsString(this)
+		} catch (e: Exception) {
+			null
+		}
+	}
+
 	override fun hashCode() : Int {
-		var result = id.hashCode()
-		result = 31 * result + createdTimestamp.hashCode()
-		result = 31 * result + name.hashCode()
+		var result = name.hashCode()
 		result = 31 * result + (extension?.hashCode() ?: 0)
 		result = 31 * result + (mimeType?.hashCode() ?: 0)
 		return result
@@ -54,8 +58,6 @@ class AttachmentObject : RealmObject {
 		if (this === other) return true
 		if (other !is AttachmentObject) return false
 
-		if (id != other.id) return false
-		if (createdTimestamp != other.createdTimestamp) return false
 		if (name != other.name) return false
 		if (extension != other.extension) return false
 		if (mimeType != other.mimeType) return false
@@ -63,26 +65,18 @@ class AttachmentObject : RealmObject {
 		return true
 	}
 
+	@JsonIgnore
 	fun clone() : AttachmentObject = AttachmentObject().apply {
-		this.id = this@AttachmentObject.id
-		this.createdTimestamp = this@AttachmentObject.createdTimestamp
 		this.name = this@AttachmentObject.name
 		this.extension = this@AttachmentObject.extension
 		this.mimeType = this@AttachmentObject.mimeType
-		this.isSaved = this@AttachmentObject.isSaved
-		this.parentNoteId = this@AttachmentObject.parentNoteId
 	}
 
+	@JsonIgnore
 	fun toSnapshot() = AttachmentSnapshot(
-		id = id,
-		createdTimestamp = createdTimestamp,
 		name = name,
 		extension = extension,
 		mimeType = mimeType,
-		isSaved = isSaved,
-		isFavourite = isFavourite,
-		isLocked = isLocked,
-		parentNoteId = parentNoteId,
 		data = null
 	)
 
@@ -93,18 +87,21 @@ class AttachmentObject : RealmObject {
 			AUDIO,
 			UNKNOWN
 		}
+
+		fun deserialize(json : String) : AttachmentObject? {
+			return try {
+				val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+				objectMapper.readValue(json, AttachmentObject::class.java)
+			} catch (e : Exception) {
+				null
+			}
+		}
 	}
 }
 
 data class AttachmentSnapshot(
-	val id : RealmUUID,
-	val createdTimestamp : Long,
 	val name : String,
 	val extension : String?,
 	val mimeType : String?,
-	val isSaved : Boolean,
-	val isFavourite : Boolean,
-	val isLocked : Boolean,
-	val parentNoteId : RealmUUID?,
 	var data: ByteArray?
 )

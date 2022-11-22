@@ -21,7 +21,7 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.search.composable.dialog.SearchDialogType
 import com.syncodec.graphite.presentation.search.composable.screen.SearchScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -110,7 +110,7 @@ class SearchActivity : ComponentActivity() {
 						openDialog provides ::openDialog,
 						closeDialog provides ::closeDialog,
 						LocalCompositionIsSelected provides isSelected,
-						LocalCompositionSelectedRealmUUIDList provides selectedRealmUUIDList,
+						LocalCompositionSelectedObjectIdList provides selectedRealmUUIDList,
 						LocalCompositionOnSelect provides { isSelected = it },
 						onWhere provides viewModel::onWhere,
 						setOnWhere provides viewModel::setOnWhere,

@@ -1,6 +1,10 @@
 package com.syncodec.graphite.presentation.attachment.composable.screen
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,68 +17,61 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.attachment.composable.bar.TopBar
-import com.syncodec.graphite.presentation.attachment.composable.bottomSheet.MenuBottomSheet
 import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.AttachmentCard
+import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.EmptyView
+import com.syncodec.graphite.presentation.attachment.composable.dialog.AttachmentDialog
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
+import com.syncodec.graphite.presentation.note.NoteActivity
+import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.Quadruple
 import io.realm.kotlin.types.RealmUUID
-import kotlinx.coroutines.launch
 import java.io.File
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AttachmentScreen(
 	noteObject : NoteObject?,
-	chapterObject: ChapterObject?,
-	attachmentList: Map<RealmUUID, Triple<AttachmentObject, File?, Uri?>>
+	chapterObject : ChapterObject?,
+	attachmentList : List<Quadruple<AttachmentObject, File?, Uri?, RealmUUID>>,
+	onClickBack : () -> Unit,
 ) {
-	val activity = LocalContext.current as AttachmentActivity
-	val scope = rememberCoroutineScope()
+	val context = LocalContext.current
 
-	val modalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+	val isSelected = LocalCompositionIsSelected.current
+	val selectedAttachmentList = AttachmentActivity.LocalSelectedAttachmentList.current
+	val onSelect = LocalCompositionOnSelect.current
 
-	val closeSheet = { scope.launch { modalBottomSheetState.hide() } }
-
-	val openSheet = { scope.launch { modalBottomSheetState.show() } }
-
-	ModalBottomSheetLayout(
-		sheetState = modalBottomSheetState,
-		sheetContent = {
-			MenuBottomSheet()
+	Scaffold(
+		modifier = Modifier.fillMaxSize(),
+		topBar = {
+			TopBar(onClickBack = onClickBack)
 		},
-		modifier = Modifier.fillMaxSize()
 	) {
-		Scaffold(
-			modifier = Modifier.fillMaxSize(),
-			topBar = {
-				TopBar(
-					onClickBack = { activity.onBackPressed() },
-					onClickMenu = { openSheet() }
-				)
-			},
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(it)
 		) {
-			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(it)
-			) {
+
+			if (attachmentList.isEmpty()) {
+				EmptyView()
+			} else {
 				LazyVerticalGrid(
 					columns = GridCells.Adaptive(144.dp),
 					modifier = Modifier.fillMaxSize()
@@ -89,17 +86,76 @@ fun AttachmentScreen(
 						}
 					}
 
-					attachmentList.forEach { (id, data) ->
-						item {
-							AttachmentCard(
-								uri = data.third,
-								file = data.second,
-								attachmentObject = data.first
-							)
+					attachmentList.forEach { attachment ->
+						item(
+							key = attachment.hashCode()
+						) {
+							Box(
+								modifier = Modifier.animateItemPlacement()
+							) {
+								AttachmentCard(
+									uri = attachment.third,
+									file = attachment.second,
+									attachmentObject = attachment.first,
+									isSelected = attachment in selectedAttachmentList,
+									onClick = {
+										if (isSelected) {
+											if (attachment in selectedAttachmentList) selectedAttachmentList.remove(attachment)
+											else selectedAttachmentList.add(attachment)
+										} else {
+											try {
+												if (attachment.second != null) {
+													Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", attachment.second)).apply {
+														addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+														context.startActivity(this)
+													}
+												}
+											} catch (e : ActivityNotFoundException) {
+												Toast.makeText(context, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
+											} catch (e : Exception) {
+												e.printStackTrace()
+												Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
+											}
+										}
+									},
+									onLongClick = {
+										onSelect(true)
+										if (attachment in selectedAttachmentList) selectedAttachmentList.remove(attachment)
+										else selectedAttachmentList.add(attachment)
+									},
+									openNote = {
+										Intent(context, NoteActivity::class.java).apply {
+											putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+											putExtra(Extra.Companion.Constant.NOTE_ID.name, attachment.fourth.bytes)
+											putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+
+											context.startActivity(this)
+										}
+									},
+									onShare = {
+										try {
+											val sharingIntent = Intent(Intent.ACTION_SEND)
+											sharingIntent.type = attachment.first.mimeType ?: "*/*"
+											sharingIntent.putExtra(Intent.EXTRA_STREAM, attachment.third)
+
+											Intent.createChooser(sharingIntent, "Share using").apply {
+												addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+												context.startActivity(this)
+											}
+										} catch (e : Exception) {
+											e.printStackTrace()
+											Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
+										}
+									}
+								)
+							}
 						}
 					}
 				}
 			}
+
+			AttachmentDialog()
 		}
 	}
 }

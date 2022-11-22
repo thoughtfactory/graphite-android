@@ -1,32 +1,28 @@
 package com.syncodec.graphite.presentation.notebook.composable.screen
 
 import android.content.Intent
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
+import android.graphics.Bitmap
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,17 +32,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
+import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.ChapterListCard
@@ -58,9 +54,9 @@ import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Preview
 @Composable
 fun ExplorerScreen() {
@@ -76,12 +72,21 @@ fun ExplorerScreen() {
 
 	val noteObjectList = NotebookActivity.LocalNoteObjectList.current
 	val chapterObjectList = NotebookActivity.LocalChapterObjectList.current
-	val tagList = listOf<TagObject>()
+	val tagList = NotebookActivity.LocalTagList.current
+
+	val isSelected = LocalCompositionIsSelected.current
+	val onSelect = LocalCompositionOnSelect.current
+	val selectedObjectList = LocalCompositionSelectedObjectIdList.current
 
 	val isVaultOpened = LocalVaultIsOpened.current
 
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.TIMESTAMP)
 	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.DESCENDING)
+
+	val onRefresh = NotebookActivity.LocalOnRefresh.current
+
+	val activityLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { onRefresh() }
+
 
 	if (noteObjectList.isEmpty() && chapterObjectList.isEmpty()) {
 		EmptyView()
@@ -101,19 +106,27 @@ fun ExplorerScreen() {
 						}
 					),
 				tagList = tagList,
+				selectedObjectIdList = selectedObjectList,
 				isVisible = isNoteListVisible,
 				toggleVisibility = { isNoteListVisible = ! isNoteListVisible },
 				onClick = {
-					Intent(context, NoteActivity::class.java).apply {
-						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId?.bytes)
-						putExtra(Extra.Companion.Constant.NOTE_ID.name, it.id.bytes)
-						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+					if (isSelected) {
+						if (it.id in selectedObjectList) selectedObjectList.remove(it.id) else selectedObjectList.add(it.id)
+					} else {
+						Intent(context, NoteActivity::class.java).apply {
+							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId?.bytes)
+							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.id.bytes)
+							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
-						context.startActivity(this)
+							activityLauncher.launch(this)
+						}
 					}
 				},
-				onLongClick = { }
+				onLongClick = {
+					onSelect(true)
+					if (it.id in selectedObjectList) selectedObjectList.remove(it.id) else selectedObjectList.add(it.id)
+				}
 			)
 			chapterList(
 				chapterList = chapterObjectList
@@ -127,11 +140,21 @@ fun ExplorerScreen() {
 						}
 					),
 				tagList = tagList,
+				selectedObjectIdList = selectedObjectList,
 				isVisible = isChapterListVisible,
 				isVaultOpened = isVaultOpened,
 				toggleVisibility = { isChapterListVisible = ! isChapterListVisible },
-				onClick = { getChapter(it.id) },
-				onLongClick = { }
+				onClick = {
+					if (isSelected) {
+						if (it.id in selectedObjectList) selectedObjectList.remove(it.id) else selectedObjectList.add(it.id)
+					} else {
+						getChapter(it.id)
+					}
+				},
+				onLongClick = {
+					onSelect(true)
+					if (it.id in selectedObjectList) selectedObjectList.remove(it.id) else selectedObjectList.add(it.id)
+				}
 			)
 
 			item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -143,6 +166,7 @@ fun ExplorerScreen() {
 private fun LazyListScope.noteList(
 	noteList : List<NoteObjectLite>,
 	tagList : List<TagObject>,
+	selectedObjectIdList : List<RealmUUID> = listOf(),
 	isVisible : Boolean,
 	toggleVisibility : () -> Unit,
 	onClick : (NoteObjectLite) -> Unit,
@@ -192,30 +216,37 @@ private fun LazyListScope.noteList(
 		item(
 			key = note.id.toString()
 		) {
+			var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
+
+			LaunchedEffect(key1 = note.id.hashCode(), key2 = note.thumbnail.hashCode()) {
+				try {
+					if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
+				} catch (e : Exception) {
+					e.printStackTrace()
+				}
+			}
+
 			Box(
 				modifier = Modifier.animateItemPlacement(tween(300))
 			) {
 				NoteListCard(
 					id = note.id,
 					timestamp = note.userTimestamp,
-					showFullTime = true,
 					isLocked = note.isLocked,
-					isSelected = false,
+					isSelected = note.id in selectedObjectIdList,
 					isFavourite = note.isFavourite,
-					isDeleted = false,
 					isLast = false,
 					title = note.title,
 					contentThumbnail = note.contentThumbnail,
 					attachmentCount = note.attachmentCount,
-					attachmentThumbnail = null,
+					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,
-					tagList = tagList.filter { it.RealmUUIDList.contains(note.id) }.map { it.toLite() },
+					tagList = tagList.filter { note.id in it.objectIdList },
 					isVisible = isVisible,
 					selectedColor = MaterialTheme.colorScheme.surface,
 					onClick = { onClick(note) },
-					onLongClick = { onLongClick(note) },
-				)
+				) { onLongClick(note) }
 			}
 		}
 	}
@@ -225,6 +256,7 @@ private fun LazyListScope.noteList(
 private fun LazyListScope.chapterList(
 	chapterList : List<ChapterObject>,
 	tagList : List<TagObject>,
+	selectedObjectIdList : List<RealmUUID>,
 	isVisible : Boolean,
 	isVaultOpened : Boolean,
 	toggleVisibility : () -> Unit,
@@ -280,7 +312,7 @@ private fun LazyListScope.chapterList(
 				ChapterListCard(
 					id = chapterObject.id,
 					timestamp = chapterObject.createdTimestamp,
-					isSelected = false,
+					isSelected = chapterObject.id in selectedObjectIdList,
 					isLocked = chapterObject.isLocked,
 					isFavourite = chapterObject.isFavourite,
 					isDeleted = false,
@@ -291,7 +323,7 @@ private fun LazyListScope.chapterList(
 					thumbnail = chapterObject.thumbnail?.decodeBase64ToBitmap(),
 					noteCount = chapterObject.noteList.filter { if (it.isLocked) isVaultOpened else true }.size,
 					chapterCount = chapterObject.chapterList.filter { if (it.isLocked) isVaultOpened else true }.size,
-					tagList = tagList.filter { it.RealmUUIDList.contains(chapterObject.id) }.map { it.toLite() },
+					tagList = tagList.filter { it.objectIdList.contains(chapterObject.id) }.map { it.toLite() },
 					isVisible = isVisible,
 					selectedColor = MaterialTheme.colorScheme.surface,
 					onClick = { onClick(chapterObject) },

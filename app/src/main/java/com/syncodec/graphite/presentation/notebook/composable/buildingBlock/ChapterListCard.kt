@@ -40,8 +40,7 @@ import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(
-	ExperimentalFoundationApi::class,
-	ExperimentalAnimationApi::class
+	ExperimentalFoundationApi::class
 )
 @Composable
 fun ChapterListCard(

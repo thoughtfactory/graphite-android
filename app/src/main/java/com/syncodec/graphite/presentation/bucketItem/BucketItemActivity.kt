@@ -78,7 +78,10 @@ import com.syncodec.graphite.presentation.common.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.LocalAuthenticatorAction
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.Status
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
@@ -135,6 +138,9 @@ class BucketItemActivity : ComponentActivity() {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+
+				val isVaultOpened = LocalVaultIsOpened.current
+				val authenticator = LocalAuthenticatorAction.current
 
 				val status by viewModel.status
 
@@ -218,8 +224,8 @@ class BucketItemActivity : ComponentActivity() {
 					LocalCompositionIsLocked provides isLocked,
 					LocalCompositionIsFavourite provides isFavourite,
 					LocalCompositionOnClickFavourite provides viewModel::onToggleFavourite,
-					LocalCompositionOnClickLock provides viewModel::onToggleLocked,
-					LocalCompositionOnClickNavigationIcon provides { this.onBackPressed() },
+					LocalCompositionOnClickLock provides { if (isVaultOpened) viewModel.onToggleLocked() else authenticator(Authenticator.AUTHENTICATE) },
+					LocalCompositionOnClickNavigationIcon provides { this.finish() },
 					LocalCompositionOnChangeState provides viewModel::onToggleState,
 					LocalCompositionOnClickSave provides viewModel::putBucketItem,
 					LocalCompositionBookKey provides bookKey,

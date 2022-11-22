@@ -38,7 +38,7 @@ fun AtlasDialog(
 
 	DeleteDialog(
 		showDialog = showDeleteDialog,
-		message = "Are you sure you want to delete selected notes?",
+		message = "Are you sure you want to delete selected items?",
 		onDismiss = { closeDialog(DialogType.DELETE) },
 	) {
 		onDelete()

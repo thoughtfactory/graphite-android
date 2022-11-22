@@ -449,20 +449,20 @@ class NoteActivity : ComponentActivity() {
 	}
 
 	private fun onShareAttachment() {
-		val files : ArrayList<Uri> = ArrayList()
-		viewModel.attachmentListBuffer.forEach {
-			it.value.third?.let { it1 -> files.add(it1) }
-		}
-
-		Intent().apply {
-			action = Intent.ACTION_SEND_MULTIPLE
-			putExtra(Intent.EXTRA_SUBJECT, viewModel.title.value ?: "Note")
-			type = "*/*"
-			putParcelableArrayListExtra(Intent.EXTRA_STREAM, files)
-
-			if (resolveActivity(this@NoteActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
-			else Toast.makeText(this@NoteActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
-		}
+//		val files : ArrayList<Uri> = ArrayList()
+//		viewModel.attachmentListBuffer.forEach {
+//			it.value.third?.let { it1 -> files.add(it1) }
+//		}
+//
+//		Intent().apply {
+//			action = Intent.ACTION_SEND_MULTIPLE
+//			putExtra(Intent.EXTRA_SUBJECT, viewModel.title.value ?: "Note")
+//			type = "*/*"
+//			putParcelableArrayListExtra(Intent.EXTRA_STREAM, files)
+//
+//			if (resolveActivity(this@NoteActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
+//			else Toast.makeText(this@NoteActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
+//		}
 	}
 
 	private fun onExportMarkdown() {

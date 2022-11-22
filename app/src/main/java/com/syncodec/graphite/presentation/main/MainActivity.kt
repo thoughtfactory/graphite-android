@@ -4,7 +4,6 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
 import android.os.CancellationSignal
@@ -51,7 +50,7 @@ import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteRefreshing
@@ -191,7 +190,7 @@ class MainActivity : ComponentActivity() {
 					LocalCompositionOnRefresh provides { viewModel.refresher.value = viewModel.refresher.value + 1 },
 					LocalCompositionIsSelected provides isSelected,
 					LocalCompositionOnSelect provides { isSelected = it },
-					LocalCompositionSelectedRealmUUIDList provides selectedRealmUUIDList,
+					LocalCompositionSelectedObjectIdList provides selectedRealmUUIDList,
 					LocalCompositionPutBucket provides viewModel::putBucket,
 					LocalCompositionOpenDialog provides ::openDialog,
 					LocalCompositionCloseDialog provides ::closeDialog,

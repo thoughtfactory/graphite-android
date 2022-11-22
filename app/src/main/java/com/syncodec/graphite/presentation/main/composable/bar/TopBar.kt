@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
@@ -83,7 +83,7 @@ private fun Bar(
 	val openSheet = LocalCompositionOpenBottomSheet.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
 
 	val onSelect = LocalCompositionOnSelect.current
 
@@ -115,12 +115,12 @@ private fun Bar(
 						tint = MaterialTheme.colorScheme.onBackground,
 					) {
 						onSelect(false)
-						selectedRealmUUIDList.clear()
+						selectedObjectIdList.clear()
 					}
 				},
 				title = {
 					Text(
-						text = if (selectedRealmUUIDList.isEmpty()) "No items selected" else if (selectedRealmUUIDList.size == 1) "1 item selected" else "${selectedRealmUUIDList.size} items selected",
+						text = if (selectedObjectIdList.isEmpty()) "No items selected" else if (selectedObjectIdList.size == 1) "1 item selected" else "${selectedObjectIdList.size} items selected",
 						color = MaterialTheme.colorScheme.onBackground
 					)
 				},
@@ -135,7 +135,7 @@ private fun Bar(
 						)
 					}
 				},
-				colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = containerColor)
+				colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor)
 			)
 		} else {
 			CenterAlignedTopAppBar(

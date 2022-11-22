@@ -64,8 +64,8 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun BucketScreen(
-	modalBottomSheetState: ModalBottomSheetState,
-	bottomSheetType: BucketBottomSheetType,
+	modalBottomSheetState : ModalBottomSheetState,
+	bottomSheetType : BucketBottomSheetType,
 ) {
 	val scope = rememberCoroutineScope()
 
@@ -142,13 +142,19 @@ fun BucketScreen(
 								}
 							}
 
-							BottomBar(modifier = Modifier.onGloballyPositioned { bottomBarSpacingPx = it.positionInParent().y.toInt() })
+							BottomBar(modifier = Modifier.onGloballyPositioned {
+								bottomBarSpacingPx = it.positionInParent().y.toInt()
+								Log.i("npr71", "y = ${it.positionInParent().y.toInt()}")
+								Log.i("npr71", "bottomBarSpacingPx = $bottomBarSpacingPx")
+
+							})
 						}
 
 						AnimatedVisibility(
 							visible = ! isSelected,
 							enter = fadeIn(tween(300)),
-							exit = fadeOut(tween(300))
+							exit = fadeOut(tween(300)),
+							modifier = Modifier
 						) {
 							PrimaryButton(
 								primaryText = when (bucketObject.bucketType) {
@@ -181,7 +187,7 @@ fun BucketScreen(
 										BucketType.LINK.name -> BucketBottomSheetType.ADD_LINK
 										else -> BucketBottomSheetType.MENU
 									}.let {
-									if (it  == BucketBottomSheetType.ADD_TODO) setBucketItemObject(null)
+										if (it == BucketBottomSheetType.ADD_TODO) setBucketItemObject(null)
 										openSheet(it)
 									}
 								}

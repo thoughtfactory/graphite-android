@@ -30,6 +30,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
@@ -39,14 +40,18 @@ import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.common.info.InfoView
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 
 
 @Composable
 fun MenuBottomSheet() {
 
+	val isVaultOpened = LocalVaultIsOpened.current
+
 	val bucketObject = LocalCompositionBucketObject.current
 
 	val openDialog = LocalCompositionOpenDialog.current
+	val closeSheet = LocalCompositionCloseBottomSheet.current
 
 	val buttonList : List<BottomSheetButtonData> = remember {
 		listOf(
@@ -65,7 +70,10 @@ fun MenuBottomSheet() {
 				icon = R.drawable.ic_delete,
 				containerColor = Color.DeleteContainer,
 				contentColor = Color.DeleteContent,
-				onClick = { openDialog(DialogType.DELETE) }
+				onClick = {
+					closeSheet()
+					openDialog(DialogType.DELETE)
+				}
 			),
 		)
 	}
@@ -99,10 +107,10 @@ fun MenuBottomSheet() {
 		Spacer(modifier = Modifier.height(6.dp))
 
 		DataView(
-			allCount = bucketObject?.bucketItemList?.size ?: 0,
-			alphaCount = bucketObject?.bucketItemList?.count { it.state == BucketItemState.ALPHA.name } ?: 0,
-			betaCount = bucketObject?.bucketItemList?.count { it.state == BucketItemState.BETA.name } ?: 0,
-			gammaCount = bucketObject?.bucketItemList?.count { it.state == BucketItemState.GAMMA.name } ?: 0,
+			allCount = bucketObject?.bucketItemList?.count { if (it.isLocked) isVaultOpened else true } ?: 0,
+			alphaCount = bucketObject?.bucketItemList?.count { (it.state == BucketItemState.ALPHA.name) && if (it.isLocked) isVaultOpened else true } ?: 0,
+			betaCount = bucketObject?.bucketItemList?.count { (it.state == BucketItemState.BETA.name) && if (it.isLocked) isVaultOpened else true } ?: 0,
+			gammaCount = bucketObject?.bucketItemList?.count { (it.state == BucketItemState.GAMMA.name) && if (it.isLocked) isVaultOpened else true } ?: 0,
 			bucketType = bucketObject?.bucketType.let {
 				try {
 					BucketType.valueOf(it ?: BucketType.UNKNOWN.name)

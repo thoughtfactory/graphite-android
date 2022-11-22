@@ -64,7 +64,7 @@ fun SettingsScreen() {
 		SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> "Local Backup"
 		SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> "Snapshot Warehouse"
 		SettingsActivity.Companion.Navigator.SYNC -> "Synchronization"
-		SettingsActivity.Companion.Navigator.ABOUT -> "About Us"
+		SettingsActivity.Companion.Navigator.ABOUT_US -> "About Us"
 	}
 
 	CompositionLocalProvider(
@@ -108,7 +108,7 @@ fun SettingsScreen() {
 							SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> LocalBackupScreen()
 							SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen()
 							SettingsActivity.Companion.Navigator.SYNC -> SynchronizationScreen()
-							SettingsActivity.Companion.Navigator.ABOUT -> null
+							SettingsActivity.Companion.Navigator.ABOUT_US -> AboutUsScreen( )
 						}
 					}
 				}

@@ -1,5 +1,11 @@
 package com.syncodec.graphite.presentation.note.composable.bar.bottomBar.editorBottomBar
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +36,8 @@ fun EditorBottomBar(
 
 	var textFormat by remember { mutableStateOf(RichTextEditor.TextFormat()) }
 
+	var isHeadingBarVisible by remember { mutableStateOf(false) }
+
 	richTextEditor.setOnFormatUpdate(
 		object : RichTextEditor.OnFormatUpdateListener {
 			override fun onFormatUpdate(newTextFormat: RichTextEditor.TextFormat) {
@@ -41,7 +49,18 @@ fun EditorBottomBar(
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		Spacer(modifier = Modifier.height(16.dp))
+		AnimatedVisibility(
+			visible = isHeadingBarVisible,
+			enter = expandVertically(tween(300)),
+			exit = shrinkVertically(tween(300)),
+		) {
+			HeadingBar(
+				richTextEditor = richTextEditor,
+				textFormat = textFormat,
+				closeBar = { isHeadingBarVisible = false },
+			)
+		}
+		Spacer(modifier = Modifier.height(8.dp))
 		FormatBar(
 			richTextEditor = richTextEditor,
 			textFormat = textFormat,
@@ -51,9 +70,8 @@ fun EditorBottomBar(
 			onClickLocation = onClickLocation,
 			onClickAttachment = onClickAttachment,
 			onClickTag = onClickTag,
-			onClickCloseToolbar = { /*TODO*/ },
-			onClickHeadingToolbar = { /*TODO*/ },
+			onClickHeading = { isHeadingBarVisible = true },
 		)
-		Spacer(modifier = Modifier.height(16.dp))
+		Spacer(modifier = Modifier.height(12.dp))
 	}
 }

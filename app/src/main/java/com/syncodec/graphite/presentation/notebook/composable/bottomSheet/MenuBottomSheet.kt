@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,7 +41,6 @@ import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGr
 import com.syncodec.graphite.presentation.common.info.InfoView
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.notebook.composable.dialog.NotebookDialogType
-import com.syncodec.graphite.presentation.tags.TagsActivity
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 import com.syncodec.graphite.utils.Extra
@@ -89,7 +87,10 @@ fun MenuBottomSheet() {
 			icon = R.drawable.ic_delete,
 			containerColor = Color.DeleteContainer,
 			contentColor = Color.DeleteContent,
-			onClick = onDeleteChapter
+			onClick = {
+				closeSheet()
+				openDialog(NotebookDialogType.DELETE_CHAPTER)
+			}
 		),
 		BottomSheetButtonData(
 			title = "Attachment",
@@ -149,12 +150,12 @@ fun MenuBottomSheet() {
 			createdTimestamp = createdTimestamp,
 			modifiedTimestamp = modifiedTimestamp,
 			description = description,
-			color = color ?: MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
+			color = color ?: MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
 			thumbnail = thumbnail,
 		)
 
 		TagView(
-			tagList = tagList.filter { it.RealmUUIDList.contains(chapterId) }.map { it.toLite() },
+			tagList = tagList.filter { it.objectIdList.contains(chapterId) }.map { it.toLite() },
 		)
 
 //		Spacer(modifier = Modifier.height(4.dp))

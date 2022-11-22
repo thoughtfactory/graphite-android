@@ -15,7 +15,7 @@ class TagObject : RealmObject {
 	var tag: String = ""
 	var color: Int = getRandomColor().toArgb()
 
-	var RealmUUIDList: RealmList<RealmUUID> = realmListOf()
+	var objectIdList: RealmList<RealmUUID> = realmListOf()
 
 	fun toLite(): TagObjectLite {
 		return TagObjectLite(
@@ -29,7 +29,7 @@ class TagObject : RealmObject {
 		id = id,
 		tag = tag,
 		color = color,
-		RealmUUIDList = RealmUUIDList
+		objectIdList = objectIdList
 	)
 
 
@@ -37,7 +37,7 @@ class TagObject : RealmObject {
 		var result = id.hashCode()
 		result = 31 * result + tag.hashCode()
 		result = 31 * result + color
-		result = 31 * result + RealmUUIDList.hashCode()
+		result = 31 * result + objectIdList.hashCode()
 		return result
 	}
 
@@ -48,7 +48,7 @@ class TagObject : RealmObject {
 		if (id != other.id) return false
 		if (tag != other.tag) return false
 		if (color != other.color) return false
-		if (RealmUUIDList != other.RealmUUIDList) return false
+		if (objectIdList != other.objectIdList) return false
 
 		return true
 	}
@@ -64,5 +64,12 @@ data class TagSnapshot(
 	val id: RealmUUID,
 	val tag: String,
 	val color: Int,
-	val RealmUUIDList: List<RealmUUID>
-)
+	val objectIdList: List<RealmUUID>
+) {
+	fun toObject() = TagObject().apply {
+		this.id = this@TagSnapshot.id
+		this.tag = this@TagSnapshot.tag
+		this.color = this@TagSnapshot.color
+		this.objectIdList.addAll(this@TagSnapshot.objectIdList)
+	}
+}

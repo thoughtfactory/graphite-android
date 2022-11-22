@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
@@ -126,9 +125,7 @@ private fun BottomSheetContent(
 
 				LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
 					try {
-						if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
-							thumbnail = note.thumbnail?.let { BitmapFactory.decodeByteArray(note.thumbnail, 0, it.size) }
-						}
+						if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
 					} catch (e : Exception) {
 						e.printStackTrace()
 					}
@@ -142,7 +139,6 @@ private fun BottomSheetContent(
 					isLocked = note.isLocked,
 					isSelected = false,
 					isFavourite = note.isFavourite,
-					isDeleted = false,
 					isLast = note.id == lastEntryKey,
 					title = note.title,
 					contentThumbnail = note.contentThumbnail,
@@ -150,14 +146,12 @@ private fun BottomSheetContent(
 					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,
-					tagList = tagList.filter { it.RealmUUIDList.contains(note.id) },
+					tagList = tagList.filter { it.objectIdList.contains(note.id) },
 					isVisible = true,
 					isSwipable = false,
 					selectedColor = MaterialTheme.colorScheme.surface,
-					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
 					onClick = { onClickNote(note.id) },
-					onLongClick = { onLongClickNote(note.id) },
-				)
+				) { onLongClickNote(note.id) }
 
 				NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
 

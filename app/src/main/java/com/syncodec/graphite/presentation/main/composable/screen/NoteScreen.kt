@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -32,7 +31,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDList
+import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.common.lazyView.isScrollingUp
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
@@ -67,7 +66,7 @@ fun NoteScreen(
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDList.current
+	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val lazyListState = rememberLazyListState()
 	val lazyGridState = rememberLazyGridState()
@@ -223,11 +222,9 @@ private fun ListView(
 					) {
 						var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
 
-						LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
+						LaunchedEffect(key1 = note.id.hashCode(), key2 = note.thumbnail.hashCode()) {
 							try {
-								if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
-									thumbnail = note.thumbnail?.let { BitmapFactory.decodeByteArray(note.thumbnail, 0, it.size) }
-								}
+								if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
 							} catch (e : Exception) {
 								e.printStackTrace()
 							}
@@ -244,22 +241,19 @@ private fun ListView(
 								isLocked = note.isLocked,
 								isSelected = selectedRealmUUIDList.contains(note.id),
 								isFavourite = note.isFavourite,
-								isDeleted = false,
 								isLast = note.id == lastEntryKey,
 								title = note.title,
 								contentThumbnail = note.contentThumbnail,
 								attachmentCount = note.attachmentCount,
 								attachmentThumbnail = thumbnail,
 								address = note.address,
-								tagList = tagList.filter { it.RealmUUIDList.contains(note.id) },
 								latLng = note.latLng,
+								tagList = tagList.filter { it.objectIdList.contains(note.id) },
 								isVisible = true,
 								isSwipable = true,
-								containerColor = MaterialTheme.colorScheme.background,
 								selectedColor = MaterialTheme.colorScheme.surface,
 								onClick = { onClickNote(note.id) },
-								onLongClick = { onLongClickNote(note.id) },
-							)
+							) { onLongClickNote(note.id) }
 						}
 
 						NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
@@ -303,9 +297,7 @@ private fun GridView(
 
 						LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
 							try {
-								if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) {
-									thumbnail = note.thumbnail?.let { BitmapFactory.decodeByteArray(note.thumbnail, 0, it.size) }
-								}
+								if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
 							} catch (e : Exception) {
 								e.printStackTrace()
 							}

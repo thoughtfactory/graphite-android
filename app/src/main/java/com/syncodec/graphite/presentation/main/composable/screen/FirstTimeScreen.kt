@@ -30,7 +30,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +53,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -61,7 +61,6 @@ import androidx.core.content.res.ResourcesCompat
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.text.revealTextView.RevealText
 import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.dataStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -326,14 +325,17 @@ private fun LoginCard(
 					)
 				}
 
-				Spacer(modifier = Modifier.height(4.dp))
+				Spacer(modifier = Modifier.height(2.dp))
 
-				OutlinedButton(
+				Button(
 					onClick = {
 						if (isAgreedToTerms) onClickTryFirst()
 						else Toast.makeText(context, "Please agree to Terms of Service and Privacy Policy", Toast.LENGTH_SHORT).show()
 					},
-					colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+					colors = ButtonDefaults.buttonColors(
+						containerColor = MaterialTheme.colorScheme.background,
+						contentColor = MaterialTheme.colorScheme.onBackground
+					),
 					shape = RoundedCornerShape(12.dp)
 				) {
 					Text(
@@ -361,28 +363,34 @@ private fun LoginCard(
 					val annotatedLinkString: AnnotatedString = buildAnnotatedString {
 						val str = "I agree to the Terms of Service and Privacy Policy"
 						append(str)
+//						** I agree to the
 						addStyle(
 							style = SpanStyle(
 								color = MaterialTheme.colorScheme.primary,
 								fontSize = 14.sp,
 							), start = 0, end = 15
 						)
+//						** Terms of Service
 						addStyle(
 							style = SpanStyle(
 								color = MaterialTheme.colorScheme.onSurface,
 								fontSize = 14.sp,
+								textDecoration = TextDecoration.Underline
 							), start = 15, end = 15 + 16
 						)
+//						** and
 						addStyle(
 							style = SpanStyle(
 								color = MaterialTheme.colorScheme.primary,
 								fontSize = 14.sp,
 							), start = 15 + 16, end = 15 + 16 + 5
 						)
+//						** Privacy Policy
 						addStyle(
 							style = SpanStyle(
 								color = MaterialTheme.colorScheme.onSurface,
 								fontSize = 14.sp,
+								textDecoration = TextDecoration.Underline
 							), start = 15 + 16 + 5, end = 15 + 16 + 5 + 14
 						)
 

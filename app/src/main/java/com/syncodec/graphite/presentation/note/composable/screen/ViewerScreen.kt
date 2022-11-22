@@ -86,7 +86,7 @@ private fun Viewer(currentNoteId : RealmUUID?) {
 
 	val openDialog = LocalCompositionOpenDialog.current
 
-	if (currentNoteId == noteId) {
+	if (currentNoteId == noteId && noteId != null) {
 		ViewerComponent(
 			noteId = noteId,
 			content = content,
