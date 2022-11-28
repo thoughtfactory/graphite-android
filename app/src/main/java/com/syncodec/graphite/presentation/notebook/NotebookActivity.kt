@@ -143,10 +143,10 @@ class NotebookActivity : ComponentActivity() {
 									isSelected = false
 									selectedObjectIdList.clear()
 								} else {
-									if (chapterObject?.parentChapterId == null) {
+									if (chapterObject?.parentId == null) {
 										finish()
 									} else {
-										chapterObject?.parentChapterId?.let { viewModel.getAndLoadChapter(it) }
+										chapterObject?.parentId?.let { viewModel.getAndLoadChapter(it) }
 									}
 								}
 							}
@@ -195,7 +195,7 @@ class NotebookActivity : ComponentActivity() {
 					LocalOnDelete provides viewModel::delete,
 					LocalOnDeleteChapter provides {
 						if (chapterId == defaultChapterId) Toast.makeText(this@NotebookActivity, "Cannot delete default chapter", Toast.LENGTH_SHORT).show()
-						else if (chapterObject?.parentChapterId == null) {
+						else if (chapterObject?.parentId == null) {
 							Intent().apply {
 								putExtra(Extra.Companion.Constant.INTENT_ACTION.name, Extra.Companion.IntentAction.DELETE.name)
 								putExtra(Extra.Companion.Constant.OBJECT_ID.name, chapterObject?.id?.bytes)
@@ -203,7 +203,7 @@ class NotebookActivity : ComponentActivity() {
 								this@NotebookActivity.finish()
 							}
 						} else {
-							val parentChapterId = chapterObject?.parentChapterId
+							val parentChapterId = chapterObject?.parentId
 							chapterId?.let { viewModel.delete(it) }
 							viewModel.getAndLoadChapter(parentChapterId)
 						}

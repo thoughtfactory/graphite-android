@@ -10,7 +10,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -30,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -42,6 +40,7 @@ import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectI
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.LocalVaultIsOpened
@@ -68,7 +67,7 @@ fun BucketScreen(
 	val isSelected = LocalCompositionIsSelected.current
 	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
-	val _bucketList : SnapshotStateList<BucketObject> = remember{ mutableStateListOf() }
+	val _bucketList : SnapshotStateList<BucketObject> = remember { mutableStateListOf() }
 
 	val isVaultOpened = LocalVaultIsOpened.current
 
@@ -100,7 +99,11 @@ fun BucketScreen(
 				.padding(it)
 		) {
 			if (_bucketList.isEmpty()) {
-				NoBucketCard()
+				EmptyView(
+					image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
+					title = "I think, therefore, I am",
+					subTitle = "― René Descartes",
+				)
 			} else {
 				SwipeRefresh(
 					state = rememberSwipeRefreshState(isRefreshing = isBucketRefreshing == true),
@@ -109,7 +112,7 @@ fun BucketScreen(
 					LazyVerticalGrid(
 						columns = GridCells.Adaptive(minSize = 144.dp),
 						modifier = Modifier
-							.padding(4.dp)
+							.padding(8.dp, 0.dp)
 							.fillMaxSize(),
 					) {
 						_bucketList.forEach {
@@ -136,44 +139,6 @@ fun BucketScreen(
 				}
 			}
 		}
-	}
-}
-
-@Composable
-private fun NoBucketCard() {
-	Column(
-		modifier = Modifier.fillMaxWidth(),
-		horizontalAlignment = Alignment.CenterHorizontally,
-		verticalArrangement = Arrangement.Center
-	) {
-		Spacer(modifier = Modifier.weight(1f))
-		Image(
-			painter = painterResource(id = if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g),
-			contentDescription = "No diary entries",
-			modifier = Modifier.fillMaxWidth(0.64f)
-		)
-
-		Spacer(modifier = Modifier.height(24.dp))
-
-		Text(
-			text = "Two roads diverged in a wood and I – \nI took the one less traveled by,\nand that has made all the difference",
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier.fillMaxWidth(0.71f)
-		)
-
-		Spacer(modifier = Modifier.height(16.dp))
-
-		Text(
-			text = "~ Robert Frost, The Road Not Taken",
-			style = MaterialTheme.typography.bodySmall,
-			fontStyle = FontStyle.Italic,
-			textAlign = TextAlign.End,
-			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier.fillMaxWidth(0.71f)
-		)
-		Spacer(modifier = Modifier.height(108.dp))
-		Spacer(modifier = Modifier.weight(1f))
 	}
 }
 

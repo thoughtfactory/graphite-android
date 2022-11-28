@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.main
 
 import android.graphics.Bitmap
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,10 +11,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
@@ -27,13 +28,10 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 import javax.inject.Inject
-import kotlin.random.Random
 
 
 @HiltViewModel
@@ -58,14 +56,16 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	val isNotebookRefreshing : MutableState<Boolean> = mutableStateOf(true)
 
 	val isSelected : MutableState<Boolean> = mutableStateOf(false)
-	val selectedRealmUUIDList : SnapshotStateList<RealmUUID> = mutableStateListOf()
+	val selectedObjectIdList : SnapshotStateList<RealmUUID> = mutableStateListOf()
 
 	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showExitDialog : MutableState<Boolean> = mutableStateOf(false)
 
+	val isPro = BaseApplication.isPro.value
+
 	init {
 		refresher.tryEmit(_refresher + 1)
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			refresher.collect {
 				refreshCoroutine?.cancel()
 				refresh()
@@ -74,7 +74,7 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	}
 
 	private fun refresh() {
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			refreshCoroutine?.cancel()
 			refreshCoroutine = this
 
@@ -95,22 +95,22 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	}
 
 	private fun onRepositoryStateSuccess() {
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getNoteList()
 		}
 
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getNotebookList()
 		}
 
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getBucketList()
 		}
 
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getTagList()
 		}
@@ -154,7 +154,9 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 				}
 			}
 		} catch (e : RealmNotInitializedException) {
+			e.printStackTrace()
 		} catch (e : Exception) {
+			e.printStackTrace()
 		}
 	}
 
@@ -191,15 +193,21 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	var sortBy : MutableState<SortBy> = mutableStateOf(SortBy.DESCENDING)
 
 	fun putNotebook(title : String, description : String, color : Color?, bitmap : Bitmap?) {
-		CoroutineScope(Dispatchers.IO).launch {
+		CoroutineScope(Dispatchers.Default).launch {
 			try {
-				ChapterObject().apply {
-					this.title = title
-					this.description = description
-					this.color = color?.toArgb()
-					this.thumbnail = bitmap?.encodeBase64()
+				if (notebookList.size >= 3 && !isPro) {
+					withContext(Dispatchers.Main) {
+						Toast.makeText(repository2.context, "Join Graphite Pro to add more notebooks", Toast.LENGTH_SHORT).show()
+					}
+				} else {
+					ChapterObject().apply {
+						this.title = title
+						this.description = description
+						this.color = color?.toArgb()
+						this.thumbnail = bitmap?.encodeBase64()
 
-					repository2.putChapter(null, this) { _, _ -> }
+						repository2.putChapter(null, this) { _, _ -> }
+					}
 				}
 			} catch (e : Exception) {
 //	    		TODO Show error message
@@ -213,20 +221,33 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 		description : String?,
 		bucketType : BucketType,
 	) {
-		BucketObject().apply {
-			this.title = title
-			this.description = description
-			this.bucketType = bucketType.name
+		CoroutineScope(Dispatchers.Default).launch {
+			if (bucketObjectList.find { it.bucketType == bucketType.name } != null && ! isPro) {
+				val bucket = when(bucketType) {
+					BucketType.TODO -> "Todo"
+					BucketType.BOOK -> "Book"
+					BucketType.SHOW -> "Show"
+					BucketType.LINK -> "Link"
+					BucketType.UNKNOWN -> "Unknown"
+				}
+				Toast.makeText(repository2.context, "Join Graphite Pro to add more $bucket bucket", Toast.LENGTH_SHORT).show()
+			} else {
+				BucketObject().apply {
+					this.title = title
+					this.description = description
+					this.bucketType = bucketType.name
 
-			repository2.putBucket(this) { _, _ -> }
+					repository2.putBucket(this) { _, _ -> }
+				}
+			}
 		}
 	}
 
 	fun delete() {
 		try {
-			val toDeleteRealmUUIDList = selectedRealmUUIDList.toList()
-			repository2.delete(toDeleteRealmUUIDList)
-			selectedRealmUUIDList.clear()
+			val toDeleteObjectIdList = selectedObjectIdList.toList()
+			repository2.delete(toDeleteObjectIdList)
+			selectedObjectIdList.clear()
 			isSelected.value = false
 		} catch (e : Exception) {
 
@@ -267,5 +288,13 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 
 	fun onAuthenticate() {
 		repository2.isAuthenticated.tryEmit(true)
+	}
+
+	fun onAuthFailure() {
+		repository2.isAuthenticated.tryEmit(false)
+	}
+
+	fun onDeauthenticate() {
+		repository2.isAuthenticated.tryEmit(false)
 	}
 }

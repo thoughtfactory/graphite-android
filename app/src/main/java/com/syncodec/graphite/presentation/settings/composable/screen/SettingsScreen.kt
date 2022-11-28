@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -37,23 +38,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen() {
 
-	val scope = rememberCoroutineScope()
+	val navigatorPath = SettingsActivity.LocalNavigatorPath.current
+	val scrollState = SettingsActivity.LocalScrollState.current
 
-	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-	var bottomSheetType : SettingsBottomSheetType by remember { mutableStateOf(SettingsBottomSheetType.PROFILE) }
-
-	fun openSheet(_bottomSheetType : SettingsBottomSheetType) {
-		scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
-	}
-
-	fun closeSheet() {
-		scope.launch { modalBottomSheetState.hide() }
-	}
-
-	val navigatorPath = SettingsActivity.navigatorPath.current
-	val scrollState = SettingsActivity.scrollState.current
-
-	val onBackPressed = SettingsActivity.onBackPressed.current
+	val onBackPressed = SettingsActivity.LocalOnBackPressed.current
 
 	val title = when (navigatorPath.last()) {
 		SettingsActivity.Companion.Navigator.BASE -> "Settings"
@@ -61,60 +49,47 @@ fun SettingsScreen() {
 		SettingsActivity.Companion.Navigator.SECURITY -> "Security"
 		SettingsActivity.Companion.Navigator.EXTENSIONS -> "Extensions"
 		SettingsActivity.Companion.Navigator.BACKUP -> "Backup & Restore"
+		SettingsActivity.Companion.Navigator.DATA -> "Data"
+		SettingsActivity.Companion.Navigator.IMPORT -> "Import"
 		SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> "Local Backup"
 		SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> "Snapshot Warehouse"
 		SettingsActivity.Companion.Navigator.SYNC -> "Synchronization"
 		SettingsActivity.Companion.Navigator.ABOUT_US -> "About Us"
 	}
 
-	CompositionLocalProvider(
-		SettingsActivity.openBottomSheet provides ::openSheet,
-		SettingsActivity.closeBottomSheet provides ::closeSheet,
+	Scaffold(
+		modifier = Modifier.fillMaxSize(),
+		topBar = {
+			TopBar(
+				title = title,
+				scrollState = scrollState,
+			) { onBackPressed() }
+		}
 	) {
-		ModalBottomSheetLayout(
-			sheetContent = {
-				SheetLayout(bottomSheetType = bottomSheetType) { closeSheet() }
-			},
-			sheetState = modalBottomSheetState,
-			sheetElevation = 0.dp,
-			sheetBackgroundColor = Color.Transparent,
-			modifier = Modifier.fillMaxSize(),
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(it)
 		) {
-			Scaffold(
-				modifier = Modifier.fillMaxSize(),
-				topBar = {
-					TopBar(
-						title = title,
-						scrollState = scrollState,
-					) { onBackPressed() }
-				}
+			AnimatedContent(
+				targetState = navigatorPath.last(),
+				transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) },
+				modifier = Modifier.fillMaxSize()
 			) {
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(it)
-				) {
-					AnimatedContent(
-						targetState = navigatorPath.last(),
-						transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) },
-						modifier = Modifier.fillMaxSize()
-					) {
-						when (it) {
-							SettingsActivity.Companion.Navigator.BASE -> BaseScreen()
-							SettingsActivity.Companion.Navigator.PREFERENCES -> PreferencesScreen()
-							SettingsActivity.Companion.Navigator.SECURITY -> SecurityScreen()
-							SettingsActivity.Companion.Navigator.EXTENSIONS -> ExtensionsScreen()
-							SettingsActivity.Companion.Navigator.BACKUP -> BackupAndRestoreScreen()
-							SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> LocalBackupScreen()
-							SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen()
-							SettingsActivity.Companion.Navigator.SYNC -> SynchronizationScreen()
-							SettingsActivity.Companion.Navigator.ABOUT_US -> AboutUsScreen( )
-						}
-					}
+				when (it) {
+					SettingsActivity.Companion.Navigator.BASE -> BaseScreen()
+					SettingsActivity.Companion.Navigator.PREFERENCES -> PreferencesScreen()
+					SettingsActivity.Companion.Navigator.SECURITY -> SecurityScreen()
+					SettingsActivity.Companion.Navigator.EXTENSIONS -> ExtensionsScreen()
+					SettingsActivity.Companion.Navigator.BACKUP -> BackupAndRestoreScreen()
+					SettingsActivity.Companion.Navigator.DATA -> DataScreen()
+					SettingsActivity.Companion.Navigator.IMPORT -> ImportScreen()
+					SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> LocalBackupScreen()
+					SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen()
+					SettingsActivity.Companion.Navigator.SYNC -> SynchronizationScreen()
+					SettingsActivity.Companion.Navigator.ABOUT_US -> AboutUsScreen( )
 				}
 			}
-
-			SettingsDialog()
 		}
 	}
 }

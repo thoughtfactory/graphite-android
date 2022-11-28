@@ -14,7 +14,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -22,7 +21,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.graphite.BaseApplication
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
@@ -32,12 +30,13 @@ import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.presentation.note.util.reverseGeocode
+import com.syncodec.graphite.utils.AttachmentType
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocationState
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.locationAddressFilter
-import com.syncodec.graphite.utils.toByteArray
+import com.syncodec.graphite.utils.type
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +50,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.time.Clock
-import java.util.Base64
 import javax.inject.Inject
 
 
@@ -83,8 +81,8 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 	val isFavourite : MutableState<Boolean?> = mutableStateOf(null)
 	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
 
-	val attachmentListStored : SnapshotStateList<Triple<AttachmentObject, File?, Uri?>> = mutableStateListOf()
-	val attachmentListBuffer : SnapshotStateList<Triple<AttachmentObject, File?, Uri?>> = mutableStateListOf()
+	val attachmentListStored : SnapshotStateList<Pair<File?, Uri?>> = mutableStateListOf()
+	val attachmentListBuffer : SnapshotStateList<Pair<File?, Uri?>> = mutableStateListOf()
 
 	val locationState : MutableState<LocationState> = mutableStateOf(LocationState.INIT)
 	var locationCoroutine : CoroutineScope? = null
@@ -252,25 +250,15 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 							this@NoteViewModel.isFavourite.value = noteObject.isFavourite
 							this@NoteViewModel.isLocked.value = noteObject.isLocked
 
-							this@NoteViewModel.parentChapterId.value = noteObject.parentChapterId
+							this@NoteViewModel.parentChapterId.value = noteObject.parentId
 							getChapter()
 
 							attachmentListStored.clear()
 							attachmentListBuffer.clear()
 
-							noteObject.attachmentList.forEach {
-								val attachmentObject = AttachmentObject.deserialize(it)
-								if (attachmentObject != null) {
-									val file = repository2.readAttachmentFile(noteObject.id, attachmentObject.name)
-									val uri = file?.let { it1 ->
-										FileProvider.getUriForFile(repository2.context, "${repository2.context.packageName}.fileprovider", it1)
-									}
-
-									withContext(Dispatchers.Main) {
-										attachmentListStored.add(Triple(attachmentObject, file, uri))
-										attachmentListBuffer.add(Triple(attachmentObject, file, uri))
-									}
-								}
+							repository2.readAttachmentFromNoteId(noteObject.id).forEach {
+								attachmentListStored.add(it)
+								attachmentListBuffer.add(it)
 							}
 
 							when {
@@ -361,20 +349,18 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 						this.isFavourite = this@NoteViewModel.isFavourite.value == true
 						this.isLocked = this@NoteViewModel.isLocked.value == true
 
-						this.attachmentList.clear()
-						val (attachmentList, thumbnail, thumbnailType) = putAttachment(this.id)
+						val (thumbnail, thumbnailType) = putAttachment(this.id)
 						this.thumbnail = thumbnail
 						this.thumbnailType = thumbnailType
-						this.attachmentList.addAll(attachmentList.mapNotNull { it.serialize() })
 
 						if (this@NoteViewModel.parentChapterId.value == null) {
 //				        TODO Show error
 							isOperationPending.value = false
 						} else {
-							this.parentChapterId = this@NoteViewModel.parentChapterId.value !!
+							this.parentId = this@NoteViewModel.parentChapterId.value !!
 							repository2.putNote(noteObject = this) { _, e ->
 								repository2.connectTag(this.id, tagListBuffer.map { it.id }) { _, e ->
-									chapterRead(this.parentChapterId !!, this.id)
+									chapterRead(this.parentId !!, this.id)
 									viewModelScope.launch(Dispatchers.Main) {
 										Toast.makeText(repository2.context, "Note saved", Toast.LENGTH_SHORT).show()
 									}
@@ -410,39 +396,28 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		this.putNote()
 	}
 
-	fun putAttachment(noteId : RealmUUID) : Triple<List<AttachmentObject>, String?, String?> {
+	fun putAttachment(noteId : RealmUUID): Pair<String?, String?> {
 		var thumbnail : String? = null
 		var thumbnailType : String? = null
 
-		val attachmentList : MutableList<AttachmentObject> = mutableListOf()
-
-		this@NoteViewModel.attachmentListStored.forEach { (attachmentObject, file, uri) ->
-			if (attachmentListBuffer.find { it.first == attachmentObject } == null) file?.delete()
+		this@NoteViewModel.attachmentListStored.forEach { (file, uri) ->
+			if (attachmentListBuffer.find { it.first == file && it.second == uri } == null) file?.delete()
 		}
 
-		this@NoteViewModel.attachmentListBuffer.forEach { (attachmentObject, file, uri) ->
-			if (attachmentListStored.find { it.first == attachmentObject } == null) {
-				val fileName = saveAttachment(noteId = noteId, inputFile = file)
-				if (fileName != null) {
-					attachmentObject.name = fileName
-					attachmentList.add(attachmentObject)
-				}
-			} else attachmentList.add(attachmentObject)
+		this@NoteViewModel.attachmentListBuffer.forEach { (file, uri) ->
+			if (attachmentListStored.find { it.first == file && it.second == uri } == null) {
+				saveAttachment(noteId = noteId, inputFile = file)
+			}
 
 			if (thumbnail == null || thumbnailType == null) {
-				file?.let { getThumbnail(attachmentObject = attachmentObject, file = file) }?.let {
-					BitmapFactory.decodeFile(file.absolutePath)?.let {
-						val aspectRatio = it.width.toFloat() / it.height.toFloat()
-						val _thumbnail = it.let { ThumbnailUtils.extractThumbnail(it, (256 * aspectRatio).toInt(), 256) }
-
-						thumbnail = _thumbnail.encodeBase64()
-						thumbnailType = attachmentObject.getType().name
-					}
+				file?.let { getThumbnail(file = file) }?.let {
+					thumbnail = it
+					thumbnailType = file.type()
 				}
 			}
 		}
 
-		return Triple(attachmentList, thumbnail, thumbnailType)
+		return Pair(thumbnail, thumbnailType)
 	}
 
 	fun discardChanges(callback : (Boolean) -> Unit) {
@@ -479,7 +454,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
-	fun removeAttachmentFromBuffer(attachmentObject : AttachmentObject) = attachmentListBuffer.removeIf { it.first == attachmentObject }
+	fun removeAttachmentFromBuffer(file : File?, uri : Uri?) = attachmentListBuffer.removeIf { it.first == file && it.second == uri }
 
 	private fun saveAttachment(noteId : RealmUUID, inputFile : File?) : String? {
 		val file = repository2.getNewAttachmentFile(noteId, name = inputFile?.name?.replace(Regex("attachment_[0-9]*_"), "") ?: RealmUUID.random().toString())
@@ -498,17 +473,14 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		} else null
 	}
 
-	private fun getThumbnail(attachmentObject : AttachmentObject, file : File) : Pair<String?, String?>? {
-		if (attachmentObject.getType() == AttachmentObject.Companion.Type.IMAGE) {
-			BitmapFactory.decodeFile(file.absolutePath)?.let {
+	private fun getThumbnail(file : File) : String? {
+		val type = file.type()
 
+		if (type == AttachmentType.IMAGE.name.lowercase()) {
+			BitmapFactory.decodeFile(file.absolutePath).let {
 				val aspectRatio = it.width.toFloat() / it.height.toFloat()
-				val thumbnail = it.let { ThumbnailUtils.extractThumbnail(it, (256 * aspectRatio).toInt(), 256) }
-
-				val thumbnailString = Base64.getEncoder().encodeToString(thumbnail.toByteArray())
-				val thumbnailType = attachmentObject.getType().name
-
-				return Pair(thumbnailType, thumbnailString)
+				val thumbnail = ThumbnailUtils.extractThumbnail(it, (256 * aspectRatio).toInt(), 256)
+				return thumbnail.encodeBase64()
 			}
 		}
 		return null
@@ -661,5 +633,8 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 
 		this.locationCoroutine?.cancel()
 		this.viewModelScope.cancel()
+	}
+
+	fun exportPdf(data : String?) {
 	}
 }

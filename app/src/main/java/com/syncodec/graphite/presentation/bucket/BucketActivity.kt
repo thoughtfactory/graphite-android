@@ -116,7 +116,7 @@ class BucketActivity : ComponentActivity() {
 				val onAuthenticatorAction = LocalAuthenticatorAction.current
 
 				var bottomSheetType : BucketBottomSheetType by rememberSaveable { mutableStateOf(BucketBottomSheetType.MENU) }
-				val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden,)
+				val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
 				fun openSheet(_bottomSheetType : BucketBottomSheetType) {
 					scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
@@ -213,8 +213,12 @@ class BucketActivity : ComponentActivity() {
 						}
 					},
 					LocalCompositionOnUpdateBucket provides viewModel::updateBucket,
-					LocalCompositionOnShare provides {
-						bucketObject?.let { onShare(it) } ?: Toast.makeText(this@BucketActivity, "Error sharing items", Toast.LENGTH_SHORT).show()
+					LocalCompositionOnShare provides { shareAll ->
+						bucketObject?.let { onShare(bucketObject = it, shareAll = shareAll) } ?: Toast.makeText(
+							this@BucketActivity,
+							"Error sharing items",
+							Toast.LENGTH_SHORT
+						).show()
 					},
 					LocalCompositionOnBackPressed provides { this.onBackPressedDispatcher.onBackPressed() }
 				) {
@@ -227,12 +231,12 @@ class BucketActivity : ComponentActivity() {
 		}
 	}
 
-	private fun onShare(bucketObject: BucketObject) {
+	private fun onShare(bucketObject : BucketObject, shareAll : Boolean) {
 
 		val bucketItemObjectList = bucketObject.bucketItemList
 		val selectedRealmUUIDList = viewModel.selectedRealmUUIDList
 
-		val baseUrl = when(bucketObject.bucketType) {
+		val baseUrl = when (bucketObject.bucketType) {
 			BucketType.TODO.name -> ""
 			BucketType.BOOK.name -> " - https://openlibrary.org"
 			BucketType.SHOW.name -> " - https://www.themoviedb.org/"
@@ -242,13 +246,13 @@ class BucketActivity : ComponentActivity() {
 		}
 
 		var shareText = ""
-		bucketItemObjectList.filter { it.id in selectedRealmUUIDList }.forEach {
-			val connector = when(it.getShowData()?.type) {
+		bucketItemObjectList.filter { if (shareAll) true else it.id in selectedRealmUUIDList }.forEach {
+			val connector = when (it.getShowData()?.type) {
 				ShowType.TV -> "tv/"
 				ShowType.MOVIE -> "movie/"
 				else -> ""
 			}
-			shareText += "${it.title}$baseUrl$connector${it.key}\n"
+			shareText += "${it.title}$baseUrl$connector${if (bucketObject.bucketType == BucketType.TODO.name) "" else it.key}\n"
 		}
 
 		Intent(Intent.ACTION_SEND).apply {
@@ -258,7 +262,7 @@ class BucketActivity : ComponentActivity() {
 			putExtra(Intent.EXTRA_TEXT, shareText)
 
 			if (resolveActivity(this@BucketActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
-			else Toast.makeText(this@BucketActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
+			else Toast.makeText(this@BucketActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
 		}
 	}
 

@@ -15,8 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,16 +26,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
@@ -51,14 +43,10 @@ import com.syncodec.graphite.presentation.ui.DeleteContent
 fun ProfileBottomSheet(
 	closeSheet : () -> Unit
 ) {
-	val auth = Firebase.auth
+	val firebaseUser = SettingsActivity.LocalFirebaseUser.current
 
-//	 auth.currentUser?.metadata?.creationTimestamp
-
-	val userForTime = auth.currentUser?.metadata?.creationTimestamp?.let { System.currentTimeMillis() - it }
-	val userForTimeInDays = userForTime?.div(1000)?.div(60)?.div(60)?.div(24)
-
-	val openDialog = SettingsActivity.openDialog.current
+	val openDialog = SettingsActivity.LocalOpenDialog.current
+	val signOut = SettingsActivity.LocalSignOut.current
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -77,10 +65,10 @@ fun ProfileBottomSheet(
 		Spacer(modifier = Modifier.height(8.dp))
 
 		ProfileView(
-			displayName = auth.currentUser?.displayName ?: "Anonymous",
-			email = auth.currentUser?.email ?: "Anonymous",
-			photoUrl = auth.currentUser?.photoUrl,
-			userForTimeInDays = userForTimeInDays
+			displayName = firebaseUser?.displayName ?: "Anonymous",
+			email = firebaseUser?.email ?: "Anonymous",
+			photoUrl = firebaseUser?.photoUrl,
+			userForTimeInDays = null
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -90,7 +78,8 @@ fun ProfileBottomSheet(
 				.fillMaxWidth()
 				.padding(24.dp, 0.dp),
 			onClick = {
-				auth.signOut()
+				closeSheet()
+				signOut()
 			}
 		) {
 			Text(text = "Sign Out")
@@ -126,7 +115,7 @@ fun ProfileView(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(24.dp, 0.dp)
-			.background(MaterialTheme.colorScheme.background.copy(alpha = 0.31f), RoundedCornerShape(12.dp))
+			.background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,

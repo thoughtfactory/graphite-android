@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetType
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
@@ -44,8 +43,6 @@ fun BottomBar(
 
 	val isVaultOpened = LocalVaultIsOpened.current
 	val onAuthenticatorAction = LocalAuthenticatorAction.current
-
-	val onShare = LocalCompositionOnShare.current
 
 	AnimatedVisibility(
 		visible = ! isSelected,

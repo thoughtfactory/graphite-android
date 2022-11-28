@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
@@ -30,13 +28,23 @@ class NoteObject : RealmObject {
 	var isFavourite : Boolean = false
 	var isLocked : Boolean = false
 
-	var attachmentList : RealmList<String> = realmListOf()
-
-	var parentChapterId : RealmUUID? = null
+	var parentId : RealmUUID? = null
 
 	fun setLatLng(latLng : LatLng?) {
-		val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
-		this.latLng = objectMapper.writeValueAsString(latLng)
+		try {
+			if (latLng == null) {
+				this.latLng = null
+			} else {
+				if (latLng?.latitude !! >= -90 && latLng?.latitude !! <= 90 && latLng?.longitude !! >= -180 && latLng?.longitude !! <= 180) {
+					val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
+					this.latLng = objectMapper.writeValueAsString(latLng)
+				} else {
+					this.latLng = null
+				}
+			}
+		} catch (e : Exception) {
+			this.latLng = null
+		}
 	}
 
 	fun getLatLng() : LatLng? {
@@ -48,12 +56,6 @@ class NoteObject : RealmObject {
 			e.printStackTrace()
 			return null
 		}
-	}
-
-	fun addAttachment(attachmentObject : AttachmentObject) = attachmentObject.serialize()?.let { attachmentList.add(it) }
-
-	fun removeAttachment(attachmentObject : AttachmentObject) {
-		attachmentList.removeIf { AttachmentObject.deserialize(it) == attachmentObject }
 	}
 
 	fun toSnapshot() = NoteSnapshot(
@@ -71,8 +73,7 @@ class NoteObject : RealmObject {
 		thumbnailType = this.thumbnailType,
 		isFavourite = this.isFavourite,
 		isLocked = this.isLocked,
-		attachmentList = this.attachmentList.toList(),
-		parentChapterId = this.parentChapterId?.toString(),
+		parentChapterId = this.parentId?.toString(),
 	)
 
 	override fun toString() : String {
@@ -94,8 +95,7 @@ class NoteObject : RealmObject {
 		result = 31 * result + (thumbnailType?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
-		result = 31 * result + attachmentList.hashCode()
-		result = 31 * result + (parentChapterId?.hashCode() ?: 0)
+		result = 31 * result + (parentId?.hashCode() ?: 0)
 		return result
 	}
 
@@ -117,8 +117,7 @@ class NoteObject : RealmObject {
 		if (thumbnailType != other.thumbnailType) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
-		if (attachmentList != other.attachmentList) return false
-		if (parentChapterId != other.parentChapterId) return false
+		if (parentId != other.parentId) return false
 
 		return true
 	}
@@ -139,7 +138,7 @@ class NoteObject : RealmObject {
 		isFavourite = isFavourite,
 		isLocked = isLocked,
 		attachmentList = listOf(),
-		parentChapterId = parentChapterId?.toString()
+		parentChapterId = parentId?.toString()
 	)
 
 
@@ -161,16 +160,14 @@ class NoteObject : RealmObject {
 			isFavourite = this@NoteObject.isFavourite
 			isLocked = this@NoteObject.isLocked
 
-			attachmentList = this@NoteObject.attachmentList
-
-			parentChapterId = this@NoteObject.parentChapterId
+			parentId = this@NoteObject.parentId
 		}
 	}
 
 	fun toLite() : NoteObjectLite {
 		return NoteObjectLite(
 			id = this.id,
-			parentChapterId = this.parentChapterId,
+			parentChapterId = this.parentId,
 			createdTimestamp = this.createdTimestamp,
 			modifiedTimestamp = this.modifiedTimestamp,
 			userTimestamp = this.userTimestamp,
@@ -191,7 +188,6 @@ class NoteObject : RealmObject {
 				}
 			},
 			thumbnailType = this.thumbnailType,
-			attachmentCount = this.attachmentList.size,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked
 		)
@@ -295,7 +291,6 @@ data class NoteObjectLite(
 	val contentThumbnail : String?,
 	val thumbnail : Bitmap? = null,
 	val thumbnailType : String? = null,
-	val attachmentCount : Int,
 	val isFavourite : Boolean,
 	val isLocked : Boolean
 ) {
@@ -315,7 +310,6 @@ data class NoteObjectLite(
 		if (contentThumbnail != other.contentThumbnail) return false
 		if (thumbnail != other.thumbnail) return false
 		if (thumbnailType != other.thumbnailType) return false
-		if (attachmentCount != other.attachmentCount) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 
@@ -335,7 +329,6 @@ data class NoteObjectLite(
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (thumbnail?.hashCode() ?: 0)
 		result = 31 * result + (thumbnailType?.hashCode() ?: 0)
-		result = 31 * result + attachmentCount
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		return result
@@ -357,7 +350,6 @@ data class NoteSnapshot(
 	val thumbnailType : String?,
 	val isFavourite : Boolean,
 	val isLocked : Boolean,
-	var attachmentList : List<String>,
 	var parentChapterId : String?
 ) {
 	fun toObject() = NoteObject().apply {
@@ -375,8 +367,7 @@ data class NoteSnapshot(
 		this.thumbnailType = this@NoteSnapshot.thumbnailType
 		this.isFavourite = this@NoteSnapshot.isFavourite
 		this.isLocked = this@NoteSnapshot.isLocked
-		this.attachmentList = realmListOf<String>().apply { addAll(this@NoteSnapshot.attachmentList) }
-		this.parentChapterId = this@NoteSnapshot.parentChapterId?.let { RealmUUID.from(it) }
+		this.parentId = this@NoteSnapshot.parentChapterId?.let { RealmUUID.from(it) }
 	}
 }
 

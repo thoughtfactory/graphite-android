@@ -16,6 +16,7 @@ import com.syncodec.graphite.presentation.ui.dialogPadding
 fun GenericDialog(
 	showDialog: Boolean,
 	title: String?,
+	contentText: String? = null,
 	onDismissRequest: () -> Unit,
 	content: @Composable () -> Unit
 ) {
@@ -42,6 +43,23 @@ fun GenericDialog(
 						)
 
 						Spacer(modifier = Modifier.height(12.dp))
+
+						if (contentText != null) {
+							Box(
+								modifier = Modifier
+									.fillMaxWidth()
+									.background(MaterialTheme.colorScheme.background, RoundedCornerShape(12.dp))
+							) {
+								Text(
+									text = contentText,
+									style = MaterialTheme.typography.bodyMedium,
+									color = MaterialTheme.colorScheme.onSurface,
+									modifier = Modifier.padding(12.dp)
+								)
+							}
+
+							Spacer(modifier = Modifier.height(12.dp))
+						}
 					}
 					content()
 				}

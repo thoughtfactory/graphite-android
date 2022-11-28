@@ -209,11 +209,11 @@ fun AddShowBottomSheet() {
 				}
 
 				Status.LOADED -> {
-					if (tmDbMovieSearchResult?.results?.isNotEmpty() == true || tmDbTvSearchResult?.results?.isNotEmpty() == true) {
+					if (tmDbMovieSearchResult?.results?.isEmpty() == true || tmDbTvSearchResult?.results?.isEmpty() == true) {
 						SearchResultStatusView(
 							imageId = R.drawable.il_bucket_search_not_found,
 							text = "Uh oh, we couldn't find anything. Try again?",
-							contentDescription = "Book not found"
+							contentDescription = "Show not found"
 						)
 					} else {
 						LazyVerticalGrid(

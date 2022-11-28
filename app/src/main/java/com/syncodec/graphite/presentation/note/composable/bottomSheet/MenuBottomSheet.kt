@@ -1,14 +1,22 @@
 package com.syncodec.graphite.presentation.note.composable.bottomSheet
 
-import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,30 +26,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.ExpandableBox
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
+import com.syncodec.graphite.presentation.common.composable.ProTag
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseBottomSheet
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteObject
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionContent
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
-import com.syncodec.graphite.presentation.raw.RawActivity
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
-import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.LocalCompositionRichTextEditor
 
 
 @Composable
 fun MenuBottomSheet() {
-	val context = LocalContext.current
-	val noteId = LocalCompositionNoteId.current
-	val noteObject = LocalCompositionNoteObject.current
+	val title = LocalCompositionTitle.current
+	val content = LocalCompositionContent.current
+
+	val richTextEditor = LocalCompositionRichTextEditor.current
 
 	val openDialog = LocalCompositionOpenDialog.current
 	val closeBottomSheet = LocalCompositionCloseBottomSheet.current
@@ -50,16 +61,8 @@ fun MenuBottomSheet() {
 
 	val buttonList : List<BottomSheetButtonData> = listOf(
 		BottomSheetButtonData(title = "Export", icon = R.drawable.ic_export) { showExportOptions = ! showExportOptions },
-		BottomSheetButtonData(
-			title = "Raw",
-			icon = R.drawable.ic_raw_data
-		) {
-			Intent(context, RawActivity::class.java).apply {
-				putExtra(Extra.Companion.Constant.OBJECT_ID.name, noteId?.bytes)
-				putExtra(Extra.Companion.Constant.OBJECT_TYPE.name, Extra.Companion.ObjectType.NOTE.name)
+		BottomSheetButtonData(title = "Copy", icon = R.drawable.ic_copy) {
 
-				context.startActivity(this)
-			}
 		},
 		BottomSheetButtonData(
 			title = "Delete",
@@ -69,9 +72,7 @@ fun MenuBottomSheet() {
 		) {
 			closeBottomSheet()
 			openDialog(NoteDialogType.DELETE, null)
-		  },
-		BottomSheetButtonData(title = "Copy", icon = R.drawable.ic_copy) {},
-		BottomSheetButtonData(title = "Duplicate", icon = R.drawable.ic_note) {},
+		},
 	)
 
 	Column(
@@ -98,47 +99,151 @@ fun MenuBottomSheet() {
 			Column(
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(16.dp, 0.dp)
+					.padding(24.dp, 0.dp)
 			) {
-				SettingsButton(
-					title = "Export as PDF",
-					icon = R.drawable.ic_file_pdf,
-					containerColor = containerColor,
-					contentColor = contentColor
-				) {}
-				SettingsButton(
-					title = "Export as HTML",
-					icon = R.drawable.ic_file_html,
-					containerColor = containerColor,
-					contentColor = contentColor
-				) {}
-				SettingsButton(
-					title = "Export as Markdown",
-					icon = R.drawable.ic_file_pdf,
-					containerColor = containerColor,
-					contentColor = contentColor
-				) {}
-				SettingsButton(
-					title = "Export as Text",
+				Spacer(modifier = Modifier.height(24.dp))
+
+				Text(
+					text = "Export",
+					style = MaterialTheme.typography.titleMedium,
+					color = MaterialTheme.colorScheme.onSurface,
+					fontWeight = FontWeight.Bold
+				)
+
+				Spacer(modifier = Modifier.height(8.dp))
+
+				ExportButton(
+					title = "As Text",
 					icon = R.drawable.ic_file_text,
 					containerColor = containerColor,
-					contentColor = contentColor
-				) {}
-				SettingsButton(
-					title = "Export as Image",
-					icon = R.drawable.ic_file_image,
+					contentColor = contentColor,
+				) {
+					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
+					richTextEditor.exec("editor.getData(\"export_text\");")
+				}
+				ExportButton(
+					title = "As PDF",
+					icon = R.drawable.ic_file_pdf,
 					containerColor = containerColor,
 					contentColor = contentColor
-				) {}
-				SettingsButton(
-					title = "Export all Attachments",
-					icon = R.drawable.ic_gallery,
+				) {
+					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
+					richTextEditor.exec("editor.getData(\"export_pdf\");")
+				}
+				ExportButton(
+					title = "As HTML",
+					icon = R.drawable.ic_file_html,
 					containerColor = containerColor,
-					contentColor = contentColor
-				) {}
+					contentColor = contentColor,
+					isProFeature = true
+				) {
+					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
+					richTextEditor.exec("editor.getData(\"export_html\");")
+				}
+				ExportButton(
+					title = "As Markdown",
+					icon = R.drawable.ic_file_pdf,
+					containerColor = containerColor,
+					contentColor = contentColor,
+					isProFeature = true
+				) {
+					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
+					richTextEditor.exec("editor.getData(\"export_markdown\");")
+				}
+//				ExportButton(
+//					title = "As Image",
+//					icon = R.drawable.ic_file_image,
+//					containerColor = containerColor,
+//					contentColor = contentColor
+//				) { richTextEditor.exec("editor.getData(\"export_image\");") }
+//				ExportButton(
+//					title = "Attachments",
+//					icon = R.drawable.ic_gallery,
+//					containerColor = containerColor,
+//					contentColor = contentColor
+//				) { richTextEditor.exec("editor.getData(\"export_attachment\");") }
 			}
 		}
 
 		Spacer(modifier = Modifier.height(32.dp))
+	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExportButton(
+	title : String,
+	icon : Int? = null,
+	subTitle : String? = null,
+	containerColor : Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
+	contentColor : Color = MaterialTheme.colorScheme.onSurface,
+	iconColor : Color = MaterialTheme.colorScheme.onSurface,
+	isProFeature : Boolean = false,
+	enabled : Boolean = true,
+	onClick : () -> Unit
+) {
+	val context = LocalContext.current
+	val isPro by BaseApplication.isPro
+
+	Card(
+		colors = CardDefaults.cardColors(
+			containerColor = containerColor,
+			contentColor = contentColor,
+			disabledContainerColor = containerColor.copy(alpha = 0.47f),
+			disabledContentColor = contentColor.copy(alpha = 0.47f),
+		),
+		modifier = Modifier.padding(0.dp, 4.dp),
+		enabled = enabled,
+		onClick = {
+			if (isProFeature && ! isPro) Toast.makeText(context, "Join Graphite Pro to access this feature", Toast.LENGTH_SHORT).show()
+			else onClick()
+		}
+	) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(16.dp)
+		) {
+			icon?.let {
+				Icon(
+					painter = painterResource(id = it),
+					contentDescription = title,
+					tint = iconColor,
+					modifier = Modifier.requiredSize(24.dp)
+				)
+				Spacer(modifier = Modifier.width(16.dp))
+			} ?: Spacer(modifier = Modifier.width(40.dp))
+
+			Column(
+				modifier = Modifier.weight(1f)
+			) {
+				Text(
+					text = title,
+					style = MaterialTheme.typography.bodyLarge,
+					fontWeight = FontWeight.Bold
+				)
+				subTitle?.let {
+					Spacer(modifier = Modifier.height(4.dp))
+					Text(
+						text = it,
+						style = MaterialTheme.typography.bodySmall,
+					)
+				}
+			}
+
+			if (isProFeature && ! isPro) {
+				Spacer(modifier = Modifier.width(16.dp))
+				ProTag()
+			}
+
+			Spacer(modifier = Modifier.width(16.dp))
+
+			Icon(
+				painter = painterResource(id = R.drawable.ic_chevron_right),
+				contentDescription = title,
+				modifier = Modifier.requiredSize(24.dp)
+			)
+		}
 	}
 }

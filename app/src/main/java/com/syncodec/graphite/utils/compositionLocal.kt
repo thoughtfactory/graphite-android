@@ -7,10 +7,6 @@ import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 
 
-//val LocalVaultState =
-//	compositionLocalOf<Graphite.Companion.VaultState> { error("Vault state unavailable...") }
-//val LocalFilterState = compositionLocalOf<Filter> { error("Filter state unavailable...") }
-val LocalCompositionPremium = compositionLocalOf<Boolean> { error("No premium state provided") }
 val LocalSelectedState = compositionLocalOf<Boolean> { error("No selected state provided") }
 val LocalCompositionRichTextEditor = compositionLocalOf<RichTextEditor> { error("No richtext editor provided") }
 @OptIn(ExperimentalMaterialApi::class)

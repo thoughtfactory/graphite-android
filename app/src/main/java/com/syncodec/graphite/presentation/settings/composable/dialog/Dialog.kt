@@ -14,30 +14,34 @@ enum class SettingsDialogType {
 @Composable
 fun SettingsDialog() {
 
-	val attachmentCount = SettingsActivity.attachmentCount.current
-	val attachmentProcessed = SettingsActivity.attachmentProcessed.current
-	val bucketItemCount = SettingsActivity.bucketItemCount.current
-	val bucketItemProcessed = SettingsActivity.bucketItemProcessed.current
-	val bucketCount = SettingsActivity.bucketCount.current
-	val bucketProcessed = SettingsActivity.bucketProcessed.current
-	val chapterCount = SettingsActivity.chapterCount.current
-	val chapterProcessed = SettingsActivity.chapterProcessed.current
-	val noteCount = SettingsActivity.noteCount.current
-	val noteProcessed = SettingsActivity.noteProcessed.current
-	val tagCount = SettingsActivity.tagCount.current
-	val tagProcessed = SettingsActivity.tagProcessed.current
-	val packageCount = SettingsActivity.packageCount.current
-	val packageProcessed = SettingsActivity.packageProcessed.current
+	val attachmentCount = SettingsActivity.LocalAttachmentCount.current
+	val attachmentProcessed = SettingsActivity.LocalAttachmentProcessed.current
+	val bucketItemCount = SettingsActivity.LocalBucketItemCount.current
+	val bucketItemProcessed = SettingsActivity.LocalBucketItemProcessed.current
+	val bucketCount = SettingsActivity.LocalBucketCount.current
+	val bucketProcessed = SettingsActivity.LocalBucketProcessed.current
+	val chapterCount = SettingsActivity.LocalChapterCount.current
+	val chapterProcessed = SettingsActivity.LocalChapterProcessed.current
+	val noteCount = SettingsActivity.LocalNoteCount.current
+	val noteProcessed = SettingsActivity.LocalNoteProcessed.current
+	val tagCount = SettingsActivity.LocalTagCount.current
+	val tagProcessed = SettingsActivity.LocalTagProcessed.current
+	val packageCount = SettingsActivity.LocalPackageCount.current
+	val packageProcessed = SettingsActivity.LocalPackageProcessed.current
+	val importDataCount = SettingsActivity.LocalImportDataCount.current
+	val importDataProcessed = SettingsActivity.LocalImportDataProcessed.current
 
-	val showTakeSnapshotDialog = SettingsActivity.showTakeSnapshotDialog.current
-	val showRestoreSnapshotDialog = SettingsActivity.showRestoreSnapshotDialog.current
-	val showRestoringSnapshotDialog = SettingsActivity.showRestoringSnapshotDialog.current
-	val showDeleteAccountDialog = SettingsActivity.showDeleteAccountDialog.current
+	val showTakeSnapshotDialog = SettingsActivity.LocalShowTakeSnapshotDialog.current
+	val showRestoreSnapshotDialog = SettingsActivity.LocalShowRestoreSnapshotDialog.current
+	val showRestoringSnapshotDialog = SettingsActivity.LocalShowRestoringSnapshotDialog.current
+	val showImportingDataDialog = SettingsActivity.LocalShowImportingDataDialog.current
+	val showImportingJourneyDataDialog = SettingsActivity.LocalShowImportingJourneyDataDialog.current
+	val showDeleteAccountDialog = SettingsActivity.LocalShowDeleteAccountDialog.current
 
-	val restoreSnapshot = SettingsActivity.restoreSnapshot.current
-	val deleteAccount = SettingsActivity.deleteAccount.current
+	val restoreSnapshot = SettingsActivity.LocalRestoreSnapshot.current
+	val deleteAccount = SettingsActivity.LocalDeleteAccount.current
 
-	val closeDialog = SettingsActivity.closeDialog.current
+	val closeDialog = SettingsActivity.LocalCloseDialog.current
 
 	TakeSnapshotDialog(
 		showDialog = showTakeSnapshotDialog,
@@ -79,6 +83,28 @@ fun SettingsDialog() {
 		noteProcessed = noteProcessed,
 		tagCount = tagCount,
 		tagProcessed = tagProcessed,
+	)
+
+	ImportingSnapshotDialog(
+		showDialog = showImportingDataDialog,
+		attachmentCount = attachmentCount,
+		attachmentProcessed = attachmentProcessed,
+		bucketItemCount = bucketItemCount,
+		bucketItemProcessed = bucketItemProcessed,
+		bucketCount = bucketCount,
+		bucketProcessed = bucketProcessed,
+		chapterCount = chapterCount,
+		chapterProcessed = chapterProcessed,
+		noteCount = noteCount,
+		noteProcessed = noteProcessed,
+		tagCount = tagCount,
+		tagProcessed = tagProcessed,
+	)
+
+	ImportingJourneySnapshotDialog(
+		showDialog = showImportingJourneyDataDialog,
+		importDataCount = importDataCount,
+		importDataProcessed = importDataProcessed
 	)
 
 	DeleteAccountDialog(

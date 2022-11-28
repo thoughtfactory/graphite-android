@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.tags.composable.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,8 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.tags.TagsActivity
 import com.syncodec.graphite.presentation.tags.composable.bar.TopBar
@@ -34,6 +37,7 @@ import com.syncodec.graphite.presentation.tags.composable.dialog.TagDialogType
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TagScreen() {
+	val context = LocalContext.current
 
 	val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
@@ -47,6 +51,8 @@ fun TagScreen() {
 	val openDialog = TagsActivity.LocalOpenDialog.current
 
 	val onBackPressed = TagsActivity.LocalOnBackPressed.current
+
+	val isPro by BaseApplication.isPro
 
 	Scaffold(
 		topBar = { TopBar(onBackPressed = onBackPressed) },
@@ -66,11 +72,15 @@ fun TagScreen() {
 					placeholder = "Add or search tag",
 					isTagPresent = true,
 					onAddTag = {
-						TagObject().apply {
-							this.tag = tagName
-							openDialog(TagDialogType.EDIT, this)
-							softwareKeyboardController?.hide()
-							tagName = ""
+						if (! isPro && tagList.size >= 4) {
+							Toast.makeText(context, "Join Graphite Pro to add more tags", Toast.LENGTH_SHORT).show()
+						} else {
+							TagObject().apply {
+								this.tag = tagName
+								openDialog(TagDialogType.EDIT, this)
+								softwareKeyboardController?.hide()
+								tagName = ""
+							}
 						}
 					},
 				) { tagName = it }

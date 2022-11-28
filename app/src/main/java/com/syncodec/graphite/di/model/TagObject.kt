@@ -26,10 +26,10 @@ class TagObject : RealmObject {
 	}
 
 	fun toSnapshot() = TagSnapshot(
-		id = id,
-		tag = tag,
-		color = color,
-		objectIdList = objectIdList
+		id = this.id.toString(),
+		tag = this.tag,
+		color = this.color,
+		objectIdList = this.objectIdList.map { it.toString() }
 	)
 
 
@@ -61,15 +61,15 @@ data class TagObjectLite(
 )
 
 data class TagSnapshot(
-	val id: RealmUUID,
+	val id: String,
 	val tag: String,
 	val color: Int,
-	val objectIdList: List<RealmUUID>
+	val objectIdList: List<String>
 ) {
 	fun toObject() = TagObject().apply {
-		this.id = this@TagSnapshot.id
+		this.id = RealmUUID.from(this@TagSnapshot.id)
 		this.tag = this@TagSnapshot.tag
 		this.color = this@TagSnapshot.color
-		this.objectIdList.addAll(this@TagSnapshot.objectIdList)
+		this.objectIdList.addAll(this@TagSnapshot.objectIdList.map { RealmUUID.from(it) })
 	}
 }

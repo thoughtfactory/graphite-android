@@ -97,7 +97,7 @@ fun TopBar() {
 				}
 			}
 		},
-		colors = TopAppBarDefaults.smallTopAppBarColors(
+		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = MaterialTheme.colorScheme.background,
 			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
 			titleContentColor = MaterialTheme.colorScheme.onSurface,

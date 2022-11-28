@@ -43,5 +43,6 @@ fun AtlasScreen(
 			)
 		}
 	}
+
 	AtlasDialog(parentChapter = parentChapter)
 }

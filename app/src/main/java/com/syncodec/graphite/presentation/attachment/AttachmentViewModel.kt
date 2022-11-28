@@ -6,16 +6,13 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.Quadruple
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -35,10 +32,10 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 	val noteObject : MutableState<NoteObject?> = mutableStateOf(null)
 	val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
 
-	val attachmentList : SnapshotStateList<Quadruple<AttachmentObject, File?, Uri?, RealmUUID>> = mutableStateListOf()
+	val attachmentList : SnapshotStateList<Triple<RealmUUID, File?, Uri?>> = mutableStateListOf()
 
 	val isSelected = mutableStateOf(false)
-	val selectedAttachmentList = mutableStateListOf<Quadruple<AttachmentObject, File?, Uri?, RealmUUID>>()
+	val selectedAttachmentList = mutableStateListOf<Triple<RealmUUID, File?, Uri?>>()
 
 	fun loadAllData() {
 		viewModelScope.launch(Dispatchers.IO) {
@@ -51,7 +48,12 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 						viewModelScope.launch {
 							if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 							try {
-								repository2.getAllNote().forEach { note -> loadDataFromNote(note.id) }
+								val _attachmentList : MutableList<Triple<RealmUUID, File?, Uri?>> = mutableListOf()
+								repository2.getAllNote().forEach { note -> loadDataFromNote(note.id) { _attachmentList.addAll(it) } }
+//								withContext(Dispatchers.Main) {
+//									attachmentList.clear()
+//									attachmentList.addAll(_attachmentList.toList())
+//								}
 							} catch (e : RealmNotInitializedException) {
 							} catch (e : Exception) {
 							}
@@ -64,27 +66,22 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 		}
 	}
 
-	fun loadDataFromNote(noteId : RealmUUID) {
+	fun loadDataFromNote(noteId : RealmUUID, getAttachmentList : (List<Triple<RealmUUID, File?, Uri?>>) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 
 			try {
-				repository2.getNoteFromIdAsFlow(noteId).collect {
-					it?.let {_noteObject ->
-						_noteObject.attachmentList.forEach {
-							val attachmentObject = AttachmentObject.deserialize(it)
-							if (attachmentObject != null) {
-								val file = repository2.readAttachmentFile(_noteObject.id, attachmentObject.name)
-								val uri = file?.let { it1 ->
-									FileProvider.getUriForFile(repository2.context, "${repository2.context.packageName}.fileprovider", it1)
-								}
-								Quadruple(attachmentObject, file, uri, _noteObject.id).let { quadruple ->
-									if (quadruple !in attachmentList) attachmentList.add(quadruple)
-								}
-							}
+				val _attachmentList : MutableList<Triple<RealmUUID, File?, Uri?>> = mutableListOf()
+				repository2.getNoteFromId(noteId).let {
+					it?.let { _noteObject ->
+						repository2.readAttachmentFromNoteId(_noteObject.id).forEach { attachment ->
+//							_attachmentList.add(Triple(_noteObject.id, attachment.first, attachment.second))
+							attachmentList.add(Triple(_noteObject.id, attachment.first, attachment.second))
 						}
 					}
 				}
+
+				getAttachmentList(_attachmentList)
 
 			} catch (e : RealmNotInitializedException) {
 			} catch (e : Exception) {
@@ -100,40 +97,40 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 				withContext(Dispatchers.Main) {
 					chapterObject.value = it
 
+					val _attachmentList : MutableList<Triple<RealmUUID, File?, Uri?>> = mutableListOf()
 					it?.chapterList?.forEach { loadDataFromChapter(it.id) }
-					it?.noteList?.forEach { loadDataFromNote(it.id) }
+					it?.noteList?.forEach { loadDataFromNote(it.id) { _attachmentList.addAll(it) } }
+//					withContext(Dispatchers.Main) {
+//						attachmentList.clear()
+//						attachmentList.addAll(_attachmentList.toList())
+//					}
 				}
 			}
 		}
 	}
 
-	fun deleteAttachment(callback: () -> Unit) {
+	fun deleteAttachment(callback : () -> Unit) {
 		val _attachmentList = selectedAttachmentList.toList()
 		viewModelScope.launch(Dispatchers.IO) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 
 			val attachmentListIterator = _attachmentList.iterator()
-			while(attachmentListIterator.hasNext()) {
+			while (attachmentListIterator.hasNext()) {
 				val attachment = attachmentListIterator.next()
-				deleteAttachment(
-					attachment.first,
-					attachment.second,
-					attachment.fourth,
-					10
-				)
+				deleteAttachment(attachment.first, attachment.second, 10)
 			}
 
 			callback()
 		}
 	}
 
-	private suspend fun deleteAttachment(attachmentObject: AttachmentObject, file : File?, noteId: RealmUUID, retry: Int) {
+	private suspend fun deleteAttachment(noteId : RealmUUID, file : File?, retry : Int) {
 		try {
-			repository2.deleteAttachment(attachmentObject, file, noteId)
+			repository2.deleteAttachment(file)
 		} catch (e : Exception) {
 			if (retry > 0) {
 				delay(1000)
-				deleteAttachment(attachmentObject, file, noteId, retry - 1)
+				deleteAttachment(noteId, file, retry - 1)
 			}
 		}
 	}

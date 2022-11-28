@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
@@ -34,7 +33,7 @@ val LocalCompositionIsLocked = compositionLocalOf<Boolean?> { null }
 val LocalCompositionIsFavourite = compositionLocalOf<Boolean?> { null }
 val LocalCompositionParentChapterId = compositionLocalOf<RealmUUID?> { null }
 val LocalCompositionParentChapter = compositionLocalOf<ChapterObject?> { null }
-val LocalCompositionAttachmentList = compositionLocalOf< List<Triple<AttachmentObject, File?, Uri?>>> { listOf() }
+val LocalCompositionAttachmentList = compositionLocalOf< List<Pair<File?, Uri?>>> { listOf() }
 
 val LocalCompositionTagList = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }
 val LocalCompositionTagListBuffer = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }
@@ -69,5 +68,4 @@ val LocalDiscardChanges = compositionLocalOf<() -> Unit> { {} }
 val LocalDeleteNote = compositionLocalOf<() -> Unit> { {} }
 val LocalOnShareText = compositionLocalOf<() -> Unit> { {} }
 val LocalOnShareAttachment = compositionLocalOf<() -> Unit> { {} }
-val LocalOnPrint = compositionLocalOf<() -> Unit> { {} }
 val LocalOnExportMarkdown = compositionLocalOf<() -> Unit> { {} }

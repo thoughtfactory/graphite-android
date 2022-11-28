@@ -33,13 +33,16 @@ import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContent
 import com.syncodec.graphite.presentation.ui.LocationContainer
+import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
+import com.syncodec.graphite.utils.getAttachmentCountFromNoteId
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo
 import com.syncodec.graphite.utils.timeStampToTime
@@ -57,7 +60,6 @@ fun NoteListCard(
 	isLast : Boolean,
 	title : String?,
 	contentThumbnail : String?,
-	attachmentCount : Int,
 	attachmentThumbnail : Bitmap?,
 	address : String?,
 	latLng : LatLng?,
@@ -120,7 +122,9 @@ fun NoteListCard(
 						title = title,
 						isLocked = isLocked,
 						isFavourite = isFavourite,
-						attachmentCount = attachmentCount
+						attachmentCount = context.getAttachmentCountFromNoteId(id),
+						contentColor = contentColor,
+						isFavouriteTinted = isFavouriteTinted
 					)
 				}
 
@@ -128,7 +132,7 @@ fun NoteListCard(
 
 				Content(
 					contentThumbnail = contentThumbnail,
-					attachmentCount = attachmentCount,
+					attachmentCount = context.getAttachmentCountFromNoteId(id),
 					attachmentThumbnail = attachmentThumbnail,
 					contentColor = contentColor
 				)
@@ -159,23 +163,25 @@ private fun Title(
 	title : String?,
 	isLocked : Boolean,
 	isFavourite : Boolean,
-	attachmentCount : Int
+	attachmentCount : Int,
+	contentColor : Color,
+	isFavouriteTinted : Boolean
 ) {
 	Row(
 		modifier = Modifier,
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		if (showFullTime) {
-			TitleText(text = entryTimestamp0(timestamp))
-			TitleText(text = entryTimestamp1(timestamp))
+			TitleText(text = entryTimestamp0(timestamp), contentColor = contentColor)
+			TitleText(text = entryTimestamp1(timestamp), contentColor = contentColor)
 		} else {
-			TitleText(text = timeStampToTime(timestamp))
+			TitleText(text = timeStampToTime(timestamp), contentColor = contentColor)
 		}
 		if (! title.isNullOrBlank()) {
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
+			TitleText(text = "·", contentColor = contentColor)
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = title)
+			TitleText(text = title, contentColor = contentColor)
 		}
 
 		Spacer(modifier = Modifier.weight(1f))
@@ -184,7 +190,7 @@ private fun Title(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_shield),
 				contentDescription = "Locked",
-				tint = Color(0xFF5ACE8F),
+				tint = if (isFavouriteTinted && isFavourite) contentColor else Color.LockClosedContainer,
 				modifier = Modifier.requiredSize(14.dp)
 			)
 		}
@@ -192,36 +198,39 @@ private fun Title(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_favourite),
 				contentDescription = "Favourite",
-				tint = Color(0xFFFF5E78),
+				tint = if (isFavouriteTinted) contentColor else Color.FavouriteContainer,
 				modifier = Modifier.requiredSize(14.dp)
 			)
 		}
 		if (isFavourite && attachmentCount != 0) {
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
+			TitleText(text = "·", contentColor = contentColor)
 			Spacer(modifier = Modifier.width(2.dp))
 		}
 		if (attachmentCount != 0) {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_attachment),
 				contentDescription = "Attachment count",
-				tint = Color(0xFFF5B971),
+				tint = if (isFavouriteTinted && isFavourite) contentColor else Color.AttachmentContainer,
 				modifier = Modifier.requiredSize(14.dp)
 			)
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "·")
+			TitleText(text = "·", contentColor = contentColor)
 			Spacer(modifier = Modifier.width(2.dp))
-			TitleText(text = "$attachmentCount")
+			TitleText(text = "$attachmentCount", contentColor = contentColor)
 		}
 	}
 }
 
 @Composable
-private fun TitleText(text : String) {
+private fun TitleText(
+	text : String,
+	contentColor : Color
+) {
 	Text(
 		text = text,
 		style = MaterialTheme.typography.bodyMedium,
-		color = MaterialTheme.colorScheme.onBackground,
+		color = contentColor,
 		fontWeight = FontWeight.Bold,
 		maxLines = 1,
 		modifier = Modifier
@@ -304,10 +313,15 @@ private fun TagView(
 
 @Composable
 private fun Location(
-	address : String?, latLng : LatLng?, contentColor : Color, isFavouriteTinted : Boolean, isFavourite : Boolean
+	address : String?,
+	latLng : LatLng?,
+	contentColor : Color,
+	isFavouriteTinted : Boolean,
+	isFavourite : Boolean
 ) {
 	Row(
-		modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+		modifier = Modifier.fillMaxWidth(),
+		verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
 			painter = painterResource(id = R.drawable.ic_map_marker),

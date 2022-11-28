@@ -47,6 +47,7 @@
     "browserify": "^17.0.0",
     "node-sass": "^7.0.1",
     "tippy.js": "^6.3.7",
+    "turndown": "^7.1.1",
     "uniq": "^1.0.1"
   }
 }

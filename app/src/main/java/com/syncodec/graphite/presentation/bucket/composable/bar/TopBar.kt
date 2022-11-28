@@ -138,7 +138,7 @@ private fun Bar(
 				onClick = onClickFavourite,
 			)
 		},
-		colors = TopAppBarDefaults.smallTopAppBarColors(
+		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = MaterialTheme.colorScheme.background,
 			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
 			titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -172,7 +172,7 @@ private fun SelectionBar() {
 				tint = MaterialTheme.colorScheme.onBackground,
 				onClick = {
 					if (selectedRealmUUIDList.isEmpty()) Toast.makeText(context, "No items selected", Toast.LENGTH_SHORT).show()
-					else onShare()
+					else onShare(false)
 				},
 			)
 

@@ -31,6 +31,7 @@ import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
@@ -53,6 +54,8 @@ fun MenuBottomSheet() {
 	val openDialog = LocalCompositionOpenDialog.current
 	val closeSheet = LocalCompositionCloseBottomSheet.current
 
+	val onShare = LocalCompositionOnShare.current
+
 	val buttonList : List<BottomSheetButtonData> = remember {
 		listOf(
 			BottomSheetButtonData(
@@ -63,7 +66,10 @@ fun MenuBottomSheet() {
 			BottomSheetButtonData(
 				title = "Share",
 				icon = R.drawable.ic_share,
-				onClick = { }
+				onClick = {
+					onShare(true)
+					closeSheet()
+				}
 			),
 			BottomSheetButtonData(
 				title = "Delete",

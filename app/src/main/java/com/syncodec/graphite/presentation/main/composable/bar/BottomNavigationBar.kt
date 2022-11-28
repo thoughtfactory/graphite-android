@@ -193,7 +193,7 @@ fun MainNavigation(
 					componentType = componentType,
 					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
 					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
-					notebookList = notebookList.filter { it.parentChapterId == null },
+					notebookList = notebookList.filter { it.parentId == null },
 					sortOn = sortOn,
 					sortBy = sortBy,
 					viewType = viewType,
@@ -280,7 +280,6 @@ fun MainNavigation(
 			) {
 				CalendarScreen(
 					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-					selectedItemList = emptyList(),
 					onClickNote = {
 						Intent(context, NoteActivity::class.java).apply {
 							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
@@ -291,8 +290,7 @@ fun MainNavigation(
 							activityLauncher.launch(this)
 						}
 					},
-					onLongClickNote = {},
-				)
+				) {}
 			}
 		}
 		composable(BottomNavigationItem.Atlas.route) {

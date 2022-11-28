@@ -16,14 +16,14 @@ import com.syncodec.graphite.utils.timeStampToPrettyFull
 @Composable
 fun SnapshotWarehouseScreen() {
 
-	val snapshotList = SettingsActivity.snapshotList.current
+	val snapshotList = SettingsActivity.LocalSnapshotList.current
 
 	val scrollState = rememberScrollState()
 
-	val takeSnapshot = SettingsActivity.takeSnapshot.current
-	val getSnapshot = SettingsActivity.getSnapshot.current
+	val takeSnapshot = SettingsActivity.LocalTakeSnapshot.current
+	val getSnapshot = SettingsActivity.LocalGetSnapshot.current
 
-	val openDialog = SettingsActivity.openDialog.current
+	val openDialog = SettingsActivity.LocalOpenDialog.current
 
 	val refreshState = rememberSwipeRefreshState(isRefreshing = false)
 

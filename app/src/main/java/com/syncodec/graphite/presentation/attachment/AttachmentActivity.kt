@@ -16,14 +16,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.presentation.attachment.composable.dialog.AttachmentDialogType
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreen
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.Quadruple
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -123,8 +121,15 @@ class AttachmentActivity : ComponentActivity() {
 			when {
 				showAll -> viewModel.loadAllData()
 				hasNoteId -> {
+//					val _attachmentList : MutableList<Triple<RealmUUID, File?, Uri?>> = mutableListOf()
 					val noteId = intent.getByteArrayExtra(Extra.Companion.Constant.NOTE_ID.name)?.let { RealmUUID.from(it) }
-					if (noteId != null) viewModel.loadDataFromNote(noteId) else finish()
+					if (noteId != null) viewModel.loadDataFromNote(noteId) {
+//						_attachmentList.addAll(it)
+					} else finish()
+//					CoroutineScope(Dispatchers.Main).launch {
+//						viewModel.attachmentList.clear()
+//						viewModel.attachmentList.addAll(_attachmentList.toList())
+//					}
 				}
 
 				hasChapterId -> {
@@ -145,7 +150,7 @@ class AttachmentActivity : ComponentActivity() {
 	}
 
 	companion object {
-		val LocalSelectedAttachmentList = compositionLocalOf { mutableStateListOf<Quadruple<AttachmentObject, File?, Uri?, RealmUUID>>() }
+		val LocalSelectedAttachmentList = compositionLocalOf { mutableStateListOf<Triple<RealmUUID, File?, Uri?>>() }
 		val LocalShowDeleteDialog = compositionLocalOf { false }
 		val LocalOpenDialog = compositionLocalOf<(AttachmentDialogType) -> Unit> { {} }
 		val LocalCloseDialog = compositionLocalOf<(AttachmentDialogType) -> Unit> { {} }

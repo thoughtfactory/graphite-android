@@ -1,12 +1,11 @@
 package com.syncodec.graphite.di.repository
 
-import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.webkit.MimeTypeMap
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
-import com.syncodec.graphite.di.model.AttachmentObject
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
@@ -30,12 +29,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -77,6 +75,7 @@ enum class CallbackStatus {
 class Repository2 @Inject constructor(@ApplicationContext val context : Context) {
 
 	val repositoryState : MutableStateFlow<RepositoryState> = MutableStateFlow(RepositoryState.INIT)
+	val isPro by BaseApplication.isPro
 
 	private var realmConfiguration : RealmConfiguration? = null
 	private var realm : Realm? = null
@@ -119,7 +118,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 									TagObject::class
 								)
 							)
-//			    .encryptionKey(getNewKey(context))
+//			                    .encryptionKey(getNewKey(context))
 								.encryptionKey(key)
 								.initialData {
 									ChapterObject().also { chapterObject ->
@@ -183,11 +182,11 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(BaseObject::class).first().find()
 	}
 
-	fun putChapter(parentChapterId : RealmUUID?, chapterObject : ChapterObject, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
+	suspend fun putChapter(parentChapterId : RealmUUID?, chapterObject : ChapterObject, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.Default).async {
 			if (realm == null) {
 				callback(false, RealmNotInitializedException())
-				return@launch
+				return@async
 			}
 			try {
 				realm !!.write {
@@ -205,8 +204,8 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 						}
 					} else {
 						findLatest(storedChapterObject)?.let { latestChapterObject ->
-							if (parentChapterId != latestChapterObject.parentChapterId) {
-								val oldParentChapter = latestChapterObject.parentChapterId?.let { getChapterFromId(it) }
+							if (parentChapterId != latestChapterObject.parentId) {
+								val oldParentChapter = latestChapterObject.parentId?.let { getChapterFromId(it) }
 								val newParentChapter = parentChapterId?.let { getChapterFromId(it) }
 
 								oldParentChapter?.let { findLatest(it)?.chapterList?.remove(latestChapterObject) }
@@ -221,7 +220,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 							latestChapterObject.isFavourite = chapterObject.isFavourite
 							latestChapterObject.isLocked = chapterObject.isLocked
 
-							latestChapterObject.parentChapterId = chapterObject.parentChapterId
+							latestChapterObject.parentId = chapterObject.parentId
 
 							callback(true, null)
 						}
@@ -230,7 +229,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 			} catch (e : Exception) {
 				callback(false, e)
 			}
-		}
+		}.join()
 	}
 
 	fun getChapterFromIdAsFlow(id : RealmUUID?) : Flow<ChapterObject?> {
@@ -250,12 +249,12 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 
 	fun getChapterWithParentIdAsFlow(parentChapterId : RealmUUID?) : Flow<List<ChapterObject>> {
 		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class, "parentChapterId == $0 ", parentChapterId).asFlow().map { it.list }
+		else realm !!.query(ChapterObject::class, "parentId == $0 ", parentChapterId).asFlow().map { it.list }
 	}
 
 	fun getChapterWithParentId(parentChapterId : RealmUUID?) : Pair<ChapterObject?, List<ChapterObject>> {
 		return if (realm == null) throw RealmNotInitializedException()
-		else Pair(getChapterFromId(parentChapterId), realm !!.query(ChapterObject::class, "parentChapterId == $0 ", parentChapterId).find().toList())
+		else Pair(getChapterFromId(parentChapterId), realm !!.query(ChapterObject::class, "parentId == $0 ", parentChapterId).find().toList())
 	}
 
 	fun getParentChapterList(id : RealmUUID?, includeEdge : Boolean = false, callback : (List<ChapterObjectLite>?, Exception?) -> Unit) {
@@ -264,10 +263,10 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 				val chapterObject = getChapterFromId(id)
 				val chapterObjectList = mutableListOf<ChapterObjectLite>()
 				if (includeEdge) chapterObject?.toLite()?.let { chapterObjectList.add(it) }
-				var parentChapterObject = chapterObject?.parentChapterId?.let { it1 -> getChapterFromId(it1) }
+				var parentChapterObject = chapterObject?.parentId?.let { it1 -> getChapterFromId(it1) }
 				while (parentChapterObject != null) {
 					chapterObjectList.add(parentChapterObject.toLite())
-					parentChapterObject = parentChapterObject.parentChapterId?.let { it1 -> getChapterFromId(it1) }
+					parentChapterObject = parentChapterObject.parentId?.let { it1 -> getChapterFromId(it1) }
 				}
 				callback(chapterObjectList, null)
 			} catch (e : Exception) {
@@ -276,18 +275,18 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun putNote(noteObject : NoteObject, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
+	suspend fun putNote(noteObject : NoteObject, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.Default).async {
 			if (realm == null) {
 				callback(false, RealmNotInitializedException())
-				return@launch
+				return@async
 			}
 			try {
 				realm !!.write {
-					if (noteObject.parentChapterId == null) {
+					if (noteObject.parentId == null) {
 						callback(false, ParentChapterNotFoundException())
 					} else {
-						val newChapterObject = getChapterFromId(noteObject.parentChapterId !!)
+						val newChapterObject = getChapterFromId(noteObject.parentId !!)
 						if (newChapterObject == null) {
 							callback(false, ParentChapterNotFoundException())
 							return@write
@@ -296,7 +295,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 								?.noteList
 								?.let {
 									val storedNoteObject = getNoteFromId(noteObject.id)
-									val currentChapterObject = storedNoteObject?.parentChapterId?.let { it1 -> getChapterFromId(it1) }
+									val currentChapterObject = storedNoteObject?.parentId?.let { it1 -> getChapterFromId(it1) }
 									if (currentChapterObject?.id != newChapterObject.id) {
 										currentChapterObject?.let { findLatest(it)?.noteList?.remove(storedNoteObject) }
 										it.add(noteObject)
@@ -315,8 +314,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 												latestNoteObject.thumbnailType = noteObject.thumbnailType
 												latestNoteObject.isFavourite = noteObject.isFavourite
 												latestNoteObject.isLocked = noteObject.isLocked
-												latestNoteObject.attachmentList = noteObject.attachmentList
-												latestNoteObject.parentChapterId = noteObject.parentChapterId
+												latestNoteObject.parentId = noteObject.parentId
 											}
 									}
 								}
@@ -329,7 +327,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 				e.printStackTrace()
 				callback(false, e)
 			}
-		}
+		}.await()
 	}
 
 	fun moveNoteToChapter(noteId : RealmUUID, chapterId : RealmUUID) {
@@ -359,7 +357,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 			try {
 				realm !!.write {
 					val noteObject = getNoteFromId(id)
-					val chapterObject = noteObject?.parentChapterId?.let { getChapterFromId(it) }
+					val chapterObject = noteObject?.parentId?.let { getChapterFromId(it) }
 
 					noteObject?.id?.let { File("$attachmentDirPath/$it").deleteRecursively() }
 
@@ -406,11 +404,11 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(NoteObject::class).find()
 	}
 
-	fun putBucket(bucketObject : BucketObject, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
+	suspend fun putBucket(bucketObject : BucketObject, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.Default).async {
 			if (realm == null) {
 				callback(false, RealmNotInitializedException())
-				return@launch
+				return@async
 			}
 			try {
 				realm !!.write {
@@ -433,14 +431,14 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 				e.printStackTrace()
 				callback(false, e)
 			}
-		}
+		}.join()
 	}
 
-	fun putBucketItem(bucketId : RealmUUID, bucketItemObject : BucketItemObject, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
+	suspend fun putBucketItem(bucketId : RealmUUID, bucketItemObject : BucketItemObject, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.Default).async {
 			if (realm == null) {
 				callback(false, RealmNotInitializedException())
-				return@launch
+				return@async
 			}
 			try {
 				realm !!.write {
@@ -458,7 +456,9 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 								latestBucketItemObject.thumbnail = bucketItemObject.thumbnail
 								latestBucketItemObject.isFavourite = bucketItemObject.isFavourite
 								latestBucketItemObject.isLocked = bucketItemObject.isLocked
+								latestBucketItemObject.parentId = bucketItemObject.parentId
 								latestBucketItemObject.data = bucketItemObject.data
+								latestBucketItemObject.key = bucketItemObject.key
 							}
 							callback(true, null)
 						}
@@ -468,7 +468,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 				e.printStackTrace()
 				callback(false, e)
 			}
-		}
+		}.join()
 	}
 
 	fun getAllBucketAsFlow() : Flow<RealmResults<BucketObject>> {
@@ -506,40 +506,21 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().find()
 	}
 
-	fun bufferAttachment(uriList : List<Uri>) : List<Triple<AttachmentObject, File?, Uri>> {
-		val attachmentList : MutableList<Triple<AttachmentObject, File?, Uri>> = mutableListOf()
+	fun bufferAttachment(uriList : List<Uri>) : List<Pair< File?, Uri>> {
+		val attachmentList : MutableList<Pair<File?, Uri>> = mutableListOf()
 		uriList.forEach { uri ->
-			var extension : String? = null
-			val name = context.getFileName(uri)
-			try {
-				extension =
-					if (uri.scheme.equals(ContentResolver.SCHEME_CONTENT))
-						MimeTypeMap.getSingleton().getExtensionFromMimeType(context.applicationContext.contentResolver.getType(uri))
-					else
-						MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(uri.path?.let { File(it) }).toString())
-			} catch (e : Exception) {
-//		    	TODO Show error message
-				e.printStackTrace()
-			} finally {
-				AttachmentObject().apply {
-					this.name = name ?: RealmUUID.random().toString()
-					this.extension = extension
-					this.mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+			val uriAndFile = createTempAttachmentFileToExpose(context, context.getFileName(uri) ?: RealmUUID.random().toString())
+			val inputStream = context.contentResolver.openInputStream(uri)
+			val outputStream = context.contentResolver.openOutputStream(uriAndFile.first)
 
-					val uriAndFile = createTempAttachmentFileToExpose(context, this.name)
-					val inputStream = context.contentResolver.openInputStream(uri)
-					val outputStream = context.contentResolver.openOutputStream(uriAndFile.first)
+			if (inputStream != null && outputStream != null) copyInputStreamToOutputStream(inputStream, outputStream)
 
-					if (inputStream != null && outputStream != null) copyInputStreamToOutputStream(inputStream, outputStream)
+			inputStream?.close()
+			outputStream?.close()
 
-					inputStream?.close()
-					outputStream?.close()
+			Triple(uriAndFile.first, uriAndFile.second, this)
 
-					Triple(uriAndFile.first, uriAndFile.second, this)
-
-					attachmentList.add(Triple(this, uriAndFile.second, uriAndFile.first))
-				}
-			}
+			attachmentList.add(Pair(uriAndFile.second, uriAndFile.first))
 		}
 
 		return attachmentList
@@ -567,36 +548,44 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
+	fun readAttachmentFromNoteId(noteId : RealmUUID) : List<Pair<File?, Uri?>> {
+		val attachmentList : MutableList<Pair<File?, Uri?>> = mutableListOf()
+		val attachmentDir = File("$attachmentDirPath/$noteId")
+		if (attachmentDir.exists()) {
+			attachmentDir.listFiles()?.forEach { file ->
+				attachmentList.add(Pair(file, Uri.fromFile(file)))
+			}
+		}
+		return attachmentList
+	}
+
+	fun getAttachmentCountFromNoteId(noteId : RealmUUID) : Int {
+		val attachmentDir = File("$attachmentDirPath/$noteId")
+		return if (attachmentDir.exists()) attachmentDir.listFiles()?.size ?: 0
+		else 0
+	}
+
 	fun readAttachmentFile(noteId : RealmUUID, name : String) : File? {
 		return File("$attachmentDirPath/$noteId/$name").let { if (it.exists()) it else null }
 	}
 
-	suspend fun deleteAttachment(attachmentObject: AttachmentObject, file : File?, noteId: RealmUUID) {
+	suspend fun deleteAttachment(file : File?) {
 		if (realm == null) throw RealmNotInitializedException()
 		else {
 			CoroutineScope(Dispatchers.IO).launch {
 				try {
 					file?.delete()
-					realm!!.write {
-						getNoteFromId(id = noteId)?.let {
-							val attachmentList = it.attachmentList.map { AttachmentObject.deserialize(it) }.toMutableList()
-							findLatest(it)?.let { note ->
-								attachmentList.remove(attachmentObject)
-								note.attachmentList = attachmentList.mapNotNull { it?.serialize() }.toRealmList()
-							}
-						}
-					}
 				} catch (e : Exception) {
-					e.printStackTrace()
+//					e.printStackTrace()
 				}
 			}.join()
 		}
 	}
 
-	fun putTag(tagObject : TagObject, callback : (Boolean, Exception?) -> Unit) {
+	suspend fun putTag(tagObject : TagObject, callback : (Boolean, Exception?) -> Unit) {
 		if (realm == null) throw RealmNotInitializedException()
 		else {
-			CoroutineScope(Dispatchers.Default).launch {
+			CoroutineScope(Dispatchers.Default).async {
 				try {
 					realm?.write {
 						val storedTagObject = getTagFromId(tagObject.id)
@@ -615,7 +604,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					callback(false, e)
 				}
 			}
-		}
+		}.join()
 	}
 
 	fun deleteTag(id : RealmUUID?) {
@@ -724,7 +713,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 
 //			** Delete note
 			val noteObject = getNoteFromId(objectId)
-			val parentChapterObject = noteObject?.parentChapterId?.let { getChapterFromId(it) }
+			val parentChapterObject = noteObject?.parentId?.let { getChapterFromId(it) }
 
 			if (parentChapterObject != null) {
 				findLatest(parentChapterObject)
@@ -750,24 +739,17 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}
 	}
 
-	fun clearRealm(callback : (Boolean, Exception?) -> Unit) {
+	suspend fun clearRealm(callback : (Boolean, Exception?) -> Unit) {
 		if (realm == null) throw RealmNotInitializedException()
 		else {
-			CoroutineScope(Dispatchers.Default).launch {
+			CoroutineScope(Dispatchers.Default).async {
 				try {
-					realm !!.write {
-						this.query(BaseObject::class).find().map { it.id }.let { this@Repository2.delete(it) }
-						this.query(BucketItemObject::class).find().map { it.id }.let { this@Repository2.delete(it) }
-						this.query(BucketObject::class).find().map { it.id }.let { this@Repository2.delete(it) }
-						this.query(ChapterObject::class).find().map { it.id }.let { this@Repository2.delete(it) }
-						this.query(NoteObject::class).find().map { it.id }.let { this@Repository2.delete(it) }
-						this.query(TagObject::class).find().map { it.id }.let { this@Repository2.delete(it) }
-					}
+					realm !!.write { this.deleteAll() }
 					callback(true, null)
 				} catch (e : Exception) {
 					callback(false, e)
 				}
-			}
+			}.join()
 		}
 	}
 }

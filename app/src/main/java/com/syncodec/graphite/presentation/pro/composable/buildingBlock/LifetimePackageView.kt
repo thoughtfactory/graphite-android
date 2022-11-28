@@ -66,7 +66,11 @@ fun LifetimePackageView() {
 
 					Spacer(modifier = Modifier.width(12.dp))
 
-					Text(text = _package.product.price, style = MaterialTheme.typography.titleMedium)
+					Text(
+						text = _package.product.price,
+						style = MaterialTheme.typography.titleLarge,
+						fontWeight = FontWeight.Bold
+					)
 				}
 			}
 		}

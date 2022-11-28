@@ -24,8 +24,8 @@ fun SecurityScreen() {
 
 	val authenticatorAction = LocalAuthenticatorAction.current
 
-	val scrollState = SettingsActivity.scrollState.current
-	val onNavigate = SettingsActivity.onNavigate.current
+	val scrollState = SettingsActivity.LocalScrollState.current
+	val onNavigate = SettingsActivity.LocalOnNavigate.current
 
 	GenericSettingsScreen(
 		title = "Security",

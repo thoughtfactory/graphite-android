@@ -23,12 +23,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.RenderGeneric
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.RenderImage
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.renderAttachment.RenderPdf
+import com.syncodec.graphite.utils.subType
 import com.syncodec.graphite.utils.tone
+import com.syncodec.graphite.utils.type
 import java.io.File
 
 
@@ -36,7 +37,6 @@ import java.io.File
 @Composable
 fun AttachmentPreview(
 	modifier : Modifier = Modifier,
-	attachment : AttachmentObject,
 	uri : Uri?,
 	file : File?,
 	clickable : Boolean,
@@ -73,25 +73,17 @@ fun AttachmentPreview(
 				this.scaleY = scale
 			}
 	) {
-		val type = attachment.getTypeString()
-		val subType = attachment.getSubTypeString()
+		val type = file?.type()
+		val subType = file?.subType()
 
 		when (type) {
-			"image" -> RenderImage(type = type, name = attachment.name, uri = uri)
-			"video" -> RenderGeneric(type = type, name = attachment.name)
-			"audio" -> RenderGeneric(type = type, name = attachment.name)
+			"image" -> RenderImage(type = type, name = file?.name, uri = uri)
+			"video" -> RenderGeneric(type = type, name = file?.name)
+			"audio" -> RenderGeneric(type = type, name = file?.name)
 			else -> {
 				when (subType) {
-					"pdf" -> RenderPdf(
-						type = type,
-						name = attachment.name,
-						file = file
-					)
-
-					else -> RenderGeneric(
-						type = type,
-						name = attachment.name
-					)
+					"pdf" -> RenderPdf(type = type, name = file?.name, file = file)
+					else -> RenderGeneric(type = type, name = file?.name)
 				}
 			}
 		}
@@ -104,7 +96,7 @@ fun AttachmentPreview(
 				if (onRemove != null) {
 					MenuButton(
 						icon = R.drawable.ic_close,
-						contentDescription = "Remove ${attachment.name}",
+						contentDescription = "Remove ${file?.name}",
 					) { onRemove.invoke() }
 				}
 
@@ -113,7 +105,7 @@ fun AttachmentPreview(
 				if (openLink != null) {
 					MenuButton(
 						icon = R.drawable.ic_open_link,
-						contentDescription = "Open ${attachment.name}",
+						contentDescription = "Open ${file?.name}",
 					) { openLink.invoke() }
 				}
 			}

@@ -43,6 +43,8 @@ const History = require('@tiptap/extension-history');
 const Placeholder = require('@tiptap/extension-placeholder');
 const Typography = require('@tiptap/extension-typography');
 
+const Turndown = require('turndown');
+
 // import './styles.scss'
 
 
@@ -280,16 +282,6 @@ editor.on('transaction', ({
     bridge.format(JSON.stringify(currentFormat));
 });
 
-editor.getData = () => {
-    data = {};
-    data.dataJson = editor.getJSON();
-    data.dataText = editor.getText();
-    // data.title = document.getElementById("title").value;
-    data.title = "title";
-
-    bridge.saveData(JSON.stringify(data));
-};
-
 editor.setBaseFontFamily = (fontFamily) => {
     document.getElementById("base").style.fontFamily = fontFamily;
 };
@@ -297,15 +289,13 @@ editor.setBaseFontFamily = (fontFamily) => {
 editor.setBaseColor = (containerColor, contentColor) => {
     document.getElementById("base").style.color = contentColor;
     document.getElementById("base").style.background = containerColor;
-    document.getElementById("input__label").style.color = contentColor;
-    document.getElementById("input__label").style.background = containerColor;
 };
 
 editor.reCalculateHeight = (height) => {
     document.getElementsByClassName("ProseMirror")[0].style.height = (height + "px")
 }
 
-editor.importData = (importData, importer, cachePath) => {
+editor.importData = (noteId, importData, importer) => {
 
     switch (importer) {
         case "graphite":
@@ -325,19 +315,30 @@ editor.importData = (importData, importer, cachePath) => {
     data.dataText = editor.getText();
     data.importData = importData;
     data.importer = importer;
-    data.cachePath = cachePath;
+    data.noteId = noteId;
 
-    bridge.saveData(JSON.stringify(data));
+    bridge.getData("import_journey", JSON.stringify(data));
 };
 
-editor.printData = (data) => {
+editor.setData = (title, data) => {
+    document.getElementById("title").setAttribute("value", title);
     editor.commands.setContent(data);
-    bridge.printData(editor.getHTML());
 };
 
-editor.getPlainText = (data) => {
-    editor.commands.setContent(data);
-    bridge.getPlainText(editor.getText());
+editor.getData = (extra) => {
+    data = {};
+    data.dataJson = editor.getJSON();
+    data.dataText = editor.getText();
+    data.dataHtml = editor.getHTML();
+    data.title = document.getElementById("title").value;
+    data.extra = extra
+
+    if(extra == "export_markdown") {
+        var turndown = new Turndown();
+        data.dataMarkdown = turndown.turndown(editor.getHTML());
+    }
+
+    bridge.getData(extra, JSON.stringify(data));
 };
 
 module.exports = editor;

@@ -46,7 +46,7 @@ fun AboutUsScreen() {
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
 
-	val scrollState = SettingsActivity.scrollState.current
+	val scrollState = SettingsActivity.LocalScrollState.current
 
 	Column(
 		modifier = Modifier

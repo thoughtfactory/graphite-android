@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -25,30 +26,36 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.syncodec.graphite.di.model.AttachmentObject
+import com.syncodec.graphite.BaseApplication
+import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
-import com.syncodec.graphite.presentation.common.lazyView.isScrollingUp
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteRefreshing
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NoEntryCard
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.gridView.NoteGridCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NotebookTimelineSpacer
+import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
+import com.syncodec.graphite.utils.AttachmentType
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.timeStampToPrettyDay
 import com.syncodec.graphite.utils.timestampToCalendarDay
 import io.realm.kotlin.types.RealmUUID
+import kotlin.random.Random
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -72,7 +79,7 @@ fun NoteScreen(
 	val lazyGridState = rememberLazyGridState()
 
 	val noteMap : MutableMap<String, MutableList<NoteObjectLite>> = mutableMapOf()
-	when(sortOn) {
+	when (sortOn) {
 		SortOn.TITLE -> {
 			val _noteList = if (sortBy == SortBy.ASCENDING) {
 				noteList.sortedBy { it.title }
@@ -85,6 +92,7 @@ fun NoteScreen(
 				else noteMap[sorter] = mutableListOf(note)
 			}
 		}
+
 		SortOn.TIMESTAMP -> {
 			val _noteList = if (sortBy == SortBy.ASCENDING) {
 				noteList.sortedBy { it.userTimestamp }
@@ -97,6 +105,7 @@ fun NoteScreen(
 				else noteMap[sorter] = mutableListOf(note)
 			}
 		}
+
 		SortOn.MODIFIED -> {
 			val _noteList = if (sortBy == SortBy.ASCENDING) {
 				noteList.sortedBy { it.modifiedTimestamp }
@@ -109,6 +118,7 @@ fun NoteScreen(
 				else noteMap[timestamp] = mutableListOf(note)
 			}
 		}
+
 		else -> null
 	}
 
@@ -119,7 +129,7 @@ fun NoteScreen(
 				enter = fadeIn(tween(300)) + scaleIn(tween(300)),
 				exit = fadeOut(tween(300)) + scaleOut(tween(300))
 			) {
-				NoteFloatingActionButton(isExpanded = lazyListState.isScrollingUp() || lazyGridState.isScrollingUp(), onClick = onClickFab)
+				NoteFloatingActionButton(isExpanded = true, onClick = onClickFab)
 			}
 		},
 		floatingActionButtonPosition = FabPosition.End
@@ -132,7 +142,11 @@ fun NoteScreen(
 				animationSpec = tween(600)
 			) {
 				if (it) {
-					NoEntryCard()
+					EmptyView(
+						image = remember { if (Random.nextBoolean()) R.drawable.il_writing_b else R.drawable.il_writing_g },
+						title = "The town was paper, but the memories were not.",
+						subTitle = "― John Green, Paper Towns",
+					)
 				} else {
 					AnimatedContent(
 						targetState = viewType,
@@ -181,7 +195,11 @@ private fun ListView(
 	onLongClickNote : (RealmUUID) -> Unit,
 	onRefresh : () -> Unit
 ) {
+	val context = LocalContext.current
+	val isPro by BaseApplication.isPro
 	val tagList = LocalCompositionTagList.current
+
+	val openDialog = LocalCompositionOpenDialog.current
 
 	SwipeRefresh(
 		state = rememberSwipeRefreshState(isRefreshing = isRefreshing),
@@ -224,9 +242,8 @@ private fun ListView(
 
 						LaunchedEffect(key1 = note.id.hashCode(), key2 = note.thumbnail.hashCode()) {
 							try {
-								if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
+								if (note.thumbnailType == AttachmentType.IMAGE.name.lowercase()) thumbnail = note.thumbnail
 							} catch (e : Exception) {
-								e.printStackTrace()
 							}
 						}
 
@@ -235,7 +252,6 @@ private fun ListView(
 						) {
 							NoteListCard(
 								id = note.id,
-								parentChapterId = note.parentChapterId,
 								timestamp = note.userTimestamp,
 								showFullTime = false,
 								isLocked = note.isLocked,
@@ -244,16 +260,37 @@ private fun ListView(
 								isLast = note.id == lastEntryKey,
 								title = note.title,
 								contentThumbnail = note.contentThumbnail,
-								attachmentCount = note.attachmentCount,
 								attachmentThumbnail = thumbnail,
 								address = note.address,
 								latLng = note.latLng,
 								tagList = tagList.filter { it.objectIdList.contains(note.id) },
 								isVisible = true,
-								isSwipable = true,
+								isSwipable = false,
 								selectedColor = MaterialTheme.colorScheme.surface,
 								onClick = { onClickNote(note.id) },
-							) { onLongClickNote(note.id) }
+								onLongClick = { onLongClickNote(note.id) }
+							) {
+								if (isPro) openDialog(MainDialogType.NOTIFICATION_PERMISSION)
+								else Toast.makeText(context, "Join Graphite Pro to pin notes in notification bar", Toast.LENGTH_SHORT).show()
+
+								note.parentChapterId?.let {
+									NotePinNotification.showSimpleNotification(
+										context = context,
+										noteId = note.id,
+										chapterId = it,
+										title = note.title ?: "Untitled",
+										content = note.contentThumbnail ?: "No content",
+										notificationId = note.id.hashCode(),
+									) {
+										Toast
+											.makeText(
+												context,
+												"Notification permission not available. Please enable permission from settings",
+												Toast.LENGTH_SHORT
+											).show()
+									}
+								}
+							}
 						}
 
 						NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
@@ -297,7 +334,7 @@ private fun GridView(
 
 						LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
 							try {
-								if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
+								if (note.thumbnailType == AttachmentType.IMAGE.name.lowercase()) thumbnail = note.thumbnail
 							} catch (e : Exception) {
 								e.printStackTrace()
 							}
@@ -314,7 +351,6 @@ private fun GridView(
 							isLast = false,
 							title = note.title,
 							contentThumbnail = note.contentThumbnail,
-							attachmentCount = note.attachmentCount,
 							attachmentThumbnail = thumbnail,
 							address = note.address,
 							latLng = note.latLng,

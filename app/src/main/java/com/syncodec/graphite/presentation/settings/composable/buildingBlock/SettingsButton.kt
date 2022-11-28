@@ -15,13 +15,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.composable.ProTag
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,12 +33,15 @@ fun SettingsButton(
 	title: String,
 	icon: Int? = null,
 	subTitle: String? = null,
+	isProFeature: Boolean = false,
 	containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
 	contentColor: Color = MaterialTheme.colorScheme.onSurface,
 	iconColor : Color = MaterialTheme.colorScheme.onSurface,
 	enabled: Boolean = true,
 	onClick: () -> Unit
 ) {
+	val isPro by BaseApplication.isPro
+
 	Card(
 		colors = CardDefaults.cardColors(
 			containerColor = containerColor,
@@ -80,6 +86,11 @@ fun SettingsButton(
 						style = MaterialTheme.typography.bodySmall,
 					)
 				}
+			}
+
+			if (isProFeature && !isPro) {
+				Spacer(modifier = Modifier.width(16.dp))
+				ProTag()
 			}
 
 			Spacer(modifier = Modifier.width(16.dp))

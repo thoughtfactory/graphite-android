@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.bar.bottomBar
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -11,20 +12,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.LocalEditNote
-import com.syncodec.graphite.presentation.note.composable.LocalOnPrint
-import com.syncodec.graphite.presentation.note.composable.LocalOnShareText
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
@@ -45,7 +46,7 @@ fun ViewerBottomBar() {
 	val isVaultOpened = LocalVaultIsOpened.current
 	val onAuthenticatorAction = LocalAuthenticatorAction.current
 
-	val onPrint = LocalOnPrint.current
+	val isPro by BaseApplication.isPro
 
 	Column(
 		modifier = Modifier
@@ -65,19 +66,16 @@ fun ViewerBottomBar() {
 				icon = R.drawable.ic_pin,
 				contentDescription = "Pin Note in Notification",
 				isChecked = NotePinNotification.isNotificationPinned(context, noteId),
-				onClick = { openDialog(NoteDialogType.NOTIFICATION_PERMISSION, null) }
+				onClick = {
+					if (isPro) openDialog(NoteDialogType.NOTIFICATION_PERMISSION, null)
+					else Toast.makeText(context, "Join Graphite Pro to pin notes in notification bar", Toast.LENGTH_SHORT).show()
+				}
 			)
 
 			MenuButton(
 				icon = R.drawable.ic_share,
 				contentDescription = "Share Note",
 				onClick = { openDialog(NoteDialogType.SHARE, null) }
-			)
-
-			MenuButton(
-				icon = R.drawable.ic_printer,
-				contentDescription = "Print Note",
-				onClick = onPrint
 			)
 
 			Spacer(modifier = Modifier.weight(1f))

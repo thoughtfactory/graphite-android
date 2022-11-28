@@ -30,15 +30,15 @@ class BucketObject: RealmObject {
 	var bucketItemList: RealmList<BucketItemObject> = realmListOf()
 
 	fun toSnapshot() = BucketSnapshot(
-		id = id,
-		createdTimestamp = createdTimestamp,
-		modifiedTimestamp = modifiedTimestamp,
-		title = title,
-		description = description,
-		bucketType = bucketType,
-		isFavourite = isFavourite,
-		isLocked = isLocked,
-		bucketItemList = bucketItemList.map { it.id }
+		id = this.id.toString(),
+		createdTimestamp = this.createdTimestamp,
+		modifiedTimestamp = this.modifiedTimestamp,
+		title = this.title,
+		description = this.description,
+		bucketType = this.bucketType,
+		isFavourite = this.isFavourite,
+		isLocked = this.isLocked,
+		bucketItemIdList = this.bucketItemList.map { it.id.toString() }
 	)
 
 	override fun hashCode(): Int {
@@ -73,7 +73,7 @@ class BucketObject: RealmObject {
 }
 
 data class BucketSnapshot(
-	val id: RealmUUID,
+	val id: String,
 	val createdTimestamp: Long,
 	val modifiedTimestamp: Long,
 	val title: String?,
@@ -81,10 +81,10 @@ data class BucketSnapshot(
 	val bucketType: String,
 	val isFavourite: Boolean,
 	val isLocked: Boolean,
-	val bucketItemList: List<RealmUUID>
+	val bucketItemIdList: List<String>
 ) {
 	fun toObject() = BucketObject().apply {
-		this.id = this@BucketSnapshot.id
+		this.id = RealmUUID.from(this@BucketSnapshot.id)
 		this.createdTimestamp = this@BucketSnapshot.createdTimestamp
 		this.modifiedTimestamp = this@BucketSnapshot.modifiedTimestamp
 		this.title = this@BucketSnapshot.title

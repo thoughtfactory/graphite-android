@@ -22,13 +22,9 @@ fun DeleteAccountDialog(
 	GenericDialog(
 		showDialog = showDialog,
 		title = "Delete Account",
+		contentText = "Deleting your account will remove all your data from our servers. This action cannot be undone.",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = "Deleting your account will remove all your data from our servers. This action cannot be undone.",
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
 
 		Spacer(modifier = Modifier.height(12.dp))
 

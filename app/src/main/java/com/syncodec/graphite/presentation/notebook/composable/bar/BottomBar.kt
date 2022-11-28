@@ -53,17 +53,17 @@ fun BottomBar(
 		) {
 			Spacer(modifier = Modifier.width(16.dp))
 
-			MenuButton(
-				icon = R.drawable.ic_share,
-				contentDescription = "Share Bucket",
-				tint = contentColor
-			) {}
-
-			MenuButton(
-				icon = R.drawable.ic_export,
-				contentDescription = "Export Bucket",
-				tint = contentColor
-			) {}
+//			MenuButton(
+//				icon = R.drawable.ic_share,
+//				contentDescription = "Share Bucket",
+//				tint = contentColor
+//			) {}
+//
+//			MenuButton(
+//				icon = R.drawable.ic_export,
+//				contentDescription = "Export Bucket",
+//				tint = contentColor
+//			) {}
 
 			Spacer(modifier = Modifier.weight(1f))
 

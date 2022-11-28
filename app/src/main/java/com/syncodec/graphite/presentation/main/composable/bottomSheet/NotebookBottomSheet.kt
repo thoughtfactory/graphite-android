@@ -208,6 +208,9 @@ fun NotebookBottomSheet(
 
 						titleText = ""
 						descriptionText = ""
+						notebookColor = null
+						notebookImage = null
+						notebookImageUri = null
 					}
 				}
 			}

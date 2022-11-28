@@ -4,8 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,8 +36,8 @@ fun EditorBottomBar(
 
 	var isHeadingBarVisible by remember { mutableStateOf(false) }
 
-	richTextEditor.setOnFormatUpdate(
-		object : RichTextEditor.OnFormatUpdateListener {
+	richTextEditor.setFormatUpdateListener(
+		object : RichTextEditor.FormatUpdateListener {
 			override fun onFormatUpdate(newTextFormat: RichTextEditor.TextFormat) {
 				textFormat = newTextFormat
 			}
@@ -72,6 +70,6 @@ fun EditorBottomBar(
 			onClickTag = onClickTag,
 			onClickHeading = { isHeadingBarVisible = true },
 		)
-		Spacer(modifier = Modifier.height(12.dp))
+		Spacer(modifier = Modifier.height(16.dp))
 	}
 }

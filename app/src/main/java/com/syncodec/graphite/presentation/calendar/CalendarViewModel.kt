@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
@@ -26,16 +26,22 @@ class CalendarViewModel  @Inject constructor(private val repository2 : Repositor
 
 	val repositoryState = repository2.repositoryState
 
-	private val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
+	val chapterObject : MutableState<ChapterObjectLite?> = mutableStateOf(null)
 	val noteList : SnapshotStateList<NoteObjectLite> = mutableStateListOf()
 
-	fun loadAllData() {
+	val chapterList : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
+	val chapterPath : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
+
+	val isSelected : MutableState<Boolean> = mutableStateOf(false)
+	val selectedObjectIdList : SnapshotStateList<RealmUUID> = mutableStateListOf()
+
+	init {
 		viewModelScope.launch(Dispatchers.IO) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("CalendarViewModel", "Init")
+					RepositoryState.INIT -> Log.d("AtlasViewModel", "Init")
 					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("CalendarViewModel", "Loading")
+					RepositoryState.LOADING -> Log.d("AtlasViewModel", "Loading")
 					RepositoryState.SUCCESS -> {
 						viewModelScope.launch {
 							if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
@@ -52,41 +58,41 @@ class CalendarViewModel  @Inject constructor(private val repository2 : Repositor
 						}
 					}
 
-					RepositoryState.ERROR -> Log.d("AttachmentViewModel", "Error")
+					RepositoryState.ERROR -> Log.d("AtlasViewModel", "Error")
 				}
 			}
 		}
 	}
 
-	fun loadDataFromChapter(RealmUUID:RealmUUID) {
+	fun onWhere(chapterId: RealmUUID?) {
 		viewModelScope.launch(Dispatchers.IO) {
-			repositoryState.collect {
-				when (it) {
-					RepositoryState.INIT -> Log.d("CalendarViewModel", "Init")
-					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("CalendarViewModel", "Loading")
-					RepositoryState.SUCCESS -> {
-						viewModelScope.launch {
-							if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
-							try {
-								repository2.getChapterFromIdAsFlow(RealmUUID).collect {
-									withContext(Dispatchers.Main) { chapterObject.value = it }
-									it?.noteList?.map { it.toLite() }?.let {
-										withContext(Dispatchers.Main) {
-											noteList.clear()
-											noteList.addAll(it)
-										}
-									}
-								}
-							} catch (e : RealmNotInitializedException) {
-							} catch (e : Exception) {
-							}
-						}
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			repository2.getChapterWithParentId(chapterId).let { (_chapterObject, _chapterList) ->
+				withContext(Dispatchers.Main) {
+					chapterObject.value = _chapterObject?.toLite()
+					chapterList.clear()
+					chapterList.addAll(_chapterList.map { it.toLite() })
+					repository2.getParentChapterList(id = _chapterObject?.id, includeEdge = true) {_chapterPath, _ ->
+						chapterPath.clear()
+						chapterPath.addAll(_chapterPath ?: listOf())
 					}
-
-					RepositoryState.ERROR -> Log.d("CalendarViewModel", "Error")
 				}
 			}
+		}
+	}
+
+	fun setOnWhere(chapterObjectLite : ChapterObjectLite?) {
+		chapterObject.value = chapterObjectLite
+	}
+
+	fun delete() {
+		try {
+			val toDeleteRealmUUIDList = selectedObjectIdList.toList()
+			repository2.delete(toDeleteRealmUUIDList)
+			selectedObjectIdList.clear()
+			isSelected.value = false
+		} catch (e : Exception) {
+
 		}
 	}
 }

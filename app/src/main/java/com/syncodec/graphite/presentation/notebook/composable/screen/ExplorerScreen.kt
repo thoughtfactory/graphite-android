@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.notebook.composable.screen
 
 import android.content.Intent
 import android.graphics.Bitmap
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
@@ -36,18 +35,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.di.model.AttachmentObject
+import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.ChapterListCard
-import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.NoteListCard
+import com.syncodec.graphite.utils.AttachmentType
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalVaultIsOpened
@@ -89,7 +89,11 @@ fun ExplorerScreen() {
 
 
 	if (noteObjectList.isEmpty() && chapterObjectList.isEmpty()) {
-		EmptyView()
+		EmptyView(
+			image = R.drawable.il_empty_chapter,
+			title = "Keep a diary, and perhaps someday it will keep you",
+			subTitle = "― Mae West",
+		)
 	} else {
 		LazyColumn(
 			modifier = Modifier.fillMaxSize()
@@ -220,7 +224,7 @@ private fun LazyListScope.noteList(
 
 			LaunchedEffect(key1 = note.id.hashCode(), key2 = note.thumbnail.hashCode()) {
 				try {
-					if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
+					if (note.thumbnailType == AttachmentType.IMAGE.name.lowercase()) thumbnail = note.thumbnail
 				} catch (e : Exception) {
 					e.printStackTrace()
 				}
@@ -238,7 +242,6 @@ private fun LazyListScope.noteList(
 					isLast = false,
 					title = note.title,
 					contentThumbnail = note.contentThumbnail,
-					attachmentCount = note.attachmentCount,
 					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,

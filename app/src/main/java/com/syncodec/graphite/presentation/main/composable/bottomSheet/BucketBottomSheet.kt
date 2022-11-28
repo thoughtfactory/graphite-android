@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
@@ -83,6 +84,8 @@ fun BucketBottomSheet() {
 
 	var bucketDescriptionText by rememberSaveable { mutableStateOf("") }
 	var isBucketDescriptionTextFocused by remember { mutableStateOf(false) }
+
+	val isPro by BaseApplication.isPro
 
 	val bucketButtonDataList: List<BucketButtonData> = listOf(
 		BucketButtonData(
@@ -179,7 +182,6 @@ fun BucketBottomSheet() {
 				.padding(24.dp, 0.dp)
 		) {
 			if (selectedBucketType != null) putBucket(bucketTitleText, bucketDescriptionText, selectedBucketType!!)
-
 
 			bucketTitleText = ""
 			bucketDescriptionText = ""

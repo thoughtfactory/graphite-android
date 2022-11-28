@@ -39,6 +39,7 @@ import coil.request.ImageRequest
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.composable.ProTag
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScreen
@@ -51,23 +52,23 @@ import com.syncodec.graphite.presentation.ui.LocalIsPro
 fun BaseScreen() {
 	val context = LocalContext.current
 
-	val scrollState = SettingsActivity.scrollState.current
-	val onNavigate = SettingsActivity.onNavigate.current
+	val scrollState = SettingsActivity.LocalScrollState.current
+	val onNavigate = SettingsActivity.LocalOnNavigate.current
 
 	val uriHandler = LocalUriHandler.current
 
 	val isPro = LocalIsPro.current
 
-	val onSignIn = SettingsActivity.signIn.current
-	val currentUser = Firebase.auth.currentUser
+	val onSignIn = SettingsActivity.LocalSignIn.current
+	val firebaseUser = SettingsActivity.LocalFirebaseUser.current
 
-	val openSheet = SettingsActivity.openBottomSheet.current
+	val openSheet = SettingsActivity.LocalOpenBottomSheet.current
 
 	GenericSettingsScreen(
 		title = "Settings",
 		scrollState = scrollState
 	) {
-		Crossfade(targetState = currentUser) {
+		Crossfade(targetState = firebaseUser) {
 			if (it == null) {
 				SettingsButton(
 					title = "Login",
@@ -117,8 +118,14 @@ fun BaseScreen() {
 		SettingsButton(
 			title = "Backup & Restore",
 			subTitle = "Backup your data to the cloud and local storage",
-			icon = R.drawable.ic_data
+			icon = R.drawable.ic_local_backup
 		) { onNavigate(SettingsActivity.Companion.Navigator.BACKUP) }
+
+		SettingsButton(
+			title = "Data",
+			subTitle = "Import and export data",
+			icon = R.drawable.ic_data
+		) { onNavigate(SettingsActivity.Companion.Navigator.DATA) }
 
 		SettingsButton(
 			title = "Synchronization",
@@ -137,6 +144,12 @@ fun BaseScreen() {
 			subTitle = "Read our privacy policy",
 			icon = R.drawable.ic_policy
 		) { uriHandler.openUri("https://graphite.syncodec.com/policy.html") }
+
+		SettingsButton(
+			title = "Future Track",
+			subTitle = "See what are we working on",
+			icon = R.drawable.ic_kanban
+		) { uriHandler.openUri("https://syncodec.notion.site/a4088372da394902b6cbedfb3b6993e3?v=1bc4974e05ce4e489f3006b851ca5ba3") }
 
 		SettingsButton(
 			title = "About Us",
@@ -214,20 +227,7 @@ fun ProfileButton(
 
 			if (isPro) {
 				Spacer(modifier = Modifier.width(12.dp))
-				Box(
-					modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
-				) {
-					Text(
-						text = "PRO",
-						fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-						fontWeight = FontWeight.Bold,
-						fontSize = 16.sp,
-						lineHeight = 18.sp,
-						letterSpacing = 2.sp,
-						color = MaterialTheme.colorScheme.onPrimary,
-						modifier = Modifier.padding(8.dp, 4.dp)
-					)
-				}
+				ProTag()
 			}
 
 			Spacer(modifier = Modifier.width(8.dp))

@@ -2,6 +2,12 @@ package com.syncodec.graphite.presentation.main.composable.buildingBlock.noteboo
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,10 +26,10 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NotebookHeaderCard(
-	title: String,
-	noEntries: String,
-	color: Color,
-	onClick: (() -> Unit)? = null
+	title : String,
+	noEntries : String,
+	color : Color,
+	onClick : (() -> Unit)? = null
 ) {
 	Box(
 		modifier = Modifier
@@ -46,16 +52,23 @@ fun NotebookHeaderCard(
 
 			Spacer(modifier = Modifier.width(12.dp))
 
-			Text(
-				text = title,
-				color = MaterialTheme.colorScheme.onBackground,
-				style = MaterialTheme.typography.titleMedium,
-				fontWeight = FontWeight.Bold
-			)
-
+			AnimatedContent(
+				targetState = title,
+				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300)) with fadeOut(tween()) + scaleOut(tween(300)) }
+			) {
+				Text(
+					text = it,
+					color = MaterialTheme.colorScheme.onBackground,
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.Bold
+				)
+			}
 			Spacer(modifier = Modifier.weight(1f))
 
-			AnimatedContent(targetState = noEntries) {
+			AnimatedContent(
+				targetState = noEntries,
+				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300)) with fadeOut(tween()) + scaleOut(tween(300)) }
+			) {
 				Text(
 					text = it,
 					color = MaterialTheme.colorScheme.onBackground,

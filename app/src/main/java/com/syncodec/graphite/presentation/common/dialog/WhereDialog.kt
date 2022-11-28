@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
@@ -66,7 +67,6 @@ fun WhereDialog(
 	onSetWhere : (ChapterObjectLite?) -> Unit,
 	onDismiss : () -> Unit,
 ) {
-
 	val isVaultOpen = LocalVaultIsOpened.current
 
 	AnimatedVisibility(
@@ -139,7 +139,7 @@ private fun WhereDialogTopBar(
 					fontWeight = FontWeight.Bold
 				)
 			},
-			colors = TopAppBarDefaults.smallTopAppBarColors(
+			colors = TopAppBarDefaults.topAppBarColors(
 				containerColor = MaterialTheme.colorScheme.surface,
 			)
 		)

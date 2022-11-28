@@ -35,7 +35,6 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
@@ -44,6 +43,7 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NotebookTimelineSpacer
 import com.syncodec.graphite.utils.AtlasClusterItem
+import com.syncodec.graphite.utils.AttachmentType
 import com.syncodec.graphite.utils.ClusterRenderer
 import com.syncodec.graphite.utils.isMarkerVisible
 import io.realm.kotlin.types.RealmUUID
@@ -53,8 +53,8 @@ import io.realm.kotlin.types.RealmUUID
 @Composable
 fun AtlasScreen(
 	noteList : List<NoteObjectLite>,
-	onClickNote: (RealmUUID) -> Unit,
-	onLongClickNote: (RealmUUID) -> Unit,
+	onClickNote : (RealmUUID) -> Unit,
+	onLongClickNote : (RealmUUID) -> Unit,
 ) {
 //	TODO note update not reflected in atlas directly
 	val context = LocalContext.current
@@ -122,7 +122,12 @@ fun AtlasScreen(
 				zoomControlsEnabled = false,
 				zoomGesturesEnabled = true,
 			),
-			properties = MapProperties(mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light)),
+			properties = MapProperties(
+				mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
+					context,
+					if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light
+				)
+			),
 			modifier = Modifier
 				.fillMaxSize()
 				.padding(0.dp, 0.dp, 0.dp, screenHeight.times(0.2f)),
@@ -131,7 +136,12 @@ fun AtlasScreen(
 				if (isDataReady) {
 					if (swLatLng.latitude != - 90.0 && swLatLng.longitude != - 180.0 && neLatLng.latitude != 90.0 && neLatLng.longitude != 180.0) {
 						try {
-							cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(LatLngBounds(swLatLng.toGLatLng() !!, neLatLng.toGLatLng() !!), 128))
+							cameraPositionState.animate(
+								CameraUpdateFactory.newLatLngBounds(
+									LatLngBounds(swLatLng.toGLatLng() !!, neLatLng.toGLatLng() !!),
+									128
+								)
+							)
 						} catch (e : Exception) {
 //							e.printStackTrace()
 						}
@@ -168,7 +178,7 @@ private fun BottomSheetContent(
 	noteList : List<NoteObjectLite>,
 	selectedItemList : List<RealmUUID>,
 	onClickNote : (RealmUUID) -> Unit,
-	onLongClickNote: (RealmUUID) -> Unit,
+	onLongClickNote : (RealmUUID) -> Unit,
 ) {
 	val context = LocalContext.current
 
@@ -191,7 +201,7 @@ private fun BottomSheetContent(
 
 				LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
 					try {
-						if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
+						if (note.thumbnailType == AttachmentType.IMAGE.name.lowercase()) thumbnail = note.thumbnail
 					} catch (e : Exception) {
 						e.printStackTrace()
 					}
@@ -199,7 +209,6 @@ private fun BottomSheetContent(
 
 				NoteListCard(
 					id = note.id,
-					parentChapterId = note.parentChapterId,
 					timestamp = note.userTimestamp,
 					showFullTime = false,
 					isLocked = note.isLocked,
@@ -208,7 +217,6 @@ private fun BottomSheetContent(
 					isLast = note.id == lastEntryKey,
 					title = note.title,
 					contentThumbnail = note.contentThumbnail,
-					attachmentCount = note.attachmentCount,
 					attachmentThumbnail = thumbnail,
 					address = note.address,
 					latLng = note.latLng,
@@ -217,7 +225,8 @@ private fun BottomSheetContent(
 					isSwipable = false,
 					selectedColor = MaterialTheme.colorScheme.surface,
 					onClick = { onClickNote(note.id) },
-				) { onLongClickNote(note.id) }
+					onLongClick = { onLongClickNote(note.id) }
+				)
 
 				NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
 

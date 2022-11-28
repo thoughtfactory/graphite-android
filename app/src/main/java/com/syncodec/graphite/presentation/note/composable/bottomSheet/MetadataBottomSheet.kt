@@ -86,7 +86,7 @@ fun MetadataBottomSheet(
 			chapterId = parentChapter?.id,
 			chapterTitle = parentChapter?.title,
 		) {
-			openDialog(NoteDialogType.CHAPTER_SELECTION, null)
+			openDialog(NoteDialogType.CHAPTER_SELECTION, parentChapter?.id)
 			closeSheet()
 		}
 

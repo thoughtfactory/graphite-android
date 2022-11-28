@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -63,6 +64,7 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDi
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionPutBucket
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowExitDialog
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowNotificationPermissionDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
@@ -138,8 +140,9 @@ class MainActivity : ComponentActivity() {
 				val isNotebookRefreshing by viewModel.isNotebookRefreshing
 
 				var isSelected by viewModel.isSelected
-				val selectedRealmUUIDList = viewModel.selectedRealmUUIDList
+				val selectedRealmUUIDList = viewModel.selectedObjectIdList
 
+				var showNotificationPermissionDialog by remember { mutableStateOf(false) }
 				var showDeleteDialog by viewModel.showDeleteDialog
 				var showExitDialog by viewModel.showExitDialog
 
@@ -151,17 +154,17 @@ class MainActivity : ComponentActivity() {
 
 				fun openDialog(_mainDialogType : MainDialogType) {
 					when (_mainDialogType) {
+						MainDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = true
 						MainDialogType.DELETE -> showDeleteDialog = true
 						MainDialogType.EXIT -> showExitDialog = true
-						else -> null
 					}
 				}
 
 				fun closeDialog(_mainDialogType : MainDialogType) {
 					when (_mainDialogType) {
+						MainDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = false
 						MainDialogType.DELETE -> showDeleteDialog = false
 						MainDialogType.EXIT -> showExitDialog = false
-						else -> null
 					}
 				}
 
@@ -194,10 +197,14 @@ class MainActivity : ComponentActivity() {
 					LocalCompositionPutBucket provides viewModel::putBucket,
 					LocalCompositionOpenDialog provides ::openDialog,
 					LocalCompositionCloseDialog provides ::closeDialog,
+					LocalCompositionShowNotificationPermissionDialog provides showNotificationPermissionDialog,
 					LocalCompositionShowDeleteDialog provides showDeleteDialog,
 					LocalCompositionShowExitDialog provides showExitDialog,
 					LocalCompositionOnDelete provides viewModel::delete,
-					LocalCompositionOnExit provides { finishAndRemoveTask() },
+					LocalCompositionOnExit provides {
+						finishAndRemoveTask()
+						viewModel.onDeauthenticate()
+					},
 					LocalCompositionOnAddDebugData provides {
 						assets.open("tmp/quotes.json").bufferedReader().let {
 							viewModel.addDebugNotes(it.readText())
@@ -219,13 +226,18 @@ class MainActivity : ComponentActivity() {
 								when (it) {
 									RepositoryState.LOCKED -> RepositoryLockedScreen(
 										errorMessage = biometricErrorMessage,
-										onUnlock = this@MainActivity::launchBiometric
+										onUnlock = { this@MainActivity.launchBiometric() }
 									)
 
 									RepositoryState.SUCCESS -> MainScreen(
 										viewModel = viewModel,
 										currentRoute = currentRoute,
 										navController = navController,
+									)
+
+									RepositoryState.ERROR -> RepositoryLockedScreen(
+										errorMessage = biometricErrorMessage,
+										onUnlock = { this@MainActivity.launchBiometric() }
 									)
 
 									else -> LoadingView()
@@ -246,50 +258,12 @@ class MainActivity : ComponentActivity() {
 		viewModel.refresher.value = viewModel.refresher.value + 1
 	}
 
-	private val authenticationCallback : BiometricPrompt.AuthenticationCallback =
-		object : BiometricPrompt.AuthenticationCallback() {
-			override fun onAuthenticationSucceeded(result : BiometricPrompt.AuthenticationResult?) {
-				super.onAuthenticationSucceeded(result)
-				Toast.makeText(this@MainActivity, "Authentication Succeeded", Toast.LENGTH_SHORT).show()
-				viewModel.onAuthenticate()
-			}
+	override fun onStop() {
+		super.onStop()
 
-			override fun onAuthenticationError(errorCode : Int, errString : CharSequence?) {
-				super.onAuthenticationError(errorCode, errString)
-				Toast.makeText(this@MainActivity, "Authentication Error", Toast.LENGTH_SHORT).show()
+//		viewModel.onDeauthenticate()
+	}
 
-				when (errorCode) {
-					BiometricPrompt.BIOMETRIC_ERROR_CANCELED -> null
-					BiometricPrompt.BIOMETRIC_ERROR_HW_NOT_PRESENT -> null
-					BiometricPrompt.BIOMETRIC_ERROR_HW_UNAVAILABLE -> null
-					BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT -> null
-					BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT_PERMANENT -> null
-					BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS -> viewModel.onAuthenticate()
-					BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL -> Toast.makeText(
-						this@MainActivity,
-						"It seems like your device don't have pin, password or pattern setup. Try setting up credentials and unlocking again",
-						Toast.LENGTH_SHORT
-					).show()
-
-					BiometricPrompt.BIOMETRIC_ERROR_NO_SPACE -> null
-					BiometricPrompt.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> null
-					BiometricPrompt.BIOMETRIC_ERROR_TIMEOUT -> null
-					BiometricPrompt.BIOMETRIC_ERROR_UNABLE_TO_PROCESS -> null
-					BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED -> null
-					BiometricPrompt.BIOMETRIC_ERROR_VENDOR -> null
-				}
-
-				biometricErrorMessage.value = errString.toString()
-			}
-
-			override fun onAuthenticationFailed() {
-				super.onAuthenticationFailed()
-			}
-
-			override fun onAuthenticationHelp(helpCode : Int, helpString : CharSequence?) {
-				super.onAuthenticationHelp(helpCode, helpString)
-			}
-		}
 
 	private fun checkBiometricSupport() : Boolean {
 		val keyGuardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
@@ -307,17 +281,71 @@ class MainActivity : ComponentActivity() {
 
 	private fun launchBiometric() {
 		if (checkBiometricSupport()) {
+			val executor = ContextCompat.getMainExecutor(applicationContext)
 			val biometricPrompt = BiometricPrompt
-				.Builder(this)
+				.Builder(applicationContext)
 				.setTitle("Graphite")
 				.setSubtitle("Unlock repository")
 				.setDescription("Repository is locked behind biometric authentication. Please authenticate to unlock.")
 				.setConfirmationRequired(false)
-				.setNegativeButton("Cancel", mainExecutor) { _, _ ->
+				.setNegativeButton("Cancel", executor) { _, _ ->
 					Toast.makeText(this@MainActivity, "Authentication Cancelled", Toast.LENGTH_SHORT).show()
 				}.build()
 
-			biometricPrompt.authenticate(getCancellationSignal(), mainExecutor, authenticationCallback)
+			biometricPrompt.authenticate(
+				getCancellationSignal(),
+				executor,
+				object : BiometricPrompt.AuthenticationCallback() {
+					override fun onAuthenticationSucceeded(result : BiometricPrompt.AuthenticationResult?) {
+						super.onAuthenticationSucceeded(result)
+						Toast.makeText(this@MainActivity, "Authentication Succeeded", Toast.LENGTH_SHORT).show()
+						viewModel.onAuthenticate()
+					}
+
+					override fun onAuthenticationError(errorCode : Int, errString : CharSequence?) {
+						super.onAuthenticationError(errorCode, errString)
+						Toast.makeText(this@MainActivity, "Authentication Error", Toast.LENGTH_SHORT).show()
+
+						when (errorCode) {
+							BiometricPrompt.BIOMETRIC_ERROR_CANCELED -> null
+							BiometricPrompt.BIOMETRIC_ERROR_HW_NOT_PRESENT -> null
+							BiometricPrompt.BIOMETRIC_ERROR_HW_UNAVAILABLE -> null
+							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT -> null
+							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT_PERMANENT -> null
+							BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS -> {
+								Log.i("npr71", "gamma")
+								viewModel.onAuthenticate()
+							}
+
+							BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL -> Toast.makeText(
+								this@MainActivity,
+								"It seems like your device don't have pin, password or pattern setup. Try setting up credentials and unlocking again",
+								Toast.LENGTH_SHORT
+							).show()
+
+							BiometricPrompt.BIOMETRIC_ERROR_NO_SPACE -> null
+							BiometricPrompt.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> null
+							BiometricPrompt.BIOMETRIC_ERROR_TIMEOUT -> null
+							BiometricPrompt.BIOMETRIC_ERROR_UNABLE_TO_PROCESS -> null
+							BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED -> null
+							BiometricPrompt.BIOMETRIC_ERROR_VENDOR -> null
+						}
+
+						biometricErrorMessage.value = errString.toString()
+
+						viewModel.onAuthFailure()
+					}
+
+					override fun onAuthenticationFailed() {
+						super.onAuthenticationFailed()
+						viewModel.onAuthFailure()
+					}
+
+					override fun onAuthenticationHelp(helpCode : Int, helpString : CharSequence?) {
+						super.onAuthenticationHelp(helpCode, helpString)
+					}
+				}
+			)
 		}
 	}
 

@@ -11,6 +11,7 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionContent
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
 import com.syncodec.graphite.utils.LocalCompositionRichTextEditor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,10 +26,12 @@ fun EditorScreen() {
 	val isReady by richTextEditor.isReady
 
 	val content = LocalCompositionContent.current
+	val title = LocalCompositionTitle.current
 
 	LaunchedEffect(key1 = noteId.hashCode() + isViewing.hashCode()) {
 		withContext(Dispatchers.IO) {
-			if (isViewing == false) richTextEditor.exec("editor.commands.setContent(${content});")
+//			if (isViewing == false) richTextEditor.exec("editor.setData(\"${title ?: ""}\", ${content});")
+			richTextEditor.exec("editor.setData(\"${title ?: ""}\", ${content});")
 		}
 	}
 

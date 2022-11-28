@@ -56,7 +56,11 @@ import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(
+	ExperimentalMaterial3Api::class,
+	ExperimentalFoundationApi::class,
+	ExperimentalAnimationApi::class
+)
 @Composable
 fun ChapterSelectionDialog(
 	showDialog : Boolean,
@@ -80,7 +84,8 @@ fun ChapterSelectionDialog(
 				TopBar(
 					chapterPath = chapterPath,
 					onSelectChapter = onSelectChapter,
-				) { onDismiss() }
+					onDismiss = onDismiss,
+				)
 			},
 			bottomBar = { BottomBar { onMove() } },
 			modifier = Modifier.fillMaxSize()
@@ -221,7 +226,7 @@ private fun TopBar(
 					fontWeight = FontWeight.Bold
 				)
 			},
-			colors = TopAppBarDefaults.smallTopAppBarColors(
+			colors = TopAppBarDefaults.topAppBarColors(
 				containerColor = MaterialTheme.colorScheme.surface,
 			)
 		)
@@ -229,6 +234,7 @@ private fun TopBar(
 		Spacer(modifier = Modifier.height(8.dp))
 
 		Navigator(
+			showRoot = true,
 			defaultChapterId = null,
 			chapterObjectLiteList = chapterPath,
 			onClick = onSelectChapter

@@ -42,4 +42,4 @@ val LocalCompositionShowEditBucketDialog = compositionLocalOf<Boolean> { error("
 
 val LocalCompositionOnDelete = compositionLocalOf<() -> Unit> { error("No data provided") }
 val LocalCompositionOnUpdateBucket = compositionLocalOf<(String?, String?) -> Unit> { {_, _ ->} }
-val LocalCompositionOnShare = compositionLocalOf { {} }
+val LocalCompositionOnShare = compositionLocalOf<(Boolean) -> Unit> { {} }

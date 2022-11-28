@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.buildingBlock
 
 
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -65,7 +64,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -80,7 +78,6 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObjectLite
@@ -103,6 +100,8 @@ import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.noteViewerTimestamp
 import com.syncodec.graphite.utils.roundTo
+import com.syncodec.graphite.utils.share
+import com.syncodec.graphite.utils.viewFile
 import io.realm.kotlin.types.RealmUUID
 import org.json.JSONArray
 import org.json.JSONObject
@@ -146,7 +145,7 @@ fun ViewerComponent(
 	latLng : LatLng?,
 	address : String?,
 	parentChapter : ChapterObject?,
-	attachmentList : List<Triple<AttachmentObject, File?, Uri?>>,
+	attachmentList : List<Pair<File?, Uri?>>,
 	connectedTag : List<TagObjectLite>,
 	onClickChapter : () -> Unit,
 ) {
@@ -209,7 +208,7 @@ fun ViewerComponent(
 @Composable
 private fun AttachmentView(
 	noteId : RealmUUID,
-	attachmentList : List<Triple<AttachmentObject, File?, Uri?>>,
+	attachmentList : List<Pair<File?, Uri?>>,
 ) {
 	val context = LocalContext.current
 	val configuration = LocalConfiguration.current
@@ -229,28 +228,14 @@ private fun AttachmentView(
 				.fillMaxWidth()
 				.height(screenHeight * 0.31f)
 		) { pageIndex ->
-			val (attachmentObject, file, uri) = attachmentList.getOrNull(pageIndex) ?: return@HorizontalPager
+			val (file, uri) = attachmentList.getOrNull(pageIndex) ?: return@HorizontalPager
 			AttachmentPreview(
-				attachment = attachmentObject,
 				uri = uri,
 				file = file,
 				clickable = true,
 				showActionButton = false,
 				modifier = Modifier.fillMaxSize(),
-				onClick = {
-					try {
-						Intent(Intent.ACTION_VIEW, file?.let { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it) }).apply {
-							addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-							context.startActivity(this)
-						}
-					} catch (e : ActivityNotFoundException) {
-						Toast.makeText(context, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
-					} catch (e : Exception) {
-						e.printStackTrace()
-						Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
-					}
-				},
+				onClick = { file?.viewFile(context) },
 			)
 		}
 
@@ -313,7 +298,7 @@ private fun AttachmentView(
 					.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(12.dp))
 			) {
 				AnimatedContent(
-					targetState = attachmentList[pagerState.currentPage].second
+					targetState = attachmentList[pagerState.currentPage].first
 				) {
 					Row(
 						modifier = Modifier
@@ -360,22 +345,8 @@ private fun AttachmentView(
 							icon = R.drawable.ic_share,
 							tint = MaterialTheme.colorScheme.onBackground
 						) {
-							try {
-								val data = attachmentList.getOrNull(pagerState.currentPage)
-								if (data != null) {
-									val sharingIntent = Intent(Intent.ACTION_SEND)
-									sharingIntent.type = data.first.mimeType ?: "*/*"
-									sharingIntent.putExtra(Intent.EXTRA_STREAM, data.third)
-
-									Intent.createChooser(sharingIntent, "Share using").apply {
-										addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-										context.startActivity(this)
-									}
-								}
-							} catch (e : Exception) {
-								e.printStackTrace()
-								Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
-							}
+							val data = attachmentList.getOrNull(pagerState.currentPage)
+							data?.first?.share(context)
 						}
 
 						Spacer(modifier = Modifier.width(12.dp))

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,8 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
 
 
@@ -37,12 +41,18 @@ fun EmptyView() {
 			contentDescription = "No tag found",
 			modifier = Modifier.size(screenWidth * 3 / 4)
 		)
+
 		Spacer(modifier = Modifier.height(16.dp))
+
 		Text(
-			text = "Add some tags to get started",
-			style = MaterialTheme.typography.bodyMedium,
+			text = "Organize your notes with tags",
+			fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
+			fontWeight = FontWeight.Bold,
+			fontSize = 14.sp,
+			lineHeight = 16.sp,
+			letterSpacing = 2.sp,
 			color = MaterialTheme.colorScheme.onBackground,
-			fontWeight = FontWeight.Bold
+			modifier = Modifier.width(screenWidth * 3 / 4)
 		)
 	}
 }

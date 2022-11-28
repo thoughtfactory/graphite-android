@@ -1,162 +1,72 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
-import android.graphics.Bitmap
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.presentation.common.calendar.Calendar
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NotebookTimelineSpacer
-import com.syncodec.graphite.utils.getToday
-import com.syncodec.graphite.utils.timestampToCalendarDay
-import com.syncodec.graphite.utils.timestampToDate
+import com.syncodec.graphite.presentation.calendar.composable.bottomSheet.NoteBottomSheet
+import com.syncodec.graphite.presentation.calendar.composable.buildingBlock.CalendarView
+import com.syncodec.graphite.utils.LocalVaultIsOpened
 import io.realm.kotlin.types.RealmUUID
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun CalendarScreen(
-	noteList: List<NoteObjectLite>,
-	selectedItemList: List<String>,
+	noteList : List<NoteObjectLite>,
 	onClickNote : (RealmUUID) -> Unit,
 	onLongClickNote : (RealmUUID) -> Unit,
 ) {
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
 
-	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
+	val isVaultOpened = LocalVaultIsOpened.current
 
-	var selectedTimestamp: Long by remember { mutableStateOf(getToday()) }
-	val noteDayMap: SnapshotStateMap<Long, MutableList<NoteObjectLite>> = remember { mutableStateMapOf() }
-	val timestampSizeMap: SnapshotStateMap<Long, Int> = remember { mutableStateMapOf() }
-	LaunchedEffect(key1 = null) {
-		noteList.forEach { note ->
-			val timestamp = timestampToCalendarDay(note.userTimestamp)
-			if (noteDayMap.containsKey(timestamp)) {
-				(noteDayMap[timestamp] ?: return@forEach).add(note)
-			} else {
-				noteDayMap[timestamp] = mutableListOf(note)
-			}
-		}
-		noteDayMap.forEach { (timestamp, data) ->
-			timestampSizeMap[timestamp] = data.size
-		}
+	var selectedDate by remember { mutableStateOf(LocalDate.now(Clock.systemDefaultZone())) }
+
+	val noteDayMap = mutableMapOf<LocalDate, MutableList<NoteObjectLite>>()
+	noteList.filter { if (it.isLocked) isVaultOpened else true }.forEach { note ->
+		val date = LocalDate.now(Clock.fixed(Instant.ofEpochMilli(note.userTimestamp), ZoneId.systemDefault()))
+		if (noteDayMap.containsKey(date)) noteDayMap[date]?.add(note) else noteDayMap[date] = mutableListOf(note)
 	}
 
 	BottomSheetScaffold(
-		scaffoldState = bottomSheetScaffoldState,
 		sheetContent = {
-			AnimatedContent(targetState = selectedTimestamp) {
-				BottomSheetContent(
-					noteList = noteList.filter { timestampToCalendarDay(it.userTimestamp) == selectedTimestamp },
-					selectedTimestamp = it,
-					selectedItemList = listOf(),
-					onClickNote = onClickNote,
-					onLongClickNote = onLongClickNote
-				)
-			}
+			NoteBottomSheet(
+				noteList = noteDayMap[selectedDate] ?: listOf(),
+				selectedDate = selectedDate,
+				selectedItemList = emptyList(),
+				onClickNote = onClickNote,
+				onLongClickNote = onLongClickNote,
+			)
 		},
-		modifier = Modifier,
+		backgroundColor = MaterialTheme.colorScheme.background,
+		sheetBackgroundColor = MaterialTheme.colorScheme.surface,
 		sheetElevation = 32.dp,
-		sheetPeekHeight = screenHeight.times(0.2f),
-		sheetBackgroundColor = MaterialTheme.colorScheme.surface
+		sheetPeekHeight = 64.dp,
+		modifier = Modifier.fillMaxSize()
 	) {
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.background)
+				.padding(it)
 		) {
-			Calendar(timestampSizeMap = timestampSizeMap) { timestamp ->
-				selectedTimestamp = timestamp
-			}
+			CalendarView(
+				noteDayMapSize = noteDayMap.mapValues { it.value.size }
+			) { it?.let { selectedDate = it } }
 		}
-	}
-}
-
-
-@Composable
-private fun BottomSheetContent(
-	noteList: List<NoteObjectLite>,
-	selectedTimestamp: Long,
-	selectedItemList: List<String>,
-	onClickNote: (RealmUUID) -> Unit,
-	onLongClickNote: (RealmUUID) -> Unit,
-) {
-	val lastEntryKey = if (noteList.isNotEmpty()) noteList.last().id else null
-
-	val tagList = LocalCompositionTagList.current
-
-	LazyColumn {
-		item { Spacer(modifier = Modifier.height(16.dp)) }
-		item {
-			NotebookHeaderCard(
-				title = timestampToDate(selectedTimestamp),
-				noEntries = if (noteList.isEmpty()) "No entries" else if (noteList.size == 1) "1 entry" else "${noteList.size} entries",
-				color = MaterialTheme.colorScheme.surface,
-			)
-		}
-		noteList.sortedBy { it.userTimestamp }.reversed().forEachIndexed { index, note ->
-			item {
-				var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
-
-				LaunchedEffect(key1 = note.id.hashCode() + note.thumbnail.hashCode()) {
-					try {
-						if (note.thumbnailType == AttachmentObject.Companion.Type.IMAGE.name) thumbnail = note.thumbnail
-					} catch (e : Exception) {
-						e.printStackTrace()
-					}
-				}
-
-				NoteListCard(
-					id = note.id,
-					parentChapterId = note.parentChapterId,
-					timestamp = note.userTimestamp,
-					showFullTime = false,
-					isLocked = note.isLocked,
-					isSelected = false,
-					isFavourite = note.isFavourite,
-					isLast = note.id == lastEntryKey,
-					title = note.title,
-					contentThumbnail = note.contentThumbnail,
-					attachmentCount = note.attachmentCount,
-					attachmentThumbnail = thumbnail,
-					address = note.address,
-					latLng = note.latLng,
-					tagList = tagList.filter { it.objectIdList.contains(note.id) },
-					isVisible = true,
-					isSwipable = false,
-					selectedColor = MaterialTheme.colorScheme.surface,
-					onClick = { onClickNote(note.id) },
-				) { onLongClickNote(note.id) }
-
-				NotebookTimelineSpacer(isVisible = note.id != lastEntryKey)
-
-			}
-		}
-		item { Spacer(modifier = Modifier.height(194.dp)) }
 	}
 }

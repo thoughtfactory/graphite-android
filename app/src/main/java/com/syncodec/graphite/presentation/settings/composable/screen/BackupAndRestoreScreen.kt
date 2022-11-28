@@ -14,8 +14,8 @@ fun BackupAndRestoreScreen() {
 
 	val context = LocalContext.current
 
-	val scrollState = SettingsActivity.scrollState.current
-	val onNavigate = SettingsActivity.onNavigate.current
+	val scrollState = SettingsActivity.LocalScrollState.current
+	val onNavigate = SettingsActivity.LocalOnNavigate.current
 
 	GenericSettingsScreen(
 		title = "Backup & Restore",
@@ -38,7 +38,7 @@ fun BackupAndRestoreScreen() {
 		) { Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show() }
 
 		SettingsButton(
-			title = "WebDAV",
+			title = "Self Hosted",
 			subTitle = "We are still working on this. Stay tuned!",
 		) { Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show() }
 	}

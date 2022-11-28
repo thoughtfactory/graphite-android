@@ -1,9 +1,7 @@
 package com.syncodec.graphite.presentation.attachment.composable.screen
 
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,8 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
@@ -38,7 +34,8 @@ import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.Quadruple
+import com.syncodec.graphite.utils.share
+import com.syncodec.graphite.utils.viewFile
 import io.realm.kotlin.types.RealmUUID
 import java.io.File
 
@@ -48,7 +45,7 @@ import java.io.File
 fun AttachmentScreen(
 	noteObject : NoteObject?,
 	chapterObject : ChapterObject?,
-	attachmentList : List<Quadruple<AttachmentObject, File?, Uri?, RealmUUID>>,
+	attachmentList : List<Triple<RealmUUID, File?, Uri?>>,
 	onClickBack : () -> Unit,
 ) {
 	val context = LocalContext.current
@@ -86,7 +83,7 @@ fun AttachmentScreen(
 						}
 					}
 
-					attachmentList.forEach { attachment ->
+					attachmentList.sortedBy { it.second?.hashCode()?.plus((it.third?.hashCode() ?: 0)) }.forEach { attachment ->
 						item(
 							key = attachment.hashCode()
 						) {
@@ -96,27 +93,12 @@ fun AttachmentScreen(
 								AttachmentCard(
 									uri = attachment.third,
 									file = attachment.second,
-									attachmentObject = attachment.first,
 									isSelected = attachment in selectedAttachmentList,
 									onClick = {
-										if (isSelected) {
-											if (attachment in selectedAttachmentList) selectedAttachmentList.remove(attachment)
-											else selectedAttachmentList.add(attachment)
-										} else {
-											try {
-												if (attachment.second != null) {
-													Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", attachment.second)).apply {
-														addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-														context.startActivity(this)
-													}
-												}
-											} catch (e : ActivityNotFoundException) {
-												Toast.makeText(context, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
-											} catch (e : Exception) {
-												e.printStackTrace()
-												Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
-											}
+										when {
+											isSelected && attachment in selectedAttachmentList -> selectedAttachmentList.remove(attachment)
+											isSelected && attachment !in selectedAttachmentList -> selectedAttachmentList.add(attachment)
+											else -> attachment.second?.viewFile(context)
 										}
 									},
 									onLongClick = {
@@ -127,27 +109,13 @@ fun AttachmentScreen(
 									openNote = {
 										Intent(context, NoteActivity::class.java).apply {
 											putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-											putExtra(Extra.Companion.Constant.NOTE_ID.name, attachment.fourth.bytes)
+											putExtra(Extra.Companion.Constant.NOTE_ID.name, attachment.first.bytes)
 											putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
 
 											context.startActivity(this)
 										}
 									},
-									onShare = {
-										try {
-											val sharingIntent = Intent(Intent.ACTION_SEND)
-											sharingIntent.type = attachment.first.mimeType ?: "*/*"
-											sharingIntent.putExtra(Intent.EXTRA_STREAM, attachment.third)
-
-											Intent.createChooser(sharingIntent, "Share using").apply {
-												addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-												context.startActivity(this)
-											}
-										} catch (e : Exception) {
-											e.printStackTrace()
-											Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
-										}
-									}
+									onShare = { attachment.second?.share(context) }
 								)
 							}
 						}

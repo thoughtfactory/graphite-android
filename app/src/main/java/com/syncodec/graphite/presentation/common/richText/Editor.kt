@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.common.richText
 
 import android.content.Context
 import android.util.Log
-import android.view.ViewTreeObserver
 import android.webkit.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
@@ -25,40 +24,23 @@ import kotlinx.coroutines.*
 class RichTextEditor(context : Context, val containerColor : Color, contentColor : Color, screenHeightPx : Int, typography : Int?) : WebView(context) {
 	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-	interface OnFormatUpdateListener {
+	interface FormatUpdateListener {
 		fun onFormatUpdate(newTextFormat : TextFormat)
 	}
 
-	private var onFormatUpdateListener : OnFormatUpdateListener? = null
-	fun setOnFormatUpdate(listener : OnFormatUpdateListener) {
-		onFormatUpdateListener = listener
+	interface GetTextListener {
+		fun onGetData(extra : String?, data : String?)
 	}
 
-	interface OnSaveDataListener {
-		fun onSaveData(data : String)
+	private var formatUpdateListener : FormatUpdateListener? = null
+	private var getTextListener : GetTextListener? = null
+
+	fun setFormatUpdateListener(listener : FormatUpdateListener) {
+		formatUpdateListener = listener
 	}
 
-	private var onSaveDataListener : OnSaveDataListener? = null
-	fun setOnSaveData(listener : OnSaveDataListener) {
-		onSaveDataListener = listener
-	}
-
-	interface OnPrintDataListener {
-		fun onPrintData(data : String)
-	}
-
-	private var onPrintDataListener : OnPrintDataListener? = null
-	fun setOnPrintData(listener : OnPrintDataListener) {
-		onPrintDataListener = listener
-	}
-
-	interface OnGetTextListener {
-		fun onGetPlainText(data : String)
-	}
-
-	private var onGetPlainTextListener : OnGetTextListener? = null
-	fun setOnPlainGetText(listener : OnGetTextListener) {
-		onGetPlainTextListener = listener
+	fun setGetTextListener(listener : GetTextListener) {
+		getTextListener = listener
 	}
 
 	var isReady : MutableState<Boolean> = mutableStateOf(false)
@@ -75,16 +57,28 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 
 		webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage : ConsoleMessage) : Boolean {
+				Log.d("npr71 : RichTextEditor", consoleMessage.message())
 				return true
 			}
 		}
+
+		setWebContentsDebuggingEnabled(true)
 
 		setBackgroundColor(0)
 		setLayerType(LAYER_TYPE_SOFTWARE, null)
 
 		addJavascriptInterface(this, "bridge")
 
-		loadUrl(INDEX_PATH)
+//		loadUrl(INDEX_PATH)
+//		loadData()
+
+		context.assets.open("dropper/index.html").let {
+			val buffer = ByteArray(it.available())
+			it.read(buffer)
+			it.close()
+			val html = String(buffer)
+			loadDataWithBaseURL("file:///android_asset/dropper", html, "text/html", "UTF-8", null)
+		}
 
 		exec("editor.setBaseColor('${containerColor.toHexString()}', '${contentColor.toHexString()}');")
 
@@ -94,14 +88,10 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			0 -> exec("editor.setBaseFontFamily(\"overlock\");")
 			1 -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
 			2 -> exec("editor.setBaseFontFamily(\"ubuntu\");")
-			3 -> exec("editor.setBaseFontFamily('atwriter');")
+			3 -> exec("editor.setBaseFontFamily(\"atwriter\");")
 			else -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
 		}
 
-//		viewTreeObserver.addOnGlobalLayoutListener {
-//			Log.i("npr71", "onGlobalLayout : $height")
-//			exec("editor.reCalculateHeight(${height / 3});")
-//		}
 	}
 
 	private fun load(trigger : String) {
@@ -135,30 +125,18 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 	fun format(textFormatJsonString : String) {
 		try {
 			val newTextFormat : TextFormat = objectMapper.readValue(textFormatJsonString)
-			onFormatUpdateListener?.onFormatUpdate(newTextFormat)
+			formatUpdateListener?.onFormatUpdate(newTextFormat)
 			currentSelection = newTextFormat.currentSelection
 		} catch (_ : Exception) {
-
 		}
 	}
 
 	@JavascriptInterface
-	fun saveData(data : String) {
-		onSaveDataListener?.onSaveData(data)
-	}
-
-	fun callPrintData(data : String?) {
-		exec("editor.printData($data);")
-	}
-
-	@JavascriptInterface
-	fun printData(data : String) {
-		onPrintDataListener?.onPrintData(data = data)
-	}
-
-	@JavascriptInterface
-	fun getPlainText(data : String) {
-		onGetPlainTextListener?.onGetPlainText(data = data)
+	fun getData(extra : String?, data : String?) {
+		try {
+			getTextListener?.onGetData(extra, data)
+		} catch (_ : Exception) {
+		}
 	}
 
 	data class TextFormat(

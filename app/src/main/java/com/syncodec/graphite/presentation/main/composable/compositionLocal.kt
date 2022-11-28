@@ -21,6 +21,7 @@ val LocalCompositionCloseBottomSheet = compositionLocalOf<() -> Unit> { error("N
 val LocalCompositionOpenDialog = compositionLocalOf<(MainDialogType) -> Unit> { error("No data provided") }
 val LocalCompositionCloseDialog = compositionLocalOf<(MainDialogType) -> Unit> { error("No data provided") }
 
+val LocalCompositionShowNotificationPermissionDialog = compositionLocalOf<Boolean> { error("No data provided") }
 val LocalCompositionShowDeleteDialog = compositionLocalOf<Boolean> { error("No data provided") }
 val LocalCompositionShowExitDialog = compositionLocalOf<Boolean> { error("No data provided") }
 

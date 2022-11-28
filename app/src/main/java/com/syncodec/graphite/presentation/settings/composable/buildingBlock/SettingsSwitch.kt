@@ -17,11 +17,15 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.BaseApplication
+import com.syncodec.graphite.presentation.common.composable.ExperimentalTag
+import com.syncodec.graphite.presentation.common.composable.ProTag
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,9 +34,13 @@ fun SettingsSwitch(
 	title: String,
 	icon: Int? = null,
 	subTitle: String? = null,
+	isProFeature: Boolean = false,
+	isExperimental: Boolean = false,
 	isChecked: Boolean,
 	onClick: () -> Unit
 ) {
+	val isPro by BaseApplication.isPro
+
 	Card(
 		colors = CardDefaults.cardColors(
 			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
@@ -47,16 +55,14 @@ fun SettingsSwitch(
 				.fillMaxWidth()
 				.padding(16.dp)
 		) {
-			if (icon != null) {
+			icon?.let {
 				Icon(
-					painter = painterResource(id = icon),
+					painter = painterResource(id = it),
 					contentDescription = title,
 					modifier = Modifier.requiredSize(24.dp)
 				)
 				Spacer(modifier = Modifier.width(16.dp))
-			} else {
-				Spacer(modifier = Modifier.width(40.dp))
-			}
+			} ?: Spacer(modifier = Modifier.width(40.dp))
 
 			Column(
 				modifier = Modifier.weight(1f)
@@ -75,6 +81,16 @@ fun SettingsSwitch(
 						color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 					)
 				}
+			}
+
+			if (isExperimental) {
+				Spacer(modifier = Modifier.width(16.dp))
+				ExperimentalTag()
+			}
+
+			if (isProFeature && !isPro) {
+				Spacer(modifier = Modifier.width(16.dp))
+				ProTag()
 			}
 
 			Spacer(modifier = Modifier.width(16.dp))

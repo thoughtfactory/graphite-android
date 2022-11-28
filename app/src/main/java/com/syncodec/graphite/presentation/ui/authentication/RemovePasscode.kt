@@ -46,7 +46,7 @@ fun RemovePasscode(
 				)
 			},
 			title = {},
-			colors = TopAppBarDefaults.smallTopAppBarColors(
+			colors = TopAppBarDefaults.topAppBarColors(
 				containerColor = MaterialTheme.colorScheme.background,
 				navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
 				titleContentColor = MaterialTheme.colorScheme.onBackground,

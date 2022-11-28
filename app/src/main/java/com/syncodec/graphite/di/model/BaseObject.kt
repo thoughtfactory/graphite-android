@@ -1,8 +1,15 @@
 package com.syncodec.graphite.di.model
 
 import androidx.room.PrimaryKey
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.node.IntNode
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import java.io.IOException
 
 
 class BaseObject: RealmObject {

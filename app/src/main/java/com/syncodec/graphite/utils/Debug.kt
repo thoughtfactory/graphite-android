@@ -23,7 +23,7 @@ class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteOb
 			System.currentTimeMillis() to listOf(
 				NoteObjectLite(
 					id = RealmUUID.random(),
-					parentChapterId = null,
+					parentChapterId = RealmUUID.random(),
 					createdTimestamp = System.currentTimeMillis(),
 					modifiedTimestamp = System.currentTimeMillis(),
 					userTimestamp = System.currentTimeMillis(),
@@ -34,7 +34,6 @@ class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteOb
 					contentThumbnail = "Looking down the misty path to uncertain destinations",
 					thumbnail = null,
 					thumbnailType = null,
-					attachmentCount = 0,
 					isFavourite = true,
 					isLocked = false,
 				)

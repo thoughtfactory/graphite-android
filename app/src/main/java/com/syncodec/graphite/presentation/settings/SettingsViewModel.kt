@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.settings
 
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -12,16 +11,22 @@ import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.syncodec.graphite.di.model.BucketItemSnapshot
 import com.syncodec.graphite.di.model.BucketSnapshot
 import com.syncodec.graphite.di.model.ChapterSnapshot
+import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteSnapshot
 import com.syncodec.graphite.di.model.TagSnapshot
+import com.syncodec.graphite.di.model.importer.JourneyNote
+import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
 import com.syncodec.graphite.di.repository.Repository2
+import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.utils.copyInDirectory
-import com.syncodec.graphite.utils.copyInputStreamToOutputStream
+import com.syncodec.graphite.utils.extractZipFile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
@@ -29,16 +34,23 @@ import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.util.zip.ZipFile
 import javax.inject.Inject
 
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
 
-	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+	private val objectMapper = jsonMapper {
+		addModule(
+			kotlinModule().addDeserializer(
+				RealmUUID::class.java,
+				RealmUUIDDeserializer()
+			)
+		)
+	}.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	val attachmentCount = mutableStateOf(0)
 	val attachmentProcessed = mutableStateOf(0)
@@ -55,11 +67,22 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 	val packageCount = mutableStateOf(0)
 	val packageProcessed = mutableStateOf(0)
 
+	val importDataCount = mutableStateOf(0)
+	val importDataProcessed = mutableStateOf(0)
+
 	val snapshotList : SnapshotStateList<DocumentFile> = mutableStateListOf()
+
+	var defaultChapterId: RealmUUID? = null
 
 	init {
 		val documentUri = repository2.context.contentResolver.persistedUriPermissions.firstOrNull()?.uri
 		if (documentUri != null) getSnapshot(documentUri)
+
+		viewModelScope.launch(Dispatchers.Default) {
+			repository2.getDefaultChapterId().collect {
+				defaultChapterId = it
+			}
+		}
 	}
 
 	fun takeSnapshot(uri : Uri, callback : (Boolean) -> Unit) {
@@ -72,7 +95,25 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 					callback(false)
 				}
 
-				documentTree.canWrite() -> takeSnapshot(documentTree = documentTree, callback = callback)
+				documentTree.canWrite() -> {
+					generateSnapshot { isSuccess, file ->
+						if (isSuccess && file != null) {
+							documentTree.createFile("application/x-7z-compressed", file.name)?.let { documentFile ->
+								val fileInputStream = file.inputStream()
+								val outputStream = repository2.context.contentResolver.openOutputStream(documentFile.uri)
+								fileInputStream.copyTo(outputStream !!)
+								fileInputStream.close()
+								outputStream.close()
+							}
+							callback(true)
+						} else {
+							viewModelScope.launch(Dispatchers.Main) {
+								Toast.makeText(repository2.context, "Error generating snapshot. Try setting backup folder again.", Toast.LENGTH_SHORT).show()
+								callback(false)
+							}
+						}
+					}
+				}
 
 				else -> viewModelScope.launch(Dispatchers.Main) {
 					Toast.makeText(repository2.context, "Error generating snapshot. Try setting backup folder again.", Toast.LENGTH_SHORT).show()
@@ -82,7 +123,7 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-	private fun takeSnapshot(documentTree : DocumentFile, callback : (Boolean) -> Unit) {
+	fun generateSnapshot(callback : (Boolean, File?) -> Unit) {
 		try {
 			val snapshotFolder = File(repository2.context.cacheDir, "snapshot").apply { mkdirs() }
 			val currentSnapshotFolder = File(snapshotFolder, "snapshot_${System.currentTimeMillis()}")
@@ -96,6 +137,7 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 			val noteFolder = File(currentSnapshotFolder, "note").apply { mkdirs() }
 			val tagFolder = File(currentSnapshotFolder, "tag").apply { mkdirs() }
 
+//			** Base
 			repository2
 				.getBaseObject()
 				?.let {
@@ -106,24 +148,13 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 				}
 
 
+//			** Attachment
 			File(repository2.attachmentDirPath).let { attachmentDir ->
 				copyInDirectory(attachmentDir, attachmentFolder)
 			}
 
-			repository2.getAllBucketItem()
-				.let { bucketItemList ->
-					viewModelScope.launch(Dispatchers.Main) {
-						bucketItemCount.value = bucketItemList.size
-						bucketItemProcessed.value = 0
-					}
-					bucketItemList.forEachIndexed { index, bucketItemObject ->
-						val snapshotString = objectMapper.writeValueAsString(bucketItemObject.toSnapshot())
-						val snapshotFile = File(bucketItemFolder.path, "${bucketItemObject.id}.json")
-						snapshotFile.writeText(snapshotString)
-						viewModelScope.launch(Dispatchers.Main) { bucketItemProcessed.value = index + 1 }
-					}
-				}
 
+//			** Bucket
 			repository2.getAllBucket()
 				.let { bucketList ->
 					viewModelScope.launch(Dispatchers.Main) {
@@ -138,6 +169,22 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 					}
 				}
 
+//			** BucketItem
+			repository2.getAllBucketItem()
+				.let { bucketItemList ->
+					viewModelScope.launch(Dispatchers.Main) {
+						bucketItemCount.value = bucketItemList.size
+						bucketItemProcessed.value = 0
+					}
+					bucketItemList.forEachIndexed { index, bucketItemObject ->
+						val snapshotString = objectMapper.writeValueAsString(bucketItemObject.toSnapshot())
+						val snapshotFile = File(bucketItemFolder.path, "${bucketItemObject.id}.json")
+						snapshotFile.writeText(snapshotString)
+						viewModelScope.launch(Dispatchers.Main) { bucketItemProcessed.value = index + 1 }
+					}
+				}
+
+//			** Chapter
 			repository2.getAllChapter()
 				.let { chapterList ->
 					viewModelScope.launch(Dispatchers.Main) {
@@ -152,6 +199,7 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 					}
 				}
 
+//			** Note
 			repository2.getAllNote()
 				.let { noteList ->
 					viewModelScope.launch(Dispatchers.Main) {
@@ -166,6 +214,7 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 					}
 				}
 
+//			** Tag
 			repository2.getAllTag()
 				.let { tagList ->
 					viewModelScope.launch(Dispatchers.Main) {
@@ -183,22 +232,17 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 			val sevenZOutput = SevenZOutputFile(File(snapshotFolder, "${currentSnapshotFolder.name}.7z"))
 			compressFile(currentSnapshotFolder, sevenZOutput)
 
-			documentTree.createFile("application/x-7z-compressed", "${currentSnapshotFolder.name}.7z")?.let { documentFile ->
-				val fileInputStream = FileInputStream(File(snapshotFolder, "${currentSnapshotFolder.name}.7z"))
-				val outputStream = repository2.context.contentResolver.openOutputStream(documentFile.uri)
-				fileInputStream.copyTo(outputStream !!)
-				fileInputStream.close()
-				outputStream.close()
+			File(snapshotFolder, "${currentSnapshotFolder.name}.7z").apply {
+				callback(true, this)
 			}
 
-			callback(true)
 			viewModelScope.launch(Dispatchers.Main) {
 				noteCount.value = 0
 				noteProcessed.value = 0
 			}
 		} catch (e : Exception) {
 			e.printStackTrace()
-			callback(false)
+			callback(false, null)
 		}
 	}
 
@@ -218,165 +262,258 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-	fun restoreSnapshot(documentFile : DocumentFile, callback : (Boolean) -> Unit) {
+	fun restoreSnapshot(inputStream : InputStream, clearAll : Boolean, callback : (Boolean) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
 
-			val snapshotFolder = File(repository2.context.cacheDir, "snapshot").apply { mkdirs() }
-			val restoreSnapshotFolder = File(File(snapshotFolder, "restore"), documentFile.name?.dropLast(3)).apply { mkdirs() }
+			val tmp7zFile = File(File(repository2.context.cacheDir, "restore"), "graphite.7z")
+			tmp7zFile.parentFile?.mkdirs()
+			tmp7zFile.delete()
+			tmp7zFile.createNewFile()
 
-			val restoreSnapshotFile = File(restoreSnapshotFolder, documentFile.name !!)
+			inputStream.copyTo(tmp7zFile.outputStream())
 
-			val inputStream = repository2.context.contentResolver.openInputStream(documentFile.uri)
-			val outputStream = FileOutputStream(restoreSnapshotFile)
+			val restoreFolder = File(File(repository2.context.cacheDir, "restore"), "graphite")
+			restoreFolder.deleteRecursively()
+			restoreFolder.mkdirs()
 
-			if (inputStream != null) {
-				copyInputStreamToOutputStream(inputStream, outputStream)
-
-				try {
+			try {
+				if (clearAll) {
 					repository2.clearRealm { isCleared, e ->
-						if (isCleared) {
-							SevenZFile(restoreSnapshotFile).use { sevenZFile ->
-								var entry : SevenZArchiveEntry
-								try {
-									while (sevenZFile.nextEntry.also { entry = it } != null) {
-										val file = File(restoreSnapshotFolder, entry.name).apply { parentFile?.mkdirs(); createNewFile() }
-										val content = ByteArray(entry.size.toInt())
-										sevenZFile.read(content)
-										file.writeBytes(content)
-									}
-								} catch (e : Exception) {
-								}
-
-								val baseFile = File(restoreSnapshotFolder, "base.json")
-								val attachmentFolder = File(restoreSnapshotFolder, "attachment")
-								val bucketItemFolderIterator = File(restoreSnapshotFolder, "bucketItem").listFiles()?.iterator()
-								val bucketFileListIterator = File(restoreSnapshotFolder, "bucket").listFiles()?.iterator()
-								val chapterFileListIterator = File(restoreSnapshotFolder, "chapter").listFiles()?.iterator()
-								val noteFileListIterator = File(restoreSnapshotFolder, "note").listFiles()?.iterator()
-								val tagFolderIterator = File(restoreSnapshotFolder, "tag").listFiles()?.iterator()
-
-								var lock = false
-
-								try {
-									val baseJsonObject = JSONObject(baseFile.readText())
-									val defaultChapterIdString = baseJsonObject.optString("default_chapter_id")
-									if (defaultChapterIdString.isNotBlank()) {
-										val defaultChapterId = defaultChapterIdString.let { RealmUUID.from(it) }
-										repository2.putDefaultChapterId(defaultChapterId) {}
-									}
-								} catch (e : Exception) {
-								}
-
-								while (true) {
-									if (! lock) {
-										if (chapterFileListIterator != null) {
-											if (chapterFileListIterator.hasNext()) {
-												try {
-													lock = true
-													val chapterSnapshot =
-														objectMapper.readValue(chapterFileListIterator.next().readBytes(), ChapterSnapshot::class.java)
-													val chapterObject = chapterSnapshot.toObject()
-													repository2.putChapter(chapterObject.parentChapterId, chapterObject) { _, e ->
-														lock = false
-													}
-												} catch (e : Exception) {
-													e.printStackTrace()
-													lock = false
-												}
-											} else {
-												break
-											}
-										} else {
-											break
-										}
-									}
-								}
-
-								while (true) {
-									if (! lock) {
-										if (noteFileListIterator != null) {
-											if (noteFileListIterator.hasNext()) {
-												lock = true
-												val noteSnapshot = objectMapper.readValue(noteFileListIterator.next().readText(), NoteSnapshot::class.java)
-												noteSnapshot.toObject().let { noteObject ->
-													repository2.putNote(noteObject) { _, e ->
-														lock = false
-													}
-												}
-											} else {
-												break
-											}
-										} else {
-											break
-										}
-									}
-								}
-
-								try {
-									copyInDirectory(attachmentFolder, File(repository2.attachmentDirPath))
-								} catch (e : Exception) {
-								}
-
-								while (true) {
-									if (! lock) {
-										if (bucketFileListIterator != null) {
-											if (bucketFileListIterator.hasNext()) {
-												lock = true
-												val bucketSnapshot = objectMapper.readValue(bucketFileListIterator.next().readText(), BucketSnapshot::class.java)
-												bucketSnapshot.toObject().let { bucketObject ->
-													repository2.putBucket(bucketObject) { _, e ->
-														lock = false
-													}
-												}
-											} else {
-												break
-											}
-										} else {
-											break
-										}
-									}
-								}
-
-								while (true) {
-									if (! lock) {
-										if (tagFolderIterator != null) {
-											if (tagFolderIterator.hasNext()) {
-												lock = true
-												val tagString = tagFolderIterator.next().readText()
-												val tagSnapshot = objectMapper.readValue(tagString, TagSnapshot::class.java)
-												tagSnapshot.toObject().let { tagObject ->
-													Log.i("npr71", "tagObject = $tagObject")
-													repository2.putTag(tagObject) { _, e ->
-														e?.printStackTrace()
-														lock = false
-													}
-												}
-											} else {
-												break
-											}
-										} else {
-											break
-										}
-									}
-								}
-							}
-						} else {
-
+						if (! isCleared) {
+							Toast.makeText(repository2.context, "Failed to clear database", Toast.LENGTH_SHORT).show()
+							callback(false)
 						}
 					}
-				} catch (e : IOException) {
-					e.printStackTrace()
-					callback(false)
-				} catch (e : Exception) {
-					e.printStackTrace()
-					callback(false)
 				}
-			} else {
+			} catch (e : Exception) {
+				e.printStackTrace()
 				callback(false)
+				return@launch
 			}
 
-			inputStream?.close()
+			try {
+				val sevenZFile = SevenZFile(tmp7zFile)
+
+				sevenZFile.entries.forEach {
+					val entry = it
+					val entryName = entry.name
+					val entryFile = File(restoreFolder, entryName)
+					entryFile.parentFile?.mkdirs()
+					entryFile.delete()
+					entryFile.createNewFile()
+					val entryInputStream = sevenZFile.getInputStream(entry)
+					entryInputStream.copyTo(entryFile.outputStream())
+					entryInputStream.close()
+				}
+
+			} catch (e : Exception) {
+				e.printStackTrace()
+				callback(false)
+				return@launch
+			}
+
+			val baseFile = File(restoreFolder, "base.json")
+			val attachmentFolder = File(restoreFolder, "attachment")
+			val bucketItemFile = File(restoreFolder, "bucketItem").listFiles()
+			val bucketFileList = File(restoreFolder, "bucket").listFiles()
+			val chapterFileList = File(restoreFolder, "chapter").listFiles()
+			val noteFileList = File(restoreFolder, "note").listFiles()
+			val tagFolder = File(restoreFolder, "tag").listFiles()
+
+//			** Base
+			try {
+				val baseJsonObject = JSONObject(baseFile.readText())
+				val defaultChapterIdString = baseJsonObject.optString("default_chapter_id")
+				if (defaultChapterIdString.isNotBlank()) {
+					val defaultChapterId = defaultChapterIdString.let { RealmUUID.from(it) }
+					repository2.putDefaultChapterId(defaultChapterId) {}
+				}
+			} catch (e : Exception) {
+				e.printStackTrace()
+			}
+
+//			** Attachment
+			try {
+				copyInDirectory(attachmentFolder, File(repository2.attachmentDirPath))
+			} catch (e : Exception) {
+				e.printStackTrace()
+			}
+
+//			** Bucket
+			viewModelScope.launch(Dispatchers.Main) {
+				bucketCount.value = bucketFileList?.size ?: 0
+				bucketProcessed.value = 0
+			}
+			bucketFileList?.forEach {
+				try {
+					val bucketSnapshot = objectMapper.readValue(it.readBytes(), BucketSnapshot::class.java)
+					bucketSnapshot.toObject().let { bucketObject ->
+						repository2.putBucket(bucketObject) { _, e -> }
+					}
+				} catch (e : Exception) {
+					e.printStackTrace()
+				}
+				viewModelScope.launch(Dispatchers.Main) { bucketProcessed.value = bucketProcessed.value + 1 }
+				delay(100)
+			}
+
+//			** BucketItem
+			viewModelScope.launch(Dispatchers.Main) {
+				bucketItemCount.value = bucketItemFile?.size ?: 0
+				bucketItemProcessed.value = 0
+			}
+			bucketItemFile?.forEach {
+				try {
+					val bucketItemSnapshot = objectMapper.readValue(it.readBytes(), BucketItemSnapshot::class.java)
+					bucketItemSnapshot.toObject().let { bucketItemObject ->
+						bucketItemObject.parentId?.let { repository2.putBucketItem(it, bucketItemObject) { _, e -> } }
+					}
+				} catch (e : Exception) {
+					e.printStackTrace()
+				}
+				viewModelScope.launch(Dispatchers.Main) { bucketItemProcessed.value = bucketItemProcessed.value + 1 }
+				delay(100)
+			}
+
+//			** Chapter
+			viewModelScope.launch(Dispatchers.Main) {
+				chapterCount.value = chapterFileList?.size ?: 0
+				chapterProcessed.value = 0
+			}
+			chapterFileList?.forEach {
+				try {
+					val chapterSnapshot = objectMapper.readValue(it.readBytes(), ChapterSnapshot::class.java)
+					chapterSnapshot.toObject().let { chapterObject ->
+						repository2.putChapter(chapterObject.parentId, chapterObject) { _, e -> }
+					}
+				} catch (e : Exception) {
+					e.printStackTrace()
+				}
+				viewModelScope.launch(Dispatchers.Main) { chapterProcessed.value = chapterProcessed.value + 1 }
+				delay(100)
+			}
+
+//			** Note
+			viewModelScope.launch(Dispatchers.Main) {
+				noteCount.value = noteFileList?.size ?: 0
+				noteProcessed.value = 0
+			}
+			noteFileList?.forEach {
+				try {
+					val noteSnapshot = objectMapper.readValue(it.readBytes(), NoteSnapshot::class.java)
+					noteSnapshot.toObject().let { noteObject ->
+						repository2.putNote(noteObject) { _, e -> }
+					}
+				} catch (e : Exception) {
+					e.printStackTrace()
+				}
+				viewModelScope.launch(Dispatchers.Main) { noteProcessed.value = noteProcessed.value + 1 }
+				delay(100)
+			}
+
+//			** Tag
+			viewModelScope.launch(Dispatchers.Main) {
+				tagCount.value = tagFolder?.size ?: 0
+				tagProcessed.value = 0
+			}
+			tagFolder?.forEach {
+				try {
+					val tagSnapshot = objectMapper.readValue(it.readBytes(), TagSnapshot::class.java)
+					tagSnapshot.toObject().let { tagObject ->
+						repository2.putTag(tagObject) { _, e -> }
+					}
+				} catch (e : Exception) {
+					e.printStackTrace()
+				}
+				viewModelScope.launch(Dispatchers.Main) { tagProcessed.value = tagProcessed.value + 1 }
+				delay(100)
+			}
+
 			callback(true)
+		}
+	}
+
+	var lock = false
+
+	fun importFromJourney(inputStream : InputStream, richTextEditor : RichTextEditor, callback : (Boolean) -> Unit) {
+		viewModelScope.launch(Dispatchers.IO) {
+			val importDir = File(repository2.context.cacheDir, "import").apply {
+				if (exists()) deleteRecursively()
+				mkdirs()
+			}
+			val journey7z = File(importDir, "journey.7z").apply {
+				if (exists()) delete()
+				createNewFile()
+			}
+
+			inputStream.copyTo(journey7z.outputStream())
+
+			val journeyFolder = File(File(repository2.context.cacheDir, "import"), "journey")
+			journeyFolder.deleteRecursively()
+			journeyFolder.mkdirs()
+
+			try {
+				val zipFile = ZipFile(journey7z)
+
+				extractZipFile(zipFile, journeyFolder)
+
+				val files = journeyFolder.listFiles()
+				viewModelScope.launch(Dispatchers.Main) {
+					importDataCount.value = files?.size ?: 0
+					importDataProcessed.value = 0
+				}
+
+				val attachmentDir = File(repository2.attachmentDirPath)
+				val fileIterator = files?.iterator()
+				viewModelScope.launch(Dispatchers.Default) {
+					while (true) {
+						if (lock) {
+							delay(100)
+						} else {
+							if (fileIterator?.hasNext() == true) {
+								lock = true
+								try {
+									val journeyFile = fileIterator?.next()
+									if (journeyFile?.extension == "json") {
+										val journeyJson = journeyFile?.readText()
+									    val journeyNote = objectMapper.readValue(journeyJson, JourneyNote::class.java)
+										val noteId = RealmUUID.random()
+										journeyNote.photos?.forEach {
+											val photoFile = it?.let { it1 -> File(journeyFolder, it1) }
+											val noteAttachmentDir = File(attachmentDir, noteId.toString()).apply { mkdirs() }
+											val attachmentFile = File(noteAttachmentDir, photoFile?.name ?: RealmUUID.random().toString()).apply { createNewFile() }
+											photoFile?.inputStream()?.copyTo(attachmentFile.outputStream())
+										}
+										richTextEditor.exec("editor.importData(\"$noteId\", $journeyJson, \"journey\");")
+									} else {
+										lock = false
+									}
+								} catch (e : Exception) {
+									lock = false
+									e.printStackTrace()
+								}
+								viewModelScope.launch(Dispatchers.Main) {
+									importDataProcessed.value = importDataProcessed.value + 1
+								}
+							} else {
+								break
+							}
+						}
+					}
+					callback(true)
+				}
+
+			} catch (e : Exception) {
+				e.printStackTrace()
+				callback(false)
+				return@launch
+			}
+		}
+	}
+
+	fun putNote(noteObject : NoteObject) {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository2.putNote(noteObject) { _, e -> lock = false }
 		}
 	}
 
@@ -403,7 +540,5 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-	private fun decompressFile(fileToDecompress : File) {
 
-	}
 }

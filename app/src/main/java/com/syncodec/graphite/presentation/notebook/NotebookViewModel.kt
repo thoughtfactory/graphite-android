@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
@@ -68,6 +69,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	val isSelected : MutableState<Boolean> = mutableStateOf(false)
 	val selectedObjectIdList : SnapshotStateList<RealmUUID> = mutableStateListOf()
 
+	val isPro = BaseApplication.isPro.value
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -120,25 +122,33 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	fun putChapter(title : String?, description : String?, color : Color?, bitmap : Bitmap?) {
 		if (this.currentChapterId.value != null) {
-			CoroutineScope(Dispatchers.Default).launch {
-				try {
-					ChapterObject().apply {
-						this.title = title
-						this.description = description
-						this.color = color?.toArgb()
-						this.thumbnail = bitmap?.encodeBase64()
+			if (isPro) {
+				CoroutineScope(Dispatchers.Default).launch {
+					try {
+						ChapterObject().apply {
+							this.title = title
+							this.description = description
+							this.color = color?.toArgb()
+							this.thumbnail = bitmap?.encodeBase64()
 
-						this.parentChapterId = this@NotebookViewModel.currentChapterId.value
+							this.parentId = this@NotebookViewModel.currentChapterId.value
 
-						repository2.putChapter(this.parentChapterId, this) { _, _ -> }
-					}
-				} catch (e : Exception) {
+							repository2.putChapter(this.parentId, this) { _, _ -> }
+						}
+					} catch (e : Exception) {
 //	    		    TODO Show error message
-					e.printStackTrace()
+						e.printStackTrace()
+					}
+				}
+			} else {
+				viewModelScope.launch(Dispatchers.Main) {
+					Toast.makeText(repository2.context, "Join Graphite Pro to add chapters in notebook", Toast.LENGTH_SHORT).show()
 				}
 			}
 		} else {
-//		    TODO Show error message
+			viewModelScope.launch(Dispatchers.Main) {
+				Toast.makeText(repository2.context, "Error adding chapter", Toast.LENGTH_SHORT).show()
+			}
 		}
 	}
 
@@ -155,9 +165,9 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 						this.isFavourite = this@NotebookViewModel.isFavourite.value ?: false
 						this.isLocked = this@NotebookViewModel.isLocked.value ?: false
 
-						this.parentChapterId = this@NotebookViewModel.parentChapterId.value
+						this.parentId = this@NotebookViewModel.parentChapterId.value
 
-						repository2.putChapter(this.parentChapterId, this) { _, _ -> }
+						repository2.putChapter(this.parentId, this) { _, _ -> }
 					}
 				} catch (e : Exception) {
 
@@ -197,7 +207,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 							this@NotebookViewModel.isFavourite.value = it.isFavourite
 							this@NotebookViewModel.isLocked.value = it.isLocked
 
-							this@NotebookViewModel.parentChapterId.value = it.parentChapterId
+							this@NotebookViewModel.parentChapterId.value = it.parentId
 
 							this@NotebookViewModel.chapterObjectList.clear()
 							this@NotebookViewModel.chapterObjectList.addAll(it.chapterList)

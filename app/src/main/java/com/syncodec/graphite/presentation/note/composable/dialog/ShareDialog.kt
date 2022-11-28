@@ -18,7 +18,6 @@ fun ShareDialog(
 	onShareAttachment: () -> Unit,
 	onDismiss: () -> Unit
 ) {
-
 	GenericDialog(
 		showDialog = showDialog,
 		title = "Share",

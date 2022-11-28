@@ -9,11 +9,16 @@
 
     <application
 		android:name="com.syncodec.graphite.BaseApplication"
+		android:fullBackupContent="false"
 		android:allowBackup="false"
+		android:appCategory="productivity"
+		android:description="@string/app_description"
 		android:icon="@mipmap/ic_launcher"
 		android:label="@string/app_name"
 		android:roundIcon="@mipmap/ic_launcher"
+		android:resizeableActivity="true"
 		android:supportsRtl="false"
+		android:largeHeap="true"
 		android:theme="@style/Theme.Graphite">
 
 		<meta-data
@@ -56,17 +61,17 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 
-			<intent-filter>
-				<action android:name="android.intent.action.SEND" />
-				<category android:name="android.intent.category.DEFAULT" />
-				<data android:mimeType="application/*" />
-				<data android:mimeType="audio/*" />
-				<data android:mimeType="image/*" />
-				<data android:mimeType="message/*" />
-				<data android:mimeType="multipart/*" />
-				<data android:mimeType="text/*" />
-				<data android:mimeType="video/*" />
-			</intent-filter>
+<!--			<intent-filter>-->
+<!--				<action android:name="android.intent.action.SEND" />-->
+<!--				<category android:name="android.intent.category.DEFAULT" />-->
+<!--				<data android:mimeType="application/*" />-->
+<!--				<data android:mimeType="audio/*" />-->
+<!--				<data android:mimeType="image/*" />-->
+<!--				<data android:mimeType="message/*" />-->
+<!--				<data android:mimeType="multipart/*" />-->
+<!--				<data android:mimeType="text/*" />-->
+<!--				<data android:mimeType="video/*" />-->
+<!--			</intent-filter>-->
 		</activity>
 
 		<activity
@@ -76,17 +81,17 @@
 			android:theme="@style/Theme.Graphite.NoActionBar"
 			android:windowSoftInputMode="adjustResize" >
 
-			<intent-filter>
-				<action android:name="android.intent.action.SEND" />
-				<category android:name="android.intent.category.DEFAULT" />
-				<data android:mimeType="application/*" />
-				<data android:mimeType="audio/*" />
-				<data android:mimeType="image/*" />
-				<data android:mimeType="message/*" />
-				<data android:mimeType="multipart/*" />
-				<data android:mimeType="text/*" />
-				<data android:mimeType="video/*" />
-			</intent-filter>
+<!--			<intent-filter>-->
+<!--				<action android:name="android.intent.action.SEND" />-->
+<!--				<category android:name="android.intent.category.DEFAULT" />-->
+<!--				<data android:mimeType="application/*" />-->
+<!--				<data android:mimeType="audio/*" />-->
+<!--				<data android:mimeType="image/*" />-->
+<!--				<data android:mimeType="message/*" />-->
+<!--				<data android:mimeType="multipart/*" />-->
+<!--				<data android:mimeType="text/*" />-->
+<!--				<data android:mimeType="video/*" />-->
+<!--			</intent-filter>-->
 
 		</activity>
 

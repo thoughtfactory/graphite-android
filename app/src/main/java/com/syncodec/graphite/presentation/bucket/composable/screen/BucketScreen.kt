@@ -144,9 +144,6 @@ fun BucketScreen(
 
 							BottomBar(modifier = Modifier.onGloballyPositioned {
 								bottomBarSpacingPx = it.positionInParent().y.toInt()
-								Log.i("npr71", "y = ${it.positionInParent().y.toInt()}")
-								Log.i("npr71", "bottomBarSpacingPx = $bottomBarSpacingPx")
-
 							})
 						}
 

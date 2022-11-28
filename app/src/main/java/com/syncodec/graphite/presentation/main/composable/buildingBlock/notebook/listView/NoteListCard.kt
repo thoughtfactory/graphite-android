@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView
 
 import android.graphics.Bitmap
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
@@ -66,7 +65,6 @@ import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
@@ -77,6 +75,7 @@ import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
+import com.syncodec.graphite.utils.getAttachmentCountFromNoteId
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo
 import com.syncodec.graphite.utils.timeStampToTime
@@ -85,12 +84,13 @@ import kotlin.math.roundToInt
 
 
 @OptIn(
-	ExperimentalFoundationApi::class, ExperimentalAnimationApi::class, ExperimentalMaterialApi::class
+	ExperimentalFoundationApi::class,
+	ExperimentalAnimationApi::class,
+	ExperimentalMaterialApi::class
 )
 @Composable
 fun NoteListCard(
 	id : RealmUUID,
-	parentChapterId : RealmUUID?,
 	timestamp : Long,
 	showFullTime : Boolean,
 	isLocked : Boolean,
@@ -99,7 +99,6 @@ fun NoteListCard(
 	isLast : Boolean,
 	title : String?,
 	contentThumbnail : String?,
-	attachmentCount : Int,
 	attachmentThumbnail : Bitmap?,
 	address : String?,
 	latLng : LatLng?,
@@ -109,6 +108,7 @@ fun NoteListCard(
 	selectedColor : Color,
 	onClick : () -> Unit,
 	onLongClick : (() -> Unit)? = null,
+	onPinNote : ((RealmUUID) -> Unit)? = null,
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
@@ -166,26 +166,9 @@ fun NoteListCard(
 					horizontalArrangement = Arrangement.SpaceEvenly
 				) {
 					MenuButton(
-						icon = R.drawable.ic_pin, tint = MaterialTheme.colorScheme.onSurface
-					) {
-						if (parentChapterId != null) {
-							NotePinNotification.showSimpleNotification(
-								context = context,
-								noteId = id,
-								chapterId = parentChapterId,
-								title = title ?: "Untitled",
-								content = contentThumbnail ?: "No content",
-								notificationId = id.hashCode(),
-							) {
-								Toast
-									.makeText(
-										context,
-										"Notification permission not available. Please enable permission from settings",
-										Toast.LENGTH_SHORT
-									).show()
-							}
-						}
-					}
+						icon = R.drawable.ic_pin, tint = MaterialTheme.colorScheme.onSurface,
+						onClick = { onPinNote?.invoke(id) }
+					)
 
 					MenuButton(
 						icon = R.drawable.ic_share, tint = MaterialTheme.colorScheme.onSurface
@@ -240,7 +223,7 @@ fun NoteListCard(
 								title = title,
 								isLocked = isLocked,
 								isFavourite = isFavourite,
-								attachmentCount = attachmentCount,
+								attachmentCount = context.getAttachmentCountFromNoteId(id),
 								contentColor = contentColor,
 								isFavouriteTinted = isFavouriteTinted
 							)
@@ -249,7 +232,7 @@ fun NoteListCard(
 
 							Content(
 								contentThumbnail = contentThumbnail,
-								attachmentCount = attachmentCount,
+								attachmentCount = context.getAttachmentCountFromNoteId(id),
 								attachmentThumbnail = attachmentThumbnail,
 								contentColor = contentColor,
 							)
@@ -347,10 +330,16 @@ private fun Title(
 
 @Composable
 private fun TitleText(
-	text : String, contentColor : Color
+	text : String,
+	contentColor : Color
 ) {
 	Text(
-		text = text, style = MaterialTheme.typography.bodyMedium, color = contentColor, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier
+		text = text,
+		style = MaterialTheme.typography.bodyMedium,
+		color = contentColor,
+		fontWeight = FontWeight.Bold,
+		maxLines = 1,
+		modifier = Modifier
 	)
 }
 
@@ -430,10 +419,15 @@ private fun TagView(
 
 @Composable
 private fun Location(
-	address : String?, latLng : LatLng?, contentColor : Color, isFavouriteTinted : Boolean, isFavourite : Boolean
+	address : String?,
+	latLng : LatLng?,
+	contentColor : Color,
+	isFavouriteTinted : Boolean,
+	isFavourite : Boolean
 ) {
 	Row(
-		modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+		modifier = Modifier.fillMaxWidth(),
+		verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
 			painter = painterResource(id = R.drawable.ic_map_marker),

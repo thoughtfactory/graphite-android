@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.AttachmentObject
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.AttachmentPreview
 import java.io.File
@@ -24,7 +23,6 @@ import java.io.File
 fun AttachmentCard(
 	uri : Uri?,
 	file : File?,
-	attachmentObject : AttachmentObject,
 	isSelected: Boolean,
 	onClick: () -> Unit,
 	onLongClick: () -> Unit,
@@ -37,7 +35,6 @@ fun AttachmentCard(
 			.padding(1.dp)
 	) {
 		AttachmentPreview(
-			attachment = attachmentObject,
 			uri = uri,
 			file = file,
 			clickable = true,

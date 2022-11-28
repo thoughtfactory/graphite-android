@@ -95,11 +95,11 @@ class SearchViewModel @Inject constructor(private val repository2 : Repository2)
 				searchQuery
 			) { parentChapterId, favourite, attachment, tag, query ->
 				noteList.filter { note ->
-					(note.parentChapterId == parentChapterId || parentChapterId == null) &&
+					((note.parentId == parentChapterId) || (parentChapterId == null)) &&
 							(! favourite || note.isFavourite) &&
-							(! attachment || note.attachmentList.isNotEmpty()) &&
-							(tag == null || tag.objectIdList.contains(note.id)) &&
-							(query == null || note.title?.contains(query, true) == true || note.content?.contains(query, true) == true)
+//							(! attachment || note.attachmentList.isNotEmpty()) &&
+							((tag == null) || tag.objectIdList.contains(note.id)) &&
+							((query == null) || (note.title?.contains(query, true) == true) || (note.content?.contains(query, true) == true))
 				}
 			}.cancellable().collect {
 				withContext(Dispatchers.Main) {

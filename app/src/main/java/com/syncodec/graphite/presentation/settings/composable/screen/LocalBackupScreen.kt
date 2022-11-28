@@ -16,11 +16,11 @@ fun LocalBackupScreen() {
 
 	val context = LocalContext.current
 
-	val scrollState = SettingsActivity.scrollState.current
-	val onNavigate = SettingsActivity.onNavigate.current
+	val scrollState = SettingsActivity.LocalScrollState.current
+	val onNavigate = SettingsActivity.LocalOnNavigate.current
 
-	val setupLocalBackupFolder = SettingsActivity.setupLocalBackupFolder.current
-	val removeLocalBackupFolder = SettingsActivity.removeLocalBackupFolder.current
+	val setupLocalBackupFolder = SettingsActivity.LocalSetupLocalBackupFolder.current
+	val removeLocalBackupFolder = SettingsActivity.LocalRemoveLocalBackupFolder.current
 
 	GenericSettingsScreen(
 		title = "Local Backup",

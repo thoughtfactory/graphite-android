@@ -28,6 +28,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.entryTimestamp0
 import com.syncodec.graphite.utils.entryTimestamp1
+import com.syncodec.graphite.utils.getAttachmentCountFromNoteId
 import com.syncodec.graphite.utils.roundTo
 import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.RealmUUID
@@ -46,7 +47,6 @@ fun NoteGridCard(
 	isLast : Boolean,
 	title : String?,
 	contentThumbnail : String?,
-	attachmentCount : Int,
 	attachmentThumbnail : Bitmap?,
 	address : String?,
 	latLng : LatLng?,
@@ -55,6 +55,8 @@ fun NoteGridCard(
 	onClick : () -> Unit,
 	onLongClick : (() -> Unit)? = null,
 ) {
+	val context = LocalContext.current
+
 
 	val containerColor by animateColorAsState(
 		when {
@@ -87,12 +89,12 @@ fun NoteGridCard(
 				title = title,
 				isLocked = isLocked,
 				isFavourite = isFavourite,
-				attachmentCount = attachmentCount
+				attachmentCount = context.getAttachmentCountFromNoteId(id)
 			)
 			Spacer(modifier = Modifier.height(4.dp))
 			Content(
 				contentThumbnail = contentThumbnail,
-				attachmentCount = attachmentCount,
+				attachmentCount = context.getAttachmentCountFromNoteId(id),
 				attachmentThumbnail = attachmentThumbnail
 			)
 			Spacer(modifier = Modifier.height(4.dp))

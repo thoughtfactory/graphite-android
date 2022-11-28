@@ -2,14 +2,17 @@ package com.syncodec.graphite.presentation.main.composable.dialog
 
 import androidx.compose.runtime.Composable
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
+import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnExit
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowExitDialog
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowNotificationPermissionDialog
 
 
 enum class MainDialogType {
+	NOTIFICATION_PERMISSION,
 	DELETE,
 	EXIT
 }
@@ -17,6 +20,7 @@ enum class MainDialogType {
 @Composable
 fun MainDialog() {
 
+	val showNotificationPermissionDialog = LocalCompositionShowNotificationPermissionDialog.current
 	val showDeleteDialog = LocalCompositionShowDeleteDialog.current
 	val showExitDialog = LocalCompositionShowExitDialog.current
 
@@ -40,4 +44,9 @@ fun MainDialog() {
 		closeDialog(MainDialogType.EXIT)
 		onExit()
 	}
+
+	NotificationPermissionDialog(
+		showDialog = showNotificationPermissionDialog,
+		onDismiss = { closeDialog(MainDialogType.NOTIFICATION_PERMISSION) },
+	) { closeDialog(MainDialogType.NOTIFICATION_PERMISSION) }
 }

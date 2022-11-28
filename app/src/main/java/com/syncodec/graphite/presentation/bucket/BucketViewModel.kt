@@ -95,6 +95,7 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 			if (isUrlValid) {
 				val bucketItemObject = BucketItemObject().apply {
 					this.bucketType = BucketType.LINK.name
+					this.parentId = this@BucketViewModel.bucketObject.value?.id
 					this.key = url
 					this@BucketViewModel.id.value?.let {
 						repository2.putBucketItem(it, this) { _, _ -> }
@@ -114,9 +115,11 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 									bucketItemObject.thumbnail = bitmap?.encodeBase64()
 									bucketItemObject.putOpenGraphResult(openGraphResult)
 
-									this@BucketViewModel.id.value?.let {
-										repository2.putBucketItem(it, bucketItemObject) { _, _ ->
-											refresh()
+									CoroutineScope(Dispatchers.Default).launch {
+										this@BucketViewModel.id.value?.let {
+											repository2.putBucketItem(it, bucketItemObject) { _, _ ->
+												refresh()
+											}
 										}
 									}
 								}
@@ -137,16 +140,19 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 		todo : String,
 		state : BucketItemState
 	) {
-		BucketItemObject().apply {
-			if (realmUUID != null) this.id = realmUUID
-			this.bucketType = BucketType.TODO.name
-			this.title = todo
-			this.state = state.name
-			this.key = todo
+		CoroutineScope(Dispatchers.Default).launch {
+			BucketItemObject().apply {
+				if (realmUUID != null) this.id = realmUUID
+				this.bucketType = BucketType.TODO.name
+				this.title = todo
+				this.state = state.name
+				this.parentId = this@BucketViewModel.bucketObject.value?.id
+				this.key = todo
 
-			this@BucketViewModel.id.value?.let {
-				repository2.putBucketItem(it, this) { _, _ ->
-					refresh()
+				this@BucketViewModel.id.value?.let {
+					repository2.putBucketItem(it, this) { _, _ ->
+						refresh()
+					}
 				}
 			}
 		}

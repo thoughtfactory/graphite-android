@@ -56,7 +56,8 @@ fun ViewerScreen() {
 				count = noteIdList.size,
 				reverseLayout = false,
 				itemSpacing = 2.dp,
-				modifier = Modifier.fillMaxSize()
+				userScrollEnabled = false,
+				modifier = Modifier.fillMaxSize(),
 			) { page ->
 				val _currentNoteId = noteIdList.getOrNull(page)
 				Crossfade(targetState = this.currentPageOffset == 0f) {

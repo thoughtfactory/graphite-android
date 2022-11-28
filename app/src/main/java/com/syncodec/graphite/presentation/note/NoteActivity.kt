@@ -72,7 +72,6 @@ import com.syncodec.graphite.presentation.note.composable.LocalEditNote
 import com.syncodec.graphite.presentation.note.composable.LocalGetNote
 import com.syncodec.graphite.presentation.note.composable.LocalOnClickTag
 import com.syncodec.graphite.presentation.note.composable.LocalOnExportMarkdown
-import com.syncodec.graphite.presentation.note.composable.LocalOnPrint
 import com.syncodec.graphite.presentation.note.composable.LocalOnShareAttachment
 import com.syncodec.graphite.presentation.note.composable.LocalOnShareText
 import com.syncodec.graphite.presentation.note.composable.LocalSaveNote
@@ -83,15 +82,17 @@ import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalCompositionPremium
 import com.syncodec.graphite.utils.LocalCompositionRichTextEditor
 import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.share
 import dagger.hilt.android.AndroidEntryPoint
 import io.noties.markwon.Markwon
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.io.File
 
 
 @AndroidEntryPoint
@@ -117,7 +118,6 @@ class NoteActivity : ComponentActivity() {
 			}
 
 		} catch (e : Exception) {
-			e.printStackTrace()
 			finish()
 		}
 
@@ -134,45 +134,96 @@ class NoteActivity : ComponentActivity() {
 
 				val richTextEditor = rememberRichTextEditor()
 
-				richTextEditor.setOnSaveData(
-					object : RichTextEditor.OnSaveDataListener {
-						override fun onSaveData(data : String) {
-							when (isNew) {
-								true -> {
+				richTextEditor.setGetTextListener(
+					object : RichTextEditor.GetTextListener {
+						override fun onGetData(extra : String?, data : String?) {
+							when(extra) {
+								"save" -> {
 									viewModel.setContent(data)
 									viewModel.putNote()
 								}
-
-								false -> {
-									viewModel.setContent(data)
-									viewModel.putNote()
+								"share" -> {
+									CoroutineScope(Dispatchers.Main).launch {
+										if (data == null) {
+											Toast.makeText(this@NoteActivity, "Error sharing note", Toast.LENGTH_SHORT).show()
+										} else {
+											val dataJson = JSONObject(data)
+											val text = dataJson.optString("dataText")
+											onShareText(text = text)
+										}
+									}
 								}
+								"export_pdf" -> {
+									try {
+										CoroutineScope(Dispatchers.Main).launch {
+											if (data == null) {
+												Toast.makeText(this@NoteActivity, "Error exporting as pdf.", Toast.LENGTH_SHORT).show()
+											} else {
+												val dataJson = JSONObject(data)
+												val text = dataJson.optString("dataText")
+												val printer = Printer(this@NoteActivity)
+												printer.createWebPrintJob(text)
+											}
+										}
+									} catch (e : Exception) {
+										Toast.makeText(this@NoteActivity, "Error exporting as pdf.", Toast.LENGTH_SHORT).show()
+									}
+								}
+								"export_html" -> {
+									if (data == null) {
+										Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+									} else {
+										try {
+											val dataJson = JSONObject(data)
+											val html = dataJson.optString("dataHtml")
 
-								null -> null
+											File.createTempFile("export_html", ".html").apply {
+												writeText(html)
+												share(this@NoteActivity,)
+											}
+										} catch (e : Exception) {
+											Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+										}
+									}
+								}
+								"export_markdown" -> {
+									if (data == null) {
+										Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+									} else {
+										try {
+											val dataJson = JSONObject(data)
+											val markdown = dataJson.optString("dataMarkdown")
+
+											File.createTempFile("export_markdown", ".md").apply {
+												writeText(markdown)
+												share(this@NoteActivity,)
+											}
+										} catch (e : Exception) {
+											Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+										}
+									}
+								}
+								"export_text" -> {
+									if (data == null) {
+										Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+									} else {
+										try {
+											val dataJson = JSONObject(data)
+											val text = dataJson.optString("dataText")
+
+											File.createTempFile("export_text", ".txt").apply {
+												writeText(text)
+												share(this@NoteActivity,)
+											}
+										} catch (e : Exception) {
+											Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+										}
+									}
+								}
 							}
 						}
 					}
 				)
-
-				richTextEditor.setOnPrintData(
-					object : RichTextEditor.OnPrintDataListener {
-						override fun onPrintData(data : String) {
-							CoroutineScope(Dispatchers.Main).launch {
-								val printer = Printer(this@NoteActivity)
-								printer.createWebPrintJob(data)
-							}
-						}
-					}
-				)
-
-				richTextEditor.setOnPlainGetText(
-					object : RichTextEditor.OnGetTextListener {
-						override fun onGetPlainText(data : String) {
-							this@NoteActivity.onShareText(data)
-						}
-					}
-				)
-
 
 				val scope = rememberCoroutineScope()
 				val keyboardController = LocalSoftwareKeyboardController.current
@@ -247,7 +298,7 @@ class NoteActivity : ComponentActivity() {
 						NoteDialogType.SHARE -> showShareDialog = true
 						NoteDialogType.CHAPTER_SELECTION -> {
 							try {
-								viewModel.getSelectChapter(data as RealmUUID)
+								viewModel.getSelectChapter(data as RealmUUID?)
 								showChapterSelectionDialog = true
 							} catch (e : Exception) {
 //								e.printStackTrace()
@@ -275,7 +326,7 @@ class NoteActivity : ComponentActivity() {
 				fun onSave() {
 					when {
 						isOperationPending -> Toast.makeText(this, "Please wait while data is being saved", Toast.LENGTH_SHORT).show()
-						richTextEditor.isReady.value -> richTextEditor.exec("editor.getData();")
+						richTextEditor.isReady.value -> richTextEditor.exec("editor.getData(\"save\");")
 						else -> Toast.makeText(this, "Please wait while editor is being loaded", Toast.LENGTH_SHORT).show()
 					}
 				}
@@ -303,7 +354,6 @@ class NoteActivity : ComponentActivity() {
 				)
 
 				CompositionLocalProvider(
-					LocalCompositionPremium provides true,
 					LocalCompositionRichTextEditor provides richTextEditor,
 					LocalCompositionNoteId provides noteId,
 					LocalCompositionNoteIdList provides noteIdList,
@@ -338,7 +388,7 @@ class NoteActivity : ComponentActivity() {
 					LocalCompositionSetUserTimestamp provides { viewModel.setUserTimestamp(it) },
 					LocalCompositionOpenBottomSheet provides ::openSheet,
 					LocalCompositionCloseBottomSheet provides ::closeSheet,
-					LocalCompositionOpenDialog provides { _noteDialogType, data -> openDialog(_noteDialogType, data) },
+					LocalCompositionOpenDialog provides ::openDialog,
 					LocalCompositionCloseDialog provides ::closeDialog,
 					LocalCompositionShowDatePickerDialog provides showDatePickerDialog,
 					LocalCompositionShowTimePickerDialog provides showTimePickerDialog,
@@ -360,14 +410,13 @@ class NoteActivity : ComponentActivity() {
 					},
 					LocalDeleteNote provides this.viewModel::deleteNote,
 					LocalOnShareText provides {
-						richTextEditor.getPlainText(viewModel.content.value ?: "")
+						richTextEditor.exec("editor.getData(\"share\");")
 						closeDialog(NoteDialogType.SHARE)
 					},
 					LocalOnShareAttachment provides {
 						this.onShareAttachment()
 						closeDialog(NoteDialogType.SHARE)
 					},
-					LocalOnPrint provides { richTextEditor.callPrintData(viewModel.content.value) },
 					LocalOnExportMarkdown provides this::onExportMarkdown
 				) {
 					NoteScreen(
@@ -438,31 +487,42 @@ class NoteActivity : ComponentActivity() {
 	}
 
 	private fun onShareText(text : String?) {
+//		Intent(Intent.ACTION_SEND).apply {
+//			type = "text/plain"
+//			putExtra(Intent.EXTRA_SUBJECT, viewModel.title.value ?: "Note")
+//			putExtra(Intent.EXTRA_TEXT, text ?: "")
+//
+//			if (resolveActivity(this@NoteActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
+//			else Toast.makeText(this@NoteActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
+//		}
+
 		Intent(Intent.ACTION_SEND).apply {
 			type = "text/html"
 			putExtra(Intent.EXTRA_SUBJECT, viewModel.title.value ?: "Note")
-			putExtra(Intent.EXTRA_TEXT, text ?: "")
+//			putExtra(Intent.EXTRA_TEXT, Html.fromHtml(shareText, Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST))
+			putExtra(Intent.EXTRA_TEXT, text ?: "no text")
 
 			if (resolveActivity(this@NoteActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
-			else Toast.makeText(this@NoteActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
+			else Toast.makeText(this@NoteActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
 		}
+
 	}
 
 	private fun onShareAttachment() {
-//		val files : ArrayList<Uri> = ArrayList()
-//		viewModel.attachmentListBuffer.forEach {
-//			it.value.third?.let { it1 -> files.add(it1) }
-//		}
-//
-//		Intent().apply {
-//			action = Intent.ACTION_SEND_MULTIPLE
-//			putExtra(Intent.EXTRA_SUBJECT, viewModel.title.value ?: "Note")
-//			type = "*/*"
-//			putParcelableArrayListExtra(Intent.EXTRA_STREAM, files)
-//
-//			if (resolveActivity(this@NoteActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
-//			else Toast.makeText(this@NoteActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
-//		}
+		val files : ArrayList<Uri> = ArrayList()
+		viewModel.attachmentListBuffer.forEach {
+			it.second?.let { it1 -> files.add(it1) }
+		}
+
+		Intent().apply {
+			action = Intent.ACTION_SEND_MULTIPLE
+			putExtra(Intent.EXTRA_SUBJECT, viewModel.title.value ?: "Note")
+			type = "*/*"
+			putParcelableArrayListExtra(Intent.EXTRA_STREAM, files)
+
+			if (resolveActivity(this@NoteActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
+			else Toast.makeText(this@NoteActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
+		}
 	}
 
 	private fun onExportMarkdown() {

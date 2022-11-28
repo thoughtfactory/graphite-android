@@ -1,10 +1,12 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScreen
@@ -21,7 +23,9 @@ fun ExtensionsScreen() {
 	val isGeolocationEnabled by dataStoreInstance.getGeolocation.collectAsState(initial = null)
 	val isYearProgressEnabled by dataStoreInstance.getYearProgress.collectAsState(initial = null)
 
-	val scrollState = SettingsActivity.scrollState.current
+	val scrollState = SettingsActivity.LocalScrollState.current
+
+	val isPro by BaseApplication.isPro
 
 	GenericSettingsScreen(
 		title = "Extensions",
@@ -38,7 +42,14 @@ fun ExtensionsScreen() {
 			title = "Auto Geo Tagging",
 			subTitle = "Automatically detect and add your location when writing a note",
 			icon = R.drawable.ic_map_marker,
-			isChecked = isGeolocationEnabled == true
-		) { dataStoreInstance.putGeolocation(isGeolocationEnabled != true) }
+			isProFeature = true,
+			isChecked = if (isPro) isGeolocationEnabled == true else false
+		) {
+			if (isPro) {
+				dataStoreInstance.putGeolocation(isGeolocationEnabled != true)
+			} else {
+				Toast.makeText(context, "Join Graphite Pro to enable auto geo tagging your notes", Toast.LENGTH_SHORT).show()
+			}
+		}
 	}
 }

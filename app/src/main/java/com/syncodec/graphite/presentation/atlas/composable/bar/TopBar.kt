@@ -32,7 +32,7 @@ fun TopBar(
 				fontWeight = FontWeight.Bold
 			)
 		},
-		colors = TopAppBarDefaults.smallTopAppBarColors(
+		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = MaterialTheme.colorScheme.background,
 			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
 			titleContentColor = MaterialTheme.colorScheme.onSurface,

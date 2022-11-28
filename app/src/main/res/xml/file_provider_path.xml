@@ -3,4 +3,5 @@
     <cache-path name="export" path="./export" />
     <cache-path name="root" path="./" />
     <files-path name="attachment" path="./data" />
+    <cache-path name="tmp" path="./" />
 </paths>

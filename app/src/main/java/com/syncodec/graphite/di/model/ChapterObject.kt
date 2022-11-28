@@ -10,7 +10,8 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 class ChapterObject : RealmObject {
-	@PrimaryKey var id : RealmUUID = RealmUUID.random()
+	@PrimaryKey
+	var id : RealmUUID = RealmUUID.random()
 
 	var createdTimestamp : Long = System.currentTimeMillis()
 	var modifiedTimestamp : Long = System.currentTimeMillis()
@@ -24,7 +25,7 @@ class ChapterObject : RealmObject {
 	var chapterList : RealmList<ChapterObject> = realmListOf()
 	var noteList : RealmList<NoteObject> = realmListOf()
 
-	var parentChapterId : RealmUUID? = null
+	var parentId : RealmUUID? = null
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
@@ -40,7 +41,7 @@ class ChapterObject : RealmObject {
 			totalNoteDirect = this.noteList.size,
 			totalChapter = this.countTotalChapter(),
 			totalNote = this.countTotalNote(),
-			parentChapterId = this.parentChapterId
+			parentId = this.parentId
 		)
 	}
 
@@ -70,9 +71,9 @@ class ChapterObject : RealmObject {
 		thumbnail = this.thumbnail,
 		isFavourite = this.isFavourite,
 		isLocked = this.isLocked,
-		chapterList = this.chapterList.map { it.id.toString() },
-		noteList = this.noteList.map { it.id.toString() },
-		parentChapterId = this.parentChapterId?.toString()
+		chapterIdList = this.chapterList.map { it.id.toString() },
+		noteIdList = this.noteList.map { it.id.toString() },
+		parentId = this.parentId?.toString()
 	)
 
 	override fun hashCode() : Int {
@@ -87,7 +88,7 @@ class ChapterObject : RealmObject {
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + chapterList.hashCode()
 		result = 31 * result + noteList.hashCode()
-		result = 31 * result + (parentChapterId?.hashCode() ?: 0)
+		result = 31 * result + (parentId?.hashCode() ?: 0)
 		return result
 	}
 
@@ -105,7 +106,7 @@ class ChapterObject : RealmObject {
 		if (isLocked != other.isLocked) return false
 		if (chapterList != other.chapterList) return false
 		if (noteList != other.noteList) return false
-		if (parentChapterId != other.parentChapterId) return false
+		if (parentId != other.parentId) return false
 
 		return true
 	}
@@ -124,7 +125,7 @@ data class ChapterObjectLite(
 	val totalNoteDirect : Int,
 	val totalChapter : Int,
 	val totalNote : Int,
-	val parentChapterId : RealmUUID?
+	val parentId : RealmUUID?
 ) {
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -135,7 +136,7 @@ data class ChapterObjectLite(
 		result = 31 * result + (color ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
-		result = 31 * result + (parentChapterId?.hashCode() ?: 0)
+		result = 31 * result + (parentId?.hashCode() ?: 0)
 		return result
 	}
 
@@ -151,7 +152,7 @@ data class ChapterObjectLite(
 		if (color != other.color) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
-		if (parentChapterId != other.parentChapterId) return false
+		if (parentId != other.parentId) return false
 
 		return true
 	}
@@ -167,9 +168,9 @@ data class ChapterSnapshot(
 	val thumbnail : String?,
 	val isFavourite : Boolean,
 	val isLocked : Boolean,
-	val chapterList : List<String>,
-	val noteList : List<String>,
-	val parentChapterId : String?
+	val chapterIdList : List<String>,
+	val noteIdList : List<String>,
+	val parentId : String?
 ) {
 	fun toObject() : ChapterObject = ChapterObject().apply {
 		this.id = RealmUUID.from(this@ChapterSnapshot.id)
@@ -181,6 +182,6 @@ data class ChapterSnapshot(
 		this.thumbnail = this@ChapterSnapshot.thumbnail
 		this.isFavourite = this@ChapterSnapshot.isFavourite
 		this.isLocked = this@ChapterSnapshot.isLocked
-		this.parentChapterId = this@ChapterSnapshot.parentChapterId?.let { RealmUUID.from(this@ChapterSnapshot.id) }
+		this.parentId = this@ChapterSnapshot.parentId?.let { RealmUUID.from(this@ChapterSnapshot.id) }
 	}
 }

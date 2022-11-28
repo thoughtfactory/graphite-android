@@ -343,6 +343,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 					this.thumbnail = this@BucketItemViewModel.thumbnail.value?.encodeBase64()
 					this.isFavourite = this@BucketItemViewModel.isFavourite.value ?: false
 					this.isLocked = this@BucketItemViewModel.isLocked.value ?: false
+					this.parentId = this@BucketItemViewModel.bucketId.value
 
 					when (this@BucketItemViewModel.bucketType.value) {
 						BucketType.TODO -> null
