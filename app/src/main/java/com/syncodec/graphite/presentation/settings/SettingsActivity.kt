@@ -377,30 +377,29 @@ class SettingsActivity : ComponentActivity() {
 				} else {
 					val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
 					auth.signInWithCredential(firebaseCredential)
-						.addOnCompleteListener(this) { task ->
-							if (task.isSuccessful) {
-								this.firebaseUser.value = auth.currentUser
-								Toast.makeText(this, "Signed in as $displayName", Toast.LENGTH_SHORT).show()
+						.addOnSuccessListener {
+							this.firebaseUser.value = auth.currentUser
+							Toast.makeText(this, "Signed in as $displayName", Toast.LENGTH_SHORT).show()
 
-								Purchases
-									.sharedInstance
-									.apply {
-										setAttributes(mapOf("\$email" to auth.currentUser?.email))
-										logIn(
-											newAppUserID = auth.currentUser !!.uid,
-											callback = object : LogInCallback {
-												override fun onError(error : PurchasesError) {
-												}
-
-												override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
-													BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
-												}
+							Purchases
+								.sharedInstance
+								.apply {
+									setAttributes(mapOf("\$email" to auth.currentUser?.email))
+									logIn(
+										newAppUserID = auth.currentUser !!.uid,
+										callback = object : LogInCallback {
+											override fun onError(error : PurchasesError) {
 											}
-										)
-									}
-							} else {
-								Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-							}
+
+											override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
+												BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+											}
+										}
+									)
+								}
+						}
+						.addOnFailureListener {
+							Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 						}
 				}
 			} catch (e : ApiException) {
@@ -439,7 +438,8 @@ class SettingsActivity : ComponentActivity() {
 				override fun onReceived(customerInfo : CustomerInfo) {
 					BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
 				}
-			})
+			}
+		)
 	}
 
 	private val localBackupDirPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {

@@ -23,11 +23,11 @@ fun ImportScreen() {
 			subTitle = "Import data from Graphite",
 		) { importData(SettingsActivity.Companion.ImportType.GRAPHITE) }
 
-		SettingsButton(
-			title = "Google Keep",
-			icon = R.drawable.ic_import,
-			subTitle = "Import data from Google Keep",
-		) { importData(SettingsActivity.Companion.ImportType.GOOGLE_KEEP) }
+//		SettingsButton(
+//			title = "Google Keep",
+//			icon = R.drawable.ic_import,
+//			subTitle = "Import data from Google Keep",
+//		) { importData(SettingsActivity.Companion.ImportType.GOOGLE_KEEP) }
 
 		SettingsButton(
 			title = "Journey",
@@ -35,10 +35,10 @@ fun ImportScreen() {
 			subTitle = "Import data from Journey",
 		) { importData(SettingsActivity.Companion.ImportType.JOURNEY) }
 
-		SettingsButton(
-			title = "Notesnook",
-			icon = R.drawable.ic_import,
-			subTitle = "Import data from Notesnook",
-		) { importData(SettingsActivity.Companion.ImportType.NOTESNOOK) }
+//		SettingsButton(
+//			title = "Notesnook",
+//			icon = R.drawable.ic_import,
+//			subTitle = "Import data from Notesnook",
+//		) { importData(SettingsActivity.Companion.ImportType.NOTESNOOK) }
 	}
 }

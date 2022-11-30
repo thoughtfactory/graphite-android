@@ -34,13 +34,10 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionTagListBuffer
 import com.syncodec.graphite.presentation.note.composable.LocalOnClickTag
 import com.syncodec.graphite.presentation.tags.TagsActivity
-import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
@@ -48,8 +45,6 @@ import com.syncodec.graphite.utils.getInverseBWColor
 @Composable
 fun TagBottomSheet() {
 	val context = LocalContext.current
-
-	val noteId = LocalCompositionNoteId.current
 
 	val tagList = LocalCompositionTagList.current
 	val tagListBuffer = LocalCompositionTagListBuffer.current
@@ -133,7 +128,7 @@ private fun ConnectedTagView(
 		item { Spacer(modifier = Modifier.width(16.dp)) }
 		tagList.forEach {
 			item(
-				key = it.id.toString()
+				key = it.tag.hashCode() + it.color.hashCode()
 			) {
 				SuggestionChip(
 					onClick = { onClick(it) },
@@ -188,7 +183,8 @@ private fun TagItem(
 			Text(
 				text = tag.tag,
 				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold
+				fontWeight = FontWeight.Bold,
+				color = MaterialTheme.colorScheme.onBackground
 			)
 
 			Spacer(modifier = Modifier.weight(1f))

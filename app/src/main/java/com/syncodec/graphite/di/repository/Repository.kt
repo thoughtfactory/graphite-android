@@ -591,6 +591,9 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 								it.color = tagObject.color
 							}
 						} else {
+							this@Repository2.getAllTag().find { it.tag == tagObject.tag }?.let {
+								it.color = tagObject.color
+							} ?:
 							copyToRealm(tagObject)
 						}
 

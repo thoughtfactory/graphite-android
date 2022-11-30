@@ -75,7 +75,9 @@ fun TagScreen() {
 						if (! isPro && tagList.size >= 4) {
 							Toast.makeText(context, "Join Graphite Pro to add more tags", Toast.LENGTH_SHORT).show()
 						} else {
-							TagObject().apply {
+							tagList.find { it.tag == tagName }?.let {
+								Toast.makeText(context, "Tag already exists", Toast.LENGTH_SHORT).show()
+							} ?: TagObject().apply {
 								this.tag = tagName
 								openDialog(TagDialogType.EDIT, this)
 								softwareKeyboardController?.hide()
