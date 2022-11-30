@@ -7,33 +7,22 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
@@ -44,7 +33,10 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook
 import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(
+	ExperimentalMaterial3Api::class,
+	ExperimentalAnimationApi::class
+)
 @Composable
 fun NotebookScreen(
 	notebookList : List<ChapterObject>,
@@ -102,49 +94,6 @@ fun NotebookScreen(
 					item { Spacer(modifier = Modifier.height(96.dp)) }
 				}
 			}
-		}
-	}
-}
-
-
-@Composable
-private fun NoNotebookCard() {
-	Box(
-		modifier = Modifier.fillMaxSize(),
-		contentAlignment = Alignment.Center
-	) {
-		Column(
-			modifier = Modifier.fillMaxWidth(),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.Center
-		) {
-			Spacer(modifier = Modifier.height(8.dp))
-			Image(
-				painter = painterResource(id = R.drawable.il_reading),
-				contentDescription = "No diary entries",
-				modifier = Modifier.fillMaxWidth(0.5f)
-			)
-
-			Spacer(modifier = Modifier.height(24.dp))
-
-			Text(
-				text = "The town was paper, but the memories were not.",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.primary,
-				modifier = Modifier.fillMaxWidth(0.71f)
-			)
-
-			Spacer(modifier = Modifier.height(16.dp))
-
-			Text(
-				text = "~ John Green, Paper Towns",
-				style = MaterialTheme.typography.bodySmall,
-				fontStyle = FontStyle.Italic,
-				textAlign = TextAlign.End,
-				color = MaterialTheme.colorScheme.primary,
-				modifier = Modifier.fillMaxWidth(0.71f)
-			)
 		}
 	}
 }

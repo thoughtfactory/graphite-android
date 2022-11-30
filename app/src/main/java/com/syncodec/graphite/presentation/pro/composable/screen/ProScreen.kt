@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.pro.composable.bar.TopBar
 import com.syncodec.graphite.presentation.pro.composable.buildingBlock.LifetimePackageView
 import com.syncodec.graphite.presentation.pro.composable.buildingBlock.ProFeaturesView
@@ -41,6 +42,9 @@ import com.syncodec.graphite.presentation.pro.composable.buildingBlock.Subscript
 @Preview
 @Composable
 fun SubscriptionScreen() {
+
+	val onRestore = ProActivity.onRestore.current
+
 	ModalBottomSheetLayout(
 		sheetContent = {
 			Box(
@@ -85,7 +89,7 @@ fun SubscriptionScreen() {
 				Spacer(modifier = Modifier.height(12.dp))
 
 				Button(
-					onClick = { /*TODO*/ },
+					onClick = onRestore,
 					contentPadding = PaddingValues(start = 16.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
 				) {
 					Icon(

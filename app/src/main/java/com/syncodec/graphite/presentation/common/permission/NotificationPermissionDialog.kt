@@ -2,17 +2,13 @@ package com.syncodec.graphite.presentation.common.permission
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -22,7 +18,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
-import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalPermissionsApi::class)

@@ -60,21 +60,21 @@ fun TagScreen(
 			)
 		}
 
-		item {
-			ListItem(
-				title = "With attachments",
-				icon = R.drawable.ic_attachment,
-				onClick = onClickWithAttachments
-			)
-		}
-		item {
-			Spacer(
-				modifier = Modifier
-					.fillMaxWidth(0.71f)
-					.height(2.dp)
-					.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f))
-			)
-		}
+//		item {
+//			ListItem(
+//				title = "With attachments",
+//				icon = R.drawable.ic_attachment,
+//				onClick = onClickWithAttachments
+//			)
+//		}
+//		item {
+//			Spacer(
+//				modifier = Modifier
+//					.fillMaxWidth(0.71f)
+//					.height(2.dp)
+//					.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f))
+//			)
+//		}
 
 		item{
 			AnimatedVisibility(visible = isVaultOpened) {

@@ -124,7 +124,7 @@ class BucketItemActivity : ComponentActivity() {
 						}
 					}
 				} catch (e : Exception) {
-					e.printStackTrace()
+//					e.printStackTrace()
 					finish()
 				}
 			}

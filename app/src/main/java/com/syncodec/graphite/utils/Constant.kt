@@ -124,6 +124,11 @@ val colorList: List<Color> = listOf(
 val imageList: List<Int> = listOf(
 	R.drawable.img_1,
 	R.drawable.img_2,
+	R.drawable.img_3,
+	R.drawable.img_4,
+	R.drawable.img_5,
+	R.drawable.img_6,
+	R.drawable.img_7,
 )
 
 val mimeTypeIconMap: Map<String, Int> = mapOf(

@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.attachment.composable.dialog
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog

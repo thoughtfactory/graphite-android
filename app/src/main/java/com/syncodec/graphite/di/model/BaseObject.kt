@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import androidx.annotation.Keep
 import androidx.room.PrimaryKey
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonProcessingException
@@ -12,6 +13,7 @@ import io.realm.kotlin.types.RealmUUID
 import java.io.IOException
 
 
+@Keep
 class BaseObject: RealmObject {
 	@PrimaryKey var id : RealmUUID = RealmUUID.random()
 	var defaultChapterId: RealmUUID? = null

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +50,7 @@ fun SettingsButton(
 			disabledContainerColor = containerColor.copy(alpha = 0.47f),
 			disabledContentColor = contentColor.copy(alpha = 0.47f),
 		),
+		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier.padding(12.dp, 4.dp),
 		enabled = enabled,
 		onClick = onClick

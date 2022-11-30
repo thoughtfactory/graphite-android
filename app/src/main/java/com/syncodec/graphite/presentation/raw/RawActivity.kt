@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.raw
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -10,7 +9,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
@@ -34,15 +32,13 @@ class RawActivity : ComponentActivity() {
 				if (RealmUUID != null && objectType != null) {
 //					viewModel.readObject(RealmUUID, objectType)
 				} else {
-					Log.i("npr71", "RealmUUID or objectType is null")
 					finish()
 				}
 			} else {
-				Log.i("npr71", "hasRealmUUID or hasObjectType is false")
 				finish()
 			}
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			finish()
 		}
 

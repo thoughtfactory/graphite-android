@@ -11,7 +11,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -20,9 +19,11 @@ import com.revenuecat.purchases.Package
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.getOfferingsWith
+import com.revenuecat.purchases.interfaces.LogInCallback
 import com.revenuecat.purchases.interfaces.PurchaseCallback
 import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 import com.revenuecat.purchases.models.StoreTransaction
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,7 +43,6 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 
 		setContent {
 			BaseContent {
-				val scope = rememberCoroutineScope()
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
@@ -56,7 +56,8 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 					ProActivity.monthlyPackage provides _monthlyPackage,
 					ProActivity.annualPackage provides _annualPackage,
 					ProActivity.lifetimePackage provides _lifetimePackage,
-					onClickPackage provides this::purchaseProduct
+					onClickPackage provides this::purchaseProduct,
+					ProActivity.onRestore provides this::onRestore,
 				) {
 					SubscriptionScreen()
 				}
@@ -94,23 +95,53 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		}
 
 		try {
-			Purchases.sharedInstance.logIn(auth.currentUser !!.uid, null)
+			Purchases
+				.sharedInstance
+				.apply {
+					logIn(auth.currentUser !!.uid, null)
+					setAttributes(mapOf("\$email" to auth.currentUser?.email))
+					purchasePackage(
+						activity = this@ProActivity,
+						packageToPurchase = _package,
+						listener = object : PurchaseCallback {
+							override fun onCompleted(storeTransaction : StoreTransaction, customerInfo : CustomerInfo) {
+								Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
+								BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+							}
 
-			Purchases.sharedInstance.purchasePackage(
-				activity = this,
-				packageToPurchase = _package,
-				listener = object : PurchaseCallback {
-					override fun onCompleted(storeTransaction : StoreTransaction, customerInfo : CustomerInfo) {
-						Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
-					}
-
-					override fun onError(error : PurchasesError, userCancelled : Boolean) {
-						Toast.makeText(this@ProActivity, "Error purchasing product. Please try again later.", Toast.LENGTH_SHORT).show()
-					}
+							override fun onError(error : PurchasesError, userCancelled : Boolean) {
+								Toast.makeText(this@ProActivity, "Error purchasing product. Please try again later.", Toast.LENGTH_SHORT).show()
+							}
+						}
+					)
 				}
-			)
 		} catch (e : Exception) {
 			Toast.makeText(this, "Error making purchase. Please try again later.", Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	private fun onRestore() {
+		val auth = Firebase.auth
+		if (auth.currentUser?.uid == null) {
+			Toast.makeText(this, "Please login to restore purchase", Toast.LENGTH_SHORT).show()
+			return
+		} else {
+			Purchases
+				.sharedInstance
+				.apply {
+					setAttributes(mapOf("\$email" to auth.currentUser?.email))
+					logIn(
+						newAppUserID = auth.currentUser !!.uid,
+						callback = object : LogInCallback {
+							override fun onError(error : PurchasesError) {
+							}
+
+							override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
+								BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+							}
+						}
+					)
+				}
 		}
 	}
 
@@ -126,5 +157,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		val lifetimePackage = compositionLocalOf<Package?> { null }
 
 		val onClickPackage = compositionLocalOf<(Package?) -> Unit> { {} }
+
+		val onRestore = compositionLocalOf<() -> Unit> { {} }
 	}
 }

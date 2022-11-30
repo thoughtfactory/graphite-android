@@ -21,7 +21,7 @@ fun String.toColor(color: Color): Color {
 	return try {
 		Color(android.graphics.Color.parseColor("#${this}"))
 	} catch (e: Exception) {
-		e.printStackTrace()
+//		e.printStackTrace()
 		color
 	}
 }

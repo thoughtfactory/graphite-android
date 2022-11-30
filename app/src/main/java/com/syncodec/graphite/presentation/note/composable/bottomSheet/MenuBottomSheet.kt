@@ -41,6 +41,7 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseB
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionContent
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
+import com.syncodec.graphite.presentation.note.composable.LocalOnShareText
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
@@ -59,10 +60,12 @@ fun MenuBottomSheet() {
 
 	var showExportOptions by remember { mutableStateOf(false) }
 
+	val onShareText = LocalOnShareText.current
+
 	val buttonList : List<BottomSheetButtonData> = listOf(
 		BottomSheetButtonData(title = "Export", icon = R.drawable.ic_export) { showExportOptions = ! showExportOptions },
 		BottomSheetButtonData(title = "Copy", icon = R.drawable.ic_copy) {
-
+			onShareText()
 		},
 		BottomSheetButtonData(
 			title = "Delete",
@@ -117,45 +120,38 @@ fun MenuBottomSheet() {
 					icon = R.drawable.ic_file_text,
 					containerColor = containerColor,
 					contentColor = contentColor,
-				) {
-					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
-					richTextEditor.exec("editor.getData(\"export_text\");")
-				}
+				) { richTextEditor.exec("editor.setAndGetData('${title}', ${content}, 'export_text');") }
+
 				ExportButton(
 					title = "As PDF",
 					icon = R.drawable.ic_file_pdf,
 					containerColor = containerColor,
 					contentColor = contentColor
-				) {
-					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
-					richTextEditor.exec("editor.getData(\"export_pdf\");")
-				}
+				) { richTextEditor.exec("editor.setAndGetData('${title}', ${content}, 'export_pdf');") }
+
 				ExportButton(
 					title = "As HTML",
 					icon = R.drawable.ic_file_html,
 					containerColor = containerColor,
 					contentColor = contentColor,
 					isProFeature = true
-				) {
-					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
-					richTextEditor.exec("editor.getData(\"export_html\");")
-				}
+				) { richTextEditor.exec("editor.setAndGetData('${title}', ${content}, 'export_html');") }
+
 				ExportButton(
 					title = "As Markdown",
 					icon = R.drawable.ic_file_pdf,
 					containerColor = containerColor,
 					contentColor = contentColor,
 					isProFeature = true
-				) {
-					richTextEditor.exec("editor.setData(${title ?: ""}, ${content});");
-					richTextEditor.exec("editor.getData(\"export_markdown\");")
-				}
+				) { richTextEditor.exec("editor.setAndGetData('${title}', ${content}, 'export_markdown');") }
+
 //				ExportButton(
 //					title = "As Image",
 //					icon = R.drawable.ic_file_image,
 //					containerColor = containerColor,
 //					contentColor = contentColor
 //				) { richTextEditor.exec("editor.getData(\"export_image\");") }
+
 //				ExportButton(
 //					title = "Attachments",
 //					icon = R.drawable.ic_gallery,

@@ -2,9 +2,19 @@ package com.syncodec.graphite.presentation.common.richText
 
 import android.content.Context
 import android.util.Log
-import android.webkit.*
+import android.webkit.ConsoleMessage
+import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Toast
+import androidx.annotation.Keep
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -17,8 +27,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.toHexString
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class RichTextEditor(context : Context, val containerColor : Color, contentColor : Color, screenHeightPx : Int, typography : Int?) : WebView(context) {
@@ -62,27 +77,35 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			}
 		}
 
-		setWebContentsDebuggingEnabled(true)
-
 		setBackgroundColor(0)
 		setLayerType(LAYER_TYPE_SOFTWARE, null)
 
 		addJavascriptInterface(this, "bridge")
 
-//		loadUrl(INDEX_PATH)
-//		loadData()
-
-		context.assets.open("dropper/index.html").let {
+		context.assets.open("orbit/orbital").let {
 			val buffer = ByteArray(it.available())
 			it.read(buffer)
 			it.close()
-			val html = String(buffer)
-			loadDataWithBaseURL("file:///android_asset/dropper", html, "text/html", "UTF-8", null)
+			val encHtml = String(buffer)
+			val passcode = "2%xY@Z5kYGu*iX!#N3m%03fC%4!070#D"
+
+			CoroutineScope(Dispatchers.IO).launch {
+				try {
+					Alice.decrypt(encHtml, passcode).let { html ->
+						withContext(Dispatchers.Main) {
+							if (html == null) Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
+							else loadDataWithBaseURL("file:///android_asset/orbit", html, "text/html", "UTF-8", null)
+						}
+					}
+				} catch (e : Exception) {
+					withContext(Dispatchers.Main) {
+						Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
+					}
+				}
+			}
 		}
 
 		exec("editor.setBaseColor('${containerColor.toHexString()}', '${contentColor.toHexString()}');")
-
-//		exec("editor.reCalculateHeight($screenHeightPx);")
 
 		when (typography) {
 			0 -> exec("editor.setBaseFontFamily(\"overlock\");")
@@ -139,6 +162,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 		}
 	}
 
+	@Keep
 	data class TextFormat(
 		val bold : Boolean = false,
 		val italic : Boolean = false,

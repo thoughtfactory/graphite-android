@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -24,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.core.content.FileProvider
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.common.printer.Printer
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
@@ -137,11 +139,12 @@ class NoteActivity : ComponentActivity() {
 				richTextEditor.setGetTextListener(
 					object : RichTextEditor.GetTextListener {
 						override fun onGetData(extra : String?, data : String?) {
-							when(extra) {
+							when (extra) {
 								"save" -> {
 									viewModel.setContent(data)
 									viewModel.putNote()
 								}
+
 								"share" -> {
 									CoroutineScope(Dispatchers.Main).launch {
 										if (data == null) {
@@ -153,6 +156,28 @@ class NoteActivity : ComponentActivity() {
 										}
 									}
 								}
+
+								"export_text" -> {
+									if (data == null) {
+										Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+									} else {
+										try {
+											val dataJson = JSONObject(data)
+											val text = dataJson.optString("dataText")
+
+											File(this@NoteActivity.cacheDir, "snapshot").apply {
+												mkdirs()
+												File(this, "export_${RealmUUID.random()}.txt").apply {
+													writeText(text)
+													share(this@NoteActivity)
+												}
+											}
+										} catch (e : Exception) {
+											Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
+										}
+									}
+								}
+
 								"export_pdf" -> {
 									try {
 										CoroutineScope(Dispatchers.Main).launch {
@@ -169,6 +194,7 @@ class NoteActivity : ComponentActivity() {
 										Toast.makeText(this@NoteActivity, "Error exporting as pdf.", Toast.LENGTH_SHORT).show()
 									}
 								}
+
 								"export_html" -> {
 									if (data == null) {
 										Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
@@ -177,15 +203,19 @@ class NoteActivity : ComponentActivity() {
 											val dataJson = JSONObject(data)
 											val html = dataJson.optString("dataHtml")
 
-											File.createTempFile("export_html", ".html").apply {
-												writeText(html)
-												share(this@NoteActivity,)
+											File(this@NoteActivity.cacheDir, "export").apply {
+												mkdirs()
+												File(this, "export_${RealmUUID.random()}.html").apply {
+													writeText(html)
+													share(this@NoteActivity)
+												}
 											}
 										} catch (e : Exception) {
 											Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
 										}
 									}
 								}
+
 								"export_markdown" -> {
 									if (data == null) {
 										Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
@@ -194,26 +224,12 @@ class NoteActivity : ComponentActivity() {
 											val dataJson = JSONObject(data)
 											val markdown = dataJson.optString("dataMarkdown")
 
-											File.createTempFile("export_markdown", ".md").apply {
-												writeText(markdown)
-												share(this@NoteActivity,)
-											}
-										} catch (e : Exception) {
-											Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
-										}
-									}
-								}
-								"export_text" -> {
-									if (data == null) {
-										Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
-									} else {
-										try {
-											val dataJson = JSONObject(data)
-											val text = dataJson.optString("dataText")
-
-											File.createTempFile("export_text", ".txt").apply {
-												writeText(text)
-												share(this@NoteActivity,)
+											File(this@NoteActivity.cacheDir, "export").apply {
+												mkdirs()
+												File(this, "export_${RealmUUID.random()}.md").apply {
+													writeText(markdown)
+													share(this@NoteActivity)
+												}
 											}
 										} catch (e : Exception) {
 											Toast.makeText(this@NoteActivity, "Error exporting data.", Toast.LENGTH_SHORT).show()
@@ -301,7 +317,6 @@ class NoteActivity : ComponentActivity() {
 								viewModel.getSelectChapter(data as RealmUUID?)
 								showChapterSelectionDialog = true
 							} catch (e : Exception) {
-//								e.printStackTrace()
 							}
 						}
 
@@ -408,9 +423,16 @@ class NoteActivity : ComponentActivity() {
 							closeDialog(NoteDialogType.DISCARD)
 						}
 					},
-					LocalDeleteNote provides this.viewModel::deleteNote,
+					LocalDeleteNote provides {
+						Intent().apply {
+							putExtra(Extra.Companion.Constant.INTENT_ACTION.name, Extra.Companion.IntentAction.DELETE.name)
+							putExtra(Extra.Companion.Constant.OBJECT_ID.name, noteId?.bytes)
+							setResult(Activity.RESULT_OK, this)
+							this@NoteActivity.finish()
+						}
+					},
 					LocalOnShareText provides {
-						richTextEditor.exec("editor.getData(\"share\");")
+						richTextEditor.exec("editor.setAndGetData('${title}', ${content}, 'share');")
 						closeDialog(NoteDialogType.SHARE)
 					},
 					LocalOnShareAttachment provides {
@@ -509,16 +531,16 @@ class NoteActivity : ComponentActivity() {
 	}
 
 	private fun onShareAttachment() {
-		val files : ArrayList<Uri> = ArrayList()
+		val uriList : ArrayList<Uri> = ArrayList()
 		viewModel.attachmentListBuffer.forEach {
-			it.second?.let { it1 -> files.add(it1) }
+			it.first?.let { FileProvider.getUriForFile(this, "${this.packageName}.fileprovider", it)?.let { uriList.add(it) } }
 		}
 
 		Intent().apply {
 			action = Intent.ACTION_SEND_MULTIPLE
 			putExtra(Intent.EXTRA_SUBJECT, viewModel.title.value ?: "Note")
 			type = "*/*"
-			putParcelableArrayListExtra(Intent.EXTRA_STREAM, files)
+			putParcelableArrayListExtra(Intent.EXTRA_STREAM, uriList)
 
 			if (resolveActivity(this@NoteActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
 			else Toast.makeText(this@NoteActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
@@ -530,17 +552,19 @@ class NoteActivity : ComponentActivity() {
 			.builder(this)
 			.build()
 
-		val markdown = markwon.toMarkdown("<!DOCTYPE html>\n" +
-				"<html>\n" +
-				"<body>\n" +
-				"\n" +
-				"<h1>My First Heading</h1>\n" +
-				"\n" +
-				"<p>My first paragraph.</p>\n" +
-				"\n" +
-				"</body>\n" +
-				"</html>\n" +
-				"\n")
+		val markdown = markwon.toMarkdown(
+			"<!DOCTYPE html>\n" +
+					"<html>\n" +
+					"<body>\n" +
+					"\n" +
+					"<h1>My First Heading</h1>\n" +
+					"\n" +
+					"<p>My first paragraph.</p>\n" +
+					"\n" +
+					"</body>\n" +
+					"</html>\n" +
+					"\n"
+		)
 
 		markwon
 	}

@@ -12,7 +12,6 @@ import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
@@ -69,7 +68,6 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 	var bookDescription : MutableState<String?> = mutableStateOf(null)
 	var bookPageCount : MutableState<Int?> = mutableStateOf(null)
 	var bookFirstPublishYear : MutableState<String?> = mutableStateOf(null)
-
 
 	val showType : MutableState<ShowType?> = mutableStateOf(null)
 
@@ -147,7 +145,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 											status.value = Status.ERROR
 										} else {
 											response.body?.string()?.let {
-												val movieData : MovieData = objectMapper.readValue(it)
+												val movieData : MovieData = objectMapper.readValue(it, MovieData::class.java)
 												loadMovie(movieData = movieData)
 												getShowThumbnail(url = movieData.posterPath) { thumbnail.value = it }
 											}
@@ -175,7 +173,7 @@ class BucketItemViewModel @Inject constructor(private val repository2 : Reposito
 											status.value = Status.ERROR
 										} else {
 											response.body?.string()?.let {
-												val tvData : TvData = objectMapper.readValue(it)
+												val tvData : TvData = objectMapper.readValue(it, TvData::class.java)
 												loadTv(tvData = tvData)
 												getShowThumbnail(url = tvData.posterPath) { thumbnail.value = it }
 											}

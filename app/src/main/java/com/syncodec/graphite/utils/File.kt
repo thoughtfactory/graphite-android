@@ -135,7 +135,7 @@ fun File.share(context : Context) {
 			}
 		}
 	} catch (e : Exception) {
-		e.printStackTrace()
+//		e.printStackTrace()
 		Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
 	}
 }
@@ -150,7 +150,7 @@ fun File.viewFile(context : Context) {
 	} catch (e : ActivityNotFoundException) {
 		Toast.makeText(context, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
 	} catch (e : Exception) {
-		e.printStackTrace()
+//		e.printStackTrace()
 		Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
 	}
 }
@@ -167,7 +167,7 @@ fun copyInputStreamToOutputStream(
 	outputStream.close()
 	inputStream.close()
 } catch (e: Exception) {
-	e.printStackTrace()
+//	e.printStackTrace()
 }
 
 fun copyInputStreamToOutputStream(inputStream: InputStream, outputStream: OutputStream) =
@@ -180,7 +180,7 @@ fun copyInputStreamToOutputStream(inputStream: InputStream, outputStream: Output
 		outputStream.close()
 		inputStream.close()
 	} catch (e: Exception) {
-		e.printStackTrace()
+//		e.printStackTrace()
 	}
 
 fun Context.getFileFromUri(uri: Uri?): File? {

@@ -1,6 +1,6 @@
 package com.syncodec.graphite.presentation.bucket
 
-import android.util.Log
+
 import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
@@ -66,9 +66,9 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 			this@BucketViewModel.refreshCoroutine = this
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("BucketViewModel", "Init")
+					RepositoryState.INIT -> null
 					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("BucketViewModel", "Loading")
+					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> {
 						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 						repository2.getBucketAsFlow(id).collect {
@@ -83,7 +83,7 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 						}
 					}
 
-					RepositoryState.ERROR -> Log.d("BucketViewModel", "Error")
+					RepositoryState.ERROR -> null
 				}
 			}
 		}

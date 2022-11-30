@@ -66,7 +66,7 @@ fun SearchResultScreen(
 						try {
 							if (noteObject.thumbnailType == AttachmentType.IMAGE.name.lowercase()) thumbnail = noteObject.thumbnail?.decodeBase64ToBitmap()
 						} catch (e : Exception) {
-							e.printStackTrace()
+//							e.printStackTrace()
 						}
 					}
 

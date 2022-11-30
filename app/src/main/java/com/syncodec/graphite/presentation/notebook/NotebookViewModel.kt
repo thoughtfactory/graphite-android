@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.notebook
 
 import android.graphics.Bitmap
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
@@ -75,11 +74,11 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("NotebookViewModel", "Init")
+					RepositoryState.INIT -> null
 					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("NotebookViewModel", "Loading")
+					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> repository2.getDefaultChapterId().collect { defaultChapterId.value = it }
-					RepositoryState.ERROR -> Log.d("NotebookViewModel", "Error")
+					RepositoryState.ERROR -> null
 				}
 			}
 		}
@@ -89,11 +88,11 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("NotebookViewModel", "Init")
+					RepositoryState.INIT -> null
 					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("NotebookViewModel", "Loading")
+					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> onRepositoryStateSuccess(chapterId = chapterId)
-					RepositoryState.ERROR -> Log.d("NotebookViewModel", "Error")
+					RepositoryState.ERROR -> null
 				}
 			}
 		}
@@ -137,7 +136,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 						}
 					} catch (e : Exception) {
 //	    		    TODO Show error message
-						e.printStackTrace()
+//						e.printStackTrace()
 					}
 				}
 			} else {

@@ -433,19 +433,6 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		}
 	}
 
-	fun deleteNote() {
-		try {
-			isOperationPending.value = true
-			if (noteId.value != null) {
-				repository2.deleteNote(id = noteId.value !!) { _, e ->
-					isOperationPending.value = false
-				}
-			}
-		} catch (e : Exception) {
-			isOperationPending.value = false
-		}
-	}
-
 	fun addAttachmentToBuffer(uriList : List<Uri>) {
 		viewModelScope.launch(Dispatchers.Default) {
 			withContext(Dispatchers.Main) {

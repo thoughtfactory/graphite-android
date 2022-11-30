@@ -119,11 +119,11 @@ fun AddShowBottomSheet() {
 //				TODO update error message and image
 				scope.launch(Dispatchers.Main) { Toast.makeText(context, "Timeout getting search results", Toast.LENGTH_SHORT).show() }
 				status = Status.ERROR
-				e.printStackTrace()
+//				e.printStackTrace()
 			} catch (e : Exception) {
 //				TODO update error message and image
 				status = Status.ERROR
-				e.printStackTrace()
+//				e.printStackTrace()
 			}
 		}
 	}

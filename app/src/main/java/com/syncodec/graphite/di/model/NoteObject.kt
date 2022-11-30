@@ -1,6 +1,7 @@
 package com.syncodec.graphite.di.model
 
 import android.graphics.Bitmap
+import androidx.annotation.Keep
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
@@ -10,6 +11,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 
 
+@Keep
 class NoteObject : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
@@ -53,7 +55,7 @@ class NoteObject : RealmObject {
 			val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 			return objectMapper.readValue(latLng, LatLng::class.java)
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			return null
 		}
 	}
@@ -184,7 +186,8 @@ class NoteObject : RealmObject {
 				try {
 					it.decodeBase64ToBitmap()
 				} catch (e : Exception) {
-					e.printStackTrace(); null
+//					e.printStackTrace()
+					null
 				}
 			},
 			thumbnailType = this.thumbnailType,
@@ -214,6 +217,7 @@ class NoteObject : RealmObject {
 	}
 }
 
+@Keep
 data class NoteObjectRaw(
 	val id : String,
 	val createdTimestamp : Long,
@@ -277,7 +281,7 @@ data class NoteObjectRaw(
 	}
 }
 
-
+@Keep
 data class NoteObjectLite(
 	val id : RealmUUID,
 	val parentChapterId : RealmUUID?,
@@ -335,6 +339,7 @@ data class NoteObjectLite(
 	}
 }
 
+@Keep
 data class NoteSnapshot(
 	val id : String,
 	val createdTimestamp : Long,
@@ -372,6 +377,7 @@ data class NoteSnapshot(
 }
 
 
+@Keep
 data class LatLng(
 	var latitude : Double? = null,
 	var longitude : Double? = null

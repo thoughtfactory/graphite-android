@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main
 
 import android.graphics.Bitmap
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
@@ -84,11 +83,11 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("MainViewModel", "Init")
-					RepositoryState.LOCKED -> Log.d("MainViewModel", "Locked")
-					RepositoryState.LOADING -> Log.d("MainViewModel", "Loading")
+					RepositoryState.INIT -> null
+					RepositoryState.LOCKED -> null
+					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> onRepositoryStateSuccess()
-					RepositoryState.ERROR -> Log.d("MainViewModel", "Error")
+					RepositoryState.ERROR -> null
 				}
 			}
 		}
@@ -131,16 +130,16 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 							}
 						}
 					} catch (e : RealmNotInitializedException) {
-						e.printStackTrace()
+//						e.printStackTrace()
 					} catch (e : Exception) {
-						e.printStackTrace()
+//						e.printStackTrace()
 					}
 				}
 			}
 		} catch (e : RealmNotInitializedException) {
-			e.printStackTrace()
+//			e.printStackTrace()
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 
@@ -154,9 +153,9 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 				}
 			}
 		} catch (e : RealmNotInitializedException) {
-			e.printStackTrace()
+//			e.printStackTrace()
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 
@@ -211,7 +210,7 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 				}
 			} catch (e : Exception) {
 //	    		TODO Show error message
-				e.printStackTrace()
+//				e.printStackTrace()
 			}
 		}
 	}

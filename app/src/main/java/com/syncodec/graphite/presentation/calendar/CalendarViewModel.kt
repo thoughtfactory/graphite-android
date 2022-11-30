@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.calendar
 
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,9 +38,9 @@ class CalendarViewModel  @Inject constructor(private val repository2 : Repositor
 		viewModelScope.launch(Dispatchers.IO) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("AtlasViewModel", "Init")
+					RepositoryState.INIT -> null
 					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("AtlasViewModel", "Loading")
+					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> {
 						viewModelScope.launch {
 							if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
@@ -58,7 +57,7 @@ class CalendarViewModel  @Inject constructor(private val repository2 : Repositor
 						}
 					}
 
-					RepositoryState.ERROR -> Log.d("AtlasViewModel", "Error")
+					RepositoryState.ERROR -> null
 				}
 			}
 		}

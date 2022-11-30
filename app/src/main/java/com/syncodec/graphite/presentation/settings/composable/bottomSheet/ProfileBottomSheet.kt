@@ -85,18 +85,18 @@ fun ProfileBottomSheet(
 			Text(text = "Sign Out")
 		}
 
-		Button(
-			colors = ButtonDefaults.buttonColors(
-				containerColor = Color.Companion.DeleteContainer,
-				contentColor = Color.Companion.DeleteContent,
-			),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
-			onClick = { openDialog(SettingsDialogType.DELETE_ACCOUNT, null) }
-		) {
-			Text(text = "Delete Account")
-		}
+//		Button(
+//			colors = ButtonDefaults.buttonColors(
+//				containerColor = Color.Companion.DeleteContainer,
+//				contentColor = Color.Companion.DeleteContent,
+//			),
+//			modifier = Modifier
+//				.fillMaxWidth()
+//				.padding(24.dp, 0.dp),
+//			onClick = { openDialog(SettingsDialogType.DELETE_ACCOUNT, null) }
+//		) {
+//			Text(text = "Delete Account")
+//		}
 
 		Spacer(modifier = Modifier.height(32.dp))
 	}

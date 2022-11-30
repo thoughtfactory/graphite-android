@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
 import android.os.CancellationSignal
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -73,6 +72,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.alice.Alice
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -106,7 +106,7 @@ class MainActivity : ComponentActivity() {
 			.setGoogleIdTokenRequestOptions(
 				BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
 					.setSupported(true)
-					.setServerClientId(BuildConfig.CLIENT_KEY)
+					.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
 					.setFilterByAuthorizedAccounts(false)
 					.build()
 			)
@@ -312,10 +312,7 @@ class MainActivity : ComponentActivity() {
 							BiometricPrompt.BIOMETRIC_ERROR_HW_UNAVAILABLE -> null
 							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT -> null
 							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT_PERMANENT -> null
-							BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS -> {
-								Log.i("npr71", "gamma")
-								viewModel.onAuthenticate()
-							}
+							BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS -> { viewModel.onAuthenticate() }
 
 							BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL -> Toast.makeText(
 								this@MainActivity,
@@ -377,11 +374,9 @@ class MainActivity : ComponentActivity() {
 					auth.signInWithCredential(firebaseCredential)
 						.addOnCompleteListener(this) { task ->
 							if (task.isSuccessful) {
-								Log.d("npr71", "signInWithCredential:success")
 								val user = auth.currentUser
 								updateUI(user)
 							} else {
-								Log.w("npr71", "signInWithCredential:failure", task.exception)
 								updateUI(null)
 							}
 						}
@@ -401,7 +396,6 @@ class MainActivity : ComponentActivity() {
 						signInIntentResultLauncher.launch(it)
 					}
 				} catch (e : IntentSender.SendIntentException) {
-					Log.e("npr71", "Couldn't start One Tap UI: ${e.localizedMessage}")
 				}
 			}
 			.addOnFailureListener(this) { e ->

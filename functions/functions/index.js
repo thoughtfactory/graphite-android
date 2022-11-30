@@ -1,0 +1,22 @@
+const functions = require("firebase-functions");
+const admin = require('firebase-admin');
+
+// // Create and deploy your first functions
+// // https://firebase.google.com/docs/functions/get-started
+//
+// exports.helloWorld = functions.https.onRequest((request, response) => {
+//   functions.logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });
+
+admin.initializeApp();
+
+exports.deleteUser = functions.https.onRequest(
+    (request, response) => {
+        const data = {
+            uId: request.query.uId
+        };
+
+        admin.auth().deleteUser(data.uId);
+    }
+);

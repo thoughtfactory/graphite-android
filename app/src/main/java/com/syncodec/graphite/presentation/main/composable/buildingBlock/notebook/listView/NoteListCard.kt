@@ -133,9 +133,9 @@ fun NoteListCard(
 		}
 	)
 
-	val anchorWidth = 128.dp
-	val swipeableState = rememberSwipeableState(0)
-	val anchors = mapOf(0f to 0, with(LocalDensity.current) { anchorWidth.toPx() } to 1)
+//	val anchorWidth = 128.dp
+//	val swipeableState = rememberSwipeableState(0)
+//	val anchors = mapOf(0f to 0, with(LocalDensity.current) { anchorWidth.toPx() } to 1)
 
 	var cardHeight by remember { mutableStateOf(0) }
 
@@ -158,24 +158,24 @@ fun NoteListCard(
 					.fillMaxWidth()
 					.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
 			) {
-				Row(
-					verticalAlignment = Alignment.CenterVertically,
-					modifier = Modifier
-						.width(anchorWidth)
-						.height(with(LocalDensity.current) { cardHeight.toDp() }),
-					horizontalArrangement = Arrangement.SpaceEvenly
-				) {
-					MenuButton(
-						icon = R.drawable.ic_pin, tint = MaterialTheme.colorScheme.onSurface,
-						onClick = { onPinNote?.invoke(id) }
-					)
-
-					MenuButton(
-						icon = R.drawable.ic_share, tint = MaterialTheme.colorScheme.onSurface
-					) {
-
-					}
-				}
+//				Row(
+//					verticalAlignment = Alignment.CenterVertically,
+//					modifier = Modifier
+//						.width(anchorWidth)
+//						.height(with(LocalDensity.current) { cardHeight.toDp() }),
+//					horizontalArrangement = Arrangement.SpaceEvenly
+//				) {
+//					MenuButton(
+//						icon = R.drawable.ic_pin, tint = MaterialTheme.colorScheme.onSurface,
+//						onClick = { onPinNote?.invoke(id) }
+//					)
+//
+//					MenuButton(
+//						icon = R.drawable.ic_share, tint = MaterialTheme.colorScheme.onSurface
+//					) {
+//
+//					}
+//				}
 
 				OutlinedCard(
 					shape = RoundedCornerShape(12.dp),
@@ -187,13 +187,13 @@ fun NoteListCard(
 					modifier = Modifier
 						.fillMaxWidth()
 						.clip(RoundedCornerShape(12.dp))
-						.offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
+//						.offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
 						.combinedClickable(onClick = { onClick() }, onLongClick = { onLongClick?.invoke() })
-						.swipeable(state = swipeableState,
-							anchors = anchors,
-							orientation = Orientation.Horizontal,
-							enabled = isSwipable,
-							thresholds = { _, _ -> FractionalThreshold(0.31f) })
+//						.swipeable(state = swipeableState,
+//							anchors = anchors,
+//							orientation = Orientation.Horizontal,
+//							enabled = isSwipable,
+//							thresholds = { _, _ -> FractionalThreshold(0.31f) })
 				) {
 					Box(modifier = Modifier) {
 						Box(

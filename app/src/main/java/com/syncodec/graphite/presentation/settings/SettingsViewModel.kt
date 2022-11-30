@@ -540,5 +540,6 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 		}
 	}
 
-
+	fun deleteAccount() {
+	}
 }

@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.attachment
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,9 +40,9 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 		viewModelScope.launch(Dispatchers.IO) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("AttachmentViewModel", "Init")
+					RepositoryState.INIT -> null
 					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("AttachmentViewModel", "Loading")
+					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> {
 						viewModelScope.launch {
 							if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
@@ -60,7 +59,7 @@ class AttachmentViewModel @Inject constructor(private val repository2 : Reposito
 						}
 					}
 
-					RepositoryState.ERROR -> Log.d("AttachmentViewModel", "Error")
+					RepositoryState.ERROR -> null
 				}
 			}
 		}

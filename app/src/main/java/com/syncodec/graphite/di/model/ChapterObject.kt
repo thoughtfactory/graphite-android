@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.ext.realmListOf
@@ -9,6 +10,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 
 
+@Keep
 class ChapterObject : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
@@ -112,6 +114,7 @@ class ChapterObject : RealmObject {
 	}
 }
 
+@Keep
 data class ChapterObjectLite(
 	val id : RealmUUID,
 	val createdTimestamp : Long,
@@ -158,6 +161,7 @@ data class ChapterObjectLite(
 	}
 }
 
+@Keep
 data class ChapterSnapshot(
 	val id : String,
 	val createdTimestamp : Long,

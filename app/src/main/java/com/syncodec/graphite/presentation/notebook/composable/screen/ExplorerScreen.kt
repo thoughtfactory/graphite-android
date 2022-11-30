@@ -226,7 +226,7 @@ private fun LazyListScope.noteList(
 				try {
 					if (note.thumbnailType == AttachmentType.IMAGE.name.lowercase()) thumbnail = note.thumbnail
 				} catch (e : Exception) {
-					e.printStackTrace()
+//					e.printStackTrace()
 				}
 			}
 

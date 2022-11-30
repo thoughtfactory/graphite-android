@@ -1,12 +1,11 @@
 package com.syncodec.graphite.di.network
 
-import android.util.Log
+import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -72,7 +71,9 @@ object OpenLibraryApi {
 					.url(it)
 					.build()
 
-				client.newCall(request).execute().body?.let { onResponse(objectMapper.readValue(it.string())) } ?: onResponse(null)
+				val response = client.newCall(request).execute()
+				val openLibraryTitleSearchResult = objectMapper.readValue(response.body?.string(), OpenLibraryTitleSearchResult::class.java)
+				onResponse(openLibraryTitleSearchResult)
 			}
 		} catch (e : Exception) {
 			onResponse(null)
@@ -108,17 +109,17 @@ object OpenLibraryApi {
 
 				client.newCall(request).execute().body?.let {
 					val jsonObject = JSONObject(it.string())
-
 					jsonObject.optJSONObject("description")?.optString("value")?.let { onResponse(it) } ?: onResponse(null)
 				} ?: onResponse(null)
 			} catch (e : Exception) {
-				e.printStackTrace()
+//				e.printStackTrace()
 				onResponse(null)
 			}
 		}
 	}
 }
 
+@Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class OpenLibraryTitleSearchResult(
 	@JsonProperty("numFound")
@@ -129,6 +130,7 @@ data class OpenLibraryTitleSearchResult(
 	val docs : List<BookData?>?
 )
 
+@Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class BookData(
 	@JsonProperty("key")
@@ -152,7 +154,7 @@ data class BookData(
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.writeValueAsString(this)
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			"null"
 		}
 	}

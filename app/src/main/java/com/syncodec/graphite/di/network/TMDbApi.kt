@@ -1,11 +1,13 @@
 package com.syncodec.graphite.di.network
 
+import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.utils.alice.Alice
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -22,8 +24,10 @@ object TMDbApi {
 
 	private val client = OkHttpClient.Builder().build()
 
+	private val tmdbApi = Alice.decrypt(BuildConfig.TMDB_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: ""
+
 	fun searchForMovieTitle(title: String, onResponse: (TMDbMovieSearchResult?) -> Unit) {
-		val url = "https://api.themoviedb.org/3/search/movie?api_key=${BuildConfig.TMDB_API_KEY}&language=en-US&query=${URLEncoder.encode(title, "utf-8")}"
+		val url = "https://api.themoviedb.org/3/search/movie?api_key=${tmdbApi}&language=en-US&query=${URLEncoder.encode(title, "utf-8")}"
 		val request = Request.Builder()
 			.url(url)
 			.build()
@@ -33,13 +37,13 @@ object TMDbApi {
 			val tmDbMovieSearchResult = objectMapper.readValue(response.body?.string(), TMDbMovieSearchResult::class.java)
 			onResponse(tmDbMovieSearchResult)
 		} catch (e: Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			onResponse(null)
 		}
 	}
 
 	fun searchForTvTitle(title: String, onResponse: (TMDbTvSearchResult?) -> Unit) {
-		val url = "https://api.themoviedb.org/3/search/tv?api_key=${BuildConfig.TMDB_API_KEY}&language=en-US&query=${URLEncoder.encode(title, "utf-8")}"
+		val url = "https://api.themoviedb.org/3/search/tv?api_key=${tmdbApi}&language=en-US&query=${URLEncoder.encode(title, "utf-8")}"
 		val request = Request.Builder()
 			.url(url)
 			.build()
@@ -49,7 +53,7 @@ object TMDbApi {
 			val tmDbTvSearchResult = objectMapper.readValue(response.body?.string(), TMDbTvSearchResult::class.java)
 			onResponse(tmDbTvSearchResult)
 		} catch (e: Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			onResponse(null)
 		}
 	}
@@ -70,7 +74,7 @@ object TMDbApi {
 	fun retrieveMovieDataFromId(id: String?, onResponse: (Response?) -> Unit) {
 		if (id == null) onResponse(null)
 		else {
-			val url = "https://api.themoviedb.org/3/movie/$id?api_key=${BuildConfig.TMDB_API_KEY}&language=en-US&query="
+			val url = "https://api.themoviedb.org/3/movie/$id?api_key=${tmdbApi}&language=en-US&query="
 			val request = Request.Builder()
 				.url(url)
 				.build()
@@ -82,7 +86,7 @@ object TMDbApi {
 	fun retrieveTvDataFromId(id: String?, onResponse: (Response?) -> Unit) {
 		if (id == null) onResponse(null)
 		else {
-			val url = "https://api.themoviedb.org/3/tv/$id?api_key=${BuildConfig.TMDB_API_KEY}&language=en-US&query="
+			val url = "https://api.themoviedb.org/3/tv/$id?api_key=${tmdbApi}&language=en-US&query="
 			val request = Request.Builder()
 				.url(url)
 				.build()
@@ -92,6 +96,7 @@ object TMDbApi {
 	}
 }
 
+@Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class TMDbMovieSearchResult(
 	@JsonProperty("page")
@@ -104,6 +109,7 @@ data class TMDbMovieSearchResult(
 	val totalResults: Int?
 )
 
+@Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class TMDbTvSearchResult(
 	@JsonProperty("page")
@@ -116,6 +122,7 @@ data class TMDbTvSearchResult(
 	val totalResults: Int?
 )
 
+@Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class MovieData(
 	@JsonProperty("adult")
@@ -184,6 +191,7 @@ data class MovieData(
 	}
 }
 
+@Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class TvData(
 	@JsonProperty("adult")
@@ -252,6 +260,7 @@ data class TvData(
 	}
 }
 
+@Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Genre(
 	@JsonProperty("id")
@@ -276,6 +285,7 @@ data class Genre(
 	}
 }
 
+@Keep
 data class ShowData(
 	var type: ShowType?,
 	var tvData: TvData? = null,
@@ -286,7 +296,7 @@ data class ShowData(
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.writeValueAsString(this)
 		} catch (e: Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			"null"
 		}
 	}
@@ -308,6 +318,4 @@ data class ShowData(
 
 		return true
 	}
-
-
 }

@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import androidx.annotation.Keep
 import androidx.room.PrimaryKey
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
@@ -17,6 +18,7 @@ enum class BucketItemState {
 	GAMMA
 }
 
+@Keep
 class BucketItemObject : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
@@ -39,7 +41,7 @@ class BucketItemObject : RealmObject {
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.readValue(data, BookData::class.java)
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			null
 		}
 	}
@@ -49,7 +51,7 @@ class BucketItemObject : RealmObject {
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.readValue(data, ShowData::class.java)
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			null
 		}
 	}
@@ -59,7 +61,7 @@ class BucketItemObject : RealmObject {
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			objectMapper.readValue(data, OpenGraphResult::class.java)
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			null
 		}
 	}
@@ -137,6 +139,7 @@ class BucketItemObject : RealmObject {
 	}
 }
 
+@Keep
 data class BucketItemSnapshot(
 	val id : String,
 	val createdTimestamp : Long,

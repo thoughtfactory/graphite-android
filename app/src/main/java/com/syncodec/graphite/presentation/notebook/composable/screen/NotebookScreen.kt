@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.notebook.composable.screen
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween

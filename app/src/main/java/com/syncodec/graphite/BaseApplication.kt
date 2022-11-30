@@ -12,6 +12,7 @@ import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.alice.Alice
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
 
@@ -41,87 +42,33 @@ class BaseApplication : Application() {
 		Purchases.debugLogsEnabled = true
 		val auth = Firebase.auth
 		val purchasesConfiguration = PurchasesConfiguration
-			.Builder(this, BuildConfig.REVENUE_CAT_API_KEY)
+			.Builder(this, Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
 			.appUserID(auth.currentUser?.uid)
 			.build()
 		Purchases.configure(purchasesConfiguration)
 
 
 		if (auth.currentUser != null) {
-			Purchases.sharedInstance.getCustomerInfo(
-				fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
-				callback = object : ReceiveCustomerInfoCallback {
-					override fun onError(error : PurchasesError) {
-					}
+			Purchases
+				.sharedInstance
+				.apply {
+					setAttributes(mapOf("\$email" to auth.currentUser?.email))
+					getCustomerInfo(
+						fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
+						callback = object : ReceiveCustomerInfoCallback {
+							override fun onError(error : PurchasesError) {
+							}
 
-					override fun onReceived(customerInfo : CustomerInfo) {
-						isPro.value = customerInfo.entitlements["pro"]?.isActive == true
-					}
+							override fun onReceived(customerInfo : CustomerInfo) {
+								isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+							}
+						}
+					)
 				}
-			)
 		}
-
-		updateQuoteData()
-	}
-
-	private fun migrate() {
-//		CoroutineScope(Dispatchers.Main).launch {
-//
-//			repository.noteRepository.getDefaultNotebookId().collect {
-//				when (it) {
-//					null -> {
-//						ChapterObject().also { chapterObject ->
-//							chapterObject.title = "Diary"
-//							chapterObject.description = "Default diary. Every notes will be saved in this notebook by default"
-//							chapterObject.color = getRandomColor().toArgb()
-//
-//							repository.noteRepository.putChapter(null, chapterObject)
-//
-//							BaseObject().also { baseObject ->
-//								baseObject.defaultChapterId = chapterObject.id
-//
-//								CoroutineScope(Dispatchers.IO).launch {
-//									repository.noteRepository.putBase(baseObject)
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-	}
-
-	private fun updateQuoteData() {
-//		CoroutineScope(Dispatchers.IO).launch {
-//			val storage = Firebase.storage("gs://graphite-diary.appspot.com")
-//			val storageRef = storage.reference
-//			val quoteDirRef = storageRef.child("server/enQuote")
-//
-//			val quoteKeyList = Repository.getQuoteKeyList()
-//
-//			val maxDateSaved = quoteKeyList.maxOfOrNull { it?.let { it1 -> quoteKeyToTimestamp(it1) } ?: 0 } ?: 0
-//			val minDate = getToday() - (14L * 24 * 60 * 60 * 1000)
-//			val maxDate = getToday() + (7L * 24 * 60 * 60 * 1000)
-//
-////			Request for data only if next 3 days data is unavailable
-//			if (maxDateSaved < maxDate) {
-//				quoteDirRef.listAll()
-//					.addOnSuccessListener { dateList ->
-//						dateList.prefixes.forEach { date ->
-//							if (date.name !in quoteKeyList && quoteKeyToTimestamp(date.name) ?: 0 > minDate) {
-//								Repository.getQuoteFromNetwork(date = date.name) {
-//									CoroutineScope(Dispatchers.IO).launch {
-//										Repository.putQuote(it)
-//									}
-//								}
-//							}
-//						}
-//					}
-//			}
-//		}
 	}
 
 	companion object {
-		val isPro: MutableState<Boolean> = mutableStateOf(false)
+		val isPro : MutableState<Boolean> = mutableStateOf(false)
 	}
 }

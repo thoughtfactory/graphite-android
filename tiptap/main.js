@@ -288,6 +288,7 @@ editor.setBaseFontFamily = (fontFamily) => {
 
 editor.setBaseColor = (containerColor, contentColor) => {
     document.getElementById("base").style.color = contentColor;
+    document.getElementById("title").style.color = contentColor;
     document.getElementById("base").style.background = containerColor;
 };
 
@@ -326,6 +327,25 @@ editor.setData = (title, data) => {
 };
 
 editor.getData = (extra) => {
+    data = {};
+    data.dataJson = editor.getJSON();
+    data.dataText = editor.getText();
+    data.dataHtml = editor.getHTML();
+    data.title = document.getElementById("title").value;
+    data.extra = extra
+
+    if(extra == "export_markdown") {
+        var turndown = new Turndown();
+        data.dataMarkdown = turndown.turndown(editor.getHTML());
+    }
+
+    bridge.getData(extra, JSON.stringify(data));
+};
+
+editor.setAndGetData = (title, data, extra) => {
+    document.getElementById("title").setAttribute("value", title);
+    editor.commands.setContent(data);
+
     data = {};
     data.dataJson = editor.getJSON();
     data.dataText = editor.getText();

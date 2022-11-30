@@ -144,7 +144,7 @@ class AttachmentActivity : ComponentActivity() {
 				else -> finish()
 			}
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			finish()
 		}
 	}

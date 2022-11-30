@@ -38,7 +38,7 @@ fun RestoreSnapshotDialog(
 
 	LaunchedEffect(key1 = showDialog) {
 		if (showDialog) {
-			timeout = 1
+			timeout = 10
 			scope.launch {
 				for (i in 1 .. 10) {
 					timeout --

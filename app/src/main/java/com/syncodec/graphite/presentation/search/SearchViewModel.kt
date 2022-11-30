@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.search
 
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,11 +54,11 @@ class SearchViewModel @Inject constructor(private val repository2 : Repository2)
 	init {
 		viewModelScope.launch(Dispatchers.IO) {
 			when (repositoryState.value) {
-				RepositoryState.INIT -> Log.d("SearchViewModel", "Init")
+				RepositoryState.INIT -> null
 				RepositoryState.LOCKED -> null
-				RepositoryState.LOADING -> Log.d("SearchViewModel", "Loading")
+				RepositoryState.LOADING -> null
 				RepositoryState.SUCCESS -> onRepositoryStateSuccess()
-				RepositoryState.ERROR -> Log.d("SearchViewModel", "Error")
+				RepositoryState.ERROR -> null
 			}
 		}
 	}

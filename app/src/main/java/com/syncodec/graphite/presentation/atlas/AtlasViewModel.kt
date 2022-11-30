@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.atlas
 
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -13,11 +12,11 @@ import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.realm.kotlin.types.RealmUUID
 import javax.inject.Inject
 
 
@@ -39,9 +38,9 @@ class AtlasViewModel @Inject constructor(private val repository2 : Repository2) 
 		viewModelScope.launch(Dispatchers.IO) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> Log.d("AtlasViewModel", "Init")
+					RepositoryState.INIT -> null
 					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> Log.d("AtlasViewModel", "Loading")
+					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> {
 						viewModelScope.launch {
 							if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
@@ -58,7 +57,7 @@ class AtlasViewModel @Inject constructor(private val repository2 : Repository2) 
 						}
 					}
 
-					RepositoryState.ERROR -> Log.d("AtlasViewModel", "Error")
+					RepositoryState.ERROR -> null
 				}
 			}
 		}

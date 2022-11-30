@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import androidx.annotation.Keep
 import androidx.room.PrimaryKey
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmList
@@ -16,6 +17,7 @@ enum class BucketType {
 }
 
 
+@Keep
 class BucketObject: RealmObject {
 	@PrimaryKey var id: RealmUUID = RealmUUID.random()
 
@@ -72,6 +74,7 @@ class BucketObject: RealmObject {
 	}
 }
 
+@Keep
 data class BucketSnapshot(
 	val id: String,
 	val createdTimestamp: Long,

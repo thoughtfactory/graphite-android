@@ -17,8 +17,8 @@ android {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 33
-		versionCode 14
-		versionName '1.2.0'
+		versionCode 19
+		versionName '2.0.0'
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 		vectorDrawables {
@@ -32,15 +32,11 @@ android {
 
 		manifestPlaceholders.clientKey = properties.getProperty('CLIENT_KEY', '')
 		manifestPlaceholders.mapsApiKey = properties.getProperty('MAPS_API_KEY', '')
-		manifestPlaceholders.googleBookApiKey = properties.getProperty('GOOGLE_BOOK_API_KEY', '')
 		manifestPlaceholders.tmdbApiKey = properties.getProperty('TMDB_API_KEY', '')
 		manifestPlaceholders.revenueCatApiKey = properties.getProperty('REVENUE_CAT_API_KEY', '')
 
 		javaCompileOptions {
 			annotationProcessorOptions {
-				arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
-				arguments += ["objectbox.myObjectBoxPackage": "com.syncodec.graphite"]
-				arguments += ["objectbox.debug": "true"]
 			}
 		}
 	}
@@ -161,6 +157,7 @@ dependencies {
 	implementation 'com.google.firebase:firebase-auth-ktx'
 	implementation 'com.google.firebase:firebase-storage-ktx'
 	implementation 'com.google.firebase:firebase-firestore-ktx'
+	implementation 'com.google.firebase:firebase-functions-ktx'
 
 	implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.10'
 

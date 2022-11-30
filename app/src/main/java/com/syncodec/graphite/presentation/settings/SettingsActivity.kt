@@ -3,8 +3,6 @@ package com.syncodec.graphite.presentation.settings
 import android.content.Intent
 import android.content.IntentSender
 import android.os.Bundle
-import android.util.Log
-import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -35,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.viewModelScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -64,6 +61,7 @@ import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScr
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
+import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.share
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
@@ -98,6 +96,7 @@ class SettingsActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		auth = Firebase.auth
+
 		this.firebaseUser.value = auth.currentUser
 		oneTapClient = Identity.getSignInClient(this)
 		signInRequest = BeginSignInRequest.builder()
@@ -109,7 +108,7 @@ class SettingsActivity : ComponentActivity() {
 			.setGoogleIdTokenRequestOptions(
 				BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
 					.setSupported(true)
-					.setServerClientId(BuildConfig.CLIENT_KEY)
+					.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
 					.setFilterByAuthorizedAccounts(false)
 					.build()
 			)
@@ -184,7 +183,7 @@ class SettingsActivity : ComponentActivity() {
 									restoreSnapshotFile = data as DocumentFile
 									_showRestoreSnapshotDialog = true
 								} catch (e : Exception) {
-									e.printStackTrace()
+//									e.printStackTrace()
 									Toast.makeText(this@SettingsActivity, "Error reading snapshot file", Toast.LENGTH_SHORT).show()
 								}
 							}
@@ -239,7 +238,11 @@ class SettingsActivity : ComponentActivity() {
 						LocalFirebaseUser provides _firebaseUser,
 						LocalSignIn provides ::signIn,
 						LocalSignOut provides ::signOut,
-						LocalDeleteAccount provides {},
+						LocalDeleteAccount provides {
+							closeSheet()
+							openDialog(SettingsDialogType.DELETE_ACCOUNT, null)
+							viewModel.deleteAccount()
+						},
 						LocalSetupLocalBackupFolder provides {
 							try {
 								Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
@@ -379,25 +382,29 @@ class SettingsActivity : ComponentActivity() {
 								this.firebaseUser.value = auth.currentUser
 								Toast.makeText(this, "Signed in as $displayName", Toast.LENGTH_SHORT).show()
 
-								Purchases.sharedInstance.logIn(
-									newAppUserID = auth.currentUser !!.uid,
-									callback = object : LogInCallback {
-										override fun onError(error : PurchasesError) {
-										}
+								Purchases
+									.sharedInstance
+									.apply {
+										setAttributes(mapOf("\$email" to auth.currentUser?.email))
+										logIn(
+											newAppUserID = auth.currentUser !!.uid,
+											callback = object : LogInCallback {
+												override fun onError(error : PurchasesError) {
+												}
 
-										override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
-											BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
-										}
+												override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
+													BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+												}
+											}
+										)
 									}
-								)
-
 							} else {
 								Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 							}
 						}
 				}
 			} catch (e : ApiException) {
-				e.printStackTrace()
+//				e.printStackTrace()
 				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 			}
 		}
@@ -412,12 +419,11 @@ class SettingsActivity : ComponentActivity() {
 						signInIntentResultLauncher.launch(it)
 					}
 				} catch (e : IntentSender.SendIntentException) {
-					e.printStackTrace()
-					Log.e("npr71", "Couldn't start One Tap UI: ${e.localizedMessage}")
+//					e.printStackTrace()
 				}
 			}
 			.addOnFailureListener(this) { e ->
-				e.printStackTrace()
+//				e.printStackTrace()
 				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 			}
 	}
@@ -492,7 +498,7 @@ class SettingsActivity : ComponentActivity() {
 								}
 							}
 						} catch (e : Exception) {
-							e.printStackTrace()
+//							e.printStackTrace()
 							viewModel.lock = false
 						}
 					}

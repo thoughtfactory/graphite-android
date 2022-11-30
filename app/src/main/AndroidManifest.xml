@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools">
 
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+	<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
 
     <application
 		android:name="com.syncodec.graphite.BaseApplication"
@@ -30,9 +32,6 @@
 		<meta-data
 			android:name="com.google.android.geo.API_KEY"
 			android:value="${mapsApiKey}" />
-		<meta-data
-			android:name="GOOGLE_BOOK_API_KEY"
-			android:value="${googleBookApiKey}" />
 		<meta-data
 			android:name="TMDB_API_KEY"
 			android:value="${tmdbApiKey}" />
@@ -144,12 +143,6 @@
 			android:windowSoftInputMode="adjustResize" />
 
 		<activity
-			android:name=".presentation.raw.RawActivity"
-			android:exported="false"
-			android:theme="@style/Theme.Graphite.NoActionBar"
-			android:windowSoftInputMode="adjustResize" />
-
-		<activity
 			android:name=".presentation.pro.ProActivity"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
@@ -157,12 +150,6 @@
 
 		<activity
 			android:name=".presentation.settings.SettingsActivity"
-			android:exported="false"
-			android:theme="@style/Theme.Graphite.NoActionBar"
-			android:windowSoftInputMode="adjustResize" />
-
-		<activity
-			android:name=".notification.NotePinNotificationService"
 			android:exported="false"
 			android:theme="@style/Theme.Graphite.NoActionBar"
 			android:windowSoftInputMode="adjustResize" />

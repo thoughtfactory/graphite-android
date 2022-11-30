@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "googleapis": "^91.0.0",
-    "jsonwebtoken": "^8.5.1",
-  }
-}

@@ -2,7 +2,6 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import com.syncodec.graphite.BaseApplication
@@ -14,7 +13,6 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.network.FirebaseStorageApi
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
@@ -80,7 +78,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 	private var realmConfiguration : RealmConfiguration? = null
 	private var realm : Realm? = null
 
-	val firebaseStorageApi = FirebaseStorageApi()
+//	val firebaseStorageApi = FirebaseStorageApi()
 
 	val isAuthenticated : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 
@@ -104,8 +102,6 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 								key = it.data !!
 							}
 						}
-
-						Log.i("npr71", "key: ${key.joinToString("") { java.lang.String.format("%02x", it) }}")
 
 						try {
 							realmConfiguration = RealmConfiguration.Builder(
@@ -141,7 +137,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 
 							repositoryState.tryEmit(RepositoryState.SUCCESS)
 						} catch (e : Exception) {
-							e.printStackTrace()
+//							e.printStackTrace()
 							repositoryState.tryEmit(RepositoryState.ERROR)
 						}
 					}
@@ -324,7 +320,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					}
 				}
 			} catch (e : Exception) {
-				e.printStackTrace()
+//				e.printStackTrace()
 				callback(false, e)
 			}
 		}.await()
@@ -428,7 +424,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					}
 				}
 			} catch (e : Exception) {
-				e.printStackTrace()
+//				e.printStackTrace()
 				callback(false, e)
 			}
 		}.join()
@@ -465,7 +461,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					} ?: callback(false, BucketNotFoundException())
 				}
 			} catch (e : Exception) {
-				e.printStackTrace()
+//				e.printStackTrace()
 				callback(false, e)
 			}
 		}.join()
@@ -543,7 +539,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 			file
 		} catch (e : Exception) {
 //  		TODO Show error message
-			e.printStackTrace()
+//			e.printStackTrace()
 			null
 		}
 	}
@@ -650,7 +646,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 						callback(true, null)
 					}
 				} catch (e : Exception) {
-					e.printStackTrace()
+//					e.printStackTrace()
 					callback(false, e)
 				}
 			}
