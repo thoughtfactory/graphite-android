@@ -227,10 +227,14 @@ fun copyInDirectory(srcDir: File, destDir: File) {
 	}
 }
 
-fun extractZipFile(inputFile : ZipFile, destination : File) {
+fun extractZipFile(inputFile : ZipFile, destination : File) : Boolean {
 	inputFile.entries().iterator().forEach {
 		val entry = it
 		val entryFile = File(destination, entry.name)
+		val canonicalPath = entryFile.canonicalPath
+		if (!canonicalPath.startsWith(destination.canonicalPath)) {
+			return false
+		}
 		entryFile.parentFile?.mkdirs()
 		entryFile.delete()
 		entryFile.createNewFile()
@@ -238,4 +242,6 @@ fun extractZipFile(inputFile : ZipFile, destination : File) {
 		entryInputStream.copyTo(entryFile.outputStream())
 		entryInputStream.close()
 	}
+
+	return true
 }

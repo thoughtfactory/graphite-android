@@ -455,54 +455,57 @@ class SettingsViewModel @Inject constructor(private val repository2 : Repository
 			try {
 				val zipFile = ZipFile(journey7z)
 
-				extractZipFile(zipFile, journeyFolder)
-
-				val files = journeyFolder.listFiles()
-				viewModelScope.launch(Dispatchers.Main) {
-					importDataCount.value = files?.size ?: 0
-					importDataProcessed.value = 0
-				}
-
-				val attachmentDir = File(repository2.attachmentDirPath)
-				val fileIterator = files?.iterator()
-				viewModelScope.launch(Dispatchers.Default) {
-					while (true) {
-						if (lock) {
-							delay(100)
-						} else {
-							if (fileIterator?.hasNext() == true) {
-								lock = true
-								try {
-									val journeyFile = fileIterator?.next()
-									if (journeyFile?.extension == "json") {
-										val journeyJson = journeyFile?.readText()
-									    val journeyNote = objectMapper.readValue(journeyJson, JourneyNote::class.java)
-										val noteId = RealmUUID.random()
-										journeyNote.photos?.forEach {
-											val photoFile = it?.let { it1 -> File(journeyFolder, it1) }
-											val noteAttachmentDir = File(attachmentDir, noteId.toString()).apply { mkdirs() }
-											val attachmentFile = File(noteAttachmentDir, photoFile?.name ?: RealmUUID.random().toString()).apply { createNewFile() }
-											photoFile?.inputStream()?.copyTo(attachmentFile.outputStream())
-										}
-										richTextEditor.exec("editor.importData(\"$noteId\", $journeyJson, \"journey\");")
-									} else {
-										lock = false
-									}
-								} catch (e : Exception) {
-									lock = false
-									e.printStackTrace()
-								}
-								viewModelScope.launch(Dispatchers.Main) {
-									importDataProcessed.value = importDataProcessed.value + 1
-								}
-							} else {
-								break
-							}
+				extractZipFile(zipFile, journeyFolder).let {
+					if (true) {
+						val files = journeyFolder.listFiles()
+						viewModelScope.launch(Dispatchers.Main) {
+							importDataCount.value = files?.size ?: 0
+							importDataProcessed.value = 0
 						}
-					}
-					callback(true)
-				}
 
+						val attachmentDir = File(repository2.attachmentDirPath)
+						val fileIterator = files?.iterator()
+						viewModelScope.launch(Dispatchers.Default) {
+							while (true) {
+								if (lock) {
+									delay(100)
+								} else {
+									if (fileIterator?.hasNext() == true) {
+										lock = true
+										try {
+											val journeyFile = fileIterator?.next()
+											if (journeyFile?.extension == "json") {
+												val journeyJson = journeyFile?.readText()
+												val journeyNote = objectMapper.readValue(journeyJson, JourneyNote::class.java)
+												val noteId = RealmUUID.random()
+												journeyNote.photos?.forEach {
+													val photoFile = it?.let { it1 -> File(journeyFolder, it1) }
+													val noteAttachmentDir = File(attachmentDir, noteId.toString()).apply { mkdirs() }
+													val attachmentFile = File(noteAttachmentDir, photoFile?.name ?: RealmUUID.random().toString()).apply { createNewFile() }
+													photoFile?.inputStream()?.copyTo(attachmentFile.outputStream())
+												}
+												richTextEditor.exec("editor.importData(\"$noteId\", $journeyJson, \"journey\");")
+											} else {
+												lock = false
+											}
+										} catch (e : Exception) {
+											lock = false
+											e.printStackTrace()
+										}
+										viewModelScope.launch(Dispatchers.Main) {
+											importDataProcessed.value = importDataProcessed.value + 1
+										}
+									} else {
+										break
+									}
+								}
+							}
+							callback(true)
+						}
+					} else {
+						callback(false)
+					}
+				}
 			} catch (e : Exception) {
 				e.printStackTrace()
 				callback(false)
