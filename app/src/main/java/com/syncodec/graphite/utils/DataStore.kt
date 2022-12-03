@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,7 @@ class DataStoreInstance(private val context : Context) {
 	companion object {
 		private val IS_FIRST_TIME = booleanPreferencesKey("is_first_time")
 		private val STORED_VERSION = intPreferencesKey("stored_version")
+		private val PREFERENCE_SUPER_EXPIRY_TIME = stringPreferencesKey("super_expiry_time")
 		private val PREFERENCE_SHOW_RELEASE_NOTES = booleanPreferencesKey("show_release_notes")
 		private val PREFERENCE_THEME = intPreferencesKey("theme")
 		private val PREFERENCE_BACKGROUND = intPreferencesKey("background")
@@ -49,12 +51,28 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[IS_FIRST_TIME] = isFirstTime }
 	}
 
-	val storedVersion : Flow<Int> =
-		context.dataStore.data.map { preferences -> preferences[STORED_VERSION] ?: 0 }
+	val storedVersion : Flow<Int> = context.dataStore.data.map { preferences -> preferences[STORED_VERSION] ?: 0 }
 
-	fun storeVersion(version : Int) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[STORED_VERSION] = version }
+	val getSuperExpiryTime = context.dataStore.data.map { preferences ->
+		try {
+			preferences[PREFERENCE_SUPER_EXPIRY_TIME]?.let { Alice.decrypt(it, "V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7") ?: "" } ?: ""
+		} catch (exception : Exception) {
+			exception.printStackTrace()
+			""
+		}
 	}
+
+	fun putSuperExpiryTime(expiryTime : Long) =
+		CoroutineScope(Dispatchers.IO).launch {
+			try {
+				Alice.encrypt(expiryTime.toString(), "V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7")?.apply {
+					context.dataStore.edit { pref -> pref[PREFERENCE_SUPER_EXPIRY_TIME] = this }
+				}
+			} catch (exception : Exception) {
+				exception.printStackTrace()
+			}
+		}
+
 
 	val showReleaseNotes : Flow<Boolean> =
 		context.dataStore.data.map { preferences ->

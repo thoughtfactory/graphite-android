@@ -3,6 +3,7 @@ package com.syncodec.graphite
 import android.app.Application
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.revenuecat.purchases.CacheFetchPolicy
@@ -14,6 +15,9 @@ import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 
@@ -38,7 +42,6 @@ class BaseApplication : Application() {
 		File(ATTACHMENT_DIR).mkdirs()
 
 		dataStore = DataStoreInstance(this)
-
 		Purchases.debugLogsEnabled = true
 		val auth = Firebase.auth
 		val purchasesConfiguration = PurchasesConfiguration
@@ -49,23 +52,44 @@ class BaseApplication : Application() {
 
 
 		if (auth.currentUser != null) {
-			Purchases
-				.sharedInstance
-				.apply {
-					setAttributes(mapOf("\$email" to auth.currentUser?.email))
-					getCustomerInfo(
-						fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
-						callback = object : ReceiveCustomerInfoCallback {
-							override fun onError(error : PurchasesError) {
-							}
-
-							override fun onReceived(customerInfo : CustomerInfo) {
-								isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+			CoroutineScope(Dispatchers.Default).launch {
+				dataStore.getSuperExpiryTime.collect {
+					try {
+						val currentTimestamp = System.currentTimeMillis()
+						if (it == "") {
+							getRevenueCatInfo(auth)
+						} else {
+							if (it.toLong() > currentTimestamp) {
+								isPro.value = true
+							} else {
+								getRevenueCatInfo(auth)
 							}
 						}
-					)
+					} catch (e : Exception) {
+						getRevenueCatInfo(auth)
+					}
 				}
+			}
 		}
+	}
+
+	private fun getRevenueCatInfo(auth: FirebaseAuth) {
+		Purchases
+			.sharedInstance
+			.apply {
+				setAttributes(mapOf("\$email" to auth.currentUser?.email))
+				getCustomerInfo(
+					fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
+					callback = object : ReceiveCustomerInfoCallback {
+						override fun onError(error : PurchasesError) {
+						}
+
+						override fun onReceived(customerInfo : CustomerInfo) {
+							isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+						}
+					}
+				)
+			}
 	}
 
 	companion object {

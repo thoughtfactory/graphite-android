@@ -60,6 +60,7 @@ import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDia
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Authenticator
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.share
@@ -428,8 +429,10 @@ class SettingsActivity : ComponentActivity() {
 	}
 
 	private fun signOut() {
+		val dataStoreInstance = DataStoreInstance(this)
 		auth.signOut()
 		this.firebaseUser.value = null
+		dataStoreInstance.putSuperExpiryTime(0)
 		Purchases.sharedInstance.logOut(
 			callback = object : ReceiveCustomerInfoCallback {
 				override fun onError(error : PurchasesError) {

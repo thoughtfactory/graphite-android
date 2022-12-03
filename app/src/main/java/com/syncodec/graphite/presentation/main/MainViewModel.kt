@@ -229,7 +229,9 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 					BucketType.LINK -> "Link"
 					BucketType.UNKNOWN -> "Unknown"
 				}
-				Toast.makeText(repository2.context, "Join Graphite Pro to add more $bucket bucket", Toast.LENGTH_SHORT).show()
+				withContext(Dispatchers.Main) {
+					Toast.makeText(repository2.context, "Join Graphite Pro to add more $bucket bucket", Toast.LENGTH_SHORT).show()
+				}
 			} else {
 				BucketObject().apply {
 					this.title = title

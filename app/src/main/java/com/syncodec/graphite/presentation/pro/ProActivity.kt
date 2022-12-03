@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Package
@@ -26,7 +27,11 @@ import com.revenuecat.purchases.models.StoreTransaction
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.utils.DataStoreInstance
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -68,7 +73,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 	private fun getProducts() {
 		try {
 			Purchases.sharedInstance.getOfferingsWith(
-				{ error ->
+				onError = { error ->
 					Toast.makeText(this, "Error retrieving data. Please try again later.", Toast.LENGTH_SHORT).show()
 				}
 			) { offerings ->
@@ -105,8 +110,17 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 						packageToPurchase = _package,
 						listener = object : PurchaseCallback {
 							override fun onCompleted(storeTransaction : StoreTransaction, customerInfo : CustomerInfo) {
-								Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
 								BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+								if (BaseApplication.isPro.value) {
+									CoroutineScope(Dispatchers.Main).launch {
+										Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
+										this@ProActivity.finish()
+									}
+								} else {
+									CoroutineScope(Dispatchers.Main).launch {
+										Toast.makeText(this@ProActivity, "Purchase failed", Toast.LENGTH_SHORT).show()
+									}
+								}
 							}
 
 							override fun onError(error : PurchasesError, userCancelled : Boolean) {
@@ -124,24 +138,76 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		val auth = Firebase.auth
 		if (auth.currentUser?.uid == null) {
 			Toast.makeText(this, "Please login to restore purchase", Toast.LENGTH_SHORT).show()
-			return
 		} else {
-			Purchases
-				.sharedInstance
-				.apply {
-					setAttributes(mapOf("\$email" to auth.currentUser?.email))
-					logIn(
-						newAppUserID = auth.currentUser !!.uid,
-						callback = object : LogInCallback {
-							override fun onError(error : PurchasesError) {
-							}
+			superRestore(
+				onSuccess = {},
+				onFailure = {
+					Purchases
+						.sharedInstance
+						.apply {
+							setAttributes(mapOf("\$email" to auth.currentUser?.email))
+							logIn(
+								newAppUserID = auth.currentUser !!.uid,
+								callback = object : LogInCallback {
+									override fun onError(error : PurchasesError) {
+									}
 
-							override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
-								BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
-							}
+									override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
+										BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+										if (BaseApplication.isPro.value) {
+											CoroutineScope(Dispatchers.Main).launch {
+												Toast.makeText(this@ProActivity, "Purchase restored", Toast.LENGTH_SHORT).show()
+												this@ProActivity.finish()
+											}
+										} else {
+											CoroutineScope(Dispatchers.Main).launch {
+												Toast.makeText(this@ProActivity, "No purchase found", Toast.LENGTH_SHORT).show()
+											}
+										}
+									}
+								}
+							)
 						}
-					)
 				}
+			)
+		}
+	}
+
+	private fun superRestore(onSuccess : () -> Unit, onFailure : () -> Unit) {
+		val dataStoreInstance = DataStoreInstance(this@ProActivity)
+		val auth = Firebase.auth
+		val fireStore = Firebase.firestore
+
+		try {
+			fireStore
+				.collection("user")
+				.document(auth.currentUser !!.uid)
+				.get()
+				.addOnSuccessListener { documentSnapshot ->
+					val expiryTimestamp = documentSnapshot.getTimestamp("override")?.seconds?.times(1000)
+					val currentTimestamp = System.currentTimeMillis()
+					if ((expiryTimestamp != null) && (expiryTimestamp > currentTimestamp)) {
+						dataStoreInstance.putSuperExpiryTime(expiryTimestamp)
+						CoroutineScope(Dispatchers.Main).launch {
+							Toast.makeText(this@ProActivity, "Welcome to Graphite Pro", Toast.LENGTH_LONG).show()
+						}
+						onSuccess()
+						finish()
+					} else {
+//					CoroutineScope(Dispatchers.Main).launch {
+//						Toast.makeText(this@ProActivity, "No active subscription found", Toast.LENGTH_LONG).show()
+//					}
+						onFailure()
+					}
+				}
+				.addOnFailureListener {
+//				CoroutineScope(Dispatchers.Main).launch {
+//					Toast.makeText(this@ProActivity, "Error getting data. Please try again later", Toast.LENGTH_SHORT).show()
+//				}
+					onFailure()
+				}
+		} catch (e : Exception) {
+			onFailure()
 		}
 	}
 
