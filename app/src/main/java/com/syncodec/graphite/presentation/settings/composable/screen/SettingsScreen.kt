@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -10,31 +9,18 @@ import androidx.compose.animation.with
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.bar.TopBar
-import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
-import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetLayout
-import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
-import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(
+	ExperimentalMaterial3Api::class,
+	ExperimentalAnimationApi::class
+)
 @Composable
 fun SettingsScreen() {
 
@@ -46,6 +32,7 @@ fun SettingsScreen() {
 	val title = when (navigatorPath.last()) {
 		SettingsActivity.Companion.Navigator.BASE -> "Settings"
 		SettingsActivity.Companion.Navigator.PREFERENCES -> "Preferences"
+		SettingsActivity.Companion.Navigator.THEME -> "Theme"
 		SettingsActivity.Companion.Navigator.SECURITY -> "Security"
 		SettingsActivity.Companion.Navigator.EXTENSIONS -> "Extensions"
 		SettingsActivity.Companion.Navigator.BACKUP -> "Backup & Restore"
@@ -79,6 +66,7 @@ fun SettingsScreen() {
 				when (it) {
 					SettingsActivity.Companion.Navigator.BASE -> BaseScreen()
 					SettingsActivity.Companion.Navigator.PREFERENCES -> PreferencesScreen()
+					SettingsActivity.Companion.Navigator.THEME -> ThemeScreen()
 					SettingsActivity.Companion.Navigator.SECURITY -> SecurityScreen()
 					SettingsActivity.Companion.Navigator.EXTENSIONS -> ExtensionsScreen()
 					SettingsActivity.Companion.Navigator.BACKUP -> BackupAndRestoreScreen()

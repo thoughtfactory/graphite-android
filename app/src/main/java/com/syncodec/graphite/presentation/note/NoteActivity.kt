@@ -450,7 +450,6 @@ class NoteActivity : ComponentActivity() {
 						onClickFavourite = viewModel::toggleFavourite,
 						onAddAttachmentToBuffer = viewModel::addAttachmentToBuffer,
 						onRemoveAttachment = viewModel::removeAttachmentFromBuffer,
-						onUpdateTitle = viewModel::onSetTitle,
 						onRemoveLocation = viewModel::onRemoveLocation,
 						onReloadLocation = viewModel::getLocation,
 						setLocation = viewModel::setLocation,

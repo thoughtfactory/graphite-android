@@ -353,7 +353,9 @@ private fun Content(
 	val context = LocalContext.current
 
 	Row(
-		modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
+		modifier = Modifier.fillMaxWidth(),
+		horizontalArrangement = Arrangement.SpaceBetween,
+		verticalAlignment = Alignment.CenterVertically
 	) {
 		if (attachmentCount == 0 || attachmentThumbnail == null) {
 			Text(

@@ -42,7 +42,6 @@ fun NoteScreen(
 	onClickFavourite : () -> Unit,
 	onAddAttachmentToBuffer : (List<Uri>) -> Unit,
 	onRemoveAttachment : (File?, Uri?) -> Unit,
-	onUpdateTitle : (String?) -> Unit,
 	onRemoveLocation : () -> Unit,
 	onReloadLocation : () -> Unit,
 	setLocation: (LatLng, String?) -> Unit,
@@ -63,7 +62,6 @@ fun NoteScreen(
 					bottomSheetType = bottomSheetType,
 					onAddAttachmentToBuffer = onAddAttachmentToBuffer,
 					onRemoveAttachment = onRemoveAttachment,
-					onUpdateTitle = onUpdateTitle,
 					onRemoveLocation = onRemoveLocation,
 					onReloadLocation = onReloadLocation,
 				)

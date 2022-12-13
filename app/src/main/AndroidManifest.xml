@@ -154,6 +154,20 @@
 			android:theme="@style/Theme.Graphite.NoActionBar"
 			android:windowSoftInputMode="adjustResize" />
 
+		<receiver android:name=".notification.NotificationReceiver" />
+
+		<receiver
+			android:name=".widget.home.WidgetReceiver"
+			android:exported="false">
+
+			<intent-filter>
+				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+			</intent-filter>
+			<meta-data
+				android:name="android.appwidget.provider"
+				android:resource="@xml/widget_provider" />
+		</receiver>
+
 		<service
 			android:name=".notification.NotePinNotificationService"
 			android:enabled="true" />

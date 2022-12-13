@@ -2,6 +2,7 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import com.syncodec.graphite.BaseApplication
@@ -102,6 +103,8 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 								key = it.data !!
 							}
 						}
+
+						Log.i("npr71", "key: ${key.joinToString("") { java.lang.String.format("%02x", it) }}")
 
 						try {
 							realmConfiguration = RealmConfiguration.Builder(

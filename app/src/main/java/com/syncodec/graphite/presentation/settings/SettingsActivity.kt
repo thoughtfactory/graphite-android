@@ -578,6 +578,7 @@ class SettingsActivity : ComponentActivity() {
 		enum class Navigator {
 			BASE,
 			PREFERENCES,
+			THEME,
 			SECURITY,
 			EXTENSIONS,
 			BACKUP,

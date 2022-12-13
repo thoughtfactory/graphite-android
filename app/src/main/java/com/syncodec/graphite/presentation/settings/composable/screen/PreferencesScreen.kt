@@ -26,6 +26,8 @@ fun PreferencesScreen() {
 
 	val scrollState = SettingsActivity.LocalScrollState.current
 
+	val onNavigate = SettingsActivity.LocalOnNavigate.current
+
 	GenericSettingsScreen(
 		title = "Preferences",
 		scrollState = scrollState
@@ -34,7 +36,7 @@ fun PreferencesScreen() {
 			title = "Theme",
 			subTitle = "Graphite",
 			icon = R.drawable.ic_theme
-		) { Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show() }
+		) { onNavigate(SettingsActivity.Companion.Navigator.THEME) }
 
 		SettingsButton(
 			title = "Font Style",

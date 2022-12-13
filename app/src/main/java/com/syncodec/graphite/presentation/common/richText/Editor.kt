@@ -5,6 +5,7 @@ import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -67,6 +68,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 
 		settings.javaScriptEnabled = true
 		settings.domStorageEnabled = true
+		settings.setRenderPriority(WebSettings.RenderPriority.HIGH)
 
 		webViewClient = WebViewClient()
 

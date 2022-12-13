@@ -35,6 +35,7 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_TINT_FAVORITE = booleanPreferencesKey("tint_favorite")
 		private val PREFERENCE_GEOLOCATION = booleanPreferencesKey("geolocation")
 		private val PREFERENCE_YEAR_PROGRESS = booleanPreferencesKey("year_progress")
+		private val PREFERENCE_NOTE_FROM_NOTIFICATION = booleanPreferencesKey("note_from_notification")
 		private val PREFERENCE_LANGUAGE = stringPreferencesKey("language")
 		private val PREFERENCE_SORT_ON = intPreferencesKey("sort_on")
 		private val PREFERENCE_SORT_BY = intPreferencesKey("sort_by")
@@ -132,6 +133,12 @@ class DataStoreInstance(private val context : Context) {
 
 	fun putYearProgress(yearProgress : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_YEAR_PROGRESS] = yearProgress }
+	}
+
+	val getNoteFromNotification : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_NOTE_FROM_NOTIFICATION] ?: true }
+
+	fun putNoteFromNotification(noteFromNotification : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_NOTE_FROM_NOTIFICATION] = noteFromNotification }
 	}
 
 	val getSortOn : Flow<SortOn> = context.dataStore.data.map { preferences ->

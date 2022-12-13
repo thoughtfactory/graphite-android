@@ -18,13 +18,12 @@ fun SheetLayout(
 	bottomSheetType: NoteBottomSheetType,
 	onAddAttachmentToBuffer: (List<Uri>) -> Unit,
 	onRemoveAttachment: (File?, Uri?) -> Unit,
-	onUpdateTitle: (String?) -> Unit,
 	onRemoveLocation : () -> Unit,
 	onReloadLocation : () -> Unit,
 ) {
 	when (bottomSheetType) {
 		NoteBottomSheetType.MENU -> MenuBottomSheet()
-		NoteBottomSheetType.METADATA -> MetadataBottomSheet(onUpdateTitle = onUpdateTitle)
+		NoteBottomSheetType.METADATA -> MetadataBottomSheet()
 		NoteBottomSheetType.LOCATION -> LocationBottomSheet(
 			onRemoveLocation = onRemoveLocation,
 			onReloadLocation = onReloadLocation,

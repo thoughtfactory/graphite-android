@@ -8,8 +8,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ListenableWorker
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
@@ -22,19 +30,21 @@ import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.encodeBase64
+import com.syncodec.graphite.widget.home.HomeWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
 @HiltViewModel
-class MainViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
+class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewModel() {
 
 	val repositoryState = repository2.repositoryState
 
@@ -96,6 +106,7 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	private fun onRepositoryStateSuccess() {
 		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			debug()
 			getNoteList()
 		}
 
@@ -298,4 +309,30 @@ class MainViewModel @Inject constructor(private val repository2 : Repository2) :
 	fun onDeauthenticate() {
 		repository2.isAuthenticated.tryEmit(false)
 	}
-}
+
+
+
+	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+	private fun debug() {
+		CoroutineScope(Dispatchers.Default).launch {
+			repository2.getDefaultChapterId().collectLatest {
+				repository2.getChapterFromIdAsFlow(it).collect { notebook ->
+					updateWidget(notebook?.noteList?.map { it.toLite() } ?: listOf())
+				}
+			}
+		}
+	}
+
+	suspend fun updateWidget(noteList: List<NoteObjectLite>) {
+		// Iterate through all the available glance id's.
+		GlanceAppWidgetManager(repository2.context).getGlanceIds(HomeWidget::class.java).forEach { glanceId ->
+			updateAppWidgetState(repository2.context, glanceId) { prefs ->
+				prefs.clear()
+				noteList.forEach {
+					prefs[stringPreferencesKey(it.id.toString())] = objectMapper.writeValueAsString(it)
+				}
+			}
+		}
+		HomeWidget().updateAll(repository2.context)
+	}}

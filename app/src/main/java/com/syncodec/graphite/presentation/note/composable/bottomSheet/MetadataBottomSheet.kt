@@ -27,10 +27,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyCard
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTitleCard
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCreatedTimestamp
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionModifiedTimestamp
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
@@ -41,9 +39,7 @@ import io.realm.kotlin.types.RealmUUID
 
 
 @Composable
-fun MetadataBottomSheet(
-	onUpdateTitle : (String?) -> Unit
-) {
+fun MetadataBottomSheet() {
 	val id = LocalCompositionNoteId.current
 	val parentChapter = LocalCompositionParentChapter.current
 	val createdTimestamp = LocalCompositionCreatedTimestamp.current
@@ -73,12 +69,6 @@ fun MetadataBottomSheet(
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
-
-		BottomSheetTitleCard(
-			title = title,
-			placeholder = "Note title",
-			onUpdateTitle = onUpdateTitle
-		)
 
 		Spacer(modifier = Modifier.height(8.dp))
 

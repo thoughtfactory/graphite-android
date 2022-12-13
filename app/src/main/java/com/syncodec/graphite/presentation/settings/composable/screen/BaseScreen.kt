@@ -3,8 +3,6 @@ package com.syncodec.graphite.presentation.settings.composable.screen
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,22 +26,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.composable.ProTag
+import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScreen
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
-import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.ui.LocalIsPro
 
 
@@ -159,9 +151,10 @@ fun BaseScreen() {
 	}
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileButton(
+private fun ProfileButton(
 	displayName : String,
 	email : String,
 	photoUrl : Uri?,
