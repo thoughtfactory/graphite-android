@@ -12,16 +12,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
+@Preview
 @Composable
 fun DualActionButtons(
-	primaryText: String,
-	secondaryText: String,
-	onPrimaryClick: () -> Unit,
-	onSecondaryClick: () -> Unit,
+	primaryText: String = "Primary",
+	secondaryText: String = "Secondary",
+	onPrimaryClick: () -> Unit = {},
+	onSecondaryClick: () -> Unit = {},
 	primaryColor: Color? = null,
 	secondaryColor: Color? = null,
 	isOutlinedButton: Boolean = true,
@@ -31,16 +33,16 @@ fun DualActionButtons(
 	Row(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		Spacer(modifier = Modifier.weight(1f))
 		if (isOutlinedButton) {
 			Button(
 				onClick = onSecondaryClick,
-				modifier = Modifier,
+				shape = MaterialTheme.shapes.small,
 				colors = ButtonDefaults.buttonColors(
 					containerColor = secondaryColor ?: MaterialTheme.colorScheme.background,
 					contentColor = secondaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
 				),
-				enabled = secondaryEnabled
+				enabled = secondaryEnabled,
+				modifier = Modifier.weight(1f)
 			) {
 				Text(
 					text = secondaryText,
@@ -51,12 +53,13 @@ fun DualActionButtons(
 		} else {
 			Button(
 				onClick = onSecondaryClick,
-				modifier = Modifier,
+				shape = MaterialTheme.shapes.small,
 				colors = ButtonDefaults.buttonColors(
 					containerColor = secondaryColor ?: MaterialTheme.colorScheme.background,
 					contentColor = secondaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
 				),
-				enabled = secondaryEnabled
+				enabled = secondaryEnabled,
+				modifier = Modifier.weight(1f)
 			) {
 				Text(
 					text = secondaryText,
@@ -70,12 +73,13 @@ fun DualActionButtons(
 
 		Button(
 			onClick = onPrimaryClick,
-			modifier = Modifier,
+			shape = MaterialTheme.shapes.small,
 			colors = ButtonDefaults.buttonColors(
 				containerColor = primaryColor ?: MaterialTheme.colorScheme.primary,
 				contentColor = primaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onPrimary,
 			),
-			enabled = primaryEnabled
+			enabled = primaryEnabled,
+			modifier = Modifier.weight(1f)
 		) {
 			Text(
 				text = primaryText,

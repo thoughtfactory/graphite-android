@@ -5,13 +5,13 @@ import android.graphics.BitmapFactory
 import com.google.android.gms.common.util.Base64Utils
 import java.io.Serializable
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
-import kotlin.Triple
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -115,3 +115,19 @@ fun String.decrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
 }
 
 fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
+
+fun ByteArray.dbxHash(): ByteArray {
+	val digest : MessageDigest = MessageDigest.getInstance("SHA-256")
+
+	val blockSize = 4 * 1024 * 1024
+
+	val blockedHash = mutableListOf<ByteArray>()
+	var index = 0
+	while (index < this.size) {
+		blockedHash.add(digest.digest(this.copyOfRange(index, Integer.min(index + blockSize, this.size))))
+		index += blockSize
+	}
+	digest.reset()
+	blockedHash.forEach { digest.update(it) }
+	return digest.digest()
+}

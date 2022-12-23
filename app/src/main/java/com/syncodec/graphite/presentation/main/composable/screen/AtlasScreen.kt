@@ -105,7 +105,10 @@ fun AtlasScreen(
 				onLongClickNote = onLongClickNote
 			)
 		},
-		modifier = Modifier, sheetElevation = 32.dp, sheetPeekHeight = screenHeight.times(0.2f), sheetBackgroundColor = MaterialTheme.colorScheme.surface
+		modifier = Modifier,
+		sheetElevation = 32.dp,
+		sheetPeekHeight = screenHeight.times(0.2f),
+		sheetBackgroundColor = MaterialTheme.colorScheme.surface
 	) {
 		GoogleMap(
 			googleMapOptionsFactory = { GoogleMapOptions() },
@@ -148,6 +151,7 @@ fun AtlasScreen(
 					}
 				}
 			}
+
 			MapEffect(key1 = noteList) {
 				it.clear()
 				val clusterManager : ClusterManager<AtlasClusterItem> = ClusterManager(context, it)

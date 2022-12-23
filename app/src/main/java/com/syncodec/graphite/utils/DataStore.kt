@@ -2,7 +2,11 @@ package com.syncodec.graphite.utils
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
@@ -10,13 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.nio.charset.StandardCharsets
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.SecretKeySpec
 
 
 val Context.dataStore : DataStore<Preferences> by preferencesDataStore("dataStore")
@@ -26,23 +23,18 @@ class DataStoreInstance(private val context : Context) {
 		private val IS_FIRST_TIME = booleanPreferencesKey("is_first_time")
 		private val STORED_VERSION = intPreferencesKey("stored_version")
 		private val PREFERENCE_SUPER_EXPIRY_TIME = stringPreferencesKey("super_expiry_time")
-		private val PREFERENCE_SHOW_RELEASE_NOTES = booleanPreferencesKey("show_release_notes")
-		private val PREFERENCE_THEME = intPreferencesKey("theme")
-		private val PREFERENCE_BACKGROUND = intPreferencesKey("background")
-		private val PREFERENCE_TYPOGRAPHY = intPreferencesKey("typography")
 		private val PREFERENCE_FOLLOW_SYSTEM_DARK_THEME = booleanPreferencesKey("follow_system_dark_theme")
 		private val PREFERENCE_FORCE_DARK_THEME = booleanPreferencesKey("force_dark_theme")
 		private val PREFERENCE_TINT_FAVORITE = booleanPreferencesKey("tint_favorite")
 		private val PREFERENCE_GEOLOCATION = booleanPreferencesKey("geolocation")
 		private val PREFERENCE_YEAR_PROGRESS = booleanPreferencesKey("year_progress")
 		private val PREFERENCE_NOTE_FROM_NOTIFICATION = booleanPreferencesKey("note_from_notification")
-		private val PREFERENCE_LANGUAGE = stringPreferencesKey("language")
 		private val PREFERENCE_SORT_ON = intPreferencesKey("sort_on")
 		private val PREFERENCE_SORT_BY = intPreferencesKey("sort_by")
 		private val PREFERENCE_VIEW_TYPE = intPreferencesKey("view_type")
-		private val PREFERENCE_VAULT_KEY = stringPreferencesKey("vault_key")
 		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
-		private val PREFERENCE_NOTE_SHOW_LOCATION_PERMISSION = booleanPreferencesKey("show_location_permission_card")
+		private val PREFERENCE_IS_SYNC_ENABLED = booleanPreferencesKey("is_sync_enabled")
+		private val PREFERENCE_DROPBOX_REFRESH_TOKEN = stringPreferencesKey("dropbox_refresh_token")
 	}
 
 	val getIsFirstTime : Flow<Boolean> =
@@ -74,36 +66,6 @@ class DataStoreInstance(private val context : Context) {
 			}
 		}
 
-
-	val showReleaseNotes : Flow<Boolean> =
-		context.dataStore.data.map { preferences ->
-			preferences[PREFERENCE_SHOW_RELEASE_NOTES] ?: true
-		}
-
-	fun setShowReleaseNotes(showReleaseNotes : Boolean) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_RELEASE_NOTES] = showReleaseNotes }
-	}
-
-	val getTheme : Flow<Int> =
-		context.dataStore.data.map { preferences -> preferences[PREFERENCE_THEME] ?: 0 }
-
-	fun putTheme(theme : Int) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_THEME] = theme }
-	}
-
-	val getBackground : Flow<Int> =
-		context.dataStore.data.map { preferences -> preferences[PREFERENCE_BACKGROUND] ?: 0 }
-
-	fun putBackground(background : Int) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_BACKGROUND] = background }
-	}
-
-	val getTypography : Flow<Int> =
-		context.dataStore.data.map { preferences -> preferences[PREFERENCE_TYPOGRAPHY] ?: 0 }
-
-	fun putTypography(typography : Int) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_TYPOGRAPHY] = typography }
-	}
 
 	val getFollowSystemDarkTheme : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FOLLOW_SYSTEM_DARK_THEME] ?: true }
 
@@ -183,73 +145,22 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_VIEW_TYPE] = viewType.ordinal }
 	}
 
-	val getPasscode =
-		context.dataStore.data.map { preferences -> preferences[PREFERENCE_VAULT_KEY] ?: "" }
-			.map { data ->
-				try {
-					if (data.length > 256 + 16) {
-						val salt = data.substring(0, 256).toByteArray(StandardCharsets.ISO_8859_1)
-						val iv =
-							data.substring(256, 256 + 16).toByteArray(StandardCharsets.ISO_8859_1)
-						val cipherText =
-							data.substring(256 + 16).toByteArray(StandardCharsets.ISO_8859_1)
-
-						val pbKeySpec = PBEKeySpec(
-							"7U%%!p28p94o!2B1@4Vqk*3VX!&g0fgP".toCharArray(),
-							salt,
-							1324,
-							256
-						)
-						val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-						val keyBytes = secretKeyFactory.generateSecret(pbKeySpec).encoded
-						val keySpec = SecretKeySpec(keyBytes, "AES")
-
-						val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-						val ivSpec = IvParameterSpec(iv)
-						cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
-						val decrypted = cipher.doFinal(cipherText)
-
-						decrypted.toString(StandardCharsets.ISO_8859_1)
-					} else {
-						""
-					}
-				} catch (exception : Exception) {
-					""
-				}
-			}
-
-	fun putPasscode(code : String) = CoroutineScope(Dispatchers.IO).launch {
-		val random = SecureRandom()
-		val salt = ByteArray(256)
-		random.nextBytes(salt)
-
-		val pbKeySpec =
-			PBEKeySpec("7U%%!p28p94o!2B1@4Vqk*3VX!&g0fgP".toCharArray(), salt, 1324, 256)
-		val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-		val keyBytes = secretKeyFactory.generateSecret(pbKeySpec).encoded
-		val keySpec = SecretKeySpec(keyBytes, "AES")
-
-		val ivRandom = SecureRandom()
-		val iv = ByteArray(16)
-		ivRandom.nextBytes(iv)
-		val ivSpec = IvParameterSpec(iv)
-
-		val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-		cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
-		val encrypted = cipher.doFinal(code.toByteArray())
-
-		val data =
-			salt.toString(StandardCharsets.ISO_8859_1) +
-					iv.toString(StandardCharsets.ISO_8859_1) +
-					encrypted.toString(StandardCharsets.ISO_8859_1)
-
-		context.dataStore.edit { pref -> pref[PREFERENCE_VAULT_KEY] = data }
-	}
-
 	fun getUseBiometric() : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_USE_BIOMETRIC] ?: false }
 
 	fun putUseBiometric(useBiometric : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_USE_BIOMETRIC] = useBiometric }
+	}
+
+	fun getIsSyncEnabled() : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_SYNC_ENABLED] ?: true }
+
+	fun setIsSyncEnabled(isSyncEnabled : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_IS_SYNC_ENABLED] = isSyncEnabled }
+	}
+
+	fun getDropboxRefreshToken() : Flow<String> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_DROPBOX_REFRESH_TOKEN] ?: "" }
+
+	fun putDropboxRefreshToken(refreshToken : String) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_DROPBOX_REFRESH_TOKEN] = refreshToken }
 	}
 
 	fun clearDatastore() = CoroutineScope(Dispatchers.IO).launch {

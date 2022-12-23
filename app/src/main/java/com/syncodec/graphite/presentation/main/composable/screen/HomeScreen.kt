@@ -24,9 +24,13 @@ fun HomeScreen(
 	componentType : ComponentType,
 	noteList : List<NoteObjectLite>,
 	bucketList : List<BucketObject>,
+	bucketOrderList: List<RealmUUID>,
 	notebookList : List<ChapterObject>,
+	notebookOrderList: List<RealmUUID>,
 	sortOn : SortOn,
 	sortBy : SortBy,
+	onReorderBucketList : (List<RealmUUID>) -> Unit,
+	onReorderNotebookList : (List<RealmUUID>) -> Unit,
 	viewType : ViewType,
 	onClickFab : () -> Unit,
 	onClickNote : (RealmUUID) -> Unit,
@@ -54,8 +58,10 @@ fun HomeScreen(
 
 			ComponentType.BUCKET -> BucketScreen(
 				bucketList = bucketList,
+				bucketOrderList = bucketOrderList,
 				sortOn = sortOn,
 				sortBy = sortBy,
+				onReorderBucketList = onReorderBucketList,
 				onClickFab = onClickFab,
 				onClickBucket = onClickBucket,
 				onLongClickBucket = onLongClickBucket
@@ -63,6 +69,8 @@ fun HomeScreen(
 
 			ComponentType.NOTEBOOK -> NotebookScreen(
 				notebookList = notebookList,
+				notebookOrderList = notebookOrderList,
+				onReorderNotebookList = onReorderNotebookList,
 				onClickFab = onClickFab,
 				onClickNotebook = onClickNotebook,
 				onLongClickNotebook = onLongClickNotebook

@@ -1,6 +1,11 @@
 package com.syncodec.graphite.presentation.main.composable.bar
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -25,10 +31,12 @@ import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionSyncStatus
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
+import com.syncodec.graphite.service.DropboxSyncStatus
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalVaultIsOpened
@@ -39,7 +47,8 @@ fun TopBar(
 	currentRoute : String?,
 	componentType : ComponentType,
 	onComponentChange : (Int) -> Unit,
-	onClickSearch : () -> Unit
+	onClickSearch : () -> Unit,
+	onClickSync : () -> Unit
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
@@ -59,7 +68,8 @@ fun TopBar(
 	) {
 		Bar(
 			currentRoute = currentRoute,
-			onClickSearch = onClickSearch
+			onClickSearch = onClickSearch,
+			onClickSync = onClickSync
 		)
 
 		AnimatedVisibility(
@@ -74,16 +84,18 @@ fun TopBar(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun Bar(
 	currentRoute : String?,
 	onClickSearch : () -> Unit,
+	onClickSync : () -> Unit
 ) {
 	val openSheet = LocalCompositionOpenBottomSheet.current
 
 	val isSelected = LocalCompositionIsSelected.current
 	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
+	val syncStatus = LocalCompositionSyncStatus.current
 
 	val onSelect = LocalCompositionOnSelect.current
 
@@ -140,10 +152,18 @@ private fun Bar(
 		} else {
 			CenterAlignedTopAppBar(
 				navigationIcon = {
-					MenuButton(
-						icon = R.drawable.ic_menu,
-						tint = MaterialTheme.colorScheme.onBackground,
-					) { openSheet(MainBottomSheetType.MENU) }
+					Row(modifier = Modifier) {
+						MenuButton(
+							icon = R.drawable.ic_menu,
+							tint = MaterialTheme.colorScheme.onBackground,
+						) { openSheet(MainBottomSheetType.MENU) }
+						MenuButton(
+							icon = R.drawable.ic_vault_f_d,
+							tint = if (isVaultOpened) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+							containerColor = if (isVaultOpened) MaterialTheme.colorScheme.primary else Color.Transparent,
+							onClick = { onAuthenticatorAction(Authenticator.AUTHENTICATE) }
+						)
+					}
 				},
 				title = {
 					Text(
@@ -158,12 +178,7 @@ private fun Bar(
 					)
 				},
 				actions = {
-					MenuButton(
-						icon = R.drawable.ic_vault,
-						tint = if (isVaultOpened) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-						containerColor = if (isVaultOpened) MaterialTheme.colorScheme.primary else Color.Transparent,
-						onClick = { onAuthenticatorAction(Authenticator.AUTHENTICATE) }
-					)
+					SyncButton(syncStatus = syncStatus, onClickSync = onClickSync)
 					MenuButton(
 						icon = R.drawable.ic_search,
 						tint = MaterialTheme.colorScheme.onBackground,
@@ -227,3 +242,102 @@ private fun ComponentType(
 		Spacer(modifier = Modifier.height(6.dp))
 	}
 }
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun SyncButton(
+	syncStatus : DropboxSyncStatus,
+	onClickSync : () -> Unit
+) {
+	val infiniteTransition = rememberInfiniteTransition()
+	val alpha by infiniteTransition.animateFloat(
+		initialValue = 1f,
+		targetValue = 0.47f,
+		animationSpec = infiniteRepeatable(
+			animation = tween(710, easing = LinearEasing),
+			repeatMode = RepeatMode.Reverse
+		)
+	)
+
+	AnimatedContent(
+		targetState = syncStatus,
+		transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+	) {
+		when (it) {
+			DropboxSyncStatus.INIT -> MenuButton(
+				icon = R.drawable.ic_cloud,
+				tint = Color.Companion.SyncCheck,
+				onClick = onClickSync
+			)
+
+			DropboxSyncStatus.SYNC_DISABLED -> MenuButton(
+				icon = R.drawable.ic_cloud_disable,
+				tint = Color.Companion.SyncDisabled,
+				onClick = onClickSync
+			)
+
+			DropboxSyncStatus.NO_INTERNET -> MenuButton(
+				icon = R.drawable.ic_no_network,
+				tint = Color.Companion.SyncNoInternet,
+				onClick = onClickSync
+			)
+
+			DropboxSyncStatus.NOT_LOGGED_IN -> MenuButton(
+				icon = R.drawable.ic_cloud_disable,
+				tint = Color.Companion.SyncNotLoggedIn,
+				onClick = onClickSync
+			)
+
+			DropboxSyncStatus.CONNECTED -> MenuButton(
+				icon = R.drawable.ic_cloud,
+				tint = Color.Companion.SyncConnected,
+				onClick = onClickSync
+			)
+
+			DropboxSyncStatus.SYNCING -> MenuButton(
+				icon = R.drawable.ic_cloud_word,
+				tint = Color.Companion.SyncSyncing,
+				modifier = Modifier.graphicsLayer {
+					this.alpha = alpha
+				},
+				onClick = onClickSync
+			)
+
+			DropboxSyncStatus.SYNC_ERROR -> MenuButton(
+				icon = R.drawable.ic_cloud_question,
+				tint = Color.Companion.SyncError,
+				onClick = onClickSync
+			)
+
+			DropboxSyncStatus.DRIVE_LOCKED -> MenuButton(
+				icon = R.drawable.ic_cloud_exclamation,
+				tint = Color.Companion.SyncLocked,
+				onClick = onClickSync
+			)
+		}
+	}
+}
+
+val Color.Companion.SyncCheck : Color
+	get() = Color(0xFF82AAE3)
+
+val Color.Companion.SyncDisabled : Color
+	get() = Color(0xFFE94560)
+
+val Color.Companion.SyncNoInternet : Color
+	get() = Color(0xFFE94560)
+
+val Color.Companion.SyncNotLoggedIn : Color
+	get() = Color(0xFFE94560)
+
+val Color.Companion.SyncConnected : Color
+	get() = Color(0xFF82AAE3)
+
+val Color.Companion.SyncSyncing : Color
+	get() = Color(0xFF82AAE3)
+
+val Color.Companion.SyncError : Color
+	get() = Color(0xFFE94560)
+
+val Color.Companion.SyncLocked : Color
+	get() = Color(0xFFE94560)

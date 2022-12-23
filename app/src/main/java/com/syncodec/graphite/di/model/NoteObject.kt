@@ -32,6 +32,8 @@ class NoteObject : RealmObject {
 
 	var parentId : RealmUUID? = null
 
+	var googleDriveId: String? = null
+
 	fun setLatLng(latLng : LatLng?) {
 		try {
 			if (latLng == null) {

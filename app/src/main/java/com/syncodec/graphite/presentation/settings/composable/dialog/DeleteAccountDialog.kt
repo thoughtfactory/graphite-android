@@ -30,7 +30,7 @@ fun DeleteAccountDialog(
 
 		DualActionButtons(
 			primaryText = "Delete",
-			secondaryText = "Dismiss",
+			secondaryText = "Cancel",
 			primaryColor = Color.Companion.DeleteContainer,
 			onPrimaryClick = onDelete,
 			onSecondaryClick = onDismiss

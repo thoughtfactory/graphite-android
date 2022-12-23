@@ -38,24 +38,24 @@ val darkColorScheme0 = darkColorScheme(
 	onBackground = Color(0xFFCEDBE6)
 )
 
-//val lightColorScheme1 = lightColorScheme(
-//	primary = Color(0xFF181D31),
-//	onPrimary = Color(0xFF7E8395),
+val lightColorScheme1 = lightColorScheme(
+	primary = Color(0xFF181D31),
+	onPrimary = Color(0xFF7E8395),
 //	primaryContainer = ,
 //	onPrimaryContainer = ,
 //	inversePrimary = ,
-//	secondary = Color(0xFF678983),
-//	onSecondary = ,
+	secondary = Color(0xFF678983),
+	onSecondary = Color(0xFF678983),
 //	secondaryContainer = ,
 //	onSecondaryContainer = ,
-//	tertiary = Color(0xFFE6DDC4),
-//	onTertiary = ,
+	tertiary = Color(0xFFE6DDC4),
+	onTertiary = Color(0xFF6B5827),
 //	tertiaryContainer = ,
 //	onTertiaryContainer = ,
-//	background = Color(0xFFF0E9D2),
-//	onBackground = ,
-//	surface = ,
-//	onSurface = ,
+	background = Color(0xFFF0E9D2),
+	onBackground = Color(0xFF28264E),
+	surface = Color(0xFFAD9F71),
+	onSurface = Color(0xFF28264E),
 //	surfaceVariant = ,
 //	onSurfaceVariant = ,
 //	surfaceTint = ,
@@ -68,7 +68,7 @@ val darkColorScheme0 = darkColorScheme(
 //	outline = ,
 //	outlineVariant = ,
 //	scrim = ,
-//)
+)
 
 
 val Color.Companion.DeleteContainer: Color

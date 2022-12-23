@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,8 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
 
@@ -25,20 +28,27 @@ import com.syncodec.graphite.utils.getInverseBWColor
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NotebookCard(
+	handleModifier : Modifier,
 	title: String?,
 	color: Color?,
 	thumbnail: String?,
 	isSelected: Boolean,
+	isDragging : Boolean,
 	onClick: (() -> Unit)?,
 	onLongClick: (() -> Unit)?
 ) {
+	val dragScale by animateFloatAsState(targetValue = if (isDragging) 1.13f else 1f)
 	val borderColor by animateColorAsState(targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-	val scale by animateFloatAsState(targetValue = if (isSelected) 0.895f else 1f)
+	val selectScale by animateFloatAsState(targetValue = if (isSelected) 0.895f else 1f)
 
 	Box(
 		modifier = Modifier
 			.padding(16.dp)
 			.border(BorderStroke(2.dp, borderColor), RoundedCornerShape(4.dp, 32.dp, 32.dp, 4.dp))
+			.graphicsLayer {
+				scaleX = dragScale
+				scaleY = dragScale
+			}
 	) {
 		Box(
 			modifier = Modifier
@@ -52,8 +62,8 @@ fun NotebookCard(
 					onLongClick = { onLongClick?.invoke() }
 				)
 				.graphicsLayer {
-					this.scaleX = scale
-					this.scaleY = scale
+					this.scaleX = selectScale
+					this.scaleY = selectScale
 				}
 		) {
 			thumbnail?.decodeBase64ToBitmap()?.let {
@@ -90,11 +100,21 @@ fun NotebookCard(
 						.padding(16.dp),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
-					Spacer(
-						modifier = Modifier
-							.fillMaxWidth()
-							.weight(1f)
-					)
+					Row(
+						modifier = Modifier.fillMaxWidth()
+					) {
+						Spacer(modifier = Modifier.weight(1f))
+
+						Icon(
+							painter = painterResource(id = R.drawable.ic_reorder),
+							contentDescription = "Reorder",
+							tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+							modifier = handleModifier.size(16.dp)
+						)
+					}
+					
+					Spacer(modifier = Modifier.weight(1f))
+					
 					Text(
 						text = title ?: "Untitled",
 						style = MaterialTheme.typography.titleLarge,

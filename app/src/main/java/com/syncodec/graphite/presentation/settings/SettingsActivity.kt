@@ -1,8 +1,10 @@
 package com.syncodec.graphite.presentation.settings
 
+import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -35,8 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -52,6 +56,7 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.sync.DropboxApi
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetLayout
@@ -100,14 +105,18 @@ class SettingsActivity : ComponentActivity() {
 
 		this.firebaseUser.value = auth.currentUser
 		oneTapClient = Identity.getSignInClient(this)
-		signInRequest = BeginSignInRequest.builder()
+		signInRequest = BeginSignInRequest
+			.builder()
 			.setPasswordRequestOptions(
-				BeginSignInRequest.PasswordRequestOptions.builder()
+				BeginSignInRequest
+					.PasswordRequestOptions
+					.builder()
 					.setSupported(true)
 					.build()
 			)
 			.setGoogleIdTokenRequestOptions(
-				BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+				GoogleIdTokenRequestOptions
+					.builder()
 					.setSupported(true)
 					.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
 					.setFilterByAuthorizedAccounts(false)
@@ -574,6 +583,21 @@ class SettingsActivity : ComponentActivity() {
 		}
 	}
 
+	private val googleSignInActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+		Log.i("npr71", "googleSignInActivity result: $it")
+		if (it.resultCode == Activity.RESULT_OK) {
+			val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
+			try {
+				val account = task.getResult(ApiException::class.java) !!
+				account.grantedScopes.forEach {
+					Log.i("npr71", it.scopeUri)
+				}
+				Log.i("npr71", "idToken : ${account.idToken}")
+			} catch (e : ApiException) {
+			}
+		}
+	}
+
 	companion object {
 		enum class Navigator {
 			BASE,
@@ -587,6 +611,7 @@ class SettingsActivity : ComponentActivity() {
 			LOCAL_BACKUP,
 			SNAPSHOT_WAREHOUSE,
 			SYNC,
+			DROPBOX_SYNC,
 			ABOUT_US
 		}
 
@@ -613,6 +638,8 @@ class SettingsActivity : ComponentActivity() {
 		val LocalRestoreSnapshot = compositionLocalOf { {} }
 		val LocalExportData = compositionLocalOf { {} }
 		val LocalImportData = compositionLocalOf<(ImportType) -> Unit> { {} }
+		val LocalDropboxSignIn = compositionLocalOf { {} }
+		val LocalTestDropboxConnection = compositionLocalOf { {} }
 
 		val LocalAttachmentCount = compositionLocalOf { 0 }
 		val LocalAttachmentProcessed = compositionLocalOf { 0 }

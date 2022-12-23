@@ -3,12 +3,8 @@ package com.syncodec.graphite
 import android.app.Application
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequest
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -27,7 +23,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 
 @HiltAndroidApp
@@ -42,6 +37,7 @@ class BaseApplication : Application() {
 
 	private val ATTACHMENT_DIR = "attachment"
 		get() = "$DATA/$field"
+
 
 	override fun onCreate() {
 		super.onCreate()
@@ -64,7 +60,6 @@ class BaseApplication : Application() {
 		Purchases.configure(purchasesConfiguration)
 
 		debug()
-
 
 		if (auth.currentUser != null) {
 			CoroutineScope(Dispatchers.Default).launch {

@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.main
 import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -14,11 +15,11 @@ import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.ListenableWorker
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.BaseApplication
+import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
@@ -27,8 +28,6 @@ import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.SortBy
-import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.widget.home.HomeWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,11 +47,17 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 
 	val repositoryState = repository2.repositoryState
 
+	val baseObject: MutableState<BaseObject?> = mutableStateOf(null)
 	val defaultNotebookId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val chapterObject : MutableState<ChapterObject?> = mutableStateOf(null)
+
 	val notebookList : SnapshotStateList<ChapterObject> = mutableStateListOf()
+	val notebookOrderList : SnapshotStateList<RealmUUID> = mutableStateListOf()
+
 	val noteList : SnapshotStateList<NoteObjectLite> = mutableStateListOf()
+
 	val bucketObjectList : SnapshotStateList<BucketObject> = mutableStateListOf()
+	val bucketObjectOrderList : SnapshotStateList<RealmUUID> = mutableStateListOf()
 
 	val tagList : SnapshotStateList<TagObject> = mutableStateListOf()
 
@@ -70,7 +75,7 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showExitDialog : MutableState<Boolean> = mutableStateOf(false)
 
-	val isPro = BaseApplication.isPro.value
+	val isPro by BaseApplication.isPro
 
 	init {
 		refresher.tryEmit(_refresher + 1)
@@ -123,6 +128,26 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 		viewModelScope.launch(Dispatchers.Default) {
 			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 			getTagList()
+		}
+
+		viewModelScope.launch(Dispatchers.Default) {
+			if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+			repository2.getBaseObjectAsFlow().collectLatest {
+				baseObject.value = it
+				it?.bucketIdOrderList?.let {
+					withContext(Dispatchers.Main) {
+						bucketObjectOrderList.clear()
+						bucketObjectOrderList.addAll(it)
+					}
+				}
+
+				it?.notebookIdOrderList?.let {
+					withContext(Dispatchers.Main) {
+						notebookOrderList.clear()
+						notebookOrderList.addAll(it)
+					}
+				}
+			}
 		}
 	}
 
@@ -198,14 +223,10 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 		}
 	}
 
-	var filterInclusivityState : MutableState<Int> = mutableStateOf(0)
-	var sortOn : MutableState<SortOn> = mutableStateOf(SortOn.TIMESTAMP)
-	var sortBy : MutableState<SortBy> = mutableStateOf(SortBy.DESCENDING)
-
 	fun putNotebook(title : String, description : String, color : Color?, bitmap : Bitmap?) {
 		CoroutineScope(Dispatchers.Default).launch {
 			try {
-				if (notebookList.size >= 3 && !isPro) {
+				if (notebookList.size >= 3 && ! isPro) {
 					withContext(Dispatchers.Main) {
 						Toast.makeText(repository2.context, "Join Graphite Pro to add more notebooks", Toast.LENGTH_SHORT).show()
 					}
@@ -233,7 +254,7 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 	) {
 		CoroutineScope(Dispatchers.Default).launch {
 			if (bucketObjectList.find { it.bucketType == bucketType.name } != null && ! isPro) {
-				val bucket = when(bucketType) {
+				val bucket = when (bucketType) {
 					BucketType.TODO -> "Todo"
 					BucketType.BOOK -> "Book"
 					BucketType.SHOW -> "Show"
@@ -266,36 +287,16 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 		}
 	}
 
-	fun addDebugNotes(debugNoteData : String) {
-//		CoroutineScope(Dispatchers.IO).launch {
-//			for (i in 0 .. 100) {
-//				val jsonObject = JSONObject(debugNoteData)
-//				val jsonArray = jsonObject.getJSONArray("quotes")
-//				for (i in 0 until jsonArray.length()) {
-//					try {
-//						NoteObject.getInstance().apply {
-//							val obj = jsonArray.getJSONObject(i)
-//							this.userTimestamp = System.currentTimeMillis() + Random.nextLong((- 1.5e+9).toLong(), 1.5e+9.toLong())
-//							this.title = obj.optString("author")
-//							this.contentThumbnail = obj.optString("quote")
-//							this.content =
-//								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-//									obj.optString("quote").repeat(500)
-//								}\"}]}]}"
-//
-//							this.parentChapterId = defaultNotebookId.value
-//							repository2.putNote(this) { _, _ -> }
-//							if (i % 100 == 0) {
-//								Log.i("npr71", "$i/${jsonArray.length()}")
-//							}
-//						}
-//					} catch (exception : Exception) {
-//						exception.printStackTrace()
-//					}
-//					delay(250)
-//				}
-//			}
-//		}
+	fun onReorderBucketList(bucketIdList:List<RealmUUID>) {
+		CoroutineScope(Dispatchers.Default).launch {
+			repository2.reorderBucketList(bucketIdList) { _, _ -> }
+		}
+	}
+
+	fun onReorderNotebookList(notebookIdList:List<RealmUUID>) {
+		CoroutineScope(Dispatchers.Default).launch {
+			repository2.reorderNotebookList(notebookIdList) { _, _ -> }
+		}
 	}
 
 	fun onAuthenticate() {
@@ -311,7 +312,6 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 	}
 
 
-
 	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 	private fun debug() {
@@ -324,15 +324,18 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 		}
 	}
 
-	suspend fun updateWidget(noteList: List<NoteObjectLite>) {
+	suspend fun updateWidget(noteList : List<NoteObjectLite>) {
 		// Iterate through all the available glance id's.
-		GlanceAppWidgetManager(repository2.context).getGlanceIds(HomeWidget::class.java).forEach { glanceId ->
-			updateAppWidgetState(repository2.context, glanceId) { prefs ->
-				prefs.clear()
-				noteList.forEach {
-					prefs[stringPreferencesKey(it.id.toString())] = objectMapper.writeValueAsString(it)
+		GlanceAppWidgetManager(repository2.context)
+			.getGlanceIds(HomeWidget::class.java)
+			.forEach { glanceId ->
+				updateAppWidgetState(repository2.context, glanceId) { prefs ->
+					prefs.clear()
+					noteList.forEach {
+						prefs[stringPreferencesKey(it.id.toString())] = objectMapper.writeValueAsString(it)
+					}
 				}
 			}
-		}
 		HomeWidget().updateAll(repository2.context)
-	}}
+	}
+}

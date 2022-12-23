@@ -9,15 +9,20 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -31,6 +36,13 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefr
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.ReorderableItem
+import org.burnoutcrew.reorderable.SpringDragCancelledAnimation
+import org.burnoutcrew.reorderable.detectReorder
+import org.burnoutcrew.reorderable.rememberReorderableLazyGridState
+import org.burnoutcrew.reorderable.reorderable
 
 
 @OptIn(
@@ -40,15 +52,46 @@ import io.realm.kotlin.types.RealmUUID
 @Composable
 fun NotebookScreen(
 	notebookList : List<ChapterObject>,
+	notebookOrderList: List<RealmUUID>,
+	onReorderNotebookList: (List<RealmUUID>) -> Unit,
 	onClickFab : () -> Unit,
 	onClickNotebook : (RealmUUID) -> Unit,
 	onLongClickNotebook : (RealmUUID) -> Unit
 ) {
+	val scope = rememberCoroutineScope()
 	val isNotebookRefreshing = LocalCompositionIsNotebookRefreshing.current
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
 	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
+
+	var _notebookList : SnapshotStateList<ChapterObject> = remember { mutableStateListOf() }
+
+	LaunchedEffect(notebookList) {
+		_notebookList.clear()
+
+		notebookOrderList.forEach { realmUUID ->
+			notebookList.firstOrNull { it.id == realmUUID }?.let { _notebookList.add(it) }
+		}
+
+		notebookList.filter { it.id !in notebookOrderList }.forEach { chapterObject ->
+			_notebookList.add(chapterObject)
+		}
+	}
+
+	val state = rememberReorderableLazyGridState(
+		dragCancelledAnimation = SpringDragCancelledAnimation(),
+		onMove = { from, to ->
+			_notebookList.apply {
+				add(to.index, removeAt(from.index))
+			}
+		},
+		onDragEnd = { from, to ->
+			scope.launch(Dispatchers.Default) {
+				onReorderNotebookList(_notebookList.map { it.id })
+			}
+		}
+	)
 
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -73,25 +116,34 @@ fun NotebookScreen(
 			) {
 				LazyVerticalGrid(
 					columns = GridCells.Adaptive(144.dp),
-					horizontalArrangement = Arrangement.Center,
+					state = state.gridState,
+					contentPadding = PaddingValues(horizontal = 8.dp),
+					verticalArrangement = Arrangement.spacedBy(4.dp),
+					horizontalArrangement = Arrangement.spacedBy(4.dp),
 					modifier = Modifier
 						.fillMaxSize()
-						.padding(12.dp, 0.dp),
+						.reorderable(state)
 				) {
-					notebookList.forEach { notebook ->
-						item {
+					items(
+						items = _notebookList,
+						key = { it.id.toString() }
+					) { notebook ->
+						ReorderableItem(
+							reorderableState = state,
+							key = notebook.id.toString(),
+						) { isDragging ->
 							NotebookCard(
+								handleModifier = Modifier.detectReorder(state),
 								title = notebook.title,
 								color = notebook.color?.let { it1 -> Color(it1) },
 								thumbnail = notebook.thumbnail,
 								isSelected = notebook.id in selectedRealmUUIDList,
+								isDragging = isDragging,
 								onClick = { onClickNotebook(notebook.id) },
 								onLongClick = { onLongClickNotebook(notebook.id) }
 							)
 						}
 					}
-					item { Spacer(modifier = Modifier.height(96.dp)) }
-					item { Spacer(modifier = Modifier.height(96.dp)) }
 				}
 			}
 		}

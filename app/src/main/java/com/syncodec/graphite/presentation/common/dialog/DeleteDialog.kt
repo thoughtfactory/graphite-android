@@ -124,7 +124,7 @@ fun DeleteDialog(
 
 		DualActionButtons(
 			primaryText = "Delete",
-			secondaryText = "Dismiss",
+			secondaryText = "Cancel",
 			onPrimaryClick = onDelete,
 			onSecondaryClick = onDismiss
 		)

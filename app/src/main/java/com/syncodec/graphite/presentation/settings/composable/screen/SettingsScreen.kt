@@ -41,6 +41,7 @@ fun SettingsScreen() {
 		SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> "Local Backup"
 		SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> "Snapshot Warehouse"
 		SettingsActivity.Companion.Navigator.SYNC -> "Synchronization"
+		SettingsActivity.Companion.Navigator.DROPBOX_SYNC -> "Dropbox"
 		SettingsActivity.Companion.Navigator.ABOUT_US -> "About Us"
 	}
 
@@ -75,6 +76,7 @@ fun SettingsScreen() {
 					SettingsActivity.Companion.Navigator.LOCAL_BACKUP -> LocalBackupScreen()
 					SettingsActivity.Companion.Navigator.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen()
 					SettingsActivity.Companion.Navigator.SYNC -> SynchronizationScreen()
+					SettingsActivity.Companion.Navigator.DROPBOX_SYNC -> DropboxSyncScreen()
 					SettingsActivity.Companion.Navigator.ABOUT_US -> AboutUsScreen( )
 				}
 			}

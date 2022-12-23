@@ -373,10 +373,6 @@ private fun LocationGoogleMap(
 
 	Box(modifier = Modifier) {
 		GoogleMap(
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(128.dp)
-				.clip(RoundedCornerShape(12.dp)),
 			cameraPositionState = cameraPositionState,
 			googleMapOptionsFactory = {
 				GoogleMapOptions().apply {
@@ -402,6 +398,10 @@ private fun LocationGoogleMap(
 			properties = MapProperties(
 				mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light)
 			),
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(128.dp)
+				.clip(RoundedCornerShape(12.dp)),
 		) {
 			Marker(
 				state = MarkerState(position = cameraPositionState.position.target),

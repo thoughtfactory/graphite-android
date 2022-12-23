@@ -107,16 +107,17 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 						Log.i("npr71", "key: ${key.joinToString("") { java.lang.String.format("%02x", it) }}")
 
 						try {
-							realmConfiguration = RealmConfiguration.Builder(
-								setOf(
-									BaseObject::class,
-									ChapterObject::class,
-									NoteObject::class,
-									BucketObject::class,
-									BucketItemObject::class,
-									TagObject::class
+							realmConfiguration = RealmConfiguration
+								.Builder(
+									setOf(
+										BaseObject::class,
+										ChapterObject::class,
+										NoteObject::class,
+										BucketObject::class,
+										BucketItemObject::class,
+										TagObject::class
+									)
 								)
-							)
 //			                    .encryptionKey(getNewKey(context))
 								.encryptionKey(key)
 								.initialData {
@@ -181,6 +182,11 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(BaseObject::class).first().find()
 	}
 
+	fun getBaseObjectAsFlow() : Flow<BaseObject?> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(BaseObject::class).first().asFlow().map { it.obj }
+	}
+
 	suspend fun putChapter(parentChapterId : RealmUUID?, chapterObject : ChapterObject, callback : (Boolean, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.Default).async {
 			if (realm == null) {
@@ -223,6 +229,31 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 
 							callback(true, null)
 						}
+					}
+				}
+			} catch (e : Exception) {
+				callback(false, e)
+			}
+		}.join()
+	}
+
+	suspend fun reorderNotebookList(chapterIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.Default).async {
+			if (realm == null) {
+				callback(false, RealmNotInitializedException())
+				return@async
+			}
+			try {
+				realm !!.write {
+					val storedBaseObject = getBaseObject()
+					storedBaseObject?.let {
+						findLatest(it)
+							?.let { latestBaseObject ->
+								latestBaseObject.notebookIdOrderList.clear()
+								latestBaseObject.notebookIdOrderList.addAll(chapterIdList)
+							}
+					} ?: run {
+						callback(false, Exception())
 					}
 				}
 			} catch (e : Exception) {
@@ -314,6 +345,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 												latestNoteObject.isFavourite = noteObject.isFavourite
 												latestNoteObject.isLocked = noteObject.isLocked
 												latestNoteObject.parentId = noteObject.parentId
+												latestNoteObject.googleDriveId = noteObject.googleDriveId
 											}
 									}
 								}
@@ -433,6 +465,31 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		}.join()
 	}
 
+	suspend fun reorderBucketList(bucketIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.Default).async {
+			if (realm == null) {
+				callback(false, RealmNotInitializedException())
+				return@async
+			}
+			try {
+				realm !!.write {
+					val storedBaseObject = getBaseObject()
+					storedBaseObject?.let {
+						findLatest(it)
+							?.let { latestBaseObject ->
+								latestBaseObject.bucketIdOrderList.clear()
+								latestBaseObject.bucketIdOrderList.addAll(bucketIdList)
+							}
+					} ?: run {
+						callback(false, Exception())
+					}
+				}
+			} catch (e : Exception) {
+				callback(false, e)
+			}
+		}
+	}
+
 	suspend fun putBucketItem(bucketId : RealmUUID, bucketItemObject : BucketItemObject, callback : (Boolean, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.Default).async {
 			if (realm == null) {
@@ -505,7 +562,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().find()
 	}
 
-	fun bufferAttachment(uriList : List<Uri>) : List<Pair< File?, Uri>> {
+	fun bufferAttachment(uriList : List<Uri>) : List<Pair<File?, Uri>> {
 		val attachmentList : MutableList<Pair<File?, Uri>> = mutableListOf()
 		uriList.forEach { uri ->
 			val uriAndFile = createTempAttachmentFileToExpose(context, context.getFileName(uri) ?: RealmUUID.random().toString())
@@ -596,8 +653,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 						} else {
 							this@Repository2.getAllTag().find { it.tag == tagObject.tag }?.let {
 								it.color = tagObject.color
-							} ?:
-							copyToRealm(tagObject)
+							} ?: copyToRealm(tagObject)
 						}
 
 						callback(true, null)

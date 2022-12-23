@@ -32,7 +32,7 @@ fun ExitDialog(
 
 		DualActionButtons(
 			primaryText = "Exit",
-			secondaryText = "Dismiss",
+			secondaryText = "Cancel",
 			onPrimaryClick = onExit,
 			onSecondaryClick = onDismiss
 		)

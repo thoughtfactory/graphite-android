@@ -30,6 +30,7 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSyncNow
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationBar
 import com.syncodec.graphite.presentation.main.composable.bar.MainNavigation
@@ -93,8 +94,13 @@ fun MainScreen(
 	val defaultNotebookId by viewModel.defaultNotebookId
 	val chapterObject by viewModel.chapterObject
 	val notebookList = viewModel.notebookList
+	val notebookOrderList = viewModel.notebookOrderList
 	val noteList = viewModel.noteList
 	val bucketList = viewModel.bucketObjectList
+	val bucketObjectOrderList = viewModel.bucketObjectOrderList
+
+	val onSync = LocalCompositionOnSyncNow.current
+	val onForceSync = LocalCompositionOnSyncNow.current
 
 	CompositionLocalProvider(
 		LocalModalBottomSheetState provides modalBottomSheetState,
@@ -112,11 +118,12 @@ fun MainScreen(
 				SheetLayout(
 					bottomSheetType = bottomSheetType,
 					putNotebook = viewModel::putNotebook,
+					onClickSyncNow = onSync,
+					onClickForceSync = onForceSync,
 				)
 			}
 		) {
 			Scaffold(
-				modifier = Modifier.fillMaxSize(),
 				topBar = {
 					TopBar(
 						currentRoute = currentRoute,
@@ -126,7 +133,8 @@ fun MainScreen(
 							Intent(context, SearchActivity::class.java).apply {
 								context.startActivity(this)
 							}
-						}
+						},
+						onClickSync = { openSheet(MainBottomSheetType.SYNC) }
 					)
 				},
 				bottomBar = {
@@ -134,17 +142,26 @@ fun MainScreen(
 						currentRoute = currentRoute,
 						onNavigation = { navController.navigate(it) }
 					)
-				}
+				},
+				modifier = Modifier.fillMaxSize()
 			) {
-				Box(modifier = Modifier.padding(it)) {
+				Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(it)
+				) {
 					MainNavigation(
 						navController = navController,
 						componentType = currentComponentType,
 						defaultNotebookId = defaultNotebookId,
 						chapterObject = chapterObject,
 						notebookList = notebookList,
+						notebookOrderList = notebookOrderList,
 						noteList = noteList,
 						bucketList = bucketList,
+						bucketOrderList = bucketObjectOrderList,
+						onReorderBucketList = viewModel::onReorderBucketList,
+						onReorderNotebookList = viewModel::onReorderNotebookList,
 					)
 
 					MainDialog()

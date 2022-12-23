@@ -14,8 +14,17 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -36,8 +45,6 @@ import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnAddDebugData
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
@@ -47,7 +54,13 @@ import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.main.composable.screen.HomeScreen
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
-import com.syncodec.graphite.utils.*
+import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.ViewType
+import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.RealmUUID
 
 
@@ -126,17 +139,18 @@ fun MainNavigation(
 	defaultNotebookId : RealmUUID?,
 	chapterObject : ChapterObject?,
 	notebookList : List<ChapterObject>,
+	notebookOrderList : List<RealmUUID>,
 	noteList : List<NoteObjectLite>,
 	bucketList : List<BucketObject>,
+	bucketOrderList: List<RealmUUID>,
+	onReorderBucketList : (List<RealmUUID>) -> Unit,
+	onReorderNotebookList : (List<RealmUUID>) -> Unit,
 ) {
 	val context = LocalContext.current
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val scope = rememberCoroutineScope()
-
 	val openSheet = LocalCompositionOpenBottomSheet.current
-	val closeSheet = LocalCompositionCloseBottomSheet.current
 
 	val isVaultOpened = LocalVaultIsOpened.current
 
@@ -152,8 +166,6 @@ fun MainNavigation(
 
 	val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) { "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner" }
 
-	val addDebugData = LocalCompositionOnAddDebugData.current
-
 	val activityLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 		try {
 			it.data?.let {
@@ -164,7 +176,7 @@ fun MainNavigation(
 					}
 					if (intentAction == Extra.Companion.IntentAction.DELETE) {
 						val hasObjectId = it.hasExtra(Extra.Companion.Constant.OBJECT_ID.name)
-						if(hasObjectId) {
+						if (hasObjectId) {
 							val realmUUID = it.getByteArrayExtra(Extra.Companion.Constant.OBJECT_ID.name)?.let { RealmUUID.from(it) }
 							if (realmUUID != null) {
 								selectedRealmUUIDList.add(realmUUID)
@@ -176,7 +188,7 @@ fun MainNavigation(
 				Extra.Companion.Constant.INTENT_ACTION.name
 				Extra.Companion.Constant.OBJECT_ID.name
 			}
-		} catch (e: Exception) {
+		} catch (e : Exception) {
 			Toast.makeText(context, "Error performing action", Toast.LENGTH_SHORT).show()
 		}
 	}
@@ -193,9 +205,13 @@ fun MainNavigation(
 					componentType = componentType,
 					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
 					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
+					bucketOrderList = bucketOrderList,
 					notebookList = notebookList.filter { it.parentId == null },
+					notebookOrderList = notebookOrderList,
 					sortOn = sortOn,
 					sortBy = sortBy,
+					onReorderBucketList = onReorderBucketList,
+					onReorderNotebookList = onReorderNotebookList,
 					viewType = viewType,
 					onClickFab = {
 						when (componentType) {

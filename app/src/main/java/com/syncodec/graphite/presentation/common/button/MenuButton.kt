@@ -65,6 +65,7 @@ fun MenuButton(
 
 @Composable
 fun MenuButton(
+	modifier : Modifier = Modifier,
 	icon: Int,
 	contentDescription: String? = null,
 	tint: Color = MaterialTheme.colorScheme.onSurface,
@@ -74,7 +75,7 @@ fun MenuButton(
 	onClick: () -> Unit
 ) {
 	Box(
-		modifier = Modifier
+		modifier = modifier
 			.requiredSize(44.dp)
 			.padding(2.dp)
 			.background(containerColor, shape)

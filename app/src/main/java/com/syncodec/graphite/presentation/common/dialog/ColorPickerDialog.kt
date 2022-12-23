@@ -89,7 +89,7 @@ fun ColorPickerDialog(
 				onSelectColor(_color)
 				onDismiss()
 			},
-			secondaryText = "Discard",
+			secondaryText = "Cancel",
 			onSecondaryClick = onDismiss,
 			primaryColor = _color,
 			secondaryColor = color,

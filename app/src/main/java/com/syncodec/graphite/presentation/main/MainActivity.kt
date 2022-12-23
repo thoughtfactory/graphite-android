@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.main
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
@@ -33,16 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.appwidget.updateAll
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.work.ListenableWorker
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.jsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -54,7 +47,6 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
@@ -67,12 +59,16 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNote
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnAddDebugData
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnExit
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnForceSync
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnReorderBucketList
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSyncNow
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionPutBucket
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowExitDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowNotificationPermissionDialog
+import com.syncodec.graphite.presentation.main.composable.LocalCompositionSyncStatus
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
@@ -80,13 +76,14 @@ import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.service.DropboxSyncService
+import com.syncodec.graphite.service.DropboxSyncServiceConnectionManager
+import com.syncodec.graphite.service.DropboxSyncStatus
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
-import com.syncodec.graphite.widget.home.HomeWidget
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 
@@ -103,9 +100,12 @@ class MainActivity : ComponentActivity() {
 
 	private var biometricErrorMessage : MutableState<String?> = mutableStateOf(null)
 
+	private var syncStatus: MutableState<DropboxSyncStatus> = mutableStateOf(DropboxSyncStatus.INIT)
+
 	@OptIn(ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
+		startSyncService()
 
 		val dataStoreInstance = DataStoreInstance(this)
 
@@ -126,6 +126,7 @@ class MainActivity : ComponentActivity() {
 			)
 			.setAutoSelectEnabled(false)
 			.build()
+
 
 		setContent {
 			BaseContent {
@@ -165,6 +166,7 @@ class MainActivity : ComponentActivity() {
 				val currentRoute = navBackStackEntry?.destination?.route
 
 				val biometricErrorMessage by this.biometricErrorMessage
+				val _syncStatus by this.syncStatus
 
 				fun openDialog(_mainDialogType : MainDialogType) {
 					when (_mainDialogType) {
@@ -200,15 +202,19 @@ class MainActivity : ComponentActivity() {
 				)
 
 				CompositionLocalProvider(
+					LocalCompositionSyncStatus provides _syncStatus,
 					LocalCompositionTagList provides tagList,
 					LocalCompositionIsNoteRefreshing provides isNoteRefreshing,
 					LocalCompositionIsBucketRefreshing provides isBucketRefreshing,
 					LocalCompositionIsNotebookRefreshing provides isNotebookRefreshing,
 					LocalCompositionOnRefresh provides { viewModel.refresher.value = viewModel.refresher.value + 1 },
+					LocalCompositionOnSyncNow provides { dropboxSyncService?.onSync() },
+					LocalCompositionOnForceSync provides { },
 					LocalCompositionIsSelected provides isSelected,
 					LocalCompositionOnSelect provides { isSelected = it },
 					LocalCompositionSelectedObjectIdList provides selectedRealmUUIDList,
 					LocalCompositionPutBucket provides viewModel::putBucket,
+					LocalCompositionOnReorderBucketList provides viewModel::onReorderBucketList,
 					LocalCompositionOpenDialog provides ::openDialog,
 					LocalCompositionCloseDialog provides ::closeDialog,
 					LocalCompositionShowNotificationPermissionDialog provides showNotificationPermissionDialog,
@@ -219,11 +225,7 @@ class MainActivity : ComponentActivity() {
 						finishAndRemoveTask()
 						viewModel.onDeauthenticate()
 					},
-					LocalCompositionOnAddDebugData provides {
-						assets.open("tmp/quotes.json").bufferedReader().let {
-							viewModel.addDebugNotes(it.readText())
-						}
-					},
+					LocalCompositionOnAddDebugData provides {},
 				) {
 					AnimatedContent(
 						targetState = isFirstTime,
@@ -272,10 +274,9 @@ class MainActivity : ComponentActivity() {
 		viewModel.refresher.value = viewModel.refresher.value + 1
 	}
 
-	override fun onStop() {
-		super.onStop()
-
-//		viewModel.onDeauthenticate()
+	override fun onDestroy() {
+		dropboxServiceConnection.unbindFromService()
+		super.onDestroy()
 	}
 
 
@@ -326,7 +327,9 @@ class MainActivity : ComponentActivity() {
 							BiometricPrompt.BIOMETRIC_ERROR_HW_UNAVAILABLE -> null
 							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT -> null
 							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT_PERMANENT -> null
-							BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS -> { viewModel.onAuthenticate() }
+							BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS -> {
+								viewModel.onAuthenticate()
+							}
 
 							BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL -> Toast.makeText(
 								this@MainActivity,
@@ -425,6 +428,25 @@ class MainActivity : ComponentActivity() {
 			Toast.makeText(this, "Hi ${user.displayName}", Toast.LENGTH_SHORT).show()
 		} else {
 			Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	var dropboxSyncService : DropboxSyncService? = null
+	private val dropboxServiceConnection = DropboxSyncServiceConnectionManager(this) {
+		dropboxSyncService = it
+		it?.let {
+			CoroutineScope(Dispatchers.Main).launch {
+				it.dropboxSyncStatus.collect {
+					syncStatus.value = it
+				}
+			}
+		}
+	}
+
+	private fun startSyncService() {
+		Intent(this.applicationContext, DropboxSyncService::class.java).apply {
+			dropboxServiceConnection.bindToService()
+			dropboxServiceConnection.dropboxSyncService
 		}
 	}
 }

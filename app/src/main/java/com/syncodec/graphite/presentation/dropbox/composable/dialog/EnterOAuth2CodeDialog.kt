@@ -1,0 +1,53 @@
+package com.syncodec.graphite.presentation.dropbox.composable.dialog
+
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.common.dialog.GenericDialog
+import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DialogTextField
+import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
+
+
+@Composable
+fun EnterOAuth2CodeDialog(
+	showDialog : Boolean,
+	onEnterCode : (String) -> Unit,
+	onDismiss : () -> Unit
+) {
+
+	var oAuthCodeText by remember { mutableStateOf("") }
+
+	GenericDialog(
+		showDialog = showDialog,
+		title = "OAuth2 Code",
+		onDismissRequest = {
+			onDismiss()
+		}
+	) {
+		DialogTextField(
+			text = oAuthCodeText,
+			label = "OAuth2 Code",
+			placeholder = "Enter OAuth2 Code",
+		) { oAuthCodeText = it ?: "" }
+
+		Spacer(modifier = Modifier.height(8.dp))
+
+		DualActionButtons(
+			primaryText = "Ok",
+			secondaryText = "Cancel",
+			onPrimaryClick = {
+				onEnterCode(oAuthCodeText)
+			},
+			onSecondaryClick = {
+				oAuthCodeText = ""
+				onDismiss()
+			}
+		)
+	}
+}
