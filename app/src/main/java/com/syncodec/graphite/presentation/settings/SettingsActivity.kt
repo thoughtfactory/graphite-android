@@ -638,20 +638,16 @@ class SettingsActivity : ComponentActivity() {
 		}
 	}
 
-	private val googleSignInActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-		Log.i("npr71", "googleSignInActivity result: $it")
-		if (it.resultCode == Activity.RESULT_OK) {
-			val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
-			try {
-				val account = task.getResult(ApiException::class.java) !!
-				account.grantedScopes.forEach {
-					Log.i("npr71", it.scopeUri)
-				}
-				Log.i("npr71", "idToken : ${account.idToken}")
-			} catch (e : ApiException) {
-			}
-		}
-	}
+//	private val googleSignInActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+//		if (it.resultCode == Activity.RESULT_OK) {
+//			val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
+//			try {
+//				val account = task.getResult(ApiException::class.java) !!
+//				Log.i("npr71", "idToken : ${account.idToken}")
+//			} catch (e : ApiException) {
+//			}
+//		}
+//	}
 
 	companion object {
 		enum class Navigator {

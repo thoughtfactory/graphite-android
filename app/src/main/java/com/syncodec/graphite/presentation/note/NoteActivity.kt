@@ -128,10 +128,10 @@ class NoteActivity : ComponentActivity() {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
 
 				val isNew by viewModel.isNew
 				val isViewing by viewModel.isViewing
+				systemUiController.setNavigationBarColor(if (isViewing == true) MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1) else MaterialTheme.colorScheme.background)
 				val isOperationPending by viewModel.isOperationPending
 				val locationSnackbarHostState = viewModel.locationSnackbarHostState
 
@@ -561,5 +561,10 @@ class NoteActivity : ComponentActivity() {
 		)
 
 		markwon
+	}
+
+	override fun onDestroy() {
+
+		super.onDestroy()
 	}
 }

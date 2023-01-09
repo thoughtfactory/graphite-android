@@ -23,13 +23,12 @@ import com.syncodec.graphite.utils.alice.putSecretData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+
 
 class DropboxActivity : ComponentActivity(), DropboxApi {
 
 	var dropboxSpaceUsage = mutableStateOf<SpaceUsage?>(null)
 
-	//	http://192.168.2.154:8001/graphite-diary/us-central1/dropboxCallback?code=t6Vy-VubtMAAAAAAAAACJWeCspWs2RRR_qMpcNeEdzo
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -111,7 +110,7 @@ class DropboxActivity : ComponentActivity(), DropboxApi {
 	}
 
 	private fun testConnection() {
-		testDropboxConnectionConnection {dropboxApiResponse ->
+		testDropboxConnectionConnection { dropboxApiResponse ->
 			CoroutineScope(Dispatchers.Main).launch {
 				Toast.makeText(this@DropboxActivity, dropboxApiResponse.message ?: "Something went wrong. Please try again.", Toast.LENGTH_SHORT).show()
 			}

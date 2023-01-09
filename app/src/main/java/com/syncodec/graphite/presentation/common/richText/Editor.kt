@@ -74,7 +74,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 
 		webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage : ConsoleMessage) : Boolean {
-				Log.d("npr71 : RichTextEditor", consoleMessage.message())
+//				Log.d("npr71 : RichTextEditor", consoleMessage.message())
 				return true
 			}
 		}
@@ -227,13 +227,15 @@ fun rememberRichTextEditor() : RichTextEditor {
 //	val typography by DataStoreInstance(context).getTypography.collectAsState(initial = null)
 	val typography = null
 
-	val richTextEditor = remember { RichTextEditor(context, containerColor, contentColor, screenHeight, typography) }
+	val richTextEditor : RichTextEditor = remember { RichTextEditor(context, containerColor, contentColor, screenHeight, typography) }
 
 	val lifecycleObserver = rememberRichTextEditorLifecycleObserver(richTextEditor)
 	val lifecycle = LocalLifecycleOwner.current.lifecycle
 	DisposableEffect(lifecycle) {
 		lifecycle.addObserver(lifecycleObserver)
-		onDispose { lifecycle.removeObserver(lifecycleObserver) }
+		onDispose {
+			lifecycle.removeObserver(lifecycleObserver)
+		}
 	}
 
 	return richTextEditor
@@ -246,6 +248,18 @@ fun rememberRichTextEditorLifecycleObserver(richTextEditor : RichTextEditor) : L
 			when (event) {
 				Lifecycle.Event.ON_RESUME -> richTextEditor.onResume()
 				Lifecycle.Event.ON_PAUSE -> richTextEditor.onPause()
+				Lifecycle.Event.ON_DESTROY -> {
+					richTextEditor.removeAllViews()
+					richTextEditor.clearHistory()
+					richTextEditor.clearCache(true)
+					richTextEditor.loadUrl("about:blank")
+					richTextEditor.onPause()
+					richTextEditor.removeAllViews()
+					richTextEditor.destroyDrawingCache()
+					richTextEditor.pauseTimers()
+					richTextEditor.destroy()
+				}
+
 				else -> null
 			}
 		}

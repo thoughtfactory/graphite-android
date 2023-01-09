@@ -131,7 +131,6 @@ fun NoteDialog(
 
 	LaunchedEffect(key1 = userTimestamp) {
 		localDatetime = userTimestamp?.let {
-			Log.i("npr71", "setting localDatetime")
 			LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.systemDefault())
 		} ?: LocalDateTime.now(Clock.systemDefaultZone())
 	}

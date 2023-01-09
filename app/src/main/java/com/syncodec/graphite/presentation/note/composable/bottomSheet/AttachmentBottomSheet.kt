@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
@@ -55,6 +57,8 @@ fun AttachmentBottomSheet(
 	onRemoveAttachment : (File?, Uri?) -> Unit = { _, _ -> },
 ) {
 	val context = LocalContext.current
+	val isPro by BaseApplication.isPro.collectAsState()
+
 	val attachmentList = LocalCompositionAttachmentList.current
 
 	var photoUri : Uri? by remember { mutableStateOf(null) }
@@ -75,7 +79,11 @@ fun AttachmentBottomSheet(
 	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
 		try {
 //			Join pro to add more than 4 attachments
-			onAddAttachmentToBuffer(uriList.take(minOf(4, 4 - attachmentList.size)))
+			if (isPro) onAddAttachmentToBuffer(uriList)
+			else {
+				onAddAttachmentToBuffer(uriList.take(minOf(4, 4 - attachmentList.size)))
+				Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
+			}
 		} catch (e : Exception) {
 		}
 	}
@@ -89,7 +97,7 @@ fun AttachmentBottomSheet(
 			buttonList = listOf(
 				{
 					BottomSheetButton(title = "Camera", icon = R.drawable.ic_camera) {
-						if (attachmentList.size < 4) {
+						if (attachmentList.size < 4 || isPro) {
 							photoUri = createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first
 							takePicture.launch(photoUri)
 						} else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
@@ -97,13 +105,13 @@ fun AttachmentBottomSheet(
 				},
 				{
 					BottomSheetButton(title = "Gallery", icon = R.drawable.ic_gallery) {
-						if (attachmentList.size < 4) openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
+						if (attachmentList.size < 4 || isPro) openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
 						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
 					}
 				},
 				{
 					BottomSheetButton(title = "File", icon = R.drawable.ic_file) {
-						if (attachmentList.size < 4) openFilePicker.launch(arrayOf("*/*"))
+						if (attachmentList.size < 4 || isPro) openFilePicker.launch(arrayOf("*/*"))
 						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
 					}
 				}
@@ -157,7 +165,7 @@ fun AttachmentBottomSheet(
 				item { Spacer(modifier = Modifier.height(4.dp)) }
 			}
 
-			if (attachmentList.size > 3) ProView()
+			if (attachmentList.size > 3 && !isPro) ProView()
 		}
 	}
 }

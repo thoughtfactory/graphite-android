@@ -4,7 +4,10 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -42,6 +45,7 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.bucket.BucketActivity
+import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
@@ -74,7 +78,7 @@ open class BottomNavigationItem(val route : String, val icon : Int, val title : 
 @Composable
 fun BottomNavigationBar(
 	currentRoute : String?,
-	onNavigation : (String) -> Unit
+	onNavigation : (BottomNavigationItem) -> Unit
 ) {
 	val isSelected = LocalCompositionIsSelected.current
 
@@ -96,7 +100,7 @@ fun BottomNavigationBar(
 		) {
 			screens.forEach { screen ->
 				NavigationBarItem(
-					onClick = { if (currentRoute != screen.route) onNavigation(screen.route) },
+					onClick = { if (currentRoute != screen.route) onNavigation(screen) },
 					icon = {
 						Icon(
 							painter = painterResource(id = screen.icon),
@@ -130,12 +134,13 @@ fun BottomNavigationBar(
 	}
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @ExperimentalPagerApi
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
 fun MainNavigation(
-	navController : NavHostController,
+	currentRoute : BottomNavigationItem,
 	componentType : ComponentType,
 	defaultNotebookId : RealmUUID?,
 	chapterObject : ChapterObject?,
@@ -143,7 +148,7 @@ fun MainNavigation(
 	notebookOrderList : List<RealmUUID>,
 	noteList : List<NoteObjectLite>,
 	bucketList : List<BucketObject>,
-	bucketOrderList: List<RealmUUID>,
+	bucketOrderList : List<RealmUUID>,
 	onReorderBucketList : (List<RealmUUID>) -> Unit,
 	onReorderNotebookList : (List<RealmUUID>) -> Unit,
 ) {
@@ -194,141 +199,267 @@ fun MainNavigation(
 		}
 	}
 
-	NavHost(
-		navController = navController,
-		startDestination = BottomNavigationItem.Home.route,
+	Crossfade(
+		targetState = currentRoute,
 	) {
-		composable(BottomNavigationItem.Home.route) {
-			CompositionLocalProvider(
-				LocalViewModelStoreOwner provides viewModelStoreOwner
-			) {
-				HomeScreen(
-					componentType = componentType,
-					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
-					bucketOrderList = bucketOrderList,
-					notebookList = notebookList.filter { it.parentId == null }.filter { if (it.isLocked) isVaultOpened else true },
-					notebookOrderList = notebookOrderList,
-					sortOn = sortOn,
-					sortBy = sortBy,
-					onReorderBucketList = onReorderBucketList,
-					onReorderNotebookList = onReorderNotebookList,
-					viewType = viewType,
-					onClickFab = {
-						when (componentType) {
-							ComponentType.NOTE -> {
-								Intent(context, NoteActivity::class.java).apply {
-									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-//          						TODO    Check if notebookId is not null
-									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-
-									activityLauncher.launch(this)
-								}
-//								addDebugData()
-							}
-
-							ComponentType.BUCKET -> openSheet(MainBottomSheetType.BUCKET)
-							ComponentType.NOTEBOOK -> openSheet(MainBottomSheetType.NOTEBOOK)
-						}
-					},
-					onClickNote = {
-						if (isSelected) {
-							onSelected(true)
-							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-							else selectedRealmUUIDList.add(it)
-						} else {
+		when (it) {
+			BottomNavigationItem.Home -> HomeScreen(
+				componentType = componentType,
+				noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
+				bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
+				bucketOrderList = bucketOrderList,
+				notebookList = notebookList.filter { it.parentId == null }.filter { if (it.isLocked) isVaultOpened else true },
+				notebookOrderList = notebookOrderList,
+				sortOn = sortOn,
+				sortBy = sortBy,
+				onReorderBucketList = onReorderBucketList,
+				onReorderNotebookList = onReorderNotebookList,
+				viewType = viewType,
+				onClickFab = {
+					when (componentType) {
+						ComponentType.NOTE -> {
 							Intent(context, NoteActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+								putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+//          						TODO    Check if notebookId is not null
 								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-								putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
 								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
 								activityLauncher.launch(this)
 							}
+//								addDebugData()
 						}
-					},
-					onLongClickNote = {
-						onSelected(true)
-						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-						else selectedRealmUUIDList.add(it)
-					},
-					onClickBucket = {
-						if (isSelected) {
-							onSelected(true)
-							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-							else selectedRealmUUIDList.add(it)
-						} else {
-							Intent(context, BucketActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.bytes)
-								activityLauncher.launch(this)
-							}
-						}
-					},
-					onLongClickBucket = {
-						onSelected(true)
-						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-						else selectedRealmUUIDList.add(it)
-					},
-					onClickNotebook = {
-						if (isSelected) {
-							onSelected(true)
-							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-							else selectedRealmUUIDList.add(it)
-						} else {
-							Intent(context, NotebookActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
-								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-								activityLauncher.launch(this)
-							}
-						}
-					},
-					onLongClickNotebook = {
-						onSelected(true)
-						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-						else selectedRealmUUIDList.add(it)
+
+						ComponentType.BUCKET -> openSheet(MainBottomSheetType.BUCKET)
+						ComponentType.NOTEBOOK -> openSheet(MainBottomSheetType.NOTEBOOK)
 					}
-				)
-			}
-		}
-		composable(BottomNavigationItem.Calendar.route) {
-			CompositionLocalProvider(
-				LocalViewModelStoreOwner provides viewModelStoreOwner
-			) {
-				CalendarScreen(
-					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-					onClickNote = {
+				},
+				onClickNote = {
+					if (isSelected) {
+						onSelected(true)
+						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+						else selectedRealmUUIDList.add(it)
+					} else {
 						Intent(context, NoteActivity::class.java).apply {
 							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
 							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
 							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
-							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
 
 							activityLauncher.launch(this)
 						}
-					},
-				) {}
-			}
-		}
-		composable(BottomNavigationItem.Atlas.route) {
-			CompositionLocalProvider(
-				LocalViewModelStoreOwner provides viewModelStoreOwner
-			) {
-				AtlasScreen(
-					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-					onClickNote = {
-						Intent(context, NoteActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-							putExtra(Extra.Companion.Constant.NOTE_ID.name, it?.bytes)
-							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
-
+					}
+				},
+				onLongClickNote = {
+					onSelected(true)
+					if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+					else selectedRealmUUIDList.add(it)
+				},
+				onClickBucket = {
+					if (isSelected) {
+						onSelected(true)
+						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+						else selectedRealmUUIDList.add(it)
+					} else {
+						Intent(context, BucketActivity::class.java).apply {
+							putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.bytes)
 							activityLauncher.launch(this)
 						}
-					},
-					onLongClickNote = {}
-				)
-			}
+					}
+				},
+				onLongClickBucket = {
+					onSelected(true)
+					if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+					else selectedRealmUUIDList.add(it)
+				},
+				onClickNotebook = {
+					if (isSelected) {
+						onSelected(true)
+						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+						else selectedRealmUUIDList.add(it)
+					} else {
+						Intent(context, NotebookActivity::class.java).apply {
+							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
+							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+							activityLauncher.launch(this)
+						}
+					}
+				},
+				onLongClickNotebook = {
+					onSelected(true)
+					if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+					else selectedRealmUUIDList.add(it)
+				}
+			)
+
+			BottomNavigationItem.Calendar -> CalendarScreen(
+				noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
+				onClickNote = {
+					Intent(context, NoteActivity::class.java).apply {
+						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+						putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
+						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+
+						activityLauncher.launch(this)
+					}
+				},
+			) {}
+
+			BottomNavigationItem.Atlas -> AtlasScreen(
+				currentRoute = currentRoute,
+				noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
+				onClickNote = {
+					Intent(context, NoteActivity::class.java).apply {
+						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+						putExtra(Extra.Companion.Constant.NOTE_ID.name, it?.bytes)
+						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+
+						activityLauncher.launch(this)
+					}
+				},
+				onLongClickNote = {}
+			)
+
+			null -> LoadingView()
 		}
 	}
+
+//	NavHost(
+//		navController = navController,
+//		startDestination = BottomNavigationItem.Home.route,
+//	) {
+//		composable(BottomNavigationItem.Home.route) {
+//			CompositionLocalProvider(
+//				LocalViewModelStoreOwner provides viewModelStoreOwner
+//			) {
+//				HomeScreen(
+//					componentType = componentType,
+//					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
+//					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
+//					bucketOrderList = bucketOrderList,
+//					notebookList = notebookList.filter { it.parentId == null }.filter { if (it.isLocked) isVaultOpened else true },
+//					notebookOrderList = notebookOrderList,
+//					sortOn = sortOn,
+//					sortBy = sortBy,
+//					onReorderBucketList = onReorderBucketList,
+//					onReorderNotebookList = onReorderNotebookList,
+//					viewType = viewType,
+//					onClickFab = {
+//						when (componentType) {
+//							ComponentType.NOTE -> {
+//								Intent(context, NoteActivity::class.java).apply {
+//									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+////          						TODO    Check if notebookId is not null
+//									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+//									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+//
+//									activityLauncher.launch(this)
+//								}
+////								addDebugData()
+//							}
+//
+//							ComponentType.BUCKET -> openSheet(MainBottomSheetType.BUCKET)
+//							ComponentType.NOTEBOOK -> openSheet(MainBottomSheetType.NOTEBOOK)
+//						}
+//					},
+//					onClickNote = {
+//						if (isSelected) {
+//							onSelected(true)
+//							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+//							else selectedRealmUUIDList.add(it)
+//						} else {
+//							Intent(context, NoteActivity::class.java).apply {
+//								putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+//								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+//								putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
+//								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+//
+//								activityLauncher.launch(this)
+//							}
+//						}
+//					},
+//					onLongClickNote = {
+//						onSelected(true)
+//						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+//						else selectedRealmUUIDList.add(it)
+//					},
+//					onClickBucket = {
+//						if (isSelected) {
+//							onSelected(true)
+//							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+//							else selectedRealmUUIDList.add(it)
+//						} else {
+//							Intent(context, BucketActivity::class.java).apply {
+//								putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.bytes)
+//								activityLauncher.launch(this)
+//							}
+//						}
+//					},
+//					onLongClickBucket = {
+//						onSelected(true)
+//						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+//						else selectedRealmUUIDList.add(it)
+//					},
+//					onClickNotebook = {
+//						if (isSelected) {
+//							onSelected(true)
+//							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+//							else selectedRealmUUIDList.add(it)
+//						} else {
+//							Intent(context, NotebookActivity::class.java).apply {
+//								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
+//								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
+//								activityLauncher.launch(this)
+//							}
+//						}
+//					},
+//					onLongClickNotebook = {
+//						onSelected(true)
+//						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
+//						else selectedRealmUUIDList.add(it)
+//					}
+//				)
+//			}
+//		}
+//		composable(BottomNavigationItem.Calendar.route) {
+//			CompositionLocalProvider(
+//				LocalViewModelStoreOwner provides viewModelStoreOwner
+//			) {
+//				CalendarScreen(
+//					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
+//					onClickNote = {
+//						Intent(context, NoteActivity::class.java).apply {
+//							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+//							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+//							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
+//							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+//
+//							activityLauncher.launch(this)
+//						}
+//					},
+//				) {}
+//			}
+//		}
+//		composable(BottomNavigationItem.Atlas.route) {
+//			CompositionLocalProvider(
+//				LocalViewModelStoreOwner provides viewModelStoreOwner
+//			) {
+//				AtlasScreen(
+//					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
+//					onClickNote = {
+//						Intent(context, NoteActivity::class.java).apply {
+//							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+//							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
+//							putExtra(Extra.Companion.Constant.NOTE_ID.name, it?.bytes)
+//							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+//
+//							activityLauncher.launch(this)
+//						}
+//					},
+//					onLongClickNote = {}
+//				)
+//			}
+//		}
+//	}
 }

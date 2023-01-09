@@ -37,6 +37,7 @@ fun AtlasScreen(
 				.padding(it)
 		) {
 			com.syncodec.graphite.presentation.main.composable.screen.AtlasScreen(
+				currentRoute = com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem.Atlas,
 				noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
 				onClickNote = onClickNote,
 				onLongClickNote = onLongClickNote,

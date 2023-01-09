@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -39,6 +41,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
+import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NotebookTimelineSpacer
@@ -47,11 +50,14 @@ import com.syncodec.graphite.utils.AttachmentType
 import com.syncodec.graphite.utils.ClusterRenderer
 import com.syncodec.graphite.utils.isMarkerVisible
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 
 
 @OptIn(ExperimentalMaterialApi::class, MapsComposeExperimentalApi::class)
 @Composable
 fun AtlasScreen(
+	currentRoute : BottomNavigationItem,
 	noteList : List<NoteObjectLite>,
 	onClickNote : (RealmUUID) -> Unit,
 	onLongClickNote : (RealmUUID) -> Unit,
@@ -95,6 +101,18 @@ fun AtlasScreen(
 		isDataReady = true
 	}
 
+	var centerCoroutine by remember { mutableStateOf<CoroutineScope?>(null) }
+	var clusterCoroutine by remember { mutableStateOf<CoroutineScope?>(null) }
+
+	DisposableEffect(key1 = currentRoute) {
+		onDispose {
+			if (currentRoute != BottomNavigationItem.Atlas) {
+				centerCoroutine?.cancel()
+				clusterCoroutine?.cancel()
+			}
+		}
+	}
+
 	BottomSheetScaffold(
 		scaffoldState = bottomSheetScaffoldState,
 		sheetContent = {
@@ -136,13 +154,14 @@ fun AtlasScreen(
 				.padding(0.dp, 0.dp, 0.dp, screenHeight.times(0.2f)),
 		) {
 			MapEffect(key1 = isDataReady) {
+				centerCoroutine = this
+
 				if (isDataReady) {
 					if (swLatLng.latitude != - 90.0 && swLatLng.longitude != - 180.0 && neLatLng.latitude != 90.0 && neLatLng.longitude != 180.0) {
 						try {
 							cameraPositionState.animate(
 								CameraUpdateFactory.newLatLngBounds(
-									LatLngBounds(swLatLng.toGLatLng() !!, neLatLng.toGLatLng() !!),
-									128
+									LatLngBounds(swLatLng.toGLatLng() !!, neLatLng.toGLatLng() !!), 128
 								)
 							)
 						} catch (e : Exception) {
@@ -153,6 +172,8 @@ fun AtlasScreen(
 			}
 
 			MapEffect(key1 = noteList) {
+				clusterCoroutine = this
+
 				it.clear()
 				val clusterManager : ClusterManager<AtlasClusterItem> = ClusterManager(context, it)
 				val clusterRenderer : ClusterRenderer<AtlasClusterItem> = ClusterRenderer(context, it, clusterManager)

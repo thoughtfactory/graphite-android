@@ -24,20 +24,16 @@ import kotlinx.coroutines.launch
 data class DbxToken(val accessToken : String, val refreshToken : String)
 
 data class DropboxApiResponse<T>(
-	val success: Boolean,
-	val result: T? = null,
-	val exception: Exception? = null,
-	val message: String? = null,
+	val success : Boolean,
+	val result : T? = null,
+	val exception : Exception? = null,
+	val message : String? = null,
 )
 
 interface DropboxApi {
 
 	fun dropboxSignIn(context : Context) {
-		val authorizeUrl =
-//			"https://www.dropbox.com/oauth2/authorize?client_id=wqgzkie6sm7xxvw&response_type=code&grant_type=authorization_code&token_access_type=offline&scope=account_info.read%20files.metadata.write%20files.metadata.read%20files.content.write%20files.content.read%20file_requests.write%20file_requests.read&redirect_uri=https%3A%2F%2Fus-central1-graphite-diary.cloudfunctions.net%2FdropboxCallback"
-//			"https://www.dropbox.com/oauth2/authorize?client_id=wqgzkie6sm7xxvw&response_type=code&grant_type=authorization_code&token_access_type=offline&scope=account_info.read%20files.metadata.write%20files.metadata.read%20files.content.write%20files.content.read%20file_requests.write%20file_requests.read&redirect_uri=https%3A%2F%2F192.168.2.154%3A8001%2Fgraphite-diary%2Fus-central1%2FdropboxCallback"
-//			"https://www.dropbox.com/oauth2/authorize?client_id=wqgzkie6sm7xxvw&response_type=code&grant_type=authorization_code&token_access_type=offline&scope=account_info.read%20files.metadata.write%20files.metadata.read%20files.content.write%20files.content.read%20file_requests.write%20file_requests.read&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fgraphite-diary%2Fus-central1%2FexchangeDropboxCodeForToken"
-			"https://www.dropbox.com/oauth2/authorize?client_id=wqgzkie6sm7xxvw&response_type=code&grant_type=authorization_code&token_access_type=offline&scope=account_info.read%20files.metadata.write%20files.metadata.read%20files.content.write%20files.content.read%20file_requests.write%20file_requests.read"
+		val authorizeUrl = ""
 
 		Intent(Intent.ACTION_VIEW).apply {
 			data = Uri.parse(authorizeUrl)
@@ -61,11 +57,10 @@ interface DropboxApi {
 
 			try {
 				val config = DbxRequestConfig("Graphite")
-				val appInfo = DbxAppInfo("wqgzkie6sm7xxvw", "kgu8ymntbtwnsxc")
 
-				val dbxAuthFinish = DbxWebAuth(config, appInfo).finishFromCode(code)
+//				val dbxAuthFinish = DbxWebAuth(config, appInfo).finishFromCode(code)
 
-				dropboxApiResponse(DropboxApiResponse(true, DbxToken(dbxAuthFinish.accessToken, dbxAuthFinish.refreshToken), null, null))
+//				dropboxApiResponse(DropboxApiResponse(true, DbxToken(dbxAuthFinish.accessToken, dbxAuthFinish.refreshToken), null, null))
 			} catch (e : BadRequestException) {
 				dropboxApiResponse(DropboxApiResponse(false, null, e, "Code has expired. Please try again."))
 			} catch (e : Exception) {
@@ -74,11 +69,11 @@ interface DropboxApi {
 		}
 	}
 
-	fun Context.getDropboxAccessToken(callback: (DropboxApiResponse<DbxToken?>) -> Unit) {
+	fun Context.getDropboxAccessToken(callback : (DropboxApiResponse<DbxToken?>) -> Unit) {
 		CoroutineScope(Dispatchers.IO).launch {
 			getSecretData("dropbox_refresh_token").let {
 				if (it.result == AliceRequestResult.KEY_NOT_FOUND) null else it.data?.decodeToString()
-			}.let {refreshToken ->
+			}.let { refreshToken ->
 				try {
 					val config = DbxRequestConfig("Graphite")
 					DbxCredential("", 0, refreshToken, "wqgzkie6sm7xxvw", "kgu8ymntbtwnsxc").refresh(config).let {

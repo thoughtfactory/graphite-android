@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.main
 
 import android.app.KeyguardManager
 import android.content.Context
-import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
@@ -34,8 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -76,15 +73,10 @@ import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.service.DropboxSyncService
-import com.syncodec.graphite.service.DropboxSyncServiceConnectionManager
 import com.syncodec.graphite.service.DropboxSyncStatus
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -100,7 +92,7 @@ class MainActivity : ComponentActivity() {
 
 	private var biometricErrorMessage : MutableState<String?> = mutableStateOf(null)
 
-	private var syncStatus: MutableState<DropboxSyncStatus> = mutableStateOf(DropboxSyncStatus.INIT)
+	private var syncStatus : MutableState<DropboxSyncStatus> = mutableStateOf(DropboxSyncStatus.INIT)
 
 	@OptIn(ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
@@ -163,9 +155,7 @@ class MainActivity : ComponentActivity() {
 				var showDeleteDialog by viewModel.showDeleteDialog
 				var showExitDialog by viewModel.showExitDialog
 
-				val navController = rememberNavController()
-				val navBackStackEntry by navController.currentBackStackEntryAsState()
-				val currentRoute = navBackStackEntry?.destination?.route
+				var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
 
 				val biometricErrorMessage by this.biometricErrorMessage
 				val _syncStatus by this.syncStatus
@@ -193,11 +183,8 @@ class MainActivity : ComponentActivity() {
 								selectedRealmUUIDList.clear()
 								isSelected = false
 							} else {
-								if (currentRoute == BottomNavigationItem.Home.route) {
-									openDialog(MainDialogType.EXIT)
-								} else {
-									navController.popBackStack(route = BottomNavigationItem.Home.route, inclusive = false, saveState = true)
-								}
+								if (currentRoute.route == BottomNavigationItem.Home.route) openDialog(MainDialogType.EXIT)
+								else currentRoute = BottomNavigationItem.Home
 							}
 						}
 					}
@@ -212,7 +199,7 @@ class MainActivity : ComponentActivity() {
 					LocalCompositionOnRefresh provides { viewModel.refresher.value = viewModel.refresher.value + 1 },
 					LocalCompositionOnSyncNow provides {
 //						dropboxSyncService?.onSync()
-													   },
+					},
 					LocalCompositionOnForceSync provides { },
 					LocalCompositionIsSelected provides isSelected,
 					LocalCompositionOnSelect provides { isSelected = it },
@@ -252,8 +239,7 @@ class MainActivity : ComponentActivity() {
 									RepositoryState.SUCCESS -> MainScreen(
 										viewModel = viewModel,
 										currentRoute = currentRoute,
-										navController = navController,
-									)
+									) { currentRoute = it }
 
 									RepositoryState.ERROR -> RepositoryLockedScreen(
 										errorMessage = biometricErrorMessage,
@@ -384,11 +370,11 @@ class MainActivity : ComponentActivity() {
 			try {
 
 				val googleCredential = oneTapClient.getSignInCredentialFromIntent(result.data)
-				val displayName = googleCredential.displayName
-				val username = googleCredential.id
-				val password = googleCredential.password
+//				val displayName = googleCredential.displayName
+//				val username = googleCredential.id
+//				val password = googleCredential.password
 				val idToken = googleCredential.googleIdToken
-				val profilePictureUri = googleCredential.profilePictureUri
+//				val profilePictureUri = googleCredential.profilePictureUri
 
 				if (idToken == null) {
 					Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()

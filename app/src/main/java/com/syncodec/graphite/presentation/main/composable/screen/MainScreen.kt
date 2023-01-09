@@ -29,6 +29,7 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseB
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSyncNow
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationBar
+import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.main.composable.bar.MainNavigation
 import com.syncodec.graphite.presentation.main.composable.bar.TopBar
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
@@ -55,8 +56,8 @@ enum class ComponentType {
 @Composable
 fun MainScreen(
 	viewModel : MainViewModel,
-	currentRoute : String?,
-	navController : NavHostController,
+	currentRoute : BottomNavigationItem,
+	navigate: (BottomNavigationItem) -> Unit,
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
@@ -117,7 +118,7 @@ fun MainScreen(
 			},
 			topBar = {
 				TopBar(
-					currentRoute = currentRoute,
+					currentRoute = currentRoute.route,
 					componentType = currentComponentType,
 					onComponentChange = { currentComponentType = ComponentType.values()[it] },
 					onClickSearch = {
@@ -130,14 +131,14 @@ fun MainScreen(
 			},
 			bottomBar = {
 				BottomNavigationBar(
-					currentRoute = currentRoute,
-					onNavigation = { navController.navigate(it) }
+					currentRoute = currentRoute.route,
+					onNavigation = { navigate(it) }
 				)
 			},
 			dialogContent = { MainDialog() }
 		) {
 			MainNavigation(
-				navController = navController,
+				currentRoute = currentRoute,
 				componentType = currentComponentType,
 				defaultNotebookId = defaultNotebookId,
 				chapterObject = chapterObject,

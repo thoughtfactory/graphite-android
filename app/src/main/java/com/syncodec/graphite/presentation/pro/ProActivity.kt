@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
@@ -28,7 +27,6 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.tone
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -189,6 +187,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 					val currentTimestamp = System.currentTimeMillis()
 					if ((expiryTimestamp != null) && (expiryTimestamp > currentTimestamp)) {
 						dataStoreInstance.putSuperExpiryTime(expiryTimestamp)
+						BaseApplication.isPro.tryEmit(true)
 						CoroutineScope(Dispatchers.Main).launch {
 							Toast.makeText(this@ProActivity, "Welcome to Graphite Pro", Toast.LENGTH_LONG).show()
 						}

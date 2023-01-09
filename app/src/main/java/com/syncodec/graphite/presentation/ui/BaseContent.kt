@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.ui
 import android.annotation.SuppressLint
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.LocalIndication
