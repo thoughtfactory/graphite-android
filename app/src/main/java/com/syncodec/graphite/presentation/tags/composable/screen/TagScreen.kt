@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.TagObject
@@ -34,6 +36,7 @@ import com.syncodec.graphite.presentation.tags.composable.dialog.TagDialog
 import com.syncodec.graphite.presentation.tags.composable.dialog.TagDialogType
 
 
+@Preview
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TagScreen() {
@@ -52,7 +55,7 @@ fun TagScreen() {
 
 	val onBackPressed = TagsActivity.LocalOnBackPressed.current
 
-	val isPro by BaseApplication.isPro
+	val isPro by BaseApplication.isPro.collectAsState()
 
 	Scaffold(
 		topBar = { TopBar(onBackPressed = onBackPressed) },
@@ -65,10 +68,8 @@ fun TagScreen() {
 			Column(
 				modifier = Modifier.fillMaxSize()
 			) {
-				Spacer(modifier = Modifier.height(16.dp))
-
 				SearchView(
-					text = tagName,
+					value = tagName,
 					placeholder = "Add or search tag",
 					isTagPresent = true,
 					onAddTag = {
@@ -87,7 +88,7 @@ fun TagScreen() {
 					},
 				) { tagName = it }
 
-				Spacer(modifier = Modifier.height(8.dp))
+				Spacer(modifier = Modifier.height(4.dp))
 
 				if (tagList.isEmpty()) {
 					EmptyView()

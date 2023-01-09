@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.search.composable.screen
 
 import android.content.Intent
 import android.graphics.Bitmap
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
@@ -55,7 +53,6 @@ fun SearchResultScreen(
 		LazyColumn(
 			modifier = Modifier.fillMaxSize(),
 			horizontalAlignment = Alignment.CenterHorizontally,
-			contentPadding = PaddingValues(0.dp, 8.dp, 0.dp, 0.dp)
 		) {
 			_visibleNote.forEach { noteObject ->
 

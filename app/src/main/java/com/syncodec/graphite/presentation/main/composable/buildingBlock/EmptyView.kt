@@ -55,6 +55,7 @@ fun EmptyView(
 			lineHeight = 16.sp,
 			letterSpacing = 2.sp,
 			color = MaterialTheme.colorScheme.onBackground,
+			textAlign = TextAlign.Center,
 			modifier = Modifier.width(screenWidth * 3 / 4)
 		)
 

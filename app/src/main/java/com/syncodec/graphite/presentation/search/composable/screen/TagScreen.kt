@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.LocalVaultIsOpened
 
 
@@ -54,9 +55,9 @@ fun TagScreen(
 		item {
 			Spacer(
 				modifier = Modifier
-					.fillMaxWidth(0.71f)
-					.height(2.dp)
-					.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f))
+					.fillMaxWidth()
+					.height(1.dp)
+					.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f))
 			)
 		}
 
@@ -84,7 +85,7 @@ fun TagScreen(
 				) {
 					ListItem(
 						title = "Locked Notes",
-						icon = R.drawable.ic_attachment,
+						icon = R.drawable.ic_file,
 						onClick = onClickLocked
 					)
 					Spacer(
@@ -115,13 +116,13 @@ fun TagScreen(
 				ListItem(
 					title = it.tag,
 					color = Color(it.color),
-					icon = R.drawable.ic_hashtag
+					icon = R.drawable.ic_tag
 				) { onClickTag(it) }
 				Spacer(
 					modifier = Modifier
 						.fillMaxWidth()
 						.height(1.dp)
-						.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.13f))
+						.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f))
 				)
 			}
 		}
@@ -150,8 +151,8 @@ private fun ListItem(
 			Icon(
 				painter = painterResource(id = icon),
 				contentDescription = title,
-				tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
-				modifier = Modifier.requiredSize(24.dp)
+				tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+				modifier = Modifier.requiredSize(IconButtonSize)
 			)
 
 			Spacer(modifier = Modifier.width(16.dp))

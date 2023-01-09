@@ -23,6 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -68,14 +69,14 @@ fun PrimaryButton(
 						painter = painterResource(id = primaryIcon),
 						contentDescription = primaryDescription,
 						tint = MaterialTheme.colorScheme.onPrimary,
+						modifier = Modifier.requiredSize(IconButtonSize)
 					)
 
-					Spacer(modifier = Modifier.width(8.dp))
+					Spacer(modifier = Modifier.width(12.dp))
 
 					Text(
 						text = primaryText,
 						style = MaterialTheme.typography.bodyMedium,
-						fontWeight = FontWeight.Bold,
 						color = MaterialTheme.colorScheme.onPrimary
 					)
 
@@ -101,6 +102,9 @@ fun PrimaryButton(
 							painter = painterResource(id = secondaryIcon),
 							contentDescription = secondaryDescription,
 							tint = MaterialTheme.colorScheme.onPrimary,
+							modifier = Modifier
+								.requiredSize(IconButtonSize)
+								.padding(2.dp)
 						)
 						Spacer(modifier = Modifier.width(16.dp))
 					}
@@ -145,9 +149,10 @@ fun PrimaryButton(
 					painter = painterResource(id = primaryIcon),
 					contentDescription = primaryDescription,
 					tint = MaterialTheme.colorScheme.onPrimary,
+					modifier = Modifier.requiredSize(IconButtonSize)
 				)
 
-				Spacer(modifier = Modifier.width(8.dp))
+				Spacer(modifier = Modifier.width(12.dp))
 
 				Text(
 					text = primaryText,
@@ -178,6 +183,7 @@ fun PrimaryButton(
 						painter = painterResource(id = secondaryIcon),
 						contentDescription = secondaryDescription,
 						tint = MaterialTheme.colorScheme.onPrimary,
+						modifier = Modifier.requiredSize(IconButtonSize)
 					)
 					Spacer(modifier = Modifier.width(16.dp))
 				}

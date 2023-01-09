@@ -18,21 +18,17 @@ fun BottomSheetHeader(
 	title: String,
 	icon: Int,
 	subTitle: String? = null,
-	contentColor: Color? = null,
+	contentColor: Color = MaterialTheme.colorScheme.onBackground,
 ) {
-
-	val _contentColor = contentColor ?: MaterialTheme.colorScheme.onSurface
 
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
+		modifier = Modifier.fillMaxWidth()
 	) {
 		Text(
 			text = title,
-			style = MaterialTheme.typography.titleLarge,
-			color = _contentColor,
+			style = MaterialTheme.typography.titleMedium,
+			color = contentColor,
 			fontWeight = FontWeight.Bold
 		)
 
@@ -41,7 +37,7 @@ fun BottomSheetHeader(
 		Icon(
 			painter = painterResource(id = icon),
 			contentDescription = null,
-			tint = _contentColor,
+			tint = contentColor,
 			modifier = Modifier.requiredSize(24.dp)
 		)
 	}
@@ -50,7 +46,7 @@ fun BottomSheetHeader(
 		Text(
 			text = subTitle,
 			style = MaterialTheme.typography.bodyMedium,
-			color = _contentColor,
+			color = contentColor,
 			maxLines = 2,
 			modifier = Modifier
 				.fillMaxWidth()

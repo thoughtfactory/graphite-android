@@ -69,7 +69,7 @@ fun ShowBookDialog(
 
 				Spacer(modifier = Modifier.width(12.dp))
 
-				MenuButton(icon = R.drawable.ic_open_link) {
+				MenuButton(icon = R.drawable.ic_launch) {
 					try {
 						uriHandler.openUri("https://openlibrary.org$bookKey")
 					} catch (e : Exception) {

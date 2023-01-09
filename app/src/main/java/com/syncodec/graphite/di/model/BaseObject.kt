@@ -19,6 +19,8 @@ class BaseObject : RealmObject {
 	var notebookIdOrderList : RealmList<RealmUUID> = realmListOf()
 	var bucketIdOrderList : RealmList<RealmUUID> = realmListOf()
 
+	var deletedIdList : RealmList<RealmUUID> = realmListOf()
+
 	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + (defaultChapterId?.hashCode() ?: 0)

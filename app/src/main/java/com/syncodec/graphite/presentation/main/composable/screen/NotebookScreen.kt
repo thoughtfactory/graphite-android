@@ -25,9 +25,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
@@ -35,6 +37,10 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNote
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
+import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOn
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,43 +59,49 @@ import org.burnoutcrew.reorderable.reorderable
 fun NotebookScreen(
 	notebookList : List<ChapterObject>,
 	notebookOrderList: List<RealmUUID>,
+	sortOn : SortOn,
+	sortBy : SortBy,
 	onReorderNotebookList: (List<RealmUUID>) -> Unit,
 	onClickFab : () -> Unit,
 	onClickNotebook : (RealmUUID) -> Unit,
 	onLongClickNotebook : (RealmUUID) -> Unit
 ) {
+	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
 	val isNotebookRefreshing = LocalCompositionIsNotebookRefreshing.current
 	val onRefresh = LocalCompositionOnRefresh.current
 
 	val isSelected = LocalCompositionIsSelected.current
 	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
-	var _notebookList : SnapshotStateList<ChapterObject> = remember { mutableStateListOf() }
+	val _notebookList : SnapshotStateList<ChapterObject> = remember { mutableStateListOf() }
 
-	LaunchedEffect(notebookList) {
+	LaunchedEffect(key1 = notebookList, key2 = sortOn, key3 = sortBy) {
 		_notebookList.clear()
-
-		notebookOrderList.forEach { realmUUID ->
-			notebookList.firstOrNull { it.id == realmUUID }?.let { _notebookList.add(it) }
-		}
-
-		notebookList.filter { it.id !in notebookOrderList }.forEach { chapterObject ->
-			_notebookList.add(chapterObject)
-		}
+		when (sortOn) {
+			SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) notebookList.sortedBy { it.title } else notebookList.sortedByDescending { it.title }
+			SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) notebookList.sortedBy { it.createdTimestamp } else notebookList.sortedByDescending { it.createdTimestamp }
+			SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) notebookList.sortedBy { it.modifiedTimestamp } else notebookList.sortedByDescending { it.modifiedTimestamp }
+			SortOn.CUSTOM -> {
+				notebookOrderList.forEach { realmUUID ->
+					notebookList.firstOrNull { it.id == realmUUID }?.let { _notebookList.add(it) }
+				}
+				notebookList.filter { it.id !in notebookOrderList }
+			}
+			else -> if (sortBy == SortBy.ASCENDING) notebookList.sortedBy { it.title } else notebookList.sortedByDescending { it.title }
+		}.apply { _notebookList.addAll(this) }
 	}
 
 	val state = rememberReorderableLazyGridState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
 		onMove = { from, to ->
-			_notebookList.apply {
-				add(to.index, removeAt(from.index))
-			}
+			_notebookList.apply { add(to.index, removeAt(from.index)) }
 		},
 		onDragEnd = { from, to ->
-			scope.launch(Dispatchers.Default) {
-				onReorderNotebookList(_notebookList.map { it.id })
-			}
+			scope.launch(Dispatchers.Default) { onReorderNotebookList(_notebookList.map { it.id }) }
+			dataStoreInstance.putSortOn(SortOn.CUSTOM)
 		}
 	)
 

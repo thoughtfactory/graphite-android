@@ -16,22 +16,27 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.composable.ProTag
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
+@Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsButton(
-	title: String,
+	title: String = "Title",
 	icon: Int? = null,
 	subTitle: String? = null,
 	isProFeature: Boolean = false,
@@ -39,9 +44,9 @@ fun SettingsButton(
 	contentColor: Color = MaterialTheme.colorScheme.onSurface,
 	iconColor : Color = MaterialTheme.colorScheme.onSurface,
 	enabled: Boolean = true,
-	onClick: () -> Unit
+	onClick: () -> Unit = {},
 ) {
-	val isPro by BaseApplication.isPro
+	val isPro by BaseApplication.isPro.collectAsState()
 
 	Card(
 		colors = CardDefaults.cardColors(
@@ -50,7 +55,7 @@ fun SettingsButton(
 			disabledContainerColor = containerColor.copy(alpha = 0.47f),
 			disabledContentColor = contentColor.copy(alpha = 0.47f),
 		),
-		shape = RoundedCornerShape(12.dp),
+		shape = MaterialTheme.shapes.medium,
 		modifier = Modifier.padding(12.dp, 4.dp),
 		enabled = enabled,
 		onClick = onClick
@@ -66,7 +71,7 @@ fun SettingsButton(
 					painter = painterResource(id = icon),
 					contentDescription = title,
 					tint = iconColor,
-					modifier = Modifier.requiredSize(24.dp)
+					modifier = Modifier.requiredSize(IconButtonSize)
 				)
 				Spacer(modifier = Modifier.width(16.dp))
 			} else {
@@ -98,9 +103,11 @@ fun SettingsButton(
 			Spacer(modifier = Modifier.width(16.dp))
 
 			Icon(
-				painter = painterResource(id = R.drawable.ic_chevron_right),
+				painter = painterResource(id = R.drawable.ic_caret),
 				contentDescription = title,
-				modifier = Modifier.requiredSize(24.dp)
+				modifier = Modifier
+					.requiredSize(IconButtonSize)
+					.graphicsLayer { rotationZ = 90f }
 			)
 		}
 	}

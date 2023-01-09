@@ -41,7 +41,7 @@ val weekNameShort: List<String> = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri
 
 val bucketTypeToIcon: Map<BucketType, Int> = mapOf(
 	BucketType.TODO to R.drawable.ic_todo,
-	BucketType.BOOK to R.drawable.ic_book,
+	BucketType.BOOK to R.drawable.ic_book_shelf,
 	BucketType.SHOW to R.drawable.ic_show,
 	BucketType.LINK to R.drawable.ic_link,
 )
@@ -62,6 +62,7 @@ enum class SortOn {
 	DUE,
 	CREATED,
 	DONE,
+	CUSTOM
 }
 
 enum class SortBy {

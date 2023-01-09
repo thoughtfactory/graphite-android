@@ -5,15 +5,41 @@ import android.graphics.ImageDecoder
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.animation.Crossfade
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,23 +49,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.flowlayout.FlowMainAxisAlignment
+import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.common.button.LargeButton
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.chapter.ChapterCoverPicker
 import com.syncodec.graphite.presentation.common.dialog.ColorPickerDialog
-import com.syncodec.graphite.presentation.common.notebook.NotebookColorChooser
-import com.syncodec.graphite.presentation.common.notebook.NotebookImageChooser
-import com.syncodec.graphite.presentation.common.text.LargeTextField
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
+import com.syncodec.graphite.utils.getInverseBWColor
+import com.syncodec.graphite.utils.getRandomColor
+import com.syncodec.graphite.utils.imageList
+import com.syncodec.graphite.utils.toHexString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -54,165 +86,93 @@ fun ChapterBottomSheet() {
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var titleText by rememberSaveable { mutableStateOf("") }
-	var isTitleTextFocused by remember { mutableStateOf(false) }
-	val titleTextFocusRequester = remember { FocusRequester() }
-
 	var descriptionText by rememberSaveable { mutableStateOf("") }
-	var isDescriptionTextFocused by remember { mutableStateOf(false) }
-	val descriptionTextFocusRequester = remember { FocusRequester() }
 
-	val chooserStateList = listOf(
-		StateData(title = "Color"),
-		StateData(title = "Image"),
-	)
-	var chooserType by rememberSaveable { mutableStateOf(0) }
-
-	var notebookColor by remember { mutableStateOf<Color?>(null) }
-	var notebookImage by remember { mutableStateOf<Int?>(null) }
-	var notebookImageUri by remember { mutableStateOf<Uri?>(null) }
-
-	var showColorPicker by remember { mutableStateOf(false) }
+	var coverColor by remember { mutableStateOf<Color?>(null) }
+	var coverImage by remember { mutableStateOf<Int?>(null) }
+	var coverUri by remember { mutableStateOf<Uri?>(null) }
 
 	val putChapter = NotebookActivity.LocalPutNewChapter.current
 	val closeSheet = NotebookActivity.LocalCloseBottomSheet.current
 
-	ColorPickerDialog(
-		color = notebookColor ?: MaterialTheme.colorScheme.primary,
-		showDialog = showColorPicker,
-		onSelectColor = {
-			notebookColor = it
-			showColorPicker = false
-		}
-	) { showColorPicker = false }
-
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(color = MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Writing a new chapter?",
+		icon = R.drawable.ic_notebook,
 	) {
 
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Writing a new chapter?",
-			icon = R.drawable.ic_notebook,
-			subTitle = "Keep your notes organized in notebooks"
+		BottomSheetTextField(
+			label = "Title",
+			placeholder = "Give your chapter a title",
+			value = titleText,
+			onValueChange = { titleText = it },
 		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
-		LargeTextField(
-			text = titleText,
-			placeholder = "Give your book a title",
-			isFocused = isTitleTextFocused,
-			focusRequester = titleTextFocusRequester,
-			onFocusChanged = { isTitleTextFocused = it },
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
-		) { titleText = it }
+		BottomSheetTextField(
+			label = "Description",
+			placeholder = "Add a little description",
+			value = descriptionText,
+			onValueChange = { descriptionText = it },
+		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
-		LargeTextField(
-			text = descriptionText,
-			placeholder = "And a little description",
-			isFocused = isDescriptionTextFocused,
-			focusRequester = descriptionTextFocusRequester,
-			onFocusChanged = { isDescriptionTextFocused = it },
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
-		) { descriptionText = it }
+		ChapterCoverPicker(
+			coverColor = coverColor,
+			coverImage = coverImage,
+			coverUri = coverUri,
+			onPickColor = { coverColor = it; coverUri = null; coverImage = null },
+			onChooseImage = { coverColor = null; coverUri = null; coverImage = it },
+			onPickImage = { coverColor = null; coverUri = it; coverImage = null },
+		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(2.dp))
 
-		StateButton(
-			stateList = chooserStateList,
-			currentState = chooserType,
-			containerColor = MaterialTheme.colorScheme.background,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(36.dp)
-				.padding(24.dp, 0.dp)
-		) { chooserType = it }
+		Button(
+			colors = ButtonDefaults.buttonColors(
+				containerColor = MaterialTheme.colorScheme.primary,
+				contentColor = MaterialTheme.colorScheme.onPrimary,
+				disabledContainerColor = MaterialTheme.colorScheme.surface,
+				disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+			),
+			enabled = ! (coverColor == null && coverImage == null && coverUri == null) && titleText.isNotBlank(),
+			modifier = Modifier.fillMaxWidth(),
+			onClick = {
+				scope.launch(Dispatchers.Default) {
+					when {
+						titleText.isEmpty() -> Toast.makeText(context, "Notebook title cannot be empty", Toast.LENGTH_SHORT).show()
+						coverColor == null && coverImage == null && coverUri == null ->
+							Toast.makeText(context, "Select a color or image for notebook", Toast.LENGTH_SHORT).show()
 
-		Spacer(modifier = Modifier.height(8.dp))
+						else -> {
 
-		Crossfade(targetState = chooserType) {
-			when (it) {
-				0 -> NotebookColorChooser(
-					currentColor = notebookColor,
-					onChooseColor = { color ->
-						notebookColor = color
-						notebookImage = null
-					},
-					onClickColorPicker = {
-						notebookImage = null
-						notebookImageUri = null
-						showColorPicker = true
-					}
-				)
+							val bitmap = if (coverImage != null) {
+								BitmapFactory.decodeResource(context.resources, coverImage !!)
+							} else {
+								coverUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
+							}
 
-				1 -> NotebookImageChooser(
-					currentImage = notebookImage,
-					currentImageUri = notebookImageUri,
-					onChooseImage = { image ->
-						notebookImage = image
-						notebookColor = null
-						notebookImageUri = null
-					},
-					onPickImage = {
-						notebookImageUri = it
-						notebookImage = null
-						notebookColor = null
-					}
-				)
-			}
-		}
+							val aspectRatio = if (bitmap != null) bitmap.width.toFloat() / bitmap.height.toFloat() else 1f
 
-		Spacer(modifier = Modifier.height(12.dp))
+							val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192) }
 
-		LargeButton(
-			text = "Create",
-			enabled = !(notebookColor == null && notebookImage == null && notebookImageUri == null) && titleText.isNotBlank(),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
-		) {
-			scope.launch(Dispatchers.IO) {
-				when {
-					titleText.isEmpty() -> Toast.makeText(context, "Notebook title cannot be empty", Toast.LENGTH_SHORT).show()
-					notebookColor == null && notebookImage == null && notebookImageUri == null ->
-						Toast.makeText(context, "Select a color or image for notebook", Toast.LENGTH_SHORT).show()
+							putChapter(titleText, descriptionText, coverColor, thumbnail)
 
-					else -> {
+							keyboardController?.hide()
+							closeSheet()
 
-						val bitmap = if (notebookImage != null) {
-							BitmapFactory.decodeResource(context.resources, notebookImage!!)
-						} else {
-							notebookImageUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
+							titleText = ""
+							descriptionText = ""
+							coverColor = null
+							coverImage = null
+							coverUri = null
 						}
-
-						val aspectRatio = if (bitmap != null) bitmap.width.toFloat() / bitmap.height.toFloat() else 1f
-
-						val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192) }
-
-						putChapter(titleText, descriptionText, notebookColor, thumbnail)
-						closeSheet()
-
-						titleTextFocusRequester.freeFocus()
-						descriptionTextFocusRequester.freeFocus()
-						keyboardController?.hide()
-
-						titleText = ""
-						descriptionText = ""
 					}
 				}
 			}
+		) {
+			Text(text = "Create")
 		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }

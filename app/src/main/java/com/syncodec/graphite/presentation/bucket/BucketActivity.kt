@@ -43,6 +43,7 @@ import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnDe
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnRefresh
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnPutTodo
+import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnReorderBucketItem
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnUpdateBucket
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenGraphResult
@@ -63,6 +64,7 @@ import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.tone
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
@@ -92,8 +94,8 @@ class BucketActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
 
 				val scope = rememberCoroutineScope()
 
@@ -110,7 +112,7 @@ class BucketActivity : ComponentActivity() {
 
 				var openGraphResult by remember { mutableStateOf<OpenGraphResult?>(null) }
 
-				var bucketItemObject by viewModel.bucketItemObject
+				val bucketItemObject by viewModel.bucketItemObject
 
 				val isVaultOpened = LocalVaultIsOpened.current
 				val onAuthenticatorAction = LocalAuthenticatorAction.current
@@ -131,7 +133,7 @@ class BucketActivity : ComponentActivity() {
 						try {
 							keyboardController?.hide()
 							focusManager.clearFocus()
-						} catch (e : Exception) {
+						} catch (_ : Exception) {
 						}
 					}
 				}
@@ -173,6 +175,7 @@ class BucketActivity : ComponentActivity() {
 
 				CompositionLocalProvider(
 					LocalCompositionBucketObject provides bucketObject,
+					LocalCompositionOnReorderBucketItem provides viewModel::onReorderBucketItem,
 					LocalCompositionOnRefresh provides viewModel::refresh,
 					LocalCompositionOnClickLock provides {
 						if (isVaultOpened) viewModel.toggleLock()

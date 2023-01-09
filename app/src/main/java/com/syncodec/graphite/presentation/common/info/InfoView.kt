@@ -40,7 +40,7 @@ fun InfoView(
 	createdTimestamp : Long?,
 	modifiedTimestamp : Long?,
 	description : String?,
-	color : Color = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
+	color : Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 	thumbnail : Bitmap?,
 ) {
 
@@ -49,9 +49,8 @@ fun InfoView(
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
-			.background(color, RoundedCornerShape(16.dp))
-			.clip(RoundedCornerShape(16.dp))
+			.background(color, MaterialTheme.shapes.medium)
+			.clip(MaterialTheme.shapes.medium)
 			.onGloballyPositioned { size = it.size }
 	) {
 		thumbnail?.let {

@@ -111,7 +111,7 @@ fun LocationPickerDialog(
 				contentAlignment = Alignment.Center
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_circle),
+					painter = painterResource(id = R.drawable.ic_ring),
 					contentDescription = "Map center",
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.requiredHeight(8.dp)

@@ -33,6 +33,7 @@ import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
@@ -48,21 +49,10 @@ fun ProfileBottomSheet(
 	val openDialog = SettingsActivity.LocalOpenDialog.current
 	val signOut = SettingsActivity.LocalSignOut.current
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Profile",
+		icon = R.drawable.ic_account
 	) {
-
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Profile",
-			icon = R.drawable.ic_account
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
 
 		ProfileView(
 			displayName = firebaseUser?.displayName ?: "Anonymous",
@@ -74,9 +64,7 @@ fun ProfileBottomSheet(
 		Spacer(modifier = Modifier.height(8.dp))
 
 		Button(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
+			modifier = Modifier.fillMaxWidth(),
 			onClick = {
 				closeSheet()
 				signOut()
@@ -97,8 +85,6 @@ fun ProfileBottomSheet(
 //		) {
 //			Text(text = "Delete Account")
 //		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
@@ -112,10 +98,7 @@ fun ProfileView(
 	val context = LocalContext.current
 
 	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
-			.background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
+		modifier = Modifier.fillMaxWidth()
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,

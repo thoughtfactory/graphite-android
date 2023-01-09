@@ -2,29 +2,26 @@ package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemState
@@ -33,17 +30,18 @@ import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBuck
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyValueCard
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
+import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.common.dialog.DialogType
-import com.syncodec.graphite.presentation.common.info.InfoView
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.timeStampToPrettyFull
 
 
+@Preview
 @Composable
 fun MenuBottomSheet() {
 
@@ -56,61 +54,64 @@ fun MenuBottomSheet() {
 
 	val onShare = LocalCompositionOnShare.current
 
-	val buttonList : List<BottomSheetButtonData> = remember {
-		listOf(
-			BottomSheetButtonData(
-				title = "Edit",
-				icon = R.drawable.ic_pencil,
-				onClick = { openDialog(DialogType.EDIT) }
-			),
-			BottomSheetButtonData(
-				title = "Share",
-				icon = R.drawable.ic_share,
-				onClick = {
-					onShare(true)
-					closeSheet()
-				}
-			),
-			BottomSheetButtonData(
-				title = "Delete",
-				icon = R.drawable.ic_delete,
-				containerColor = Color.DeleteContainer,
-				contentColor = Color.DeleteContent,
-				onClick = {
-					closeSheet()
-					openDialog(DialogType.DELETE)
-				}
-			),
-		)
-	}
-
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Menu",
+		icon = R.drawable.ic_menu,
 	) {
 
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Menu",
-			icon = R.drawable.ic_menu,
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		BottomSheetButtonGrid(buttonList = buttonList)
-
-		InfoView(
-			id = bucketObject?.id,
-			createdTimestamp = bucketObject?.createdTimestamp,
-			modifiedTimestamp = null,
-			description = bucketObject?.description,
-			thumbnail = null
+		BottomSheetButtonGrid(
+			buttonList = listOf(
+				{ BottomSheetButton(title = "Edit", icon = R.drawable.ic_pencil) { openDialog(DialogType.EDIT) } },
+				{ BottomSheetButton(title = "Share", icon = R.drawable.ic_share) { onShare(true); closeSheet() } },
+				{
+					BottomSheetButton(
+						title = "Delete",
+						icon = R.drawable.ic_delete,
+						containerColor = Color.Companion.DeleteContainer,
+						contentColor = Color.Companion.DeleteContent
+					) { closeSheet(); openDialog(DialogType.DELETE) }
+				},
+			)
 		)
 
 		Spacer(modifier = Modifier.height(6.dp))
+
+		Spacer(
+			modifier = Modifier
+				.fillMaxWidth(0.71f)
+				.height(1.dp)
+				.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.13f))
+		)
+
+		Spacer(modifier = Modifier.height(6.dp))
+
+		BottomSheetKeyValueCard(
+			key = "ID",
+			value = bucketObject?.id?.toString() ?: "",
+		)
+
+		Spacer(modifier = Modifier.height(4.dp))
+
+		BottomSheetKeyValueCard(
+			key = "Description",
+			value = bucketObject?.description,
+		)
+
+		Spacer(modifier = Modifier.height(4.dp))
+
+		BottomSheetKeyValueCard(
+			key = "Created On",
+			value = bucketObject?.createdTimestamp?.timeStampToPrettyFull(),
+		)
+
+		Spacer(modifier = Modifier.height(4.dp))
+
+		BottomSheetKeyValueCard(
+			key = "Modified On",
+			value = bucketObject?.modifiedTimestamp?.timeStampToPrettyFull(),
+		)
+
+		Spacer(modifier = Modifier.height(4.dp))
 
 		DataView(
 			allCount = bucketObject?.bucketItemList?.count { if (it.isLocked) isVaultOpened else true } ?: 0,
@@ -125,8 +126,6 @@ fun MenuBottomSheet() {
 				}
 			}
 		)
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
@@ -140,9 +139,7 @@ private fun ColumnScope.DataView(
 ) {
 	this.apply {
 		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
+			modifier = Modifier.fillMaxWidth()
 		) {
 			DataItemView(
 				text = allCount.toString(),
@@ -165,12 +162,10 @@ private fun ColumnScope.DataView(
 			)
 		}
 
-		Spacer(modifier = Modifier.height(6.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
+			modifier = Modifier.fillMaxWidth()
 		) {
 			DataItemView(
 				text = betaCount.toString(),
@@ -217,10 +212,10 @@ private fun DataItemView(
 	contentDescription : String,
 ) {
 	Card(
-		shape = RoundedCornerShape(12.dp),
+		shape = MaterialTheme.shapes.medium,
 		colors = CardDefaults.cardColors(
-			containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
-			contentColor = MaterialTheme.colorScheme.onBackground
+			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+			contentColor = MaterialTheme.colorScheme.onSurface
 		),
 		modifier = modifier.height(40.dp)
 	) {

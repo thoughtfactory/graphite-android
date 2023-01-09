@@ -236,7 +236,7 @@ private fun TopBar(
 		Navigator(
 			showRoot = true,
 			defaultChapterId = null,
-			chapterObjectLiteList = chapterPath,
+			chapterPath = chapterPath,
 			onClick = onSelectChapter
 		)
 	}

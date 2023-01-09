@@ -112,16 +112,9 @@ fun DeleteDialog(
 	GenericDialog(
 		showDialog = showDialog,
 		title = "Delete",
+		contentText = "Deletion is an irreversible action. Are you sure you want to delete selected items?",
 		onDismissRequest = onDismiss
 	) {
-		Text(
-			text = message ?: "Are you sure you want to delete this item?",
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
 		DualActionButtons(
 			primaryText = "Delete",
 			secondaryText = "Cancel",

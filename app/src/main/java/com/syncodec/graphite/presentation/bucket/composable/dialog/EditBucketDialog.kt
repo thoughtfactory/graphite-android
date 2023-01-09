@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
@@ -50,9 +49,6 @@ fun EditBucketDialog(
 	}
 
 	val focusManager = LocalFocusManager.current
-	val titleFocusRequester = remember { FocusRequester() }
-	val descriptionFocusRequester = remember { FocusRequester() }
-
 
 	GenericDialog(
 		showDialog = showDialog,
@@ -60,7 +56,7 @@ fun EditBucketDialog(
 		onDismissRequest = onDismiss
 	) {
 		DialogTextField(
-			text = _title,
+			value = _title ?: "",
 			label = "Title",
 			placeholder = "An interesting title",
 			trailingIcon = {
@@ -78,7 +74,7 @@ fun EditBucketDialog(
 		Spacer(modifier = Modifier.height(8.dp))
 
 		DialogTextField(
-			text = _description,
+			value = _description ?: "",
 			label = "Description",
 			placeholder = "What is it about?",
 			maxLines = 7,

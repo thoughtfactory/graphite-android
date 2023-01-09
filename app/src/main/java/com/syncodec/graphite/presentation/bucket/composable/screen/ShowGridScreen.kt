@@ -7,8 +7,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
@@ -75,11 +75,10 @@ fun ShowGridScreen(
 		EmptyView(bucketType = BucketType.SHOW)
 	} else {
 		LazyVerticalGrid(
-			columns = GridCells.Adaptive(128.dp),
+			columns = GridCells.Adaptive(96.dp),
 			horizontalArrangement = Arrangement.Center,
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(4.dp, 0.dp),
+			contentPadding = PaddingValues(8.dp, 0.dp),
+			modifier = Modifier.fillMaxSize()
 		) {
 			bucketItemList.forEach { bucketItemObject ->
 				item(

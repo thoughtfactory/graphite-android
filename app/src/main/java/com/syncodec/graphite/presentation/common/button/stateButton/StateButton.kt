@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
 data class StateData(
@@ -54,8 +55,8 @@ fun StateButton(
 		contentAlignment = Alignment.Center,
 		modifier = modifier
 			.fillMaxWidth()
-			.background(containerColor, RoundedCornerShape(31))
-			.border(4.dp, containerColor, RoundedCornerShape(31))
+			.background(containerColor, MaterialTheme.shapes.medium)
+			.border(4.dp, containerColor, MaterialTheme.shapes.medium)
 	) {
 		Row(
 			modifier = Modifier.fillMaxSize(),
@@ -66,8 +67,8 @@ fun StateButton(
 				modifier = Modifier
 					.fillMaxHeight()
 					.weight(1f)
-					.background(stateList[currentState].stateTint ?: MaterialTheme.colorScheme.primary, RoundedCornerShape(31))
-					.border(4.dp, containerColor, RoundedCornerShape(31))
+					.background(stateList[currentState].stateTint ?: MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+					.border(4.dp, containerColor, MaterialTheme.shapes.medium)
 			)
 			Spacer(modifier = Modifier.weight((stateList.size - spacerWeight - 1 + 0.00001).toFloat()))
 		}
@@ -90,12 +91,12 @@ fun StateButton(
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center
 				) {
-					if (state.icon != null) {
+					state.icon?.let {
 						Icon(
-							painter = painterResource(id = state.icon),
-							contentDescription = state.title,
+							painter = painterResource(id = it),
+							contentDescription = null,
 							tint = textColor,
-							modifier = Modifier.requiredSize(20.dp)
+							modifier = Modifier.requiredSize(IconButtonSize)
 						)
 						Spacer(modifier = Modifier.width(6.dp))
 					}

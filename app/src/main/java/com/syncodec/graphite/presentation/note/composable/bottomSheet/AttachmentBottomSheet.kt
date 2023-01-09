@@ -7,9 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,13 +33,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
-import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
+import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAttachmentList
 import com.syncodec.graphite.presentation.note.composable.buildingBlock.AttachmentPreview
 import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
@@ -50,11 +47,12 @@ import io.realm.kotlin.types.RealmUUID
 import java.io.File
 
 
+@Preview
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AttachmentBottomSheet(
-	onAddAttachmentToBuffer : (List<Uri>) -> Unit,
-	onRemoveAttachment : (File?, Uri?) -> Unit,
+	onAddAttachmentToBuffer : (List<Uri>) -> Unit = {},
+	onRemoveAttachment : (File?, Uri?) -> Unit = { _, _ -> },
 ) {
 	val context = LocalContext.current
 	val attachmentList = LocalCompositionAttachmentList.current
@@ -82,71 +80,42 @@ fun AttachmentBottomSheet(
 		}
 	}
 
-	val buttonList : List<BottomSheetButtonData> = remember {
-		listOf(
-			BottomSheetButtonData(title = "Camera", icon = R.drawable.ic_camera) {
-				if (attachmentList.size < 4) {
-					photoUri = createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first
-					takePicture.launch(photoUri)
-				} else {
-					Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
-				}
-			},
-			BottomSheetButtonData(title = "Gallery", icon = R.drawable.ic_gallery) {
-				if (attachmentList.size < 4) {
-					openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
-				} else {
-					Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
-				}
-			},
-//		    TODO Add audio recording
-			BottomSheetButtonData(title = "File", icon = R.drawable.ic_file) {
-				if (attachmentList.size < 4) {
-					openFilePicker.launch(arrayOf("*/*"))
-				} else {
-					Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
-				}
-			},
-		)
-	}
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Attachments",
+		icon = R.drawable.ic_attachment_new,
 	) {
 
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Attachment",
-			icon = R.drawable.ic_attachment,
+		BottomSheetButtonGrid(
+			buttonList = listOf(
+				{
+					BottomSheetButton(title = "Camera", icon = R.drawable.ic_camera) {
+						if (attachmentList.size < 4) {
+							photoUri = createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first
+							takePicture.launch(photoUri)
+						} else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
+					}
+				},
+				{
+					BottomSheetButton(title = "Gallery", icon = R.drawable.ic_gallery) {
+						if (attachmentList.size < 4) openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
+						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
+					}
+				},
+				{
+					BottomSheetButton(title = "File", icon = R.drawable.ic_file) {
+						if (attachmentList.size < 4) openFilePicker.launch(arrayOf("*/*"))
+						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
+					}
+				}
+			)
 		)
 
-		Spacer(modifier = Modifier.height(8.dp))
-
-		Row(
-			modifier = Modifier.padding(24.dp, 0.dp),
-			horizontalArrangement = Arrangement.SpaceBetween
-		) {
-			buttonList.forEachIndexed { index, buttonData ->
-				BottomSheetButton(
-					modifier = Modifier.weight(1f),
-					title = buttonData.title,
-					icon = buttonData.icon,
-					onClick = buttonData.onClick
-				)
-
-				if (index != buttonList.size - 1) Spacer(modifier = Modifier.width(8.dp))
-			}
-		}
-
 		if (attachmentList.isNotEmpty()) {
-			Spacer(modifier = Modifier.height(12.dp))
+			Spacer(modifier = Modifier.height(4.dp))
 
 			LazyVerticalGrid(
-				columns = GridCells.Adaptive(144.dp),
-				modifier = Modifier.padding(20.dp, 0.dp),
+				columns = GridCells.Adaptive(120.dp),
+				modifier = Modifier,
 			) {
 				attachmentList.forEach { (file, uri) ->
 					item(
@@ -155,7 +124,7 @@ fun AttachmentBottomSheet(
 						Box(
 							modifier = Modifier
 								.padding(4.dp)
-								.clip(RoundedCornerShape(28.dp))
+								.clip(MaterialTheme.shapes.large)
 								.animateItemPlacement()
 						) {
 							AttachmentPreview(
@@ -184,16 +153,11 @@ fun AttachmentBottomSheet(
 						}
 					}
 				}
-				item { Spacer(modifier = Modifier.height(8.dp)) }
-				item { Spacer(modifier = Modifier.height(8.dp)) }
+				item { Spacer(modifier = Modifier.height(4.dp)) }
+				item { Spacer(modifier = Modifier.height(4.dp)) }
 			}
 
-			if (attachmentList.size > 3) {
-				ProView()
-				Spacer(modifier = Modifier.height(32.dp))
-			}
-		} else {
-			Spacer(modifier = Modifier.height(32.dp))
+			if (attachmentList.size > 3) ProView()
 		}
 	}
 }
@@ -203,17 +167,16 @@ private fun ProView() {
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
-			.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(24.dp))
+			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), MaterialTheme.shapes.medium)
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(16.dp),
+				.padding(12.dp),
 		) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_pro),
+				painter = painterResource(id = R.drawable.ic_pro_star),
 				contentDescription = "Pro",
 				tint = Color.Unspecified,
 				modifier = Modifier.requiredSize(48.dp)
@@ -224,7 +187,7 @@ private fun ProView() {
 			Text(
 				text = "Join Graphite Pro to add more attachments",
 				style = MaterialTheme.typography.bodyLarge,
-				color = MaterialTheme.colorScheme.onBackground,
+				color = MaterialTheme.colorScheme.onSurface,
 				fontWeight = FontWeight.Bold,
 			)
 		}

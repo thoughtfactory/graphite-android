@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.screen
 
+import android.view.ContextThemeWrapper
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable

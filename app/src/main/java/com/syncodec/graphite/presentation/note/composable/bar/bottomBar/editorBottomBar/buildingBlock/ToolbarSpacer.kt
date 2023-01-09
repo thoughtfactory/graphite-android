@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ToolbarSpacer() {
 	Row(
-		modifier = Modifier.height(44.dp),
+		modifier = Modifier.height(40.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Spacer(modifier = Modifier.width(4.dp))

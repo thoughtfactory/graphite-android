@@ -5,14 +5,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,8 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionTagList
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionTagListBuffer
 import com.syncodec.graphite.presentation.note.composable.LocalOnClickTag
@@ -51,29 +48,16 @@ fun TagBottomSheet() {
 
 	val onClickTag = LocalOnClickTag.current
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.wrapContentHeight()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Tags",
+		icon = R.drawable.ic_tag
 	) {
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Tags",
-			icon = R.drawable.ic_hashtag
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
 
 		ConnectedTagView(
 			tagList = tagListBuffer,
 		) {
 			onClickTag(it)
 		}
-
-		Spacer(modifier = Modifier.height(8.dp))
 
 		LazyColumn(
 			modifier = Modifier.fillMaxWidth()
@@ -97,7 +81,7 @@ fun TagBottomSheet() {
 				}
 		}
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		Button(
 			onClick = {
@@ -105,14 +89,10 @@ fun TagBottomSheet() {
 					context.startActivity(this)
 				}
 			},
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
 			Text(text = "Manage Tags")
 		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
@@ -125,7 +105,6 @@ private fun ConnectedTagView(
 	LazyRow(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		item { Spacer(modifier = Modifier.width(16.dp)) }
 		tagList.forEach {
 			item(
 				key = it.tag.hashCode() + it.color.hashCode()
@@ -149,7 +128,6 @@ private fun ConnectedTagView(
 				)
 			}
 		}
-		item { Spacer(modifier = Modifier.width(16.dp)) }
 	}
 }
 
@@ -163,12 +141,12 @@ private fun TagItem(
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(48.dp)
-			.padding(24.dp, 4.dp)
+			.padding(0.dp, 2.dp)
 			.background(
-				if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.background.copy(alpha = 0.47f),
-				RoundedCornerShape(8.dp)
+				if (isSelected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
+				MaterialTheme.shapes.medium
 			)
-			.clip(RoundedCornerShape(8.dp))
+			.clip(MaterialTheme.shapes.medium)
 			.clickable { onClick() },
 		contentAlignment = Alignment.CenterStart
 	) {
@@ -184,7 +162,7 @@ private fun TagItem(
 				text = tag.tag,
 				style = MaterialTheme.typography.bodyMedium,
 				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.onBackground
+				color = MaterialTheme.colorScheme.onSurface
 			)
 
 			Spacer(modifier = Modifier.weight(1f))

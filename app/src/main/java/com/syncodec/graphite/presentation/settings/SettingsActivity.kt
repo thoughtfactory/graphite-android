@@ -12,12 +12,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
@@ -56,13 +59,26 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.sync.DropboxApi
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.settings.composable.bar.TopBar
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
-import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.AboutUsScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.BackupAndRestoreScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.BaseScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.DataScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.DropboxSyncScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.ExtensionsScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.ImportScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.LocalBackupScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.PreferencesScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.SecurityScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.SnapshotWarehouseScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.SynchronizationScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.ThemeScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.DataStoreInstance
@@ -97,7 +113,7 @@ class SettingsActivity : ComponentActivity() {
 	val showImportingJourneyDataDialog = mutableStateOf(false)
 	val showDeleteAccountDialog = mutableStateOf(false)
 
-	@OptIn(ExperimentalMaterialApi::class)
+	@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -135,8 +151,8 @@ class SettingsActivity : ComponentActivity() {
 				BaseContent {
 					val scope = rememberCoroutineScope()
 					val systemUiController = rememberSystemUiController()
-					systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-					systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+					systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
 
 					val scrollState = rememberScrollState()
 
@@ -359,15 +375,54 @@ class SettingsActivity : ComponentActivity() {
 						LocalCloseDialog provides ::closeDialog,
 						LocalOnBackPressed provides { this.onBackPressedDispatcher.onBackPressed() }
 					) {
-						ModalBottomSheetLayout(
+						val title = when (navigatorPath.last()) {
+							Navigator.BASE -> "Settings"
+							Navigator.PREFERENCES -> "Preferences"
+							Navigator.THEME -> "Theme"
+							Navigator.SECURITY -> "Security"
+							Navigator.EXTENSIONS -> "Extensions"
+							Navigator.BACKUP -> "Backup & Restore"
+							Navigator.DATA -> "Data"
+							Navigator.IMPORT -> "Import"
+							Navigator.LOCAL_BACKUP -> "Local Backup"
+							Navigator.SNAPSHOT_WAREHOUSE -> "Snapshot Warehouse"
+							Navigator.SYNC -> "Synchronization"
+							Navigator.DROPBOX_SYNC -> "Dropbox"
+							Navigator.ABOUT_US -> "About Us"
+						}
+
+						GenericScaffold(
+							modalBottomSheetState = modalBottomSheetState,
 							sheetContent = { SheetLayout(bottomSheetType = bottomSheetType) { closeSheet() } },
-							sheetState = modalBottomSheetState,
-							sheetElevation = 0.dp,
-							sheetBackgroundColor = Color.Transparent,
-							modifier = Modifier.fillMaxSize(),
+							topBar = {
+								TopBar(
+									title = title,
+									scrollState = scrollState,
+								) { super.getOnBackPressedDispatcher().onBackPressed() }
+							},
+							dialogContent = { SettingsDialog() },
 						) {
-							SettingsScreen()
-							SettingsDialog()
+							AnimatedContent(
+								targetState = navigatorPath.last(),
+								transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) },
+								modifier = Modifier.fillMaxSize()
+							) {
+								when (it) {
+									Navigator.BASE -> BaseScreen()
+									Navigator.PREFERENCES -> PreferencesScreen()
+									Navigator.THEME -> ThemeScreen()
+									Navigator.SECURITY -> SecurityScreen()
+									Navigator.EXTENSIONS -> ExtensionsScreen()
+									Navigator.BACKUP -> BackupAndRestoreScreen()
+									Navigator.DATA -> DataScreen()
+									Navigator.IMPORT -> ImportScreen()
+									Navigator.LOCAL_BACKUP -> LocalBackupScreen()
+									Navigator.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen()
+									Navigator.SYNC -> SynchronizationScreen()
+									Navigator.DROPBOX_SYNC -> DropboxSyncScreen()
+									Navigator.ABOUT_US -> AboutUsScreen( )
+								}
+							}
 						}
 					}
 				}
@@ -402,7 +457,7 @@ class SettingsActivity : ComponentActivity() {
 											}
 
 											override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
-												BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+												BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 											}
 										}
 									)
@@ -448,7 +503,7 @@ class SettingsActivity : ComponentActivity() {
 				}
 
 				override fun onReceived(customerInfo : CustomerInfo) {
-					BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+					BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 				}
 			}
 		)

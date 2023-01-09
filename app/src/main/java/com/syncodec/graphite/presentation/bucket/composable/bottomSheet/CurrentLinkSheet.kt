@@ -2,19 +2,15 @@ package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
 import android.graphics.Bitmap
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -26,15 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -49,11 +40,11 @@ import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnCl
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickBucketItemFavourite
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickBucketItemLock
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenGraphResult
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.text.KeyValueText
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 
@@ -72,81 +63,21 @@ fun CurrentLinkBottomSheet() {
 
 	val closeSheet = LocalCompositionCloseBottomSheet.current
 
-	var _thumbnail by remember { mutableStateOf<Bitmap?>(null) }
-	LaunchedEffect(key1 = bucketItemObject?.thumbnail) {
-		_thumbnail = bucketItemObject?.thumbnail?.decodeBase64ToBitmap()
-	}
-
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
-			.verticalScroll(rememberScrollState())
+	GenericBottomSheet(
+		title = "Link",
+		icon = R.drawable.ic_link
 	) {
 
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Link",
-			icon = R.drawable.ic_link,
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		_thumbnail?.let {
-			val configuration = LocalConfiguration.current
-			val screenWidth = configuration.screenWidthDp.dp
-
-			var aspectRatio by remember { mutableStateOf(1f) }
-
-			Box(
-				contentAlignment = Alignment.Center,
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
-					.clip(RoundedCornerShape(16.dp))
-			) {
-				AsyncImage(
-					model = ImageRequest.Builder(context)
-						.data(it)
-						.build(),
-					contentDescription = null,
-					contentScale = ContentScale.FillBounds,
-					modifier = Modifier
-						.fillMaxWidth()
-						.blur(32.dp, BlurredEdgeTreatment.Rectangle)
-				)
-
-				AsyncImage(
-					model = ImageRequest.Builder(context)
-						.data(it)
-						.listener { request, result ->
-							aspectRatio = result.drawable.intrinsicWidth.toFloat() / result.drawable.intrinsicHeight.toFloat()
-						}
-						.build(),
-					placeholder = null,
-					contentDescription = null,
-					contentScale = ContentScale.Fit,
-					modifier = Modifier
-						.height(screenWidth / 1.91f)
-						.aspectRatio(aspectRatio)
-						.clip(RoundedCornerShape(12.dp))
-						.graphicsLayer(scaleX = 0.88f, scaleY = 0.88f)
-				)
-			}
+		var _thumbnail by remember { mutableStateOf<Bitmap?>(null) }
+		LaunchedEffect(key1 = bucketItemObject?.thumbnail){
+			_thumbnail = bucketItemObject?.thumbnail?.decodeBase64ToBitmap()
 		}
-
-		Spacer(modifier = Modifier.height(8.dp))
+		Thumbnail(thumbnail = _thumbnail)
 
 		KeyValueText(
 			key = "Title",
 			value = openGraphResult?.title,
-			containerColor = MaterialTheme.colorScheme.background,
-			contentColor = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth()
 		)
 
 		Spacer(modifier = Modifier.height(4.dp))
@@ -154,11 +85,7 @@ fun CurrentLinkBottomSheet() {
 		KeyValueText(
 			key = "Description",
 			value = openGraphResult?.description,
-			containerColor = MaterialTheme.colorScheme.background,
-			contentColor = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth()
 		)
 
 		Spacer(modifier = Modifier.height(4.dp))
@@ -166,12 +93,8 @@ fun CurrentLinkBottomSheet() {
 		KeyValueText(
 			key = "URL",
 			value = bucketItemObject?.key,
-			containerColor = MaterialTheme.colorScheme.background,
-			contentColor = MaterialTheme.colorScheme.onBackground,
 			maxLines = 8,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
 			try {
 				uriHandler.openUri(bucketItemObject?.key !!)
@@ -180,24 +103,33 @@ fun CurrentLinkBottomSheet() {
 			}
 		}
 
-		Spacer(modifier = Modifier.height(4.dp))
+		Spacer(modifier = Modifier.height(0.dp))
 
 		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
+			val lockContainerColor by animateColorAsState(
+				targetValue = if (bucketItemObject?.isLocked == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(
+					alpha = 0.71f
+				)
+			)
+			val favouriteContainerColor by animateColorAsState(
+				targetValue = if (bucketItemObject?.isFavourite == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(
+					alpha = 0.71f
+				)
+			)
+			val lockContentColor by animateColorAsState(targetValue = if (bucketItemObject?.isLocked == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
+			val favouriteContentColor by animateColorAsState(targetValue = if (bucketItemObject?.isFavourite == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
 			Button(
 				onClick = { if (bucketItemObject != null) onClickLock(bucketItemObject) },
-				colors = ButtonDefaults.buttonColors(
-					containerColor = if (bucketItemObject?.isLocked == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
-					contentColor = if (bucketItemObject?.isLocked == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-				),
+				colors = ButtonDefaults.buttonColors(containerColor = lockContainerColor, contentColor = lockContentColor),
+				shape = MaterialTheme.shapes.small,
 				modifier = Modifier.weight(1f)
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_lock_close),
 					contentDescription = "Lock",
+					modifier = Modifier.requiredSize(IconButtonSize)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 				Text(text = "Lock")
@@ -207,15 +139,14 @@ fun CurrentLinkBottomSheet() {
 
 			Button(
 				onClick = { if (bucketItemObject != null) onClickFavourite(bucketItemObject) },
-				colors = ButtonDefaults.buttonColors(
-					containerColor = if (bucketItemObject?.isFavourite == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
-					contentColor = if (bucketItemObject?.isFavourite == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-				),
+				colors = ButtonDefaults.buttonColors(containerColor = favouriteContainerColor, contentColor = favouriteContentColor),
+				shape = MaterialTheme.shapes.small,
 				modifier = Modifier.weight(1f)
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_favourite),
 					contentDescription = "Favorite",
+					modifier = Modifier.requiredSize(IconButtonSize)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 				Text(text = "Favourite")
@@ -232,9 +163,7 @@ fun CurrentLinkBottomSheet() {
 				containerColor = Color.Companion.DeleteContainer,
 				contentColor = Color.Companion.DeleteContent,
 			),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
 			Text(text = "Delete")
 		}
@@ -251,13 +180,34 @@ fun CurrentLinkBottomSheet() {
 				containerColor = MaterialTheme.colorScheme.primary,
 				contentColor = MaterialTheme.colorScheme.onPrimary,
 			),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
 			Text(text = "Open Link")
 		}
+	}
+}
 
-		Spacer(modifier = Modifier.height(32.dp))
+@Composable
+private fun ColumnScope.Thumbnail(
+	thumbnail : Bitmap?
+) {
+	val context = LocalContext.current
+
+	this.apply {
+		thumbnail?.let {
+			AsyncImage(
+				model = ImageRequest.Builder(context)
+					.data(it)
+					.build(),
+				placeholder = null,
+				contentDescription = null,
+				contentScale = ContentScale.Crop,
+				modifier = Modifier
+					.fillMaxWidth()
+					.heightIn(0.dp, 128.dp)
+					.clip(MaterialTheme.shapes.medium)
+			)
+			Spacer(modifier = Modifier.height(6.dp))
+		}
 	}
 }

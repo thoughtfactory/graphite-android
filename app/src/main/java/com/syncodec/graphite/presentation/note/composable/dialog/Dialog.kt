@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.dialog
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +15,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.DiscardDialog
+import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialog
 import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAddress
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseDialog
@@ -90,21 +92,15 @@ fun NoteDialog(
 	val latLng = LocalCompositionLatLng.current
 	val address = LocalCompositionAddress.current
 
-	val chapterList = LocalCompositionSelectChapterList.current
-	val chapterPath = LocalCompositionSelectChapterPath.current
-
 	val showLocationPickerDialog = LocalCompositionShowLocationPickerDialog.current
 
 	val showDatePickerDialog = LocalCompositionShowDatePickerDialog.current
 	val showTimePickerDialog = LocalCompositionShowTimePickerDialog.current
 	val showNotificationPermissionDialog = LocalCompositionShowNotificationPermissionDialog.current
-	val showChapterSelectionDialog = LocalCompositionShowChapterSelectionDialog.current
 	val showShareDialog = LocalCompositionShowShareDialog.current
 	val showDiscardDialog = LocalCompositionShowDiscardDialog.current
 	val showDeleteDialog = LocalCompositionShowDeleteDialog.current
 
-	val onSelectChapter = LocalCompositionOnSelectChapter.current
-	val onMoveChapter = LocalCompositionOnMoveChapter.current
 	val setUserTimestamp = LocalCompositionSetUserTimestamp.current
 
 	val datePickerDialogState = rememberMaterialDialogState()
@@ -135,6 +131,7 @@ fun NoteDialog(
 
 	LaunchedEffect(key1 = userTimestamp) {
 		localDatetime = userTimestamp?.let {
+			Log.i("npr71", "setting localDatetime")
 			LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.systemDefault())
 		} ?: LocalDateTime.now(Clock.systemDefaultZone())
 	}
@@ -187,15 +184,6 @@ fun NoteDialog(
 		}
 	}
 
-	ChapterSelectionDialog(
-		showDialog = showChapterSelectionDialog,
-		chapterList = chapterList,
-		chapterPath = chapterPath,
-		onSelectChapter = onSelectChapter,
-		onMove = onMoveChapter,
-		onDismiss = { closeDialog(NoteDialogType.CHAPTER_SELECTION) }
-	)
-
 	DeleteDialog(
 		showDialog = showDeleteDialog,
 		message = "Are you sure you want to delete this note? This operation is non reversible.",
@@ -218,7 +206,7 @@ fun NoteDialog(
 	) { closeDialog(NoteDialogType.SHARE) }
 
 
-	if (userTimestamp != null) {
+	userTimestamp?.let {
 		MaterialDialog(
 			dialogState = datePickerDialogState,
 			buttons = {
@@ -237,7 +225,7 @@ fun NoteDialog(
 			onCloseRequest = { closeDialog(NoteDialogType.DATE_PICKER) }
 		) {
 			datepicker(
-				initialDate = localDatetime.toLocalDate(),
+				initialDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.systemDefault()).toLocalDate(),
 				colors = DatePickerDefaults.colors(
 					headerBackgroundColor = MaterialTheme.colorScheme.primary,
 					headerTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -248,15 +236,15 @@ fun NoteDialog(
 					dateInactiveTextColor = MaterialTheme.colorScheme.onBackground,
 				),
 			) { date ->
-				localDatetime = localDatetime.with(date)
-				setUserTimestamp(localDatetime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+//				setUserTimestamp(localDatetime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+				setUserTimestamp(localDatetime.with(date).toInstant(OffsetDateTime.now().offset).toEpochMilli())
 				closeDialog(NoteDialogType.DATE_PICKER)
 				openDialog(NoteDialogType.TIME_PICKER, null)
 			}
 		}
 	}
 
-	if (userTimestamp != null) {
+	userTimestamp?.let {timeStamp ->
 		MaterialDialog(
 			dialogState = timePickerDialogState,
 			buttons = {
@@ -275,7 +263,7 @@ fun NoteDialog(
 			onCloseRequest = { closeDialog(NoteDialogType.DATE_PICKER) }
 		) {
 			timepicker(
-				initialTime = localDatetime.toLocalTime(),
+				initialTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeStamp), ZoneOffset.systemDefault()).toLocalTime(),
 				colors = TimePickerDefaults.colors(
 					activeBackgroundColor = MaterialTheme.colorScheme.primary,
 					inactiveBackgroundColor = MaterialTheme.colorScheme.surface,
@@ -288,8 +276,11 @@ fun NoteDialog(
 					borderColor = MaterialTheme.colorScheme.onBackground,
 				),
 			) {
-				localDatetime = localDatetime.with(it)
-				setUserTimestamp(localDatetime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+//				localDatetime = localDatetime.with(it)
+				LocalDateTime.ofInstant(Instant.ofEpochMilli(timeStamp), ZoneOffset.systemDefault()).with(it).let {
+					setUserTimestamp(it.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+				}
+//				setUserTimestamp(localDatetime.with(it).toInstant(OffsetDateTime.now().offset).toEpochMilli())
 				closeDialog(NoteDialogType.TIME_PICKER)
 			}
 		}

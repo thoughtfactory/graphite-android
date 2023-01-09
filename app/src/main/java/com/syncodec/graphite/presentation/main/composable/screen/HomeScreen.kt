@@ -70,6 +70,8 @@ fun HomeScreen(
 			ComponentType.NOTEBOOK -> NotebookScreen(
 				notebookList = notebookList,
 				notebookOrderList = notebookOrderList,
+				sortOn = sortOn,
+				sortBy = sortBy,
 				onReorderNotebookList = onReorderNotebookList,
 				onClickFab = onClickFab,
 				onClickNotebook = onClickNotebook,

@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
@@ -38,7 +37,7 @@ fun TopBar() {
 	val isLocked = NotebookActivity.LocalIsLocked.current
 
 	val getChapter = NotebookActivity.LocalGetChapter.current
-	val parentChapterObjectList = NotebookActivity.LocalParentChapterObjectList.current
+	val chapterPath = NotebookActivity.LocalChapterPathList.current
 
 	val isSelected = LocalCompositionIsSelected.current
 	val onToggleFavourite = NotebookActivity.LocalOnToggleFavourite.current
@@ -70,8 +69,9 @@ fun TopBar() {
 			exit = shrinkVertically(tween(300))
 		) {
 			Navigator(
+				showRoot = false,
 				defaultChapterId = defaultChapterId,
-				chapterObjectLiteList = parentChapterObjectList,
+				chapterPath = chapterPath,
 				onClick = getChapter
 			)
 		}
@@ -81,14 +81,14 @@ fun TopBar() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Bar(
-	title: String,
-	isLocked: Boolean,
-	isFavourite: Boolean,
-	onClickLock: () -> Unit,
-	onClickFavourite: () -> Unit,
-	onClickFilter: () -> Unit,
-	onClickDelete: () -> Unit,
-	onBackPressed: () -> Unit
+	title : String,
+	isLocked : Boolean,
+	isFavourite : Boolean,
+	onClickLock : () -> Unit,
+	onClickFavourite : () -> Unit,
+	onClickFilter : () -> Unit,
+	onClickDelete : () -> Unit,
+	onBackPressed : () -> Unit
 ) {
 	val isSelected = LocalCompositionIsSelected.current
 	val onSelect = LocalCompositionOnSelect.current
@@ -116,15 +116,11 @@ private fun Bar(
 					)
 				},
 				actions = {
-					IconButton(
+					MenuButton(
+						icon = R.drawable.ic_delete,
+						tint = Color.DeleteContainer,
 						onClick = onClickDelete
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_delete),
-							contentDescription = "Delete items",
-							tint = Color.DeleteContainer
-						)
-					}
+					)
 				},
 				colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 			)
@@ -184,13 +180,6 @@ private fun Bar(
 			)
 		}
 	}
-
-
-
-
-
-
-
 
 
 }

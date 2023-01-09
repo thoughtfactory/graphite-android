@@ -96,6 +96,7 @@ import com.syncodec.graphite.presentation.common.richText.viewer.string.RichText
 import com.syncodec.graphite.presentation.common.richText.viewer.string.RichTextStringStyle
 import com.syncodec.graphite.presentation.common.richText.viewer.string.Text
 import com.syncodec.graphite.presentation.common.richText.viewer.string.richTextString
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.noteViewerTimestamp
@@ -249,9 +250,9 @@ private fun AttachmentView(
 				modifier = Modifier.fillMaxWidth()
 			) {
 				MenuButton(
-					icon = R.drawable.ic_attachment,
+					icon = R.drawable.ic_file,
 					tint = MaterialTheme.colorScheme.onBackground,
-					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.47f)
+					containerColor = MaterialTheme.colorScheme.background
 				) {
 					Intent(context, AttachmentActivity::class.java).apply {
 						putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
@@ -263,7 +264,7 @@ private fun AttachmentView(
 
 				Box(
 					modifier = Modifier
-						.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(8.dp))
+						.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
 						.padding(8.dp, 0.dp)
 				) {
 					AnimatedContent(targetState = pagerState.currentPage) { page ->
@@ -281,7 +282,7 @@ private fun AttachmentView(
 			Spacer(modifier = Modifier.weight(1f))
 
 			Box(
-				modifier = Modifier.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(50))
+				modifier = Modifier.background(MaterialTheme.colorScheme.background, RoundedCornerShape(50))
 			) {
 				HorizontalPagerIndicator(
 					pagerState = pagerState,
@@ -290,21 +291,19 @@ private fun AttachmentView(
 				)
 			}
 
-			Spacer(modifier = Modifier.height(12.dp))
+			Spacer(modifier = Modifier.height(4.dp))
 
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), RoundedCornerShape(12.dp))
+					.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.large)
 			) {
 				AnimatedContent(
 					targetState = attachmentList[pagerState.currentPage].first
 				) {
 					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(0.dp, 8.dp),
-						verticalAlignment = Alignment.CenterVertically
+						verticalAlignment = Alignment.CenterVertically,
+						modifier = Modifier.fillMaxWidth()
 					) {
 						Spacer(modifier = Modifier.width(12.dp))
 						Text(
@@ -407,8 +406,8 @@ private fun Header(
 				Box(
 					modifier = Modifier
 						.widthIn(96.dp)
-						.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-						.clip(RoundedCornerShape(12.dp))
+						.background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+						.clip(MaterialTheme.shapes.medium)
 						.clickable { onClickChapter() }
 				) {
 					Row(
@@ -419,6 +418,9 @@ private fun Header(
 							painter = painterResource(id = R.drawable.ic_notebook),
 							contentDescription = "Chapter",
 							tint = MaterialTheme.colorScheme.onSurface,
+							modifier = Modifier
+								.requiredSize(IconButtonSize)
+								.padding(2.dp)
 						)
 						Spacer(modifier = Modifier.width(8.dp))
 						Text(
@@ -470,8 +472,20 @@ private fun Header(
 				}
 			}
 		}
+
+		AnimatedVisibility(
+			visible = showMap,
+			enter = expandVertically(tween(300)),
+			exit = shrinkVertically(tween(300))
+		) {
+			Column(modifier = Modifier.fillMaxWidth()) {
+				Spacer(modifier = Modifier.height(4.dp))
+				LocationMap(latLng = latLng)
+				Spacer(modifier = Modifier.height(4.dp))
+			}
+		}
+
 		if (connectedTag.isNotEmpty()) {
-			Spacer(modifier = Modifier.height(6.dp))
 			FlowRow(
 				modifier = Modifier.fillMaxWidth(),
 				mainAxisSpacing = 8.dp,
@@ -479,28 +493,21 @@ private fun Header(
 			) {
 				connectedTag.forEach {
 					Box(
-						modifier = Modifier.background(color = Color(it.color).copy(alpha = 0.71f), shape = RoundedCornerShape(8.dp))
+						modifier = Modifier.background(color = Color(it.color).copy(alpha = 0.71f), shape = MaterialTheme.shapes.medium)
 					) {
 						Text(
 							text = it.tag,
 							style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
 							color = Color(it.color).getInverseBWColor(),
-							modifier = Modifier.padding(8.dp)
+							modifier = Modifier.padding(12.dp, 8.dp)
 						)
 					}
 				}
 			}
-			Spacer(modifier = Modifier.height(4.dp))
-		}
-		AnimatedVisibility(
-			visible = showMap,
-			enter = expandVertically(tween(300)),
-			exit = shrinkVertically(tween(300))
-		) {
-			LocationMap(latLng = latLng)
+			Spacer(modifier = Modifier.height(0.dp))
 		}
 		if (! title.isNullOrBlank()) {
-			Spacer(modifier = Modifier.height(8.dp))
+			Spacer(modifier = Modifier.height(4.dp))
 			Text(
 				text = title,
 				modifier = Modifier,
@@ -531,7 +538,7 @@ private fun LocationMap(
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(128.dp)
-			.clip(RoundedCornerShape(12.dp)),
+			.clip(MaterialTheme.shapes.medium),
 		cameraPositionState = cameraPositionState,
 		googleMapOptionsFactory = {
 			GoogleMapOptions().apply {

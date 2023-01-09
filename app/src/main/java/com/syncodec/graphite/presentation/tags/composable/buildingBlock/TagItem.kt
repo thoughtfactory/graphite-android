@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
@@ -23,17 +25,27 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 
 
+class TagObjectPreviewParameter: PreviewParameterProvider<TagObject> {
+	override val values = sequenceOf(
+		TagObject.getRandomInstance(),
+		TagObject.getRandomInstance(),
+		TagObject.getRandomInstance(),
+		TagObject.getRandomInstance(),
+	)
+}
+
+@Preview
 @Composable
 fun TagItem(
-	tag: TagObject,
-	onDelete: () -> Unit,
-	onClick: () -> Unit,
+	@PreviewParameter(TagObjectPreviewParameter::class) tag: TagObject,
+	onDelete: () -> Unit = {},
+	onClick: () -> Unit = {},
 ) {
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(24.dp, 4.dp)
-			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), RoundedCornerShape(8.dp)),
+			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.31f), MaterialTheme.shapes.medium),
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
@@ -46,7 +58,7 @@ fun TagItem(
 			Text(
 				text = tag.tag,
 				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold
+				color = MaterialTheme.colorScheme.onSurface,
 			)
 
 			Spacer(modifier = Modifier.weight(1f))
@@ -68,6 +80,7 @@ fun TagItem(
 
 			MenuButton(
 				icon = R.drawable.ic_pencil,
+				tint = MaterialTheme.colorScheme.onSurface,
 				onClick = onClick,
 			)
 		}

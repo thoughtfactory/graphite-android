@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.buildingBlock
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -36,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
@@ -44,9 +44,10 @@ import com.syncodec.graphite.utils.DataStoreInstance
 import java.util.Calendar
 
 
+@Preview
 @Composable
 fun YearProgressBar(
-	showCard : Boolean,
+	showCard : Boolean = true,
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }

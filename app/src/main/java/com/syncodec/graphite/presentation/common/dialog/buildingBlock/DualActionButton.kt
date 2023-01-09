@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,70 +22,50 @@ import com.syncodec.graphite.utils.getInverseBWColor
 @Composable
 fun DualActionButtons(
 	primaryText: String = "Primary",
-	secondaryText: String = "Secondary",
+	secondaryText: String? = null,
 	onPrimaryClick: () -> Unit = {},
 	onSecondaryClick: () -> Unit = {},
-	primaryColor: Color? = null,
-	secondaryColor: Color? = null,
-	isOutlinedButton: Boolean = true,
+	primaryColor: Color = MaterialTheme.colorScheme.primary,
+	secondaryColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
 	primaryEnabled: Boolean = true,
 	secondaryEnabled: Boolean = true,
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		if (isOutlinedButton) {
+		secondaryText?.let {
 			Button(
 				onClick = onSecondaryClick,
-				shape = MaterialTheme.shapes.small,
+				shape = CircleShape,
 				colors = ButtonDefaults.buttonColors(
-					containerColor = secondaryColor ?: MaterialTheme.colorScheme.background,
-					contentColor = secondaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
+					containerColor = secondaryColor,
+					contentColor = secondaryColor.getInverseBWColor(),
 				),
 				enabled = secondaryEnabled,
 				modifier = Modifier.weight(1f)
 			) {
 				Text(
-					text = secondaryText,
-					color = secondaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
-					fontWeight = FontWeight.Bold
+					text = it,
+					color = secondaryColor.getInverseBWColor(),
 				)
 			}
-		} else {
-			Button(
-				onClick = onSecondaryClick,
-				shape = MaterialTheme.shapes.small,
-				colors = ButtonDefaults.buttonColors(
-					containerColor = secondaryColor ?: MaterialTheme.colorScheme.background,
-					contentColor = secondaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
-				),
-				enabled = secondaryEnabled,
-				modifier = Modifier.weight(1f)
-			) {
-				Text(
-					text = secondaryText,
-					color = secondaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
-					fontWeight = FontWeight.Bold
-				)
-			}
-		}
 
-		Spacer(modifier = Modifier.width(8.dp))
+			Spacer(modifier = Modifier.width(8.dp))
+		}
 
 		Button(
 			onClick = onPrimaryClick,
-			shape = MaterialTheme.shapes.small,
+			shape = CircleShape,
 			colors = ButtonDefaults.buttonColors(
-				containerColor = primaryColor ?: MaterialTheme.colorScheme.primary,
-				contentColor = primaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onPrimary,
+				containerColor = primaryColor,
+				contentColor = primaryColor.getInverseBWColor(),
 			),
 			enabled = primaryEnabled,
 			modifier = Modifier.weight(1f)
 		) {
 			Text(
 				text = primaryText,
-				color = primaryColor?.getInverseBWColor() ?: MaterialTheme.colorScheme.onPrimary,
-				fontWeight = FontWeight.Bold
+				color = primaryColor.getInverseBWColor(),
 			)
 		}
 	}

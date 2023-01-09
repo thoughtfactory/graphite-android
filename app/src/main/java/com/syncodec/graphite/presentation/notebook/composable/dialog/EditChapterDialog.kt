@@ -6,12 +6,7 @@ import android.graphics.ImageDecoder
 import android.media.ThumbnailUtils
 import android.net.Uri
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,40 +14,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.dialog.ColorPickerDialog
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DialogTextField
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
-import com.syncodec.graphite.presentation.common.notebook.NotebookImageChooser
-import com.syncodec.graphite.utils.getInverseBWColor
-import com.syncodec.graphite.utils.toHexString
+import com.syncodec.graphite.presentation.common.chapter.ChapterCoverPicker
 
 
+@Preview
 @Composable
 fun EditChapterDialog(
-	title: String?,
-	description: String?,
-	color: Color?,
-	thumbnail: Bitmap?,
-	showDialog: Boolean,
-	onSave: (String?, String?, Color?, Bitmap?) -> Unit,
-	onDismiss: () -> Unit,
+	title: String? = null,
+	description: String? = null,
+	color: Color? = null,
+	thumbnail: Bitmap? = null,
+	showDialog: Boolean = true,
+	onSave: (String?, String?, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
+	onDismiss: () -> Unit = { },
 ) {
 	val context = LocalContext.current
 
 	var _title by remember { mutableStateOf(title) }
 	var _description by remember { mutableStateOf(description) }
-	var _color by remember { mutableStateOf(color) }
-
-	var showColorPickerDialog by remember { mutableStateOf(false) }
+	var coverColor by remember { mutableStateOf(color) }
+	var coverImage by remember { mutableStateOf<Int?>(null) }
+	var coverUri by remember { mutableStateOf<Uri?>(null) }
 
 	LaunchedEffect(key1 = title) {
 		_title = title
@@ -61,24 +50,16 @@ fun EditChapterDialog(
 		_description = description
 	}
 	LaunchedEffect(key1 = color) {
-		_color = color
+		coverColor = color
 	}
 
 	LaunchedEffect(key1 = showDialog) {
 		if (showDialog) {
 			_title = title
 			_description = description
-			_color = color
+			coverColor = color
 		}
 	}
-
-	var currentImage by remember { mutableStateOf<Int?>(null) }
-	var currentImageUri by remember { mutableStateOf<Uri?>(null) }
-
-//	TODO Some bug in Compose
-	val focusManager = LocalFocusManager.current
-	val titleFocusRequester = remember { FocusRequester() }
-	val descriptionFocusRequester = remember { FocusRequester() }
 
 	GenericDialog(
 		showDialog = showDialog,
@@ -86,84 +67,46 @@ fun EditChapterDialog(
 		onDismissRequest = onDismiss
 	) {
 		DialogTextField(
-			text = _title,
+			value = _title ?: "",
 			label = "Title",
 			placeholder = "An interesting title",
-			trailingIcon = {
-				MenuButton(
-					icon = R.drawable.ic_close,
-					tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-				) { _title = "" }
-			},
-			onKeyboardAction = {
-//				titleFocusRequester.freeFocus()
-//				descriptionFocusRequester.captureFocus()
-			},
-		) { _title = it ?: "" }
+			onValueChange = { _title = it },
+		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		DialogTextField(
-			text = _description,
+			value = _description ?: "",
 			label = "Description",
 			placeholder = "What is it about?",
-			maxLines = 7,
-			trailingIcon = {
-				MenuButton(
-					icon = R.drawable.ic_close,
-					tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-				) { _description = null }
-			},
-			onKeyboardAction = { focusManager.clearFocus(false) },
-		) { _description = it }
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		Button(
-			onClick = { showColorPickerDialog = true },
-			colors = ButtonDefaults.buttonColors(containerColor = _color ?: MaterialTheme.colorScheme.primary),
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(48.dp)
-		) {
-			Text(
-				text = _color?.toHexString() ?: MaterialTheme.colorScheme.primary.toHexString(),
-				color = _color?.getInverseBWColor() ?: MaterialTheme.colorScheme.onPrimary,
-				style = MaterialTheme.typography.titleLarge,
-				fontWeight = FontWeight.Bold
-			)
-		}
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		NotebookImageChooser(
-			currentImage = currentImage,
-			currentImageUri = currentImageUri,
-			keepStartPadding = false,
-			onPickImage = {
-				currentImageUri = it
-				currentImage = null
-			},
-			onChooseImage = {
-				currentImage = it
-				currentImageUri = null
-			}
+			onValueChange = { _description = it },
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
+
+		ChapterCoverPicker(
+			coverColor = coverColor,
+			coverImage = coverImage,
+			coverUri = coverUri,
+			onPickColor = { coverColor = it; coverUri = null; coverImage = null },
+			onChooseImage = { coverColor = null; coverUri = null; coverImage = it },
+			onPickImage = { coverColor = null; coverUri = it; coverImage = null },
+		)
+
+		Spacer(modifier = Modifier.height(24.dp))
 
 		DualActionButtons(
 			primaryText = "Save",
 			onPrimaryClick = {
 
-				val bitmap = if (currentImage != null) BitmapFactory.decodeResource(context.resources, currentImage!!)
-				else currentImageUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
+				val bitmap = coverImage?.let { BitmapFactory.decodeResource(context.resources, it) } ?:
+				 coverUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
 
 				val aspectRatio = if (bitmap != null) { bitmap.width.toFloat() / bitmap.height.toFloat() } else { 1f }
 
 				val _thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (512 * aspectRatio).toInt(), 512) }
 
-				if (_thumbnail == null) onSave(_title, _description, _color, null)
+				if (_thumbnail == null) onSave(_title, _description, coverColor, null)
 				else onSave(_title, _description, null, _thumbnail)
 
 				onDismiss()
@@ -171,18 +114,5 @@ fun EditChapterDialog(
 			secondaryText = "Discard",
 			onSecondaryClick = onDismiss
 		)
-
-	}
-
-	ColorPickerDialog(
-		color = _color ?: MaterialTheme.colorScheme.primary,
-		showDialog = showColorPickerDialog,
-		onSelectColor = {
-			_color = it
-			currentImage = null
-			currentImageUri = null
-		}
-	) {
-		showColorPickerDialog = false
 	}
 }

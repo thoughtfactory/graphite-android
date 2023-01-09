@@ -39,23 +39,23 @@ val darkColorScheme0 = darkColorScheme(
 )
 
 val lightColorScheme1 = lightColorScheme(
-	primary = Color(0xFF181D31),
-	onPrimary = Color(0xFF7E8395),
-//	primaryContainer = ,
-//	onPrimaryContainer = ,
+	primary = Color(0xFF003A70),
+	onPrimary = Color(0xFFFFFFFF),
+	primaryContainer = Color(0xFF64A4CE),
+	onPrimaryContainer = Color(0xFFFFFFFF),
 //	inversePrimary = ,
-	secondary = Color(0xFF678983),
-	onSecondary = Color(0xFF678983),
-//	secondaryContainer = ,
-//	onSecondaryContainer = ,
-	tertiary = Color(0xFFE6DDC4),
-	onTertiary = Color(0xFF6B5827),
+	secondary = Color(0xFF0F558F),
+	onSecondary = Color(0xFFFFFFFF),
+	secondaryContainer = Color(0xFF2476B1),
+	onSecondaryContainer = Color(0xFFFFFFFF),
+//	tertiary = Color(0xFFE6DDC4),
+//	onTertiary = Color(0xFF6B5827),
 //	tertiaryContainer = ,
 //	onTertiaryContainer = ,
-	background = Color(0xFFF0E9D2),
-	onBackground = Color(0xFF28264E),
-	surface = Color(0xFFAD9F71),
-	onSurface = Color(0xFF28264E),
+	background = Color(0xFFE2EFF6),
+	onBackground = Color(0xFF000000),
+	surface = Color(0xFFB7D7EA),
+	onSurface = Color(0xFF000000),
 //	surfaceVariant = ,
 //	onSurfaceVariant = ,
 //	surfaceTint = ,
@@ -103,4 +103,10 @@ val Color.Companion.LocationContainer:Color
 val Color.Companion.LocationContent:Color
 	get() = Color.White
 
-val dialogPadding = PaddingValues(24.dp, 24.dp, 24.dp, 12.dp)
+val Color.Companion.PositiveContainer:Color
+	get() = Color(0xFF76BA99)
+
+val Color.Companion.PositiveContent:Color
+	get() = Color.White
+
+val IconButtonSize = 20.dp

@@ -15,19 +15,14 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun BottomSheetStrip(
-	contentColor : Color? = MaterialTheme.colorScheme.onSurface,
+	contentColor : Color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
 ) {
-
-	val _contentColor = contentColor ?: MaterialTheme.colorScheme.onSurface
-
-	Spacer(modifier = Modifier.height(16.dp))
-
 	Box(
 		modifier = Modifier
-			.width(96.dp)
-			.height(3.dp)
-			.background(_contentColor)
+			.width(48.dp)
+			.height(4.dp)
+			.background(contentColor, RoundedCornerShape(50))
 	)
 
-	Spacer(modifier = Modifier.height(12.dp))
+	Spacer(modifier = Modifier.height(8.dp))
 }

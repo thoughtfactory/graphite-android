@@ -13,7 +13,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
@@ -30,9 +28,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FractionalThreshold
-import androidx.compose.material.rememberSwipeableState
-import androidx.compose.material.swipeable
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +52,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import coil.compose.AsyncImage
@@ -65,7 +59,6 @@ import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContent
@@ -80,7 +73,6 @@ import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo
 import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.RealmUUID
-import kotlin.math.roundToInt
 
 
 @OptIn(
@@ -156,7 +148,7 @@ fun NoteListCard(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+					.background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
 			) {
 //				Row(
 //					verticalAlignment = Alignment.CenterVertically,
@@ -178,7 +170,7 @@ fun NoteListCard(
 //				}
 
 				OutlinedCard(
-					shape = RoundedCornerShape(12.dp),
+					shape = MaterialTheme.shapes.medium,
 					border = BorderStroke(
 						1.dp, if (isFavourite && isFavouriteTinted) containerColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.17f)
 					),
@@ -186,7 +178,7 @@ fun NoteListCard(
 					elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
 					modifier = Modifier
 						.fillMaxWidth()
-						.clip(RoundedCornerShape(12.dp))
+						.clip(MaterialTheme.shapes.medium)
 //						.offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
 						.combinedClickable(onClick = { onClick() }, onLongClick = { onLongClick?.invoke() })
 //						.swipeable(state = swipeableState,
@@ -215,7 +207,7 @@ fun NoteListCard(
 						Column(
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(12.dp, 8.dp)
+								.padding(8.dp)
 						) {
 							Title(
 								showFullTime = showFullTime,
@@ -315,7 +307,7 @@ private fun Title(
 		}
 		if (attachmentCount != 0) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_attachment),
+				painter = painterResource(id = R.drawable.ic_file),
 				contentDescription = "Attachment count",
 				tint = if (isFavouriteTinted && isFavourite) contentColor else Color.AttachmentContainer,
 				modifier = Modifier.requiredSize(14.dp)
@@ -383,7 +375,7 @@ private fun Content(
 				contentScale = ContentScale.Crop,
 				modifier = Modifier
 					.requiredSize(80.dp)
-					.clip(RoundedCornerShape(12.dp)),
+					.clip(MaterialTheme.shapes.medium),
 			)
 		}
 	}

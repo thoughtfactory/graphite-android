@@ -8,20 +8,18 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -41,16 +39,15 @@ import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectI
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.search.composable.buildingBlock.SearchBar
 import com.syncodec.graphite.presentation.ui.DeleteContainer
-import com.syncodec.graphite.utils.getInverseBWColor
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
 	tagObject : TagObject?,
-	query: String?,
+	query : String?,
 	onClickBack : () -> Unit,
-	onHitSearch: (String) -> Unit,
+	onHitSearch : (String) -> Unit,
 ) {
 
 	val isSelected = LocalCompositionIsSelected.current
@@ -92,7 +89,7 @@ fun TopBar(
 					},
 					actions = {
 						IconButton(
-							onClick = {  }
+							onClick = { }
 						) {
 							Icon(
 								painter = painterResource(id = R.drawable.ic_delete),
@@ -101,21 +98,12 @@ fun TopBar(
 							)
 						}
 					},
-					colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+					colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 				)
 			} else {
-				TopAppBar(
-					modifier = Modifier.fillMaxWidth(),
-					navigationIcon = {
-						MenuButton(
-							icon = R.drawable.ic_back,
-							tint = MaterialTheme.colorScheme.onBackground,
-							onClick = onClickBack
-						)
-					},
-					title = {
-						SearchBar(onHitSearch = onHitSearch)
-					},
+				SearchBar(
+					onHitSearch = onHitSearch,
+					onClickBack = onClickBack,
 				)
 			}
 		}
@@ -124,13 +112,12 @@ fun TopBar(
 			visible = tagObject != null || query != null,
 			enter = expandVertically(tween(300)) + fadeIn(tween(300)),
 			exit = shrinkVertically(tween(300)) + fadeOut(tween(300)),
-			modifier = Modifier
-				.fillMaxWidth()
-				.background(containerColor)
+			modifier = Modifier.fillMaxWidth()
 		) {
 			Column(
 				modifier = Modifier.fillMaxWidth()
 			) {
+				Spacer(modifier = Modifier.height(8.dp))
 				Row(
 					verticalAlignment = Alignment.CenterVertically,
 					modifier = Modifier.fillMaxWidth()
@@ -144,26 +131,27 @@ fun TopBar(
 						fontWeight = FontWeight.Bold
 					)
 
-					Spacer(modifier = Modifier.width(16.dp))
+					Spacer(modifier = Modifier.width(8.dp))
 
-					Button(
-						shape = RoundedCornerShape(12.dp),
-						onClick = {  },
-						colors = ButtonDefaults.buttonColors(
-							containerColor = tagObject?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary,
-							contentColor = tagObject?.color?.let { Color(it).getInverseBWColor() } ?: MaterialTheme.colorScheme.onPrimary
-						)
-
-					) {
-						Text(
-							text = tagObject?.tag ?: query ?: "",
-						)
-					}
+					SuggestionChip(
+						label = {
+							Text(
+								text = tagObject?.tag ?: query ?: "",
+								style = MaterialTheme.typography.bodyMedium,
+								fontWeight = FontWeight.Bold,
+								modifier = Modifier,
+							)
+						},
+						shape = MaterialTheme.shapes.medium,
+						colors = SuggestionChipDefaults.suggestionChipColors(
+							containerColor = MaterialTheme.colorScheme.primary,
+							labelColor = MaterialTheme.colorScheme.onPrimary,
+						),
+						onClick = { /*TODO*/ },
+					)
 
 					Spacer(modifier = Modifier.width(16.dp))
 				}
-
-				Spacer(modifier = Modifier.height(8.dp))
 			}
 		}
 	}

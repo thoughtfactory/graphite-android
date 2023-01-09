@@ -127,7 +127,7 @@ private fun TagItemView(
 			Spacer(modifier = Modifier.width(16.dp))
 
 			Icon(
-				painter = painterResource(id = R.drawable.ic_hashtag),
+				painter = painterResource(id = R.drawable.ic_tag),
 				contentDescription = tag.tag,
 				tint = MaterialTheme.colorScheme.onSurface,
 				modifier = Modifier.size(24.dp)
@@ -179,13 +179,13 @@ private fun TagSearchBar(
 	var searchQuery by remember { mutableStateOf("") }
 
 	DialogTextField(
-		text = searchQuery,
+		value = searchQuery,
 		label = "Search or Add tag",
 		placeholder = "Connect em' all",
 		maxLines = 1,
 		leadingIcon = {
 			MenuButton(
-				icon = R.drawable.ic_hashtag,
+				icon = R.drawable.ic_tag,
 				tint = tagColor
 			) {}
 		},
@@ -205,6 +205,5 @@ private fun TagSearchBar(
 		},
 		containerColor = MaterialTheme.colorScheme.surface,
 		contentColor = MaterialTheme.colorScheme.onSurface,
-		modifier = Modifier.padding(12.dp, 0.dp),
 	) { searchQuery = (it ?: searchQuery).replace(" ", "").lowercase() }
 }

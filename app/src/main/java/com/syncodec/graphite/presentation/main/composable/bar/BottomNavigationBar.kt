@@ -54,6 +54,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.main.composable.screen.HomeScreen
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalVaultIsOpened
@@ -100,7 +101,7 @@ fun BottomNavigationBar(
 						Icon(
 							painter = painterResource(id = screen.icon),
 							contentDescription = screen.title,
-							modifier = Modifier.requiredSize(20.dp)
+							modifier = Modifier.requiredSize(IconButtonSize)
 						)
 					},
 					label = {
@@ -206,7 +207,7 @@ fun MainNavigation(
 					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
 					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
 					bucketOrderList = bucketOrderList,
-					notebookList = notebookList.filter { it.parentId == null },
+					notebookList = notebookList.filter { it.parentId == null }.filter { if (it.isLocked) isVaultOpened else true },
 					notebookOrderList = notebookOrderList,
 					sortOn = sortOn,
 					sortBy = sortBy,

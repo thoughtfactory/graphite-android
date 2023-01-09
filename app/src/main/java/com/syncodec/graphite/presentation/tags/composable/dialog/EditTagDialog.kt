@@ -35,22 +35,25 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
+import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DialogTextField
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.getRandomColor
 import com.syncodec.graphite.utils.toHexString
 
 
+@Preview
 @Composable
 fun EditTagDialog(
-	showDialog : Boolean,
-	tag: String,
-	color : Color,
-	onSave: (String, Color) -> Unit,
-	onDismiss : () -> Unit,
+	showDialog : Boolean = true,
+	tag : String = "Tag",
+	color : Color = getRandomColor(),
+	onSave : (String, Color) -> Unit = { _, _ -> },
+	onDismiss : () -> Unit = {},
 ) {
 
 	var _tag by remember { mutableStateOf("") }
@@ -68,10 +71,11 @@ fun EditTagDialog(
 		title = "Edit Tag",
 		onDismissRequest = onDismiss
 	) {
-		TextField(
-			text = _tag,
+		DialogTextField(
+			value = _tag,
+			label = "Tag",
 			placeholder = "Add a tag",
-		) { _tag = it }
+		) { _tag = it ?: "" }
 
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -91,20 +95,17 @@ fun EditTagDialog(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(48.dp)
-				.background(
-					color = _color,
-					shape = RoundedCornerShape(12.dp)
-				)
+				.background(_color, MaterialTheme.shapes.medium)
 		) {
 			Text(
 				text = _color.toHexString(),
-				style = MaterialTheme.typography.bodyLarge,
+				style = MaterialTheme.typography.bodyMedium,
 				color = _color.getInverseBWColor(),
 				modifier = Modifier.align(Alignment.Center)
 			)
 		}
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(24.dp))
 
 		DualActionButtons(
 			primaryText = "Save",

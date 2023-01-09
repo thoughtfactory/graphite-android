@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -45,15 +42,16 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.network.MovieData
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TMDbMovieSearchResult
 import com.syncodec.graphite.di.network.TMDbTvSearchResult
+import com.syncodec.graphite.di.network.TvData
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.common.text.LargeTextField
@@ -77,7 +75,6 @@ fun AddShowBottomSheet() {
 
 	var queryText by rememberSaveable { mutableStateOf("") }
 	var isTextFocused by rememberSaveable { mutableStateOf(false) }
-	val focusRequester = remember { FocusRequester() }
 
 	var status : Status by remember { mutableStateOf(Status.INIT) }
 	var tmDbMovieSearchResult : TMDbMovieSearchResult? by remember { mutableStateOf(null) }
@@ -87,7 +84,6 @@ fun AddShowBottomSheet() {
 
 	val onSearch = {
 		status = Status.LOADING
-		focusRequester.freeFocus()
 		keyboardController?.hide()
 		tmDbMovieSearchResult = null
 		scope.launch(Dispatchers.IO) {
@@ -128,49 +124,38 @@ fun AddShowBottomSheet() {
 		}
 	}
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "What did you watch",
+		icon = R.drawable.ic_show,
 	) {
 
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "What did you watch",
-			icon = R.drawable.ic_show,
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
 		LargeTextField(
-			text = queryText,
-			placeholder = if (currentState == 0) "Search for movie" else "Search for tv show",
+			modifier = Modifier,
+			value = queryText,
+			placeholder = if (currentState == 0) "Search for a movie" else "Search for a tv show",
+			isFocused = isTextFocused,
+			onFocusChanged = { isTextFocused = it },
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
 				autoCorrect = true,
 				keyboardType = KeyboardType.Text,
 				imeAction = ImeAction.Search
 			),
-			isFocused = isTextFocused,
-			focusRequester = focusRequester,
-			onFocusChanged = { isTextFocused = it },
-			onValueChanged = { queryText = it },
 			keyboardActions = KeyboardActions(
 				onSearch = { onSearch() },
 				onDone = { onSearch() }
 			),
-			modifier = Modifier.padding(24.dp, 0.dp)
-		)
+			trailingIcon = R.drawable.ic_search,
+			onClickTrailingIcon = { onSearch() }
+		) { queryText = it }
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		StateButton(
 			stateList = listOf(
 				StateData(
 					title = "Movie",
-					icon = R.drawable.ic_show,
+					icon = R.drawable.ic_movie,
 					stateTint = MaterialTheme.colorScheme.primary
 				),
 				StateData(
@@ -179,15 +164,14 @@ fun AddShowBottomSheet() {
 					stateTint = MaterialTheme.colorScheme.primary
 				)
 			),
-			containerColor = MaterialTheme.colorScheme.background,
+			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 			currentState = currentState,
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(36.dp)
-				.padding(24.dp, 0.dp)
+				.height(32.dp)
 		) { currentState = it }
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		AnimatedContent(targetState = status) {
 			when (it) {
@@ -208,84 +192,44 @@ fun AddShowBottomSheet() {
 					) { LoadingView() }
 				}
 
-				Status.LOADED -> {
-					if (tmDbMovieSearchResult?.results?.isEmpty() == true || tmDbTvSearchResult?.results?.isEmpty() == true) {
-						SearchResultStatusView(
-							imageId = R.drawable.il_bucket_search_not_found,
-							text = "Uh oh, we couldn't find anything. Try again?",
-							contentDescription = "Show not found"
-						)
-					} else {
-						LazyVerticalGrid(
-							columns = GridCells.Fixed(3),
-							contentPadding = PaddingValues(16.dp, 0.dp),
-						) {
-							if (currentState == 0) {
-								tmDbMovieSearchResult?.results?.forEach { movieDataResult ->
-									if (movieDataResult != null) {
-										item {
-											ShowCard(
-												title = movieDataResult.title,
-												posterPath = movieDataResult.posterPath,
-												releaseDate = movieDataResult.releaseDate,
-											) {
-												focusRequester.freeFocus()
-												keyboardController?.hide()
+				Status.LOADED -> LoadedView(
+					tmDbMovieSearchResult = tmDbMovieSearchResult,
+					tmDbTvSearchResult = tmDbTvSearchResult,
+					currentState = currentState,
+					onClickMovie = { movieData ->
+						keyboardController?.hide()
 
-												if (bucketObject == null || movieDataResult.id == null) {
-													Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
-												} else {
-													Intent(context, BucketItemActivity::class.java).apply {
-														putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-														putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.bytes)
-														putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
-														putExtra(Extra.Companion.Constant.MOVIE_ID.name, movieDataResult.id)
+						if (bucketObject == null || movieData.id == null) {
+							Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
+						} else {
+							Intent(context, BucketItemActivity::class.java).apply {
+								putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+								putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.bytes)
+								putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
+								putExtra(Extra.Companion.Constant.MOVIE_ID.name, movieData.id)
 
-														context.startActivity(this)
-													}
-												}
-											}
-										}
-									}
-								}
-								item { Spacer(modifier = Modifier.height(32.dp)) }
-								item { Spacer(modifier = Modifier.height(32.dp)) }
-								item { Spacer(modifier = Modifier.height(32.dp)) }
-							} else if (currentState == 1) {
-								tmDbTvSearchResult?.results?.forEach { tvDataResult ->
-									if (tvDataResult != null) {
-										item {
-											ShowCard(
-												title = tvDataResult.name,
-												posterPath = tvDataResult.posterPath,
-												releaseDate = tvDataResult.firstAirDate,
-											) {
-												focusRequester.freeFocus()
-												keyboardController?.hide()
-
-												if (bucketObject == null || tvDataResult.id == null) {
-													Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
-												} else {
-													Intent(context, BucketItemActivity::class.java).apply {
-														putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-														putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.bytes)
-														putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
-														putExtra(Extra.Companion.Constant.TV_ID.name, tvDataResult.id)
-
-														context.startActivity(this)
-													}
-												}
-											}
-										}
-									}
-								}
-								item { Spacer(modifier = Modifier.height(32.dp)) }
-								item { Spacer(modifier = Modifier.height(32.dp)) }
-								item { Spacer(modifier = Modifier.height(32.dp)) }
+								context.startActivity(this)
 							}
 						}
+					},
+					onClickTv = { tvData ->
+						keyboardController?.hide()
+
+						if (bucketObject == null || tvData.id == null) {
+							Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
+						} else {
+							Intent(context, BucketItemActivity::class.java).apply {
+								putExtra(Extra.Companion.Constant.IS_NEW.name, true)
+								putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.bytes)
+								putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
+								putExtra(Extra.Companion.Constant.TV_ID.name, tvData.id)
+
+								context.startActivity(this)
+							}
+						}
+
 					}
-				}
+				)
 
 				Status.ERROR -> {
 					SearchResultStatusView(
@@ -296,8 +240,59 @@ fun AddShowBottomSheet() {
 				}
 			}
 		}
+	}
+}
 
-		Spacer(modifier = Modifier.height(32.dp))
+@Composable
+private fun LoadedView(
+	tmDbMovieSearchResult : TMDbMovieSearchResult? = null,
+	tmDbTvSearchResult : TMDbTvSearchResult? = null,
+	currentState : Int = 0,
+	onClickMovie : (MovieData) -> Unit = {},
+	onClickTv : (TvData) -> Unit = {},
+) {
+	if (tmDbMovieSearchResult?.results?.isEmpty() == true || tmDbTvSearchResult?.results?.isEmpty() == true) {
+		SearchResultStatusView(
+			imageId = R.drawable.il_bucket_search_not_found,
+			text = "Uh oh, we couldn't find anything. Try again?",
+			contentDescription = "Show not found"
+		)
+	} else {
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(3),
+		) {
+			if (currentState == 0) {
+				tmDbMovieSearchResult?.results?.forEach { movieData ->
+					movieData?.let {
+						item {
+							ShowCard(
+								title = it.title,
+								posterPath = it.posterPath,
+								releaseDate = it.releaseDate,
+							) { onClickMovie(it) }
+						}
+					}
+				}
+				item { Spacer(modifier = Modifier.height(32.dp)) }
+				item { Spacer(modifier = Modifier.height(32.dp)) }
+				item { Spacer(modifier = Modifier.height(32.dp)) }
+			} else if (currentState == 1) {
+				tmDbTvSearchResult?.results?.forEach { tvData ->
+					tvData?.let {
+						item {
+							ShowCard(
+								title = it.name,
+								posterPath = it.posterPath,
+								releaseDate = it.firstAirDate,
+							) { onClickTv(it) }
+						}
+					}
+				}
+				item { Spacer(modifier = Modifier.height(32.dp)) }
+				item { Spacer(modifier = Modifier.height(32.dp)) }
+				item { Spacer(modifier = Modifier.height(32.dp)) }
+			}
+		}
 	}
 }
 
@@ -311,29 +306,57 @@ private fun ShowCard(
 	val context = LocalContext.current
 
 	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier.padding(4.dp),
+		horizontalAlignment = Alignment.Start,
+		modifier = Modifier.padding(8.dp),
 	) {
-		AsyncImage(
-			model = ImageRequest.Builder(context)
-				.data(if (posterPath.isNullOrBlank()) "" else "https://image.tmdb.org/t/p/w500${posterPath}")
-				.crossfade(300)
-				.build(),
-			placeholder = null,
-			contentDescription = title,
-			contentScale = ContentScale.Crop,
+		Box(
+			contentAlignment = Alignment.Center,
 			modifier = Modifier
 				.aspectRatio(0.6666f)
-				.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-				.clip(RoundedCornerShape(12.dp))
-				.clickable { onClick() },
-		)
+				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.medium)
+				.clip(MaterialTheme.shapes.medium)
+				.clickable { onClick() }
+		) {
+			var isError by remember { mutableStateOf(false) }
+			posterPath?.let {
+				AsyncImage(
+					model = ImageRequest.Builder(context)
+						.data(if (it.isBlank()) "" else "https://image.tmdb.org/t/p/w500${it}")
+						.crossfade(300)
+						.build(),
+					placeholder = null,
+					onError = { isError = true },
+					contentDescription = title,
+					contentScale = ContentScale.Crop,
+					modifier = Modifier
+						.aspectRatio(0.6666f)
+						.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.medium)
+						.clip(MaterialTheme.shapes.medium)
+						.clickable { onClick() },
+				)
+			} ?: Text(
+				text = "No cover",
+				modifier = Modifier.padding(8.dp),
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f)
+			)
+			if (isError) {
+				Text(
+					text = "No cover",
+					modifier = Modifier.padding(8.dp),
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f)
+				)
+			}
+		}
+
+		Spacer(modifier = Modifier.height(4.dp))
 
 		Text(
-			text = "${title} ${if ((releaseDate?.length ?: 0) > 4) "(${releaseDate?.substring(0, 4)})" else ""}",
-			style = MaterialTheme.typography.bodyMedium,
+			text = "$title ${if ((releaseDate?.length ?: 0) > 4) "(${releaseDate?.substring(0, 4)})" else ""}",
+			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier.padding(0.dp, 4.dp, 0.dp, 0.dp)
+			modifier = Modifier
 		)
 	}
 }

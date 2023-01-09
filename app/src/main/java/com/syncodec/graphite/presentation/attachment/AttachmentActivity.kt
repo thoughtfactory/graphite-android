@@ -22,6 +22,7 @@ import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
 import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.tone
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -41,8 +42,8 @@ class AttachmentActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
 
 				val noteObject by viewModel.noteObject
 				val chapterObject by viewModel.chapterObject

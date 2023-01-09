@@ -92,7 +92,6 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 	val tagListBuffer : SnapshotStateList<TagObject> = mutableStateListOf()
 
 	val selectChapterList : SnapshotStateList<ChapterObject> = mutableStateListOf()
-	val selectParentChapter : MutableState<ChapterObject?> = mutableStateOf(null)
 	val selectChapterPath : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
 
 	val showLocationPermissionDialog : MutableState<Boolean> = mutableStateOf(false)
@@ -174,7 +173,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 					viewModelScope.launch(Dispatchers.Default) {
 						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
 						try {
-							repository2.getChapterFromIdAsFlow(chapterId).collect {
+							repository2.getChapterFromId(chapterId).let {
 								withContext(Dispatchers.Main) {
 									noteIdList.clear()
 									noteIdList.addAll(it?.noteList?.map { it.id } ?: listOf())
@@ -182,6 +181,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 									isNew.value = true
 									isViewing.value = false
 									this@NoteViewModel.parentChapterId.value = chapterId
+									this@NoteViewModel.parentChapterObject.value = it
 								}
 							}
 						} catch (e : RealmNotInitializedException) {
@@ -215,9 +215,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		locationState.value = LocationState.INIT
 
 		viewModelScope.launch(Dispatchers.IO) {
-			val getGeolocation = DataStoreInstance(context = repository2.context)
-				.getGeolocation
-				.first()
+			val getGeolocation = DataStoreInstance(context = repository2.context).getGeolocation.first()
 
 			val isPro = BaseApplication.isPro.value
 
@@ -309,9 +307,8 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 			chapterCoroutine = this
 
 			parentChapterId.value?.let {
-				repository2.getChapterFromIdAsFlow(it).cancellable().collect { chapterObject ->
-					parentChapterObject.value = chapterObject
-					selectParentChapter.value = chapterObject
+				repository2.getChapterFromId(it)?.let {
+					withContext(Dispatchers.Main) { parentChapterObject.value = it }
 				}
 			}
 		}
@@ -335,7 +332,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 
 						if (this@NoteViewModel.noteId.value != null) this.id = this@NoteViewModel.noteId.value !!
 						this.createdTimestamp = this@NoteViewModel.createdTimestamp.value ?: System.currentTimeMillis()
-						this.modifiedTimestamp = this@NoteViewModel.modifiedTimestamp.value ?: System.currentTimeMillis()
+						this.modifiedTimestamp = System.currentTimeMillis()
 						this.userTimestamp = this@NoteViewModel.userTimestamp.value ?: System.currentTimeMillis()
 						this.title = this@NoteViewModel.title.value
 						this.color = this@NoteViewModel.color.value
@@ -396,7 +393,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 		this.putNote()
 	}
 
-	fun putAttachment(noteId : RealmUUID): Pair<String?, String?> {
+	fun putAttachment(noteId : RealmUUID) : Pair<String?, String?> {
 		var thumbnail : String? = null
 		var thumbnailType : String? = null
 
@@ -583,7 +580,7 @@ class NoteViewModel @Inject constructor(private val repository2 : Repository2) :
 				}
 			}
 			repository2.getChapterFromId(id = parentChapterId).let {
-				repository2.getParentChapterList(id = it?.id, true) { list, _ ->
+				repository2.getChapterPath(id = it?.id, true) { list, _ ->
 					viewModelScope.launch(Dispatchers.Main) {
 						selectChapterPath.clear()
 						list?.let { selectChapterPath.addAll(it) }

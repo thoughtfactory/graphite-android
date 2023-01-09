@@ -21,20 +21,21 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.tone
 
 
 @Composable
 fun MenuButton(
-	icon: Int,
-	contentDescription: String? = null,
-	tint: Color = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
-	containerColor: Color = Color.Transparent,
-	shape: Shape = RoundedCornerShape(25),
-	isEnabled: Boolean = true,
-	isChecked: Boolean,
-	onClick: () -> Unit
+	icon : Int,
+	contentDescription : String? = null,
+	tint : Color = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+	containerColor : Color = Color.Transparent,
+	shape : Shape = MaterialTheme.shapes.small,
+	isEnabled : Boolean = true,
+	isChecked : Boolean,
+	onClick : () -> Unit
 ) {
 	val _containerColor by animateColorAsState(
 		targetValue = if (isChecked) tint else containerColor,
@@ -46,19 +47,19 @@ fun MenuButton(
 	)
 
 	Box(
+		contentAlignment = Alignment.Center,
 		modifier = Modifier
-			.requiredSize(44.dp)
+			.requiredSize((IconButtonSize * 2) + 2.dp)
 			.padding(2.dp)
 			.background(_containerColor, shape)
 			.clip(shape)
-			.clickable(enabled = isEnabled, onClickLabel = contentDescription, role = Role.Button) { onClick() },
-		contentAlignment = Alignment.Center
+			.clickable(enabled = isEnabled, onClickLabel = contentDescription, role = Role.Button) { onClick() }
 	) {
 		Icon(
 			painter = painterResource(id = icon),
 			contentDescription = contentDescription,
 			tint = contentColor,
-			modifier = Modifier.requiredSize(24.dp)
+			modifier = Modifier.requiredSize(IconButtonSize)
 		)
 	}
 }
@@ -66,28 +67,28 @@ fun MenuButton(
 @Composable
 fun MenuButton(
 	modifier : Modifier = Modifier,
-	icon: Int,
-	contentDescription: String? = null,
-	tint: Color = MaterialTheme.colorScheme.onSurface,
-	containerColor: Color = Color.Transparent,
-	shape: Shape = RoundedCornerShape(25),
-	isEnabled: Boolean = true,
-	onClick: () -> Unit
+	icon : Int,
+	contentDescription : String? = null,
+	tint : Color = MaterialTheme.colorScheme.onSurface,
+	containerColor : Color = Color.Transparent,
+	shape : Shape = MaterialTheme.shapes.small,
+	isEnabled : Boolean = true,
+	onClick : () -> Unit
 ) {
 	Box(
+		contentAlignment = Alignment.Center,
 		modifier = modifier
-			.requiredSize(44.dp)
+			.requiredSize((IconButtonSize * 2) + 2.dp)
 			.padding(2.dp)
 			.background(containerColor, shape)
 			.clip(shape)
-			.clickable(enabled = isEnabled, onClickLabel = contentDescription, role = Role.Button) { onClick() },
-		contentAlignment = Alignment.Center
+			.clickable(enabled = isEnabled, onClickLabel = contentDescription, role = Role.Button) { onClick() }
 	) {
 		Icon(
 			painter = painterResource(id = icon),
 			contentDescription = contentDescription,
 			tint = tint,
-			modifier = Modifier.requiredSize(24.dp)
+			modifier = Modifier.requiredSize(IconButtonSize)
 		)
 	}
 }

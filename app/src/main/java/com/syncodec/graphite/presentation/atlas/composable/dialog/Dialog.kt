@@ -6,16 +6,13 @@ import com.syncodec.graphite.presentation.atlas.AtlasActivity
 import com.syncodec.graphite.presentation.common.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.DialogType
-import com.syncodec.graphite.presentation.common.dialog.WhereDialog
+import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialog
 
 
 @Composable
 fun AtlasDialog(
 	parentChapter: ChapterObjectLite?,
 ) {
-	val chapterList = AtlasActivity.LocalChapterList.current
-	val chapterPath = AtlasActivity.LocalChapterPath.current
-
 	val showDeleteDialog = AtlasActivity.LocalShowDeleteDialog.current
 	val showWhereDialog = AtlasActivity.LocalShowWhereDialog.current
 
@@ -23,16 +20,12 @@ fun AtlasDialog(
 
 	val onDelete = AtlasActivity.LocalOnDelete.current
 
-	val onWhere = AtlasActivity.LocalOnWhere.current
 	val onSetWhere = AtlasActivity.LocalSetOnWhere.current
 
 	WhereDialog(
 		showDialog = showWhereDialog,
 		parentChapter = parentChapter,
-		chapterList = chapterList,
-		chapterPath = chapterPath,
-		onWhere = onWhere,
-		onSetWhere = onSetWhere
+		onSetChapter = onSetWhere
 	) { closeDialog(DialogType.WHERE) }
 
 

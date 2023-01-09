@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.bottomSheet
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,9 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.ExpandableBox
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonData
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
+import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.common.composable.ProTag
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseBottomSheet
@@ -45,6 +44,7 @@ import com.syncodec.graphite.presentation.note.composable.LocalOnShareText
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.LocalCompositionRichTextEditor
 
 
@@ -62,47 +62,44 @@ fun MenuBottomSheet() {
 
 	val onShareText = LocalOnShareText.current
 
-	val buttonList : List<BottomSheetButtonData> = listOf(
-		BottomSheetButtonData(title = "Export", icon = R.drawable.ic_export) { showExportOptions = ! showExportOptions },
-		BottomSheetButtonData(title = "Copy", icon = R.drawable.ic_copy) {
-			onShareText()
-		},
-		BottomSheetButtonData(
-			title = "Delete",
-			icon = R.drawable.ic_delete,
-			containerColor = Color.DeleteContainer,
-			contentColor = Color.DeleteContent,
-		) {
-			closeBottomSheet()
-			openDialog(NoteDialogType.DELETE, null)
-		},
-	)
-
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.wrapContentHeight()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Menu",
+		icon = R.drawable.ic_menu,
 	) {
-		BottomSheetStrip()
 
-		BottomSheetHeader(
-			title = "Menu",
-			icon = R.drawable.ic_menu
+		BottomSheetButtonGrid(
+			buttonList = listOf(
+				{
+					BottomSheetButton(title = "Export", icon = R.drawable.ic_export) {
+						showExportOptions = ! showExportOptions
+					}
+				},
+				{
+					BottomSheetButton(title = "Copy", icon = R.drawable.ic_copy) {
+						onShareText()
+					}
+				},
+				{
+					BottomSheetButton(
+						title = "Delete",
+						icon = R.drawable.ic_delete,
+						containerColor = Color.DeleteContainer,
+						contentColor = Color.DeleteContent,
+					) {
+						closeBottomSheet()
+						openDialog(NoteDialogType.DELETE, null)
+					}
+				}
+			)
 		)
-
-		BottomSheetButtonGrid(buttonList = buttonList)
 
 		ExpandableBox(
 			isVisible = showExportOptions
 		) {
-			val containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
-			val contentColor = MaterialTheme.colorScheme.onBackground
+			val containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f)
+			val contentColor = MaterialTheme.colorScheme.onSurface
 			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(24.dp, 0.dp)
+				modifier = Modifier.fillMaxWidth()
 			) {
 				Spacer(modifier = Modifier.height(24.dp))
 
@@ -117,7 +114,7 @@ fun MenuBottomSheet() {
 
 				ExportButton(
 					title = "As Text",
-					icon = R.drawable.ic_file_text,
+					icon = R.drawable.ic_file_txt,
 					containerColor = containerColor,
 					contentColor = contentColor,
 				) { richTextEditor.exec("editor.setAndGetData('${title}', ${content}, 'export_text');") }
@@ -139,7 +136,7 @@ fun MenuBottomSheet() {
 
 				ExportButton(
 					title = "As Markdown",
-					icon = R.drawable.ic_file_pdf,
+					icon = R.drawable.ic_file_md,
 					containerColor = containerColor,
 					contentColor = contentColor,
 					isProFeature = true
@@ -160,8 +157,6 @@ fun MenuBottomSheet() {
 //				) { richTextEditor.exec("editor.getData(\"export_attachment\");") }
 			}
 		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
@@ -179,7 +174,7 @@ private fun ExportButton(
 	onClick : () -> Unit
 ) {
 	val context = LocalContext.current
-	val isPro by BaseApplication.isPro
+	val isPro by BaseApplication.isPro.collectAsState()
 
 	Card(
 		colors = CardDefaults.cardColors(
@@ -236,9 +231,11 @@ private fun ExportButton(
 			Spacer(modifier = Modifier.width(16.dp))
 
 			Icon(
-				painter = painterResource(id = R.drawable.ic_chevron_right),
+				painter = painterResource(id = R.drawable.ic_caret),
 				contentDescription = title,
-				modifier = Modifier.requiredSize(24.dp)
+				modifier = Modifier
+					.requiredSize(IconButtonSize)
+					.graphicsLayer { rotationZ = 90f }
 			)
 		}
 	}

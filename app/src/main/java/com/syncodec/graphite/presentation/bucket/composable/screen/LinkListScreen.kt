@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,16 +22,19 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -58,13 +63,24 @@ import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectI
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.ReorderableItem
+import org.burnoutcrew.reorderable.SpringDragCancelledAnimation
+import org.burnoutcrew.reorderable.detectReorder
+import org.burnoutcrew.reorderable.rememberReorderableLazyListState
+import org.burnoutcrew.reorderable.reorderable
 
 
-@OptIn(ExperimentalFoundationApi::class)
+@Preview
 @Composable
 fun LinkListScreen(
 	bucketItemList : List<BucketItemObject> = listOf(),
+	onReorderBucketItemList : (List<RealmUUID>) -> Unit = {},
 ) {
+	val scope = rememberCoroutineScope()
+
 	val setOpenGraphResult = LocalCompositionSetOpenGraphResult.current
 
 	val isSelected = LocalCompositionIsSelected.current
@@ -74,80 +90,91 @@ fun LinkListScreen(
 	val setBucketItemObject = LocalCompositionSetBucketItemObject.current
 	val openSheet = LocalCompositionOpenBottomSheet.current
 
-	if (bucketItemList.isEmpty()) {
+	var _bucketItemList : SnapshotStateList<BucketItemObject> = remember { mutableStateListOf() }
+	LaunchedEffect(bucketItemList) {
+		_bucketItemList.clear()
+		_bucketItemList.addAll(bucketItemList)
+	}
+
+	val state = rememberReorderableLazyListState(
+		dragCancelledAnimation = SpringDragCancelledAnimation(),
+		onMove = { from, to ->
+			_bucketItemList.apply { add(to.index, removeAt(from.index)) }
+		},
+		onDragEnd = { from, to ->
+			scope.launch(Dispatchers.Default) { onReorderBucketItemList(_bucketItemList.map { it.id }) }
+		}
+	)
+
+	if (_bucketItemList.isEmpty()) {
 		EmptyView(bucketType = BucketType.LINK)
 	} else {
 		LazyColumn(
-			modifier = Modifier.fillMaxSize()
+			state = state.listState,
+			modifier = Modifier
+				.fillMaxSize()
+				.reorderable(state)
 		) {
-			bucketItemList.forEach { bucketItemObject ->
-				item(
+			items(
+				items = _bucketItemList,
+				key = { it.id.toString() }
+			) { bucketItemObject ->
+				ReorderableItem(
+					reorderableState = state,
 					key = bucketItemObject.id.toString(),
-				) {
+				) { isDragging ->
 					val openGraphResult = bucketItemObject.getOpenGraphResult()
-					Box(
-						modifier = Modifier.animateItemPlacement()
-					) {
-						LinkItem(
-							title = bucketItemObject.title,
-							thumbnail = bucketItemObject.thumbnail,
-							openGraphResult = openGraphResult,
-							url = bucketItemObject.key,
-							isLocked = bucketItemObject.isLocked,
-							isFavourite = bucketItemObject.isFavourite,
-							isSelected = bucketItemObject.id in selectedRealmUUIDList,
-							onClick = {
-								if (isSelected) {
-									if (bucketItemObject.id in selectedRealmUUIDList) selectedRealmUUIDList.remove(bucketItemObject.id)
-									else selectedRealmUUIDList.add(bucketItemObject.id)
-								} else {
-									setBucketItemObject(bucketItemObject)
-									setOpenGraphResult(openGraphResult)
-									openSheet(BucketBottomSheetType.CURRENT_LINK)
-								}
-							},
-							onLongClick = {
+
+					LinkItem(
+						handleModifier = Modifier.detectReorder(state),
+						title = bucketItemObject.title,
+						thumbnail = bucketItemObject.thumbnail,
+						openGraphResult = openGraphResult,
+						url = bucketItemObject.key,
+						isLocked = bucketItemObject.isLocked,
+						isFavourite = bucketItemObject.isFavourite,
+						isSelected = bucketItemObject.id in selectedRealmUUIDList,
+						onClick = {
+							if (isSelected) {
 								if (bucketItemObject.id in selectedRealmUUIDList) selectedRealmUUIDList.remove(bucketItemObject.id)
 								else selectedRealmUUIDList.add(bucketItemObject.id)
-								onSelected(true)
+							} else {
+								setBucketItemObject(bucketItemObject)
+								setOpenGraphResult(openGraphResult)
+								openSheet(BucketBottomSheetType.CURRENT_LINK)
 							}
-						)
-					}
-				}
-
-				item {
-					Spacer(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(2.dp)
-							.padding(24.dp, 0.dp)
-							.background(MaterialTheme.colorScheme.onBackground.copy(0.13f))
+						},
+						onLongClick = {
+							if (bucketItemObject.id in selectedRealmUUIDList) selectedRealmUUIDList.remove(bucketItemObject.id)
+							else selectedRealmUUIDList.add(bucketItemObject.id)
+							onSelected(true)
+						}
 					)
 				}
 			}
-
-			item { Spacer(modifier = Modifier.height(32.dp)) }
 		}
 	}
 }
 
-
+@Preview
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LinkItem(
-	title : String?,
-	thumbnail : String?,
-	openGraphResult : OpenGraphResult?,
-	url : String?,
-	isLocked : Boolean,
-	isFavourite : Boolean,
-	isSelected : Boolean,
-	onClick : () -> Unit,
-	onLongClick : () -> Unit
+	handleModifier : Modifier = Modifier,
+	title : String? = null,
+	thumbnail : String? = null,
+	openGraphResult : OpenGraphResult? = null,
+	url : String? = null,
+	isLocked : Boolean = false,
+	isFavourite : Boolean = true,
+	isSelected : Boolean = false,
+	isDragging : Boolean = false,
+	onClick : () -> Unit = {},
+	onLongClick : () -> Unit = {},
 ) {
 
 	val containerColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
+		targetValue = if (isSelected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
 		animationSpec = tween(300)
 	)
 	val contentColor by animateColorAsState(
@@ -169,21 +196,32 @@ private fun LinkItem(
 		Row(
 			modifier = Modifier
 				.fillMaxSize()
-				.padding(16.dp, 6.dp),
+				.padding(8.dp, 4.dp),
 			verticalAlignment = Alignment.CenterVertically
 		) {
+			Icon(
+				painter = painterResource(id = R.drawable.ic_reorder),
+				contentDescription = null,
+				tint = contentColor.copy(alpha = 0.47f),
+				modifier = handleModifier.size(16.dp)
+			)
+
+			Spacer(modifier = Modifier.width(8.dp))
+
 			var _thumbnail by remember { mutableStateOf<Bitmap?>(null) }
 			LaunchedEffect(key1 = thumbnail) {
 				_thumbnail = thumbnail?.decodeBase64ToBitmap()
 			}
 			Thumbnail(
 				thumbnail = _thumbnail,
-				contentDescription = title
+				contentDescription = title,
+				isSelected = isSelected,
 			)
 
 			Spacer(modifier = Modifier.width(8.dp))
 
 			Column(
+				verticalArrangement = Arrangement.Top,
 				modifier = Modifier.weight(1f)
 			) {
 
@@ -194,8 +232,6 @@ private fun LinkItem(
 					isFavourite = isFavourite
 				)
 
-				Spacer(modifier = Modifier.height(4.dp))
-
 				UrlText(
 					url = url,
 					contentColor = contentColor
@@ -205,8 +241,6 @@ private fun LinkItem(
 					siteName = openGraphResult?.siteName,
 					contentColor = contentColor
 				)
-
-				Spacer(modifier = Modifier.height(4.dp))
 
 				openGraphResult?.description?.let {
 					DescriptionText(
@@ -222,11 +256,21 @@ private fun LinkItem(
 
 @Composable
 private fun Thumbnail(
-	thumbnail : Bitmap?,
-	contentDescription : String?
+	thumbnail : Bitmap? = null,
+	contentDescription : String? = null,
+	isSelected : Boolean = false,
 ) {
 	val context = LocalContext.current
 	var isThumbnailLoaded by remember { mutableStateOf(false) }
+
+	val containerColor by animateColorAsState(
+		targetValue = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+		animationSpec = tween(300)
+	)
+	val contentColor by animateColorAsState(
+		targetValue = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+		animationSpec = tween(300)
+	)
 
 	Box(modifier = Modifier) {
 		AsyncImage(
@@ -240,7 +284,7 @@ private fun Thumbnail(
 			contentScale = ContentScale.Crop,
 			modifier = Modifier
 				.requiredSize(96.dp)
-				.clip(RoundedCornerShape(16.dp)),
+				.clip(MaterialTheme.shapes.medium),
 		)
 
 		AnimatedVisibility(
@@ -251,15 +295,15 @@ private fun Thumbnail(
 			Box(
 				modifier = Modifier
 					.requiredSize(96.dp)
-					.clip(RoundedCornerShape(16.dp))
-					.background(MaterialTheme.colorScheme.surface.copy(0.71f))
+					.clip(MaterialTheme.shapes.medium)
+					.background(containerColor)
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_link),
 					contentDescription = null,
-					tint = MaterialTheme.colorScheme.onBackground.copy(0.47f),
+					tint = contentColor,
 					modifier = Modifier
-						.size(48.dp)
+						.size(32.dp)
 						.align(Alignment.Center)
 				)
 			}
@@ -268,13 +312,14 @@ private fun Thumbnail(
 	}
 }
 
+@Preview
 @Composable
 private fun TitleText(
 	modifier : Modifier = Modifier,
-	title : String?,
-	contentColor : Color,
-	isLocked : Boolean,
-	isFavourite : Boolean
+	title : String? = "Title",
+	contentColor : Color = MaterialTheme.colorScheme.onBackground,
+	isLocked : Boolean = false,
+	isFavourite : Boolean = true,
 ) {
 	Row(
 		modifier = modifier,
@@ -320,39 +365,41 @@ private fun TitleText(
 	}
 }
 
+@Preview
 @Composable
 private fun DescriptionText(
-	description : String,
-	contentColor : Color
+	description : String = "Description",
+	contentColor : Color = MaterialTheme.colorScheme.onBackground,
 ) {
 	Text(
 		text = description,
-		style = MaterialTheme.typography.bodyMedium,
+		style = MaterialTheme.typography.bodySmall,
 		color = contentColor,
 		maxLines = 1,
 		overflow = TextOverflow.Ellipsis
 	)
 }
 
+@Preview
 @Composable
 private fun SiteNameText(
-	siteName : String?,
-	contentColor : Color
+	siteName : String? = "Site Name",
+	contentColor : Color = MaterialTheme.colorScheme.onBackground,
 ) {
 	Text(
 		text = siteName ?: "",
 		style = MaterialTheme.typography.bodyMedium,
 		color = contentColor.copy(alpha = 0.47f),
-		fontWeight = if (siteName?.isNotEmpty() == true) FontWeight.Bold else FontWeight.Normal,
 		maxLines = 2,
 		overflow = TextOverflow.Ellipsis
 	)
 }
 
+@Preview
 @Composable
 private fun UrlText(
-	url : String?,
-	contentColor : Color
+	url : String? = "https://www.example.com",
+	contentColor : Color = MaterialTheme.colorScheme.onBackground,
 ) {
 	Text(
 		text = url ?: "",

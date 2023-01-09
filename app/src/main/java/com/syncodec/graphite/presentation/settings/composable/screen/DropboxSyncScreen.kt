@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.SettingsActivity
@@ -26,8 +27,9 @@ fun DropboxSyncScreen() {
 	) {
 		SettingsButton(
 			title = "Connect with Dropbox",
-			icon = R.drawable.ic_dropbox,
+			icon = R.drawable.ic_logo_dropbox,
 			subTitle = "Connect with Dropbox to sync your data",
+			iconColor = Color.Unspecified,
 		) { dropboxSignIn() }
 
 		SettingsButton(

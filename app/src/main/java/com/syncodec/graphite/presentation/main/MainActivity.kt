@@ -105,7 +105,9 @@ class MainActivity : ComponentActivity() {
 	@OptIn(ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
-		startSyncService()
+		isInStack = true
+
+//		startSyncService()
 
 		val dataStoreInstance = DataStoreInstance(this)
 
@@ -131,7 +133,7 @@ class MainActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
 				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
 				val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
@@ -208,7 +210,9 @@ class MainActivity : ComponentActivity() {
 					LocalCompositionIsBucketRefreshing provides isBucketRefreshing,
 					LocalCompositionIsNotebookRefreshing provides isNotebookRefreshing,
 					LocalCompositionOnRefresh provides { viewModel.refresher.value = viewModel.refresher.value + 1 },
-					LocalCompositionOnSyncNow provides { dropboxSyncService?.onSync() },
+					LocalCompositionOnSyncNow provides {
+//						dropboxSyncService?.onSync()
+													   },
 					LocalCompositionOnForceSync provides { },
 					LocalCompositionIsSelected provides isSelected,
 					LocalCompositionOnSelect provides { isSelected = it },
@@ -275,7 +279,9 @@ class MainActivity : ComponentActivity() {
 	}
 
 	override fun onDestroy() {
-		dropboxServiceConnection.unbindFromService()
+		isInStack = false
+
+//		dropboxServiceConnection.unbindFromService()
 		super.onDestroy()
 	}
 
@@ -431,22 +437,25 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
-	var dropboxSyncService : DropboxSyncService? = null
-	private val dropboxServiceConnection = DropboxSyncServiceConnectionManager(this) {
-		dropboxSyncService = it
-		it?.let {
-			CoroutineScope(Dispatchers.Main).launch {
-				it.dropboxSyncStatus.collect {
-					syncStatus.value = it
-				}
-			}
-		}
-	}
+//	var dropboxSyncService : DropboxSyncService? = null
+//	private val dropboxServiceConnection = DropboxSyncServiceConnectionManager(this) {
+//		dropboxSyncService = it
+//		it?.let {
+//			CoroutineScope(Dispatchers.Main).launch {
+//				it.dropboxSyncStatus.collect {
+//					syncStatus.value = it
+//				}
+//			}
+//		}
+//	}
 
-	private fun startSyncService() {
-		Intent(this.applicationContext, DropboxSyncService::class.java).apply {
-			dropboxServiceConnection.bindToService()
-			dropboxServiceConnection.dropboxSyncService
-		}
+//	private fun startSyncService() {
+//		Intent(this.applicationContext, DropboxSyncService::class.java).apply {
+//			dropboxServiceConnection.bindToService()
+//		}
+//	}
+
+	companion object {
+		var isInStack = false
 	}
 }

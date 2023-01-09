@@ -172,7 +172,7 @@ private fun Title(
 			}
 			if (attachmentCount != 0) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_attachment),
+					painter = painterResource(id = R.drawable.ic_file),
 					contentDescription = "Attachment count",
 					tint = Color(0xFFF5B971),
 					modifier = Modifier.requiredSize(14.dp)

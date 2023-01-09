@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,56 +20,49 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
-data class BottomSheetButtonData(
-	val title: String,
-	val icon: Int,
-	val containerColor: Color? = null,
-	val contentColor: Color? = null,
-	val onClick: () -> Unit
-)
-
+@Preview
 @Composable
 fun BottomSheetButton(
-	modifier: Modifier,
-	title: String,
-	icon: Int,
-	containerColor: Color? = null,
-	contentColor: Color? = null,
-	onClick: () -> Unit
+	modifier: Modifier = Modifier,
+	title: String = "Title",
+	icon: Int = R.drawable.ic_menu,
+	containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+	contentColor: Color = MaterialTheme.colorScheme.onSurface,
+	onClick: () -> Unit = {}
 ) {
-	val _containerColor = containerColor ?: MaterialTheme.colorScheme.background.copy(alpha = 0.71f)
-	val _contentColor = contentColor ?: MaterialTheme.colorScheme.onBackground
-
 	Column(
 		verticalArrangement = Arrangement.Center,
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = modifier
-			.background(_containerColor, RoundedCornerShape(20.dp))
-			.clip(RoundedCornerShape(20.dp))
+			.background(containerColor, MaterialTheme.shapes.large)
+			.clip(MaterialTheme.shapes.large)
 			.clickable(onClick = onClick)
 	) {
-		Spacer(modifier = Modifier.height(16.dp))
+		Spacer(modifier = Modifier.height(12.dp))
 		Icon(
 			painter = painterResource(id = icon),
 			contentDescription = title,
-			tint = _contentColor,
-			modifier = Modifier.requiredSize(24.dp)
+			tint = contentColor,
+			modifier = Modifier.requiredSize(IconButtonSize)
 		)
 		Spacer(modifier = Modifier.height(4.dp))
 		Text(
 			text = title,
 			style = MaterialTheme.typography.bodyMedium,
-			color = _contentColor,
+			color = contentColor,
 			textAlign = TextAlign.Center,
 			maxLines = 1,
 			overflow = TextOverflow.Ellipsis,
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(12.dp, 0.dp)
+				.padding(8.dp, 0.dp)
 		)
-		Spacer(modifier = Modifier.height(16.dp))
+		Spacer(modifier = Modifier.height(12.dp))
 	}
 }

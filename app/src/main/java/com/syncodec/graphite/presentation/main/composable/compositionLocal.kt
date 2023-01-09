@@ -22,7 +22,7 @@ val LocalCompositionOnSyncNow = compositionLocalOf { {} }
 val LocalCompositionOnForceSync = compositionLocalOf { {} }
 
 val LocalCompositionOpenBottomSheet = compositionLocalOf<(MainBottomSheetType) -> Unit> { error("No data provided") }
-val LocalCompositionCloseBottomSheet = compositionLocalOf<() -> Unit> { error("No data provided") }
+val LocalCompositionCloseBottomSheet = compositionLocalOf<() -> Unit> { {} }
 val LocalCompositionOpenDialog = compositionLocalOf<(MainDialogType) -> Unit> { error("No data provided") }
 val LocalCompositionCloseDialog = compositionLocalOf<(MainDialogType) -> Unit> { error("No data provided") }
 

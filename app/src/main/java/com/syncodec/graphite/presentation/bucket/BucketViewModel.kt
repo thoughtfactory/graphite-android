@@ -89,6 +89,14 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 		}
 	}
 
+	fun onReorderBucketItem(bucketItemList : List<RealmUUID>) {
+		viewModelScope.launch(Dispatchers.IO) {
+			id.value?.let {
+				repository2.reorderBucketItem(it, bucketItemList) { _, _ -> }
+			}
+		}
+	}
+
 	fun putLink(url : String) {
 		CoroutineScope(Dispatchers.IO).launch {
 			val isUrlValid = URLUtil.isValidUrl(url)
@@ -162,7 +170,6 @@ class BucketViewModel @Inject constructor(private val repository2 : Repository2)
 		CoroutineScope(Dispatchers.IO).launch {
 			BucketObject().apply {
 				if (this@BucketViewModel.id.value != null) this.id = this@BucketViewModel.id.value !!
-				this.modifiedTimestamp = System.currentTimeMillis()
 				this.title = this@BucketViewModel.title.value
 				this.description = this@BucketViewModel.description.value
 				this.bucketType = this@BucketViewModel.bucketType.value ?: BucketType.UNKNOWN.name

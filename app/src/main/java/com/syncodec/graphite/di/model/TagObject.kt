@@ -54,6 +54,13 @@ class TagObject : RealmObject {
 
 		return true
 	}
+
+	companion object {
+		fun getRandomInstance() = TagObject().apply {
+			tag = "Tag ${System.currentTimeMillis()}"
+			color = getRandomColor().toArgb()
+		}
+	}
 }
 
 @Keep

@@ -104,7 +104,7 @@ fun AttachmentPreview(
 
 				if (openLink != null) {
 					MenuButton(
-						icon = R.drawable.ic_open_link,
+						icon = R.drawable.ic_launch,
 						contentDescription = "Open ${file?.name}",
 					) { openLink.invoke() }
 				}

@@ -14,6 +14,7 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.utils.RealmUUIDReorderComparator
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
@@ -28,6 +29,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -74,7 +76,6 @@ enum class CallbackStatus {
 class Repository2 @Inject constructor(@ApplicationContext val context : Context) {
 
 	val repositoryState : MutableStateFlow<RepositoryState> = MutableStateFlow(RepositoryState.INIT)
-	val isPro by BaseApplication.isPro
 
 	private var realmConfiguration : RealmConfiguration? = null
 	private var realm : Realm? = null
@@ -103,8 +104,6 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 								key = it.data !!
 							}
 						}
-
-						Log.i("npr71", "key: ${key.joinToString("") { java.lang.String.format("%02x", it) }}")
 
 						try {
 							realmConfiguration = RealmConfiguration
@@ -135,6 +134,8 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 										}
 									}
 								}
+								.schemaVersion(1)
+								.migration(RealmMigrator())
 								.build()
 
 							realm = Realm.open(realmConfiguration !!)
@@ -267,27 +268,73 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 	}
 
+	/**
+	 * @author pushpull
+	 * @since 2.0.0
+	 * @return RealmResults of ChapterObject containing all chapters
+	 * @throws RealmNotInitializedException if realm is not initialized
+	 */
 	fun getAllChapter() : RealmResults<ChapterObject> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(ChapterObject::class).find()
 	}
 
+	/**
+	 * @author pushpull
+	 * @since 2.0.0
+	 * @return Flow of RealmResults of ChapterObject containing all chapters
+	 * @throws RealmNotInitializedException if realm is not initialized
+	 */
+	fun getAllChapterAsFlow() : Flow<RealmResults<ChapterObject>> {
+		return if (realm == null) throw RealmNotInitializedException()
+		else realm !!.query(ChapterObject::class).asFlow().map { it.list }
+	}
+
+	/**
+	 * @author pushpull
+	 * @since 2.0.0
+	 * @param id RealmUUID of the chapter. If null, no exceptions will be thrown but result will also be null.
+	 * @return ChapterObject with the given id. If no chapter with the given id exists, null will be returned.
+	 * @throws RealmNotInitializedException if realm is not initialized.
+	 */
 	fun getChapterFromId(id : RealmUUID?) : ChapterObject? {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().find()
 	}
 
+	/**
+	 * @author pushpull
+	 * @since 2.0.0
+	 * @param parentChapterId RealmUUID of the parent chapter. Null if the chapter is a notebook.
+	 * @return List of child ChapterObject as Flow.
+	 * @throws RealmNotInitializedException if realm is not initialized.
+	 */
 	fun getChapterWithParentIdAsFlow(parentChapterId : RealmUUID?) : Flow<List<ChapterObject>> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(ChapterObject::class, "parentId == $0 ", parentChapterId).asFlow().map { it.list }
 	}
 
+	/**
+	 * @author pushpull
+	 * @since 2.0.0
+	 * @param parentChapterId Id of the parent chapter. Null if the chapter is a notebook.
+	 * @return Pair of the chapter and the child chapters list.
+	 * @throws RealmNotInitializedException if the realm is not initialized.
+	 */
 	fun getChapterWithParentId(parentChapterId : RealmUUID?) : Pair<ChapterObject?, List<ChapterObject>> {
 		return if (realm == null) throw RealmNotInitializedException()
 		else Pair(getChapterFromId(parentChapterId), realm !!.query(ChapterObject::class, "parentId == $0 ", parentChapterId).find().toList())
 	}
 
-	fun getParentChapterList(id : RealmUUID?, includeEdge : Boolean = false, callback : (List<ChapterObjectLite>?, Exception?) -> Unit) {
+	/**
+	 * Get the path of the chapter within the tree.
+	 * @author pushpull
+	 * @since 2.0.0
+	 * @param id RealmUUID of the current chapter. Null if the chapter is a notebook.
+	 * @param includeEdge If true, the current chapter will be included in the path.
+	 * @param callback Callback with the path list and exception if thrown.
+	 */
+	fun getChapterPath(id : RealmUUID?, includeEdge : Boolean = false, callback : (List<ChapterObjectLite>?, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.Default).launch {
 			try {
 				val chapterObject = getChapterFromId(id)
@@ -332,7 +379,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 									} else {
 										findLatest(storedNoteObject)
 											?.let { latestNoteObject ->
-												latestNoteObject.modifiedTimestamp = noteObject.modifiedTimestamp
+												latestNoteObject.modifiedTimestamp = System.currentTimeMillis()
 												latestNoteObject.userTimestamp = noteObject.userTimestamp
 												latestNoteObject.title = noteObject.title
 												latestNoteObject.color = noteObject.color
@@ -449,7 +496,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 					} else {
 						findLatest(storedBucketObject)
 							?.let { latestBucketObject ->
-								latestBucketObject.modifiedTimestamp = bucketObject.modifiedTimestamp
+								latestBucketObject.modifiedTimestamp = System.currentTimeMillis()
 								latestBucketObject.title = bucketObject.title
 								latestBucketObject.description = bucketObject.description
 								latestBucketObject.bucketType = bucketObject.bucketType
@@ -506,7 +553,7 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 							callback(true, null)
 						} else {
 							findLatest(storedBucketItem)?.let { latestBucketItemObject ->
-								latestBucketItemObject.modifiedTimestamp = bucketItemObject.modifiedTimestamp
+								latestBucketItemObject.modifiedTimestamp = System.currentTimeMillis()
 								latestBucketItemObject.title = bucketItemObject.title
 								latestBucketItemObject.state = bucketItemObject.state
 								latestBucketItemObject.thumbnail = bucketItemObject.thumbnail
@@ -560,6 +607,26 @@ class Repository2 @Inject constructor(@ApplicationContext val context : Context)
 	fun getBucketItem(id : RealmUUID) : BucketItemObject? {
 		return if (realm == null) throw RealmNotInitializedException()
 		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().find()
+	}
+
+	suspend fun reorderBucketItem(bucketId : RealmUUID, bucketItemIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
+		CoroutineScope(Dispatchers.Default).async {
+			if (realm == null) {
+				callback(false, RealmNotInitializedException())
+				return@async
+			}
+			try {
+				realm !!.write {
+					getBucketFromId(bucketId)?.let { bucket ->
+						findLatest(bucket)?.let { latestBucket ->
+							latestBucket.bucketItemList.sortWith(RealmUUIDReorderComparator(bucketItemIdList, BucketItemObject::id))
+						}
+					}
+				}
+			} catch (e : Exception) {
+				callback(false, e)
+			}
+		}.join()
 	}
 
 	fun bufferAttachment(uriList : List<Uri>) : List<Pair<File?, Uri>> {

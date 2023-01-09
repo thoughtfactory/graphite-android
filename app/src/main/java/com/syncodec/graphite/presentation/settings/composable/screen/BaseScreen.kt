@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.bugReport.BugReportActivity
 import com.syncodec.graphite.presentation.common.composable.ProTag
 import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.settings.SettingsActivity
@@ -92,7 +93,7 @@ fun BaseScreen() {
 		SettingsButton(
 			title = "Preferences",
 			subTitle = "Themes, font style, etc.",
-			icon = R.drawable.ic_preference
+			icon = R.drawable.ic_gears
 		) { onNavigate(SettingsActivity.Companion.Navigator.PREFERENCES) }
 
 		SettingsButton(
@@ -104,7 +105,7 @@ fun BaseScreen() {
 		SettingsButton(
 			title = "Extensions",
 			subTitle = "Manage extensions",
-			icon = R.drawable.ic_extensions
+			icon = R.drawable.ic_extension
 		) { onNavigate(SettingsActivity.Companion.Navigator.EXTENSIONS) }
 
 		SettingsButton(
@@ -142,6 +143,16 @@ fun BaseScreen() {
 			subTitle = "See what are we working on",
 			icon = R.drawable.ic_kanban
 		) { uriHandler.openUri("https://syncodec.notion.site/a4088372da394902b6cbedfb3b6993e3?v=1bc4974e05ce4e489f3006b851ca5ba3") }
+
+		SettingsButton(
+			title = "Feedback and Suggestions",
+			subTitle = "Provide us some suggestions, or report bugs",
+			icon = R.drawable.ic_bug
+		) {
+			Intent(context, BugReportActivity::class.java).apply {
+				context.startActivity(this)
+			}
+		}
 
 		SettingsButton(
 			title = "About Us",

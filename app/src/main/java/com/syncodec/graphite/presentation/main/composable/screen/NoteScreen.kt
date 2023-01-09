@@ -16,10 +16,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
@@ -40,9 +41,10 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNote
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.WhatsNewCard
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.gridView.NoteGridCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.listView.NoteListCard
@@ -58,7 +60,7 @@ import io.realm.kotlin.types.RealmUUID
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun NoteScreen(
 	noteList : List<NoteObjectLite>,
@@ -76,16 +78,12 @@ fun NoteScreen(
 	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
 
 	val lazyListState = rememberLazyListState()
-	val lazyGridState = rememberLazyGridState()
+	val lazyStaggeredGridState = rememberLazyStaggeredGridState()
 
 	val noteMap : MutableMap<String, MutableList<NoteObjectLite>> = mutableMapOf()
 	when (sortOn) {
 		SortOn.TITLE -> {
-			val _noteList = if (sortBy == SortBy.ASCENDING) {
-				noteList.sortedBy { it.title }
-			} else {
-				noteList.sortedByDescending { it.title }
-			}
+			val _noteList = if (sortBy == SortBy.ASCENDING) noteList.sortedBy { it.title } else noteList.sortedByDescending { it.title }
 			_noteList.forEach { note ->
 				val sorter = note.title?.firstOrNull()?.uppercase() ?: "."
 				if (noteMap.containsKey(sorter)) noteMap[sorter] !!.add(note)
@@ -94,11 +92,7 @@ fun NoteScreen(
 		}
 
 		SortOn.TIMESTAMP -> {
-			val _noteList = if (sortBy == SortBy.ASCENDING) {
-				noteList.sortedBy { it.userTimestamp }
-			} else {
-				noteList.sortedByDescending { it.userTimestamp }
-			}
+			val _noteList = if (sortBy == SortBy.ASCENDING) noteList.sortedBy { it.userTimestamp } else noteList.sortedByDescending { it.userTimestamp }
 			_noteList.forEach { note ->
 				val sorter = timestampToCalendarDay(note.userTimestamp).timeStampToPrettyDay()
 				if (noteMap.containsKey(sorter)) noteMap[sorter] !!.add(note)
@@ -107,11 +101,7 @@ fun NoteScreen(
 		}
 
 		SortOn.MODIFIED -> {
-			val _noteList = if (sortBy == SortBy.ASCENDING) {
-				noteList.sortedBy { it.modifiedTimestamp }
-			} else {
-				noteList.sortedByDescending { it.modifiedTimestamp }
-			}
+			val _noteList = if (sortBy == SortBy.ASCENDING) noteList.sortedBy { it.modifiedTimestamp } else noteList.sortedByDescending { it.modifiedTimestamp }
 			_noteList.forEach { note ->
 				val timestamp = timestampToCalendarDay(note.modifiedTimestamp).timeStampToPrettyDay()
 				if (noteMap.containsKey(timestamp)) noteMap[timestamp] !!.add(note)
@@ -119,7 +109,14 @@ fun NoteScreen(
 			}
 		}
 
-		else -> null
+		else -> {
+			val _noteList = if (sortBy == SortBy.ASCENDING) noteList.sortedBy { it.userTimestamp } else noteList.sortedByDescending { it.userTimestamp }
+			_noteList.forEach { note ->
+				val sorter = timestampToCalendarDay(note.userTimestamp).timeStampToPrettyDay()
+				if (noteMap.containsKey(sorter)) noteMap[sorter] !!.add(note)
+				else noteMap[sorter] = mutableListOf(note)
+			}
+		}
 	}
 
 	Scaffold(
@@ -166,7 +163,7 @@ fun NoteScreen(
 							)
 
 							ViewType.GRID -> GridView(
-								lazyListState = lazyListState,
+								lazyStaggeredGridState = lazyStaggeredGridState,
 								isRefreshing = isNoteRefreshing,
 								isSelected = isSelected,
 								selectedRealmUUIDList = selectedRealmUUIDList,
@@ -196,7 +193,7 @@ private fun ListView(
 	onRefresh : () -> Unit
 ) {
 	val context = LocalContext.current
-	val isPro by BaseApplication.isPro
+	val isPro by BaseApplication.isPro.collectAsState()
 	val tagList = LocalCompositionTagList.current
 
 	val openDialog = LocalCompositionOpenDialog.current
@@ -206,11 +203,18 @@ private fun ListView(
 		onRefresh = onRefresh
 	) {
 		LazyColumn(
-			modifier = Modifier.fillMaxSize(),
-			state = lazyListState
+			state = lazyListState,
+			modifier = Modifier
+				.fillMaxSize()
 		) {
 			item {
 				YearProgressBar(showCard = ! isSelected)
+			}
+
+			item(
+				key = "whats_new_card",
+			) {
+				WhatsNewCard(showCard = ! isSelected)
 			}
 
 			noteDayMap.forEach { (day, noteList) ->
@@ -306,7 +310,7 @@ private fun ListView(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GridView(
-	lazyListState : LazyListState,
+	lazyStaggeredGridState : LazyStaggeredGridState,
 	isRefreshing : Boolean,
 	isSelected : Boolean,
 	selectedRealmUUIDList : List<RealmUUID>,
@@ -320,9 +324,10 @@ private fun GridView(
 		onRefresh = onRefresh
 	) {
 		LazyVerticalStaggeredGrid(
+			state = lazyStaggeredGridState,
 			columns = StaggeredGridCells.Fixed(2),
-			modifier = Modifier.fillMaxSize(),
 			contentPadding = PaddingValues(8.dp, 0.dp),
+			modifier = Modifier.fillMaxSize(),
 		) {
 			noteDayMap.forEach { day, noteList ->
 				noteList.forEach { note ->

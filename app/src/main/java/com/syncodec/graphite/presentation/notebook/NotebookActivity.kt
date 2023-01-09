@@ -39,6 +39,7 @@ import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.tone
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
 
@@ -71,8 +72,8 @@ class NotebookActivity : ComponentActivity() {
 			BaseContent {
 
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
 
 				val keyboardController = LocalSoftwareKeyboardController.current
 				val focusManager = LocalFocusManager.current
@@ -98,7 +99,7 @@ class NotebookActivity : ComponentActivity() {
 				val isFavourite by viewModel.isFavourite
 				val isLocked by viewModel.isLocked
 
-				val parentChapterObjectList = viewModel.parentChapterObjectList
+				val chapterPath = viewModel.chapterPath
 
 				val chapterObjectList = viewModel.chapterObjectList
 				val noteObjectList = viewModel.noteObjectList
@@ -170,7 +171,7 @@ class NotebookActivity : ComponentActivity() {
 					LocalChapterObjectList provides chapterObjectList,
 					LocalNoteObjectList provides noteObjectList,
 					LocalTagList provides tagList,
-					LocalParentChapterObjectList provides parentChapterObjectList,
+					LocalChapterPathList provides chapterPath,
 					LocalPutNewChapter provides viewModel::putChapter,
 					LocalGetChapter provides viewModel::getAndLoadChapter,
 					LocalCompositionIsSelected provides isSelected,
@@ -235,7 +236,7 @@ class NotebookActivity : ComponentActivity() {
 		val LocalNoteObjectList = compositionLocalOf<SnapshotStateList<NoteObjectLite>> { mutableStateListOf() }
 		val LocalTagList = compositionLocalOf<SnapshotStateList<TagObject>> { mutableStateListOf() }
 
-		val LocalParentChapterObjectList = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { mutableStateListOf() }
+		val LocalChapterPathList = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { mutableStateListOf() }
 
 		val LocalPutNewChapter = compositionLocalOf<(String?, String?, Color?, Bitmap?) -> Unit> { { _, _, _, _ -> } }
 		val LocalGetChapter = compositionLocalOf<(RealmUUID?) -> Unit> { {} }

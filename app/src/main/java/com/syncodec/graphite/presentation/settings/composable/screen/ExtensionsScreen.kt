@@ -28,7 +28,7 @@ fun ExtensionsScreen() {
 
 	val scrollState = SettingsActivity.LocalScrollState.current
 
-	val isPro by BaseApplication.isPro
+	val isPro by BaseApplication.isPro.collectAsState()
 
 	GenericSettingsScreen(
 		title = "Extensions",

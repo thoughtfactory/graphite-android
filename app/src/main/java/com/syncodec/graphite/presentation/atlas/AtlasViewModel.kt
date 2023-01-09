@@ -71,7 +71,7 @@ class AtlasViewModel @Inject constructor(private val repository2 : Repository2) 
 					chapterObject.value = _chapterObject?.toLite()
 					chapterList.clear()
 					chapterList.addAll(_chapterList.map { it.toLite() })
-					repository2.getParentChapterList(id = _chapterObject?.id, includeEdge = true) {_chapterPath, _ ->
+					repository2.getChapterPath(id = _chapterObject?.id, includeEdge = true) { _chapterPath, _ ->
 						chapterPath.clear()
 						chapterPath.addAll(_chapterPath ?: listOf())
 					}

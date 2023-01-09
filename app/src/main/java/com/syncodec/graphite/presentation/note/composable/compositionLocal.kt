@@ -41,7 +41,7 @@ val LocalCompositionTagListBuffer = compositionLocalOf<SnapshotStateList<TagObje
 val LocalCompositionSelectChapterList = compositionLocalOf<SnapshotStateList<ChapterObject>> { mutableStateListOf() }
 val LocalCompositionSelectChapterPath = compositionLocalOf<SnapshotStateList<ChapterObjectLite>> { mutableStateListOf() }
 val LocalCompositionOnSelectChapter = compositionLocalOf<(RealmUUID?) -> Unit> { {} }
-val LocalCompositionOnMoveChapter = compositionLocalOf<() -> Unit> { {} }
+val LocalCompositionOnMoveChapter = compositionLocalOf<(RealmUUID?) -> Unit> { {} }
 val LocalCompositionSetUserTimestamp = compositionLocalOf<(Long) -> Unit> { {} }
 
 val LocalCompositionLocationState = compositionLocalOf<LocationState> { LocationState.UNKNOW_ERROR }

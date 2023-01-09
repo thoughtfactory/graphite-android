@@ -34,8 +34,6 @@ fun ShareDialog(
 		DualActionButtons(
 			primaryText = "Text",
 			secondaryText = "Attachments",
-			primaryColor = MaterialTheme.colorScheme.primary,
-			secondaryColor = MaterialTheme.colorScheme.primary,
 			onPrimaryClick = onShareText,
 			onSecondaryClick = onShareAttachment
 		)

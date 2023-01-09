@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -33,7 +34,7 @@ fun ExperimentalTag() {
 				painter = painterResource(id = R.drawable.ic_experimental),
 				contentDescription = "Exp",
 				tint = MaterialTheme.colorScheme.onPrimary,
-				modifier = Modifier.width(16.dp)
+				modifier = Modifier.requiredSize(16.dp)
 			)
 
 			Spacer(modifier = Modifier.width(4.dp))

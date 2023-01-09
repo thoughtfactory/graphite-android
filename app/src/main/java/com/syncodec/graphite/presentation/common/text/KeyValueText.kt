@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,27 +22,29 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 
+@Preview
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun KeyValueText(
 	modifier : Modifier = Modifier,
-	key : String,
-	value : String?,
-	containerColor : Color = MaterialTheme.colorScheme.surface,
+	key : String = "Key",
+	value : String? = "Value",
+	containerColor : Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 	contentColor : Color = MaterialTheme.colorScheme.onSurface,
 	maxLines : Int = Int.MAX_VALUE,
-	onClick : () -> Unit = { /*TODO*/ },
+	onClick : () -> Unit = {  },
 ) {
 	val context = LocalContext.current
 	val clipboardManager : ClipboardManager = LocalClipboardManager.current
 
 	Box(
 		modifier = modifier
-			.background(color = containerColor, shape = RoundedCornerShape(16.dp))
-			.clip(RoundedCornerShape(16.dp))
+			.background(color = containerColor, shape = MaterialTheme.shapes.medium)
+			.clip(MaterialTheme.shapes.medium)
 			.combinedClickable(
 				enabled = true,
 				onClick = onClick,
@@ -59,13 +60,12 @@ fun KeyValueText(
 		) {
 			Text(
 				text = key,
-				style = MaterialTheme.typography.bodyMedium,
+				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurface,
 			)
-			Spacer(modifier = Modifier.height(4.dp))
 			Text(
 				text = if (value.isNullOrEmpty()) "No $key" else value,
-				style = MaterialTheme.typography.titleMedium,
+				style = MaterialTheme.typography.bodyMedium,
 				color = contentColor,
 				fontStyle = if (value == null) FontStyle.Italic else null,
 				fontWeight = if (value != null) FontWeight.Bold else null,

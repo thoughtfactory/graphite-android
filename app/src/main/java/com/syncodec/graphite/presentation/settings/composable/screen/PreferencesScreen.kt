@@ -36,7 +36,8 @@ fun PreferencesScreen() {
 			title = "Theme",
 			subTitle = "Graphite",
 			icon = R.drawable.ic_theme
-		) { onNavigate(SettingsActivity.Companion.Navigator.THEME) }
+//		) { onNavigate(SettingsActivity.Companion.Navigator.THEME) }
+		) { Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show() }
 
 		SettingsButton(
 			title = "Font Style",
@@ -47,7 +48,7 @@ fun PreferencesScreen() {
 		SettingsSwitch(
 			title = "Tint Favourite Notes",
 			subTitle = "Show a tint on favourite notes",
-			icon = R.drawable.ic_color_picker,
+			icon = R.drawable.ic_favourite,
 			isExperimental = true,
 			isChecked = isTintFavourite != false,
 		) { dataStoreInstance.putTintFavorite(isTintFavourite == false) }

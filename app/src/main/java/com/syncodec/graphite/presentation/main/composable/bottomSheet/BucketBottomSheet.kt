@@ -4,24 +4,26 @@ import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -35,39 +37,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyText
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
-import com.syncodec.graphite.presentation.common.button.LargeButton
-import com.syncodec.graphite.presentation.common.text.LargeTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionPutBucket
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.bucketItemNameMap
 import com.syncodec.graphite.utils.bucketTypeToIcon
 
 
 private data class BucketButtonData(
-	val subtitle: String,
-	val bucketType: BucketType?,
-	val highlight: Boolean = false,
-	val onClick: () -> Unit
+	val subtitle : String,
+	val bucketType : BucketType?,
+	val highlight : Boolean = false,
+	val onClick : () -> Unit
 )
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Preview
 @Composable
-fun BucketBottomSheet() {
+fun ColumnScope.BucketBottomSheet() {
 	val context = LocalContext.current
 
 	val closeSheet = LocalCompositionCloseBottomSheet.current
@@ -79,15 +76,10 @@ fun BucketBottomSheet() {
 	var selectedBucketType by remember { mutableStateOf<BucketType?>(null) }
 
 	var bucketTitleText by rememberSaveable { mutableStateOf("") }
-	var isBucketNameTitleFocused by remember { mutableStateOf(false) }
-	val bucketTitleTextFocusRequester = remember { FocusRequester() }
 
 	var bucketDescriptionText by rememberSaveable { mutableStateOf("") }
-	var isBucketDescriptionTextFocused by remember { mutableStateOf(false) }
 
-	val isPro by BaseApplication.isPro
-
-	val bucketButtonDataList: List<BucketButtonData> = listOf(
+	val bucketButtonDataList : List<BucketButtonData> = listOf(
 		BucketButtonData(
 			subtitle = "Have any pending tasks?",
 			bucketType = BucketType.TODO,
@@ -121,86 +113,70 @@ fun BucketBottomSheet() {
 		}
 	)
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "New List",
+		icon = R.drawable.ic_bucket
 	) {
-
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Pick a bucket",
-			icon = R.drawable.ic_bucket
-		)
-
 		Row(
 			modifier = Modifier.horizontalScroll(rememberScrollState())
 		) {
-			Spacer(modifier = Modifier.width(16.dp))
 			bucketButtonDataList.forEach { BucketButton(it) }
-			Spacer(modifier = Modifier.width(16.dp))
 		}
 
 		Spacer(modifier = Modifier.height(12.dp))
 
-		BottomSheetKeyText(text = "And name it")
+		BottomSheetTextField(
+			value = bucketTitleText,
+			label = "Title",
+			placeholder = "Name your bucket",
+			onValueChange = { bucketTitleText = it },
+		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
-		LargeTextField(
-			text = bucketTitleText,
-			placeholder = "Umm... Let me think...",
-			isFocused = isBucketNameTitleFocused,
-			onFocusChanged = { isBucketNameTitleFocused = it },
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
-		) { bucketTitleText = it }
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		LargeTextField(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp),
-			text = bucketDescriptionText,
+		BottomSheetTextField(
+			value = bucketDescriptionText,
+			label = "Description",
 			placeholder = "What is it about?",
-			isFocused = isBucketDescriptionTextFocused,
-			focusRequester = bucketTitleTextFocusRequester,
-			onFocusChanged = { isBucketDescriptionTextFocused = it },
-		) { bucketDescriptionText = it }
+			onValueChange = { bucketDescriptionText = it },
+		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
-		LargeButton(
-			text = "Create",
+		Button(
+			colors = ButtonDefaults.buttonColors(
+				containerColor = MaterialTheme.colorScheme.primary,
+				contentColor = MaterialTheme.colorScheme.onPrimary,
+				disabledContainerColor = MaterialTheme.colorScheme.surface,
+				disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+			),
 			enabled = selectedBucketType != null && bucketTitleText.isNotBlank(),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(24.dp, 0.dp)
+			modifier = Modifier.fillMaxWidth(),
+			onClick = {
+				if (selectedBucketType != null) putBucket(bucketTitleText, bucketDescriptionText, selectedBucketType !!)
+
+				bucketTitleText = ""
+				bucketDescriptionText = ""
+				selectedBucketType = null
+				keyboardController?.hide()
+				closeSheet()
+			}
 		) {
-			if (selectedBucketType != null) putBucket(bucketTitleText, bucketDescriptionText, selectedBucketType!!)
-
-			bucketTitleText = ""
-			bucketDescriptionText = ""
-			selectedBucketType = null
-			bucketTitleTextFocusRequester.freeFocus()
-			keyboardController?.hide()
-			closeSheet()
+			Text(
+				text = "Create",
+				modifier = Modifier
+			)
 		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BucketButton(
-	bucketButtonData: BucketButtonData
+	bucketButtonData : BucketButtonData
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 		animationSpec = tween(600)
 	)
 	val contentColor by animateColorAsState(
@@ -213,16 +189,16 @@ private fun BucketButton(
 		modifier = Modifier.requiredWidth(160.dp)
 	) {
 		OutlinedCard(
-			shape = RoundedCornerShape(12.dp),
+			shape = MaterialTheme.shapes.medium,
 			border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
 			colors = CardDefaults.outlinedCardColors(containerColor = containerColor),
 			modifier = Modifier
 				.width(160.dp)
-				.height(96.dp)
-				.padding(6.dp)
+				.height(84.dp)
+				.padding(6.dp, 0.dp)
 				.focusable(true)
-				.clip(RoundedCornerShape(12.dp))
-				.clickable { bucketButtonData.onClick() },
+				.clip(RoundedCornerShape(12.dp)),
+			onClick = bucketButtonData.onClick
 		) {
 			Column(
 				modifier = Modifier
@@ -238,9 +214,7 @@ private fun BucketButton(
 					),
 					contentDescription = null,
 					tint = contentColor,
-					modifier = Modifier
-						.size(24.dp)
-						.alpha(0.71f)
+					modifier = Modifier.requiredSize(IconButtonSize)
 				)
 
 				Text(
@@ -251,15 +225,16 @@ private fun BucketButton(
 			}
 		}
 
+		Spacer(modifier = Modifier.height(4.dp))
+
 		Text(
 			text = bucketButtonData.subtitle,
 			style = MaterialTheme.typography.bodySmall,
-			color = MaterialTheme.colorScheme.onSurface,
+			color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
 			maxLines = 3,
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(6.dp, 0.dp)
-				.alpha(0.47f)
 		)
 	}
 }

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,8 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
 		private val PREFERENCE_IS_SYNC_ENABLED = booleanPreferencesKey("is_sync_enabled")
 		private val PREFERENCE_DROPBOX_REFRESH_TOKEN = stringPreferencesKey("dropbox_refresh_token")
+
+		private val PREFERENCE_SHOW_WHATS_NEW_CARD = intPreferencesKey("show_whats_new_card")
 	}
 
 	val getIsFirstTime : Flow<Boolean> =
@@ -113,6 +116,7 @@ class DataStoreInstance(private val context : Context) {
 //			5 -> SortOn.DUE
 //			6 -> SortOn.CREATED
 //			7 -> SortOn.DONE
+			8 -> SortOn.CUSTOM
 			else -> SortOn.TIMESTAMP
 		}
 	}
@@ -161,6 +165,12 @@ class DataStoreInstance(private val context : Context) {
 
 	fun putDropboxRefreshToken(refreshToken : String) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_DROPBOX_REFRESH_TOKEN] = refreshToken }
+	}
+
+	val getShowWhatsNewCard : Flow<Boolean> = context.dataStore.data.map { preferences -> (preferences[PREFERENCE_SHOW_WHATS_NEW_CARD] ?: 0) == BuildConfig.VERSION_CODE }
+
+	fun putShowWhatsNewCard(showWhatsNewCard : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_WHATS_NEW_CARD] = BuildConfig.VERSION_CODE }
 	}
 
 	fun clearDatastore() = CoroutineScope(Dispatchers.IO).launch {

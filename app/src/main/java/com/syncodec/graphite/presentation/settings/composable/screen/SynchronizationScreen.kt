@@ -1,7 +1,9 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.dropbox.DropboxActivity
@@ -23,12 +25,14 @@ fun SynchronizationScreen() {
 	) {
 		SettingsButton(
 			title = "Dropbox",
-			icon = R.drawable.ic_dropbox,
+			icon = R.drawable.ic_logo_dropbox,
 			subTitle = "Sync your data with Dropbox",
+			iconColor = Color.Unspecified,
 		) {
-			Intent(context, DropboxActivity::class.java).apply {
-				context.startActivity(this)
-			}
+//			Intent(context, DropboxActivity::class.java).apply {
+//				context.startActivity(this)
+//			}
+			Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show()
 		}
 	}
 }

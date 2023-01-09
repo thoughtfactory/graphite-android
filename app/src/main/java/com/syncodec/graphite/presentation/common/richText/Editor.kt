@@ -68,7 +68,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 
 		settings.javaScriptEnabled = true
 		settings.domStorageEnabled = true
-		settings.setRenderPriority(WebSettings.RenderPriority.HIGH)
+//		settings.setRenderPriority(WebSettings.RenderPriority.HIGH)
 
 		webViewClient = WebViewClient()
 
@@ -116,7 +116,6 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			3 -> exec("editor.setBaseFontFamily(\"atwriter\");")
 			else -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
 		}
-
 	}
 
 	private fun load(trigger : String) {

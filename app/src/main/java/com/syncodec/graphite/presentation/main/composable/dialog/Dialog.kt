@@ -1,6 +1,11 @@
 package com.syncodec.graphite.presentation.main.composable.dialog
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseDialog
@@ -9,6 +14,9 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnExit
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowExitDialog
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowNotificationPermissionDialog
+import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
+import com.vanpra.composematerialdialogs.MaterialDialog
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 
 
 enum class MainDialogType {

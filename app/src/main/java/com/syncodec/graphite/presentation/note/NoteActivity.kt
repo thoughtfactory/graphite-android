@@ -87,6 +87,7 @@ import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalCompositionRichTextEditor
 import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.share
+import com.syncodec.graphite.utils.tone
 import dagger.hilt.android.AndroidEntryPoint
 import io.noties.markwon.Markwon
 import io.realm.kotlin.types.RealmUUID
@@ -126,8 +127,8 @@ class NoteActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
 
 				val isNew by viewModel.isNew
 				val isViewing by viewModel.isViewing
@@ -312,13 +313,7 @@ class NoteActivity : ComponentActivity() {
 						NoteDialogType.DISCARD -> showDiscardDialog = true
 						NoteDialogType.DELETE -> showDeleteDialog = true
 						NoteDialogType.SHARE -> showShareDialog = true
-						NoteDialogType.CHAPTER_SELECTION -> {
-							try {
-								viewModel.getSelectChapter(data as RealmUUID?)
-								showChapterSelectionDialog = true
-							} catch (e : Exception) {
-							}
-						}
+						NoteDialogType.CHAPTER_SELECTION -> showChapterSelectionDialog = true
 
 						else -> null
 					}
@@ -350,7 +345,8 @@ class NoteActivity : ComponentActivity() {
 					this, object : OnBackPressedCallback(true) {
 						override fun handleOnBackPressed() {
 							if (showChapterSelectionDialog) {
-								viewModel.getSelectChapter(selectChapterPath.getOrNull(1)?.id)
+//								viewModel.getSelectChapter(selectChapterPath.getOrNull(1)?.id)
+								closeDialog(NoteDialogType.CHAPTER_SELECTION)
 							} else if (showNotificationPermissionDialog || showLocationPickerDialog || showDeleteDialog) {
 								closeDialog(NoteDialogType.LOCATION_PICKER)
 								closeDialog(NoteDialogType.NOTIFICATION_PERMISSION)
@@ -395,9 +391,8 @@ class NoteActivity : ComponentActivity() {
 					LocalCompositionSelectChapterPath provides selectChapterPath,
 					LocalCompositionOnSelectChapter provides { viewModel.getSelectChapter(it) },
 					LocalCompositionOnMoveChapter provides {
-						val id = selectChapterPath.firstOrNull()
-						if (id == null) Toast.makeText(this, "Please select a chapter", Toast.LENGTH_SHORT).show()
-						else viewModel.moveNoteToChapter(id.id)
+						if (it == null) Toast.makeText(this, "Please select a chapter", Toast.LENGTH_SHORT).show()
+						else viewModel.moveNoteToChapter(it)
 						closeDialog(NoteDialogType.CHAPTER_SELECTION)
 					},
 					LocalCompositionSetUserTimestamp provides { viewModel.setUserTimestamp(it) },

@@ -1,3 +1,18 @@
 package com.syncodec.graphite.di.repository
 
-import io.realm.kotlin.migration.RealmMigration
+import io.realm.kotlin.dynamic.DynamicMutableRealm
+import io.realm.kotlin.dynamic.DynamicRealm
+import io.realm.kotlin.migration.AutomaticSchemaMigration
+
+
+class RealmMigrator : AutomaticSchemaMigration {
+
+	override fun migrate(migrationContext : AutomaticSchemaMigration.MigrationContext) {
+		migrate0to1(migrationContext.oldRealm, migrationContext.newRealm)
+	}
+
+	private fun migrate0to1(oldRealm : DynamicRealm, newRealm : DynamicMutableRealm) {
+		val oldSchema = oldRealm.schema()
+		val newSchema = newRealm.schema()
+	}
+}

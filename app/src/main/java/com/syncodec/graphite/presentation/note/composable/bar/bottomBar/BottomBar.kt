@@ -18,7 +18,9 @@ fun BottomBar(
 
 	Crossfade(targetState = isViewing) {
 		when (it) {
-			true -> ViewerBottomBar()
+			true -> ViewerBottomBar(
+				onClickMetadata = onClickMetadata,
+			)
 			false -> EditorBottomBar(
 				onClickTimePicker = onClickTimePicker,
 				onClickTag = onClickTag,

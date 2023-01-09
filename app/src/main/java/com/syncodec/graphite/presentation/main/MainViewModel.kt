@@ -75,8 +75,6 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 	val showDeleteDialog : MutableState<Boolean> = mutableStateOf(false)
 	val showExitDialog : MutableState<Boolean> = mutableStateOf(false)
 
-	val isPro by BaseApplication.isPro
-
 	init {
 		refresher.tryEmit(_refresher + 1)
 		viewModelScope.launch(Dispatchers.Default) {
@@ -226,7 +224,7 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 	fun putNotebook(title : String, description : String, color : Color?, bitmap : Bitmap?) {
 		CoroutineScope(Dispatchers.Default).launch {
 			try {
-				if (notebookList.size >= 3 && ! isPro) {
+				if (notebookList.size >= 3 && ! BaseApplication.isPro.value) {
 					withContext(Dispatchers.Main) {
 						Toast.makeText(repository2.context, "Join Graphite Pro to add more notebooks", Toast.LENGTH_SHORT).show()
 					}
@@ -253,7 +251,7 @@ class MainViewModel @Inject constructor(val repository2 : Repository2) : ViewMod
 		bucketType : BucketType,
 	) {
 		CoroutineScope(Dispatchers.Default).launch {
-			if (bucketObjectList.find { it.bucketType == bucketType.name } != null && ! isPro) {
+			if (bucketObjectList.find { it.bucketType == bucketType.name } != null && ! BaseApplication.isPro.value) {
 				val bucket = when (bucketType) {
 					BucketType.TODO -> "Todo"
 					BucketType.BOOK -> "Book"

@@ -59,7 +59,7 @@ fun ShowInfoDialog(
 
 				Spacer(modifier = Modifier.weight(1f))
 
-				MenuButton(icon = R.drawable.ic_open_link) {
+				MenuButton(icon = R.drawable.ic_launch) {
 					try {
 						when {
 							movieId != null -> uriHandler.openUri("https://www.themoviedb.org/movie/$movieId")
@@ -71,7 +71,6 @@ fun ShowInfoDialog(
 				}
 			}
 		}
-
 
 		Spacer(modifier = Modifier.height(6.dp))
 
@@ -95,7 +94,7 @@ fun ShowInfoDialog(
 
 				Spacer(modifier = Modifier.weight(1f))
 
-				MenuButton(icon = R.drawable.ic_open_link) {
+				MenuButton(icon = R.drawable.ic_launch) {
 					try {
 						uriHandler.openUri("https://www.imdb.com/title/$movieImdbId/")
 					} catch (e : Exception) {
@@ -104,7 +103,5 @@ fun ShowInfoDialog(
 				}
 			}
 		}
-
-		Spacer(modifier = Modifier.height(12.dp))
 	}
 }

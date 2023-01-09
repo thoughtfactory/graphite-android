@@ -8,6 +8,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlin.random.Random
 
 
 @Keep
@@ -158,6 +159,26 @@ data class ChapterObjectLite(
 		if (parentId != other.parentId) return false
 
 		return true
+	}
+
+	companion object {
+		fun getRandomInstance() : ChapterObjectLite {
+			return ChapterObjectLite(
+				id = RealmUUID.random(),
+				createdTimestamp = System.currentTimeMillis()+ Random.nextLong(),
+				modifiedTimestamp = System.currentTimeMillis() + Random.nextLong(),
+				title = RealmUUID.random().toString(),
+				description = RealmUUID.random().toString(),
+				color = getRandomColor().toArgb(),
+				isFavourite = Random.nextBoolean(),
+				isLocked = Random.nextBoolean(),
+				totalChapterDirect = Random.nextInt(),
+				totalNoteDirect = Random.nextInt(),
+				totalChapter = Random.nextInt(),
+				totalNote = Random.nextInt(),
+				parentId = RealmUUID.random()
+			)
+		}
 	}
 }
 

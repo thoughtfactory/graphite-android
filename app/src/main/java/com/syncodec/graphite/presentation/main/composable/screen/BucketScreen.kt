@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +48,9 @@ import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefr
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocalVaultIsOpened
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
@@ -75,7 +78,10 @@ fun BucketScreen(
 	onClickBucket : (RealmUUID) -> Unit,
 	onLongClickBucket : (RealmUUID) -> Unit
 ) {
+	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
 	val isBucketRefreshing = LocalCompositionIsBucketRefreshing.current
 	val onRefresh = LocalCompositionOnRefresh.current
 
@@ -84,29 +90,21 @@ fun BucketScreen(
 
 	val _bucketList : SnapshotStateList<BucketObject> = remember { mutableStateListOf() }
 
-	val isVaultOpened = LocalVaultIsOpened.current
-
-	LaunchedEffect(bucketList) {
+	LaunchedEffect(key1 = bucketList, key2 = sortOn, key3 = sortBy) {
 		_bucketList.clear()
-
-		bucketOrderList.forEach { realmUUID ->
-			bucketList.firstOrNull { it.id == realmUUID }?.let { _bucketList.add(it) }
-		}
-
-		bucketList.filter { it.id !in bucketOrderList }.forEach { bucketObject ->
-			_bucketList.add(bucketObject)
-		}
+		when (sortOn) {
+			SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.title } else bucketList.sortedByDescending { it.title }
+			SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.createdTimestamp } else bucketList.sortedByDescending { it.createdTimestamp }
+			SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.modifiedTimestamp } else bucketList.sortedByDescending { it.modifiedTimestamp }
+			SortOn.CUSTOM -> {
+				bucketOrderList.forEach { realmUUID ->
+					bucketList.firstOrNull { it.id == realmUUID }?.let { _bucketList.add(it) }
+				}
+				bucketList.filter { it.id !in bucketOrderList }
+			}
+			else -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.title } else bucketList.sortedByDescending { it.title }
+		}.apply { _bucketList.addAll(this) }
 	}
-
-//	LaunchedEffect(key1 = bucketList, key2 = sortOn, key3 = sortBy) {
-//		_bucketList.clear()
-//		when (sortOn) {
-//			SortOn.TITLE -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.title } else bucketList.sortedByDescending { it.title }
-//			SortOn.TIMESTAMP -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.createdTimestamp } else bucketList.sortedByDescending { it.createdTimestamp }
-//			SortOn.MODIFIED -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.modifiedTimestamp } else bucketList.sortedByDescending { it.modifiedTimestamp }
-//			else -> if (sortBy == SortBy.ASCENDING) bucketList.sortedBy { it.title } else bucketList.sortedByDescending { it.title }
-//		}.apply { _bucketList.addAll(this) }
-//	}
 
 	val state = rememberReorderableLazyGridState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
@@ -116,9 +114,8 @@ fun BucketScreen(
 			}
 		},
 		onDragEnd = { from, to ->
-			scope.launch(Dispatchers.Default) {
-				onReorderBucketList(_bucketList.map { it.id })
-			}
+			scope.launch(Dispatchers.Default) { onReorderBucketList(_bucketList.map { it.id }) }
+			dataStoreInstance.putSortOn(SortOn.CUSTOM)
 		}
 	)
 
@@ -245,7 +242,7 @@ private fun BucketCard(
 						painter = painterResource(id = bucketTypeToIcon.getOrElse(bucketType) { R.drawable.ic_bucket }),
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onBackground,
-						modifier = Modifier.size(24.dp)
+						modifier = Modifier.requiredSize(IconButtonSize)
 					)
 					Spacer(modifier = Modifier.weight(1f))
 					if (isFavourite) {

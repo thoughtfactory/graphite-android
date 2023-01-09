@@ -47,7 +47,7 @@ fun BucketItemDialog() {
 	ShowBookDialog(
 		showDialog = showBookInfoDialog,
 		bookKey = bookKey,
-	) { closeDialog(DialogType.SHOW_INFO) }
+	) { closeDialog(DialogType.BOOK_INFO) }
 
 	DeleteDialog(
 		showDialog = showDeleteDialog,

@@ -25,6 +25,7 @@ import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectI
 import com.syncodec.graphite.presentation.search.composable.dialog.SearchDialogType
 import com.syncodec.graphite.presentation.search.composable.screen.SearchScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.utils.tone
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
 
@@ -42,8 +43,8 @@ class SearchActivity : ComponentActivity() {
 				BaseContent {
 
 					val systemUiController = rememberSystemUiController()
-					systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onBackground)
-					systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+					systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
 
 					val showResultScreen by viewModel.showResultScreen
 					val tagList = viewModel.tagList

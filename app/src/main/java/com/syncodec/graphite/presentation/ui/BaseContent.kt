@@ -72,7 +72,7 @@ fun BaseContent(
 
 	var isVaultOpened by remember { mutableStateOf(false) }
 
-	val isPro by BaseApplication.isPro
+	val isPro by BaseApplication.isPro.collectAsState()
 
 	if (isFollowSystemDarkTheme != null && isForceDarkTheme != null) {
 		androidx.compose.material3.MaterialTheme(

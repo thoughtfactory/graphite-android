@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.note.composable.bottomSheet
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,56 +20,58 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyCard
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyValueCard
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCreatedTimestamp
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionModifiedTimestamp
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapter
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionTitle
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
+import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.RealmUUID
 
 
+@Preview
 @Composable
 fun MetadataBottomSheet() {
 	val id = LocalCompositionNoteId.current
 	val parentChapter = LocalCompositionParentChapter.current
 	val createdTimestamp = LocalCompositionCreatedTimestamp.current
 	val modifiedTimestamp = LocalCompositionModifiedTimestamp.current
-	val title = LocalCompositionTitle.current
 
 	val closeSheet = LocalCompositionCloseBottomSheet.current
 	val openDialog = LocalCompositionOpenDialog.current
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Metadata",
+		icon = R.drawable.ic_info,
 	) {
-		BottomSheetStrip()
 
-		BottomSheetHeader(
-			title = "Metadata",
-			icon = R.drawable.ic_info
+		BottomSheetKeyValueCard(
+			key = "ID",
+			value = id?.toString() ?: "Unsaved",
 		)
+		Spacer(modifier = Modifier.height(4.dp))
 
-		BottomSheetKeyCard(
-			id = id,
-			createdTimestamp = createdTimestamp ?: 0,
-			modifiedTimestamp = modifiedTimestamp ?: 0
+		BottomSheetKeyValueCard(
+			key = "Created",
+			value = createdTimestamp?.timeStampToPrettyFull() ?: "Unsaved",
 		)
+		Spacer(modifier = Modifier.height(4.dp))
 
-		Spacer(modifier = Modifier.height(8.dp))
-
-		Spacer(modifier = Modifier.height(8.dp))
+		BottomSheetKeyValueCard(
+			key = "Modified",
+			value = modifiedTimestamp?.timeStampToPrettyFull() ?: "Unsaved",
+		)
+		Spacer(modifier = Modifier.height(4.dp))
 
 		ParentCard(
 			chapterId = parentChapter?.id,
@@ -79,28 +80,25 @@ fun MetadataBottomSheet() {
 			openDialog(NoteDialogType.CHAPTER_SELECTION, parentChapter?.id)
 			closeSheet()
 		}
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
+@Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ParentCard(
 	chapterId: RealmUUID?,
 	chapterTitle: String?,
-	onClick: () -> Unit
+	onClick: () -> Unit = {},
 ) {
 	Card(
 		shape = RoundedCornerShape(12.dp),
 		colors = CardDefaults.cardColors(
-			containerColor = MaterialTheme.colorScheme.background,
-			contentColor = MaterialTheme.colorScheme.onBackground
+			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+			contentColor = MaterialTheme.colorScheme.onSurface
 		),
 		onClick = onClick,
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
+		modifier = Modifier.fillMaxWidth()
 	) {
 		Row(
 			modifier = Modifier
@@ -109,7 +107,7 @@ private fun ParentCard(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			Column(
-				modifier = Modifier
+				modifier = Modifier.weight(1f)
 			) {
 				Text(
 					text = chapterTitle ?: "Chapter Untitled",
@@ -122,19 +120,19 @@ private fun ParentCard(
 				Text(
 					text = "$chapterId",
 					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold
 				)
 			}
 
-			Spacer(modifier = Modifier.width(8.dp))
-
-			Spacer(modifier = Modifier.weight(1f))
+			Spacer(modifier = Modifier.width(16.dp))
 
 			Icon(
 				painter = painterResource(id = R.drawable.ic_notebook),
 				contentDescription = "Parent chapter",
-				modifier = Modifier.requiredSize(32.dp),
-				tint = MaterialTheme.colorScheme.onBackground
+				tint = MaterialTheme.colorScheme.onBackground,
+				modifier = Modifier.requiredSize(IconButtonSize)
 			)
+			Spacer(modifier = Modifier.width(8.dp))
 		}
 	}
 }

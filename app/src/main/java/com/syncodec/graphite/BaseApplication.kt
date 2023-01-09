@@ -1,11 +1,7 @@
 package com.syncodec.graphite
 
 import android.app.Application
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.work.OneTimeWorkRequest
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
+import android.content.Intent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -15,12 +11,16 @@ import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
+import com.syncodec.graphite.presentation.main.MainActivity
+import com.syncodec.graphite.service.WatchdogService
+import com.syncodec.graphite.service.WatchdogServiceConnectionManager
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
-import com.syncodec.graphite.widget.home.DailyReadWorkerTask
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -38,42 +38,34 @@ class BaseApplication : Application() {
 	private val ATTACHMENT_DIR = "attachment"
 		get() = "$DATA/$field"
 
-
 	override fun onCreate() {
 		super.onCreate()
+
+//		watchWatchdog()
 
 		ROOT = applicationContext.filesDir.path
 		File(DATA).mkdirs()
 		File(ATTACHMENT_DIR).mkdirs()
 
-//		Instabug.Builder(this, "2d6140579e95c85aa01fde896537cd72")
-//			.setInvocationEvents(InstabugInvocationEvent.SHAKE, InstabugInvocationEvent.FLOATING_BUTTON)
-//			.build()
-
 		dataStore = DataStoreInstance(this)
-		Purchases.debugLogsEnabled = true
+		Purchases.debugLogsEnabled = false
 		val auth = Firebase.auth
+
 		val purchasesConfiguration = PurchasesConfiguration
 			.Builder(this, Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
 			.appUserID(auth.currentUser?.uid)
 			.build()
 		Purchases.configure(purchasesConfiguration)
 
-		debug()
-
-		if (auth.currentUser != null) {
+		auth.currentUser?.uid?.let { uid ->
 			CoroutineScope(Dispatchers.Default).launch {
-				dataStore.getSuperExpiryTime.collect {
+				dataStore.getSuperExpiryTime.collect { superExpiryTimeString ->
 					try {
 						val currentTimestamp = System.currentTimeMillis()
-						if (it == "") {
+						if (superExpiryTimeString == "") {
 							getRevenueCatInfo(auth)
 						} else {
-							if (it.toLong() > currentTimestamp) {
-								isPro.value = true
-							} else {
-								getRevenueCatInfo(auth)
-							}
+							if (superExpiryTimeString.toLong() > currentTimestamp) isPro.tryEmit(true) else getRevenueCatInfo(auth)
 						}
 					} catch (e : Exception) {
 						getRevenueCatInfo(auth)
@@ -82,6 +74,33 @@ class BaseApplication : Application() {
 			}
 		}
 	}
+
+//	fun watchWatchdog() {
+//		CoroutineScope(Dispatchers.Default).launch {
+//			delay(5000)
+//			while (true) {
+//				if (MainActivity.isInStack) {
+//					startWatchdog()
+////		    		TODO: Set this to 5 seconds
+//					delay(30000)
+//				} else {
+//					watchdogServiceConnection.unbindFromService()
+//					break
+//				}
+//			}
+//		}
+//	}
+
+//	var watchdogService : WatchdogService? = null
+//	private val watchdogServiceConnection = WatchdogServiceConnectionManager(this) {
+//		watchdogService = it
+//	}
+//
+//	private fun startWatchdog() {
+//		Intent(this.applicationContext, WatchdogService::class.java).apply {
+//			watchdogServiceConnection.bindToService()
+//		}
+//	}
 
 	private fun getRevenueCatInfo(auth : FirebaseAuth) {
 		Purchases
@@ -95,31 +114,14 @@ class BaseApplication : Application() {
 						}
 
 						override fun onReceived(customerInfo : CustomerInfo) {
-							isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+							isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 						}
 					}
 				)
 			}
 	}
 
-	fun debug() {
-//		execute()
-	}
-
-	fun execute() = enqueueWorker()
-
-	private fun enqueueWorker() {
-		WorkManager
-			.getInstance(this)
-			.enqueue(buildRequest())
-	}
-
-	private fun buildRequest() : OneTimeWorkRequest {
-		// 1 day
-		return OneTimeWorkRequestBuilder<DailyReadWorkerTask>().build()
-	}
-
 	companion object {
-		val isPro : MutableState<Boolean> = mutableStateOf(false)
+		val isPro : MutableStateFlow<Boolean> = MutableStateFlow(false)
 	}
 }

@@ -28,6 +28,7 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.tone
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,8 +50,8 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		setContent {
 			BaseContent {
 				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
 
 				val _monthlyPackage by this.monthlyPackage
 				val _annualPackage by this.annualPackage
@@ -110,7 +111,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 						packageToPurchase = _package,
 						listener = object : PurchaseCallback {
 							override fun onCompleted(storeTransaction : StoreTransaction, customerInfo : CustomerInfo) {
-								BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+								BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 								if (BaseApplication.isPro.value) {
 									CoroutineScope(Dispatchers.Main).launch {
 										Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
@@ -153,7 +154,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 									}
 
 									override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
-										BaseApplication.isPro.value = customerInfo.entitlements["pro"]?.isActive == true
+										BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 										if (BaseApplication.isPro.value) {
 											CoroutineScope(Dispatchers.Main).launch {
 												Toast.makeText(this@ProActivity, "Purchase restored", Toast.LENGTH_SHORT).show()

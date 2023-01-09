@@ -209,7 +209,7 @@ private fun Title(
 		}
 		if (attachmentCount != 0) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_attachment),
+				painter = painterResource(id = R.drawable.ic_file),
 				contentDescription = "Attachment count",
 				tint = if (isFavouriteTinted && isFavourite) contentColor else Color.AttachmentContainer,
 				modifier = Modifier.requiredSize(14.dp)

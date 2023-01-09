@@ -105,12 +105,17 @@ fun NotebookCard(
 					) {
 						Spacer(modifier = Modifier.weight(1f))
 
-						Icon(
-							painter = painterResource(id = R.drawable.ic_reorder),
-							contentDescription = "Reorder",
-							tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
-							modifier = handleModifier.size(16.dp)
-						)
+						Box(
+							contentAlignment = Alignment.Center,
+							modifier = handleModifier.requiredSize(24.dp)
+						) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_reorder),
+								contentDescription = "Reorder",
+								tint = color?.getInverseBWColor() ?: Color.White,
+								modifier = Modifier.size(16.dp)
+							)
+						}
 					}
 					
 					Spacer(modifier = Modifier.weight(1f))

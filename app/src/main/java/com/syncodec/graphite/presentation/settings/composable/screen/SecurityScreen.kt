@@ -38,7 +38,7 @@ fun SecurityScreen() {
 
 		SettingsButton(
 			title = "Change Passcode",
-			icon = R.drawable.ic_change_passcode
+			icon = R.drawable.ic_passcode_change
 		) { authenticatorAction(Authenticator.CHANGE_PASSCODE) }
 
 //		SettingsButton(

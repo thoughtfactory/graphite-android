@@ -122,7 +122,7 @@ fun BookScreen() {
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(16.dp, 0.dp)
-				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), RoundedCornerShape(16.dp))
+				.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
 				.clip(RoundedCornerShape(16.dp))
 				.clickable { openDialog(DialogType.BOOK_INFO) }
 		) {
@@ -153,8 +153,6 @@ fun BookScreen() {
 					)
 				}
 
-				Spacer(modifier = Modifier.height(4.dp))
-
 				Row(
 					modifier = Modifier.fillMaxWidth()
 				) {
@@ -177,26 +175,26 @@ fun BookScreen() {
 			}
 		}
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		StateButton(
 			stateList = stateList,
 			currentState = currentState,
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
+			containerColor = MaterialTheme.colorScheme.surface,
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(16.dp, 0.dp)
-				.height(36.dp),
+				.height(32.dp),
 			onStateChange = onChangeState,
 		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		Box(
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(16.dp, 0.dp)
-				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), RoundedCornerShape(16.dp))
+				.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
 		) {
 			Column(
 				modifier = Modifier
@@ -210,8 +208,6 @@ fun BookScreen() {
 					fontWeight = FontWeight.Bold,
 				)
 
-				Spacer(modifier = Modifier.height(4.dp))
-
 				Text(
 					text = bookDescription ?: "",
 					style = MaterialTheme.typography.bodyMedium,
@@ -222,7 +218,7 @@ fun BookScreen() {
 			}
 		}
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(2.dp))
 
 		Button(
 			onClick = {

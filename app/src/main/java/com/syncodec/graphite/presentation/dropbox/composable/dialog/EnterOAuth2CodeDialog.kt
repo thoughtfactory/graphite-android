@@ -31,12 +31,13 @@ fun EnterOAuth2CodeDialog(
 		}
 	) {
 		DialogTextField(
-			text = oAuthCodeText,
+			value = oAuthCodeText,
 			label = "OAuth2 Code",
 			placeholder = "Enter OAuth2 Code",
+			supportingText = "Get the OAuth2 code by clicking \"Connect with Dropbox\"",
 		) { oAuthCodeText = it ?: "" }
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(24.dp))
 
 		DualActionButtons(
 			primaryText = "Ok",

@@ -77,7 +77,7 @@ fun BookGridScreen(
 		EmptyView(bucketType = BucketType.BOOK)
 	} else {
 		LazyVerticalGrid(
-			columns = GridCells.Adaptive(128.dp),
+			columns = GridCells.Adaptive(96.dp),
 			horizontalArrangement = Arrangement.Center,
 			contentPadding = PaddingValues(8.dp, 0.dp),
 			modifier = Modifier.fillMaxSize()

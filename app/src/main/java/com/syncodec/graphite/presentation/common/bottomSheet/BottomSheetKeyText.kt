@@ -19,8 +19,6 @@ fun BottomSheetKeyText(
 		style = MaterialTheme.typography.bodyLarge,
 		color = MaterialTheme.colorScheme.onSurface,
 		fontWeight = FontWeight.Bold,
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
+		modifier = Modifier.fillMaxWidth()
 	)
 }

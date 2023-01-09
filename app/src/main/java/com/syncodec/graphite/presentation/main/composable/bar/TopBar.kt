@@ -36,6 +36,7 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottom
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.service.DropboxSyncStatus
 import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
@@ -84,7 +85,7 @@ fun TopBar(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Bar(
 	currentRoute : String?,
@@ -143,7 +144,8 @@ private fun Bar(
 						Icon(
 							painter = painterResource(id = R.drawable.ic_delete),
 							contentDescription = "Delete items",
-							tint = Color.DeleteContainer
+							tint = Color.DeleteContainer,
+							modifier = Modifier.requiredSize(IconButtonSize)
 						)
 					}
 				},
@@ -157,12 +159,6 @@ private fun Bar(
 							icon = R.drawable.ic_menu,
 							tint = MaterialTheme.colorScheme.onBackground,
 						) { openSheet(MainBottomSheetType.MENU) }
-						MenuButton(
-							icon = R.drawable.ic_vault_f_d,
-							tint = if (isVaultOpened) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-							containerColor = if (isVaultOpened) MaterialTheme.colorScheme.primary else Color.Transparent,
-							onClick = { onAuthenticatorAction(Authenticator.AUTHENTICATE) }
-						)
 					}
 				},
 				title = {
@@ -178,7 +174,13 @@ private fun Bar(
 					)
 				},
 				actions = {
-					SyncButton(syncStatus = syncStatus, onClickSync = onClickSync)
+//					SyncButton(syncStatus = syncStatus, onClickSync = onClickSync)
+					MenuButton(
+						icon = R.drawable.ic_vault,
+						tint = if (isVaultOpened) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+						containerColor = if (isVaultOpened) MaterialTheme.colorScheme.primary else Color.Transparent,
+						onClick = { onAuthenticatorAction(Authenticator.AUTHENTICATE) }
+					)
 					MenuButton(
 						icon = R.drawable.ic_search,
 						tint = MaterialTheme.colorScheme.onBackground,
@@ -216,7 +218,7 @@ private fun ComponentType(
 						stateTint = MaterialTheme.colorScheme.primary
 					),
 					StateData(
-						title = "Bucket",
+						title = "List",
 						icon = R.drawable.ic_bucket,
 						stateTint = MaterialTheme.colorScheme.primary
 					),
@@ -229,7 +231,7 @@ private fun ComponentType(
 				currentState = componentType.ordinal,
 				onStateChange = onStateChange,
 				modifier = Modifier
-					.height(36.dp)
+					.height(32.dp)
 					.weight(1f)
 			)
 			MenuButton(
@@ -270,6 +272,12 @@ private fun SyncButton(
 				onClick = onClickSync
 			)
 
+			DropboxSyncStatus.SYNC_NOT_CONFIGURED -> MenuButton(
+				icon = R.drawable.ic_cloud_dashed,
+				tint = Color.Companion.SyncNotCongifured,
+				onClick = onClickSync
+			)
+
 			DropboxSyncStatus.SYNC_DISABLED -> MenuButton(
 				icon = R.drawable.ic_cloud_disable,
 				tint = Color.Companion.SyncDisabled,
@@ -295,7 +303,7 @@ private fun SyncButton(
 			)
 
 			DropboxSyncStatus.SYNCING -> MenuButton(
-				icon = R.drawable.ic_cloud_word,
+				icon = R.drawable.ic_cloud_syncing,
 				tint = Color.Companion.SyncSyncing,
 				modifier = Modifier.graphicsLayer {
 					this.alpha = alpha
@@ -304,7 +312,7 @@ private fun SyncButton(
 			)
 
 			DropboxSyncStatus.SYNC_ERROR -> MenuButton(
-				icon = R.drawable.ic_cloud_question,
+				icon = R.drawable.ic_cloud_exclamation,
 				tint = Color.Companion.SyncError,
 				onClick = onClickSync
 			)
@@ -321,6 +329,8 @@ private fun SyncButton(
 val Color.Companion.SyncCheck : Color
 	get() = Color(0xFF82AAE3)
 
+val Color.Companion.SyncNotCongifured : Color
+	get() = Color(0xFFE94560)
 val Color.Companion.SyncDisabled : Color
 	get() = Color(0xFFE94560)
 

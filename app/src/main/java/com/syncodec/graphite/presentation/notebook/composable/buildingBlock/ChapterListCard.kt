@@ -2,7 +2,7 @@ package com.syncodec.graphite.presentation.notebook.composable.buildingBlock
 
 import android.graphics.Bitmap
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -34,6 +35,7 @@ import com.syncodec.graphite.presentation.common.ExpandableBox
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContent
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.RealmUUID
@@ -231,6 +233,7 @@ private fun Title(
 			painter = painterResource(id = R.drawable.ic_notebook),
 			contentDescription = "Chapter count",
 			tint = contentColor,
+			modifier = Modifier.size(IconButtonSize)
 		)
 
 		Spacer(modifier = Modifier.width(4.dp))
@@ -248,6 +251,7 @@ private fun Title(
 			painter = painterResource(id = R.drawable.ic_note),
 			contentDescription = "Note count",
 			tint = contentColor,
+			modifier = Modifier.size(IconButtonSize)
 		)
 
 		Spacer(modifier = Modifier.width(4.dp))
@@ -261,27 +265,17 @@ private fun Title(
 
 		Spacer(modifier = Modifier.width(4.dp))
 
-		AnimatedContent(
-			targetState = isExpanded,
-			transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
-		) {
-			if (it) {
-				MenuButton(
-					icon = R.drawable.ic_chevron_down,
-					contentDescription = "Less info",
-					tint = contentColor,
-					onClick = onMoreInfo
-				)
+		val caretAngle by animateFloatAsState(if (isExpanded) 180f else 90f)
 
-			} else {
-				MenuButton(
-					icon = R.drawable.ic_chevron_right,
-					contentDescription = "More info",
-					tint = contentColor,
-					onClick = onMoreInfo
-				)
-			}
-		}
+		MenuButton(
+			icon = R.drawable.ic_caret,
+			contentDescription = "Less info",
+			tint = contentColor,
+			modifier = Modifier.graphicsLayer {
+				rotationZ = caretAngle
+			},
+			onClick = onMoreInfo
+		)
 	}
 }
 

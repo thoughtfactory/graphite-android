@@ -1,19 +1,21 @@
 package com.syncodec.graphite.presentation.common.printer
 
 import android.content.Context
-import android.os.CancellationSignal
 import android.os.Environment
-import android.os.ParcelFileDescriptor
-import android.print.*
+import android.print.PrintAttributes
 import android.print.PrintAttributes.Resolution
-import android.print.PrintDocumentAdapter.LayoutResultCallback
-import android.print.PrintDocumentAdapter.WriteResultCallback
+import android.print.PrintManager
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.syncodec.graphite.presentation.common.richText.RichTextEditor
+import android.widget.Toast
 import com.syncodec.graphite.presentation.common.richText.viewer.util.randomUUID
+import com.syncodec.graphite.utils.alice.Alice
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 
@@ -49,17 +51,28 @@ class Printer(context: Context) : WebView(context) {
 		setBackgroundColor(0)
 		setLayerType(LAYER_TYPE_SOFTWARE, null)
 
-//		addJavascriptInterface(this, "bridge")
+		context.assets.open("orbit/orbital").let {
+			val buffer = ByteArray(it.available())
+			it.read(buffer)
+			it.close()
+			val encHtml = String(buffer)
+			val passcode = "2%xY@Z5kYGu*iX!#N3m%03fC%4!070#D"
 
-		loadUrl(RichTextEditor.INDEX_PATH)
-//		exec("editor.setBaseFontColor('$textColor');")
-//		when (typography) {
-//			0 -> exec("editor.setBaseFontFamily(\"overlock\");")
-//			1 -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
-//			2 -> exec("editor.setBaseFontFamily(\"ubuntu\");")
-//			3 -> exec("editor.setBaseFontFamily('atwriter');")
-//			else -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
-//		}
+			CoroutineScope(Dispatchers.IO).launch {
+				try {
+					Alice.decrypt(encHtml, passcode).let { html ->
+						withContext(Dispatchers.Main) {
+							if (html == null) Toast.makeText(context, "Error loading printer", Toast.LENGTH_LONG).show()
+							else loadDataWithBaseURL("file:///android_asset/orbit", html, "text/html", "UTF-8", null)
+						}
+					}
+				} catch (e : Exception) {
+					withContext(Dispatchers.Main) {
+						Toast.makeText(context, "Error loading printer", Toast.LENGTH_LONG).show()
+					}
+				}
+			}
+		}
 	}
 
 

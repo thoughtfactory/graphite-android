@@ -1,16 +1,14 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -20,14 +18,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.accompanist.pager.ExperimentalPagerApi
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSyncNow
@@ -53,7 +49,6 @@ enum class ComponentType {
 
 @OptIn(
 	ExperimentalMaterialApi::class,
-	ExperimentalMaterial3Api::class,
 	ExperimentalPagerApi::class,
 	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class
 )
@@ -72,6 +67,7 @@ fun MainScreen(
 	var currentComponentType : ComponentType by remember { mutableStateOf(ComponentType.NOTE) }
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+	val scaffoldBlurRadius by animateFloatAsState(targetValue = if (modalBottomSheetState.progress.to == ModalBottomSheetValue.Hidden) (32.002f - 0.001f - (modalBottomSheetState.progress.fraction * 32f)) else (0.001f + (modalBottomSheetState.progress.fraction * 32f)))
 
 	LaunchedEffect(key1 = modalBottomSheetState.currentValue) {
 		if (modalBottomSheetState.currentValue == ModalBottomSheetValue.Hidden) {
@@ -109,11 +105,8 @@ fun MainScreen(
 		LocalCompositionOpenBottomSheet provides ::openSheet,
 		LocalCompositionCloseBottomSheet provides ::closeSheet,
 	) {
-		ModalBottomSheetLayout(
-			modifier = Modifier.fillMaxSize(),
-			sheetState = modalBottomSheetState,
-			sheetElevation = 0.dp,
-			sheetBackgroundColor = Color.Transparent,
+		GenericScaffold(
+			modalBottomSheetState = modalBottomSheetState,
 			sheetContent = {
 				SheetLayout(
 					bottomSheetType = bottomSheetType,
@@ -121,52 +114,41 @@ fun MainScreen(
 					onClickSyncNow = onSync,
 					onClickForceSync = onForceSync,
 				)
-			}
+			},
+			topBar = {
+				TopBar(
+					currentRoute = currentRoute,
+					componentType = currentComponentType,
+					onComponentChange = { currentComponentType = ComponentType.values()[it] },
+					onClickSearch = {
+						Intent(context, SearchActivity::class.java).apply {
+							context.startActivity(this)
+						}
+					},
+					onClickSync = { openSheet(MainBottomSheetType.SYNC) }
+				)
+			},
+			bottomBar = {
+				BottomNavigationBar(
+					currentRoute = currentRoute,
+					onNavigation = { navController.navigate(it) }
+				)
+			},
+			dialogContent = { MainDialog() }
 		) {
-			Scaffold(
-				topBar = {
-					TopBar(
-						currentRoute = currentRoute,
-						componentType = currentComponentType,
-						onComponentChange = { currentComponentType = ComponentType.values()[it] },
-						onClickSearch = {
-							Intent(context, SearchActivity::class.java).apply {
-								context.startActivity(this)
-							}
-						},
-						onClickSync = { openSheet(MainBottomSheetType.SYNC) }
-					)
-				},
-				bottomBar = {
-					BottomNavigationBar(
-						currentRoute = currentRoute,
-						onNavigation = { navController.navigate(it) }
-					)
-				},
-				modifier = Modifier.fillMaxSize()
-			) {
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(it)
-				) {
-					MainNavigation(
-						navController = navController,
-						componentType = currentComponentType,
-						defaultNotebookId = defaultNotebookId,
-						chapterObject = chapterObject,
-						notebookList = notebookList,
-						notebookOrderList = notebookOrderList,
-						noteList = noteList,
-						bucketList = bucketList,
-						bucketOrderList = bucketObjectOrderList,
-						onReorderBucketList = viewModel::onReorderBucketList,
-						onReorderNotebookList = viewModel::onReorderNotebookList,
-					)
-
-					MainDialog()
-				}
-			}
+			MainNavigation(
+				navController = navController,
+				componentType = currentComponentType,
+				defaultNotebookId = defaultNotebookId,
+				chapterObject = chapterObject,
+				notebookList = notebookList,
+				notebookOrderList = notebookOrderList,
+				noteList = noteList,
+				bucketList = bucketList,
+				bucketOrderList = bucketObjectOrderList,
+				onReorderBucketList = viewModel::onReorderBucketList,
+				onReorderNotebookList = viewModel::onReorderNotebookList,
+			)
 		}
 	}
 }

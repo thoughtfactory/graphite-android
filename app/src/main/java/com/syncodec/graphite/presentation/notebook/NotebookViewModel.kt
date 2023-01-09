@@ -56,7 +56,7 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	val currentChapterId : MutableState<RealmUUID?> = mutableStateOf(null)
 	val parentChapterId : MutableState<RealmUUID?> = mutableStateOf(null)
-	val parentChapterObjectList : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
+	val chapterPath : SnapshotStateList<ChapterObjectLite> = mutableStateListOf()
 
 	val tagObjectList : SnapshotStateList<TagObject> = mutableStateListOf()
 
@@ -67,8 +67,6 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	val isSelected : MutableState<Boolean> = mutableStateOf(false)
 	val selectedObjectIdList : SnapshotStateList<RealmUUID> = mutableStateListOf()
-
-	val isPro = BaseApplication.isPro.value
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -121,10 +119,12 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	fun putChapter(title : String?, description : String?, color : Color?, bitmap : Bitmap?) {
 		if (this.currentChapterId.value != null) {
-			if (isPro) {
+			if (BaseApplication.isPro.value) {
 				CoroutineScope(Dispatchers.Default).launch {
 					try {
 						ChapterObject().apply {
+							this.modifiedTimestamp = System.currentTimeMillis()
+
 							this.title = title
 							this.description = description
 							this.color = color?.toArgb()
@@ -157,6 +157,8 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 				try {
 					ChapterObject().apply {
 						this.id = it
+						this.modifiedTimestamp = System.currentTimeMillis()
+
 						this.title = this@NotebookViewModel.title.value
 						this.description = this@NotebookViewModel.description.value
 						this.color = this@NotebookViewModel.color.value?.toArgb()
@@ -229,13 +231,15 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 	}
 
 	private fun getParentChapter(id : RealmUUID) {
-		repository2.getParentChapterList(id = id) { list, e ->
+		repository2.getChapterPath(id = id, includeEdge = true) { list, e ->
 			viewModelScope.launch(Dispatchers.Main) {
-				parentChapterObjectList.clear()
-				list?.let {
-					parentChapterObjectList.addAll(it)
-					chapterObjectLite.value?.let { parentChapterObjectList.add(0, it) }
-				}
+				chapterPath.clear()
+				chapterPath.addAll(list ?: listOf())
+//				chapterObjectLite.value?.let { chapterPath.add(0, it) }
+//				list?.let {
+//					chapterPath.addAll(it)
+//					chapterObjectLite.value?.let { chapterPath.add(0, it) }
+//				}
 			}
 		}
 	}
@@ -260,7 +264,17 @@ class NotebookViewModel @Inject constructor(private val repository2 : Repository
 
 	fun delete() {
 		try {
-			val toDeleteRealmUUIDList = selectedObjectIdList.toList()
+			val toDeleteRealmUUIDList = selectedObjectIdList.toMutableList().apply {
+				try {
+					if (contains(defaultChapterId.value)) {
+						remove(defaultChapterId.value)
+						viewModelScope.launch(Dispatchers.Main) {
+							Toast.makeText(repository2.context, "Default chapter cannot be deleted", Toast.LENGTH_SHORT).show()
+						}
+					}
+				} catch (e : Exception) {
+				}
+			}
 			repository2.delete(toDeleteRealmUUIDList)
 			selectedObjectIdList.clear()
 			isSelected.value = false

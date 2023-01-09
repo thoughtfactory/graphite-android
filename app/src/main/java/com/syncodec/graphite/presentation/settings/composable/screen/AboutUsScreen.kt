@@ -64,7 +64,7 @@ fun AboutUsScreen() {
 				painter = painterResource(id = R.drawable.ic_icon),
 				contentDescription = null,
 				tint = Color.Unspecified,
-				modifier = Modifier.size(screenWidth / 3)
+				modifier = Modifier.requiredSize(screenWidth / 3)
 			)
 
 			Spacer(modifier = Modifier.height(32.dp))
@@ -118,12 +118,12 @@ fun AboutUsScreen() {
 
 		SettingsButton(
 			title = "Rate us",
-			icon = R.drawable.ic_rate_us,
+			icon = R.drawable.ic_star,
 		) { Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${BuildConfig.APPLICATION_ID}")).apply { context.startActivity(this) } }
 
 		SettingsButton(
 			title = "Find us on Instagram",
-			icon = R.drawable.ic_instagram,
+			icon = R.drawable.ic_logo_instagram,
 			iconColor = Color.Unspecified
 		) {
 			val uri = Uri.parse("https://www.instagram.com/graphite.diary/?hl=en")
@@ -149,6 +149,7 @@ fun AboutUsScreen() {
 }
 
 
+@Preview
 @Composable
 private fun MadeWithLove() {
 	Row(
@@ -167,10 +168,10 @@ private fun MadeWithLove() {
 		Spacer(modifier = Modifier.width(6.dp))
 
 		Icon(
-			painter = painterResource(id = R.drawable.ic_love),
+			painter = painterResource(id = R.drawable.ic_heart_c),
 			contentDescription = "Love",
 			tint = Color.Unspecified,
-			modifier = Modifier.requiredSize(14.dp)
+			modifier = Modifier.requiredSize(24.dp)
 		)
 
 		Spacer(modifier = Modifier.width(6.dp))
@@ -183,13 +184,13 @@ private fun MadeWithLove() {
 			color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
 		)
 
-		Spacer(modifier = Modifier.width(6.dp))
+		Spacer(modifier = Modifier.width(10.dp))
 
 		Icon(
-			painter = painterResource(id = R.drawable.ic_earth),
+			painter = painterResource(id = R.drawable.ic_earth_c),
 			contentDescription = "Earth",
 			tint = Color.Unspecified,
-			modifier = Modifier.requiredSize(16.dp)
+			modifier = Modifier.requiredSize(20.dp)
 		)
 	}
 }

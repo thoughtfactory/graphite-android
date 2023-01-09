@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.note.composable.bottomSheet
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -12,10 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMapOptions
@@ -48,22 +46,22 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
+import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.permission.LocationPermissionDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAddress
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionLocationState
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionLatLng
+import com.syncodec.graphite.presentation.note.composable.LocalCompositionLocationState
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.dialog.NoteDialogType
 import com.syncodec.graphite.utils.LocationState
 import com.syncodec.graphite.utils.roundTo
 
 
+@Preview
 @Composable
 fun LocationBottomSheet(
-	onRemoveLocation : () -> Unit,
-	onReloadLocation : () -> Unit,
+	onRemoveLocation : () -> Unit = {},
+	onReloadLocation : () -> Unit = {},
 ) {
 	val openDialog = LocalCompositionOpenDialog.current
 
@@ -71,21 +69,10 @@ fun LocationBottomSheet(
 	val latLng = LocalCompositionLatLng.current
 	val address = LocalCompositionAddress.current
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
+	GenericBottomSheet(
+		title = "Location",
+		icon = R.drawable.ic_map_marker,
 	) {
-		BottomSheetStrip()
-
-		BottomSheetHeader(
-			title = "Location",
-			icon = R.drawable.ic_map_marker
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
 		LocationCard(
 			locationState = locationState,
 			latLng = latLng,
@@ -93,20 +80,19 @@ fun LocationBottomSheet(
 			onRemoveLocation = onRemoveLocation,
 			onReloadLocation = onReloadLocation
 		) { openDialog(NoteDialogType.LOCATION_PICKER, null) }
-
-		Spacer(modifier = Modifier.height(32.dp))
 	}
 }
 
+@Preview
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun LocationCard(
-	locationState : LocationState,
+	locationState : LocationState = LocationState.LOADING,
 	latLng : LatLng? = null,
 	address : String? = null,
-	onRemoveLocation : () -> Unit,
-	onReloadLocation : () -> Unit,
-	onSetLocationManually : () -> Unit
+	onRemoveLocation : () -> Unit = {},
+	onReloadLocation : () -> Unit = {},
+	onSetLocationManually : () -> Unit = {},
 ) {
 	var showLocationPermissionDialog by remember { mutableStateOf(false) }
 
@@ -117,21 +103,17 @@ private fun LocationCard(
 	)
 
 	Card(
-		shape = RoundedCornerShape(12.dp),
+		shape = MaterialTheme.shapes.medium,
 		colors = CardDefaults.cardColors(
 			containerColor = MaterialTheme.colorScheme.background,
 			contentColor = MaterialTheme.colorScheme.onBackground
 		),
 		onClick = { },
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(24.dp, 0.dp)
+		modifier = Modifier.fillMaxWidth()
 	) {
 		AnimatedContent(
 			targetState = locationState,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(12.dp)
+			modifier = Modifier.fillMaxWidth()
 		) {
 			when (it) {
 				LocationState.INIT -> LocationViewGeneric(
@@ -215,11 +197,12 @@ private fun LocationCard(
 	}
 }
 
+@Preview
 @Composable
 private fun LocationViewGeneric(
 	message : String = "Location",
-	onReloadLocation : () -> Unit,
-	onSetLocationManually : () -> Unit
+	onReloadLocation : () -> Unit = {},
+	onSetLocationManually : () -> Unit = {},
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth(),
@@ -228,26 +211,33 @@ private fun LocationViewGeneric(
 			text = message,
 			style = MaterialTheme.typography.bodyMedium
 		)
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.End
 		) {
-			OutlinedButton(onClick = onReloadLocation) {
+			OutlinedButton(
+				onClick = onReloadLocation,
+				modifier = Modifier.weight(1f)
+			) {
 				Text(text = "Reload location")
 			}
 			Spacer(modifier = Modifier.width(8.dp))
-			Button(onClick = onSetLocationManually) {
+			Button(
+				onClick = onSetLocationManually,
+				modifier = Modifier.weight(1f)
+			) {
 				Text(text = "Set location")
 			}
 		}
 	}
 }
 
+@Preview
 @Composable
 private fun LocationViewNoPermission(
-	onRequestPermission : () -> Unit,
-	onSetLocationManually : () -> Unit
+	onRequestPermission : () -> Unit = {},
+	onSetLocationManually : () -> Unit = {},
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth(),
@@ -256,26 +246,33 @@ private fun LocationViewNoPermission(
 			text = "Request permission to connect your notes with location or set location manually",
 			style = MaterialTheme.typography.bodyMedium
 		)
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.End
 		) {
-			OutlinedButton(onClick = onRequestPermission) {
+			OutlinedButton(
+				onClick = onRequestPermission,
+				modifier = Modifier.weight(1f)
+			) {
 				Text(text = "Request permission")
 			}
 			Spacer(modifier = Modifier.width(8.dp))
-			Button(onClick = onSetLocationManually) {
+			Button(
+				onClick = onSetLocationManually,
+				modifier = Modifier.weight(1f)
+			) {
 				Text(text = "Set location")
 			}
 		}
 	}
 }
 
+@Preview
 @Composable
 private fun LocationViewNotPro(
-	onReloadLocation : () -> Unit,
-	onSetLocationManually : () -> Unit
+	onReloadLocation : () -> Unit = {},
+	onSetLocationManually : () -> Unit = {},
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth(),
@@ -285,40 +282,47 @@ private fun LocationViewNotPro(
 			modifier = Modifier.fillMaxWidth()
 		) {
 			Icon(
-				painterResource(id = R.drawable.ic_pro),
+				painterResource(id = R.drawable.ic_pro_star),
 				contentDescription = "Pro",
 				tint = Color.Companion.Unspecified,
 				modifier = Modifier.size(36.dp)
 			)
-			Spacer(modifier = Modifier.width(8.dp))
+			Spacer(modifier = Modifier.width(4.dp))
 			Text(
 				text = "Join Graphite Pro to connect your notes with location automatically",
 				style = MaterialTheme.typography.bodyMedium
 			)
 		}
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.End
 		) {
-			OutlinedButton(onClick = onReloadLocation) {
-				Text(text = "Load location")
+			OutlinedButton(
+				onClick = onReloadLocation,
+				modifier = Modifier.weight(1f)
+			) {
+				Text(text = "Load")
 			}
 			Spacer(modifier = Modifier.width(8.dp))
-			Button(onClick = onSetLocationManually) {
-				Text(text = "Set location")
+			Button(
+				onClick = onSetLocationManually,
+				modifier = Modifier.weight(1f)
+			) {
+				Text(text = "Set")
 			}
 		}
 	}
 }
 
+@Preview
 @Composable
 private fun LocationViewSuccess(
-	latLng : LatLng?,
-	address : String?,
-	onRemoveLocation : () -> Unit,
-	onReloadLocation : () -> Unit,
-	onSetLocationManually : () -> Unit
+	latLng : LatLng? = null,
+	address : String? = null,
+	onRemoveLocation : () -> Unit = {},
+	onReloadLocation : () -> Unit = {},
+	onSetLocationManually : () -> Unit = {},
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth(),
@@ -328,7 +332,7 @@ private fun LocationViewSuccess(
 				latLng = latLng,
 				onSetLocationManually = onSetLocationManually
 			)
-			Spacer(modifier = Modifier.height(8.dp))
+			Spacer(modifier = Modifier.height(4.dp))
 			Text(
 				text = "${latLng.latitude?.roundTo(6)}, ${latLng.longitude?.roundTo(6)}",
 				style = MaterialTheme.typography.bodyMedium
@@ -340,27 +344,34 @@ private fun LocationViewSuccess(
 				text = address,
 				style = MaterialTheme.typography.bodyMedium
 			)
-			Spacer(modifier = Modifier.height(4.dp))
+			Spacer(modifier = Modifier.height(24.dp))
 		}
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.End
 		) {
-			OutlinedButton(onClick = onRemoveLocation) {
-				Text(text = "Remove location")
+			OutlinedButton(
+				onClick = onRemoveLocation,
+				modifier = Modifier.weight(1f)
+			) {
+				Text(text = "Remove")
 			}
 			Spacer(modifier = Modifier.width(8.dp))
-			Button(onClick = onReloadLocation) {
-				Text(text = "Reload location")
+			Button(
+				onClick = onReloadLocation,
+				modifier = Modifier.weight(1f)
+			) {
+				Text(text = "Reload")
 			}
 		}
 	}
 }
 
+@Preview
 @Composable
 private fun LocationGoogleMap(
-	latLng : LatLng?,
-	onSetLocationManually : () -> Unit
+	latLng : LatLng? = null,
+	onSetLocationManually : () -> Unit = {}
 ) {
 	val context = LocalContext.current
 	val cameraPositionState = rememberCameraPositionState()
@@ -401,7 +412,7 @@ private fun LocationGoogleMap(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(128.dp)
-				.clip(RoundedCornerShape(12.dp)),
+				.clip(MaterialTheme.shapes.medium),
 		) {
 			Marker(
 				state = MarkerState(position = cameraPositionState.position.target),
@@ -412,7 +423,7 @@ private fun LocationGoogleMap(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(128.dp)
-				.clip(RoundedCornerShape(12.dp))
+				.clip(MaterialTheme.shapes.medium)
 				.clickable { onSetLocationManually() }
 		)
 	}

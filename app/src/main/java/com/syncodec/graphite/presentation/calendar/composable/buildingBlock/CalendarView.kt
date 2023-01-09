@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,6 +48,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.Quadruple
 import com.syncodec.graphite.utils.monthName
 import com.syncodec.graphite.utils.weekNameInitial
@@ -59,11 +62,12 @@ val dayColor1 = Color(0xFFFFDCAE)
 val dayColor2 = Color(0xFFADCF9F)
 val dayColor3 = Color(0xFF76BA99)
 
+@Preview
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun CalendarView(
-	noteDayMapSize : Map<LocalDate, Int>,
-	onClickDay : (LocalDate?) -> Unit
+	noteDayMapSize : Map<LocalDate, Int> = emptyMap(),
+	onClickDay : (LocalDate?) -> Unit = {},
 ) {
 	val scope = rememberCoroutineScope()
 
@@ -139,11 +143,12 @@ fun CalendarView(
 	}
 }
 
+@Preview
 @Composable
 private fun YearView(
-	listState : LazyListState,
-	selectedYearIndex : Int,
-	onClickYear : (Int) -> Unit
+	listState : LazyListState = rememberLazyListState(),
+	selectedYearIndex : Int = 0,
+	onClickYear : (Int) -> Unit = {}
 ) {
 	LazyRow(
 		modifier = Modifier.fillMaxWidth(),
@@ -158,16 +163,17 @@ private fun YearView(
 	}
 }
 
+@Preview
 @Composable
 private fun MonthView(
-	year : Int,
-	month : Int,
-	firstDay : DayOfWeek,
-	monthLength : Int,
-	noteDayMapSize : Map<LocalDate, Int>,
-	onPrevious : () -> Unit,
-	onNext : () -> Unit,
-	onClickDay : (LocalDate?) -> Unit
+	year : Int = 1999,
+	month : Int = 5,
+	firstDay : DayOfWeek = DayOfWeek.SATURDAY,
+	monthLength : Int = 31,
+	noteDayMapSize : Map<LocalDate, Int> = emptyMap(),
+	onPrevious : () -> Unit = {},
+	onNext : () -> Unit = {},
+	onClickDay : (LocalDate?) -> Unit = {}
 ) {
 	Column(
 		modifier = Modifier.fillMaxSize()
@@ -195,11 +201,12 @@ private fun MonthView(
 	}
 }
 
+@Preview
 @Composable
 private fun MonthName(
-	month : @IntRange(from = 1, to = 12) Int,
-	onPrevious : () -> Unit,
-	onNext : () -> Unit,
+	month : @IntRange(from = 1, to = 12) Int = 5,
+	onPrevious : () -> Unit = {},
+	onNext : () -> Unit = {},
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
@@ -207,9 +214,12 @@ private fun MonthName(
 	) {
 		IconButton(onClick = onPrevious) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_chevron_left),
+				painter = painterResource(id = R.drawable.ic_caret),
 				contentDescription = "Previous month",
-				tint = MaterialTheme.colorScheme.onBackground
+				tint = MaterialTheme.colorScheme.onBackground,
+				modifier = Modifier
+					.requiredSize(IconButtonSize)
+					.graphicsLayer { rotationY = 270f }
 			)
 		}
 		Spacer(modifier = Modifier.weight(1f))
@@ -222,20 +232,24 @@ private fun MonthName(
 		Spacer(modifier = Modifier.weight(1f))
 		IconButton(onClick = onNext) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_chevron_right),
+				painter = painterResource(id = R.drawable.ic_caret),
 				contentDescription = "Next month",
-				tint = MaterialTheme.colorScheme.onBackground
+				tint = MaterialTheme.colorScheme.onBackground,
+				modifier = Modifier
+					.requiredSize(IconButtonSize)
+					.graphicsLayer { rotationY = 90f }
 			)
 		}
 	}
 }
 
+@Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun YearItem(
-	year : Int,
-	isSelected : Boolean,
-	onClick : () -> Unit
+	year : Int = 1999,
+	isSelected : Boolean = false,
+	onClick : () -> Unit = {}
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
@@ -265,14 +279,15 @@ private fun YearItem(
 	)
 }
 
+@Preview
 @Composable
 private fun MonthContent(
-	year : Int,
-	month : Int,
-	firstDay : DayOfWeek,
-	monthLength : Int,
-	noteDayMapSize : Map<LocalDate, Int>,
-	onClickDay : (LocalDate?) -> Unit
+	year : Int = 1999,
+	month : Int = 5,
+	firstDay : DayOfWeek = DayOfWeek.SATURDAY,
+	monthLength : Int = 31 ,
+	noteDayMapSize : Map<LocalDate, Int> = emptyMap(),
+	onClickDay : (LocalDate?) -> Unit = {}
 ) {
 	val numberOfWeek = kotlin.math.ceil((firstDay.value + monthLength - 1) / 7.0).toInt()
 
@@ -305,6 +320,7 @@ private fun MonthContent(
 	}
 }
 
+@Preview
 @Composable
 private fun WeekHeader() {
 	Row(
