@@ -80,10 +80,6 @@ class AtlasViewModel @Inject constructor(private val repository2 : Repository2) 
 		}
 	}
 
-	fun setOnWhere(chapterObjectLite : ChapterObjectLite?) {
-		chapterObject.value = chapterObjectLite
-	}
-
 	fun delete() {
 		try {
 			val toDeleteRealmUUIDList = selectedRealmUUIDList.toList()

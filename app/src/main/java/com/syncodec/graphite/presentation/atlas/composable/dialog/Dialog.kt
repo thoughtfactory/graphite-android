@@ -28,7 +28,6 @@ fun AtlasDialog(
 		onSetChapter = onSetWhere
 	) { closeDialog(DialogType.WHERE) }
 
-
 	DeleteDialog(
 		showDialog = showDeleteDialog,
 		message = "Are you sure you want to delete selected items?",

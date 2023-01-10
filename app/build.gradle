@@ -17,7 +17,7 @@ android {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 33
-		versionCode 28
+		versionCode 29
 
 		versionName '2.1.0'
 

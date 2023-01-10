@@ -158,7 +158,10 @@ class AtlasActivity : ComponentActivity() {
 					LocalCompositionCloseDialog provides ::closeDialog,
 					LocalOnDelete provides viewModel::delete,
 					LocalOnWhere provides viewModel::onWhere,
-					LocalSetOnWhere provides viewModel::setOnWhere,
+					LocalSetOnWhere provides {
+						viewModel.onWhere(it?.id)
+						closeDialog(DialogType.WHERE)
+					},
 				) {
 					AtlasScreen(
 						parentChapter = parentChapter,

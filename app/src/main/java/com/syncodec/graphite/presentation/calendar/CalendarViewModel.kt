@@ -80,10 +80,6 @@ class CalendarViewModel  @Inject constructor(private val repository2 : Repositor
 		}
 	}
 
-	fun setOnWhere(chapterObjectLite : ChapterObjectLite?) {
-		chapterObject.value = chapterObjectLite
-	}
-
 	fun delete() {
 		try {
 			val toDeleteRealmUUIDList = selectedObjectIdList.toList()

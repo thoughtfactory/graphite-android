@@ -35,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +54,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
@@ -275,6 +277,8 @@ private fun ImagePicker(
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
+	val isPro by BaseApplication.isPro.collectAsState()
+
 	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
 		uri?.let { onPickImage(it) } ?: run {
 			scope.launch(Dispatchers.Main) {
@@ -310,7 +314,10 @@ private fun ImagePicker(
 						.padding(4.dp)
 						.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), MaterialTheme.shapes.medium)
 						.clip(MaterialTheme.shapes.medium)
-						.clickable { openFilePicker.launch(arrayOf("image/*")) },
+						.clickable {
+							if (isPro) openFilePicker.launch(arrayOf("image/*"))
+							else Toast.makeText(context, "Join Graphite Pro to add custom cover in notebooks", Toast.LENGTH_SHORT).show()
+						},
 				) {
 					AnimatedContent(
 						targetState = bitmap,
