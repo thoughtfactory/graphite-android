@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.common.scaffold
 
+import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -40,7 +41,7 @@ fun GenericScaffold(
 	bottomBar : @Composable () -> Unit = { },
 	floatingActionButton : @Composable () -> Unit = { },
 	dialogContent : @Composable () -> Unit = { },
-	snackbarHost: @Composable () -> Unit = { },
+	snackbarHost : @Composable () -> Unit = { },
 	content : @Composable () -> Unit = { },
 ) {
 	val scaffoldBlurRadius by animateFloatAsState(targetValue = if (modalBottomSheetState.progress.to == ModalBottomSheetValue.Hidden) (32.002f - 0.001f - (modalBottomSheetState.progress.fraction * 32f)) else (0.001f + (modalBottomSheetState.progress.fraction * 32f)))
@@ -77,7 +78,9 @@ fun GenericScaffold(
 			modifier = Modifier
 				.fillMaxSize()
 				.graphicsLayer {
-					this.renderEffect = BlurEffect(scaffoldBlurRadius, scaffoldBlurRadius, TileMode.Clamp)
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S_V2) {
+						this.renderEffect = BlurEffect(scaffoldBlurRadius, scaffoldBlurRadius, TileMode.Clamp)
+					}
 				},
 			snackbarHost = snackbarHost,
 			floatingActionButton = floatingActionButton,

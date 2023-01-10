@@ -5,10 +5,13 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -51,7 +55,7 @@ enum class ComponentType {
 @OptIn(
 	ExperimentalMaterialApi::class,
 	ExperimentalPagerApi::class,
-	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class
+	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class
 )
 @Composable
 fun MainScreen(
@@ -106,6 +110,45 @@ fun MainScreen(
 		LocalCompositionOpenBottomSheet provides ::openSheet,
 		LocalCompositionCloseBottomSheet provides ::closeSheet,
 	) {
+//		Scaffold(
+//			topBar = {
+//				TopBar(
+//					currentRoute = currentRoute.route,
+//					componentType = currentComponentType,
+//					onComponentChange = { currentComponentType = ComponentType.values()[it] },
+//					onClickSearch = {
+//						Intent(context, SearchActivity::class.java).apply {
+//							context.startActivity(this)
+//						}
+//					},
+//					onClickSync = { openSheet(MainBottomSheetType.SYNC) }
+//				)
+//			},
+//			bottomBar = {
+//				BottomNavigationBar(
+//					currentRoute = currentRoute.route,
+//					onNavigation = { navigate(it) }
+//				)
+//			}
+//		) {
+//			Box(
+//				modifier = Modifier.padding(it)
+//			) {
+//				MainNavigation(
+//					currentRoute = currentRoute,
+//					componentType = currentComponentType,
+//					defaultNotebookId = defaultNotebookId,
+//					chapterObject = chapterObject,
+//					notebookList = notebookList,
+//					notebookOrderList = notebookOrderList,
+//					noteList = noteList,
+//					bucketList = bucketList,
+//					bucketOrderList = bucketObjectOrderList,
+//					onReorderBucketList = viewModel::onReorderBucketList,
+//					onReorderNotebookList = viewModel::onReorderNotebookList,
+//				)
+//			}
+//		}
 		GenericScaffold(
 			modalBottomSheetState = modalBottomSheetState,
 			sheetContent = {
