@@ -2,20 +2,21 @@ package com.syncodec.graphite.presentation.settings.composable.screen
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
-import com.syncodec.graphite.notification.WriteNoteNotification
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScreen
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsSwitch
+import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
 import com.syncodec.graphite.utils.DataStoreInstance
 
 
+@Preview
 @Composable
 fun ExtensionsScreen() {
 
@@ -29,6 +30,8 @@ fun ExtensionsScreen() {
 	val scrollState = SettingsActivity.LocalScrollState.current
 
 	val isPro by BaseApplication.isPro.collectAsState()
+
+	val openDialog = SettingsActivity.LocalOpenDialog.current
 
 	GenericSettingsScreen(
 		title = "Extensions",
@@ -59,13 +62,11 @@ fun ExtensionsScreen() {
 			title = "Note from notification",
 			subTitle = "Directly add a note from notification",
 			icon = R.drawable.ic_note_notification,
-			isProFeature = false,
+			isProFeature = true,
 			isChecked = isNoteNotificationEnabled == true
 		) {
-			isNoteNotificationEnabled?.not()?.let {
-				dataStoreInstance.putNoteFromNotification(it)
-				if (it) WriteNoteNotification.showSimpleNotification(context = context)
-			} ?: dataStoreInstance.putNoteFromNotification(false)
+			if (isPro) openDialog(SettingsDialogType.NOTIFICATION_PERMISSION, null)
+			else Toast.makeText(context, "Join Graphite Pro to enable adding notes from notification", Toast.LENGTH_SHORT).show()
 		}
 	}
 }

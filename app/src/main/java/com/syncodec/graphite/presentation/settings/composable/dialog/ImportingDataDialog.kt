@@ -14,25 +14,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 
 
+@Preview
 @Composable
 fun ImportingSnapshotDialog(
-	showDialog: Boolean,
-	attachmentCount : Int,
-	attachmentProcessed : Int,
-	bucketItemCount : Int,
-	bucketItemProcessed : Int,
-	bucketCount : Int,
-	bucketProcessed : Int,
-	chapterCount : Int,
-	chapterProcessed : Int,
-	noteCount : Int,
-	noteProcessed : Int,
-	tagCount : Int,
-	tagProcessed : Int,
+	showDialog: Boolean = true,
+	attachmentCount : Int = 0,
+	attachmentProcessed : Int = 0,
+	bucketItemCount : Int = 0,
+	bucketItemProcessed : Int = 0,
+	bucketCount : Int = 0,
+	bucketProcessed : Int = 0,
+	chapterCount : Int = 0,
+	chapterProcessed : Int = 0,
+	noteCount : Int = 0,
+	noteProcessed : Int = 0,
+	tagCount : Int = 0,
+	tagProcessed : Int = 0,
 ) {
 	GenericDialog(
 		showDialog = showDialog,

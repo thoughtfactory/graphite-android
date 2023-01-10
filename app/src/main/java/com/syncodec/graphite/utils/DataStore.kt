@@ -100,7 +100,7 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_YEAR_PROGRESS] = yearProgress }
 	}
 
-	val getNoteFromNotification : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_NOTE_FROM_NOTIFICATION] ?: true }
+	val getNoteFromNotification : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_NOTE_FROM_NOTIFICATION] ?: false }
 
 	fun putNoteFromNotification(noteFromNotification : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_NOTE_FROM_NOTIFICATION] = noteFromNotification }
@@ -167,7 +167,7 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_DROPBOX_REFRESH_TOKEN] = refreshToken }
 	}
 
-	val getShowWhatsNewCard : Flow<Boolean> = context.dataStore.data.map { preferences -> (preferences[PREFERENCE_SHOW_WHATS_NEW_CARD] ?: 0) == BuildConfig.VERSION_CODE }
+	val getShowWhatsNewCard : Flow<Boolean> = context.dataStore.data.map { preferences -> (preferences[PREFERENCE_SHOW_WHATS_NEW_CARD] ?: 0) != BuildConfig.VERSION_CODE }
 
 	fun putShowWhatsNewCard(showWhatsNewCard : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_WHATS_NEW_CARD] = BuildConfig.VERSION_CODE }

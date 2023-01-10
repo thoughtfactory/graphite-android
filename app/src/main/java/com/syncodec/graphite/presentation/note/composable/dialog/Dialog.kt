@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.note.composable.dialog
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +14,6 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.DiscardDialog
-import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialog
 import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionAddress
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionCloseDialog
@@ -23,14 +21,9 @@ import com.syncodec.graphite.presentation.note.composable.LocalCompositionConten
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionIsViewing
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionLatLng
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionNoteId
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionOnMoveChapter
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionOnSelectChapter
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionParentChapterId
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionSelectChapterList
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionSelectChapterPath
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionSetUserTimestamp
-import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowChapterSelectionDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowDatePickerDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.note.composable.LocalCompositionShowDiscardDialog

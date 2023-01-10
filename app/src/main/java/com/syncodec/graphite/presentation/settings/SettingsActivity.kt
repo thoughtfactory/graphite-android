@@ -197,6 +197,7 @@ class SettingsActivity : ComponentActivity() {
 					var _showRestoringSnapshotDialog by this.showRestoringSnapshotDialog
 					var _showImportingDataDialog by this.showImportingDataDialog
 					var _showImportingJourneyDataDialog by this.showImportingJourneyDataDialog
+					var showNotificationPermissionDialog by remember { mutableStateOf(false) }
 					var _showDeleteAccountDialog by this.showDeleteAccountDialog
 
 					var restoreSnapshotFile by remember { mutableStateOf<DocumentFile?>(null) }
@@ -215,6 +216,7 @@ class SettingsActivity : ComponentActivity() {
 							}
 
 							SettingsDialogType.RESTORING_SNAPSHOT -> _showRestoringSnapshotDialog = true
+							SettingsDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = true
 							SettingsDialogType.DELETE_ACCOUNT -> _showDeleteAccountDialog = true
 						}
 					}
@@ -224,6 +226,7 @@ class SettingsActivity : ComponentActivity() {
 							SettingsDialogType.TAKE_SNAPSHOT -> _showTakeSnapshotDialog = false
 							SettingsDialogType.RESTORE_SNAPSHOT -> _showRestoreSnapshotDialog = false
 							SettingsDialogType.RESTORING_SNAPSHOT -> _showRestoringSnapshotDialog = false
+							SettingsDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = false
 							SettingsDialogType.DELETE_ACCOUNT -> _showDeleteAccountDialog = false
 						}
 					}
@@ -352,6 +355,7 @@ class SettingsActivity : ComponentActivity() {
 						LocalShowRestoringSnapshotDialog provides _showRestoringSnapshotDialog,
 						LocalShowImportingDataDialog provides _showImportingDataDialog,
 						LocalShowImportingJourneyDataDialog provides _showImportingJourneyDataDialog,
+						LocalShowNotificationPermissionDialog provides showNotificationPermissionDialog,
 						LocalShowDeleteAccountDialog provides _showDeleteAccountDialog,
 						LocalAttachmentCount provides attachmentCount,
 						LocalAttachmentProcessed provides attachmentProcessed,
@@ -714,6 +718,7 @@ class SettingsActivity : ComponentActivity() {
 		val LocalShowRestoringSnapshotDialog = compositionLocalOf { false }
 		val LocalShowImportingDataDialog = compositionLocalOf { false }
 		val LocalShowImportingJourneyDataDialog = compositionLocalOf { false }
+		val LocalShowNotificationPermissionDialog = compositionLocalOf { false }
 		val LocalShowDeleteAccountDialog = compositionLocalOf { false }
 
 		val LocalOpenBottomSheet = compositionLocalOf<(SettingsBottomSheetType) -> Unit> { {} }

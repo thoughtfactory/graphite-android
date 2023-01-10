@@ -1,18 +1,28 @@
 package com.syncodec.graphite.presentation.settings.composable.dialog
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.syncodec.graphite.notification.WriteNoteNotification
+import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 import com.syncodec.graphite.presentation.settings.SettingsActivity
+import com.syncodec.graphite.utils.DataStoreInstance
 
 
 enum class SettingsDialogType {
 	TAKE_SNAPSHOT,
 	RESTORE_SNAPSHOT,
 	RESTORING_SNAPSHOT,
+	NOTIFICATION_PERMISSION,
 	DELETE_ACCOUNT
 }
 
 @Composable
 fun SettingsDialog() {
+	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
 	val attachmentCount = SettingsActivity.LocalAttachmentCount.current
 	val attachmentProcessed = SettingsActivity.LocalAttachmentProcessed.current
@@ -36,7 +46,10 @@ fun SettingsDialog() {
 	val showRestoringSnapshotDialog = SettingsActivity.LocalShowRestoringSnapshotDialog.current
 	val showImportingDataDialog = SettingsActivity.LocalShowImportingDataDialog.current
 	val showImportingJourneyDataDialog = SettingsActivity.LocalShowImportingJourneyDataDialog.current
+	val showNotificationPermissionDialog = SettingsActivity.LocalShowNotificationPermissionDialog.current
 	val showDeleteAccountDialog = SettingsActivity.LocalShowDeleteAccountDialog.current
+
+	val isNoteNotificationEnabled by dataStoreInstance.getNoteFromNotification.collectAsState(initial = null)
 
 	val restoreSnapshot = SettingsActivity.LocalRestoreSnapshot.current
 	val deleteAccount = SettingsActivity.LocalDeleteAccount.current
@@ -106,6 +119,18 @@ fun SettingsDialog() {
 		importDataCount = importDataCount,
 		importDataProcessed = importDataProcessed
 	)
+
+	NotificationPermissionDialog(
+		showDialog = showNotificationPermissionDialog,
+		onDismiss = { closeDialog(SettingsDialogType.NOTIFICATION_PERMISSION) },
+	) {
+		closeDialog(SettingsDialogType.NOTIFICATION_PERMISSION)
+		isNoteNotificationEnabled?.not()?.let {
+			dataStoreInstance.putNoteFromNotification(it)
+			if (it) WriteNoteNotification.showSimpleNotification(context = context) else WriteNoteNotification.cancelNotification(context = context)
+		} ?: dataStoreInstance.putNoteFromNotification(false)
+	}
+
 
 	DeleteAccountDialog(
 		showDialog = showDeleteAccountDialog,

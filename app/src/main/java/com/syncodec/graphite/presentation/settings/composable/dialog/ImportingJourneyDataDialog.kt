@@ -14,15 +14,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 
 
+@Preview
 @Composable
 fun ImportingJourneySnapshotDialog(
-	showDialog: Boolean,
-	importDataCount: Int,
-	importDataProcessed: Int,
+	showDialog: Boolean = true,
+	importDataCount: Int = 0,
+	importDataProcessed: Int = 0,
 ) {
 	GenericDialog(
 		showDialog = showDialog,

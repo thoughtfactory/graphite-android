@@ -154,5 +154,11 @@ class WriteNoteNotification {
 			val notificationManager : NotificationManager = with(context) { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 			notificationManager.createNotificationChannel(channel)
 		}
+
+		fun cancelNotification(context : Context) {
+			with(NotificationManagerCompat.from(context)) {
+				this.cancel(NOTIFICATION_ID)
+			}
+		}
 	}
 }
