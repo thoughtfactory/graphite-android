@@ -5,11 +5,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -27,13 +26,10 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.DataStoreInstance
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
-@AndroidEntryPoint
 class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 
 	private val monthlyPackage : MutableState<Package?> = mutableStateOf(null)
@@ -55,16 +51,13 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 				val _annualPackage by this.annualPackage
 				val _lifetimePackage by this.lifetimePackage
 
-				CompositionLocalProvider(
-					onBackPressed provides this::finish,
-					ProActivity.monthlyPackage provides _monthlyPackage,
-					ProActivity.annualPackage provides _annualPackage,
-					ProActivity.lifetimePackage provides _lifetimePackage,
-					onClickPackage provides this::purchaseProduct,
-					ProActivity.onRestore provides this::onRestore,
-				) {
-					SubscriptionScreen()
-				}
+				SubscriptionScreen(
+					monthlyPackage = _monthlyPackage,
+					annualPackage = _annualPackage,
+					lifetimePackage = _lifetimePackage,
+					onClickPackage = this::purchaseProduct,
+					onRestore = this::onRestore,
+				)
 			}
 		}
 	}
@@ -111,12 +104,12 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 							override fun onCompleted(storeTransaction : StoreTransaction, customerInfo : CustomerInfo) {
 								BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 								if (BaseApplication.isPro.value) {
-									CoroutineScope(Dispatchers.Main).launch {
+									lifecycleScope.launch(Dispatchers.Main) {
 										Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
 										this@ProActivity.finish()
 									}
 								} else {
-									CoroutineScope(Dispatchers.Main).launch {
+									lifecycleScope.launch(Dispatchers.Main) {
 										Toast.makeText(this@ProActivity, "Purchase failed", Toast.LENGTH_SHORT).show()
 									}
 								}
@@ -154,13 +147,13 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 									override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
 										BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 										if (BaseApplication.isPro.value) {
-											CoroutineScope(Dispatchers.Main).launch {
-												Toast.makeText(this@ProActivity, "Purchase restored", Toast.LENGTH_SHORT).show()
+											lifecycleScope.launch(Dispatchers.Main) {
+												Toast.makeText(this@ProActivity.applicationContext, "Purchase restored", Toast.LENGTH_SHORT).show()
 												this@ProActivity.finish()
 											}
 										} else {
-											CoroutineScope(Dispatchers.Main).launch {
-												Toast.makeText(this@ProActivity, "No purchase found", Toast.LENGTH_SHORT).show()
+											lifecycleScope.launch(Dispatchers.Main) {
+												Toast.makeText(this@ProActivity.applicationContext, "No purchase found", Toast.LENGTH_SHORT).show()
 											}
 										}
 									}
@@ -188,22 +181,16 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 					if ((expiryTimestamp != null) && (expiryTimestamp > currentTimestamp)) {
 						dataStoreInstance.putSuperExpiryTime(expiryTimestamp)
 						BaseApplication.isPro.tryEmit(true)
-						CoroutineScope(Dispatchers.Main).launch {
+						lifecycleScope.launch(Dispatchers.Main) {
 							Toast.makeText(this@ProActivity, "Welcome to Graphite Pro", Toast.LENGTH_LONG).show()
 						}
 						onSuccess()
 						finish()
 					} else {
-//					CoroutineScope(Dispatchers.Main).launch {
-//						Toast.makeText(this@ProActivity, "No active subscription found", Toast.LENGTH_LONG).show()
-//					}
 						onFailure()
 					}
 				}
 				.addOnFailureListener {
-//				CoroutineScope(Dispatchers.Main).launch {
-//					Toast.makeText(this@ProActivity, "Error getting data. Please try again later", Toast.LENGTH_SHORT).show()
-//				}
 					onFailure()
 				}
 		} catch (e : Exception) {
@@ -213,17 +200,5 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 
 	override fun onReceived(customerInfo : CustomerInfo) {
 
-	}
-
-	companion object {
-		val onBackPressed = compositionLocalOf<() -> Unit> { {} }
-
-		val monthlyPackage = compositionLocalOf<Package?> { null }
-		val annualPackage = compositionLocalOf<Package?> { null }
-		val lifetimePackage = compositionLocalOf<Package?> { null }
-
-		val onClickPackage = compositionLocalOf<(Package?) -> Unit> { {} }
-
-		val onRestore = compositionLocalOf<() -> Unit> { {} }
 	}
 }

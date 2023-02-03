@@ -48,7 +48,6 @@ fun AuthenticatorScreen(
 			navigationIcon = {
 				MenuButton(
 					icon = R.drawable.ic_close,
-					tint = MaterialTheme.colorScheme.onBackground,
 					onClick = onClose
 				)
 			},

@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,7 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_SUPER_EXPIRY_TIME = stringPreferencesKey("super_expiry_time")
 		private val PREFERENCE_FOLLOW_SYSTEM_DARK_THEME = booleanPreferencesKey("follow_system_dark_theme")
 		private val PREFERENCE_FORCE_DARK_THEME = booleanPreferencesKey("force_dark_theme")
+		private val PREFERENCE_DARK_THEME = stringPreferencesKey("dark_theme")
 		private val PREFERENCE_TINT_FAVORITE = booleanPreferencesKey("tint_favorite")
 		private val PREFERENCE_GEOLOCATION = booleanPreferencesKey("geolocation")
 		private val PREFERENCE_YEAR_PROGRESS = booleanPreferencesKey("year_progress")
@@ -82,6 +84,15 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_FORCE_DARK_THEME] = forceDarkTheme }
 	}
 
+	val getDarkTheme : Flow<SettingsActivity.Companion.DarkTheme> = context.dataStore.data.map { preferences ->
+		SettingsActivity.Companion.DarkTheme.values().find { it.name == preferences[PREFERENCE_DARK_THEME] }
+			?: SettingsActivity.Companion.DarkTheme.SYNC_WITH_SYSTEM
+	}
+
+	fun putDarkTheme(darkTheme : SettingsActivity.Companion.DarkTheme) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_DARK_THEME] = darkTheme.name }
+	}
+
 	val getTintFavorite : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_TINT_FAVORITE] ?: true }
 
 	fun putTintFavorite(tintFavorite : Boolean) = CoroutineScope(Dispatchers.IO).launch {
@@ -108,16 +119,16 @@ class DataStoreInstance(private val context : Context) {
 
 	val getSortOn : Flow<SortOn> = context.dataStore.data.map { preferences ->
 		when (preferences[PREFERENCE_SORT_ON] ?: 1) {
-			0 -> SortOn.TITLE
-			1 -> SortOn.TIMESTAMP
-			2 -> SortOn.MODIFIED
+			0 -> SortOn.Title
+			1 -> SortOn.Timestamp
+			2 -> SortOn.Modified
 //			3 -> SortOn.PRIORITY
 //			4 -> SortOn.COMPLETED
 //			5 -> SortOn.DUE
 //			6 -> SortOn.CREATED
 //			7 -> SortOn.DONE
 			8 -> SortOn.CUSTOM
-			else -> SortOn.TIMESTAMP
+			else -> SortOn.Timestamp
 		}
 	}
 
@@ -127,9 +138,9 @@ class DataStoreInstance(private val context : Context) {
 
 	val getSortBy : Flow<SortBy> = context.dataStore.data.map { preferences ->
 		when (preferences[PREFERENCE_SORT_BY] ?: 1) {
-			0 -> SortBy.ASCENDING
-			1 -> SortBy.DESCENDING
-			else -> SortBy.DESCENDING
+			0 -> SortBy.Ascending
+			1 -> SortBy.Descending
+			else -> SortBy.Descending
 		}
 	}
 
@@ -167,7 +178,8 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_DROPBOX_REFRESH_TOKEN] = refreshToken }
 	}
 
-	val getShowWhatsNewCard : Flow<Boolean> = context.dataStore.data.map { preferences -> (preferences[PREFERENCE_SHOW_WHATS_NEW_CARD] ?: 0) != BuildConfig.VERSION_CODE }
+	val getShowWhatsNewCard : Flow<Boolean> =
+		context.dataStore.data.map { preferences -> (preferences[PREFERENCE_SHOW_WHATS_NEW_CARD] ?: 0) != BuildConfig.VERSION_CODE }
 
 	fun putShowWhatsNewCard(showWhatsNewCard : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_WHATS_NEW_CARD] = BuildConfig.VERSION_CODE }

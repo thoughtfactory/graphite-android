@@ -15,4 +15,13 @@ class RealmMigrator : AutomaticSchemaMigration {
 		val oldSchema = oldRealm.schema()
 		val newSchema = newRealm.schema()
 	}
+
+	private fun migrate0to2(oldRealm : DynamicRealm, newRealm : DynamicMutableRealm) {
+		val oldSchema = oldRealm.schema()
+		val newSchema = newRealm.schema()
+	}
+	private fun migrate1to2(oldRealm : DynamicRealm, newRealm : DynamicMutableRealm) {
+		val oldSchema = oldRealm.schema()
+		val newSchema = newRealm.schema()
+	}
 }

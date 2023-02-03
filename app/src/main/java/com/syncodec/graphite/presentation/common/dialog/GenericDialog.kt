@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.common.dialog
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,8 @@ fun GenericDialog(
 	onDismissRequest: () -> Unit = {},
 	content: @Composable () -> Unit = {}
 ) {
+	BackHandler(enabled = showDialog) { onDismissRequest() }
+
 	if (showDialog) {
 		Dialog(
 			onDismissRequest = onDismissRequest,
@@ -67,9 +70,9 @@ fun GenericDialog(
 						)
 					}
 
-					Spacer(modifier = Modifier.height(24.dp))
-
 					content()
+
+					Spacer(modifier = Modifier.height(24.dp))
 
 					dualActionButton?.invoke()
 				}

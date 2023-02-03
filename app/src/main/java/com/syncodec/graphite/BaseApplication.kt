@@ -1,7 +1,6 @@
 package com.syncodec.graphite
 
 import android.app.Application
-import android.content.Intent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -11,41 +10,84 @@ import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
-import com.syncodec.graphite.presentation.main.MainActivity
-import com.syncodec.graphite.service.WatchdogService
-import com.syncodec.graphite.service.WatchdogServiceConnectionManager
+import com.syncodec.graphite.di.repository.AttachmentRepository
+import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
+import com.syncodec.graphite.presentation.bucket.BucketViewModel
+import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
+import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
+import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
+import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
+import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
+import com.syncodec.graphite.presentation.main.MainViewModel
+import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreenViewModel
+import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreenViewModel
+import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
+import com.syncodec.graphite.presentation.note.NoteViewModel
+import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
+import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
+import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
+import com.syncodec.graphite.presentation.settings.composable.dialog.clearData.ClearDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.dialog.exportData.ExportDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.dialog.importData.ImportDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.screen.localBackup.LocalBackupViewModel
+import com.syncodec.graphite.presentation.tags.TagsViewModel
+import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
-import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.context.startKoin
+import org.koin.dsl.module
 import java.io.File
+import com.syncodec.graphite.presentation.notebook.screen.NotebookScreenViewModel as NotebookScreenViewModel2
 
 
-@HiltAndroidApp
 class BaseApplication : Application() {
 
-	lateinit var dataStore : DataStoreInstance
-
-	private lateinit var ROOT : String
-
-	private val DATA : String = "data"
-		get() = "$ROOT/$field"
-
-	private val ATTACHMENT_DIR = "attachment"
-		get() = "$DATA/$field"
+	private lateinit var dataStore : DataStoreInstance
 
 	override fun onCreate() {
 		super.onCreate()
 
-//		watchWatchdog()
+		initDirectory()
 
-		ROOT = applicationContext.filesDir.path
-		File(DATA).mkdirs()
-		File(ATTACHMENT_DIR).mkdirs()
+		startKoin {
+			androidLogger()
+			androidContext(this@BaseApplication)
+			modules(
+				module {
+					single { KoinRepository().apply { this.initRealm(this@BaseApplication) } }
+					single { AttachmentRepository().apply { this.initRepository(this@BaseApplication) } }
+					viewModelOf(::MainViewModel)
+					viewModelOf(::NoteScreenViewModel)
+					viewModelOf(::BucketScreenViewModel)
+					viewModelOf(::NotebookScreenViewModel)
+					viewModelOf(::NoteViewModel)
+					viewModelOf(::EditorScreenViewModel)
+					viewModelOf(::ViewerScreenViewModel)
+					viewModelOf(::BucketViewModel)
+					viewModelOf(::BucketScreenCommonViewModel)
+					viewModelOf(::BucketBottomSheetViewModel)
+					viewModelOf(::BucketItemViewModel)
+					viewModelOf(::NotebookScreenViewModel2)
+					viewModelOf(::SearchScreenViewModel)
+					viewModelOf(::TagsViewModel)
+					viewModelOf(::AttachmentScreenViewModel)
+					viewModelOf(::ExportDataViewModel)
+					viewModelOf(::ImportDataViewModel)
+					viewModelOf(::ClearDataViewModel)
+					viewModelOf(::LocalBackupViewModel)
+					viewModelOf(::WhereDialogViewModel)
+					viewModelOf(::ExplorerScreenViewModel)
+				}
+			)
+		}
 
 		dataStore = DataStoreInstance(this)
 		Purchases.debugLogsEnabled = false
@@ -73,6 +115,12 @@ class BaseApplication : Application() {
 				}
 			}
 		}
+	}
+
+	private fun initDirectory() {
+		val filesDir = this.filesDir
+		val dataDir = File(filesDir, "data").also { it.mkdirs() }
+		val attachmentDir = File(dataDir, "attachments").also { it.mkdirs() }
 	}
 
 //	fun watchWatchdog() {
@@ -122,6 +170,9 @@ class BaseApplication : Application() {
 	}
 
 	companion object {
-		val isPro : MutableStateFlow<Boolean> = MutableStateFlow(false)
+		val isPro : MutableStateFlow<Boolean> = MutableStateFlow(true)
+
+		val isAuthenticated : MutableStateFlow<Boolean> = MutableStateFlow(false)
+		val authenticatorScreen : MutableStateFlow<AuthenticatorScreen> = MutableStateFlow(AuthenticatorScreen.None)
 	}
 }

@@ -3,12 +3,23 @@ package com.syncodec.graphite.utils
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import com.syncodec.graphite.R
+import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDirPath
 import io.realm.kotlin.types.RealmUUID
+import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
+import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import java.io.*
 import java.util.zip.ZipFile
 
@@ -20,9 +31,9 @@ enum class AttachmentType {
 	UNKNOWN
 }
 
-fun Context.getFileName(uri: Uri): String? {
+fun Context.getFileName(uri : Uri) : String? {
 	try {
-		var result: String? = null
+		var result : String? = null
 		if (uri.scheme.equals("content")) {
 			contentResolver.query(uri, null, null, null, null).use { cursor ->
 				if (cursor != null && cursor.moveToFirst()) {
@@ -35,23 +46,22 @@ fun Context.getFileName(uri: Uri): String? {
 		if (result == null) {
 			result = uri.path
 			val cut = result?.lastIndexOf('/')
-			if (cut != null && cut != -1) {
+			if (cut != null && cut != - 1) {
 				result = result?.substring(cut + 1)
 			}
 		}
 		return result
-	} catch (e: Exception) {
+	} catch (e : Exception) {
 		return null
 	}
 }
 
-fun Uri.mimeType(context: Context): String? {
+fun Uri.mimeType(context : Context) : String? {
 	return context.contentResolver.getType(this)
 }
 
 fun Context.getAttachmentCountFromNoteId(noteId : RealmUUID) : Int {
-	val attachmentDirPath = "${filesDir.path}/data/attachment"
-	val attachmentDir = File("$attachmentDirPath/$noteId")
+	val attachmentDir = File(attachmentDirPath(noteId = noteId))
 	return if (attachmentDir.exists()) attachmentDir.listFiles()?.size ?: 0
 	else 0
 }
@@ -59,8 +69,10 @@ fun Context.getAttachmentCountFromNoteId(noteId : RealmUUID) : Int {
 
 fun File.extension() : String? {
 	return try {
-		MimeTypeMap.getFileExtensionFromUrl(this.name)
-	} catch (e: Exception) {
+		val ext = MimeTypeMap.getFileExtensionFromUrl(this.name)
+		if (ext.isNullOrEmpty()) this.name.split(".").lastOrNull()
+		else ext
+	} catch (e : Exception) {
 		null
 	}
 }
@@ -68,7 +80,7 @@ fun File.extension() : String? {
 fun File.mimeType() : String? {
 	return try {
 		MimeTypeMap.getSingleton().getMimeTypeFromExtension(this.extension())
-	} catch (e: Exception) {
+	} catch (e : Exception) {
 		null
 	}
 }
@@ -76,7 +88,7 @@ fun File.mimeType() : String? {
 fun File.type() : String? {
 	return try {
 		mimeType()?.split("/")?.get(0)
-	} catch (e: Exception) {
+	} catch (e : Exception) {
 		null
 	}
 }
@@ -84,13 +96,13 @@ fun File.type() : String? {
 fun File.subType() : String? {
 	return try {
 		mimeType()?.split("/")?.get(1)
-	} catch (e: Exception) {
+	} catch (e : Exception) {
 		null
 	}
 }
 
 @Throws(IOException::class)
-fun createTempAttachmentFile(context : Context, id : String): File {
+fun createTempAttachmentFile(context : Context, id : String) : File {
 	val directory = File(context.cacheDir, "attachment")
 	directory.mkdirs()
 	return File.createTempFile("attachment_", "_$id", directory)
@@ -98,15 +110,15 @@ fun createTempAttachmentFile(context : Context, id : String): File {
 
 @Throws(IOException::class)
 fun createTempAttachmentFileToExpose(
-	context: Context,
-	name: String,
-): Pair<Uri, File> {
+	context : Context,
+	name : String,
+) : Pair<Uri, File> {
 	val file = createTempAttachmentFile(context, name)
 	val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 	return Pair(uri, file)
 }
 
-fun Context.copyToCache(file : File): File {
+fun Context.copyToCache(file : File) : File {
 	val directory = File(cacheDir, "tmp")
 	directory.mkdirs()
 	val cacheFile = File(directory, file.name)
@@ -140,9 +152,11 @@ fun File.share(context : Context) {
 	}
 }
 
-fun File.viewFile(context : Context) {
+fun File.viewExternally(context : Context) {
 	try {
-		Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", this)).apply {
+		Intent(Intent.ACTION_VIEW).apply {
+			Log.i("npr71", "mime : ${mimeType() ?: "*/*"}")
+			setDataAndType(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", this@viewExternally), mimeType() ?: "*/*")
 			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
 			context.startActivity(this)
@@ -156,34 +170,34 @@ fun File.viewFile(context : Context) {
 }
 
 fun copyInputStreamToOutputStream(
-	inputStream: InputStream,
-	outputStream: FileOutputStream
+	inputStream : InputStream,
+	outputStream : FileOutputStream
 ) = try {
 	val buf = ByteArray(1024)
-	var len: Int
+	var len : Int
 	while (inputStream.read(buf).also { len = it } > 0) {
 		outputStream.write(buf, 0, len)
 	}
 	outputStream.close()
 	inputStream.close()
-} catch (e: Exception) {
+} catch (e : Exception) {
 //	e.printStackTrace()
 }
 
-fun copyInputStreamToOutputStream(inputStream: InputStream, outputStream: OutputStream) =
+fun copyInputStreamToOutputStream(inputStream : InputStream, outputStream : OutputStream) =
 	try {
 		val buf = ByteArray(1024)
-		var len: Int
+		var len : Int
 		while (inputStream.read(buf).also { len = it } > 0) {
 			outputStream.write(buf, 0, len)
 		}
 		outputStream.close()
 		inputStream.close()
-	} catch (e: Exception) {
+	} catch (e : Exception) {
 //		e.printStackTrace()
 	}
 
-fun Context.getFileFromUri(uri: Uri?): File? {
+fun Context.getFileFromUri(uri : Uri?) : File? {
 	if (uri == null) return null
 	val tempFile = File.createTempFile("${System.currentTimeMillis()}", null)
 	val inputStream = contentResolver.openInputStream(uri) ?: return null
@@ -193,8 +207,8 @@ fun Context.getFileFromUri(uri: Uri?): File? {
 	return tempFile
 }
 
-fun copyDirectory(srcDir: File, destDir: File) {
-	if (!destDir.exists()) {
+fun copyDirectory(srcDir : File, destDir : File) {
+	if (! destDir.exists()) {
 		destDir.mkdirs()
 	}
 	srcDir.listFiles()?.forEach { file ->
@@ -211,7 +225,7 @@ fun copyDirectory(srcDir: File, destDir: File) {
 	}
 }
 
-fun copyInDirectory(srcDir: File, destDir: File) {
+fun copyInDirectory(srcDir : File, destDir : File) {
 	srcDir.listFiles()?.forEach { file ->
 		if (file.isDirectory) {
 			copyInDirectory(file, File(destDir, file.name))
@@ -232,7 +246,7 @@ fun extractZipFile(inputFile : ZipFile, destination : File) : Boolean {
 		val entry = it
 		val entryFile = File(destination, entry.name)
 		val canonicalPath = entryFile.canonicalPath
-		if (!canonicalPath.startsWith(destination.canonicalPath)) {
+		if (! canonicalPath.startsWith(destination.canonicalPath)) {
 			return false
 		}
 		entryFile.parentFile?.mkdirs()
@@ -245,3 +259,95 @@ fun extractZipFile(inputFile : ZipFile, destination : File) : Boolean {
 
 	return true
 }
+
+fun compress7z(fileToCompress : File, outputFile : SevenZOutputFile, progressReport : (Int, Int) -> Unit = { _, _ -> }) {
+	outputFile.use { sevenZOutput ->
+		val archivePackage = fileToCompress.walk()
+		val totalPackage = archivePackage.count()
+		archivePackage.forEachIndexed { index, file ->
+			if (file.isFile) {
+				try {
+					val entry : SevenZArchiveEntry = sevenZOutput.createArchiveEntry(file, file.path.replace(fileToCompress.path, ""))
+					sevenZOutput.putArchiveEntry(entry)
+					sevenZOutput.write(file.readBytes())
+					sevenZOutput.closeArchiveEntry()
+				} catch (e : IOException) {
+				}
+				progressReport(index, totalPackage)
+			}
+		}
+		sevenZOutput.finish()
+	}
+}
+
+fun Uri.getPreview(context : Context) : Bitmap? {
+	val type = context.contentResolver.getType(this)?.split("/")
+	val mimeType = type?.getOrNull(0)
+	val mimeSubType = type?.getOrNull(1)
+
+	var bitmap : Bitmap? = null
+	val parcelFileDescriptor = context.contentResolver.openFileDescriptor(this, "r")
+
+	when (mimeType) {
+		"image" -> {
+			val exif = ExifInterface(context.contentResolver.openInputStream(this) ?: return null)
+			val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+
+			val matrix = Matrix()
+
+			when (orientation) {
+				ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90F)
+				ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180F)
+				ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270F)
+			}
+
+			parcelFileDescriptor?.let {
+				bitmap = BitmapFactory.decodeFileDescriptor(it.fileDescriptor)?.let {
+					Bitmap.createBitmap(it, 0, 0, it.width, it.height, matrix, true)
+				}
+			}
+		}
+
+		"video" -> {
+			val mediaMetadataRetriever = MediaMetadataRetriever()
+			mediaMetadataRetriever.setDataSource(context, this)
+			bitmap = mediaMetadataRetriever.getFrameAtTime(1000)
+		}
+
+		"audio" -> {
+			val mediaMetadataRetriever = MediaMetadataRetriever()
+			mediaMetadataRetriever.setDataSource(context, this)
+			bitmap = mediaMetadataRetriever.embeddedPicture?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+		}
+
+		"application" -> {
+			when (mimeSubType) {
+				"pdf" -> {
+				}
+			}
+		}
+	}
+
+	parcelFileDescriptor?.close()
+
+	return bitmap
+}
+
+fun Uri.getFileName(context : Context) : String? {
+	var result : String? = null
+	if (this.scheme == "content") {
+		val cursor : Cursor? = context.contentResolver.query(this, null, null, null, null)
+		cursor?.use { kursor ->
+			if (kursor.moveToFirst() && kursor.columnCount > 0 && kursor.columnNames.contains(OpenableColumns.DISPLAY_NAME)) {
+				cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME).let { if (it != -1) result = kursor.getString(it) }
+			}
+		}
+	}
+	if (result == null) {
+		result = this.path
+		result?.lastIndexOf('/')?.let { if (it != -1) result = result?.substring(it + 1) }
+	}
+	return result
+}
+
+fun Uri.icon(context : Context) : Int = mimeSubTypeIconMap.getOrDefault(context.contentResolver.getType(this), R.drawable.ic_file)

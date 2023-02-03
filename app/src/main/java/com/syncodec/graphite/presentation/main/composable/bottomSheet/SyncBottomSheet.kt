@@ -92,7 +92,6 @@ fun SyncBottomSheet(
 
 				MenuButton(
 					icon = R.drawable.ic_setting,
-					tint = MaterialTheme.colorScheme.onSurface,
 					modifier = Modifier.requiredSize(32.dp)
 				) {
 					Intent(context, DropboxActivity::class.java).apply {

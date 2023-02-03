@@ -1,49 +1,34 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketItemState
+import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnPagerStateChange
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnReorderBucketItem
+import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenBottomSheet
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionPagerState
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSetBucketItemObject
 import com.syncodec.graphite.presentation.bucket.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucket.composable.bar.TopBar
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetType
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.bucket.composable.dialog.BucketDialog
+import com.syncodec.graphite.presentation.bucket.composable.screen.bookScreen.BucketBookScreen
+import com.syncodec.graphite.presentation.bucket.composable.screen.linkScreen.BucketLinkScreen
+import com.syncodec.graphite.presentation.bucket.composable.screen.showScreen.BucketShowScreen
+import com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen.BucketTodoScreen
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.button.PrimaryButton
+import com.syncodec.graphite.presentation.common.scaffold.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.enumValueOf
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 
 @OptIn(
@@ -52,122 +37,87 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun BucketScreen(
+	bucketObject : BucketObject?,
 	modalBottomSheetState : ModalBottomSheetState,
 	bottomSheetType : BucketBottomSheetType,
+	onClickBack : () -> Unit = {},
 ) {
 	val scope = rememberCoroutineScope()
-
-	val bucketObject = LocalCompositionBucketObject.current
-	val onReorderBucketItem = LocalCompositionOnReorderBucketItem.current
+	val viewModel : BucketViewModel = koinViewModel()
 
 	val isSelected = LocalCompositionIsSelected.current
 
-	val isVaultOpened = LocalVaultIsOpened.current
-
-	var bottomBarSpacingPx by remember { mutableStateOf<Int?>(null) }
-
 	val pagerState = rememberPagerState(0)
+	var currentPage = pagerState.currentPage
+	LaunchedEffect(key1 = pagerState.currentPage) {
+		currentPage = pagerState.currentPage
+	}
 
 	val openSheet = LocalCompositionOpenBottomSheet.current
 
 	val setBucketItemObject = LocalCompositionSetBucketItemObject.current
 
-	CompositionLocalProvider(
-		LocalCompositionPagerState provides pagerState.currentPage,
-		LocalCompositionOnPagerStateChange provides { scope.launch { pagerState.animateScrollToPage(it) } },
-	) {
+	bucketObject?.let { bucketObject ->
 		GenericScaffold(
 			modalBottomSheetState = modalBottomSheetState,
 			sheetContent = { SheetLayout(bottomSheetType = bottomSheetType) },
-			topBar = { TopBar() },
-			dialogContent = { BucketDialog() }
-		) {
-			bucketObject?.let {
-				Column(
-					modifier = Modifier.fillMaxSize()
-				) {
-					Box(
-						modifier = Modifier
-							.fillMaxWidth()
-							.weight(1f)
-					) {
-						HorizontalPager(
-							state = pagerState,
-							count = 4,
-							userScrollEnabled = ! isSelected && it.bucketType != BucketType.LINK.name,
-							modifier = Modifier.fillMaxSize(),
-						) { currentPage ->
-							val filteredList = it.bucketItemList.filter {
-								if (currentPage == 0) true
-								else try {
-									BucketItemState.valueOf(it.state).ordinal == currentPage - 1
-								} catch (e : Exception) {
-									false
-								}
-							}.filter {
-								if (it.isLocked) isVaultOpened
-								else true
-							}
-
-							when (it.bucketType) {
-								BucketType.TODO.name -> TodoScreen(bucketItemList = filteredList)
-								BucketType.BOOK.name -> BookGridScreen(bucketItemList = filteredList)
-								BucketType.SHOW.name -> ShowGridScreen(bucketItemList = filteredList)
-								BucketType.LINK.name -> LinkListScreen(bucketItemList = filteredList, onReorderBucketItemList = onReorderBucketItem)
-								else -> null
-							}
-						}
+			topBar = {
+				TopBar(
+					title = bucketObject.title,
+					isLocked = bucketObject.isLocked,
+					isFavourite = bucketObject.isFavourite,
+					bucketType = enumValueOf(bucketObject.bucketType, BucketType.UNKNOWN),
+					viewState = currentPage,
+					isSelected = isSelected,
+					onClickFavourite = viewModel::toggleFavourite,
+					onClickLock = viewModel::toggleLock,
+					onStateChange = { scope.launch { pagerState.animateScrollToPage(it) } },
+					onClickBack = onClickBack,
+				)
+			},
+			bottomBar = { BottomBar() },
+			isBottomBarVisible = ! isSelected,
+			dialogContent = { BucketDialog(bucketObject = bucketObject) },
+			isButtonVisible = ! isSelected,
+			primaryButton = GenericButton(
+				text = when (bucketObject.bucketType) {
+					BucketType.TODO.name -> "Add Todo"
+					BucketType.BOOK.name -> "Add Book"
+					BucketType.SHOW.name -> "Add Show"
+					BucketType.LINK.name -> "Add Link"
+					BucketType.UNKNOWN.name -> "ERROR"
+					else -> "ERROR"
+				},
+				icon = when (bucketObject.bucketType) {
+					BucketType.TODO.name -> R.drawable.ic_todo
+					BucketType.BOOK.name -> R.drawable.ic_book_shelf
+					BucketType.SHOW.name -> R.drawable.ic_show
+					BucketType.LINK.name -> R.drawable.ic_link
+					BucketType.UNKNOWN.name -> R.drawable.ic_warning
+					else -> R.drawable.ic_warning
+				},
+				onClick = {
+					when (bucketObject.bucketType) {
+						BucketType.TODO.name -> BucketBottomSheetType.ADD_TODO
+						BucketType.BOOK.name -> BucketBottomSheetType.ADD_BOOK
+						BucketType.SHOW.name -> BucketBottomSheetType.ADD_SHOW
+						BucketType.LINK.name -> BucketBottomSheetType.ADD_LINK
+						else -> BucketBottomSheetType.MENU
+					}.let {
+						if (it == BucketBottomSheetType.ADD_TODO) setBucketItemObject(null)
+						openSheet(it)
 					}
-
-					BottomBar(modifier = Modifier.onGloballyPositioned {
-						bottomBarSpacingPx = it.positionInParent().y.toInt()
-					})
 				}
-
-				AnimatedVisibility(
-					visible = ! isSelected,
-					enter = fadeIn(tween(300)),
-					exit = fadeOut(tween(300)),
-					modifier = Modifier
-				) {
-					PrimaryButton(
-						primaryText = when (it.bucketType) {
-							BucketType.TODO.name -> "Add Todo"
-							BucketType.BOOK.name -> "Add Book"
-							BucketType.SHOW.name -> "Add Show"
-							BucketType.LINK.name -> "Add Link"
-							else -> "ERROR"
-						},
-						primaryIcon = when (it.bucketType) {
-							BucketType.TODO.name -> R.drawable.ic_todo
-							BucketType.BOOK.name -> R.drawable.ic_book_shelf
-							BucketType.SHOW.name -> R.drawable.ic_show
-							BucketType.LINK.name -> R.drawable.ic_link
-							else -> R.drawable.ic_warning
-						},
-						primaryDescription = when (it.bucketType) {
-							BucketType.TODO.name -> "Add a new todo to your bucket"
-							BucketType.BOOK.name -> "Add a new book to your bucket"
-							BucketType.SHOW.name -> "Add a new show to your bucket"
-							BucketType.LINK.name -> "Add a new link to your bucket"
-							else -> "ERROR"
-						},
-						bottomBarSpacingPx = bottomBarSpacingPx,
-						onClickPrimary = {
-							when (it.bucketType) {
-								BucketType.TODO.name -> BucketBottomSheetType.ADD_TODO
-								BucketType.BOOK.name -> BucketBottomSheetType.ADD_BOOK
-								BucketType.SHOW.name -> BucketBottomSheetType.ADD_SHOW
-								BucketType.LINK.name -> BucketBottomSheetType.ADD_LINK
-								else -> BucketBottomSheetType.MENU
-							}.let {
-								if (it == BucketBottomSheetType.ADD_TODO) setBucketItemObject(null)
-								openSheet(it)
-							}
-						}
-					)
-				}
-			} ?: LoadingView()
+			)
+		) {
+			when (bucketObject.bucketType) {
+				BucketType.TODO.name -> BucketTodoScreen(pagerState = pagerState)
+				BucketType.BOOK.name -> BucketBookScreen(pagerState = pagerState)
+				BucketType.SHOW.name -> BucketShowScreen(pagerState = pagerState)
+				BucketType.LINK.name -> BucketLinkScreen()
+				BucketType.UNKNOWN.name -> null
+				else -> null
+			}
 		}
-	}
+	} ?: LoadingView()
 }

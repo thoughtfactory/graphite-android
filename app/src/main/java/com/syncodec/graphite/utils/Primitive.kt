@@ -131,3 +131,15 @@ fun ByteArray.dbxHash(): ByteArray {
 	blockedHash.forEach { digest.update(it) }
 	return digest.digest()
 }
+
+inline fun <reified T : Enum<T>> enumValueOf(name: String?, defaultValue: T): T {
+	return try {
+		if (name != null) {
+			enumValueOf(name)
+		} else {
+			defaultValue
+		}
+	} catch (e: Exception) {
+		defaultValue
+	}
+}

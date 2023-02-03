@@ -5,21 +5,20 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.KoinRepository
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
-import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
+import org.koin.android.annotation.KoinViewModel
 
 
-@HiltViewModel
-class TagsViewModel @Inject constructor(private val repository2 : Repository2) : ViewModel() {
+@KoinViewModel
+class TagsViewModel(private val repository : KoinRepository) : ViewModel() {
 
-	val repositoryState = repository2.repositoryState
+	val repositoryState = repository.repositoryState
 
 	val tagList : SnapshotStateList<TagObject> = mutableStateListOf()
 
@@ -32,7 +31,7 @@ class TagsViewModel @Inject constructor(private val repository2 : Repository2) :
 				RepositoryState.SUCCESS -> {
 					viewModelScope.launch(Dispatchers.IO) {
 						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
-						repository2.getAllTagAsFlow().collect {
+						repository.getAllTagAsFlow().collect {
 							withContext(Dispatchers.Main) {
 								tagList.clear()
 								tagList.addAll(it)
@@ -49,7 +48,7 @@ class TagsViewModel @Inject constructor(private val repository2 : Repository2) :
 	fun putTag(tagObject : TagObject) {
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
-				repository2.putTag(tagObject) { _, _ -> }
+				repository.putTag(tagObject) { _, _ -> }
 			} catch (e : RealmNotInitializedException) {
 			} catch (e : Exception) {
 			}
@@ -59,7 +58,7 @@ class TagsViewModel @Inject constructor(private val repository2 : Repository2) :
 	fun deleteTag(tagObject : TagObject?) {
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
-				repository2.deleteTag(tagObject?.id)
+				repository.deleteTag(tagObject?.id)
 			} catch (e : RealmNotInitializedException) {
 			} catch (e : Exception) {
 			}

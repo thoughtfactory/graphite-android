@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.bucket.composable.dialog
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,8 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
@@ -20,31 +19,26 @@ import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DialogText
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 
 
+@Preview
 @Composable
 fun EditBucketDialog(
-	title: String?,
-	description: String?,
-	showDialog: Boolean,
-	onDismiss: () -> Unit,
-	onSave: (String?, String?) -> Unit,
+	title : String? = null,
+	description : String? = null,
+	showDialog : Boolean = true,
+	onDismiss : () -> Unit = {},
+	onSave : (String?, String?) -> Unit = { _, _ -> }
 ) {
 
-	val context = LocalContext.current
+	var newTitle by remember { mutableStateOf(title) }
+	var newDescription by remember { mutableStateOf(description) }
 
-	var _title by remember { mutableStateOf(title) }
-	var _description by remember { mutableStateOf(description) }
-
-	LaunchedEffect(key1 = title) {
-		_title = title
-	}
-	LaunchedEffect(key1 = description) {
-		_description = description
-	}
+	LaunchedEffect(key1 = title) { newTitle = title }
+	LaunchedEffect(key1 = description) { newDescription = description }
 
 	LaunchedEffect(key1 = showDialog) {
 		if (showDialog) {
-			_title = title
-			_description = description
+			newTitle = title
+			newDescription = description
 		}
 	}
 
@@ -53,50 +47,37 @@ fun EditBucketDialog(
 	GenericDialog(
 		showDialog = showDialog,
 		title = "Edit Bucket",
+		dualActionButton = {
+			DualActionButtons(
+				primaryText = "Save",
+				onClickPrimary = {
+					onSave(newTitle, newDescription)
+					onDismiss()
+				},
+				secondaryText = "Discard",
+				onClickSecondary = onDismiss
+			)
+		},
 		onDismissRequest = onDismiss
 	) {
+		Spacer(modifier = Modifier.height(8.dp))
 		DialogTextField(
-			value = _title ?: "",
+			value = newTitle ?: "",
 			label = "Title",
 			placeholder = "An interesting title",
-			trailingIcon = {
-				MenuButton(
-					icon = R.drawable.ic_close,
-					tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-				) { _title = "" }
-			},
 			onKeyboardAction = {
 //				titleFocusRequester.freeFocus()
 //				descriptionFocusRequester.captureFocus()
 			},
-		) { _title = it ?: "" }
+		) { newTitle = it ?: "" }
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		DialogTextField(
-			value = _description ?: "",
+			value = newDescription ?: "",
 			label = "Description",
 			placeholder = "What is it about?",
-			maxLines = 7,
-			trailingIcon = {
-				MenuButton(
-					icon = R.drawable.ic_close,
-					tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-				) { _description = null }
-			},
 			onKeyboardAction = { focusManager.clearFocus(false) },
-		) { _description = it }
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		DualActionButtons(
-			primaryText = "Save",
-			onPrimaryClick = {
-				onSave(_title, _description)
-				onDismiss()
-			},
-			secondaryText = "Discard",
-			onSecondaryClick = onDismiss
-		)
+		) { newDescription = it }
 	}
 }

@@ -30,9 +30,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,8 +54,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
+import com.maxkeppeker.sheets.core.models.base.Header
+import com.maxkeppeker.sheets.core.models.base.rememberSheetState
+import com.maxkeppeler.sheets.color.ColorDialog
+import com.maxkeppeler.sheets.color.models.ColorConfig
+import com.maxkeppeler.sheets.color.models.ColorSelection
+import com.maxkeppeler.sheets.color.models.ColorSelectionMode
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
@@ -88,7 +97,11 @@ fun ChapterCoverPicker(
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.medium)
+			.background(
+				MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.31f), MaterialTheme.shapes.medium
+			)
 	) {
 		Column(
 			modifier = Modifier
@@ -119,7 +132,7 @@ fun ChapterCoverPicker(
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun ColorPicker(
@@ -316,7 +329,9 @@ private fun ImagePicker(
 						.clip(MaterialTheme.shapes.medium)
 						.clickable {
 							if (isPro) openFilePicker.launch(arrayOf("image/*"))
-							else Toast.makeText(context, "Join Graphite Pro to add custom cover in notebooks", Toast.LENGTH_SHORT).show()
+							else Toast
+								.makeText(context, "Join Graphite Pro to add custom cover in notebooks", Toast.LENGTH_SHORT)
+								.show()
 						},
 				) {
 					AnimatedContent(

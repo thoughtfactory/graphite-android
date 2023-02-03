@@ -24,11 +24,7 @@ fun NoteFloatingActionButton(
 ) {
 	ExtendedFloatingActionButton(
 		text = {
-			Text(
-				text = "New Note",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold
-			)
+			Text(text = "New Note")
 		},
 		icon = {
 			Icon(
@@ -50,11 +46,7 @@ fun BucketFloatingActionButton(
 ) {
 	ExtendedFloatingActionButton(
 		text = {
-			Text(
-				text = "New List",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold
-			)
+			Text(text = "New List")
 		},
 		icon = {
 			Icon(
@@ -76,11 +68,7 @@ fun NotebookFloatingActionButton(
 ) {
 	ExtendedFloatingActionButton(
 		text = {
-			Text(
-				text = "New Notebook",
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.Bold
-			)
+			Text(text = "New Notebook")
 		},
 		icon = {
 			Icon(

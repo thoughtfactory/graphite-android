@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.ui.DeleteContainer
 
 
 class TagObjectPreviewParameter: PreviewParameterProvider<TagObject> {
@@ -74,13 +73,11 @@ fun TagItem(
 
 			MenuButton(
 				icon = R.drawable.ic_delete,
-				tint = Color.Companion.DeleteContainer,
 				onClick = onDelete,
 			)
 
 			MenuButton(
 				icon = R.drawable.ic_pencil,
-				tint = MaterialTheme.colorScheme.onSurface,
 				onClick = onClick,
 			)
 		}

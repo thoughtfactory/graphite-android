@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.pro.composable.bar
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
@@ -7,26 +8,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.pro.ProActivity
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar() {
-
-	val onBackPressed = ProActivity.onBackPressed.current
+	val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
 	TopAppBar(
-		navigationIcon = {
-			MenuButton(
-				icon = R.drawable.ic_close,
-				tint = MaterialTheme.colorScheme.onBackground,
-				onClick = onBackPressed
-			)
-		},
-		title = {
-
-		},
+		navigationIcon = { MenuButton(icon = R.drawable.ic_close) { backPressedDispatcher?.onBackPressed() } },
+		title = {},
 		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = MaterialTheme.colorScheme.background,
 			navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
@@ -34,5 +25,4 @@ fun TopBar() {
 			actionIconContentColor = MaterialTheme.colorScheme.onBackground
 		)
 	)
-
 }

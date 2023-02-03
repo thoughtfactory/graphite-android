@@ -110,8 +110,8 @@ fun EditTagDialog(
 		DualActionButtons(
 			primaryText = "Save",
 			secondaryText = "Discard",
-			onPrimaryClick = { onSave(_tag, _color) },
-			onSecondaryClick = onDismiss
+			onClickPrimary = { onSave(_tag, _color) },
+			onClickSecondary = onDismiss
 		)
 	}
 }

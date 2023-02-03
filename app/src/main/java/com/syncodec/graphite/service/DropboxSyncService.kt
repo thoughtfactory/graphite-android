@@ -13,38 +13,18 @@ import android.os.Looper
 import android.os.Message
 import android.util.Log
 import android.widget.Toast
-import com.dropbox.core.DbxRequestConfig
-import com.dropbox.core.v2.DbxClientV2
-import com.dropbox.core.v2.files.SearchOptions
-import com.dropbox.core.v2.files.WriteMode
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.syncodec.graphite.di.model.ChapterSnapshot
-import com.syncodec.graphite.di.model.NoteSnapshot
 import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
-import com.syncodec.graphite.di.repository.Repository2
-import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.di.sync.DbxToken
 import com.syncodec.graphite.di.sync.DropboxApi
-import com.syncodec.graphite.di.sync.DropboxInnerMetadata
-import com.syncodec.graphite.di.sync.DropboxMetadata
-import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.alice.AliceRequestResult
-import com.syncodec.graphite.utils.alice.getSecretData
-import com.syncodec.graphite.utils.dbxHash
-import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.util.Date
-import javax.inject.Inject
-import kotlin.system.exitProcess
 
 
 enum class DropboxSyncStatus {
@@ -59,7 +39,6 @@ enum class DropboxSyncStatus {
 	DRIVE_LOCKED
 }
 
-@AndroidEntryPoint
 class DropboxSyncService : Service(), DropboxApi {
 
 	private val objectMapper = jsonMapper {
@@ -116,8 +95,8 @@ class DropboxSyncService : Service(), DropboxApi {
 		}
 	}
 
-	@Inject
-	lateinit var repository2 : Repository2
+//	@Inject
+//	lateinit var repository2 : Repository2
 
 	override fun onCreate() {
 		super.onCreate()

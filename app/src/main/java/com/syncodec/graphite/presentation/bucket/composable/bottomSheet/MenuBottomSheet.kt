@@ -16,6 +16,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
@@ -37,17 +38,19 @@ import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGr
 import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
-import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.timeStampToPrettyFull
+import org.koin.androidx.compose.koinViewModel
 
 
 @Preview
 @Composable
 fun MenuBottomSheet() {
+	val viewModel: BucketBottomSheetViewModel = koinViewModel()
 
-	val isVaultOpened = LocalVaultIsOpened.current
+	val bucketObject by viewModel.bucketObject.collectAsState()
 
-	val bucketObject = LocalCompositionBucketObject.current
+	val isVaultOpened = LocalIsAuthenticated.current
 
 	val openDialog = LocalCompositionOpenDialog.current
 	val closeSheet = LocalCompositionCloseBottomSheet.current

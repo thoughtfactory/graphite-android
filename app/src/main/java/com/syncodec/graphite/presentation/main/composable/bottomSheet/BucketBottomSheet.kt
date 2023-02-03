@@ -8,7 +8,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,8 +47,6 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionPutBucket
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.bucketItemNameMap
 import com.syncodec.graphite.utils.bucketTypeToIcon
@@ -64,19 +62,15 @@ private data class BucketButtonData(
 @OptIn(ExperimentalComposeUiApi::class)
 @Preview
 @Composable
-fun ColumnScope.BucketBottomSheet() {
+fun BucketBottomSheet(
+	putBucket : (String?, String?, BucketType) -> Unit = { _, _, _ -> },
+) {
 	val context = LocalContext.current
-
-	val closeSheet = LocalCompositionCloseBottomSheet.current
-
-	val putBucket = LocalCompositionPutBucket.current
 
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var selectedBucketType by remember { mutableStateOf<BucketType?>(null) }
-
 	var bucketTitleText by rememberSaveable { mutableStateOf("") }
-
 	var bucketDescriptionText by rememberSaveable { mutableStateOf("") }
 
 	val bucketButtonDataList : List<BucketButtonData> = listOf(
@@ -144,10 +138,11 @@ fun ColumnScope.BucketBottomSheet() {
 		Spacer(modifier = Modifier.height(4.dp))
 
 		Button(
+			shape = MaterialTheme.shapes.medium,
 			colors = ButtonDefaults.buttonColors(
 				containerColor = MaterialTheme.colorScheme.primary,
 				contentColor = MaterialTheme.colorScheme.onPrimary,
-				disabledContainerColor = MaterialTheme.colorScheme.surface,
+				disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 				disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 			),
 			enabled = selectedBucketType != null && bucketTitleText.isNotBlank(),
@@ -159,13 +154,9 @@ fun ColumnScope.BucketBottomSheet() {
 				bucketDescriptionText = ""
 				selectedBucketType = null
 				keyboardController?.hide()
-				closeSheet()
-			}
+			},
 		) {
-			Text(
-				text = "Create",
-				modifier = Modifier
-			)
+			Text(text = "Create")
 		}
 	}
 }

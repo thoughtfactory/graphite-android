@@ -9,11 +9,9 @@ import android.os.Bundle
 import android.os.CancellationSignal
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -23,7 +21,6 @@ import androidx.compose.animation.with
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -46,29 +43,6 @@ import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseDialog
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsBucketRefreshing
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNoteRefreshing
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionIsNotebookRefreshing
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnAddDebugData
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnExit
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnForceSync
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnRefresh
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnReorderBucketList
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSyncNow
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionPutBucket
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowDeleteDialog
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowExitDialog
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionShowNotificationPermissionDialog
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionSyncStatus
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionTagList
-import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
-import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
@@ -76,13 +50,12 @@ import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.service.DropboxSyncStatus
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-	private val viewModel by viewModels<MainViewModel>()
+	private val viewModel by viewModel<MainViewModel>()
 
 	private lateinit var auth : FirebaseAuth
 	private lateinit var oneTapClient : SignInClient
@@ -142,134 +115,44 @@ class MainActivity : ComponentActivity() {
 
 				val repositoryState by viewModel.repositoryState.collectAsState(initial = null)
 
-				val tagList = viewModel.tagList
-
-				val isNoteRefreshing by viewModel.isNoteRefreshing
-				val isBucketRefreshing by viewModel.isBucketRefreshing
-				val isNotebookRefreshing by viewModel.isNotebookRefreshing
-
-				var isSelected by viewModel.isSelected
-				val selectedRealmUUIDList = viewModel.selectedObjectIdList
-
-				var showNotificationPermissionDialog by remember { mutableStateOf(false) }
-				var showDeleteDialog by viewModel.showDeleteDialog
-				var showExitDialog by viewModel.showExitDialog
-
-				var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
-
 				val biometricErrorMessage by this.biometricErrorMessage
-				val _syncStatus by this.syncStatus
 
-				fun openDialog(_mainDialogType : MainDialogType) {
-					when (_mainDialogType) {
-						MainDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = true
-						MainDialogType.DELETE -> showDeleteDialog = true
-						MainDialogType.EXIT -> showExitDialog = true
-					}
-				}
-
-				fun closeDialog(_mainDialogType : MainDialogType) {
-					when (_mainDialogType) {
-						MainDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = false
-						MainDialogType.DELETE -> showDeleteDialog = false
-						MainDialogType.EXIT -> showExitDialog = false
-					}
-				}
-
-				this.onBackPressedDispatcher.addCallback(
-					this, object : OnBackPressedCallback(true) {
-						override fun handleOnBackPressed() {
-							if (isSelected) {
-								selectedRealmUUIDList.clear()
-								isSelected = false
-							} else {
-								if (currentRoute.route == BottomNavigationItem.Home.route) openDialog(MainDialogType.EXIT)
-								else currentRoute = BottomNavigationItem.Home
-							}
-						}
-					}
-				)
-
-				CompositionLocalProvider(
-					LocalCompositionSyncStatus provides _syncStatus,
-					LocalCompositionTagList provides tagList,
-					LocalCompositionIsNoteRefreshing provides isNoteRefreshing,
-					LocalCompositionIsBucketRefreshing provides isBucketRefreshing,
-					LocalCompositionIsNotebookRefreshing provides isNotebookRefreshing,
-					LocalCompositionOnRefresh provides { viewModel.refresher.value = viewModel.refresher.value + 1 },
-					LocalCompositionOnSyncNow provides {
-//						dropboxSyncService?.onSync()
-					},
-					LocalCompositionOnForceSync provides { },
-					LocalCompositionIsSelected provides isSelected,
-					LocalCompositionOnSelect provides { isSelected = it },
-					LocalCompositionSelectedObjectIdList provides selectedRealmUUIDList,
-					LocalCompositionPutBucket provides viewModel::putBucket,
-					LocalCompositionOnReorderBucketList provides viewModel::onReorderBucketList,
-					LocalCompositionOpenDialog provides ::openDialog,
-					LocalCompositionCloseDialog provides ::closeDialog,
-					LocalCompositionShowNotificationPermissionDialog provides showNotificationPermissionDialog,
-					LocalCompositionShowDeleteDialog provides showDeleteDialog,
-					LocalCompositionShowExitDialog provides showExitDialog,
-					LocalCompositionOnDelete provides viewModel::delete,
-					LocalCompositionOnExit provides {
-						finishAndRemoveTask()
-						viewModel.onDeauthenticate()
-					},
-					LocalCompositionOnAddDebugData provides {},
+				AnimatedContent(
+					targetState = isFirstTime,
+					transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
+					modifier = Modifier.fillMaxSize()
 				) {
-					AnimatedContent(
-						targetState = isFirstTime,
-						transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
-						modifier = Modifier.fillMaxSize()
-					) {
-						when (it) {
-							true -> FirstTimeScreen(onClickLogin = this@MainActivity::signIn)
-							false -> AnimatedContent(
-								targetState = repositoryState,
-								transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
-								modifier = Modifier.fillMaxSize()
-							) {
-								when (it) {
-									RepositoryState.LOCKED -> RepositoryLockedScreen(
-										errorMessage = biometricErrorMessage,
-										onUnlock = { this@MainActivity.launchBiometric() }
-									)
+					when (it) {
+						true -> FirstTimeScreen(onClickLogin = this@MainActivity::signIn)
+						false -> AnimatedContent(
+							targetState = repositoryState,
+							transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
+							modifier = Modifier.fillMaxSize()
+						) {
+							when (it) {
+								RepositoryState.LOCKED -> RepositoryLockedScreen(
+									errorMessage = biometricErrorMessage,
+									onUnlock = { this@MainActivity.launchBiometric() }
+								)
 
-									RepositoryState.SUCCESS -> MainScreen(
-										viewModel = viewModel,
-										currentRoute = currentRoute,
-									) { currentRoute = it }
+								RepositoryState.SUCCESS -> MainScreen()
 
-									RepositoryState.ERROR -> RepositoryLockedScreen(
-										errorMessage = biometricErrorMessage,
-										onUnlock = { this@MainActivity.launchBiometric() }
-									)
+								RepositoryState.ERROR -> RepositoryLockedScreen(
+									errorMessage = biometricErrorMessage,
+									onUnlock = { this@MainActivity.launchBiometric() }
+								)
 
-									else -> LoadingView()
-								}
+								else -> LoadingView()
 							}
-
-							else -> LoadingView()
 						}
+
+						else -> LoadingView()
 					}
 				}
 			}
 		}
 	}
 
-	override fun onResume() {
-		super.onResume()
-
-		viewModel.refresher.value = viewModel.refresher.value + 1
-	}
-
-	override fun onDestroy() {
-		isInStack = false
-
-//		dropboxServiceConnection.unbindFromService()
-		super.onDestroy()
-	}
 
 
 	private fun checkBiometricSupport() : Boolean {
@@ -422,25 +305,6 @@ class MainActivity : ComponentActivity() {
 			Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 		}
 	}
-
-//	var dropboxSyncService : DropboxSyncService? = null
-//	private val dropboxServiceConnection = DropboxSyncServiceConnectionManager(this) {
-//		dropboxSyncService = it
-//		it?.let {
-//			CoroutineScope(Dispatchers.Main).launch {
-//				it.dropboxSyncStatus.collect {
-//					syncStatus.value = it
-//				}
-//			}
-//		}
-//	}
-
-//	private fun startSyncService() {
-//		Intent(this.applicationContext, DropboxSyncService::class.java).apply {
-//			dropboxServiceConnection.bindToService()
-//		}
-//	}
-
 	companion object {
 		var isInStack = false
 	}

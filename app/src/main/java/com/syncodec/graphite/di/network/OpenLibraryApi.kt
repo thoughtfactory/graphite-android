@@ -4,6 +4,7 @@ import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import okhttp3.OkHttpClient
@@ -12,34 +13,6 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.Serializable
 import java.net.URLEncoder
-
-
-enum class ApiStatus {
-	LOADING,
-	SUCCESS,
-	ERROR,
-}  // for your case might be simplify to use only sealed class
-
-sealed class ApiResult<out T>(val status : ApiStatus, val data : T?, val message : String?) {
-
-	data class Loading<out R>(val _data : R?, val isLoading : Boolean) : ApiResult<R>(
-		status = ApiStatus.LOADING,
-		data = _data,
-		message = null
-	)
-
-	data class Success<out R>(val _data : R?) : ApiResult<R>(
-		status = ApiStatus.SUCCESS,
-		data = _data,
-		message = null
-	)
-
-	data class Error(val exception : String) : ApiResult<Nothing>(
-		status = ApiStatus.ERROR,
-		data = null,
-		message = exception
-	)
-}
 
 
 object OpenLibraryApi {
@@ -53,7 +26,16 @@ object OpenLibraryApi {
 		ISBN
 	}
 
-	fun searchForBook(query : String, requestType : OpenLibraryApiRequestType, onResponse : (OpenLibraryTitleSearchResult?) -> Unit) {
+	/**
+	 * Search for a book by title on OpenLibrary
+	 * @author pushpull
+	 * @since 2.2.0
+	 * @param query Query to search for
+	 * @param requestType Type of request QUERY, TITLE, ISBN
+	 * @param onResponse Callback for the result in form of OpenLibraryTitleSearchResult
+	 */
+	fun searchForBook(query : String, requestType : OpenLibraryApiRequestType, onResponse : (ApiResult<OpenLibraryTitleSearchResult>) -> Unit) {
+		onResponse(ApiResult.Loading(null, true))
 		try {
 			val url = when (requestType) {
 				OpenLibraryApiRequestType.QUERY -> "https://openlibrary.org/search.json?q="
@@ -73,10 +55,10 @@ object OpenLibraryApi {
 
 				val response = client.newCall(request).execute()
 				val openLibraryTitleSearchResult = objectMapper.readValue(response.body?.string(), OpenLibraryTitleSearchResult::class.java)
-				onResponse(openLibraryTitleSearchResult)
+				onResponse(ApiResult.Success(openLibraryTitleSearchResult))
 			}
 		} catch (e : Exception) {
-			onResponse(null)
+			onResponse(ApiResult.Error(e.message ?: "Unknown error"))
 		}
 	}
 
@@ -148,6 +130,23 @@ data class BookData(
 	@JsonProperty("description")
 	var description : String?
 ) : Serializable {
+	constructor(jsonString : String?) : this(null, null, null, null, null, null, null) {
+		if (jsonString != null) {
+			try {
+				val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+				val bookData = objectMapper.readValue(jsonString, BookData::class.java)
+				this.key = bookData.key
+				this.title = bookData.title
+				this.coverI = bookData.coverI
+				this.authorList = bookData.authorList
+				this.firstPublishYear = bookData.firstPublishYear
+				this.numberOfPages = bookData.numberOfPages
+				this.description = bookData.description
+			} catch (e : Exception) {
+
+			}
+		}
+	}
 
 	fun toJsonString() : String {
 		return try {

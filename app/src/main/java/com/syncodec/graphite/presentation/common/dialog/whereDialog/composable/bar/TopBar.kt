@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.navigator.Navigator
+import com.syncodec.graphite.presentation.notebook.screen.composable.bar.Navigator
 import io.realm.kotlin.types.RealmUUID
 
 
@@ -51,10 +51,10 @@ fun TopBar(
 		)
 
 		Navigator(
-			showRoot = true,
+			chapterPath = chapterPath.reversed(),
 			defaultChapterId = null,
-			chapterPath = chapterPath,
-			onClick = onExploreChapter
+			showRoot = true,
+			onClickNavigatorChapter = onExploreChapter,
 		)
 	}
 }

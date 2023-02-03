@@ -11,8 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,21 +37,19 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.chapter.ChapterCoverPicker
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
 @Preview
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NotebookBottomSheet(
 	putNotebook : (String, String, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
+	closeSheet : () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
-
-	val closeSheet = LocalCompositionCloseBottomSheet.current
 
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -92,10 +96,11 @@ fun NotebookBottomSheet(
 		Spacer(modifier = Modifier.height(2.dp))
 
 		Button(
+			shape = MaterialTheme.shapes.medium,
 			colors = ButtonDefaults.buttonColors(
 				containerColor = MaterialTheme.colorScheme.primary,
 				contentColor = MaterialTheme.colorScheme.onPrimary,
-				disabledContainerColor = MaterialTheme.colorScheme.surface,
+				disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 				disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 			),
 			enabled = ! (coverColor == null && coverImage == null && coverUri == null) && titleText.isNotBlank(),

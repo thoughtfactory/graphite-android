@@ -42,10 +42,10 @@ fun EnterOAuth2CodeDialog(
 		DualActionButtons(
 			primaryText = "Ok",
 			secondaryText = "Cancel",
-			onPrimaryClick = {
+			onClickPrimary = {
 				onEnterCode(oAuthCodeText)
 			},
-			onSecondaryClick = {
+			onClickSecondary = {
 				oAuthCodeText = ""
 				onDismiss()
 			}

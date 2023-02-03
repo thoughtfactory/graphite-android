@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,7 +33,7 @@ fun BottomSheetButton(
 	modifier: Modifier = Modifier,
 	title: String = "Title",
 	icon: Int = R.drawable.ic_menu,
-	containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+	containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 	contentColor: Color = MaterialTheme.colorScheme.onSurface,
 	onClick: () -> Unit = {}
 ) {

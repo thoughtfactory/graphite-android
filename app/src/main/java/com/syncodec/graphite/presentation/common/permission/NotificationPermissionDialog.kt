@@ -53,14 +53,14 @@ fun NotificationPermissionDialog(
 		DualActionButtons(
 			primaryText = "Request",
 			secondaryText = "Discard",
-			onPrimaryClick = {
+			onClickPrimary = {
 				Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
 					addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 					this.data = Uri.fromParts("package", context.packageName, null)
 					startActivity(context, this, null)
 				}
 			},
-			onSecondaryClick = onDismiss
+			onClickSecondary = onDismiss
 		)
 	}
 }

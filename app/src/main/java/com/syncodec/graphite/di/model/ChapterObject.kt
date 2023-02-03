@@ -2,6 +2,9 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmList
@@ -208,5 +211,14 @@ data class ChapterSnapshot(
 		this.isFavourite = this@ChapterSnapshot.isFavourite
 		this.isLocked = this@ChapterSnapshot.isLocked
 		this.parentId = this@ChapterSnapshot.parentId?.let { RealmUUID.from(this@ChapterSnapshot.id) }
+	}
+
+	fun toJsonString(): String? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			return objectMapper.writeValueAsString(this)
+		} catch (e: Exception) {
+			null
+		}
 	}
 }

@@ -11,11 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.ui.DeleteContainer
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.utils.tone
 
 
@@ -39,15 +38,21 @@ fun BottomBar(
 
 		MenuButton(
 			icon = R.drawable.ic_share,
-			contentDescription = "Share",
-			tint = contentColor,
+			tooltip = "Share",
+			colors = MenuButtonDefaults.menuButtonColors(
+				containerColor = containerColor,
+				iconColor = contentColor,
+			),
 			onClick = onClickShare
 		)
 
 		MenuButton(
 			icon = R.drawable.ic_delete,
-			contentDescription = "Delete",
-			tint = Color.DeleteContainer,
+			tooltip = "Delete",
+			colors = MenuButtonDefaults.menuButtonColors(
+				containerColor = containerColor,
+				iconColor = MaterialTheme.colorScheme.error,
+			),
 			onClick = onClickDelete
 		)
 
@@ -57,8 +62,7 @@ fun BottomBar(
 
 		MenuButton(
 			icon = R.drawable.ic_clock,
-			contentDescription = "Add reminder",
-			tint = contentColor,
+			tooltip = "Add reminder",
 			onClick = onClickAddReminder
 		)
 

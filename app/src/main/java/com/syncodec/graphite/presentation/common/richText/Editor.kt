@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.common.richText
 
 import android.content.Context
-import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -13,8 +12,6 @@ import androidx.annotation.Keep
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -30,9 +27,12 @@ import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.toHexString
+import io.github.esentsov.FilePrivate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -40,26 +40,32 @@ import kotlinx.coroutines.withContext
 class RichTextEditor(context : Context, val containerColor : Color, contentColor : Color, screenHeightPx : Int, typography : Int?) : WebView(context) {
 	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-	interface FormatUpdateListener {
-		fun onFormatUpdate(newTextFormat : TextFormat)
-	}
 
+	/**
+	 * Override [GetTextListener] to get data from the editor.
+	 *
+	 * @author pushpull
+	 * @since 2.2.0
+	 * @param extra Can be used to identify the type of data.
+	 * @param data Handle according to [extra].
+	 *
+	 * @see [getData]
+	 */
 	interface GetTextListener {
-		fun onGetData(extra : String?, data : String?)
+		fun onGetData(requestData : RequestData, data : String?)
 	}
 
-	private var formatUpdateListener : FormatUpdateListener? = null
 	private var getTextListener : GetTextListener? = null
-
-	fun setFormatUpdateListener(listener : FormatUpdateListener) {
-		formatUpdateListener = listener
-	}
 
 	fun setGetTextListener(listener : GetTextListener) {
 		getTextListener = listener
 	}
 
-	var isReady : MutableState<Boolean> = mutableStateOf(false)
+	/** Set by [onReady] when TipTap is ready to use. Observe this and update UI accordingly.*/
+	private var _isReady : MutableStateFlow<Boolean> = MutableStateFlow(false)
+	val isReady : StateFlow<Boolean> = _isReady
+
+	val textFormat = MutableStateFlow(TextFormat())
 	var currentSelection : Int = 0
 
 	init {
@@ -68,7 +74,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 
 		settings.javaScriptEnabled = true
 		settings.domStorageEnabled = true
-//		settings.setRenderPriority(WebSettings.RenderPriority.HIGH)
+		settings.setRenderPriority(WebSettings.RenderPriority.HIGH)
 
 		webViewClient = WebViewClient()
 
@@ -89,7 +95,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			it.read(buffer)
 			it.close()
 			val encHtml = String(buffer)
-			val passcode = "2%xY@Z5kYGu*iX!#N3m%03fC%4!070#D"
+			val passcode = "d5Y3f8*hN8%c%Q3%Jb9vU^8R4MV@z^9*"
 
 			CoroutineScope(Dispatchers.IO).launch {
 				try {
@@ -118,15 +124,10 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 		}
 	}
 
-	private fun load(trigger : String) {
-		evaluateJavascript(trigger) { result ->
-			run {
-			}
-		}
-	}
+	private fun load(trigger : String) = evaluateJavascript(trigger) { result -> }
 
 	fun exec(trigger : String) {
-		CoroutineScope(Dispatchers.IO).launch {
+		CoroutineScope(Dispatchers.Default).launch {
 			while (true) {
 				try {
 					if (isReady.value) break
@@ -140,75 +141,172 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 		}
 	}
 
-	@JavascriptInterface
-	fun onCreate() {
-		isReady.value = true
-	}
+	/**
+	 * Set content in TipTap. Do not call this method before the editor [isReady].
+	 * @param content Must be a JSON string in TipTap format.
+	 * @author pushpull
+	 * @since 2.2.0
+	 * */
+	fun setData(title : String?, content : String?) = exec("editor.setData(\"${title ?: ""}\", ${content});")
+	fun onEditorAction(editorAction : EditorAction) = editorActionExecMap[editorAction]?.let { exec(it) }
+	fun save() = exec("editor.getData(\"${RequestData.Save.name}\");")
 
+	/**
+	 * Exposed to JS for TipTap to callback when it is ready to use. This is deeply coupled to the JS code as well as how [exec] is called.
+	 *
+	 * This method is not supposed to be called from anywhere except JS.
+	 * @author pushpull
+	 * @since 2.2.0
+	 * @see [setData]
+	 */
+	@FilePrivate
+	@JavascriptInterface
+	fun onReady() = _isReady.tryEmit(true)
+
+	@FilePrivate
 	@JavascriptInterface
 	fun format(textFormatJsonString : String) {
 		try {
 			val newTextFormat : TextFormat = objectMapper.readValue(textFormatJsonString)
-			formatUpdateListener?.onFormatUpdate(newTextFormat)
+			textFormat.tryEmit(newTextFormat)
 			currentSelection = newTextFormat.currentSelection
 		} catch (_ : Exception) {
 		}
 	}
 
+	/**
+	 * Exposed to JS for TipTap to callback when [save] is called. This is deeply coupled to the JS code as well as how [exec] is called.
+	 *
+	 * This method is not supposed to be called from anywhere except JS.
+	 * @author pushpull
+	 * @since 2.2.0
+	 * @param requestData Can be used to identify the type of data.
+	 * @param data Handle according to [requestData].
+	 * Can have following extra:
+	 *  *   [RequestData.Save] : JSON string. Contains dataJson, dataText and title. dataJson is the JSON string of the document provided and readable by TipTap.
+	 *  *   [RequestData.Share] : JSON string. Contains dataText.
+	 *  *   [RequestData.ExportText] : JSON string. Contains dataText.
+	 *  *   [RequestData.ExportPdf] : JSON string. Contains dataText.
+	 *  *   [RequestData.ExportHtml] : JSON string. Contains dataHtml.
+	 *  *   [RequestData.ExportMarkdown] : JSON string. Contains dataText.
+	 * @see [GetTextListener.onGetData]
+	 */
+	@FilePrivate
 	@JavascriptInterface
-	fun getData(extra : String?, data : String?) {
+	fun getData(requestData : String?, data : String?) {
 		try {
-			getTextListener?.onGetData(extra, data)
+			RequestData.values().find { it.name == requestData }?.let { getTextListener?.onGetData(it, data) }
 		} catch (_ : Exception) {
 		}
 	}
 
-	@Keep
-	data class TextFormat(
-		val bold : Boolean = false,
-		val italic : Boolean = false,
-		val underline : Boolean = false,
-		val strike : Boolean = false,
-		val superscript : Boolean = false,
-		val subscript : Boolean = false,
-
-		val alignLeft : Boolean = false,
-		val alignCenter : Boolean = false,
-		val alignRight : Boolean = false,
-		val alignJustify : Boolean = false,
-
-		val link : String? = null,
-
-		val blockquote : Boolean = false,
-		val code : Boolean = false,
-		val codeBlock : Boolean = false,
-
-		val paragraph : Boolean = false,
-		val heading1 : Boolean = false,
-		val heading2 : Boolean = false,
-		val heading3 : Boolean = false,
-		val heading4 : Boolean = false,
-		val heading5 : Boolean = false,
-		val heading6 : Boolean = false,
-
-		val bulletList : Boolean = false,
-		val orderedList : Boolean = false,
-		val taskList : Boolean = false,
-
-		val characterCount : Int = 0,
-		val wordCount : Int = 0,
-		val textColor : String? = null,
-		val highlightColor : String? = null,
-
-		val fontSize : String = "12px",
-		val fontFamily : String = "Open Sans",
-
-		val currentSelection : Int = 0
-	)
-
 	companion object {
-		const val TAG = "RICH_TEXT_EDITOR"
-		const val INDEX_PATH = "file:///android_asset/dropper/index.html"
+		@Keep
+		data class TextFormat(
+			val bold : Boolean = false,
+			val italic : Boolean = false,
+			val underline : Boolean = false,
+			val strike : Boolean = false,
+			val superscript : Boolean = false,
+			val subscript : Boolean = false,
+
+			val alignLeft : Boolean = false,
+			val alignCenter : Boolean = false,
+			val alignRight : Boolean = false,
+			val alignJustify : Boolean = false,
+
+			val link : String? = null,
+
+			val blockquote : Boolean = false,
+			val code : Boolean = false,
+			val codeBlock : Boolean = false,
+
+			val paragraph : Boolean = false,
+			val heading1 : Boolean = false,
+			val heading2 : Boolean = false,
+			val heading3 : Boolean = false,
+			val heading4 : Boolean = false,
+			val heading5 : Boolean = false,
+			val heading6 : Boolean = false,
+
+			val bulletList : Boolean = false,
+			val orderedList : Boolean = false,
+			val taskList : Boolean = false,
+
+			val characterCount : Int = 0,
+			val wordCount : Int = 0,
+			val textColor : String? = null,
+			val highlightColor : String? = null,
+
+			val fontSize : String = "12px",
+			val fontFamily : String = "Open Sans",
+
+			val currentSelection : Int = 0
+		)
+
+		enum class EditorAction {
+			UNDO,
+			REDO,
+			BOLD,
+			ITALIC,
+			UNDERLINE,
+			STRIKETHROUGH,
+			HARD_LINE_BREAK,
+			CHECK_LIST,
+			BULLET_LIST,
+			ORDERED_LIST,
+			PARAGRAPH,
+			HEADING_1,
+			HEADING_2,
+			HEADING_3,
+			HEADING_4,
+			HEADING_5,
+			HEADING_6,
+			BLOCK_QUOTE,
+			INDENT,
+			OUTDENT,
+			SUPERSCRIPT,
+			SUBSCRIPT,
+		}
+
+		val editorActionExecMap : Map<EditorAction, String> = mapOf(
+			EditorAction.UNDO to "editor.commands.undo();",
+			EditorAction.REDO to "editor.commands.redo();",
+			EditorAction.BOLD to "editor.chain().focus().toggleBold().run()",
+			EditorAction.ITALIC to "editor.chain().focus().toggleItalic().run()",
+			EditorAction.UNDERLINE to "editor.chain().focus().toggleUnderline().run()",
+			EditorAction.STRIKETHROUGH to "editor.chain().focus().toggleStrike().run()",
+			EditorAction.HARD_LINE_BREAK to "editor.chain().focus().setHardBreak().run()",
+			EditorAction.CHECK_LIST to "editor.commands.toggleTaskList();",
+			EditorAction.BULLET_LIST to "editor.commands.toggleBulletList();",
+			EditorAction.ORDERED_LIST to "editor.commands.toggleOrderedList();",
+			EditorAction.PARAGRAPH to "editor.commands.toggleHeading({ level: 3 });",
+			EditorAction.HEADING_1 to "editor.commands.toggleHeading({ level: 1 });",
+			EditorAction.HEADING_2 to "editor.commands.toggleHeading({ level: 2 });",
+			EditorAction.HEADING_3 to "editor.commands.toggleHeading({ level: 3 });",
+			EditorAction.HEADING_4 to "editor.commands.toggleHeading({ level: 4 });",
+			EditorAction.HEADING_5 to "editor.commands.toggleHeading({ level: 5 });",
+			EditorAction.HEADING_6 to "editor.commands.toggleHeading({ level: 6 });",
+			EditorAction.BLOCK_QUOTE to "editor.chain().focus().toggleBlockquote().run();",
+			EditorAction.INDENT to "editor.chain().focus().sinkListItem('listItem').run()",
+			EditorAction.OUTDENT to "editor.chain().focus().liftListItem('listItem').run()",
+			EditorAction.SUPERSCRIPT to "editor.chain().focus().toggleSuperscript().run();",
+			EditorAction.SUBSCRIPT to "editor.chain().focus().toggleSubscript().run();",
+		)
+
+		/**
+		 * Ensure that [RequestData] is consistent with TipTap.
+		 * @author pushpull
+		 * @since 2.2.0
+		 */
+		enum class RequestData {
+			Save,
+			Share,
+			ExportText,
+			ExportPdf,
+			ExportHtml,
+			ExportMarkdown
+		}
 	}
 }
 
@@ -233,9 +331,7 @@ fun rememberRichTextEditor() : RichTextEditor {
 	val lifecycle = LocalLifecycleOwner.current.lifecycle
 	DisposableEffect(lifecycle) {
 		lifecycle.addObserver(lifecycleObserver)
-		onDispose {
-			lifecycle.removeObserver(lifecycleObserver)
-		}
+		onDispose { lifecycle.removeObserver(lifecycleObserver) }
 	}
 
 	return richTextEditor

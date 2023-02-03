@@ -18,10 +18,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,8 +33,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ClipboardManager
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontStyle
@@ -47,10 +45,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.network.ApiStatus
 import com.syncodec.graphite.di.network.BookData
-import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -60,20 +57,19 @@ import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.net.SocketTimeoutException
+import org.koin.androidx.compose.koinViewModel
 
 
 @Preview
-@OptIn(ExperimentalAnimationApi::class, ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalComposeUiApi::class)
 @Preview
 @Composable
 fun AddBookBottomSheet() {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
-	val clipboardManager : ClipboardManager = LocalClipboardManager.current
+	val viewModel: BucketBottomSheetViewModel = koinViewModel()
 
-
-	val bucketObject = LocalCompositionBucketObject.current
+	val bucketObject by viewModel.bucketObject.collectAsState()
 
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -83,45 +79,25 @@ fun AddBookBottomSheet() {
 	var status : Status by remember { mutableStateOf(Status.INIT) }
 	var openLibraryTitleSearchResult : OpenLibraryTitleSearchResult? by remember { mutableStateOf(null) }
 
-//	val openLibrarySearchTypeList = listOf(
-//		StateData(title = "All", icon = R.drawable.ic_state,),
-//		StateData(title = "Title", icon = R.drawable.ic_title,),
-//		StateData(title = "Author", icon = R.drawable.ic_book,),
-//		StateData(title = "ISBN", icon = R.drawable.ic_book,),
-//	)
-//	var openLibrarySearchType by rememberSaveable { mutableStateOf(0) }
-
 	val onSearch = {
 		status = Status.LOADING
 		keyboardController?.hide()
 		openLibraryTitleSearchResult = null
-		scope.launch(Dispatchers.IO) {
-			try {
-				val onSearchResult : (OpenLibraryTitleSearchResult?) -> Unit = {
-					if (it == null) {
-						status = Status.ERROR
-					} else {
-						openLibraryTitleSearchResult = it
+		viewModel.searchForBook(query = queryText) { apiResult ->
+			scope.launch(Dispatchers.Main) {
+				when (apiResult.status) {
+					ApiStatus.LOADING -> {
+						status = Status.LOADING
+					}
+					ApiStatus.SUCCESS -> {
 						status = Status.LOADED
+						openLibraryTitleSearchResult = apiResult.data
+					}
+					ApiStatus.ERROR -> {
+						status = Status.ERROR
+						openLibraryTitleSearchResult = null
 					}
 				}
-
-				OpenLibraryApi.searchForBook(
-					query = queryText,
-					requestType = OpenLibraryApi.OpenLibraryApiRequestType.QUERY,
-					onResponse = onSearchResult
-				)
-			} catch (e : SocketTimeoutException) {
-//							TODO update error message and image
-				scope.launch(Dispatchers.Main) {
-					Toast.makeText(context, "Timeout getting search results", Toast.LENGTH_SHORT).show()
-				}
-				status = Status.ERROR
-				e.printStackTrace()
-			} catch (e : Exception) {
-//							TODO update error message and image
-				status = Status.ERROR
-				e.printStackTrace()
 			}
 		}
 	}
@@ -130,7 +106,6 @@ fun AddBookBottomSheet() {
 		title = "Umm... What was that book",
 		icon = R.drawable.ic_book,
 	) {
-
 		LargeTextField(
 			modifier = Modifier,
 			value = queryText,
@@ -179,11 +154,11 @@ fun AddBookBottomSheet() {
 						Toast.makeText(context, "Error adding book to bucket", Toast.LENGTH_SHORT).show()
 					} else {
 						Intent(context, BucketItemActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-							putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.bytes)
-							putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.BOOK.name)
-							putExtra(Extra.Companion.Constant.BOOK_ID.name, bookData.key)
-							putExtra(Extra.Companion.Constant.BUCKET_EXTRA_DATA.name, bookData)
+							putExtra(Extra.Companion.Extra.IsNew.name, true)
+							putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketObject?.id?.bytes)
+							putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.BOOK.name)
+							putExtra(Extra.Companion.Extra.BOOK_ID.name, bookData.key)
+							putExtra(Extra.Companion.Extra.BUCKET_EXTRA_DATA.name, bookData)
 
 							context.startActivity(this)
 						}

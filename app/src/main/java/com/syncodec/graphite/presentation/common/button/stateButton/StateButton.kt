@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
@@ -46,7 +45,7 @@ fun StateButton(
 	stateList: List<StateData>,
 	containerColor: Color = MaterialTheme.colorScheme.surface,
 	currentState: Int,
-	onStateChange: (Int) -> Unit
+	onChangeState: (Int) -> Unit
 ) {
 	val interactionSource = remember { MutableInteractionSource() }
 	val spacerWeight by animateFloatAsState(targetValue = currentState.toFloat())
@@ -87,7 +86,7 @@ fun StateButton(
 						.clickable(
 							interactionSource = interactionSource,
 							indication = null
-						) { onStateChange(index) },
+						) { onChangeState(index) },
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center
 				) {

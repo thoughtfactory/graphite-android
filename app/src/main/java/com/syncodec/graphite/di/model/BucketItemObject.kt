@@ -1,7 +1,6 @@
 package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
-import androidx.room.PrimaryKey
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
@@ -10,6 +9,7 @@ import com.syncodec.graphite.di.network.BookData
 import com.syncodec.graphite.di.network.ShowData
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 enum class BucketItemState {
@@ -167,5 +167,14 @@ data class BucketItemSnapshot(
 		this.parentId = this@BucketItemSnapshot.parentId?.let { RealmUUID.from(it) }
 		this.key = this@BucketItemSnapshot.key
 		this.data = this@BucketItemSnapshot.data
+	}
+
+	fun toJsonString(): String? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			return objectMapper.writeValueAsString(this)
+		} catch (e: Exception) {
+			null
+		}
 	}
 }

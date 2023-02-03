@@ -2,22 +2,17 @@ package com.syncodec.graphite.widget.home
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
-import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.ActionCallback
@@ -25,7 +20,6 @@ import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.background
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
-import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.unit.ColorProvider
 import androidx.glance.background
 import androidx.glance.currentState
@@ -40,7 +34,6 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
-import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -48,11 +41,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
 import com.syncodec.graphite.presentation.note.NoteActivity
-import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.RealmUUID
@@ -220,11 +211,11 @@ class AddWaterClickAction : ActionCallback {
 	override suspend fun onAction(context : Context, glanceId : GlanceId, parameters : ActionParameters) {
 		val noteId = parameters.get(ActionParameters.Key<ByteArray>("noteId"))
 		Intent(context, NoteActivity::class.java).apply {
-			putExtra(Extra.Companion.Constant.IS_NEW.name, false)
+			putExtra(Extra.Companion.Extra.IsNew.name, false)
 			if (noteId != null) {
-				putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId)
+				putExtra(Extra.Companion.Extra.NoteId.name, noteId)
 			}
-			putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+			putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
 
 			context.startActivity(this)
 		}

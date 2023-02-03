@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,39 +34,39 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketItemObject
 import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickBucketItemDelete
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickBucketItemFavourite
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnClickBucketItemLock
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenGraphResult
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.text.KeyValueText
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import org.koin.androidx.compose.koinViewModel
 
 
 @Preview
 @Composable
 fun CurrentLinkBottomSheet() {
 	val context = LocalContext.current
+	val viewModel : BucketBottomSheetViewModel = koinViewModel()
+
+	val bucketItemObject by viewModel.bucketItemObject.collectAsState()
+	var openGraphResult by remember  { mutableStateOf<OpenGraphResult?>(null) }
+
 	val uriHandler = LocalUriHandler.current
-
-	val openGraphResult = LocalCompositionOpenGraphResult.current
-
-	val bucketItemObject = LocalCompositionBucketItemObject.current
-	val onClickLock = LocalCompositionOnClickBucketItemLock.current
-	val onClickFavourite = LocalCompositionOnClickBucketItemFavourite.current
-	val onClickDelete = LocalCompositionOnClickBucketItemDelete.current
 
 	val closeSheet = LocalCompositionCloseBottomSheet.current
 
+	LaunchedEffect(key1 = bucketItemObject?.hashCode()) {
+		openGraphResult = bucketItemObject?.getOpenGraphResult()
+	}
+
 	GenericBottomSheet(
 		title = "Link",
-		icon = R.drawable.ic_link
+		icon = R.drawable.ic_link,
+		enableScroll = true,
 	) {
 
 		var _thumbnail by remember { mutableStateOf<Bitmap?>(null) }
@@ -103,7 +104,7 @@ fun CurrentLinkBottomSheet() {
 			}
 		}
 
-		Spacer(modifier = Modifier.height(0.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		Row(
 			modifier = Modifier.fillMaxWidth()
@@ -121,9 +122,9 @@ fun CurrentLinkBottomSheet() {
 			val lockContentColor by animateColorAsState(targetValue = if (bucketItemObject?.isLocked == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
 			val favouriteContentColor by animateColorAsState(targetValue = if (bucketItemObject?.isFavourite == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
 			Button(
-				onClick = { if (bucketItemObject != null) onClickLock(bucketItemObject) },
+				onClick = { viewModel.toggleLock(bucketItemObject = bucketItemObject) },
 				colors = ButtonDefaults.buttonColors(containerColor = lockContainerColor, contentColor = lockContentColor),
-				shape = MaterialTheme.shapes.small,
+				shape = MaterialTheme.shapes.medium,
 				modifier = Modifier.weight(1f)
 			) {
 				Icon(
@@ -138,9 +139,9 @@ fun CurrentLinkBottomSheet() {
 			Spacer(modifier = Modifier.width(8.dp))
 
 			Button(
-				onClick = { if (bucketItemObject != null) onClickFavourite(bucketItemObject) },
+				onClick = { viewModel.toggleFavourite(bucketItemObject = bucketItemObject) },
 				colors = ButtonDefaults.buttonColors(containerColor = favouriteContainerColor, contentColor = favouriteContentColor),
-				shape = MaterialTheme.shapes.small,
+				shape = MaterialTheme.shapes.medium,
 				modifier = Modifier.weight(1f)
 			) {
 				Icon(
@@ -155,7 +156,7 @@ fun CurrentLinkBottomSheet() {
 
 		Button(
 			onClick = {
-				if (bucketItemObject != null) onClickDelete(bucketItemObject)
+				if (bucketItemObject != null) viewModel.deleteBucketItem(realmUUIDList = bucketItemObject?.id?.let { listOf(it) } ?: listOf())
 				else Toast.makeText(context, "Error deleting the item", Toast.LENGTH_SHORT).show()
 				closeSheet()
 			},

@@ -9,7 +9,7 @@ import io.realm.kotlin.types.RealmUUID
 
 val LocalCompositionIsSelected = compositionLocalOf<Boolean> { false }
 val LocalCompositionOnSelect = compositionLocalOf<(Boolean) -> Unit> { {} }
-val LocalCompositionSelectedObjectIdList = compositionLocalOf<SnapshotStateList<RealmUUID>> { mutableStateListOf() }
+val LocalCompositionSelectedRealmUUIDIdList = compositionLocalOf<SnapshotStateList<RealmUUID>> { mutableStateListOf() }
 
 val LocalCompositionOpenDialog = compositionLocalOf<(DialogType) -> Unit> { {} }
 val LocalCompositionCloseDialog = compositionLocalOf<(DialogType) -> Unit> { {} }

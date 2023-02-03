@@ -4,6 +4,12 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -20,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,12 +49,12 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.network.ApiStatus
 import com.syncodec.graphite.di.network.MovieData
-import com.syncodec.graphite.di.network.TMDbApi
+import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbMovieSearchResult
 import com.syncodec.graphite.di.network.TMDbTvSearchResult
 import com.syncodec.graphite.di.network.TvData
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionBucketObject
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -59,7 +66,7 @@ import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.net.SocketTimeoutException
+import org.koin.androidx.compose.koinViewModel
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalAnimationApi::class)
@@ -68,13 +75,14 @@ import java.net.SocketTimeoutException
 fun AddShowBottomSheet() {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val viewModel : BucketBottomSheetViewModel = koinViewModel()
 
-	val bucketObject = LocalCompositionBucketObject.current
+	val bucketObject by viewModel.bucketObject.collectAsState()
 
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var queryText by rememberSaveable { mutableStateOf("") }
-	var isTextFocused by rememberSaveable { mutableStateOf(false) }
+	var isTextFocused by remember { mutableStateOf(false) }
 
 	var status : Status by remember { mutableStateOf(Status.INIT) }
 	var tmDbMovieSearchResult : TMDbMovieSearchResult? by remember { mutableStateOf(null) }
@@ -86,41 +94,49 @@ fun AddShowBottomSheet() {
 		status = Status.LOADING
 		keyboardController?.hide()
 		tmDbMovieSearchResult = null
-		scope.launch(Dispatchers.IO) {
-			try {
-				if (currentState == 0) {
-					TMDbApi
-						.searchForMovieTitle(queryText) {
-							if (it == null) {
-								status = Status.ERROR
-							} else {
-								tmDbMovieSearchResult = it
-								tmDbTvSearchResult = null
-								status = Status.LOADED
-							}
+		tmDbTvSearchResult = null
+		when (currentState) {
+			0 -> viewModel.searchForMovie(queryText) { apiResult ->
+				scope.launch(Dispatchers.Main) {
+					when (apiResult.status) {
+						ApiStatus.LOADING -> {
+							status = Status.LOADING
 						}
-				} else {
-					TMDbApi
-						.searchForTvTitle(queryText) {
-							if (it == null) {
-								status = Status.ERROR
-							} else {
-								tmDbMovieSearchResult = null
-								tmDbTvSearchResult = it
-								status = Status.LOADED
-							}
+
+						ApiStatus.SUCCESS -> {
+							status = Status.LOADED
+							tmDbMovieSearchResult = apiResult.data
 						}
+
+						ApiStatus.ERROR -> {
+							status = Status.ERROR
+							tmDbMovieSearchResult = null
+						}
+					}
 				}
-			} catch (e : SocketTimeoutException) {
-//				TODO update error message and image
-				scope.launch(Dispatchers.Main) { Toast.makeText(context, "Timeout getting search results", Toast.LENGTH_SHORT).show() }
-				status = Status.ERROR
-//				e.printStackTrace()
-			} catch (e : Exception) {
-//				TODO update error message and image
-				status = Status.ERROR
-//				e.printStackTrace()
 			}
+
+			1 -> viewModel.searchForTvShow(queryText) { apiResult ->
+				scope.launch(Dispatchers.Main) {
+					when (apiResult.status) {
+						ApiStatus.LOADING -> {
+							status = Status.LOADING
+						}
+
+						ApiStatus.SUCCESS -> {
+							status = Status.LOADED
+							tmDbTvSearchResult = apiResult.data
+						}
+
+						ApiStatus.ERROR -> {
+							status = Status.ERROR
+							tmDbTvSearchResult = null
+						}
+					}
+				}
+			}
+
+			else -> null
 		}
 	}
 
@@ -173,7 +189,10 @@ fun AddShowBottomSheet() {
 
 		Spacer(modifier = Modifier.height(4.dp))
 
-		AnimatedContent(targetState = status) {
+		AnimatedContent(
+			targetState = status,
+			transitionSpec = { scaleIn(tween(300)) + fadeIn(tween(300)) with scaleOut(tween(300)) + fadeOut(tween(300)) }
+		) {
 			when (it) {
 				Status.INIT -> {
 					SearchResultStatusView(
@@ -203,10 +222,11 @@ fun AddShowBottomSheet() {
 							Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
 						} else {
 							Intent(context, BucketItemActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-								putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.bytes)
-								putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
-								putExtra(Extra.Companion.Constant.MOVIE_ID.name, movieData.id)
+								putExtra(Extra.Companion.Extra.IsNew.name, true)
+								putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketObject?.id?.bytes)
+								putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
+								putExtra(Extra.Companion.Extra.SHOW_TYPE.name, ShowType.MOVIE.name)
+								putExtra(Extra.Companion.Extra.MOVIE_ID.name, movieData.id)
 
 								context.startActivity(this)
 							}
@@ -219,10 +239,11 @@ fun AddShowBottomSheet() {
 							Toast.makeText(context, "Error adding movie to bucket", Toast.LENGTH_SHORT).show()
 						} else {
 							Intent(context, BucketItemActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-								putExtra(Extra.Companion.Constant.BUCKET_ID.name, bucketObject.id.bytes)
-								putExtra(Extra.Companion.Constant.BUCKET_TYPE.name, BucketType.SHOW.name)
-								putExtra(Extra.Companion.Constant.TV_ID.name, tvData.id)
+								putExtra(Extra.Companion.Extra.IsNew.name, true)
+								putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketObject?.id?.bytes)
+								putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
+								putExtra(Extra.Companion.Extra.SHOW_TYPE.name, ShowType.TV.name)
+								putExtra(Extra.Companion.Extra.TV_ID.name, tvData.id)
 
 								context.startActivity(this)
 							}

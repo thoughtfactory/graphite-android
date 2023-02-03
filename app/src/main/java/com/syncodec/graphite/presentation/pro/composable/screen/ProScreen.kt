@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.revenuecat.purchases.Package
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.pro.composable.bar.TopBar
@@ -41,10 +42,13 @@ import com.syncodec.graphite.presentation.pro.composable.buildingBlock.Subscript
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun SubscriptionScreen() {
-
-	val onRestore = ProActivity.onRestore.current
-
+fun SubscriptionScreen(
+	monthlyPackage : Package? = null,
+	annualPackage: Package? = null,
+	lifetimePackage : Package? = null,
+	onClickPackage: (Package?) -> Unit = {},
+	onRestore: () -> Unit = {},
+) {
 	ModalBottomSheetLayout(
 		sheetContent = {
 			Box(
@@ -83,9 +87,16 @@ fun SubscriptionScreen() {
 				ProFeaturesView()
 
 				Spacer(modifier = Modifier.height(24.dp))
-				SubscriptionPackageView()
+				SubscriptionPackageView(
+					monthlyPackage = monthlyPackage,
+					annualPackage = annualPackage,
+					onClickPackage = onClickPackage
+				)
 				Spacer(modifier = Modifier.height(16.dp))
-				LifetimePackageView()
+				LifetimePackageView(
+					lifetimePackage = lifetimePackage,
+					onClickPackage = onClickPackage
+				)
 				Spacer(modifier = Modifier.height(12.dp))
 
 				Button(

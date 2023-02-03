@@ -17,25 +17,25 @@ class DropboxApiTest {
 
 	@Test
 	fun test_authenticate() {
-		val dropboxApi = DropboxApi()
-//		val code = "Vs53hMx1TBMAAAAAAAAALlw-3V2H4Y4er2Sh03HUCWs"
-		val code = "t6Vy-VubtMAAAAAAAAACLGisHxSIGdtqq69w4NqiLYk"
-
-		CoroutineScope(Dispatchers.Default).launch {
-			dropboxApi.authenticate(code = code) {
-				println(it)
-			}
-		}
+//		val dropboxApi = DropboxApi()
+////		val code = "Vs53hMx1TBMAAAAAAAAALlw-3V2H4Y4er2Sh03HUCWs"
+//		val code = "t6Vy-VubtMAAAAAAAAACLGisHxSIGdtqq69w4NqiLYk"
+//
+//		CoroutineScope(Dispatchers.Default).launch {
+//			dropboxApi.authenticate(code = code) {
+//				println(it)
+//			}
+//		}
 	}
 
 	@Test
 	fun test_getToken() {
-		val dropboxApi = DropboxApi()
-		val refreshToken = "7eezSK9tMrUAAAAAAAAAAT8zIiGFDKgmBjKnEBRjFC9jh3x1MHCj6wm6r7TBdZ27"
-		CoroutineScope(Dispatchers.Default).launch {
-			dropboxApi.getAccessToken(refreshToken).let {
-				println("result" + it)
-			}
-		}
+//		val dropboxApi = DropboxApi()
+//		val refreshToken = "7eezSK9tMrUAAAAAAAAAAT8zIiGFDKgmBjKnEBRjFC9jh3x1MHCj6wm6r7TBdZ27"
+//		CoroutineScope(Dispatchers.Default).launch {
+//			dropboxApi.getAccessToken(refreshToken).let {
+//				println("result" + it)
+//			}
+//		}
 	}
 }

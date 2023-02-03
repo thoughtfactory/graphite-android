@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -77,8 +76,7 @@ import io.realm.kotlin.types.RealmUUID
 
 @OptIn(
 	ExperimentalFoundationApi::class,
-	ExperimentalAnimationApi::class,
-	ExperimentalMaterialApi::class
+	ExperimentalAnimationApi::class
 )
 @Composable
 fun NoteListCard(
@@ -96,11 +94,9 @@ fun NoteListCard(
 	latLng : LatLng?,
 	tagList : List<TagObject>,
 	isVisible : Boolean = false,
-	isSwipable : Boolean,
 	selectedColor : Color,
 	onClick : () -> Unit,
 	onLongClick : (() -> Unit)? = null,
-	onPinNote : ((RealmUUID) -> Unit)? = null,
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }

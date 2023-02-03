@@ -132,7 +132,7 @@
             android:name=".presentation.bucket.BucketActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustPan" />
 
         <activity
             android:name=".presentation.bucketItem.BucketItemActivity"
@@ -141,7 +141,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.search.SearchActivity"
+            android:name=".presentation.explorer.ExplorerActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
@@ -158,23 +158,23 @@
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
-<!--        <activity-->
-<!--            android:name=".presentation.dropbox.DropboxActivity"-->
-<!--            android:exported="true"-->
-<!--            android:theme="@style/Theme.Graphite.NoActionBar"-->
-<!--            android:windowSoftInputMode="adjustResize">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.VIEW" />-->
+        <activity
+            android:name=".presentation.dropbox.DropboxActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
 
-<!--                <category android:name="android.intent.category.DEFAULT" />-->
-<!--                <category android:name="android.intent.category.BROWSABLE" />-->
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
-<!--                <data-->
-<!--                    android:host="graphite.syncodec.com"-->
-<!--                    android:pathPrefix="/dropboxCallback"-->
-<!--                    android:scheme="https" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
+                <data
+                    android:host="graphite.syncodec.com"
+                    android:pathPrefix="/dropboxCallback"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".presentation.bugReport.BugReportActivity"

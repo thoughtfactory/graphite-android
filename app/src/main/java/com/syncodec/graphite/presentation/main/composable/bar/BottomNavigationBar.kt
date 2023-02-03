@@ -1,16 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.bar
 
-import android.content.Intent
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -24,47 +14,22 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnDelete
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
+import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.ExplorerScreen
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
-import com.syncodec.graphite.presentation.main.composable.screen.AtlasScreen
-import com.syncodec.graphite.presentation.main.composable.screen.CalendarScreen
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.main.composable.screen.HomeScreen
-import com.syncodec.graphite.presentation.note.NoteActivity
-import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.presentation.ui.IconButtonSize
-import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.LocalVaultIsOpened
-import com.syncodec.graphite.utils.SortBy
-import com.syncodec.graphite.utils.SortOn
-import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.RealmUUID
 
@@ -80,386 +45,95 @@ fun BottomNavigationBar(
 	currentRoute : String?,
 	onNavigation : (BottomNavigationItem) -> Unit
 ) {
-	val isSelected = LocalCompositionIsSelected.current
-
 	val screens = listOf(
 		BottomNavigationItem.Home,
 		BottomNavigationItem.Calendar,
 		BottomNavigationItem.Atlas,
 	)
 
-	AnimatedVisibility(
-		visible = ! isSelected,
-		enter = slideInVertically(animationSpec = tween(300), initialOffsetY = { it }),
-		exit = slideOutVertically(animationSpec = tween(300), targetOffsetY = { it }),
+	NavigationBar(
+		tonalElevation = 8.dp,
+		modifier = Modifier.fillMaxWidth()
 	) {
-		NavigationBar(
-			containerColor = MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1),
-			tonalElevation = 0.dp,
-			modifier = Modifier.fillMaxWidth()
-		) {
-			screens.forEach { screen ->
-				NavigationBarItem(
-					onClick = { if (currentRoute != screen.route) onNavigation(screen) },
-					icon = {
-						Icon(
-							painter = painterResource(id = screen.icon),
-							contentDescription = screen.title,
-							modifier = Modifier.requiredSize(IconButtonSize)
-						)
-					},
-					label = {
-						Text(
-							text = screen.title,
-							textAlign = TextAlign.Center,
-							style = MaterialTheme.typography.bodyMedium,
-							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							lineHeight = 12.sp
-						)
-					},
-					colors = NavigationBarItemDefaults.colors(
-						selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-						unselectedIconColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
-						selectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
-						unselectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
-						indicatorColor = MaterialTheme.colorScheme.primary
-					),
-					selected = currentRoute == screen.route,
-					interactionSource = remember { MutableInteractionSource() },
-					modifier = Modifier,
-				)
-			}
+		screens.forEach { screen ->
+			NavigationBarItem(
+				onClick = { onNavigation(screen) },
+				icon = {
+					Icon(
+						painter = painterResource(id = screen.icon),
+						contentDescription = screen.title,
+						modifier = Modifier.requiredSize(IconButtonSize)
+					)
+				},
+				label = {
+					Text(
+						text = screen.title,
+						textAlign = TextAlign.Center,
+						style = MaterialTheme.typography.bodyMedium,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						lineHeight = 12.sp
+					)
+				},
+				colors = NavigationBarItemDefaults.colors(
+					selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+					unselectedIconColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+					selectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+					unselectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
+					indicatorColor = MaterialTheme.colorScheme.primary
+				),
+				selected = currentRoute == screen.route,
+				interactionSource = remember { MutableInteractionSource() },
+				modifier = Modifier,
+			)
 		}
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @ExperimentalPagerApi
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
 fun MainNavigation(
-	currentRoute : BottomNavigationItem,
-	componentType : ComponentType,
-	defaultNotebookId : RealmUUID?,
-	chapterObject : ChapterObject?,
-	notebookList : List<ChapterObject>,
-	notebookOrderList : List<RealmUUID>,
-	noteList : List<NoteObjectLite>,
-	bucketList : List<BucketObject>,
-	bucketOrderList : List<RealmUUID>,
-	onReorderBucketList : (List<RealmUUID>) -> Unit,
-	onReorderNotebookList : (List<RealmUUID>) -> Unit,
+	currentRoute : BottomNavigationItem = BottomNavigationItem.Home,
+	componentType : ComponentType = ComponentType.Note,
+	isSelecting : Boolean = false,
+	onSelect : (RealmUUID) -> Unit = {},
+	selectedIdList : List<RealmUUID> = listOf(),
+	openSheet : (MainBottomSheetType) -> Unit = {},
 ) {
-	val context = LocalContext.current
-
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-
-	val openSheet = LocalCompositionOpenBottomSheet.current
-
-	val isVaultOpened = LocalVaultIsOpened.current
-
-	val isSelected = LocalCompositionIsSelected.current
-	val onSelected = LocalCompositionOnSelect.current
-	val selectedRealmUUIDList = LocalCompositionSelectedObjectIdList.current
-
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.TIMESTAMP)
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.DESCENDING)
-	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.LIST)
-
-	val onDelete = LocalCompositionOnDelete.current
-
-	val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) { "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner" }
-
-	val activityLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-		try {
-			it.data?.let {
-				val hasIntentAction = it.hasExtra(Extra.Companion.Constant.INTENT_ACTION.name)
-				if (hasIntentAction) {
-					val intentAction = it.getStringExtra(Extra.Companion.Constant.INTENT_ACTION.name)?.let { it1 ->
-						Extra.Companion.IntentAction.valueOf(it1)
-					}
-					if (intentAction == Extra.Companion.IntentAction.DELETE) {
-						val hasObjectId = it.hasExtra(Extra.Companion.Constant.OBJECT_ID.name)
-						if (hasObjectId) {
-							val realmUUID = it.getByteArrayExtra(Extra.Companion.Constant.OBJECT_ID.name)?.let { RealmUUID.from(it) }
-							if (realmUUID != null) {
-								selectedRealmUUIDList.add(realmUUID)
-								onDelete()
-							}
-						}
-					}
-				}
-				Extra.Companion.Constant.INTENT_ACTION.name
-				Extra.Companion.Constant.OBJECT_ID.name
-			}
-		} catch (e : Exception) {
-			Toast.makeText(context, "Error performing action", Toast.LENGTH_SHORT).show()
-		}
-	}
-
 	Crossfade(
 		targetState = currentRoute,
 	) {
 		when (it) {
 			BottomNavigationItem.Home -> HomeScreen(
 				componentType = componentType,
-				noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-				bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
-				bucketOrderList = bucketOrderList,
-				notebookList = notebookList.filter { it.parentId == null }.filter { if (it.isLocked) isVaultOpened else true },
-				notebookOrderList = notebookOrderList,
-				sortOn = sortOn,
-				sortBy = sortBy,
-				onReorderBucketList = onReorderBucketList,
-				onReorderNotebookList = onReorderNotebookList,
-				viewType = viewType,
-				onClickFab = {
-					when (componentType) {
-						ComponentType.NOTE -> {
-							Intent(context, NoteActivity::class.java).apply {
-								putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-//          						TODO    Check if notebookId is not null
-								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-
-								activityLauncher.launch(this)
-							}
-//								addDebugData()
-						}
-
-						ComponentType.BUCKET -> openSheet(MainBottomSheetType.BUCKET)
-						ComponentType.NOTEBOOK -> openSheet(MainBottomSheetType.NOTEBOOK)
-					}
-				},
-				onClickNote = {
-					if (isSelected) {
-						onSelected(true)
-						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-						else selectedRealmUUIDList.add(it)
-					} else {
-						Intent(context, NoteActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
-							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-
-							activityLauncher.launch(this)
-						}
-					}
-				},
-				onLongClickNote = {
-					onSelected(true)
-					if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-					else selectedRealmUUIDList.add(it)
-				},
-				onClickBucket = {
-					if (isSelected) {
-						onSelected(true)
-						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-						else selectedRealmUUIDList.add(it)
-					} else {
-						Intent(context, BucketActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.bytes)
-							activityLauncher.launch(this)
-						}
-					}
-				},
-				onLongClickBucket = {
-					onSelected(true)
-					if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-					else selectedRealmUUIDList.add(it)
-				},
-				onClickNotebook = {
-					if (isSelected) {
-						onSelected(true)
-						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-						else selectedRealmUUIDList.add(it)
-					} else {
-						Intent(context, NotebookActivity::class.java).apply {
-							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
-							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-							activityLauncher.launch(this)
-						}
-					}
-				},
-				onLongClickNotebook = {
-					onSelected(true)
-					if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-					else selectedRealmUUIDList.add(it)
-				}
+				isSelecting = isSelecting,
+				onSelect = onSelect,
+				selectedIdList = selectedIdList,
+				onClickNewList = { openSheet(MainBottomSheetType.Bucket) },
+				onClickNewNotebook = { openSheet(MainBottomSheetType.Notebook) },
 			)
 
-			BottomNavigationItem.Calendar -> CalendarScreen(
-				noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-				onClickNote = {
-					Intent(context, NoteActivity::class.java).apply {
-						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-						putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
-						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+			BottomNavigationItem.Calendar -> ExplorerScreen(
+				explorerType = Extra.Companion.ExplorerType.Calendar,
+				searchInDefaultChapter = true,
+				isStatic = true,
+				isSelecting = isSelecting,
+				onSelect = onSelect,
+				selectedIdList = selectedIdList,
+			)
 
-						activityLauncher.launch(this)
-					}
-				},
-			) {}
-
-			BottomNavigationItem.Atlas -> AtlasScreen(
-				currentRoute = currentRoute,
-				noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-				onClickNote = {
-					Intent(context, NoteActivity::class.java).apply {
-						putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-						putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-						putExtra(Extra.Companion.Constant.NOTE_ID.name, it?.bytes)
-						putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
-
-						activityLauncher.launch(this)
-					}
-				},
-				onLongClickNote = {}
+			BottomNavigationItem.Atlas -> ExplorerScreen(
+				explorerType = Extra.Companion.ExplorerType.Atlas,
+				searchInDefaultChapter = true,
+				isStatic = true,
+				isSelecting = isSelecting,
+				onSelect = onSelect,
+				selectedIdList = selectedIdList,
 			)
 
 			null -> LoadingView()
 		}
 	}
-
-//	NavHost(
-//		navController = navController,
-//		startDestination = BottomNavigationItem.Home.route,
-//	) {
-//		composable(BottomNavigationItem.Home.route) {
-//			CompositionLocalProvider(
-//				LocalViewModelStoreOwner provides viewModelStoreOwner
-//			) {
-//				HomeScreen(
-//					componentType = componentType,
-//					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-//					bucketList = bucketList.filter { if (it.isLocked) isVaultOpened else true },
-//					bucketOrderList = bucketOrderList,
-//					notebookList = notebookList.filter { it.parentId == null }.filter { if (it.isLocked) isVaultOpened else true },
-//					notebookOrderList = notebookOrderList,
-//					sortOn = sortOn,
-//					sortBy = sortBy,
-//					onReorderBucketList = onReorderBucketList,
-//					onReorderNotebookList = onReorderNotebookList,
-//					viewType = viewType,
-//					onClickFab = {
-//						when (componentType) {
-//							ComponentType.NOTE -> {
-//								Intent(context, NoteActivity::class.java).apply {
-//									putExtra(Extra.Companion.Constant.IS_NEW.name, true)
-////          						TODO    Check if notebookId is not null
-//									putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-//									putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-//
-//									activityLauncher.launch(this)
-//								}
-////								addDebugData()
-//							}
-//
-//							ComponentType.BUCKET -> openSheet(MainBottomSheetType.BUCKET)
-//							ComponentType.NOTEBOOK -> openSheet(MainBottomSheetType.NOTEBOOK)
-//						}
-//					},
-//					onClickNote = {
-//						if (isSelected) {
-//							onSelected(true)
-//							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-//							else selectedRealmUUIDList.add(it)
-//						} else {
-//							Intent(context, NoteActivity::class.java).apply {
-//								putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-//								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-//								putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
-//								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-//
-//								activityLauncher.launch(this)
-//							}
-//						}
-//					},
-//					onLongClickNote = {
-//						onSelected(true)
-//						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-//						else selectedRealmUUIDList.add(it)
-//					},
-//					onClickBucket = {
-//						if (isSelected) {
-//							onSelected(true)
-//							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-//							else selectedRealmUUIDList.add(it)
-//						} else {
-//							Intent(context, BucketActivity::class.java).apply {
-//								putExtra(Extra.Companion.Constant.BUCKET_ID.name, it.bytes)
-//								activityLauncher.launch(this)
-//							}
-//						}
-//					},
-//					onLongClickBucket = {
-//						onSelected(true)
-//						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-//						else selectedRealmUUIDList.add(it)
-//					},
-//					onClickNotebook = {
-//						if (isSelected) {
-//							onSelected(true)
-//							if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-//							else selectedRealmUUIDList.add(it)
-//						} else {
-//							Intent(context, NotebookActivity::class.java).apply {
-//								putExtra(Extra.Companion.Constant.CHAPTER_ID.name, it.bytes)
-//								putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.READ_CHAPTER.name)
-//								activityLauncher.launch(this)
-//							}
-//						}
-//					},
-//					onLongClickNotebook = {
-//						onSelected(true)
-//						if (selectedRealmUUIDList.contains(it)) selectedRealmUUIDList.remove(it)
-//						else selectedRealmUUIDList.add(it)
-//					}
-//				)
-//			}
-//		}
-//		composable(BottomNavigationItem.Calendar.route) {
-//			CompositionLocalProvider(
-//				LocalViewModelStoreOwner provides viewModelStoreOwner
-//			) {
-//				CalendarScreen(
-//					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-//					onClickNote = {
-//						Intent(context, NoteActivity::class.java).apply {
-//							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-//							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-//							putExtra(Extra.Companion.Constant.NOTE_ID.name, it.bytes)
-//							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
-//
-//							activityLauncher.launch(this)
-//						}
-//					},
-//				) {}
-//			}
-//		}
-//		composable(BottomNavigationItem.Atlas.route) {
-//			CompositionLocalProvider(
-//				LocalViewModelStoreOwner provides viewModelStoreOwner
-//			) {
-//				AtlasScreen(
-//					noteList = noteList.filter { if (it.isLocked) isVaultOpened else true },
-//					onClickNote = {
-//						Intent(context, NoteActivity::class.java).apply {
-//							putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-//							putExtra(Extra.Companion.Constant.CHAPTER_ID.name, defaultNotebookId?.bytes)
-//							putExtra(Extra.Companion.Constant.NOTE_ID.name, it?.bytes)
-//							putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
-//
-//							activityLauncher.launch(this)
-//						}
-//					},
-//					onLongClickNote = {}
-//				)
-//			}
-//		}
-//	}
 }

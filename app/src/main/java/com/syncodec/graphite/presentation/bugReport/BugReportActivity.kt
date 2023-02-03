@@ -13,13 +13,11 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.bugReport.composable.BugReportScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.tone
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
-@AndroidEntryPoint
 class BugReportActivity : ComponentActivity() {
 
 	override fun onCreate(savedInstanceState : Bundle?) {

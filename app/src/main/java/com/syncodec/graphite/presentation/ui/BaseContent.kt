@@ -24,10 +24,10 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.ui.authentication.AddPasscodeScreen
 import com.syncodec.graphite.presentation.ui.authentication.AuthenticatorScreen
 import com.syncodec.graphite.presentation.ui.authentication.ChangePasscode
-import com.syncodec.graphite.utils.Authenticator
+import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
@@ -63,17 +63,18 @@ fun BaseContent(
 
 	val appTypography = UbuntuTypography
 
-	var authenticator by remember { mutableStateOf(Authenticator.NONE) }
+	val isAuthenticated by BaseApplication.isAuthenticated.collectAsState(initial = false)
+	val authenticatorState by BaseApplication.authenticatorScreen.collectAsState()
 
-	fun onClose() {
-		authenticator = Authenticator.NONE
-	}
+	fun onClose() = BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 
 	var noTry by remember { mutableStateOf(0) }
 
-	var isVaultOpened by remember { mutableStateOf(false) }
-
 	val isPro by BaseApplication.isPro.collectAsState()
+
+	BackHandler(enabled = authenticatorState != AuthenticatorScreen.None) {
+		BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+	}
 
 	if (isFollowSystemDarkTheme != null && isForceDarkTheme != null) {
 		androidx.compose.material3.MaterialTheme(
@@ -86,35 +87,35 @@ fun BaseContent(
 			CompositionLocalProvider(
 				LocalIndication provides rippleIndication,
 				LocalIsPro provides isPro,
-				LocalVaultIsOpened provides isVaultOpened,
-				LocalAuthenticatorAction provides {
-					if (isVaultOpened) {
-						isVaultOpened = false
+				LocalIsAuthenticated provides isAuthenticated,
+				LocalAuthenticatorAction provides { newAuthenticatorState ->
+					if (isAuthenticated) {
+						BaseApplication.isAuthenticated.tryEmit(false)
 						noTry = 0
 						Toast.makeText(context, "Vault closed", Toast.LENGTH_SHORT).show()
 					} else {
 						val alice = context.getSecretData("passcode")
 
-						authenticator = when (it) {
-							Authenticator.AUTHENTICATE -> if (alice.result == AliceRequestResult.SUCCESS) Authenticator.AUTHENTICATE else Authenticator.ADD_PASSCODE
-							Authenticator.ADD_PASSCODE -> it
-							Authenticator.CHANGE_PASSCODE -> if (alice.result == AliceRequestResult.SUCCESS) Authenticator.CHANGE_PASSCODE else Authenticator.ADD_PASSCODE
-							Authenticator.REMOVE_PASSCODE -> if (alice.result == AliceRequestResult.SUCCESS) Authenticator.CHANGE_PASSCODE else Authenticator.ADD_PASSCODE
-							Authenticator.NONE -> it
-						}
+						when (newAuthenticatorState) {
+							AuthenticatorScreen.Authenticate -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.Authenticate else AuthenticatorScreen.AddPasscode
+							AuthenticatorScreen.AddPasscode -> newAuthenticatorState
+							AuthenticatorScreen.ChangePasscode -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.ChangePasscode else AuthenticatorScreen.AddPasscode
+							AuthenticatorScreen.RemovePasscode -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.ChangePasscode else AuthenticatorScreen.AddPasscode
+							AuthenticatorScreen.None -> newAuthenticatorState
+						}.let { BaseApplication.authenticatorScreen.tryEmit(it) }
 					}
 				},
 				content = {
-					AnimatedContent(targetState = authenticator) { target ->
+					AnimatedContent(targetState = authenticatorState) { target ->
 						when (target) {
-							Authenticator.AUTHENTICATE -> AuthenticatorScreen(
+							AuthenticatorScreen.Authenticate -> AuthenticatorScreen(
 								noTry = noTry,
 								onAuthenticate = {
 									val passcode = context.getSecretData("passcode").data?.decodeToString()
 
 									if (passcode == it) {
-										authenticator = Authenticator.NONE
-										isVaultOpened = true
+										BaseApplication.isAuthenticated.tryEmit(true)
+										BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 										noTry = 0
 										Toast.makeText(context, "Vault opened", Toast.LENGTH_SHORT).show()
 									} else {
@@ -124,32 +125,32 @@ fun BaseContent(
 
 									if (noTry >= 3) {
 										noTry = 0
-										authenticator = Authenticator.NONE
+										BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 									}
 								},
 								onClose = ::onClose
 							)
 
-							Authenticator.ADD_PASSCODE -> AddPasscodeScreen(
+							AuthenticatorScreen.AddPasscode -> AddPasscodeScreen(
 								onPasscodeAdded = {
 									context.putSecretData("passcode", it.toByteArray())
-									authenticator = Authenticator.NONE
+									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 									Toast.makeText(context, "Passcode added", Toast.LENGTH_SHORT).show()
 								},
 								onClose = ::onClose
 							)
 
-							Authenticator.CHANGE_PASSCODE -> ChangePasscode(
+							AuthenticatorScreen.ChangePasscode -> ChangePasscode(
 								onPasscodeAdded = {
 									context.putSecretData("passcode", it.toByteArray())
-									authenticator = Authenticator.NONE
+									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 									Toast.makeText(context, "Passcode updated", Toast.LENGTH_SHORT).show()
 								},
 								onClose = ::onClose
 							)
 
-							Authenticator.REMOVE_PASSCODE -> content()
-							Authenticator.NONE -> content()
+							AuthenticatorScreen.RemovePasscode -> content()
+							AuthenticatorScreen.None -> content()
 						}
 					}
 				}

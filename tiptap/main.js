@@ -202,12 +202,12 @@ const editor = new Editor.Editor({
     autofocus: true,
     editable: true,
     injectCSS: false,
-    onCreate: onCreate,
+    onCreate: onReady,
     editable: true,
 });
 
-function onCreate() {
-    bridge.onCreate();
+function onReady() {
+    bridge.onReady();
 };
 
 editor.on('transaction', ({
@@ -334,7 +334,7 @@ editor.getData = (extra) => {
     data.title = document.getElementById("title").value;
     data.extra = extra
 
-    if(extra == "export_markdown") {
+    if(extra == "exportMarkdown") {
         var turndown = new Turndown();
         data.dataMarkdown = turndown.turndown(editor.getHTML());
     }

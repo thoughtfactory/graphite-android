@@ -1,27 +1,27 @@
 package com.syncodec.graphite.presentation.attachment.composable.dialog
 
 import androidx.compose.runtime.Composable
-import com.syncodec.graphite.presentation.attachment.AttachmentActivity
+import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.presentation.common.dialog.DeleteDialog
 
 
 enum class AttachmentDialogType {
-	DELETE,
+	Delete,
 }
 
+@Preview
 @Composable
-fun AttachmentDialog() {
-
-	val showDeleteDialog = AttachmentActivity.LocalShowDeleteDialog.current
-	val closeDialog = AttachmentActivity.LocalCloseDialog.current
-	val onDelete = AttachmentActivity.LocalOnDelete.current
-
+fun AttachmentDialog(
+	isDeleteDialogVisible : Boolean = false,
+	onDelete : () -> Unit = {},
+	closeDialog : (AttachmentDialogType) -> Unit = {  },
+) {
 	DeleteDialog(
-		showDialog = showDeleteDialog,
-		message = "Are you sure you want to delete selected attachments?",
-		onDismiss = { closeDialog(AttachmentDialogType.DELETE) },
+		showDialog = isDeleteDialogVisible,
+		message = "Deleting attachments is an irreversible action. Are you sure you want to delete the selected attachments?",
+		onDismiss = { closeDialog(AttachmentDialogType.Delete) },
 	) {
 		onDelete()
-		closeDialog(AttachmentDialogType.DELETE)
+		closeDialog(AttachmentDialogType.Delete)
 	}
 }

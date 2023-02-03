@@ -1,45 +1,35 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
-import android.widget.Toast
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.SettingsActivity
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScreen
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
+import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
 
 
+@Preview
 @Composable
-fun BackupAndRestoreScreen() {
-
-	val context = LocalContext.current
-
-	val scrollState = SettingsActivity.LocalScrollState.current
-	val onNavigate = SettingsActivity.LocalOnNavigate.current
-
-	GenericSettingsScreen(
-		title = "Backup & Restore",
-		scrollState = scrollState
+fun BackupAndRestoreScreen(
+	navigateTo : (SettingsActivity.Companion.SettingsScreen) -> Unit = {},
+) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.verticalScroll(rememberScrollState())
 	) {
-		SettingsButton(
-			title = "Local Backup",
+		SettingButton(
+			text = "Local Backup",
 			icon = R.drawable.ic_snapshot,
-			subTitle = "Backup your data to your local storage",
-		) { onNavigate(SettingsActivity.Companion.Navigator.LOCAL_BACKUP) }
-
-		SettingsButton(
-			title = "Google Drive™",
-			subTitle = "We are still working on this. Stay tuned!",
-		) { Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show() }
-
-		SettingsButton(
-			title = "OneDrive™",
-			subTitle = "We are still working on this. Stay tuned!",
-		) { Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show() }
-
-		SettingsButton(
-			title = "Self Hosted",
-			subTitle = "We are still working on this. Stay tuned!",
-		) { Toast.makeText(context, "We are still working on this. Stay tuned!", Toast.LENGTH_LONG).show() }
+			subText = "Manage"
+		) { navigateTo(SettingsActivity.Companion.SettingsScreen.LOCAL_BACKUP) }
+		SettingButton(text = "Dropbox", icon = R.drawable.ic_logo_dropbox, subText = "Coming soon", tint = Color.Unspecified)
+		SettingButton(text = "Google Drive", icon = R.drawable.ic_logo_google_drive, subText = "Coming soon", tint = Color.Unspecified)
+		SettingButton(text = "One Drive", icon = R.drawable.ic_logo_onedrive, subText = "Coming soon",tint = Color.Unspecified)
 	}
 }

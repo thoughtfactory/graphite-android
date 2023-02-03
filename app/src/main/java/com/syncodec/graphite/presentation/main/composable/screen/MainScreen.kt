@@ -1,14 +1,12 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.content.Intent
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,9 +20,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.main.MainViewModel
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionCloseBottomSheet
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOnSyncNow
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationBar
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.main.composable.bar.MainNavigation
@@ -32,40 +27,40 @@ import com.syncodec.graphite.presentation.main.composable.bar.TopBar
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialog
-import com.syncodec.graphite.presentation.search.SearchActivity
-import com.syncodec.graphite.utils.LocalModalBottomSheetState
-import com.syncodec.graphite.utils.LocalModalBottomSheetType
-import com.syncodec.graphite.utils.LocalSetModalBottomSheetType
+import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
+import com.syncodec.graphite.presentation.explorer.ExplorerActivity
+import com.syncodec.graphite.utils.Extra
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 
 enum class ComponentType {
-	NOTE,
-	BUCKET,
-	NOTEBOOK
+	Note,
+	Bucket,
+	Notebook
 }
 
 @OptIn(
 	ExperimentalMaterialApi::class,
 	ExperimentalPagerApi::class,
-	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class
+	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class
 )
 @Composable
-fun MainScreen(
-	viewModel : MainViewModel,
-	currentRoute : BottomNavigationItem,
-	navigate: (BottomNavigationItem) -> Unit,
-) {
+fun MainScreen() {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val viewModel : MainViewModel = koinViewModel()
+
+	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
+
 	val keyboardController = LocalSoftwareKeyboardController.current
 	val focusManager = LocalFocusManager.current
 
-	var bottomSheetType : MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.MENU) }
-	var currentComponentType : ComponentType by remember { mutableStateOf(ComponentType.NOTE) }
+	var bottomSheetType : MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.Menu) }
+	var currentComponentType : ComponentType by remember { mutableStateOf(ComponentType.Note) }
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-	val scaffoldBlurRadius by animateFloatAsState(targetValue = if (modalBottomSheetState.progress.to == ModalBottomSheetValue.Hidden) (32.002f - 0.001f - (modalBottomSheetState.progress.fraction * 32f)) else (0.001f + (modalBottomSheetState.progress.fraction * 32f)))
 
 	LaunchedEffect(key1 = modalBottomSheetState.currentValue) {
 		if (modalBottomSheetState.currentValue == ModalBottomSheetValue.Hidden) {
@@ -77,76 +72,102 @@ fun MainScreen(
 		}
 	}
 
-	fun openSheet(_bottomSheetType : MainBottomSheetType) {
-		scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
+	fun openSheet(sheetType : MainBottomSheetType) = scope.launch { bottomSheetType = sheetType; modalBottomSheetState.show() }
+
+	fun closeSheet() = scope.launch { modalBottomSheetState.hide() }
+
+	var isSelecting : Boolean by remember { mutableStateOf(false) }
+	var selectedIdList : List<RealmUUID> by remember { mutableStateOf(listOf()) }
+
+	var showNotificationPermissionDialog : Boolean by remember { mutableStateOf(false) }
+	var showDeleteDialog : Boolean by remember { mutableStateOf(false) }
+
+	fun openDialog(dialogType : MainDialogType) = when (dialogType) {
+		MainDialogType.NotificationPermission -> showNotificationPermissionDialog = true
+		MainDialogType.Delete -> showDeleteDialog = true
 	}
 
-	fun closeSheet() {
-		scope.launch { modalBottomSheetState.hide() }
+	fun closeDialog(dialogType : MainDialogType) = when (dialogType) {
+		MainDialogType.NotificationPermission -> showNotificationPermissionDialog = false
+		MainDialogType.Delete -> showDeleteDialog = false
 	}
 
-	val defaultNotebookId by viewModel.defaultNotebookId
-	val chapterObject by viewModel.chapterObject
-	val notebookList = viewModel.notebookList
-	val notebookOrderList = viewModel.notebookOrderList
-	val noteList = viewModel.noteList
-	val bucketList = viewModel.bucketObjectList
-	val bucketObjectOrderList = viewModel.bucketObjectOrderList
+	BackHandler(enabled = currentRoute != BottomNavigationItem.Home) { currentRoute = BottomNavigationItem.Home }
 
-	val onSync = LocalCompositionOnSyncNow.current
-	val onForceSync = LocalCompositionOnSyncNow.current
+	BackHandler(enabled = isSelecting) {
+		isSelecting = false
+		selectedIdList = listOf()
+	}
 
-	CompositionLocalProvider(
-		LocalModalBottomSheetState provides modalBottomSheetState,
-		LocalModalBottomSheetType provides bottomSheetType.ordinal,
-		LocalSetModalBottomSheetType provides { bottomSheetType = MainBottomSheetType.values().getOrElse(it) { MainBottomSheetType.MENU } },
-		LocalCompositionOpenBottomSheet provides ::openSheet,
-		LocalCompositionCloseBottomSheet provides ::closeSheet,
-	) {
-		GenericScaffold(
-			modalBottomSheetState = modalBottomSheetState,
-			sheetContent = {
-				SheetLayout(
-					bottomSheetType = bottomSheetType,
-					putNotebook = viewModel::putNotebook,
-					onClickSyncNow = onSync,
-					onClickForceSync = onForceSync,
-				)
-			},
-			topBar = {
-				TopBar(
-					currentRoute = currentRoute.route,
-					componentType = currentComponentType,
-					onComponentChange = { currentComponentType = ComponentType.values()[it] },
-					onClickSearch = {
-						Intent(context, SearchActivity::class.java).apply {
-							context.startActivity(this)
-						}
-					},
-					onClickSync = { openSheet(MainBottomSheetType.SYNC) }
-				)
-			},
-			bottomBar = {
-				BottomNavigationBar(
-					currentRoute = currentRoute.route,
-					onNavigation = { navigate(it) }
-				)
-			},
-			dialogContent = { MainDialog() }
-		) {
-			MainNavigation(
-				currentRoute = currentRoute,
+	GenericScaffold(
+		topBar = {
+			TopBar(
+				currentRoute = currentRoute.route,
 				componentType = currentComponentType,
-				defaultNotebookId = defaultNotebookId,
-				chapterObject = chapterObject,
-				notebookList = notebookList,
-				notebookOrderList = notebookOrderList,
-				noteList = noteList,
-				bucketList = bucketList,
-				bucketOrderList = bucketObjectOrderList,
-				onReorderBucketList = viewModel::onReorderBucketList,
-				onReorderNotebookList = viewModel::onReorderNotebookList,
+				isSelecting = isSelecting,
+				selectedSize = selectedIdList.size,
+				onComponentChange = { currentComponentType = ComponentType.values()[it] },
+				onClickFilter = { openSheet(MainBottomSheetType.Filter) },
+				onClickMenu = { openSheet(MainBottomSheetType.Menu) },
+				onClickCancelSelect = {
+					isSelecting = false
+					selectedIdList = listOf()
+				},
+				onClickSearch = {
+					Intent(context, ExplorerActivity::class.java).apply {
+						putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Search.name)
+						context.startActivity(this)
+					}
+				},
+				onClickDelete = { openDialog(MainDialogType.Delete) }
+			)
+		},
+		bottomBar = {
+			BottomNavigationBar(
+				currentRoute = currentRoute.route,
+				onNavigation = {
+					when {
+						currentRoute == BottomNavigationItem.Home && it == BottomNavigationItem.Home -> currentComponentType = ComponentType.values()[(currentComponentType.ordinal + 1) % 3]
+						currentRoute != it -> currentRoute = it
+
+					}
+				}
+			)
+		},
+		isBottomBarVisible = ! isSelecting,
+		modalBottomSheetState = modalBottomSheetState,
+		sheetContent = {
+			SheetLayout(
+				bottomSheetType = bottomSheetType,
+				putBucket = viewModel::putBucket,
+				putNotebook = viewModel::putNotebook,
+				onClickSyncNow = {},
+				onClickForceSync = {},
+				closeSheet = ::closeSheet
+			)
+		},
+		dialogContent = {
+			MainDialog(
+				showNotificationPermissionDialog = showNotificationPermissionDialog,
+				showDeleteDialog = showDeleteDialog,
+				onDelete = { viewModel.delete(idList = selectedIdList.toList()); isSelecting = false; selectedIdList = listOf() },
+				closeDialog = ::closeDialog,
 			)
 		}
+	) {
+		MainNavigation(
+			currentRoute = currentRoute,
+			componentType = currentComponentType,
+			isSelecting = isSelecting,
+			onSelect = {
+				isSelecting = true
+				selectedIdList.toMutableList().apply {
+					if (it in this) remove(it) else add(it)
+					selectedIdList = this
+				}
+			},
+			selectedIdList = selectedIdList,
+			openSheet = ::openSheet,
+		)
 	}
 }

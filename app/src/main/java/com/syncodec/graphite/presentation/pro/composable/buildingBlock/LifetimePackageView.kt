@@ -20,14 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.presentation.pro.ProActivity
+import com.revenuecat.purchases.Package
 
 
 @Composable
-fun LifetimePackageView() {
-	val lifetimePackage = ProActivity.lifetimePackage.current
-	val onClickPackage = ProActivity.onClickPackage.current
-
+fun LifetimePackageView(
+	lifetimePackage : Package? = null,
+	onClickPackage: (Package?) -> Unit = {},
+) {
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()

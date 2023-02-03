@@ -5,8 +5,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -26,13 +24,12 @@ import com.syncodec.graphite.presentation.tags.composable.dialog.TagDialogType
 import com.syncodec.graphite.presentation.tags.composable.screen.TagScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.getRandomColor
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
-@AndroidEntryPoint
 class TagsActivity : ComponentActivity() {
 
-	private val viewModel by viewModels<TagsViewModel>()
+	private val viewModel : TagsViewModel by viewModel()
 
 	@OptIn(ExperimentalComposeUiApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {

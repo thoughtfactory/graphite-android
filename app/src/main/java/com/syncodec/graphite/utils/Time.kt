@@ -10,6 +10,8 @@ fun Long.timeStampToPrettyFull(): String = DateFormat.format("EEE dd MMM, yyyy, 
 
 fun Long.timeStampToPrettyFullStop(): String = DateFormat.format("EEE dd MMM, yyyy, HH mm ss aa", this).toString()
 
+fun Long.timeStampToPrettyNumber(): String = DateFormat.format("dd MM yyyy HH mm ss", this).toString()
+
 fun timeStampToTime(timestamp: Long): String = DateFormat.format("HH:mm aa", timestamp).toString()
 
 fun timestampToDate(timestamp: Long): String = DateFormat.format("EEE dd MMM, yyyy", timestamp).toString()

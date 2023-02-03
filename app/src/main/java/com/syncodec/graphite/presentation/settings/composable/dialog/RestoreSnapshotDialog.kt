@@ -83,13 +83,13 @@ fun RestoreSnapshotDialog(
 			primaryText = "Restore${if (timeout > 0) " ($timeout)" else ""}",
 			secondaryText = "Cancel",
 			primaryColor = restoreButtonContainerColor,
-			onPrimaryClick = {
+			onClickPrimary = {
 				if (timeout < 1) {
 					onRestore()
 					onDismiss()
 				}
 			},
-			onSecondaryClick = onDismiss
+			onClickSecondary = onDismiss
 		)
 	}
 }

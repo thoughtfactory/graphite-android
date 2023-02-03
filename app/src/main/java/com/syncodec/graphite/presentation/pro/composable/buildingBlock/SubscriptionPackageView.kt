@@ -31,15 +31,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.revenuecat.purchases.Package
-import com.syncodec.graphite.presentation.pro.ProActivity
 
 
 @Composable
-fun SubscriptionPackageView() {
-
-	val monthlyPackage = ProActivity.monthlyPackage.current
-	val annualPackage = ProActivity.annualPackage.current
-
+fun SubscriptionPackageView(
+	monthlyPackage : Package? = null,
+	annualPackage : Package? = null,
+	onClickPackage: (Package?) -> Unit = { _ -> },
+) {
 	val savePercent = monthlyPackage?.product?.originalPriceAmountMicros?.let { monthlyPrice ->
 		annualPackage?.product?.originalPriceAmountMicros?.let { annualPrice ->
 			(monthlyPrice * 12) - annualPrice
@@ -50,8 +49,6 @@ fun SubscriptionPackageView() {
 
 	var monthlySize by remember { mutableStateOf<IntSize?>(null) }
 	var annualSize by remember { mutableStateOf<IntSize?>(null) }
-
-	val onClickPackage = ProActivity.onClickPackage.current
 
 	Row(
 		horizontalArrangement = Arrangement.SpaceAround,

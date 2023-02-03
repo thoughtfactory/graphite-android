@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
@@ -76,24 +77,26 @@ fun AnimatedScrollText(
 @Composable
 fun AnimatedText(
 	modifier : Modifier = Modifier,
-	text : String,
+	text : String?,
 	style : TextStyle = LocalTextStyle.current,
 	color : Color = Color.Unspecified,
 	fontStyle : FontStyle? = null,
 	fontWeight : FontWeight? = null,
-	transitionSpec : AnimatedContentScope<String>.() -> ContentTransform = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+	textAlign: TextAlign? = null,
+	transitionSpec : AnimatedContentScope<String?>.() -> ContentTransform = { fadeIn(tween(300)) with fadeOut(tween(300)) }
 ) {
 	AnimatedContent(
 		targetState = text,
 		transitionSpec = transitionSpec
 	) {
 		Text(
-			text = it,
+			text = it ?: "",
 			style = style,
 			color = color,
 			modifier = modifier,
 			fontStyle = fontStyle,
-			fontWeight = fontWeight
+			fontWeight = fontWeight,
+			textAlign = textAlign
 		)
 	}
 }

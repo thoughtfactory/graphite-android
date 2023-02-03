@@ -25,7 +25,6 @@ fun TopBar(
 		navigationIcon = {
 			MenuButton(
 				icon = R.drawable.ic_back,
-				tint = MaterialTheme.colorScheme.onBackground,
 				onClick = onClickBack
 			)
 		},

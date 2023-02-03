@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,14 +38,22 @@ fun BottomSheetKeyValueCard(
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), shape = MaterialTheme.shapes.medium)
+			.background(
+				color = MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.31f), shape = MaterialTheme.shapes.medium
+			)
 			.clip(MaterialTheme.shapes.medium)
 			.combinedClickable(
 				enabled = onClick != null,
 				onClick = { onClick?.invoke() },
 				onLongClick = {
 					value?.let { clipboardManager.setText(AnnotatedString(it)) }
-						?: run { Toast.makeText(context, "No value to copy", Toast.LENGTH_SHORT).show() }
+						?: run {
+							Toast
+								.makeText(context, "No value to copy", Toast.LENGTH_SHORT)
+								.show()
+						}
 				},
 				onLongClickLabel = "Copy to clipboard",
 			)

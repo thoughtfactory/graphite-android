@@ -1,138 +1,63 @@
 package com.syncodec.graphite.presentation.bucketItem
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.network.BookData
+import com.syncodec.graphite.di.network.ShowData
 import com.syncodec.graphite.di.network.ShowType
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookAuthorList
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookCoverI
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookDescription
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookFirstPublishYear
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookKey
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookPageCount
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBookTitle
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionBucketType
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsFavourite
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsLocked
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsNew
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieAdult
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieGenres
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieHomepage
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieId
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieImdbId
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieOriginalLanguage
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieOriginalTitle
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieOverview
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMoviePosterPath
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieReleaseDate
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieRuntime
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieTagline
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionMovieTitle
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnChangeState
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickFavourite
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickLock
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickNavigationIcon
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickSave
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnDelete
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnShare
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionShowBookInfoDialog
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionShowDeleteDialog
 import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionShowShowInfoDialog
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionShowType
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionState
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionStatus
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionThumbnail
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTitle
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvAdult
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvFirstAirDate
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvGenres
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvHomepage
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvId
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvName
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvNumberOfEpisodes
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvNumberOfSeasons
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvOriginalLanguage
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvOriginalName
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvOverview
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvPosterPath
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTvTagline
+import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BucketItemScreen
-import com.syncodec.graphite.presentation.common.ErrorView
-import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.bucketItem.composable.screen.bookScreen.BookScreenViewModel
+import com.syncodec.graphite.presentation.bucketItem.composable.screen.movieScreen.MovieScreenViewModel
+import com.syncodec.graphite.presentation.bucketItem.composable.screen.tvScreen.TvScreenViewModel
 import com.syncodec.graphite.presentation.common.LocalCompositionCloseDialog
 import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.utils.Authenticator
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalVaultIsOpened
-import com.syncodec.graphite.utils.Status
+import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.utils.serializable
 import com.syncodec.graphite.utils.tone
-import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
-@AndroidEntryPoint
 class BucketItemActivity : ComponentActivity() {
 
-	val viewModel by viewModels<BucketItemViewModel>()
+	private val viewModel : BucketItemViewModel by viewModel()
+	private lateinit var screenViewModel : AbstractBucketScreenViewModel
+
+	var bucketType = mutableStateOf<BucketType?>(null)
+
+	var loaderCoroutineScope : CoroutineScope? = null
 
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		val hasIsNew = intent.hasExtra(Extra.Companion.Constant.IS_NEW.name)
-		val hasBucketId = intent.hasExtra(Extra.Companion.Constant.BUCKET_ID.name)
-		val hasBucketType = intent.hasExtra(Extra.Companion.Constant.BUCKET_TYPE.name)
-
-		if (hasIsNew && hasBucketId && hasBucketType) {
-			val isNew = intent.getBooleanExtra(Extra.Companion.Constant.IS_NEW.name, false)
-			val bucketId = intent.getByteArrayExtra(Extra.Companion.Constant.BUCKET_ID.name)?.let { RealmUUID.from(it) }
-			val bucketItemId = intent.getByteArrayExtra(Extra.Companion.Constant.BUCKET_ITEM_ID.name)?.let { RealmUUID.from(it) }
-			val _bucketType = intent.getStringExtra(Extra.Companion.Constant.BUCKET_TYPE.name)
-
-			if (bucketId == null || _bucketType == null) {
-				finish()
-			} else {
-				try {
-					val bucketType = BucketType.valueOf(_bucketType)
-					if (bucketType == BucketType.UNKNOWN) {
-						finish()
-					} else {
-						if (isNew) {
-							viewModel.initData(bucketId, bucketType, intent)
-						} else {
-							if (bucketItemId == null || bucketId == null) {
-								finish()
-							} else {
-								viewModel.loadData(bucketItemId, bucketId)
-							}
-						}
-					}
-				} catch (e : Exception) {
-//					e.printStackTrace()
-					finish()
-				}
-			}
-
-		} else {
-			finish()
-		}
+		initData()
 
 		setContent {
 			BaseContent {
@@ -140,62 +65,20 @@ class BucketItemActivity : ComponentActivity() {
 				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
 				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
 
-				val isVaultOpened = LocalVaultIsOpened.current
+				val isVaultOpened = LocalIsAuthenticated.current
 				val authenticator = LocalAuthenticatorAction.current
 
-				val status by viewModel.status
-
 				val isNew by viewModel.isNew
-
-				val objectId by viewModel.objectId
-				val bucketType by viewModel.bucketType
-				val title by viewModel.title
-				val state by viewModel.state
-				val thumbnail by viewModel.thumbnail
-				val isLocked by viewModel.isLocked
 				val isFavourite by viewModel.isFavourite
-
-				val bookKey by viewModel.bookKey
-				val bookTitle by viewModel.bookTitle
-				val bookCoverI by viewModel.bookCoverI
-				val bookAuthorList = viewModel.bookAuthorList
-				val bookDescription by viewModel.bookDescription
-				val bookPageCount by viewModel.bookPageCount
-				val bookFirstPublishYear by viewModel.bookFirstPublishYear
-
-				val showType by viewModel.showType
-
-				val movieId by viewModel.movieId
-				val movieAdult by viewModel.movieAdult
-				val movieGenres = viewModel.movieGenres
-				val movieHomepage by viewModel.movieHomepage
-				val movieImdbId by viewModel.movieImdbId
-				val movieOriginalLanguage by viewModel.movieOriginalLanguage
-				val movieOriginalTitle by viewModel.movieOriginalTitle
-				val movieOverview by viewModel.movieOverview
-				val moviePosterPath by viewModel.moviePosterPath
-				val movieReleaseDate by viewModel.movieReleaseDate
-				val movieRuntime by viewModel.movieRuntime
-				val movieTitle by viewModel.movieTitle
-				val movieTagline by viewModel.movieTagline
-
-				val tvId by viewModel.tvId
-				val tvAdult by viewModel.tvAdult
-				val tvFirstAirDate by viewModel.tvFirstAirDate
-				val tvGenres = viewModel.tvGenres
-				val tvHomepage by viewModel.tvHomepage
-				val tvNumberOfSeasons by viewModel.tvNumberOfSeasons
-				val tvNumberOfEpisodes by viewModel.tvNumberOfEpisodes
-				val tvOriginalLanguage by viewModel.tvOriginalLanguage
-				val tvName by viewModel.tvName
-				val tvOriginalName by viewModel.tvOriginalName
-				val tvOverview by viewModel.tvOverview
-				val tvPosterPath by viewModel.tvPosterPath
-				val tvTagline by viewModel.tvTagline
+				val isLocked by viewModel.isLocked
 
 				var showShowInfoDialog by remember { mutableStateOf(false) }
 				var showBookInfoDialog by remember { mutableStateOf(false) }
 				var showDeleteDialog by remember { mutableStateOf(false) }
+
+				val bucketItemObject by viewModel.bucketItemObject
+
+				val showType by viewModel.showType.collectAsState()
 
 				fun openDialog(dialogType : DialogType) {
 					when (dialogType) {
@@ -216,78 +99,256 @@ class BucketItemActivity : ComponentActivity() {
 				}
 
 				CompositionLocalProvider(
-					LocalCompositionStatus provides status,
-					LocalCompositionIsNew provides isNew,
-					LocalCompositionBucketType provides bucketType,
-					LocalCompositionTitle provides title,
-					LocalCompositionState provides state?.ordinal,
-					LocalCompositionThumbnail provides thumbnail,
-					LocalCompositionIsLocked provides isLocked,
-					LocalCompositionIsFavourite provides isFavourite,
-					LocalCompositionOnClickFavourite provides viewModel::onToggleFavourite,
-					LocalCompositionOnClickLock provides { if (isVaultOpened) viewModel.onToggleLocked() else authenticator(Authenticator.AUTHENTICATE) },
-					LocalCompositionOnClickNavigationIcon provides { this.finish() },
-					LocalCompositionOnChangeState provides viewModel::onToggleState,
-					LocalCompositionOnClickSave provides viewModel::putBucketItem,
-					LocalCompositionBookKey provides bookKey,
-					LocalCompositionBookTitle provides bookTitle,
-					LocalCompositionBookCoverI provides bookCoverI,
-					LocalCompositionBookAuthorList provides bookAuthorList,
-					LocalCompositionBookDescription provides bookDescription,
-					LocalCompositionBookPageCount provides bookPageCount,
-					LocalCompositionBookFirstPublishYear provides bookFirstPublishYear,
-					LocalCompositionShowType provides showType,
-					LocalCompositionMovieId provides movieId,
-					LocalCompositionMovieAdult provides movieAdult,
-					LocalCompositionMovieGenres provides movieGenres,
-					LocalCompositionMovieHomepage provides movieHomepage,
-					LocalCompositionMovieImdbId provides movieImdbId,
-					LocalCompositionMovieOriginalLanguage provides movieOriginalLanguage,
-					LocalCompositionMovieOriginalTitle provides movieOriginalTitle,
-					LocalCompositionMovieOverview provides movieOverview,
-					LocalCompositionMoviePosterPath provides moviePosterPath,
-					LocalCompositionMovieReleaseDate provides movieReleaseDate,
-					LocalCompositionMovieRuntime provides movieRuntime,
-					LocalCompositionMovieTitle provides movieTitle,
-					LocalCompositionMovieTagline provides movieTagline,
-					LocalCompositionTvId provides tvId,
-					LocalCompositionTvAdult provides tvAdult,
-					LocalCompositionTvFirstAirDate provides tvFirstAirDate,
-					LocalCompositionTvGenres provides tvGenres,
-					LocalCompositionTvHomepage provides tvHomepage,
-					LocalCompositionTvNumberOfSeasons provides tvNumberOfSeasons,
-					LocalCompositionTvNumberOfEpisodes provides tvNumberOfEpisodes,
-					LocalCompositionTvOriginalLanguage provides tvOriginalLanguage,
-					LocalCompositionTvName provides tvName,
-					LocalCompositionTvOriginalName provides tvOriginalName,
-					LocalCompositionTvOverview provides tvOverview,
-					LocalCompositionTvPosterPath provides tvPosterPath,
-					LocalCompositionTvTagline provides tvTagline,
 					LocalCompositionShowShowInfoDialog provides showShowInfoDialog,
 					LocalCompositionShowBookInfoDialog provides showBookInfoDialog,
 					LocalCompositionShowDeleteDialog provides showDeleteDialog,
 					LocalCompositionOpenDialog provides ::openDialog,
 					LocalCompositionCloseDialog provides ::closeDialog,
-					LocalCompositionOnDelete provides {
-						Intent().apply {
-							putExtra(Extra.Companion.Constant.INTENT_ACTION.name, Extra.Companion.IntentAction.DELETE.name)
-							putExtra(Extra.Companion.Constant.OBJECT_ID.name, objectId?.bytes)
-							setResult(Activity.RESULT_OK, this)
-							this@BucketItemActivity.finish()
-						}
-					},
 					LocalCompositionOnShare provides this::onShare
 				) {
-					Crossfade(
-						targetState = status,
-						animationSpec = tween(durationMillis = 300)
-					) {
-						when (it) {
-							Status.INIT -> LoadingView()
-							Status.LOADING -> LoadingView()
-							Status.LOADED -> BucketItemScreen()
-							Status.ERROR -> ErrorView()
+					val bucketType by bucketType
+					BucketItemScreen(
+						bucketItemObject = bucketItemObject,
+						bucketType = bucketType,
+						showType = showType,
+						isSaved = isNew?.not(),
+						isFavourite = isFavourite ?: false,
+						isLocked = isLocked ?: false,
+						onClickSave = {
+							screenViewModel.getData().let { (data, key, thumbnail, title) ->
+								viewModel.data.value = data
+								viewModel.key.value = key
+								viewModel.thumbnail.value = thumbnail
+								viewModel.title.value = title
+							}
+							viewModel.putBucketItem()
+						},
+						onClickFavourite = {
+							if (isNew == true) {
+								screenViewModel.getData().let { (bookData, bookKey, thumbnail, title) ->
+									viewModel.data.value = bookData
+									viewModel.key.value = bookKey
+									viewModel.thumbnail.value = thumbnail
+									viewModel.title.value = title
+								}
+							}
+							viewModel.onToggleFavourite()
+						},
+						onClickLock = {
+							if (isNew == true) {
+								screenViewModel.getData().let { (bookData, bookKey, thumbnail, title) ->
+									viewModel.data.value = bookData
+									viewModel.key.value = bookKey
+									viewModel.thumbnail.value = thumbnail
+									viewModel.title.value = title
+								}
+							}
+							viewModel.onToggleLock()
+						},
+						onChangeState = {
+							if (isNew == true) {
+								screenViewModel.getData().let { (bookData, bookKey, thumbnail, title) ->
+									viewModel.data.value = bookData
+									viewModel.key.value = bookKey
+									viewModel.thumbnail.value = thumbnail
+									viewModel.title.value = title
+								}
+							}
+							viewModel.onChangeState(it)
+						},
+						onClickBack = { finish() },
+					)
+				}
+			}
+		}
+	}
+
+	override fun onDestroy() {
+		loaderCoroutineScope?.cancel()
+		super.onDestroy()
+	}
+
+	private fun initData() {
+		val hasIsNew = intent.hasExtra(Extra.Companion.Extra.IsNew.name)
+		val hasBucketId = intent.hasExtra(Extra.Companion.Extra.BUCKET_ID.name)
+		val hasBucketType = intent.hasExtra(Extra.Companion.Extra.BUCKET_TYPE.name)
+
+		if (hasIsNew && hasBucketId && hasBucketType) {
+			val isNew = intent.getBooleanExtra(Extra.Companion.Extra.IsNew.name, false)
+			val bucketId = intent.getByteArrayExtra(Extra.Companion.Extra.BUCKET_ID.name)?.let { RealmUUID.from(it) }
+			val bucketItemId = intent.getByteArrayExtra(Extra.Companion.Extra.BUCKET_ITEM_ID.name)?.let { RealmUUID.from(it) }
+			val bucketType = intent.getStringExtra(Extra.Companion.Extra.BUCKET_TYPE.name)
+
+			if (bucketId == null || bucketType == null) {
+				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				finish()
+			} else {
+				try {
+					this.bucketType.value = BucketType.values().find { it.name == bucketType }
+					when (bucketType) {
+						BucketType.BOOK.name -> {
+							screenViewModel = viewModels<BookScreenViewModel>().value
+							initBookData(isNew = isNew, bucketId = bucketId, bucketItemId = bucketItemId)
 						}
+
+						BucketType.SHOW.name -> initShowData(isNew = isNew, bucketId = bucketId, bucketItemId = bucketItemId)
+						else -> {
+							Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+							finish()
+						}
+					}
+				} catch (e : Exception) {
+					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					finish()
+				}
+			}
+
+		} else {
+			Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+			finish()
+		}
+	}
+
+	private fun initBookData(isNew : Boolean, bucketId : RealmUUID, bucketItemId : RealmUUID?) {
+		if (isNew) {
+			val hasBookId = intent.hasExtra(Extra.Companion.Extra.BOOK_ID.name)
+			val hasExtraData = intent.hasExtra(Extra.Companion.Extra.BUCKET_EXTRA_DATA.name)
+
+			if (! hasBookId || ! hasExtraData) {
+				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				finish()
+			} else {
+				val bookId = intent.getStringExtra(Extra.Companion.Extra.BOOK_ID.name)
+				val bookData = intent.serializable<BookData>(Extra.Companion.Extra.BUCKET_EXTRA_DATA.name)
+
+				if (bookId == null || bookData == null) {
+					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					finish()
+				} else {
+					viewModel.initData(bucketId = bucketId, bucketType = BucketType.BOOK)
+					screenViewModel.initData(id = bookId, data = bookData.toJsonString())
+				}
+			}
+		} else {
+			if (bucketItemId == null) {
+				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				finish()
+			} else {
+				viewModel.loadData(bucketItemId = bucketItemId, bucketId = bucketId)
+				CoroutineScope(Dispatchers.Default).launch {
+					loaderCoroutineScope?.cancel()
+					loaderCoroutineScope = this
+					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
+						Pair(data, thumbnail)
+					}.collect { (data, thumbnail) ->
+						val bookData = BookData(data)
+						viewModel.key.tryEmit(bookData.key)
+						screenViewModel.loadData(data = data, thumbnail = thumbnail)
+					}
+				}
+			}
+		}
+	}
+
+	private fun initShowData(isNew : Boolean, bucketId : RealmUUID, bucketItemId : RealmUUID?) {
+		val hasShowType = intent.hasExtra(Extra.Companion.Extra.SHOW_TYPE.name)
+
+		if (hasShowType) {
+			val showType = intent.getStringExtra(Extra.Companion.Extra.SHOW_TYPE.name)
+			when (showType) {
+				ShowType.MOVIE.name -> {
+					screenViewModel = viewModels<MovieScreenViewModel>().value
+					initMovieData(isNew = isNew, bucketId = bucketId, bucketItemId = bucketItemId)
+				}
+
+				ShowType.TV.name -> {
+					screenViewModel = viewModels<TvScreenViewModel>().value
+					initTvData(isNew = isNew, bucketId = bucketId, bucketItemId = bucketItemId)
+				}
+
+				else -> {
+					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					finish()
+				}
+			}
+		} else {
+			Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+			finish()
+		}
+	}
+
+	private fun initMovieData(isNew : Boolean, bucketId : RealmUUID, bucketItemId : RealmUUID?) {
+		if (isNew) {
+			val hasMovieId = intent.hasExtra(Extra.Companion.Extra.MOVIE_ID.name)
+
+			if (hasMovieId) {
+				val movieId = intent.getStringExtra(Extra.Companion.Extra.MOVIE_ID.name)
+
+				if (movieId == null) {
+					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					finish()
+				} else {
+					viewModel.initData(bucketId = bucketId, bucketType = BucketType.SHOW, showType = ShowType.MOVIE)
+					screenViewModel.initData(id = movieId, data = null)
+				}
+			} else {
+				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				finish()
+			}
+		} else {
+			if (bucketItemId == null) {
+				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				finish()
+			} else {
+				viewModel.loadData(bucketItemId = bucketItemId, bucketId = bucketId, showType = ShowType.MOVIE)
+				CoroutineScope(Dispatchers.Default).launch {
+					loaderCoroutineScope?.cancel()
+					loaderCoroutineScope = this
+					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
+						Pair(data, thumbnail)
+					}.collect { (data, thumbnail) ->
+						val showData = ShowData(data)
+						viewModel.key.tryEmit(showData.movieData?.id)
+						screenViewModel.loadData(data = showData.movieData?.toJsonString(), thumbnail = thumbnail)
+					}
+				}
+			}
+		}
+	}
+
+	private fun initTvData(isNew : Boolean, bucketId : RealmUUID, bucketItemId : RealmUUID?) {
+		if (isNew) {
+			val hasTvId = intent.hasExtra(Extra.Companion.Extra.TV_ID.name)
+
+			if (hasTvId) {
+				val tvId = intent.getStringExtra(Extra.Companion.Extra.TV_ID.name)
+
+				if (tvId == null) {
+					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					finish()
+				} else {
+					viewModel.initData(bucketId = bucketId, bucketType = BucketType.SHOW, showType = ShowType.TV)
+					screenViewModel.initData(id = tvId, data = null)
+				}
+			} else {
+				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				finish()
+			}
+		} else {
+			if (bucketItemId == null) {
+				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				finish()
+			} else {
+				viewModel.loadData(bucketItemId = bucketItemId, bucketId = bucketId, showType = ShowType.TV)
+				CoroutineScope(Dispatchers.Default).launch {
+					loaderCoroutineScope?.cancel()
+					loaderCoroutineScope = this
+					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
+						Pair(data, thumbnail)
+					}.collect { (data, thumbnail) ->
+						val showData = ShowData(data)
+						viewModel.key.tryEmit(showData.tvData?.id)
+						screenViewModel.loadData(data = showData.tvData?.toJsonString(), thumbnail = thumbnail)
 					}
 				}
 			}
@@ -295,24 +356,24 @@ class BucketItemActivity : ComponentActivity() {
 	}
 
 	private fun onShare() {
-		var shareText = when(viewModel.bucketType.value) {
-			BucketType.BOOK -> "I'm reading ${viewModel.bookTitle.value} by ${viewModel.bookAuthorList.joinToString(", ")}. Find it on https://openlibrary.org${viewModel.bookKey.value}"
-			BucketType.SHOW -> when(viewModel.showType.value) {
-				ShowType.MOVIE -> "I'm watching ${viewModel.movieTitle.value}. Find it on https://www.themoviedb.org/movie/${viewModel.movieId.value}"
-				ShowType.TV -> "I'm watching ${viewModel.tvName.value}. Find it on https://www.themoviedb.org/tv/${viewModel.tvId.value}"
-				else -> ""
-			}
-			else -> ""
-		}
+//		var shareText = when(viewModel.bucketType.value) {
+//			BucketType.BOOK -> "I'm reading ${viewModel.bookTitle.value} by ${viewModel.bookAuthorList.joinToString(", ")}. Find it on https://openlibrary.org${viewModel.bookKey.value}"
+//			BucketType.SHOW -> when(viewModel.showType.value) {
+//				ShowType.MOVIE -> "I'm watching ${viewModel.movieTitle.value}. Find it on https://www.themoviedb.org/movie/${viewModel.movieId.value}"
+//				ShowType.TV -> "I'm watching ${viewModel.tvName.value}. Find it on https://www.themoviedb.org/tv/${viewModel.tvId.value}"
+//				else -> ""
+//			}
+//			else -> ""
+//		}
 
-		Intent(Intent.ACTION_SEND).apply {
-			type = "text/html"
-			putExtra(Intent.EXTRA_SUBJECT, shareText)
-//			putExtra(Intent.EXTRA_TEXT, Html.fromHtml(shareText, Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST))
-			putExtra(Intent.EXTRA_TEXT, shareText)
-
-			if (resolveActivity(this@BucketItemActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
-			else Toast.makeText(this@BucketItemActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
-		}
+//		Intent(Intent.ACTION_SEND).apply {
+//			type = "text/html"
+//			putExtra(Intent.EXTRA_SUBJECT, shareText)
+////			putExtra(Intent.EXTRA_TEXT, Html.fromHtml(shareText, Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST))
+//			putExtra(Intent.EXTRA_TEXT, shareText)
+//
+//			if (resolveActivity(this@BucketItemActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
+//			else Toast.makeText(this@BucketItemActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
+//		}
 	}
 }

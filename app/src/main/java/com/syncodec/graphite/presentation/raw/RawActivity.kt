@@ -22,12 +22,12 @@ class RawActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		try {
-			val hasRealmUUID = intent.hasExtra(Extra.Companion.Constant.OBJECT_ID.name)
-			val hasObjectType = intent.hasExtra(Extra.Companion.Constant.OBJECT_TYPE.name)
+			val hasRealmUUID = intent.hasExtra(Extra.Companion.Extra.OBJECT_ID.name)
+			val hasObjectType = intent.hasExtra(Extra.Companion.Extra.OBJECT_TYPE.name)
 
 			if (hasRealmUUID && hasObjectType) {
-				val RealmUUID = intent.getStringExtra(Extra.Companion.Constant.OBJECT_ID.name)?.let { RealmUUID.from(it) }
-				val objectType = intent.getStringExtra(Extra.Companion.Constant.OBJECT_TYPE.name)?.let { Extra.Companion.ObjectType.valueOf(it) }
+				val RealmUUID = intent.getStringExtra(Extra.Companion.Extra.OBJECT_ID.name)?.let { RealmUUID.from(it) }
+				val objectType = intent.getStringExtra(Extra.Companion.Extra.OBJECT_TYPE.name)?.let { Extra.Companion.ObjectType.valueOf(it) }
 
 				if (RealmUUID != null && objectType != null) {
 //					viewModel.readObject(RealmUUID, objectType)

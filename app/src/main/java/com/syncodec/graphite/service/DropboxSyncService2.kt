@@ -24,7 +24,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.di.model.ChapterSnapshot
 import com.syncodec.graphite.di.model.NoteSnapshot
 import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
-import com.syncodec.graphite.di.repository.Repository2
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.di.sync.DbxToken
 import com.syncodec.graphite.di.sync.DropboxApi
@@ -34,7 +33,6 @@ import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.dbxHash
-import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

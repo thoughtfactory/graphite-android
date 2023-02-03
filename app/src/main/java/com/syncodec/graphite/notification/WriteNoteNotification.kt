@@ -17,13 +17,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.Repository2
-import com.syncodec.graphite.di.repository.RepositoryState
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
 class WriteNoteNotificationService : Service() {
@@ -51,43 +44,42 @@ class WriteNoteNotificationService : Service() {
 	}
 }
 
-@AndroidEntryPoint
 class NotificationReceiver : BroadcastReceiver() {
 
 	override fun onReceive(context : Context, intent : Intent) {
 		val remoteInput = RemoteInput.getResultsFromIntent(intent)
 
 		if (remoteInput != null) {
-			val repository2 = Repository2(context)
-			repository2.isAuthenticated.value = true
-			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
-
-			putNote(repository2, content)
+//			val repository2 = Repository2(context)
+//			repository2.isAuthenticated.value = true
+//			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
+//
+//			putNote(repository2, content)
 		}
 	}
 
-	private fun putNote(
-		repository2 : Repository2,
-		content: String
-	) {
-		CoroutineScope(Dispatchers.Default).launch {
-			repository2.repositoryState.collect {
-				if(it == RepositoryState.SUCCESS) {
-					repository2.getDefaultChapterId().collect {
-						NoteObject().apply {
-							this.content = "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
-							this.parentId = it
-							this.contentThumbnail = content.substring(0, minOf(256, content.length))
-
-							repository2.putNote(this) { _, _ ->
-								WriteNoteNotification.showSimpleNotification(context = repository2.context)
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+//	private fun putNote(
+//		repository2 : Repository2,
+//		content: String
+//	) {
+//		CoroutineScope(Dispatchers.Default).launch {
+//			repository2.repositoryState.collect {
+//				if(it == RepositoryState.SUCCESS) {
+//					repository2.getDefaultChapterId().collect {
+//						NoteObject().apply {
+//							this.content = "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
+//							this.parentId = it
+//							this.contentThumbnail = content.substring(0, minOf(256, content.length))
+//
+////							repository2.putNote(this) { _, _ ->
+////								WriteNoteNotification.showSimpleNotification(context = repository2.context)
+////							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
 }
 
 

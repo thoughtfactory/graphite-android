@@ -1,11 +1,12 @@
 package com.syncodec.graphite.di.model
 
-import android.graphics.Bitmap
+import android.util.Log
 import androidx.annotation.Keep
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import io.realm.kotlin.ext.backlinks
+import io.realm.kotlin.types.BacklinksDelegate
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
@@ -31,20 +32,20 @@ class NoteObject : RealmObject {
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
+	val parent by backlinks(ChapterObject::noteList)
 
 	var googleDriveId: String? = null
 
 	fun setLatLng(latLng : LatLng?) {
 		try {
-			if (latLng == null) {
-				this.latLng = null
-			} else {
-				if (latLng?.latitude !! >= -90 && latLng?.latitude !! <= 90 && latLng?.longitude !! >= -180 && latLng?.longitude !! <= 180) {
+			latLng?.let {
+				val latitude = it.latitude
+				val longitude = it.longitude
+				if(latitude == null || longitude == null) this.latLng = null
+				else if (latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
 					val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
-					this.latLng = objectMapper.writeValueAsString(latLng)
-				} else {
-					this.latLng = null
-				}
+					this.latLng = objectMapper.writeValueAsString(it)
+				} else this.latLng = null
 			}
 		} catch (e : Exception) {
 			this.latLng = null
@@ -184,14 +185,7 @@ class NoteObject : RealmObject {
 			},
 			address = this.address,
 			contentThumbnail = this.contentThumbnail,
-			thumbnail = this.thumbnail?.let {
-				try {
-					it.decodeBase64ToBitmap()
-				} catch (e : Exception) {
-//					e.printStackTrace()
-					null
-				}
-			},
+			thumbnail = this.thumbnail,
 			thumbnailType = this.thumbnailType,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked
@@ -295,7 +289,7 @@ data class NoteObjectLite(
 	val latLng : LatLng?,
 	val address : String?,
 	val contentThumbnail : String?,
-	val thumbnail : Bitmap? = null,
+	val thumbnail : String? = null,
 	val thumbnailType : String? = null,
 	val isFavourite : Boolean,
 	val isLocked : Boolean
@@ -375,6 +369,15 @@ data class NoteSnapshot(
 		this.isFavourite = this@NoteSnapshot.isFavourite
 		this.isLocked = this@NoteSnapshot.isLocked
 		this.parentId = this@NoteSnapshot.parentChapterId?.let { RealmUUID.from(it) }
+	}
+
+	fun toJsonString(): String? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			return objectMapper.writeValueAsString(this)
+		} catch (e: Exception) {
+			null
+		}
 	}
 }
 

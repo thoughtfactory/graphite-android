@@ -1,26 +1,22 @@
 package com.syncodec.graphite.presentation.settings
 
-import android.app.Activity
-import android.content.Intent
 import android.content.IntentSender
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.with
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
@@ -29,21 +25,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.documentfile.provider.DocumentFile
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -57,61 +47,30 @@ import com.revenuecat.purchases.interfaces.LogInCallback
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.settings.composable.bar.TopBar
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
-import com.syncodec.graphite.presentation.settings.composable.screen.AboutUsScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.BackupAndRestoreScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.BaseScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.DataScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.DropboxSyncScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.ExtensionsScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.ImportScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.LocalBackupScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.PreferencesScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.SecurityScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.SnapshotWarehouseScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.SynchronizationScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.ThemeScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.localBackup.LocalBackupScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.utils.Authenticator
+import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.alice.Alice
-import com.syncodec.graphite.utils.share
-import dagger.hilt.android.AndroidEntryPoint
-import io.realm.kotlin.types.RealmUUID
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 
-@AndroidEntryPoint
 class SettingsActivity : ComponentActivity() {
-
-	private val viewModel by viewModels<SettingsViewModel>()
 
 	private lateinit var auth : FirebaseAuth
 	private lateinit var oneTapClient : SignInClient
 	private lateinit var signInRequest : BeginSignInRequest
 
 	private var firebaseUser : MutableState<FirebaseUser?> = mutableStateOf(null)
-
-	private var backupFolderPath : MutableState<String?> = mutableStateOf(null)
-
-	val showTakeSnapshotDialog = mutableStateOf(false)
-	val showRestoreSnapshotDialog = mutableStateOf(false)
-	val showRestoringSnapshotDialog = mutableStateOf(false)
-	val showImportingDataDialog = mutableStateOf(false)
-	val showImportingJourneyDataDialog = mutableStateOf(false)
-	val showDeleteAccountDialog = mutableStateOf(false)
 
 	@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
@@ -141,8 +100,8 @@ class SettingsActivity : ComponentActivity() {
 			.setAutoSelectEnabled(false)
 			.build()
 
-		var authenticator by mutableStateOf(Authenticator.NONE)
-		val authenticatorAction : (Authenticator) -> Unit = { authenticator = it }
+		var authenticatorScreen by mutableStateOf(AuthenticatorScreen.None)
+		val authenticatorAction : (AuthenticatorScreen) -> Unit = { authenticatorScreen = it }
 
 		setContent {
 			CompositionLocalProvider(
@@ -152,32 +111,7 @@ class SettingsActivity : ComponentActivity() {
 					val scope = rememberCoroutineScope()
 					val systemUiController = rememberSystemUiController()
 					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-					systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
-
-					val scrollState = rememberScrollState()
-
-					val navigatorPath = remember { mutableStateListOf(Navigator.BASE) }
-
-					var backupFolderPath by this.backupFolderPath
-
-					val snapshotList = viewModel.snapshotList
-
-					val attachmentCount by viewModel.attachmentCount
-					val attachmentProcessed by viewModel.attachmentProcessed
-					val bucketItemCount by viewModel.bucketItemCount
-					val bucketItemProcessed by viewModel.bucketItemProcessed
-					val bucketCount by viewModel.bucketCount
-					val bucketProcessed by viewModel.bucketProcessed
-					val chapterCount by viewModel.chapterCount
-					val chapterProcessed by viewModel.chapterProcessed
-					val noteCount by viewModel.noteCount
-					val noteProcessed by viewModel.noteProcessed
-					val tagCount by viewModel.tagCount
-					val tagProcessed by viewModel.tagProcessed
-					val packageCount by viewModel.packageCount
-					val packageProcessed by viewModel.packageProcessed
-					val importDataCount by viewModel.importDataCount
-					val importDataProcessed by viewModel.importDataProcessed
+					systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
 					val _firebaseUser by this.firebaseUser
 
@@ -192,30 +126,19 @@ class SettingsActivity : ComponentActivity() {
 						scope.launch { modalBottomSheetState.hide() }
 					}
 
-					var _showTakeSnapshotDialog by this.showTakeSnapshotDialog
-					var _showRestoreSnapshotDialog by this.showRestoreSnapshotDialog
-					var _showRestoringSnapshotDialog by this.showRestoringSnapshotDialog
-					var _showImportingDataDialog by this.showImportingDataDialog
-					var _showImportingJourneyDataDialog by this.showImportingJourneyDataDialog
+					var showImportDataDialog by remember { mutableStateOf(false) }
+					var showExportDataDialog by remember { mutableStateOf(false) }
+					var showClearDataDialog by remember { mutableStateOf(false) }
 					var showNotificationPermissionDialog by remember { mutableStateOf(false) }
-					var _showDeleteAccountDialog by this.showDeleteAccountDialog
+					var _showDeleteAccountDialog by remember { mutableStateOf(false) }
 
-					var restoreSnapshotFile by remember { mutableStateOf<DocumentFile?>(null) }
+					var settingsScreen by remember { mutableStateOf(SettingsScreen.SETTINGS) }
 
 					fun openDialog(dialogType : SettingsDialogType, data : Any?) {
 						when (dialogType) {
-							SettingsDialogType.TAKE_SNAPSHOT -> _showTakeSnapshotDialog = true
-							SettingsDialogType.RESTORE_SNAPSHOT -> {
-								try {
-									restoreSnapshotFile = data as DocumentFile
-									_showRestoreSnapshotDialog = true
-								} catch (e : Exception) {
-//									e.printStackTrace()
-									Toast.makeText(this@SettingsActivity, "Error reading snapshot file", Toast.LENGTH_SHORT).show()
-								}
-							}
-
-							SettingsDialogType.RESTORING_SNAPSHOT -> _showRestoringSnapshotDialog = true
+							SettingsDialogType.IMPORT_DATA -> showImportDataDialog = true
+							SettingsDialogType.EXPORT_DATA -> showExportDataDialog = true
+							SettingsDialogType.CLEAR_DATA -> showClearDataDialog = true
 							SettingsDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = true
 							SettingsDialogType.DELETE_ACCOUNT -> _showDeleteAccountDialog = true
 						}
@@ -223,9 +146,9 @@ class SettingsActivity : ComponentActivity() {
 
 					fun closeDialog(dialogType : SettingsDialogType) {
 						when (dialogType) {
-							SettingsDialogType.TAKE_SNAPSHOT -> _showTakeSnapshotDialog = false
-							SettingsDialogType.RESTORE_SNAPSHOT -> _showRestoreSnapshotDialog = false
-							SettingsDialogType.RESTORING_SNAPSHOT -> _showRestoringSnapshotDialog = false
+							SettingsDialogType.IMPORT_DATA -> showImportDataDialog = false
+							SettingsDialogType.EXPORT_DATA -> showExportDataDialog = false
+							SettingsDialogType.CLEAR_DATA -> showClearDataDialog = false
 							SettingsDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = false
 							SettingsDialogType.DELETE_ACCOUNT -> _showDeleteAccountDialog = false
 						}
@@ -234,197 +157,51 @@ class SettingsActivity : ComponentActivity() {
 					this.onBackPressedDispatcher.addCallback(
 						this, object : OnBackPressedCallback(true) {
 							override fun handleOnBackPressed() {
-								if (authenticator == Authenticator.NONE) {
-									if (_showDeleteAccountDialog || _showRestoreSnapshotDialog) {
-										closeDialog(SettingsDialogType.DELETE_ACCOUNT)
-										closeDialog(SettingsDialogType.RESTORE_SNAPSHOT)
-									} else if (_showTakeSnapshotDialog || _showRestoringSnapshotDialog) {
-										Toast.makeText(this@SettingsActivity, "Please wait for the current operation to finish", Toast.LENGTH_SHORT).show()
-									} else if (modalBottomSheetState.isVisible) {
-										closeSheet()
-									} else {
-										if (navigatorPath.size > 1) {
-											navigatorPath.removeLast()
-											scope.launch { scrollState.scrollTo(0) }
-										} else {
-											finish()
-										}
+								if (authenticatorScreen == AuthenticatorScreen.None) {
+									when (settingsScreen) {
+										SettingsScreen.SETTINGS -> finish()
+										SettingsScreen.BACKUP_AND_RESTORE -> settingsScreen = SettingsScreen.SETTINGS
+										SettingsScreen.LOCAL_BACKUP -> settingsScreen = SettingsScreen.BACKUP_AND_RESTORE
 									}
 								} else {
-									authenticator = Authenticator.NONE
+									authenticatorScreen = AuthenticatorScreen.None
 								}
 							}
 						}
 					)
 
 					CompositionLocalProvider(
-						LocalOnNavigate provides {
-							navigatorPath.add(it)
-							scope.launch { scrollState.scrollTo(0) }
-						},
-						LocalNavigatorPath provides navigatorPath,
-						LocalScrollState provides scrollState,
 						LocalFirebaseUser provides _firebaseUser,
 						LocalSignIn provides ::signIn,
 						LocalSignOut provides ::signOut,
 						LocalDeleteAccount provides {
 							closeSheet()
 							openDialog(SettingsDialogType.DELETE_ACCOUNT, null)
-							viewModel.deleteAccount()
 						},
-						LocalSetupLocalBackupFolder provides {
-							try {
-								Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-									localBackupDirPicker.launch(this)
-								}
-							} catch (e : Exception) {
-								Toast.makeText(this@SettingsActivity, "Error setting backup folder", Toast.LENGTH_SHORT).show()
-							}
-						},
-						LocalRemoveLocalBackupFolder provides {
-							try {
-								contentResolver.persistedUriPermissions.forEach {
-									contentResolver.releasePersistableUriPermission(it.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-								}
-								backupFolderPath = contentResolver.persistedUriPermissions.firstOrNull()?.uri?.path
-								Toast.makeText(this, "Local backup folder removed", Toast.LENGTH_SHORT).show()
-							} catch (e : Exception) {
-								Toast.makeText(this@SettingsActivity, "Error removing backup folder", Toast.LENGTH_SHORT).show()
-							}
-						},
-						LocalBackupFolderPath provides backupFolderPath,
-						LocalSnapshotList provides snapshotList,
-						LocalTakeSnapshot provides {
-							try {
-								val uri = contentResolver.persistedUriPermissions.firstOrNull()?.uri
-								if (uri == null) Toast.makeText(this, "Error generating snapshot. Try setting backup folder again.", Toast.LENGTH_SHORT).show()
-								else viewModel.takeSnapshot(uri) {
-									scope.launch(Dispatchers.Main) {
-										if (it) Toast.makeText(this@SettingsActivity, "Snapshot saved", Toast.LENGTH_SHORT).show()
-										else Toast.makeText(this@SettingsActivity, "Error taking snapshot", Toast.LENGTH_SHORT).show()
-										closeDialog(SettingsDialogType.TAKE_SNAPSHOT)
-
-										viewModel.getSnapshot(uri)
-									}
-								}
-								openDialog(SettingsDialogType.TAKE_SNAPSHOT, null)
-							} catch (e : Exception) {
-								Toast.makeText(this@SettingsActivity, "Error taking snapshot", Toast.LENGTH_SHORT).show()
-							}
-						},
-						LocalGetSnapshot provides {
-							val uri = contentResolver.persistedUriPermissions.firstOrNull()?.uri
-							if (uri == null) Toast.makeText(this, "Error getting snapshot. Try setting backup folder again.", Toast.LENGTH_SHORT).show()
-							else viewModel.getSnapshot(uri)
-						},
-						LocalRestoreSnapshot provides {
-							openDialog(SettingsDialogType.RESTORING_SNAPSHOT, null)
-							try {
-								restoreSnapshotFile?.let {
-									viewModel.restoreSnapshot(contentResolver.openInputStream(it.uri) !!, true) {
-										CoroutineScope(Dispatchers.Main).launch {
-											if (it) Toast.makeText(this@SettingsActivity, "Snapshot restored", Toast.LENGTH_SHORT).show()
-											else Toast.makeText(this@SettingsActivity, "Error restoring snapshot", Toast.LENGTH_SHORT).show()
-											closeDialog(SettingsDialogType.RESTORING_SNAPSHOT)
-										}
-									}
-								} ?: Toast.makeText(this, "Error restoring snapshot. Try again.", Toast.LENGTH_SHORT)
-							} catch (e : Exception) {
-								Toast.makeText(this@SettingsActivity, "Error restoring snapshot", Toast.LENGTH_SHORT).show()
-							}
-						},
-						LocalExportData provides {
-							openDialog(SettingsDialogType.TAKE_SNAPSHOT, null)
-							CoroutineScope(Dispatchers.IO).launch {
-								viewModel.generateSnapshot { _, file ->
-									CoroutineScope(Dispatchers.Main).launch { closeDialog(SettingsDialogType.TAKE_SNAPSHOT) }
-									file?.share(this@SettingsActivity)
-								}
-							}
-						},
-						LocalImportData provides {
-							when (it) {
-								ImportType.GRAPHITE -> importGraphiteFilePicker.launch(arrayOf("application/x-7z-compressed"))
-								ImportType.GOOGLE_KEEP -> null
-								ImportType.JOURNEY -> importJourneyFilePicker.launch(arrayOf("application/zip"))
-								ImportType.NOTESNOOK -> null
-							}
-						},
-						LocalShowTakeSnapshotDialog provides _showTakeSnapshotDialog,
-						LocalShowRestoreSnapshotDialog provides _showRestoreSnapshotDialog,
-						LocalShowRestoringSnapshotDialog provides _showRestoringSnapshotDialog,
-						LocalShowImportingDataDialog provides _showImportingDataDialog,
-						LocalShowImportingJourneyDataDialog provides _showImportingJourneyDataDialog,
+						LocalShowImportDataDialog provides showImportDataDialog,
+						LocalShowExportDataDialog provides showExportDataDialog,
+						LocalShowClearDataDialog provides showClearDataDialog,
 						LocalShowNotificationPermissionDialog provides showNotificationPermissionDialog,
 						LocalShowDeleteAccountDialog provides _showDeleteAccountDialog,
-						LocalAttachmentCount provides attachmentCount,
-						LocalAttachmentProcessed provides attachmentProcessed,
-						LocalBucketItemCount provides bucketItemCount,
-						LocalBucketItemProcessed provides bucketItemProcessed,
-						LocalBucketCount provides bucketCount,
-						LocalBucketProcessed provides bucketProcessed,
-						LocalChapterCount provides chapterCount,
-						LocalChapterProcessed provides chapterProcessed,
-						LocalNoteCount provides noteCount,
-						LocalNoteProcessed provides noteProcessed,
-						LocalTagCount provides tagCount,
-						LocalTagProcessed provides tagProcessed,
-						LocalPackageCount provides packageCount,
-						LocalPackageProcessed provides packageProcessed,
-						LocalImportDataCount provides importDataCount,
-						LocalImportDataProcessed provides importDataProcessed,
 						LocalOpenBottomSheet provides ::openSheet,
 						LocalCloseBottomSheet provides ::closeSheet,
 						LocalOpenDialog provides ::openDialog,
 						LocalCloseDialog provides ::closeDialog,
-						LocalOnBackPressed provides { this.onBackPressedDispatcher.onBackPressed() }
 					) {
-						val title = when (navigatorPath.last()) {
-							Navigator.BASE -> "Settings"
-							Navigator.PREFERENCES -> "Preferences"
-							Navigator.THEME -> "Theme"
-							Navigator.SECURITY -> "Security"
-							Navigator.EXTENSIONS -> "Extensions"
-							Navigator.BACKUP -> "Backup & Restore"
-							Navigator.DATA -> "Data"
-							Navigator.IMPORT -> "Import"
-							Navigator.LOCAL_BACKUP -> "Local Backup"
-							Navigator.SNAPSHOT_WAREHOUSE -> "Snapshot Warehouse"
-							Navigator.SYNC -> "Synchronization"
-							Navigator.DROPBOX_SYNC -> "Dropbox"
-							Navigator.ABOUT_US -> "About Us"
-						}
-
 						GenericScaffold(
 							modalBottomSheetState = modalBottomSheetState,
 							sheetContent = { SheetLayout(bottomSheetType = bottomSheetType) { closeSheet() } },
-							topBar = {
-								TopBar(
-									title = title,
-									scrollState = scrollState,
-								) { super.getOnBackPressedDispatcher().onBackPressed() }
-							},
+							topBar = { TopBar { super.getOnBackPressedDispatcher().onBackPressed() } },
 							dialogContent = { SettingsDialog() },
 						) {
 							AnimatedContent(
-								targetState = navigatorPath.last(),
-								transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) },
-								modifier = Modifier.fillMaxSize()
+								targetState = settingsScreen,
+								transitionSpec = { scaleIn(tween(300), initialScale = 0.71f) + fadeIn(tween(300)) with scaleOut(tween(300), targetScale = 0.71f) + fadeOut(tween(300)) }
 							) {
 								when (it) {
-									Navigator.BASE -> BaseScreen()
-									Navigator.PREFERENCES -> PreferencesScreen()
-									Navigator.THEME -> ThemeScreen()
-									Navigator.SECURITY -> SecurityScreen()
-									Navigator.EXTENSIONS -> ExtensionsScreen()
-									Navigator.BACKUP -> BackupAndRestoreScreen()
-									Navigator.DATA -> DataScreen()
-									Navigator.IMPORT -> ImportScreen()
-									Navigator.LOCAL_BACKUP -> LocalBackupScreen()
-									Navigator.SNAPSHOT_WAREHOUSE -> SnapshotWarehouseScreen()
-									Navigator.SYNC -> SynchronizationScreen()
-									Navigator.DROPBOX_SYNC -> DropboxSyncScreen()
-									Navigator.ABOUT_US -> AboutUsScreen( )
+									SettingsScreen.SETTINGS -> SettingsScreen { settingsScreen = it }
+									SettingsScreen.BACKUP_AND_RESTORE -> BackupAndRestoreScreen { settingsScreen = it }
+									SettingsScreen.LOCAL_BACKUP -> LocalBackupScreen()
 								}
 							}
 						}
@@ -513,211 +290,15 @@ class SettingsActivity : ComponentActivity() {
 		)
 	}
 
-	private val localBackupDirPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-		try {
-			it.data?.data.apply {
-				this?.let { it1 ->
-					contentResolver.takePersistableUriPermission(this, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-					backupFolderPath.value = contentResolver.persistedUriPermissions.firstOrNull()?.uri?.path
-				}
-			}
-			Toast.makeText(this, "Backup folder set to ${backupFolderPath.value}", Toast.LENGTH_SHORT).show()
-		} catch (e : Exception) {
-			Toast.makeText(this, "Error setting backup folder", Toast.LENGTH_SHORT).show()
-		}
-	}
-
-	private fun richTextEditor() = RichTextEditor(this, Color.Transparent, Color.Transparent, 0, null).apply {
-		setGetTextListener(
-			object : RichTextEditor.GetTextListener {
-				override fun onGetData(extra : String?, data : String?) {
-					CoroutineScope(Dispatchers.Default).launch {
-						try {
-							if (data == null) {
-								viewModel.lock = false
-							} else {
-								val dataObject = JSONObject(data)
-								val dataJson = dataObject.optJSONObject("dataJson")
-								val dataText = dataObject.optString("dataText")
-								val importData = dataObject.optJSONObject("importData") ?: JSONObject()
-								val noteId = try {
-									RealmUUID.from(dataObject.optString("noteId"))
-								} catch (e : Exception) {
-									RealmUUID.random()
-								}
-								NoteObject().apply {
-									this.id = noteId
-									this.createdTimestamp = importData.optLong("date_journal").let { if (it == 0L) System.currentTimeMillis() else it }
-									this.modifiedTimestamp = importData.optLong("date_modified").let { if (it == 0L) System.currentTimeMillis() else it }
-									this.userTimestamp = this.createdTimestamp
-									this.title
-									this.color
-									val lat = importData.optDouble("lat")
-									val lng = importData.optDouble("lng")
-									this.setLatLng(LatLng(lat, lng))
-									this.address = importData.optString("address")
-									this.contentThumbnail = dataText.substring(0, minOf(256, dataText.length))
-									this.content = dataJson?.toString()
-									this.thumbnail
-									this.thumbnailType
-									this.isFavourite = importData.optBoolean("favorite")
-									this.isLocked
-
-									this.parentId = viewModel.defaultChapterId
-
-									viewModel.putNote(this)
-								}
-							}
-						} catch (e : Exception) {
-//							e.printStackTrace()
-							viewModel.lock = false
-						}
-					}
-				}
-			}
-		)
-	}
-
-	private val importGraphiteFilePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) {
-		try {
-			it?.let { it1 ->
-				contentResolver.openInputStream(it1)?.let { inputStream ->
-					showImportingDataDialog.value = true
-					try {
-						viewModel.restoreSnapshot(inputStream = inputStream, clearAll = false) {
-							CoroutineScope(Dispatchers.Main).launch {
-								if (it) Toast.makeText(this@SettingsActivity, "Data imported", Toast.LENGTH_SHORT).show()
-								else Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-								showImportingDataDialog.value = false
-							}
-						}
-					} catch (e : Exception) {
-						CoroutineScope(Dispatchers.Main).launch {
-							Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-							showImportingDataDialog.value = false
-						}
-					}
-				} ?: CoroutineScope(Dispatchers.Main).launch {
-					Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-					showImportingDataDialog.value = false
-				}
-			}
-		} catch (e : Exception) {
-			CoroutineScope(Dispatchers.Main).launch {
-				Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-				showImportingDataDialog.value = false
-			}
-		}
-	}
-
-	private val importJourneyFilePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) {
-		try {
-			it?.let { it1 ->
-				contentResolver.openInputStream(it1)?.let { inputStream ->
-					showImportingJourneyDataDialog.value = true
-					try {
-						viewModel.importFromJourney(inputStream = inputStream, richTextEditor()) {
-							CoroutineScope(Dispatchers.Main).launch {
-								if (it) Toast.makeText(this@SettingsActivity, "Data imported", Toast.LENGTH_SHORT).show()
-								else Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-								showImportingJourneyDataDialog.value = false
-							}
-						}
-					} catch (e : Exception) {
-						CoroutineScope(Dispatchers.Main).launch {
-							Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-							showImportingJourneyDataDialog.value = false
-						}
-					}
-				} ?: CoroutineScope(Dispatchers.Main).launch {
-					Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-					showImportingJourneyDataDialog.value = false
-				}
-			}
-		} catch (e : Exception) {
-			CoroutineScope(Dispatchers.Main).launch {
-				Toast.makeText(this@SettingsActivity, "Error importing data", Toast.LENGTH_SHORT).show()
-				showImportingJourneyDataDialog.value = false
-			}
-		}
-	}
-
-//	private val googleSignInActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-//		if (it.resultCode == Activity.RESULT_OK) {
-//			val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
-//			try {
-//				val account = task.getResult(ApiException::class.java) !!
-//				Log.i("npr71", "idToken : ${account.idToken}")
-//			} catch (e : ApiException) {
-//			}
-//		}
-//	}
-
 	companion object {
-		enum class Navigator {
-			BASE,
-			PREFERENCES,
-			THEME,
-			SECURITY,
-			EXTENSIONS,
-			BACKUP,
-			DATA,
-			IMPORT,
-			LOCAL_BACKUP,
-			SNAPSHOT_WAREHOUSE,
-			SYNC,
-			DROPBOX_SYNC,
-			ABOUT_US
-		}
-
-		enum class ImportType {
-			GRAPHITE,
-			GOOGLE_KEEP,
-			JOURNEY,
-			NOTESNOOK
-		}
-
-		val LocalOnNavigate = compositionLocalOf<(Navigator) -> Unit> { {} }
-		val LocalNavigatorPath = compositionLocalOf<SnapshotStateList<Navigator>> { mutableStateListOf() }
-		val LocalScrollState = compositionLocalOf { ScrollState(0) }
 		val LocalFirebaseUser = compositionLocalOf<FirebaseUser?> { null }
 		val LocalSignIn = compositionLocalOf { {} }
 		val LocalSignOut = compositionLocalOf { {} }
 		val LocalDeleteAccount = compositionLocalOf { {} }
-		val LocalSetupLocalBackupFolder = compositionLocalOf { {} }
-		val LocalRemoveLocalBackupFolder = compositionLocalOf { {} }
-		val LocalBackupFolderPath = compositionLocalOf<String?> { null }
-		val LocalSnapshotList = compositionLocalOf<SnapshotStateList<DocumentFile>> { mutableStateListOf() }
-		val LocalTakeSnapshot = compositionLocalOf { {} }
-		val LocalGetSnapshot = compositionLocalOf { {} }
-		val LocalRestoreSnapshot = compositionLocalOf { {} }
-		val LocalExportData = compositionLocalOf { {} }
-		val LocalImportData = compositionLocalOf<(ImportType) -> Unit> { {} }
-		val LocalDropboxSignIn = compositionLocalOf { {} }
-		val LocalTestDropboxConnection = compositionLocalOf { {} }
 
-		val LocalAttachmentCount = compositionLocalOf { 0 }
-		val LocalAttachmentProcessed = compositionLocalOf { 0 }
-		val LocalBucketItemCount = compositionLocalOf { 0 }
-		val LocalBucketItemProcessed = compositionLocalOf { 0 }
-		val LocalBucketCount = compositionLocalOf { 0 }
-		val LocalBucketProcessed = compositionLocalOf { 0 }
-		val LocalChapterCount = compositionLocalOf { 0 }
-		val LocalChapterProcessed = compositionLocalOf { 0 }
-		val LocalNoteCount = compositionLocalOf { 0 }
-		val LocalNoteProcessed = compositionLocalOf { 0 }
-		val LocalTagCount = compositionLocalOf { 0 }
-		val LocalTagProcessed = compositionLocalOf { 0 }
-		val LocalPackageCount = compositionLocalOf { 0 }
-		val LocalPackageProcessed = compositionLocalOf { 0 }
-		val LocalImportDataCount = compositionLocalOf { 0 }
-		val LocalImportDataProcessed = compositionLocalOf { 0 }
-
-		val LocalShowTakeSnapshotDialog = compositionLocalOf { false }
-		val LocalShowRestoreSnapshotDialog = compositionLocalOf { false }
-		val LocalShowRestoringSnapshotDialog = compositionLocalOf { false }
-		val LocalShowImportingDataDialog = compositionLocalOf { false }
-		val LocalShowImportingJourneyDataDialog = compositionLocalOf { false }
+		val LocalShowImportDataDialog = compositionLocalOf { false }
+		val LocalShowExportDataDialog = compositionLocalOf { false }
+		val LocalShowClearDataDialog = compositionLocalOf { false }
 		val LocalShowNotificationPermissionDialog = compositionLocalOf { false }
 		val LocalShowDeleteAccountDialog = compositionLocalOf { false }
 
@@ -726,6 +307,16 @@ class SettingsActivity : ComponentActivity() {
 		val LocalOpenDialog = compositionLocalOf<(SettingsDialogType, Any?) -> Unit> { { _, _ -> } }
 		val LocalCloseDialog = compositionLocalOf<(SettingsDialogType) -> Unit> { {} }
 
-		val LocalOnBackPressed = compositionLocalOf { {} }
+		enum class SettingsScreen {
+			SETTINGS,
+			BACKUP_AND_RESTORE,
+			LOCAL_BACKUP
+		}
+
+		enum class DarkTheme {
+			SYNC_WITH_SYSTEM,
+			ALWAYS_ON,
+			ALWAYS_OFF
+		}
 	}
 }

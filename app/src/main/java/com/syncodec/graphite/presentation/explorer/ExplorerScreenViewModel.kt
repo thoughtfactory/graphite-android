@@ -1,0 +1,94 @@
+package com.syncodec.graphite.presentation.explorer
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.utils.ContentStatus
+import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import org.koin.android.annotation.KoinViewModel
+
+
+@KoinViewModel
+class ExplorerScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+
+	val repositoryState = repository.repositoryState
+	val contentStatus : MutableStateFlow<ContentStatus> = MutableStateFlow(ContentStatus.Init)
+
+	private val _tagList : MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
+	val tagList : StateFlow<List<TagObject>> = _tagList
+	private val _noteList : MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
+	private val _filteredNoteList : MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
+	val filteredNoteList : StateFlow<List<NoteObjectLite>> = _filteredNoteList
+
+	private val _chapterObject = MutableStateFlow<ChapterObjectLite?>(null)
+	val chapterObject : StateFlow<ChapterObjectLite?> = _chapterObject
+
+	private val _filter : MutableStateFlow<(NoteObjectLite) -> Boolean> = MutableStateFlow { true }
+	val filter : StateFlow<(NoteObjectLite) -> Boolean> = _filter
+
+	init {
+		viewModelScope.launch(Dispatchers.Default) {
+			repositoryState.collect {
+				if (it == RepositoryState.SUCCESS) {
+					observeNotes()
+					observeTags()
+					observeFilter()
+				}
+			}
+		}
+	}
+
+	private fun observeNotes() {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.getAllNoteLiteAsFlow().collect { noteList ->
+				this@ExplorerScreenViewModel._noteList.tryEmit(noteList)
+			}
+		}
+	}
+
+	private fun observeTags() {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.getAllTagAsFlow().collect { tagList ->
+				this@ExplorerScreenViewModel._tagList.tryEmit(tagList)
+			}
+		}
+	}
+
+	private fun observeFilter() {
+		viewModelScope.launch(Dispatchers.Default) {
+			combine(
+				_noteList,
+				_chapterObject,
+				_filter
+			) { _noteList, _chapterObject, _filter ->
+				_noteList.filter { note ->
+					chapterObject.value?.id?.let { note.parentChapterId == it } ?: true && _filter(note)
+				}.let { _filteredNoteList.tryEmit(it) }
+			}.collect()
+		}
+	}
+
+	fun filterOnDefaultChapter() {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.getDefaultChapterId().let { repository.getChapterFromId(it).let { chapter -> _chapterObject.tryEmit(chapter?.toLite()) } }
+		}
+	}
+
+	fun filterOnChapter(chapterObject : RealmUUID?) = viewModelScope.launch(Dispatchers.Default) {
+		chapterObject?.let { repository.getChapterFromId(it).let { chapter -> _chapterObject.tryEmit(chapter?.toLite()) } }
+	}
+
+	fun filterOn(filter : (NoteObjectLite) -> Boolean) = _filter.tryEmit(filter)
+
+	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+}

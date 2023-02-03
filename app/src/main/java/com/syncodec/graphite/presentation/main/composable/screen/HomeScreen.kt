@@ -11,9 +11,9 @@ import androidx.compose.animation.with
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreen
+import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreen
+import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreen
 import com.syncodec.graphite.utils.*
 import io.realm.kotlin.types.RealmUUID
 
@@ -21,24 +21,12 @@ import io.realm.kotlin.types.RealmUUID
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun HomeScreen(
-	componentType : ComponentType,
-	noteList : List<NoteObjectLite>,
-	bucketList : List<BucketObject>,
-	bucketOrderList: List<RealmUUID>,
-	notebookList : List<ChapterObject>,
-	notebookOrderList: List<RealmUUID>,
-	sortOn : SortOn,
-	sortBy : SortBy,
-	onReorderBucketList : (List<RealmUUID>) -> Unit,
-	onReorderNotebookList : (List<RealmUUID>) -> Unit,
-	viewType : ViewType,
-	onClickFab : () -> Unit,
-	onClickNote : (RealmUUID) -> Unit,
-	onLongClickNote : (RealmUUID) -> Unit,
-	onClickBucket : (RealmUUID) -> Unit,
-	onLongClickBucket : (RealmUUID) -> Unit,
-	onClickNotebook : (RealmUUID) -> Unit,
-	onLongClickNotebook : (RealmUUID) -> Unit
+	componentType : ComponentType = ComponentType.Note,
+	isSelecting : Boolean = false,
+	onSelect : (RealmUUID) -> Unit = {},
+	selectedIdList : List<RealmUUID> = listOf(),
+	onClickNewList : () -> Unit = {},
+	onClickNewNotebook : () -> Unit = {},
 ) {
 	AnimatedContent(
 		targetState = componentType,
@@ -46,36 +34,24 @@ fun HomeScreen(
 		modifier = Modifier.fillMaxSize()
 	) {
 		when (it) {
-			ComponentType.NOTE -> NoteScreen(
-				noteList = noteList,
-				sortOn = sortOn,
-				sortBy = sortBy,
-				viewType = viewType,
-				onClickFab = onClickFab,
-				onClickNote = onClickNote,
-				onLongClickNote = onLongClickNote
+			ComponentType.Note -> NoteScreen(
+				isSelecting = isSelecting,
+				onSelect = onSelect,
+				selectedIdList = selectedIdList,
 			)
 
-			ComponentType.BUCKET -> BucketScreen(
-				bucketList = bucketList,
-				bucketOrderList = bucketOrderList,
-				sortOn = sortOn,
-				sortBy = sortBy,
-				onReorderBucketList = onReorderBucketList,
-				onClickFab = onClickFab,
-				onClickBucket = onClickBucket,
-				onLongClickBucket = onLongClickBucket
+			ComponentType.Bucket -> BucketScreen(
+				isSelecting = isSelecting,
+				onSelect = onSelect,
+				selectedIdList = selectedIdList,
+				onClickFab = onClickNewList,
 			)
 
-			ComponentType.NOTEBOOK -> NotebookScreen(
-				notebookList = notebookList,
-				notebookOrderList = notebookOrderList,
-				sortOn = sortOn,
-				sortBy = sortBy,
-				onReorderNotebookList = onReorderNotebookList,
-				onClickFab = onClickFab,
-				onClickNotebook = onClickNotebook,
-				onLongClickNotebook = onLongClickNotebook
+			ComponentType.Notebook -> NotebookScreen(
+				isSelecting = isSelecting,
+				onSelect = onSelect,
+				selectedIdList = selectedIdList,
+				onClickFab = onClickNewNotebook,
 			)
 		}
 	}

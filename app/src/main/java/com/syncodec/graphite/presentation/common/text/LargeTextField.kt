@@ -58,6 +58,7 @@ fun LargeTextField(
 		value = value,
 		onValueChange = onValueChange,
 		maxLines = 1,
+		singleLine = true,
 		textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
 		keyboardOptions = keyboardOptions,
 		keyboardActions = keyboardActions,

@@ -49,7 +49,6 @@ import com.syncodec.graphite.presentation.dropbox.DropboxActivity
 import com.syncodec.graphite.presentation.dropbox.composable.bar.TopBar
 import com.syncodec.graphite.presentation.dropbox.composable.dialog.DropboxDialog
 import com.syncodec.graphite.presentation.dropbox.composable.dialog.DropboxDialogType
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 
@@ -81,44 +80,44 @@ fun DropboxScreen(
 				.fillMaxSize()
 				.padding(it)
 		) {
-			Column(
-				modifier = Modifier
-					.fillMaxSize()
-			) {
-				ExperimentalCard()
-
-				SettingsButton(
-					title = "Connect with Dropbox",
-					icon = R.drawable.ic_logo_dropbox,
-					subTitle = "Get OAuth2 token from Dropbox to sync your files",
-					iconColor = Color.Unspecified
-				) { signInWithDropbox(context) }
-
-				SettingsButton(
-					title = "Enter Dropbox OAuth2 code",
-					icon = R.drawable.ic_keyboard,
-					subTitle = "Enter OAuth2 code to connect with Dropbox"
-				) {
-					openDialog(DropboxDialogType.ENTER_OAUTH2_CODE_DIALOG)
-				}
-
-				SettingsButton(
-					title = "Test connection",
-					icon = R.drawable.ic_test_connection,
-					subTitle = "Test connection to Dropbox"
-				) { testConnection() }
-
-				DropboxSpaceUsage(spaceUsage = spaceUsage)
-
-				SettingsButton(
-					title = "Disconnect from Dropbox",
-					icon = R.drawable.ic_cloud_x,
-					subTitle = "Remove Dropbox connection",
-					containerColor = Color.Companion.DeleteContainer.copy(alpha = 0.71f),
-					contentColor = Color.Companion.DeleteContent,
-					iconColor = Color.Companion.DeleteContent,
-				) { disconnect() }
-			}
+//			Column(
+//				modifier = Modifier
+//					.fillMaxSize()
+//			) {
+//				ExperimentalCard()
+//
+//				SettingsButton(
+//					title = "Connect with Dropbox",
+//					icon = R.drawable.ic_logo_dropbox,
+//					subTitle = "Get OAuth2 token from Dropbox to sync your files",
+//					iconColor = Color.Unspecified
+//				) { signInWithDropbox(context) }
+//
+//				SettingsButton(
+//					title = "Enter Dropbox OAuth2 code",
+//					icon = R.drawable.ic_keyboard,
+//					subTitle = "Enter OAuth2 code to connect with Dropbox"
+//				) {
+//					openDialog(DropboxDialogType.ENTER_OAUTH2_CODE_DIALOG)
+//				}
+//
+//				SettingsButton(
+//					title = "Test connection",
+//					icon = R.drawable.ic_test_connection,
+//					subTitle = "Test connection to Dropbox"
+//				) { testConnection() }
+//
+//				DropboxSpaceUsage(spaceUsage = spaceUsage)
+//
+//				SettingsButton(
+//					title = "Disconnect from Dropbox",
+//					icon = R.drawable.ic_cloud_x,
+//					subTitle = "Remove Dropbox connection",
+//					containerColor = Color.Companion.DeleteContainer.copy(alpha = 0.71f),
+//					contentColor = Color.Companion.DeleteContent,
+//					iconColor = Color.Companion.DeleteContent,
+//				) { disconnect() }
+//			}
 		}
 	}
 

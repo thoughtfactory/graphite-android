@@ -1,11 +1,14 @@
 package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
-import androidx.room.PrimaryKey
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 
 enum class BucketType {
@@ -19,7 +22,8 @@ enum class BucketType {
 
 @Keep
 class BucketObject: RealmObject {
-	@PrimaryKey var id: RealmUUID = RealmUUID.random()
+	@PrimaryKey
+	var id: RealmUUID = RealmUUID.random()
 
 	var createdTimestamp: Long = System.currentTimeMillis()
 	var modifiedTimestamp: Long = System.currentTimeMillis()
@@ -95,5 +99,14 @@ data class BucketSnapshot(
 		this.bucketType = this@BucketSnapshot.bucketType
 		this.isFavourite = this@BucketSnapshot.isFavourite
 		this.isLocked = this@BucketSnapshot.isLocked
+	}
+
+	fun toJsonString(): String? {
+		return try {
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			return objectMapper.writeValueAsString(this)
+		} catch (e: Exception) {
+			null
+		}
 	}
 }

@@ -12,11 +12,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.CircleShape
@@ -55,7 +53,6 @@ fun GridItem(
 	onLongClick : () -> Unit = {},
 	onClick : () -> Unit = {}
 ) {
-	val context = LocalContext.current
 	var _thumbnail by remember { mutableStateOf<Bitmap?>(null) }
 	LaunchedEffect(key1 = thumbnail.hashCode()) {
 		_thumbnail = thumbnail?.decodeBase64ToBitmap()

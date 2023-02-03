@@ -31,8 +31,8 @@ fun DiscardDialog(
 		DualActionButtons(
 			primaryText = "Discard",
 			secondaryText = "Cancel",
-			onPrimaryClick = onDiscard,
-			onSecondaryClick = onDismiss
+			onClickPrimary = onDiscard,
+			onClickSecondary = onDismiss
 		)
 	}
 }

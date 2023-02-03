@@ -31,7 +31,6 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.chapter.ChapterCoverPicker
-import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -54,7 +53,6 @@ fun ChapterBottomSheet(
 	var coverImage by remember { mutableStateOf<Int?>(null) }
 	var coverUri by remember { mutableStateOf<Uri?>(null) }
 
-	val closeSheet = NotebookActivity.LocalCloseBottomSheet.current
 
 	GenericBottomSheet(
 		title = "Writing a new chapter?",
@@ -121,7 +119,6 @@ fun ChapterBottomSheet(
 							putChapter(titleText, descriptionText, coverColor, thumbnail)
 
 							keyboardController?.hide()
-							closeSheet()
 
 							titleText = ""
 							descriptionText = ""

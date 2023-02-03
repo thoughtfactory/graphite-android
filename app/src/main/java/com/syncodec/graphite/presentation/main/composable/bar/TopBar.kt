@@ -16,40 +16,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedObjectIdList
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenBottomSheet
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.main.composable.LocalCompositionSyncStatus
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
-import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
-import com.syncodec.graphite.presentation.ui.DeleteContainer
-import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.service.DropboxSyncStatus
-import com.syncodec.graphite.utils.Authenticator
+import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalVaultIsOpened
+import com.syncodec.graphite.utils.LocalIsAuthenticated
 
 
+@Preview
 @Composable
 fun TopBar(
-	currentRoute : String?,
-	componentType : ComponentType,
-	onComponentChange : (Int) -> Unit,
-	onClickSearch : () -> Unit,
-	onClickSync : () -> Unit
+	currentRoute : String? = null,
+	componentType : ComponentType = ComponentType.Note,
+	isSelecting : Boolean = false,
+	selectedSize : Int = 0,
+	onComponentChange : (Int) -> Unit = {},
+	onClickFilter : () -> Unit = {},
+	onClickMenu : () -> Unit = {},
+	onClickCancelSelect : () -> Unit = {},
+	onClickSearch : () -> Unit = {},
+	onClickDelete : () -> Unit = {},
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
@@ -60,8 +58,6 @@ fun TopBar(
 		}
 	)
 
-	val isSelected = LocalCompositionIsSelected.current
-
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -69,40 +65,42 @@ fun TopBar(
 	) {
 		Bar(
 			currentRoute = currentRoute,
+			isSelecting = isSelecting,
+			selectedSize = selectedSize,
+			onClickMenu = onClickMenu,
+			onClickCancelSelect = onClickCancelSelect,
 			onClickSearch = onClickSearch,
-			onClickSync = onClickSync
+			onClickDelete = onClickDelete,
 		)
 
 		AnimatedVisibility(
-			visible = currentRoute == BottomNavigationItem.Home.route && ! isSelected,
+			visible = currentRoute == BottomNavigationItem.Home.route && !isSelecting,
 			enter = expandVertically(tween(300)),
 			exit = shrinkVertically(tween(300))
 		) {
-			ComponentType(
+			ComponentTypeView(
 				componentType = componentType,
-			) { onComponentChange(it) }
+				onStateChange = onComponentChange,
+				onClickFilter = onClickFilter
+			)
 		}
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun Bar(
 	currentRoute : String?,
+	isSelecting : Boolean,
+	selectedSize : Int,
+	onClickMenu : () -> Unit,
+	onClickCancelSelect : () -> Unit,
 	onClickSearch : () -> Unit,
-	onClickSync : () -> Unit
+	onClickDelete : () -> Unit,
 ) {
-	val openSheet = LocalCompositionOpenBottomSheet.current
 
-	val isSelected = LocalCompositionIsSelected.current
-	val selectedObjectIdList = LocalCompositionSelectedObjectIdList.current
-	val syncStatus = LocalCompositionSyncStatus.current
-
-	val onSelect = LocalCompositionOnSelect.current
-
-	val isVaultOpened = LocalVaultIsOpened.current
-
-	val openDialog = LocalCompositionOpenDialog.current
+	val isAuthenticated = LocalIsAuthenticated.current
+	val authenticatorAction = LocalAuthenticatorAction.current
 
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
@@ -114,10 +112,8 @@ private fun Bar(
 		}
 	)
 
-	val onAuthenticatorAction = LocalAuthenticatorAction.current
-
 	Crossfade(
-		targetState = isSelected,
+		targetState = isSelecting,
 		animationSpec = tween(300)
 	) {
 		if (it) {
@@ -125,41 +121,31 @@ private fun Bar(
 				navigationIcon = {
 					MenuButton(
 						icon = R.drawable.ic_close,
-						tint = MaterialTheme.colorScheme.onBackground,
-					) {
-						onSelect(false)
-						selectedObjectIdList.clear()
-					}
+						onClick = onClickCancelSelect,
+					)
 				},
 				title = {
-					Text(
-						text = if (selectedObjectIdList.isEmpty()) "No items selected" else if (selectedObjectIdList.size == 1) "1 item selected" else "${selectedObjectIdList.size} items selected",
-						color = MaterialTheme.colorScheme.onBackground
+					AnimatedText(
+						text = if (selectedSize == 0) "No items selected" else if (selectedSize == 1) "1 item selected" else "${selectedSize ?: "No"} items selected",
+						color = MaterialTheme.colorScheme.onBackground,
 					)
 				},
 				actions = {
-					IconButton(
-						onClick = { openDialog(MainDialogType.DELETE) }
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_delete),
-							contentDescription = "Delete items",
-							tint = Color.DeleteContainer,
-							modifier = Modifier.requiredSize(IconButtonSize)
-						)
-					}
+					MenuButton(
+						icon = R.drawable.ic_delete,
+						colors = MenuButtonDefaults.deleteButtonColors(),
+						onClick = onClickDelete
+					)
 				},
 				colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor)
 			)
 		} else {
 			CenterAlignedTopAppBar(
 				navigationIcon = {
-					Row(modifier = Modifier) {
-						MenuButton(
-							icon = R.drawable.ic_menu,
-							tint = MaterialTheme.colorScheme.onBackground,
-						) { openSheet(MainBottomSheetType.MENU) }
-					}
+					MenuButton(
+						icon = R.drawable.ic_menu,
+						onClick = onClickMenu,
+					)
 				},
 				title = {
 					Text(
@@ -174,16 +160,14 @@ private fun Bar(
 					)
 				},
 				actions = {
-//					SyncButton(syncStatus = syncStatus, onClickSync = onClickSync)
 					MenuButton(
 						icon = R.drawable.ic_vault,
-						tint = if (isVaultOpened) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-						containerColor = if (isVaultOpened) MaterialTheme.colorScheme.primary else Color.Transparent,
-						onClick = { onAuthenticatorAction(Authenticator.AUTHENTICATE) }
-					)
+						tooltip = "Vault",
+						checked = isAuthenticated,
+					) { authenticatorAction(AuthenticatorScreen.Authenticate) }
+
 					MenuButton(
 						icon = R.drawable.ic_search,
-						tint = MaterialTheme.colorScheme.onBackground,
 						onClick = onClickSearch
 					)
 				},
@@ -194,12 +178,11 @@ private fun Bar(
 }
 
 @Composable
-private fun ComponentType(
-	componentType : ComponentType,
-	onStateChange : (Int) -> Unit
+private fun ComponentTypeView(
+	componentType : ComponentType = ComponentType.Note,
+	onStateChange : (Int) -> Unit = {},
+	onClickFilter : () -> Unit = {},
 ) {
-	val openSheet = LocalCompositionOpenBottomSheet.current
-
 	Column(
 		modifier = Modifier.fillMaxWidth(),
 		verticalArrangement = Arrangement.Center,
@@ -229,15 +212,15 @@ private fun ComponentType(
 					),
 				),
 				currentState = componentType.ordinal,
-				onStateChange = onStateChange,
+				onChangeState = onStateChange,
 				modifier = Modifier
 					.height(32.dp)
 					.weight(1f)
 			)
 			MenuButton(
 				icon = R.drawable.ic_filter,
-				tint = MaterialTheme.colorScheme.onBackground,
-			) { openSheet(MainBottomSheetType.FILTER) }
+				onClick = onClickFilter,
+			)
 
 			Spacer(modifier = Modifier.width(4.dp))
 		}
@@ -268,43 +251,36 @@ private fun SyncButton(
 		when (it) {
 			DropboxSyncStatus.INIT -> MenuButton(
 				icon = R.drawable.ic_cloud,
-				tint = Color.Companion.SyncCheck,
 				onClick = onClickSync
 			)
 
 			DropboxSyncStatus.SYNC_NOT_CONFIGURED -> MenuButton(
 				icon = R.drawable.ic_cloud_dashed,
-				tint = Color.Companion.SyncNotCongifured,
 				onClick = onClickSync
 			)
 
 			DropboxSyncStatus.SYNC_DISABLED -> MenuButton(
 				icon = R.drawable.ic_cloud_disable,
-				tint = Color.Companion.SyncDisabled,
 				onClick = onClickSync
 			)
 
 			DropboxSyncStatus.NO_INTERNET -> MenuButton(
 				icon = R.drawable.ic_no_network,
-				tint = Color.Companion.SyncNoInternet,
 				onClick = onClickSync
 			)
 
 			DropboxSyncStatus.NOT_LOGGED_IN -> MenuButton(
 				icon = R.drawable.ic_cloud_disable,
-				tint = Color.Companion.SyncNotLoggedIn,
 				onClick = onClickSync
 			)
 
 			DropboxSyncStatus.CONNECTED -> MenuButton(
 				icon = R.drawable.ic_cloud,
-				tint = Color.Companion.SyncConnected,
 				onClick = onClickSync
 			)
 
 			DropboxSyncStatus.SYNCING -> MenuButton(
 				icon = R.drawable.ic_cloud_syncing,
-				tint = Color.Companion.SyncSyncing,
 				modifier = Modifier.graphicsLayer {
 					this.alpha = alpha
 				},
@@ -313,13 +289,11 @@ private fun SyncButton(
 
 			DropboxSyncStatus.SYNC_ERROR -> MenuButton(
 				icon = R.drawable.ic_cloud_exclamation,
-				tint = Color.Companion.SyncError,
 				onClick = onClickSync
 			)
 
 			DropboxSyncStatus.DRIVE_LOCKED -> MenuButton(
 				icon = R.drawable.ic_cloud_exclamation,
-				tint = Color.Companion.SyncLocked,
 				onClick = onClickSync
 			)
 		}

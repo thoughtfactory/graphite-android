@@ -1,45 +1,177 @@
 package com.syncodec.graphite.presentation.common.bottomSheet
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonColors
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
 @Preview
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheetTextField(
 	value : String = "Title",
 	label : String = "Label",
 	placeholder : String = "Placeholder",
+	actionButtons : @Composable RowScope.() -> Unit = {},
+	colors : BottomSheetTextFieldColors = BottomSheetTextFieldDefaults.textFieldColors(),
 	onValueChange : (String) -> Unit = {},
 ) {
-	TextField(
-		value = value,
-		onValueChange = onValueChange,
-		textStyle = MaterialTheme.typography.bodyMedium,
-		label = { Text(label) },
-		placeholder = { Text(placeholder) },
-		shape = MaterialTheme.shapes.medium,
-		singleLine = true,
-		maxLines = 1,
-		colors = TextFieldDefaults.textFieldColors(
-			textColor = MaterialTheme.colorScheme.onSurface,
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
-			cursorColor = MaterialTheme.colorScheme.onSurface,
-			focusedIndicatorColor = Color.Transparent,
-			unfocusedIndicatorColor = Color.Transparent,
-			placeholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
-			focusedLabelColor = MaterialTheme.colorScheme.onSurface,
-			unfocusedLabelColor = MaterialTheme.colorScheme.onSurface,
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = Modifier.fillMaxWidth(),
+	) {
+		BasicTextField(
+			value = value,
+			textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textColor),
+			cursorBrush = SolidColor(colors.cursorColor),
+			singleLine = true,
+			onValueChange = onValueChange,
+			modifier = Modifier.weight(1f),
+		) {
+			Box(
+				contentAlignment = Alignment.CenterStart,
+				modifier = Modifier
+					.fillMaxWidth()
+					.height((IconButtonSize * 2) + 2.dp)
+					.background(colors.containerColor, MaterialTheme.shapes.medium)
+					.padding(12.dp, 0.dp),
+			) {
+				androidx.compose.animation.AnimatedVisibility(
+					visible = value.isEmpty(),
+					enter = fadeIn(tween(300)),
+					exit = fadeOut(tween(300)),
+				) {
+					Text(
+						text = placeholder,
+						color = colors.placeholderColor,
+						style = MaterialTheme.typography.bodyMedium,
+					)
+				}
+				it()
+			}
+		}
+
+		Spacer(modifier = Modifier.width(4.dp))
+		MenuButton(
+			icon = R.drawable.ic_close,
+			colors = MenuButtonDefaults.menuButtonColors(
+				containerColor = colors.containerColor,
+				iconColor = colors.textColor,
+			)
+		) { onValueChange("") }
+		actionButtons()
+	}
+}
+
+@Immutable
+data class BottomSheetTextFieldColors constructor(
+	val textColor : Color,
+	val disabledTextColor : Color,
+	val containerColor : Color,
+	val cursorColor : Color,
+	val errorCursorColor : Color,
+	val selectionColors : TextSelectionColors,
+	val focusedTrailingIconColor : Color,
+	val unfocusedTrailingIconColor : Color,
+	val disabledTrailingIconColor : Color,
+	val errorTrailingIconColor : Color,
+	val placeholderColor : Color,
+	val disabledPlaceholderColor : Color,
+) {
+	override fun equals(other : Any?) : Boolean {
+		if (this === other) return true
+		if (other !is BottomSheetTextFieldColors) return false
+
+		if (textColor != other.textColor) return false
+		if (disabledTextColor != other.disabledTextColor) return false
+		if (containerColor != other.containerColor) return false
+		if (cursorColor != other.cursorColor) return false
+		if (errorCursorColor != other.errorCursorColor) return false
+		if (selectionColors != other.selectionColors) return false
+		if (focusedTrailingIconColor != other.focusedTrailingIconColor) return false
+		if (unfocusedTrailingIconColor != other.unfocusedTrailingIconColor) return false
+		if (disabledTrailingIconColor != other.disabledTrailingIconColor) return false
+		if (errorTrailingIconColor != other.errorTrailingIconColor) return false
+		if (placeholderColor != other.placeholderColor) return false
+		if (disabledPlaceholderColor != other.disabledPlaceholderColor) return false
+
+		return true
+	}
+
+	override fun hashCode() : Int {
+		var result = textColor.hashCode()
+		result = 31 * result + disabledTextColor.hashCode()
+		result = 31 * result + containerColor.hashCode()
+		result = 31 * result + cursorColor.hashCode()
+		result = 31 * result + errorCursorColor.hashCode()
+		result = 31 * result + selectionColors.hashCode()
+		result = 31 * result + focusedTrailingIconColor.hashCode()
+		result = 31 * result + unfocusedTrailingIconColor.hashCode()
+		result = 31 * result + disabledTrailingIconColor.hashCode()
+		result = 31 * result + errorTrailingIconColor.hashCode()
+		result = 31 * result + placeholderColor.hashCode()
+		result = 31 * result + disabledPlaceholderColor.hashCode()
+		return result
+	}
+
+}
+
+object BottomSheetTextFieldDefaults {
+	@Composable
+	fun textFieldColors(
+		textColor : Color = MaterialTheme.colorScheme.onSurface,
+		disabledTextColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
+		containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
+		cursorColor : Color = MaterialTheme.colorScheme.onSurface,
+		errorCursorColor : Color = MaterialTheme.colorScheme.error,
+		selectionColors : TextSelectionColors = TextSelectionColors(
+			handleColor = MaterialTheme.colorScheme.onSurface,
+			backgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
 		),
-		modifier = Modifier.fillMaxWidth()
+		focusedTrailingIconColor : Color = MaterialTheme.colorScheme.onSurface,
+		unfocusedTrailingIconColor : Color = MaterialTheme.colorScheme.onSurface,
+		disabledTrailingIconColor : Color = MaterialTheme.colorScheme.onSurface,
+		errorTrailingIconColor : Color = MaterialTheme.colorScheme.error,
+		placeholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+		disabledPlaceholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
+	) : BottomSheetTextFieldColors = BottomSheetTextFieldColors(
+		textColor = textColor,
+		disabledTextColor = disabledTextColor,
+		containerColor = containerColor,
+		cursorColor = cursorColor,
+		errorCursorColor = errorCursorColor,
+		selectionColors = selectionColors,
+		focusedTrailingIconColor = focusedTrailingIconColor,
+		unfocusedTrailingIconColor = unfocusedTrailingIconColor,
+		disabledTrailingIconColor = disabledTrailingIconColor,
+		errorTrailingIconColor = errorTrailingIconColor,
+		placeholderColor = placeholderColor,
+		disabledPlaceholderColor = disabledPlaceholderColor,
 	)
 }

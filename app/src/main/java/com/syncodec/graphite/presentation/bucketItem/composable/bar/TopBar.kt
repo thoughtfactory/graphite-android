@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.bucketItem.composable.bar
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -19,49 +18,59 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsNew
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionTitle
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsFavourite
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionIsLocked
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickFavourite
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickLock
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickNavigationIcon
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnClickSave
 import com.syncodec.graphite.presentation.common.button.MenuButton
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
-fun TopBar() {
-	val title = LocalCompositionTitle.current
-	val onClickNavigationIcon = LocalCompositionOnClickNavigationIcon.current
-	val isNew = LocalCompositionIsNew.current
-	val isLocked = LocalCompositionIsLocked.current
-	val isFavourite = LocalCompositionIsFavourite.current
-	val onClickSave = LocalCompositionOnClickSave.current
-	val onClickLock = LocalCompositionOnClickLock.current
-	val onClickFavourite = LocalCompositionOnClickFavourite.current
-
+fun TopBar(
+	isSaved : Boolean = false,
+	isFavourite : Boolean = false,
+	isLocked : Boolean = false,
+	onClickSave : () -> Unit = {},
+	onClickFavourite : () -> Unit = {},
+	onClickLock : () -> Unit = {},
+	onClickBack : () -> Unit = {}
+) {
 	TopAppBar(
 		navigationIcon = {
 			MenuButton(
 				icon = R.drawable.ic_back,
-				contentDescription = "Back",
-				tint = MaterialTheme.colorScheme.onBackground,
-				onClick = onClickNavigationIcon
+				tooltip = "Back",
+				onClick = onClickBack
 			)
 		},
 		title = {},
 		actions = {
 			AnimatedContent(
-				targetState = isNew,
+				targetState = isSaved,
 				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + fadeOut(tween(300), 0.71f) }
 			) {
-				when(it) {
+				when (it) {
 					true -> {
+						Row(
+							modifier = Modifier
+						) {
+							MenuButton(
+								icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
+								tooltip = if (isLocked) "Locked" else "Not locked",
+								checked = isLocked,
+								shape = MaterialTheme.shapes.medium,
+								onClick = onClickLock
+							)
+							MenuButton(
+								icon = R.drawable.ic_favourite,
+								tooltip = "Favourite",
+								checked = isFavourite,
+								shape = MaterialTheme.shapes.medium,
+								onClick = onClickFavourite,
+							)
+						}
+					}
+
+					false -> {
 						Row(
 							modifier = Modifier
 						) {
@@ -71,37 +80,12 @@ fun TopBar() {
 							Spacer(modifier = Modifier.width(4.dp))
 						}
 					}
-					 false -> {
-						 Row(
-							 modifier = Modifier
-						 ) {
-							 MenuButton(
-								 icon = if (isLocked == true) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
-								 contentDescription = if (isLocked == true) "Locked" else "Not locked",
-								 tint = MaterialTheme.colorScheme.onBackground,
-								 isChecked = isLocked == true,
-								 isEnabled = true,
-								 onClick = onClickLock
-							 )
-							 MenuButton(
-								 icon = R.drawable.ic_favourite,
-								 contentDescription = "Favourite",
-								 tint = MaterialTheme.colorScheme.onBackground,
-								 isChecked = isFavourite == true,
-								 isEnabled = true,
-								 onClick = onClickFavourite,
-							 )
-						 }
-					 }
-					null -> null
 				}
 			}
 		},
 		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = MaterialTheme.colorScheme.background,
-			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-			titleContentColor = MaterialTheme.colorScheme.onSurface,
-			actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+			navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
 		)
 	)
 }

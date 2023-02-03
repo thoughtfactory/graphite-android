@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,15 +30,15 @@ import com.syncodec.graphite.presentation.ui.IconButtonSize
 @Preview
 @Composable
 fun GenericBottomSheet(
-	title: String = "Title",
-	icon: Int = R.drawable.ic_menu,
-	subTitle: String? = null,
-	content: @Composable ColumnScope.() -> Unit = {},
+	title : String = "Title",
+	icon : Int = R.drawable.ic_menu,
+	subTitle : String? = null,
+	enableScroll : Boolean = false,
+	content : @Composable ColumnScope.() -> Unit = {},
 ) {
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier.fillMaxWidth()
-	) {
+
+	@Composable
+	fun ColumnScope.innerContent() {
 		Box(
 			modifier = Modifier
 				.width(48.dp)
@@ -80,5 +82,23 @@ fun GenericBottomSheet(
 		Spacer(modifier = Modifier.height(12.dp))
 
 		content()
+	}
+
+	if (enableScroll) {
+		Column(
+			horizontalAlignment = Alignment.CenterHorizontally,
+			modifier = Modifier
+				.fillMaxWidth()
+				.verticalScroll(rememberScrollState())
+		) {
+			innerContent()
+		}
+	} else {
+		Column(
+			horizontalAlignment = Alignment.CenterHorizontally,
+			modifier = Modifier.fillMaxWidth()
+		) {
+			innerContent()
+		}
 	}
 }

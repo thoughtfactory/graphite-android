@@ -83,10 +83,9 @@ class NotePinNotification {
 			val openActivityActionIntent = TaskStackBuilder.create(context).run {
 //				addNextIntentWithParentStack(resultIntent)
 				Intent(context, NoteActivity::class.java).apply {
-					putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-					putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId.bytes)
-					putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
-					putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
+					putExtra(Extra.Companion.Extra.IsNew.name, false)
+					putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
+					putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
 
 					flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
@@ -116,7 +115,7 @@ class NotePinNotification {
 				)
 				.addExtras(
 					Bundle().apply {
-						putByteArray(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
+						putByteArray(Extra.Companion.Extra.NoteId.name, noteId.bytes)
 					}
 				)
 				.setContentIntent(openActivityActionIntent)
@@ -146,7 +145,7 @@ class NotePinNotification {
 		fun isNotificationPinned(context : Context, noteId : RealmUUID?) : Boolean {
 			val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 			return notificationManager.activeNotifications.any {
-				it.notification.extras.getByteArray(Extra.Companion.Constant.NOTE_ID.name).contentEquals(noteId?.bytes)
+				it.notification.extras.getByteArray(Extra.Companion.Extra.NoteId.name).contentEquals(noteId?.bytes)
 			}
 		}
 	}
