@@ -26,6 +26,7 @@ fun LazyListScope.noteList(
 	headerSubTitle : String = "${noteList.size} notes",
 	headerMinHeight : Dp = Dp.Hairline,
 	headerBackgroundColor : Color? = null,
+	isVisible : Boolean = true,
 	toggleVisibility : () -> Unit = {},
 	noteCardColors : NoteCardColors? = null,
 	headerEnabled : Boolean = true,
@@ -43,31 +44,32 @@ fun LazyListScope.noteList(
 		) { toggleVisibility() }
 	}
 
-	noteList
-		.forEach { note ->
-		item(
-			key = note.id.toString()
-		) {
-			Box(
-				modifier = Modifier.animateItemPlacement(tween(300))
-			) {
-				NoteCard(
-					id = note.id,
-					timestamp = note.userTimestamp.timeStampToPrettyFull(),
-					title = note.title,
-					isFavourite = note.isFavourite,
-					isLocked = note.isLocked,
-					contentThumbnail = note.contentThumbnail,
-					thumbnail = note.thumbnail,
-					address = note.address,
-					latLng = note.latLng,
-					tagList = tagList.filter { note.id in it.objectIdList },
-					isSelected = note.id in selectedIdList,
-					colors = noteCardColors ?: NoteCardDefaults.noteCardColors(),
-					onClick = { onClick(note) },
-					onLongClick = { onLongClick(note) },
-				)
+	if (isVisible)
+		noteList
+			.forEach { note ->
+				item(
+					key = note.id.toString()
+				) {
+					Box(
+						modifier = Modifier.animateItemPlacement(tween(300))
+					) {
+						NoteCard(
+							id = note.id,
+							timestamp = note.userTimestamp.timeStampToPrettyFull(),
+							title = note.title,
+							isFavourite = note.isFavourite,
+							isLocked = note.isLocked,
+							contentThumbnail = note.contentThumbnail,
+							thumbnail = note.thumbnail,
+							address = note.address,
+							latLng = note.latLng,
+							tagList = tagList.filter { note.id in it.objectIdList },
+							isSelected = note.id in selectedIdList,
+							colors = noteCardColors ?: NoteCardDefaults.noteCardColors(),
+							onClick = { onClick(note) },
+							onLongClick = { onLongClick(note) },
+						)
+					}
+				}
 			}
-		}
-	}
 }

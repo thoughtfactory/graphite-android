@@ -4,9 +4,8 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.utils.LocationDataState
+import com.syncodec.graphite.utils.LocationData
 import io.realm.kotlin.types.RealmUUID
 import java.io.File
 
@@ -25,10 +24,8 @@ fun SheetLayout(
 	noteId : RealmUUID? = null,
 	createdTimestamp : Long? = null,
 	modifiedTimestamp : Long? = null,
-	latLng : LatLng? = null,
-	address : String? = null,
 	parentChapterObject : ChapterObject? = null,
-	locationDataState : LocationDataState = LocationDataState.INIT,
+	locationData : LocationData = LocationData.Init,
 	attachmentListSaved : List<File> = listOf(),
 	attachmentListToAdd : List<Uri> = listOf(),
 	attachmentListToRemove : List<File> = listOf(),
@@ -56,9 +53,7 @@ fun SheetLayout(
 		)
 
 		EditorBottomSheetType.LOCATION -> LocationBottomSheet(
-			locationDataState = locationDataState,
-			latLng = latLng,
-			address = address,
+			locationData = locationData,
 			onRemoveLocation = onRemoveLocation,
 			onReloadLocation = onReloadLocation,
 		)

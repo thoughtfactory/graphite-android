@@ -8,11 +8,10 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.LocationDataState
+import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import io.realm.kotlin.types.BacklinksDelegate
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +66,7 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 	val onNoteSaved = MutableStateFlow(false)
 
 	/** Used for bottom sheet to show the correct view and data.*/
-	val locationDataState = MutableStateFlow(LocationDataState.INIT)
+	val locationDataState = MutableStateFlow<LocationData>(LocationData.Init)
 
 	init {
 		initObserver()
@@ -224,12 +223,15 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 
 	/** Used for bottom sheet to show the correct view and data.*/
 	private fun loadLocationData(latLng : LatLng?, address : String?) {
-		when {
-			latLng == null && address == null -> locationDataState.tryEmit(LocationDataState.SUCCESS_NO_LOCATION)
-			latLng == null && address == "" -> locationDataState.tryEmit(LocationDataState.SUCCESS_NO_LOCATION)
-			latLng == null && address != null -> locationDataState.tryEmit(LocationDataState.SUCCESS_ONLY_ADDRESS)
-			latLng != null && address == null -> locationDataState.tryEmit(LocationDataState.SUCCESS_ONLY_LATLNG)
-			else -> locationDataState.tryEmit(LocationDataState.SUCCESS)
+		try {
+			when {
+				latLng == null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessNoData)
+				latLng == null && !address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyAddress(address))
+				latLng != null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyLatLng(latLng))
+				else -> locationDataState.tryEmit(LocationData.Success(latLng!!, address!!))
+			}
+		} catch (e : Exception) {
+			locationDataState.tryEmit(LocationData.Error("Error loading location data"))
 		}
 	}
 
@@ -246,6 +248,8 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 		this.address.tryEmit(address)
 		loadLocationData(latLng = latLng, address = address)
 	}
+
+	fun setLocationPermissionUnabailable() = this.locationDataState.tryEmit(LocationData.NoPermission)
 
 	fun setContent(data : String?) : Boolean {
 		return try {

@@ -21,6 +21,15 @@ class BaseObject : RealmObject {
 
 	var deletedIdList : RealmList<RealmUUID> = realmListOf()
 
+	fun clone() : BaseObject = BaseObject().apply {
+		this.id = this@BaseObject.id
+		this.defaultChapterId = this@BaseObject.defaultChapterId
+		this.lastSyncedTimestamp = this@BaseObject.lastSyncedTimestamp
+		this.notebookIdOrderList = this@BaseObject.notebookIdOrderList
+		this.bucketIdOrderList = this@BaseObject.bucketIdOrderList
+		this.deletedIdList = this@BaseObject.deletedIdList
+	}
+
 	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + (defaultChapterId?.hashCode() ?: 0)

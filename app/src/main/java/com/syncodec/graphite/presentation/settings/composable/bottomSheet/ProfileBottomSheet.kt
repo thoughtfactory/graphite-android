@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.google.firebase.auth.FirebaseUser
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
@@ -42,13 +43,10 @@ import com.syncodec.graphite.presentation.ui.DeleteContent
 
 @Composable
 fun ProfileBottomSheet(
+	firebaseUser : FirebaseUser?,
+	signOut : () -> Unit,
 	closeSheet : () -> Unit
 ) {
-	val firebaseUser = SettingsActivity.LocalFirebaseUser.current
-
-	val openDialog = SettingsActivity.LocalOpenDialog.current
-	val signOut = SettingsActivity.LocalSignOut.current
-
 	GenericBottomSheet(
 		title = "Profile",
 		icon = R.drawable.ic_account

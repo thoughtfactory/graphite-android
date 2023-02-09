@@ -43,6 +43,7 @@ fun KeyValueText(
 
 	Box(
 		modifier = modifier
+			.padding(0.dp, 4.dp)
 			.background(color = containerColor, shape = MaterialTheme.shapes.medium)
 			.clip(MaterialTheme.shapes.medium)
 			.combinedClickable(

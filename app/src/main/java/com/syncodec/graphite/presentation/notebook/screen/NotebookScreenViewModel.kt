@@ -10,7 +10,7 @@ import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.encodeBase64
@@ -109,8 +109,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 					loadChapterList(parentId = chapterObject1.id)
 					loadChapterPath(chapterId = chapterObject1.id).let {
 						this@NotebookScreenViewModel.chapterPath.tryEmit(it)
-						if (chapterObject1.noteList.isEmpty() && chapterObject1.chapterList.isEmpty()) contentStatus.tryEmit(ContentStatus.LoadedEmpty)
-						else contentStatus.tryEmit(ContentStatus.Loaded)
+						contentStatus.tryEmit(ContentStatus.Loaded)
 					}
 				}
 			}
@@ -149,7 +148,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 
 			this.parentId = parentId
 
-			repository.putChapter(parentId = parentId, this) { _, _ -> }
+			repository.putChapterSuspended(this)
 		}
 	}
 
@@ -165,7 +164,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			this.isLocked = this@NotebookScreenViewModel.isLocked.value ?: false
 
 			this.parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }
-			repository.putChapter(parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }, this) { _, _ -> }
+			repository.putChapterSuspended(this)
 		}
 	}
 
@@ -183,7 +182,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			this.isLocked = this@NotebookScreenViewModel.isLocked.value ?: false
 
 			this.parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }
-			repository.putChapter(parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }, this) { _, _ -> }
+			repository.putChapterSuspended(this)
 		}
 	}
 
@@ -199,13 +198,13 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			this.isLocked = (this@NotebookScreenViewModel.isLocked.value ?: false).not()
 
 			this.parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }
-			repository.putChapter(parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }, this) { _, _ -> }
+			repository.putChapterSuspended(this)
 		}
 	}
 
 	fun setDefaultChapter(chapterId : RealmUUID) {
-		viewModelScope.launch(Dispatchers.Default) {
-			repository.putDefaultChapterId(id = chapterId) { _ -> }
+		CoroutineScope(Dispatchers.Default).launch {
+			repository.putDefaultChapterId(id = chapterId)
 		}
 	}
 

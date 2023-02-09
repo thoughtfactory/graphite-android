@@ -9,9 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -70,24 +69,22 @@ class WhereDialogViewModel(val repository : KoinRepository) : ViewModel() {
 
 	fun putChapter(parentChapterId : RealmUUID?, title : String?, description : String?, color : Color?, bitmap : Bitmap?) {
 		if (BaseApplication.isPro.value) {
-			CoroutineScope(Dispatchers.Default).launch {
-				try {
-					ChapterObject().apply {
-						this.modifiedTimestamp = System.currentTimeMillis()
+			try {
+				ChapterObject().apply {
+					this.modifiedTimestamp = System.currentTimeMillis()
 
-						this.title = title
-						this.description = description
-						this.color = color?.toArgb()
-						this.thumbnail = bitmap?.encodeBase64()
+					this.title = title
+					this.description = description
+					this.color = color?.toArgb()
+					this.thumbnail = bitmap?.encodeBase64()
 
-						this.parentId = parentChapterId
+					this.parentId = parentChapterId
 
-						repository.putChapter(this.parentId, this) { _, _ -> }
-					}
-				} catch (e : Exception) {
+					repository.putChapterSuspended(this)
+				}
+			} catch (e : Exception) {
 //	    		    TODO Show error message
 //						e.printStackTrace()
-				}
 			}
 		} else {
 //			viewModelScope.launch(Dispatchers.Main) {

@@ -29,6 +29,7 @@ fun LazyListScope.chapterList(
 	headerSubTitle : String = "${chapterList.size} chapters",
 	headerMinHeight : Dp = Dp.Hairline,
 	headerBackgroundColor : Color? = null,
+	isVisible : Boolean = true,
 	toggleVisibility : () -> Unit = {},
 	headerEnabled : Boolean = true,
 	onClick : (ChapterObject) -> Unit = {},
@@ -46,33 +47,34 @@ fun LazyListScope.chapterList(
 		) { toggleVisibility() }
 	}
 
-	chapterList
-		.forEach { chapterObject ->
-		item(
-			key = chapterObject.id.toString()
-		) {
-			Box(
-				modifier = Modifier.animateItemPlacement(tween(300))
-			) {
-				ChapterCard(
-					id = chapterObject.id,
-					createdTimestamp = chapterObject.createdTimestamp,
-					modifiedTimestamp = chapterObject.modifiedTimestamp,
-					title = chapterObject.title,
-					description = chapterObject.description,
-					isFavourite = chapterObject.isFavourite,
-					isLocked = chapterObject.isLocked,
-					color = chapterObject.color?.let { Color(it) },
-					thumbnail = chapterObject.thumbnail,
-					noteCount = chapterObject.noteList.size,
-					chapterCount = chapterObject.chapterList.size,
-					isSelected = chapterObject.id in selectedIdList,
-					onClick = { onClick(chapterObject) },
-					onLongClick = { onLongClick(chapterObject) },
-				)
+	if (isVisible)
+		chapterList
+			.forEach { chapterObject ->
+				item(
+					key = chapterObject.id.toString()
+				) {
+					Box(
+						modifier = Modifier.animateItemPlacement(tween(300))
+					) {
+						ChapterCard(
+							id = chapterObject.id,
+							createdTimestamp = chapterObject.createdTimestamp,
+							modifiedTimestamp = chapterObject.modifiedTimestamp,
+							title = chapterObject.title,
+							description = chapterObject.description,
+							isFavourite = chapterObject.isFavourite,
+							isLocked = chapterObject.isLocked,
+							color = chapterObject.color?.let { Color(it) },
+							thumbnail = chapterObject.thumbnail,
+							noteCount = 0,
+							chapterCount = 0,
+							isSelected = chapterObject.id in selectedIdList,
+							onClick = { onClick(chapterObject) },
+							onLongClick = { onLongClick(chapterObject) },
+						)
+					}
+				}
 			}
-		}
-	}
 
 	item { Spacer(modifier = Modifier.height(96.dp)) }
 }

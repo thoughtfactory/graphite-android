@@ -35,17 +35,17 @@ class BucketObject: RealmObject {
 
 	var bucketItemList: RealmList<BucketItemObject> = realmListOf()
 
-	fun toSnapshot() = BucketSnapshot(
-		id = this.id.toString(),
-		createdTimestamp = this.createdTimestamp,
-		modifiedTimestamp = this.modifiedTimestamp,
-		title = this.title,
-		description = this.description,
-		bucketType = this.bucketType,
-		isFavourite = this.isFavourite,
-		isLocked = this.isLocked,
-		bucketItemIdList = this.bucketItemList.map { it.id.toString() }
-	)
+	fun clone() : BucketObject = BucketObject().apply {
+		this.id = this@BucketObject.id
+		this.createdTimestamp = this@BucketObject.createdTimestamp
+		this.modifiedTimestamp = this@BucketObject.modifiedTimestamp
+		this.title = this@BucketObject.title
+		this.description = this@BucketObject.description
+		this.bucketType = this@BucketObject.bucketType
+		this.isFavourite = this@BucketObject.isFavourite
+		this.isLocked = this@BucketObject.isLocked
+		this.bucketItemList = this@BucketObject.bucketItemList
+	}
 
 	override fun hashCode(): Int {
 		var result = id.hashCode()
@@ -75,38 +75,5 @@ class BucketObject: RealmObject {
 		if (bucketItemList != other.bucketItemList) return false
 
 		return true
-	}
-}
-
-@Keep
-data class BucketSnapshot(
-	val id: String,
-	val createdTimestamp: Long,
-	val modifiedTimestamp: Long,
-	val title: String?,
-	val description: String?,
-	val bucketType: String,
-	val isFavourite: Boolean,
-	val isLocked: Boolean,
-	val bucketItemIdList: List<String>
-) {
-	fun toObject() = BucketObject().apply {
-		this.id = RealmUUID.from(this@BucketSnapshot.id)
-		this.createdTimestamp = this@BucketSnapshot.createdTimestamp
-		this.modifiedTimestamp = this@BucketSnapshot.modifiedTimestamp
-		this.title = this@BucketSnapshot.title
-		this.description = this@BucketSnapshot.description
-		this.bucketType = this@BucketSnapshot.bucketType
-		this.isFavourite = this@BucketSnapshot.isFavourite
-		this.isLocked = this@BucketSnapshot.isLocked
-	}
-
-	fun toJsonString(): String? {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			return objectMapper.writeValueAsString(this)
-		} catch (e: Exception) {
-			null
-		}
 	}
 }

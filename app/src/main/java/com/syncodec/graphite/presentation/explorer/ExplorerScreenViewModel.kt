@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID

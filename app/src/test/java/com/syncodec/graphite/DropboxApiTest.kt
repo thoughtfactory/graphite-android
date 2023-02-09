@@ -1,10 +1,5 @@
 package com.syncodec.graphite
 
-import android.content.Context
-import com.syncodec.graphite.di.sync.DropboxApi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.junit.Test
 
 class DropboxApiTest {

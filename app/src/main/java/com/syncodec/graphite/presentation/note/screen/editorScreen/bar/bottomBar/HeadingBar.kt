@@ -58,47 +58,47 @@ fun HeadingBar(
 					icon = R.drawable.ic_format_paragraph,
 					contentDescription = "Paragraph",
 					isChecked = textFormat.paragraph,
-					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.PARAGRAPH) },
+					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Paragraph) },
 				)
 
 				ToolbarButton(
 					icon = R.drawable.ic_format_h1,
 					contentDescription = "Heading 1",
 					isChecked = textFormat.heading1,
-					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.HEADING_1) },
+					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Heading1) },
 				)
 
 				ToolbarButton(
 					icon = R.drawable.ic_format_h2,
 					contentDescription = "Heading 2",
 					isChecked = textFormat.heading2,
-					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.HEADING_2) },
+					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Heading2) },
 				)
 
 				ToolbarButton(
 					icon = R.drawable.ic_format_h3,
 					contentDescription = "Heading 3",
 					isChecked = textFormat.heading3,
-					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.HEADING_3) },
+					onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Heading3) },
 				)
 
 				ToolbarButton(
 					icon = R.drawable.ic_format_h4,
 					contentDescription = "Heading 4",
 					isChecked = textFormat.heading4
-				) { onEditorAction(RichTextEditor.Companion.EditorAction.HEADING_4) }
+				) { onEditorAction(RichTextEditor.Companion.EditorAction.Heading4) }
 
 				ToolbarButton(
 					icon = R.drawable.ic_format_h5,
 					contentDescription = "Heading 5",
 					isChecked = textFormat.heading5,
-				) { onEditorAction(RichTextEditor.Companion.EditorAction.HEADING_5) }
+				) { onEditorAction(RichTextEditor.Companion.EditorAction.Heading5) }
 
 				ToolbarButton(
 					icon = R.drawable.ic_format_h6,
 					contentDescription = "Heading 6",
 					isChecked = textFormat.heading6,
-				) { onEditorAction(RichTextEditor.Companion.EditorAction.HEADING_6) }
+				) { onEditorAction(RichTextEditor.Companion.EditorAction.Heading6) }
 
 				Spacer(modifier = Modifier.width(2.dp))
 			}

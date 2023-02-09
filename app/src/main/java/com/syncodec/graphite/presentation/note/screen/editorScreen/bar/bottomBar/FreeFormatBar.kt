@@ -55,13 +55,13 @@ fun FreeFormatToolbar(
 				icon = R.drawable.ic_format_undo,
 				contentDescription = "Undo",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.UNDO) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Undo) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_redo,
 				contentDescription = "Redo",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.REDO) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Redo) },
 			)
 
 			ToolbarSpacer()
@@ -70,7 +70,7 @@ fun FreeFormatToolbar(
 				icon = R.drawable.ic_format_bold,
 				contentDescription = "Bold",
 				isChecked = textFormat.bold,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BOLD) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Bold) },
 			)
 			FreeToolbarButton(
 				icon = R.drawable.ic_format_italic,
@@ -91,7 +91,7 @@ fun FreeFormatToolbar(
 				icon = R.drawable.ic_format_hard_break,
 				contentDescription = "Format hard break",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.HARD_LINE_BREAK) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.HardLineBreak) },
 			)
 
 			ToolbarSpacer()
@@ -100,7 +100,7 @@ fun FreeFormatToolbar(
 				icon = R.drawable.ic_format_list_bullet,
 				contentDescription = "Bullet list",
 				isChecked = textFormat.bulletList,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BULLET_LIST) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BulletList) },
 			)
 			FreeToolbarButton(
 				icon = R.drawable.ic_format_list_ordered,
@@ -133,7 +133,7 @@ fun FreeFormatToolbar(
 				icon = R.drawable.ic_format_blockquote,
 				contentDescription = "Format blockquote",
 				isChecked = textFormat.blockquote,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BLOCK_QUOTE) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Blockquote) },
 			)
 
 			ToolbarSpacer()
@@ -142,14 +142,14 @@ fun FreeFormatToolbar(
 				icon = R.drawable.ic_format_indent,
 				contentDescription = "Format indent",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.INDENT) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Indent) },
 			)
 
 			ToolbarButton(
 				icon = R.drawable.ic_format_outdent,
 				contentDescription = "Format outdent",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.OUTDENT) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Outdent) },
 			)
 
 			ToolbarSpacer()

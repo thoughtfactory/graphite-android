@@ -21,13 +21,18 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.ErrorView
@@ -119,13 +124,36 @@ fun NoteScreen(
 				enter = fadeIn(tween(300)) + scaleIn(tween(300)),
 				exit = fadeOut(tween(300)) + scaleOut(tween(300))
 			) {
-				NoteFloatingActionButton(isExpanded = true) {
-					Intent(context, NoteActivity::class.java).apply {
-						putExtra(Extra.Companion.Extra.IsNew.name, true)
-						putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
-						putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+				if (BuildConfig.DEBUG) {
+					Column(
+						modifier = Modifier,
+						horizontalAlignment = Alignment.End,
+					) {
+						FloatingActionButton(onClick = { viewModel.addDebugData() }) {
+							Icon(painter = painterResource(id = R.drawable.ic_bug), contentDescription = null)
+						}
 
-						activityLauncher.launch(this)
+						Spacer(modifier = Modifier.height(16.dp))
+
+						NoteFloatingActionButton(isExpanded = true) {
+							Intent(context, NoteActivity::class.java).apply {
+								putExtra(Extra.Companion.Extra.IsNew.name, true)
+								putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
+								putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+
+								activityLauncher.launch(this)
+							}
+						}
+					}
+				} else {
+					NoteFloatingActionButton(isExpanded = true) {
+						Intent(context, NoteActivity::class.java).apply {
+							putExtra(Extra.Companion.Extra.IsNew.name, true)
+							putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
+							putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+
+							activityLauncher.launch(this)
+						}
 					}
 				}
 			}

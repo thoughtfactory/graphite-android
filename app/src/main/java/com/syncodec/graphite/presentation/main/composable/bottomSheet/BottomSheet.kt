@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.service.DropboxService
 
 
 enum class MainBottomSheetType {
@@ -17,6 +18,7 @@ enum class MainBottomSheetType {
 @Composable
 fun SheetLayout(
 	bottomSheetType : MainBottomSheetType = MainBottomSheetType.Menu,
+	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
 	putBucket : (String?, String?, BucketType) -> Unit = { _, _, _ -> },
 	putNotebook : (String, String, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
 	onClickSyncNow : () -> Unit = {},
@@ -32,6 +34,7 @@ fun SheetLayout(
 			closeSheet = closeSheet,
 		)
 		MainBottomSheetType.Sync -> SyncBottomSheet(
+			syncStatus = syncStatus,
 			onClickSyncNow = onClickSyncNow,
 			onClickForceSync = onClickForceSync,
 		)

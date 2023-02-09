@@ -1,19 +1,46 @@
 package com.syncodec.graphite.di.model
 
-import android.util.Log
 import androidx.annotation.Keep
+import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import io.realm.kotlin.ext.backlinks
-import io.realm.kotlin.types.BacklinksDelegate
+import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.json.JSONObject
+import java.nio.charset.Charset
 
 
 @Keep
-class NoteObject : RealmObject {
+class NoteObject() : RealmObject {
+
+	constructor(byteArray : ByteArray) : this() {
+		val jsonObject = JSONObject(byteArray.toString(Charset.defaultCharset()))
+
+		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
+		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
+		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
+		this.userTimestamp = jsonObject.optLong("userTimestamp", System.currentTimeMillis())
+		this.title = jsonObject.optString("title")
+		this.color = jsonObject.optInt("color", getRandomColor().toArgb())
+		val latLngObject = jsonObject.optJSONObject("latLng")
+		if (latLngObject != null) {
+			val lat = latLngObject.optDouble("latitude")
+			val lng = latLngObject.optDouble("longitude")
+			this.setLatLng(LatLng(lat, lng))
+		}
+		this.address = jsonObject.optString("address")
+		this.contentThumbnail = jsonObject.optString("contentThumbnail")
+		this.content = jsonObject.optString("content")
+		this.thumbnail = jsonObject.optString("thumbnail")
+		this.thumbnailType = jsonObject.optString("thumbnailType")
+		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
+		this.isLocked = jsonObject.optBoolean("isLocked", false)
+		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
+	}
+
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
@@ -32,9 +59,8 @@ class NoteObject : RealmObject {
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
-	val parent by backlinks(ChapterObject::noteList)
 
-	var googleDriveId: String? = null
+	var lastSyncedTimestamp : Long = 0
 
 	fun setLatLng(latLng : LatLng?) {
 		try {
@@ -62,27 +88,68 @@ class NoteObject : RealmObject {
 			return null
 		}
 	}
+	override fun toString() : String = this.id.toString()
 
-	fun toSnapshot() = NoteSnapshot(
-		id = this.id.toString(),
-		createdTimestamp = this.createdTimestamp,
-		modifiedTimestamp = this.modifiedTimestamp,
-		userTimestamp = this.userTimestamp,
-		title = this.title,
-		color = this.color,
-		latLng = this.latLng,
-		address = this.address,
-		contentThumbnail = this.contentThumbnail,
-		content = this.content,
-		thumbnail = this.thumbnail,
-		thumbnailType = this.thumbnailType,
-		isFavourite = this.isFavourite,
-		isLocked = this.isLocked,
-		parentChapterId = this.parentId?.toString(),
-	)
+	fun toLite() : NoteObjectLite {
+		return NoteObjectLite(
+			id = this.id,
+			parentChapterId = this.parentId,
+			createdTimestamp = this.createdTimestamp,
+			modifiedTimestamp = this.modifiedTimestamp,
+			userTimestamp = this.userTimestamp,
+			title = this.title,
+			color = this.color,
+			latLng = try {
+				this.getLatLng()
+			} catch (e : Exception) {
+				null
+			},
+			address = this.address,
+			contentThumbnail = this.contentThumbnail,
+			thumbnail = this.thumbnail,
+			thumbnailType = this.thumbnailType,
+			isFavourite = this.isFavourite,
+			isLocked = this.isLocked
+		)
+	}
 
-	override fun toString() : String {
-		return this.id.toString()
+	fun clone() : NoteObject = NoteObject().apply {
+		this.id = this@NoteObject.id
+		this.createdTimestamp = this@NoteObject.createdTimestamp
+		this.modifiedTimestamp = this@NoteObject.modifiedTimestamp
+		this.userTimestamp = this@NoteObject.userTimestamp
+		this.title = this@NoteObject.title
+		this.color = this@NoteObject.color
+		this.latLng = this@NoteObject.latLng
+		this.address = this@NoteObject.address
+		this.contentThumbnail = this@NoteObject.contentThumbnail
+		this.content = this@NoteObject.content
+		this.thumbnail = this@NoteObject.thumbnail
+		this.thumbnailType = this@NoteObject.thumbnailType
+		this.isFavourite = this@NoteObject.isFavourite
+		this.isLocked = this@NoteObject.isLocked
+		this.parentId = this@NoteObject.parentId
+	}
+
+	fun toCloudSnapshot() : String {
+		val jsonObject = JSONObject()
+		jsonObject.put("id", this.id.toString())
+		jsonObject.put("createdTimestamp", this.createdTimestamp)
+		jsonObject.put("modifiedTimestamp", this.modifiedTimestamp)
+		jsonObject.put("userTimestamp", this.userTimestamp)
+		jsonObject.put("title", this.title)
+		jsonObject.put("color", this.color)
+		jsonObject.put("latLng", this.latLng)
+		jsonObject.put("address", this.address)
+		jsonObject.put("contentThumbnail", this.contentThumbnail)
+		jsonObject.put("content", this.content)
+		jsonObject.put("thumbnail", this.thumbnail)
+		jsonObject.put("thumbnailType", this.thumbnailType)
+		jsonObject.put("isFavourite", this.isFavourite)
+		jsonObject.put("isLocked", this.isLocked)
+		jsonObject.put("parentId", this.parentId?.toString())
+
+		return jsonObject.toString()
 	}
 
 	override fun hashCode() : Int {
@@ -100,7 +167,7 @@ class NoteObject : RealmObject {
 		result = 31 * result + (thumbnailType?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
-		result = 31 * result + (parentId?.hashCode() ?: 0)
+		result = 31 * result + parentId.hashCode()
 		return result
 	}
 
@@ -127,74 +194,9 @@ class NoteObject : RealmObject {
 		return true
 	}
 
-	fun toRaw() : NoteObjectRaw = NoteObjectRaw(
-		id = id.toString(),
-		createdTimestamp = createdTimestamp,
-		modifiedTimestamp = modifiedTimestamp,
-		userTimestamp = userTimestamp,
-		title = title,
-		color = color,
-		latLng = getLatLng(),
-		address = address,
-		contentThumbnail = contentThumbnail,
-		content = content,
-		thumbnail = thumbnail,
-		thumbnailType = thumbnailType,
-		isFavourite = isFavourite,
-		isLocked = isLocked,
-		attachmentList = listOf(),
-		parentChapterId = parentId?.toString()
-	)
-
-
-	fun clone() : NoteObject {
-		return NoteObject().apply {
-//			id = this@NoteObject.id
-
-			createdTimestamp = this@NoteObject.createdTimestamp
-			modifiedTimestamp = this@NoteObject.modifiedTimestamp
-			userTimestamp = this@NoteObject.userTimestamp
-			title = this@NoteObject.title
-			color = this@NoteObject.color
-			latLng = this@NoteObject.latLng
-			address = this@NoteObject.address
-			contentThumbnail = this@NoteObject.contentThumbnail
-			content = this@NoteObject.content
-			thumbnail = this@NoteObject.thumbnail
-			thumbnailType = this@NoteObject.thumbnailType
-			isFavourite = this@NoteObject.isFavourite
-			isLocked = this@NoteObject.isLocked
-
-			parentId = this@NoteObject.parentId
-		}
-	}
-
-	fun toLite() : NoteObjectLite {
-		return NoteObjectLite(
-			id = this.id,
-			parentChapterId = this.parentId,
-			createdTimestamp = this.createdTimestamp,
-			modifiedTimestamp = this.modifiedTimestamp,
-			userTimestamp = this.userTimestamp,
-			title = this.title,
-			color = this.color,
-			latLng = try {
-				this.getLatLng()
-			} catch (e : Exception) {
-				null
-			},
-			address = this.address,
-			contentThumbnail = this.contentThumbnail,
-			thumbnail = this.thumbnail,
-			thumbnailType = this.thumbnailType,
-			isFavourite = this.isFavourite,
-			isLocked = this.isLocked
-		)
-	}
-
 
 	companion object {
-		fun getInstance() : NoteObject {
+		fun getRandomInstance() : NoteObject {
 			return NoteObject().apply {
 				this.createdTimestamp = System.currentTimeMillis()
 				this.modifiedTimestamp = System.currentTimeMillis()
@@ -208,72 +210,9 @@ class NoteObject : RealmObject {
 				this.thumbnailType = "New Thumbnail Type"
 				this.isFavourite = false
 				this.isLocked = false
+				this.parentId = RealmUUID.random()
 			}
 		}
-	}
-}
-
-@Keep
-data class NoteObjectRaw(
-	val id : String,
-	val createdTimestamp : Long,
-	val modifiedTimestamp : Long,
-	val userTimestamp : Long,
-	val title : String?,
-	val color : Int?,
-	val latLng : LatLng?,
-	val address : String?,
-	val contentThumbnail : String?,
-	val content : String?,
-	val thumbnail : String?,
-	val thumbnailType : String?,
-	val isFavourite : Boolean,
-	val isLocked : Boolean,
-	val attachmentList : List<RealmUUID>,
-	val parentChapterId : String?
-) {
-	override fun hashCode() : Int {
-		var result = id.hashCode()
-		result = 31 * result + createdTimestamp.hashCode()
-		result = 31 * result + modifiedTimestamp.hashCode()
-		result = 31 * result + userTimestamp.hashCode()
-		result = 31 * result + (title?.hashCode() ?: 0)
-		result = 31 * result + (color ?: 0)
-		result = 31 * result + (latLng?.hashCode() ?: 0)
-		result = 31 * result + (address?.hashCode() ?: 0)
-		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
-		result = 31 * result + (content?.hashCode() ?: 0)
-		result = 31 * result + (thumbnail?.hashCode() ?: 0)
-		result = 31 * result + (thumbnailType?.hashCode() ?: 0)
-		result = 31 * result + isFavourite.hashCode()
-		result = 31 * result + isLocked.hashCode()
-		result = 31 * result + attachmentList.hashCode()
-		result = 31 * result + (parentChapterId?.hashCode() ?: 0)
-		return result
-	}
-
-	override fun equals(other : Any?) : Boolean {
-		if (this === other) return true
-		if (other !is NoteObjectRaw) return false
-
-		if (id != other.id) return false
-		if (createdTimestamp != other.createdTimestamp) return false
-		if (modifiedTimestamp != other.modifiedTimestamp) return false
-		if (userTimestamp != other.userTimestamp) return false
-		if (title != other.title) return false
-		if (color != other.color) return false
-		if (latLng != other.latLng) return false
-		if (address != other.address) return false
-		if (contentThumbnail != other.contentThumbnail) return false
-		if (content != other.content) return false
-		if (thumbnail != other.thumbnail) return false
-		if (thumbnailType != other.thumbnailType) return false
-		if (isFavourite != other.isFavourite) return false
-		if (isLocked != other.isLocked) return false
-		if (attachmentList != other.attachmentList) return false
-		if (parentChapterId != other.parentChapterId) return false
-
-		return true
 	}
 }
 
@@ -334,53 +273,6 @@ data class NoteObjectLite(
 		return result
 	}
 }
-
-@Keep
-data class NoteSnapshot(
-	val id : String,
-	val createdTimestamp : Long,
-	val modifiedTimestamp : Long,
-	val userTimestamp : Long,
-	val title : String?,
-	val color : Int?,
-	val latLng : String?,
-	val address : String?,
-	val contentThumbnail : String?,
-	val content : String?,
-	val thumbnail : String?,
-	val thumbnailType : String?,
-	val isFavourite : Boolean,
-	val isLocked : Boolean,
-	var parentChapterId : String?
-) {
-	fun toObject() = NoteObject().apply {
-		this.id = RealmUUID.from(this@NoteSnapshot.id)
-		this.createdTimestamp = this@NoteSnapshot.createdTimestamp
-		this.modifiedTimestamp = this@NoteSnapshot.modifiedTimestamp
-		this.userTimestamp = this@NoteSnapshot.userTimestamp
-		this.title = this@NoteSnapshot.title
-		this.color = this@NoteSnapshot.color
-		this.latLng = this@NoteSnapshot.latLng
-		this.address = this@NoteSnapshot.address
-		this.contentThumbnail = this@NoteSnapshot.contentThumbnail
-		this.content = this@NoteSnapshot.content
-		this.thumbnail = this@NoteSnapshot.thumbnail
-		this.thumbnailType = this@NoteSnapshot.thumbnailType
-		this.isFavourite = this@NoteSnapshot.isFavourite
-		this.isLocked = this@NoteSnapshot.isLocked
-		this.parentId = this@NoteSnapshot.parentChapterId?.let { RealmUUID.from(it) }
-	}
-
-	fun toJsonString(): String? {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			return objectMapper.writeValueAsString(this)
-		} catch (e: Exception) {
-			null
-		}
-	}
-}
-
 
 @Keep
 data class LatLng(

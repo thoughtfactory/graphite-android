@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.explorer.ExplorerActivity
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationBar
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
@@ -28,7 +29,7 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottom
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialog
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
-import com.syncodec.graphite.presentation.explorer.ExplorerActivity
+import com.syncodec.graphite.service.DropboxService
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
@@ -47,7 +48,11 @@ enum class ComponentType {
 	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class
 )
 @Composable
-fun MainScreen() {
+fun MainScreen(
+	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
+	onClickSyncNow : () -> Unit = {},
+	onClickForceSync : () -> Unit = {},
+) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 	val viewModel : MainViewModel = koinViewModel()
@@ -106,6 +111,7 @@ fun MainScreen() {
 				componentType = currentComponentType,
 				isSelecting = isSelecting,
 				selectedSize = selectedIdList.size,
+				syncStatus = syncStatus,
 				onComponentChange = { currentComponentType = ComponentType.values()[it] },
 				onClickFilter = { openSheet(MainBottomSheetType.Filter) },
 				onClickMenu = { openSheet(MainBottomSheetType.Menu) },
@@ -113,6 +119,7 @@ fun MainScreen() {
 					isSelecting = false
 					selectedIdList = listOf()
 				},
+				onClickCloud = { openSheet(MainBottomSheetType.Sync) },
 				onClickSearch = {
 					Intent(context, ExplorerActivity::class.java).apply {
 						putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Search.name)
@@ -127,7 +134,9 @@ fun MainScreen() {
 				currentRoute = currentRoute.route,
 				onNavigation = {
 					when {
-						currentRoute == BottomNavigationItem.Home && it == BottomNavigationItem.Home -> currentComponentType = ComponentType.values()[(currentComponentType.ordinal + 1) % 3]
+						currentRoute == BottomNavigationItem.Home && it == BottomNavigationItem.Home -> currentComponentType =
+							ComponentType.values()[(currentComponentType.ordinal + 1) % 3]
+
 						currentRoute != it -> currentRoute = it
 
 					}
@@ -139,10 +148,11 @@ fun MainScreen() {
 		sheetContent = {
 			SheetLayout(
 				bottomSheetType = bottomSheetType,
+				syncStatus = syncStatus,
 				putBucket = viewModel::putBucket,
 				putNotebook = viewModel::putNotebook,
-				onClickSyncNow = {},
-				onClickForceSync = {},
+				onClickSyncNow = onClickSyncNow,
+				onClickForceSync = onClickForceSync,
 				closeSheet = ::closeSheet
 			)
 		},

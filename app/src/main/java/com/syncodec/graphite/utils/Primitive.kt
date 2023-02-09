@@ -16,47 +16,47 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 
-fun String.addEmptyLines(lines: Int) = this + "\n".repeat(lines)
+fun String.addEmptyLines(lines : Int) = this + "\n".repeat(lines)
 
-fun Double.roundTo(numFractionDigits: Int): Double {
+fun Double.roundTo(numFractionDigits : Int) : Double {
 	val factor = 10.0.pow(numFractionDigits.toDouble())
 	return (this * factor).roundToInt() / factor
 }
 
-fun String.containsAnyOfIgnoreCase(keywords: List<String>): Boolean {
+fun String.containsAnyOfIgnoreCase(keywords : List<String>) : Boolean {
 	for (keyword in keywords) {
 		if (this.contains(keyword, true)) return true
 	}
 	return false
 }
 
-fun String.decodeBase64ToBitmap(): Bitmap? {
+fun String.decodeBase64ToBitmap() : Bitmap? {
 	return try {
-		Base64Utils.decode(this).let { BitmapFactory.decodeByteArray(it, 0, it.size)}
-	} catch (e: Exception) {
+		Base64Utils.decode(this).let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+	} catch (e : Exception) {
 		null
 	}
 }
 
-fun Bitmap.encodeBase64(): String? {
+fun Bitmap.encodeBase64() : String? {
 	return try {
 		Base64Utils.encode(this.toByteArray())
-	} catch (e: Exception) {
+	} catch (e : Exception) {
 		null
 	}
 }
 
 data class Quadruple<out A, out B, out C, out D>(
-	val first: A,
-	val second: B,
-	val third: C,
-	val fourth: D
+	val first : A,
+	val second : B,
+	val third : C,
+	val fourth : D
 ) : Serializable {
-	override fun toString(): String = "($first, $second, $third)"
+	override fun toString() : String = "($first, $second, $third)"
 }
 
 @Deprecated("Remove in next version")
-fun String.encrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
+fun String.encrypt(key : String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm") : String? {
 	try {
 		val random = SecureRandom()
 		val salt = ByteArray(256)
@@ -86,7 +86,7 @@ fun String.encrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
 }
 
 @Deprecated("Remove in next version")
-fun String.decrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
+fun String.decrypt(key : String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm") : String? {
 	return try {
 		if (length > 256 + 16) {
 			val salt = substring(0, 256).toByteArray(StandardCharsets.ISO_8859_1)
@@ -109,14 +109,14 @@ fun String.decrypt(key: String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm"): String? {
 		} else {
 			null
 		}
-	} catch (exception: Exception) {
+	} catch (exception : Exception) {
 		null
 	}
 }
 
-fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
+fun ByteArray.toHex() : String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
 
-fun ByteArray.dbxHash(): ByteArray {
+fun ByteArray.dbxHash() : ByteArray {
 	val digest : MessageDigest = MessageDigest.getInstance("SHA-256")
 
 	val blockSize = 4 * 1024 * 1024
@@ -132,14 +132,23 @@ fun ByteArray.dbxHash(): ByteArray {
 	return digest.digest()
 }
 
-inline fun <reified T : Enum<T>> enumValueOf(name: String?, defaultValue: T): T {
+fun ByteArray.dbxHashString() : String = dbxHash().joinToString("") { java.lang.String.format("%02x", it) }
+
+fun String.sha256(): String {
+	val bytes = this.encodeToByteArray()
+	val md = MessageDigest.getInstance("SHA-256")
+	val digest = md.digest(bytes)
+	return digest.fold("") { str, it -> str + "%02x".format(it) }
+}
+
+inline fun <reified T : Enum<T>> enumValueOf(name : String?, defaultValue : T) : T {
 	return try {
 		if (name != null) {
 			enumValueOf(name)
 		} else {
 			defaultValue
 		}
-	} catch (e: Exception) {
+	} catch (e : Exception) {
 		defaultValue
 	}
 }

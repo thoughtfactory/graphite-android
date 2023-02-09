@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +28,7 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 			this.color = color?.toArgb()
 			this.thumbnail = bitmap?.encodeBase64()
 
-			repository.putChapter(null, this) { _, _ -> }
+			repository.putChapterSuspended(this)
 		}
 	}
 

@@ -86,7 +86,7 @@ class DataStoreInstance(private val context : Context) {
 
 	val getDarkTheme : Flow<SettingsActivity.Companion.DarkTheme> = context.dataStore.data.map { preferences ->
 		SettingsActivity.Companion.DarkTheme.values().find { it.name == preferences[PREFERENCE_DARK_THEME] }
-			?: SettingsActivity.Companion.DarkTheme.SYNC_WITH_SYSTEM
+			?: SettingsActivity.Companion.DarkTheme.SyncWithSystem
 	}
 
 	fun putDarkTheme(darkTheme : SettingsActivity.Companion.DarkTheme) = CoroutineScope(Dispatchers.IO).launch {

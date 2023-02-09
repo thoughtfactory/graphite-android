@@ -9,16 +9,12 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.types.RealmUUID
-import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
-import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import org.json.JSONObject
 import org.koin.android.annotation.KoinViewModel
-import java.io.File
-import java.io.IOException
 
 
 @KoinViewModel

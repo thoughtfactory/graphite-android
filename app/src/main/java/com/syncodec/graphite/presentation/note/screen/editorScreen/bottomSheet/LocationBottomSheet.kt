@@ -45,7 +45,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.permission.LocationPermissionDialog
-import com.syncodec.graphite.utils.LocationDataState
+import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.roundTo
 import io.github.esentsov.PackagePrivate
 
@@ -54,23 +54,19 @@ import io.github.esentsov.PackagePrivate
 @Preview
 @Composable
 fun LocationBottomSheet(
-	locationDataState: LocationDataState = LocationDataState.INIT,
-	latLng: LatLng? = null,
-	address: String? = null,
-	onRemoveLocation: () -> Unit = {},
-	onReloadLocation: () -> Unit = {},
+	locationData : LocationData = LocationData.Init,
+	onRemoveLocation : () -> Unit = {},
+	onReloadLocation : () -> Unit = {},
 ) {
 	GenericBottomSheet(
 		title = "Location",
 		icon = R.drawable.ic_map_marker,
 	) {
 		LocationCard(
-			locationDataState = locationDataState,
-			latLng = latLng,
-			address = address,
+			locationData = locationData,
 			onRemoveLocation = onRemoveLocation,
 			onReloadLocation = onReloadLocation
-		) {  }
+		) { }
 	}
 }
 
@@ -78,9 +74,7 @@ fun LocationBottomSheet(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun LocationCard(
-	locationDataState : LocationDataState = LocationDataState.INIT,
-	latLng : LatLng? = null,
-	address : String? = null,
+	locationData : LocationData = LocationData.Init,
 	onRemoveLocation : () -> Unit = {},
 	onReloadLocation : () -> Unit = {},
 	onSetLocationManually : () -> Unit = {},
@@ -94,50 +88,62 @@ private fun LocationCard(
 	)
 
 	AnimatedContent(
-		targetState = locationDataState,
+		targetState = locationData,
 		modifier = Modifier.fillMaxWidth()
 	) {
 		when (it) {
-			LocationDataState.INIT -> LocationViewGeneric(
-				message = "Getting location...",
+			is LocationData.Init -> LocationViewGeneric(
+				message = "Initializing...",
 				onReloadLocation = onReloadLocation,
 				onSetLocationManually = onSetLocationManually
 			)
 
-			LocationDataState.LOADING -> LocationViewGeneric(
+			is LocationData.Loading -> LocationViewGeneric(
 				message = "Getting location... Reload or set location manually.",
 				onReloadLocation = onReloadLocation,
 				onSetLocationManually = onSetLocationManually
 			)
 
-			LocationDataState.SUCCESS_NO_LOCATION -> LocationViewGeneric(
-				message = "No location data... Reload or set location manually.",
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually
-			)
-
-			LocationDataState.SUCCESS_ONLY_ADDRESS -> LocationViewSuccess(
-				latLng = null,
-				address = address,
-				onRemoveLocation = onRemoveLocation,
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually,
-			)
-
-			LocationDataState.SUCCESS_ONLY_LATLNG -> LocationViewSuccess(
-				latLng = latLng,
+			is LocationData.SuccessOnlyLatLng -> LocationViewSuccess(
+				latLng = it.latLng,
 				address = null,
 				onRemoveLocation = onRemoveLocation,
 				onReloadLocation = onReloadLocation,
 				onSetLocationManually = onSetLocationManually,
 			)
 
-			LocationDataState.SUCCESS -> LocationViewSuccess(
-				latLng = latLng,
-				address = address,
+			is LocationData.SuccessOnlyAddress -> LocationViewSuccess(
+				latLng = null,
+				address = it.address,
 				onRemoveLocation = onRemoveLocation,
 				onReloadLocation = onReloadLocation,
 				onSetLocationManually = onSetLocationManually,
+			)
+
+			is LocationData.Success -> LocationViewSuccess(
+				latLng = it.latLng,
+				address = it.address,
+				onRemoveLocation = onRemoveLocation,
+				onReloadLocation = onReloadLocation,
+				onSetLocationManually = onSetLocationManually,
+			)
+
+			is LocationData.SuccessNoData -> LocationViewGeneric(
+				message = "No location data. Reload or set location manually.",
+				onReloadLocation = onReloadLocation,
+				onSetLocationManually = onSetLocationManually
+			)
+
+			is LocationData.NoPermission -> LocationViewNoPermission(
+				onRequestPermission = { showLocationPermissionDialog = true },
+				onSetLocationManually = onSetLocationManually
+			)
+
+
+			is LocationData.Error -> LocationViewGeneric(
+				message = it.message,
+				onReloadLocation = onReloadLocation,
+				onSetLocationManually = onSetLocationManually
 			)
 		}
 	}
@@ -158,7 +164,7 @@ private fun LocationViewGeneric(
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurface,
 		)
-		Spacer(modifier = Modifier.height(4.dp))
+		Spacer(modifier = Modifier.height(16.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.End
@@ -196,7 +202,7 @@ private fun LocationViewNoPermission(
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurface,
 		)
-		Spacer(modifier = Modifier.height(4.dp))
+		Spacer(modifier = Modifier.height(16.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.End
@@ -206,7 +212,7 @@ private fun LocationViewNoPermission(
 				shape = MaterialTheme.shapes.medium,
 				modifier = Modifier.weight(1f)
 			) {
-				Text(text = "Request permission")
+				Text(text = "Request")
 			}
 			Spacer(modifier = Modifier.width(8.dp))
 			Button(
@@ -294,14 +300,14 @@ private fun LocationViewSuccess(
 			)
 			Spacer(modifier = Modifier.height(4.dp))
 		}
-		if (address != null) {
+		address?.let {
 			Text(
-				text = address,
+				text = it,
 				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onSurface,
 			)
-			Spacer(modifier = Modifier.height(24.dp))
 		}
+		Spacer(modifier = Modifier.height(16.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.End

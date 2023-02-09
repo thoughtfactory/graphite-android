@@ -87,21 +87,6 @@ class BucketItemObject : RealmObject {
 		}
 	}
 
-	fun toSnapshot() = BucketItemSnapshot(
-		id = this.id.toString(),
-		createdTimestamp = this.createdTimestamp,
-		modifiedTimestamp = this.modifiedTimestamp,
-		bucketType = this.bucketType,
-		title = this.title,
-		state = this.state,
-		thumbnail = this.thumbnail,
-		isFavourite = this.isFavourite,
-		isLocked = this.isLocked,
-		parentId = this.parentId?.toString(),
-		key = this.key,
-		data = this.data
-	)
-
 	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
@@ -136,45 +121,5 @@ class BucketItemObject : RealmObject {
 		if (data != other.data) return false
 
 		return true
-	}
-}
-
-@Keep
-data class BucketItemSnapshot(
-	val id : String,
-	val createdTimestamp : Long,
-	val modifiedTimestamp : Long,
-	val bucketType : String,
-	val title : String?,
-	val state : String,
-	val thumbnail : String?,
-	val isFavourite : Boolean,
-	val isLocked : Boolean,
-	val parentId : String?,
-	val key : String?,
-	val data : String?
-) {
-	fun toObject() = BucketItemObject().apply {
-		this.id = RealmUUID.from(this@BucketItemSnapshot.id)
-		this.createdTimestamp = this@BucketItemSnapshot.createdTimestamp
-		this.modifiedTimestamp = this@BucketItemSnapshot.modifiedTimestamp
-		this.bucketType = this@BucketItemSnapshot.bucketType
-		this.title = this@BucketItemSnapshot.title
-		this.state = this@BucketItemSnapshot.state
-		this.thumbnail = this@BucketItemSnapshot.thumbnail
-		this.isFavourite = this@BucketItemSnapshot.isFavourite
-		this.isLocked = this@BucketItemSnapshot.isLocked
-		this.parentId = this@BucketItemSnapshot.parentId?.let { RealmUUID.from(it) }
-		this.key = this@BucketItemSnapshot.key
-		this.data = this@BucketItemSnapshot.data
-	}
-
-	fun toJsonString(): String? {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			return objectMapper.writeValueAsString(this)
-		} catch (e: Exception) {
-			null
-		}
 	}
 }

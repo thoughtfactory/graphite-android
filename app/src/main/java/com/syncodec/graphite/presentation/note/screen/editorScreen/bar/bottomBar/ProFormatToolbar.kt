@@ -40,13 +40,13 @@ fun ProFormatToolbar(
 				icon = R.drawable.ic_format_undo,
 				contentDescription = "Undo",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.UNDO) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Undo) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_redo,
 				contentDescription = "Redo",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.REDO) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Redo) },
 			)
 
 			ToolbarSpacer()
@@ -55,31 +55,31 @@ fun ProFormatToolbar(
 				icon = R.drawable.ic_format_bold,
 				contentDescription = "Bold",
 				isChecked = textFormat.bold,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BOLD) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Bold) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_italic,
 				contentDescription = "Italic",
 				isChecked = textFormat.italic,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.ITALIC) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Italic) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_underline,
 				contentDescription = "Underline",
 				isChecked = textFormat.underline,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.UNDERLINE) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Underline) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_strikethrough,
 				contentDescription = "Strikethrough",
 				isChecked = textFormat.strike,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.STRIKETHROUGH) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.StrikeThrough) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_hard_break,
 				contentDescription = "Format hard break",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.HARD_LINE_BREAK) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.HardLineBreak) },
 			)
 			ToolbarSpacer()
 
@@ -87,19 +87,19 @@ fun ProFormatToolbar(
 				icon = R.drawable.ic_format_list_check,
 				contentDescription = "Check list",
 				isChecked = textFormat.taskList,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.CHECK_LIST) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.CheckList) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_list_bullet,
 				contentDescription = "Bullet list",
 				isChecked = textFormat.bulletList,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BULLET_LIST) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BulletList) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_list_ordered,
 				contentDescription = "Ordered list",
 				isChecked = textFormat.orderedList,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.ORDERED_LIST) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.OrderedList) },
 			)
 
 			ToolbarSpacer()
@@ -123,7 +123,7 @@ fun ProFormatToolbar(
 				icon = R.drawable.ic_format_blockquote,
 				contentDescription = "Format blockquote",
 				isChecked = textFormat.blockquote,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.BLOCK_QUOTE) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Blockquote) },
 			)
 
 			ToolbarSpacer()
@@ -132,14 +132,14 @@ fun ProFormatToolbar(
 				icon = R.drawable.ic_format_indent,
 				contentDescription = "Format indent",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.INDENT) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Indent) },
 			)
 
 			ToolbarButton(
 				icon = R.drawable.ic_format_outdent,
 				contentDescription = "Format outdent",
 				isChecked = false,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.OUTDENT) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Outdent) },
 			)
 
 			ToolbarSpacer()
@@ -148,13 +148,13 @@ fun ProFormatToolbar(
 				icon = R.drawable.ic_format_superscript,
 				contentDescription = "Format superscript",
 				isChecked = textFormat.superscript,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.SUPERSCRIPT) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Superscript) },
 			)
 			ToolbarButton(
 				icon = R.drawable.ic_format_subscript,
 				contentDescription = "Format subscript",
 				isChecked = textFormat.subscript,
-				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.SUBSCRIPT) },
+				onClick = { onEditorAction(RichTextEditor.Companion.EditorAction.Subscript) },
 			)
 
 			Spacer(modifier = Modifier.width(2.dp))

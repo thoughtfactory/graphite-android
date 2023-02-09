@@ -27,7 +27,7 @@ fun BackupAndRestoreScreen(
 			text = "Local Backup",
 			icon = R.drawable.ic_snapshot,
 			subText = "Manage"
-		) { navigateTo(SettingsActivity.Companion.SettingsScreen.LOCAL_BACKUP) }
+		) { navigateTo(SettingsActivity.Companion.SettingsScreen.LocalBackup) }
 		SettingButton(text = "Dropbox", icon = R.drawable.ic_logo_dropbox, subText = "Coming soon", tint = Color.Unspecified)
 		SettingButton(text = "Google Drive", icon = R.drawable.ic_logo_google_drive, subText = "Coming soon", tint = Color.Unspecified)
 		SettingButton(text = "One Drive", icon = R.drawable.ic_logo_onedrive, subText = "Coming soon",tint = Color.Unspecified)

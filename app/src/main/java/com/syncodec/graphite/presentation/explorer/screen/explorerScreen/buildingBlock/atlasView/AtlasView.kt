@@ -85,14 +85,14 @@ fun AtlasView(
 				latLngBoundsForCameraTarget = null,
 				mapStyleOptions = null,
 				mapType = MapType.NORMAL,
-				maxZoomPreference = 15f,
+				maxZoomPreference = 17f,
 				minZoomPreference = 1f,
 			)
 		)
 	}
 
 	val cameraPositionState : CameraPositionState = rememberCameraPositionState {
-		position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
+		position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 1f)
 	}
 	var latLngBounds by remember { mutableStateOf<LatLngBounds?>(null) }
 
@@ -109,8 +109,10 @@ fun AtlasView(
 		scope.launch(Dispatchers.IO) {
 			if (noteList.isNotEmpty() && isMapLoaded) {
 				val latLngList = noteList.mapNotNull { it.latLng?.toGLatLng() }
-				latLngBounds = calculateLatLngBounds(latLngList).also {
-					withContext(Dispatchers.Main) { cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(it, 71)) }
+				if (latLngList.isNotEmpty()) {
+					latLngBounds = calculateLatLngBounds(latLngList).also {
+						withContext(Dispatchers.Main) { cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(it, 71)) }
+					}
 				}
 			}
 		}
@@ -194,8 +196,10 @@ fun AtlasView(
 				onClick = {
 					scope.launch {
 						val latLngList = noteList.mapNotNull { it.latLng?.toGLatLng() }
-						latLngBounds = calculateLatLngBounds(latLngList).also {
-							withContext(Dispatchers.Main) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(it, 71)) }
+						if (latLngList.isNotEmpty()) {
+							latLngBounds = calculateLatLngBounds(latLngList).also {
+								cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(it, 171))
+							}
 						}
 					}
 				},

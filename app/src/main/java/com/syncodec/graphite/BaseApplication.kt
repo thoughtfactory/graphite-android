@@ -1,6 +1,7 @@
 package com.syncodec.graphite
 
 import android.app.Application
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -11,13 +12,15 @@ import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.di.repository.AttachmentRepository
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
+import com.syncodec.graphite.presentation.dropbox.screen.DropboxScreenViewModel
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreenViewModel
@@ -29,8 +32,9 @@ import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenV
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.settings.composable.dialog.clearData.ClearDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.dialog.exportData.ExportDataViewModel
-import com.syncodec.graphite.presentation.settings.composable.dialog.importData.ImportDataViewModel
-import com.syncodec.graphite.presentation.settings.composable.screen.localBackup.LocalBackupViewModel
+import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.ImportDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.journey.ImportDataJourneyViewModel
+import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
@@ -62,8 +66,10 @@ class BaseApplication : Application() {
 			androidContext(this@BaseApplication)
 			modules(
 				module {
-					single { KoinRepository().apply { this.initRealm(this@BaseApplication) } }
-					single { AttachmentRepository().apply { this.initRepository(this@BaseApplication) } }
+					single { KoinRepository().apply { this.initRealm(context = this@BaseApplication) } }
+					single { AttachmentRepository().apply { this.initRepository(context = this@BaseApplication) } }
+					single { DBox(this@BaseApplication) }
+
 					viewModelOf(::MainViewModel)
 					viewModelOf(::NoteScreenViewModel)
 					viewModelOf(::BucketScreenViewModel)
@@ -81,16 +87,20 @@ class BaseApplication : Application() {
 					viewModelOf(::AttachmentScreenViewModel)
 					viewModelOf(::ExportDataViewModel)
 					viewModelOf(::ImportDataViewModel)
+					viewModelOf(::ImportDataJourneyViewModel)
 					viewModelOf(::ClearDataViewModel)
+					viewModelOf(::LocalBackupViewModel)
 					viewModelOf(::LocalBackupViewModel)
 					viewModelOf(::WhereDialogViewModel)
 					viewModelOf(::ExplorerScreenViewModel)
+					viewModelOf(::DropboxScreenViewModel)
 				}
 			)
 		}
 
 		dataStore = DataStoreInstance(this)
 		Purchases.debugLogsEnabled = false
+		FirebaseApp.initializeApp(this)
 		val auth = Firebase.auth
 
 		val purchasesConfiguration = PurchasesConfiguration

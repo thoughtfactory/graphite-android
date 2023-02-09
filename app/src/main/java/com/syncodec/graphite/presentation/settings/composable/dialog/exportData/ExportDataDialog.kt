@@ -71,72 +71,73 @@ fun ExportDataDialog(
 	var packageProcessed by remember { mutableStateOf(0) }
 
 	suspend fun exportData(exportObject : ExportDataViewModel.Companion.ExportObject) : File? {
-		try {
-			val snapshotFolder = File(context.cacheDir, "snapshot").apply { mkdirs() }
-			val currentSnapshotFolder = File(snapshotFolder, "snapshot_${System.currentTimeMillis()}")
-			currentSnapshotFolder.mkdirs()
-
-			val baseFile = File(currentSnapshotFolder.path, "base.json")
-			val attachmentFolder = File(currentSnapshotFolder, "attachment").apply { mkdirs() }
-			val bucketItemFolder = File(currentSnapshotFolder, "bucketItem").apply { mkdirs() }
-			val bucketFolder = File(currentSnapshotFolder, "bucket").apply { mkdirs() }
-			val chapterFolder = File(currentSnapshotFolder, "chapter").apply { mkdirs() }
-			val noteFolder = File(currentSnapshotFolder, "note").apply { mkdirs() }
-			val tagFolder = File(currentSnapshotFolder, "tag").apply { mkdirs() }
-
-			exportObject.baseObject?.let { baseFile.writeText(it) }
-
-			if (isAttachmentSelected) copyInDirectory(File(context.attachmentDirPath()), attachmentFolder)
-
-			withContext(Dispatchers.Main) {
-				exportObject.bucketList?.size?.let { bucketCount = it }
-				exportObject.bucketItemList?.size?.let { bucketItemCount = it }
-				exportObject.chapterList?.size?.let { chapterCount = it }
-				exportObject.noteList?.size?.let { noteCount = it }
-				exportObject.tagList?.size?.let { tagCount = it }
-			}
-
-			exportObject.bucketList?.let {
-				it.forEachIndexed { index, bucketObject ->
-					bucketObject.toSnapshot().toJsonString()?.let { File(bucketFolder.path, "${bucketObject.id}.json").writeText(it) }
-					withContext(Dispatchers.Main) { bucketProcessed = index + 1 }
-				}
-			}
-			exportObject.bucketItemList?.let {
-				it.forEachIndexed { index, bucketItemObject ->
-					bucketItemObject.toSnapshot().toJsonString()?.let { File(bucketItemFolder.path, "${bucketItemObject.id}.json").writeText(it) }
-					withContext(Dispatchers.Main) { bucketItemProcessed = index + 1 }
-				}
-			}
-			exportObject.chapterList?.let {
-				it.forEachIndexed { index, chapterObject ->
-					chapterObject.toSnapshot().toJsonString()?.let { File(chapterFolder.path, "${chapterObject.id}.json").writeText(it) }
-					withContext(Dispatchers.Main) { chapterProcessed = index + 1 }
-				}
-			}
-			exportObject.noteList?.let {
-				it.forEachIndexed { index, noteObject ->
-					noteObject.toSnapshot().toJsonString()?.let { File(noteFolder.path, "${noteObject.id}.json").writeText(it) }
-					withContext(Dispatchers.Main) { noteProcessed = index + 1 }
-				}
-			}
-			exportObject.tagList?.let {
-				it.forEachIndexed { index, tagObject ->
-					tagObject.toSnapshot().toJsonString()?.let { File(tagFolder.path, "${tagObject.id}.json").writeText(it) }
-					withContext(Dispatchers.Main) { tagProcessed = index + 1 }
-				}
-			}
-
-			val sevenZOutput = SevenZOutputFile(File(snapshotFolder, "${currentSnapshotFolder.name}.7z"))
-			compress7z(currentSnapshotFolder, sevenZOutput) { processes, total ->
-				scope.launch(Dispatchers.Main) { packageProcessed = processes; packageCount = total }
-			}
-
-			return File(snapshotFolder, "${currentSnapshotFolder.name}.7z")
-		} catch (e : Exception) {
-			e.printStackTrace()
-			return null
-		}
+		return null
+//		try {
+//			val snapshotFolder = File(context.cacheDir, "snapshot").apply { mkdirs() }
+//			val currentSnapshotFolder = File(snapshotFolder, "snapshot_${System.currentTimeMillis()}")
+//			currentSnapshotFolder.mkdirs()
+//
+//			val baseFile = File(currentSnapshotFolder.path, "base.json")
+//			val attachmentFolder = File(currentSnapshotFolder, "attachment").apply { mkdirs() }
+//			val bucketItemFolder = File(currentSnapshotFolder, "bucketItem").apply { mkdirs() }
+//			val bucketFolder = File(currentSnapshotFolder, "bucket").apply { mkdirs() }
+//			val chapterFolder = File(currentSnapshotFolder, "chapter").apply { mkdirs() }
+//			val noteFolder = File(currentSnapshotFolder, "note").apply { mkdirs() }
+//			val tagFolder = File(currentSnapshotFolder, "tag").apply { mkdirs() }
+//
+//			exportObject.baseObject?.let { baseFile.writeText(it) }
+//
+//			if (isAttachmentSelected) copyInDirectory(File(context.attachmentDirPath()), attachmentFolder)
+//
+//			withContext(Dispatchers.Main) {
+//				exportObject.bucketList?.size?.let { bucketCount = it }
+//				exportObject.bucketItemList?.size?.let { bucketItemCount = it }
+//				exportObject.chapterList?.size?.let { chapterCount = it }
+//				exportObject.noteList?.size?.let { noteCount = it }
+//				exportObject.tagList?.size?.let { tagCount = it }
+//			}
+//
+//			exportObject.bucketList?.let {
+//				it.forEachIndexed { index, bucketObject ->
+//					bucketObject.toSnapshot().toJsonString()?.let { File(bucketFolder.path, "${bucketObject.id}.json").writeText(it) }
+//					withContext(Dispatchers.Main) { bucketProcessed = index + 1 }
+//				}
+//			}
+//			exportObject.bucketItemList?.let {
+//				it.forEachIndexed { index, bucketItemObject ->
+//					bucketItemObject.toSnapshot().toJsonString()?.let { File(bucketItemFolder.path, "${bucketItemObject.id}.json").writeText(it) }
+//					withContext(Dispatchers.Main) { bucketItemProcessed = index + 1 }
+//				}
+//			}
+//			exportObject.chapterList?.let {
+//				it.forEachIndexed { index, chapterObject ->
+//					chapterObject.toSnapshot().toJsonString()?.let { File(chapterFolder.path, "${chapterObject.id}.json").writeText(it) }
+//					withContext(Dispatchers.Main) { chapterProcessed = index + 1 }
+//				}
+//			}
+//			exportObject.noteList?.let {
+//				it.forEachIndexed { index, noteObject ->
+//					noteObject.toSnapshot().toJsonString()?.let { File(noteFolder.path, "${noteObject.id}.json").writeText(it) }
+//					withContext(Dispatchers.Main) { noteProcessed = index + 1 }
+//				}
+//			}
+//			exportObject.tagList?.let {
+//				it.forEachIndexed { index, tagObject ->
+//					tagObject.toSnapshot().toJsonString()?.let { File(tagFolder.path, "${tagObject.id}.json").writeText(it) }
+//					withContext(Dispatchers.Main) { tagProcessed = index + 1 }
+//				}
+//			}
+//
+//			val sevenZOutput = SevenZOutputFile(File(snapshotFolder, "${currentSnapshotFolder.name}.7z"))
+//			compress7z(currentSnapshotFolder, sevenZOutput) { processes, total ->
+//				scope.launch(Dispatchers.Main) { packageProcessed = processes; packageCount = total }
+//			}
+//
+//			return File(snapshotFolder, "${currentSnapshotFolder.name}.7z")
+//		} catch (e : Exception) {
+//			e.printStackTrace()
+//			return null
+//		}
 	}
 
 	GenericDialog(

@@ -181,10 +181,7 @@ fun NotebookScreen() {
 		NotebookDialogType.DeleteChapter -> showDeleteChapterDialog = false
 	}
 
-	Log.i("npr71", "parentId: $parentId")
-
 	BackHandler(enabled = parentId != null) {
-		Log.i("npr71", "parentId: $parentId")
 		parentId?.let { viewModel.loadChapter(chapterId = RealmUUID.Companion.from(it)) }
 	}
 

@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.note.screen.editorScreen
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -20,6 +21,7 @@ import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -90,8 +92,6 @@ fun EditorScreen(
 	val userTimestamp by viewModel.userTimestamp.collectAsState()
 	val title by viewModel.title.collectAsState()
 	val content by viewModel.content.collectAsState()
-	val latLng by viewModel.latLng.collectAsState()
-	val address by viewModel.address.collectAsState()
 	val parentChapterObject by viewModel.parentChapter.collectAsState()
 
 	var attachmentListSaved by remember { mutableStateOf<List<File>>(listOf()) }
@@ -105,7 +105,7 @@ fun EditorScreen(
 
 	val onNoteSaved by viewModel.onNoteSaved.collectAsState()
 
-	val locationDataState by viewModel.locationDataState.collectAsState()
+	val locationData by viewModel.locationDataState.collectAsState()
 
 	val locationSnackbarHostState = SnackbarHostState()
 
@@ -144,6 +144,7 @@ fun EditorScreen(
 			if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
 				ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
 			) {
+				viewModel.setLocationPermissionUnabailable()
 				if (! silent) openDialog(EditorDialogType.LocationPermission)
 				return@launch
 			}
@@ -160,10 +161,8 @@ fun EditorScreen(
 									scope.launch(Dispatchers.Main) {
 										val message = if (receivedAddress.isNullOrEmpty()) "Lat : ${location.latitude}\nLng : ${location.longitude}"
 										else "${receivedAddress}\nLat : ${location.latitude}\nLng : ${location.longitude}"
-										locationSnackbarHostState.showSnackbar(
-											message = message,
-											duration = SnackbarDuration.Short
-										)
+										Log.i("npr71", "snackbar : $message")
+										locationSnackbarHostState.showSnackbar(message = message, duration = SnackbarDuration.Short)
 									}
 
 									LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = receivedAddress) }
@@ -241,6 +240,7 @@ fun EditorScreen(
 							RichTextEditor.Companion.RequestData.ExportPdf -> null
 							RichTextEditor.Companion.RequestData.ExportHtml -> null
 							RichTextEditor.Companion.RequestData.ExportMarkdown -> null
+							else -> null
 						}
 					}
 				}
@@ -249,8 +249,8 @@ fun EditorScreen(
 		}
 	}
 
-	LaunchedEffect(key1 = isNewNote) {
-		if (isNewNote) getLocationFromHardware(silent = true)
+	LaunchedEffect(key1 = isNewNote, key2 = isReady) {
+		if (isNewNote && isReady) getLocationFromHardware(silent = true)
 	}
 
 	LaunchedEffect(key1 = onNoteSaved.hashCode(), key2 = noteId) {
@@ -283,10 +283,8 @@ fun EditorScreen(
 				noteId = noteId,
 				createdTimestamp = createdTimestamp,
 				modifiedTimestamp = modifiedTimestamp,
-				latLng = latLng,
-				address = address,
 				parentChapterObject = parentChapterObject,
-				locationDataState = locationDataState,
+				locationData = locationData,
 				attachmentListSaved = attachmentListSaved,
 				attachmentListToAdd = attachmentListToAdd,
 				attachmentListToRemove = attachmentListToRemove,

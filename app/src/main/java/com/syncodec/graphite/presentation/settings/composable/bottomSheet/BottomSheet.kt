@@ -1,18 +1,25 @@
 package com.syncodec.graphite.presentation.settings.composable.bottomSheet
 
 import androidx.compose.runtime.Composable
+import com.google.firebase.auth.FirebaseUser
 
 
 enum class SettingsBottomSheetType {
-	PROFILE
+	Profile
 }
 
 @Composable
 fun SheetLayout(
-	bottomSheetType: SettingsBottomSheetType,
-	closeSheet: () -> Unit
+	bottomSheetType: SettingsBottomSheetType = SettingsBottomSheetType.Profile,
+	firebaseUser : FirebaseUser? = null,
+	signOut : () -> Unit = {},
+	closeSheet: () -> Unit = {},
 ) {
 	when (bottomSheetType) {
-		SettingsBottomSheetType.PROFILE -> ProfileBottomSheet(closeSheet)
+		SettingsBottomSheetType.Profile -> ProfileBottomSheet(
+			firebaseUser = firebaseUser,
+			signOut = signOut,
+			closeSheet = closeSheet
+		)
 	}
 }

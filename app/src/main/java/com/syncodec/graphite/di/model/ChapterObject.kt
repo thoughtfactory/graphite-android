@@ -2,20 +2,37 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.jsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.utils.getRandomColor
-import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.json.JSONObject
+import java.nio.charset.Charset
 import kotlin.random.Random
 
 
 @Keep
-class ChapterObject : RealmObject {
+class ChapterObject() : RealmObject {
+
+	constructor(byteArray : ByteArray) : this() {
+		val jsonObject = JSONObject(byteArray.toString(Charset.defaultCharset()))
+
+		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
+		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
+		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
+		this.title = jsonObject.optString("title")
+		this.description = jsonObject.optString("description")
+		this.color = jsonObject.optInt("color")
+		this.thumbnail = jsonObject.optString("thumbnail")
+		if (this.thumbnail == "null") {
+			this.thumbnail = null
+			if (this.color == null || this.color == 0) this.color = getRandomColor().toArgb()
+		}
+		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
+		this.isLocked = jsonObject.optBoolean("isLocked", false)
+		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
+	}
+
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
@@ -28,10 +45,9 @@ class ChapterObject : RealmObject {
 	var isFavourite : Boolean = false
 	var isLocked : Boolean = false
 
-	var chapterList : RealmList<ChapterObject> = realmListOf()
-	var noteList : RealmList<NoteObject> = realmListOf()
-
 	var parentId : RealmUUID? = null
+
+	var lastSyncedTimestamp : Long = 0
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
@@ -43,44 +59,38 @@ class ChapterObject : RealmObject {
 			color = this.color,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked,
-			totalChapterDirect = this.chapterList.size,
-			totalNoteDirect = this.noteList.size,
-			totalChapter = this.countTotalChapter(),
-			totalNote = this.countTotalNote(),
 			parentId = this.parentId
 		)
 	}
 
-	fun countTotalChapter() : Int {
-		var total = 0
-		for (chapter in chapterList) {
-			total += chapter.countTotalChapter()
-		}
-		return total + chapterList.size
+	fun clone() = ChapterObject().apply {
+		this.id = this@ChapterObject.id
+		this.createdTimestamp = this@ChapterObject.createdTimestamp
+		this.modifiedTimestamp = this@ChapterObject.modifiedTimestamp
+		this.title = this@ChapterObject.title
+		this.description = this@ChapterObject.description
+		this.color = this@ChapterObject.color
+		this.thumbnail = this@ChapterObject.thumbnail
+		this.isFavourite = this@ChapterObject.isFavourite
+		this.isLocked = this@ChapterObject.isLocked
+		this.parentId = this@ChapterObject.parentId
 	}
 
-	fun countTotalNote() : Int {
-		var total = 0
-		for (chapter in chapterList) {
-			total += chapter.countTotalNote()
-		}
-		return total + noteList.size
-	}
+	fun toCloudSnapshot() : String {
+		val jsonObject = JSONObject()
+		jsonObject.put("id", this.id.toString())
+		jsonObject.put("createdTimestamp", this.createdTimestamp)
+		jsonObject.put("modifiedTimestamp", this.modifiedTimestamp)
+		jsonObject.put("title", this.title)
+		jsonObject.put("description", this.description)
+		jsonObject.put("color", this.color)
+		jsonObject.put("thumbnail", this.thumbnail)
+		jsonObject.put("isFavourite", this.isFavourite)
+		jsonObject.put("isLocked", this.isLocked)
+		jsonObject.put("parentId", this.parentId?.toString())
 
-	fun toSnapshot() = ChapterSnapshot(
-		id = this.id.toString(),
-		createdTimestamp = this.createdTimestamp,
-		modifiedTimestamp = this.modifiedTimestamp,
-		title = this.title,
-		description = this.description,
-		color = this.color,
-		thumbnail = this.thumbnail,
-		isFavourite = this.isFavourite,
-		isLocked = this.isLocked,
-		chapterIdList = this.chapterList.map { it.id.toString() },
-		noteIdList = this.noteList.map { it.id.toString() },
-		parentId = this.parentId?.toString()
-	)
+		return jsonObject.toString()
+	}
 
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -92,8 +102,6 @@ class ChapterObject : RealmObject {
 		result = 31 * result + (thumbnail?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
-		result = 31 * result + chapterList.hashCode()
-		result = 31 * result + noteList.hashCode()
 		result = 31 * result + (parentId?.hashCode() ?: 0)
 		return result
 	}
@@ -110,8 +118,6 @@ class ChapterObject : RealmObject {
 		if (color != other.color) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
-		if (chapterList != other.chapterList) return false
-		if (noteList != other.noteList) return false
 		if (parentId != other.parentId) return false
 
 		return true
@@ -128,10 +134,6 @@ data class ChapterObjectLite(
 	val color : Int?,
 	val isFavourite : Boolean,
 	val isLocked : Boolean,
-	val totalChapterDirect : Int,
-	val totalNoteDirect : Int,
-	val totalChapter : Int,
-	val totalNote : Int,
 	val parentId : RealmUUID?
 ) {
 	override fun hashCode() : Int {
@@ -168,57 +170,15 @@ data class ChapterObjectLite(
 		fun getRandomInstance() : ChapterObjectLite {
 			return ChapterObjectLite(
 				id = RealmUUID.random(),
-				createdTimestamp = System.currentTimeMillis()+ Random.nextLong(),
+				createdTimestamp = System.currentTimeMillis() + Random.nextLong(),
 				modifiedTimestamp = System.currentTimeMillis() + Random.nextLong(),
 				title = RealmUUID.random().toString(),
 				description = RealmUUID.random().toString(),
 				color = getRandomColor().toArgb(),
 				isFavourite = Random.nextBoolean(),
 				isLocked = Random.nextBoolean(),
-				totalChapterDirect = Random.nextInt(),
-				totalNoteDirect = Random.nextInt(),
-				totalChapter = Random.nextInt(),
-				totalNote = Random.nextInt(),
 				parentId = RealmUUID.random()
 			)
-		}
-	}
-}
-
-@Keep
-data class ChapterSnapshot(
-	val id : String,
-	val createdTimestamp : Long,
-	val modifiedTimestamp : Long,
-	val title : String?,
-	val description : String?,
-	val color : Int?,
-	val thumbnail : String?,
-	val isFavourite : Boolean,
-	val isLocked : Boolean,
-	val chapterIdList : List<String>,
-	val noteIdList : List<String>,
-	val parentId : String?
-) {
-	fun toObject() : ChapterObject = ChapterObject().apply {
-		this.id = RealmUUID.from(this@ChapterSnapshot.id)
-		this.createdTimestamp = this@ChapterSnapshot.createdTimestamp
-		this.modifiedTimestamp = this@ChapterSnapshot.modifiedTimestamp
-		this.title = this@ChapterSnapshot.title
-		this.description = this@ChapterSnapshot.description
-		this.color = this@ChapterSnapshot.color
-		this.thumbnail = this@ChapterSnapshot.thumbnail
-		this.isFavourite = this@ChapterSnapshot.isFavourite
-		this.isLocked = this@ChapterSnapshot.isLocked
-		this.parentId = this@ChapterSnapshot.parentId?.let { RealmUUID.from(this@ChapterSnapshot.id) }
-	}
-
-	fun toJsonString(): String? {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			return objectMapper.writeValueAsString(this)
-		} catch (e: Exception) {
-			null
 		}
 	}
 }

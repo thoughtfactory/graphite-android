@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -47,9 +49,13 @@ import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.service.DropboxSyncStatus
+import com.syncodec.graphite.service.DropboxService
+import com.syncodec.graphite.service.DropboxServiceConnectionManager
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -65,14 +71,15 @@ class MainActivity : ComponentActivity() {
 
 	private var biometricErrorMessage : MutableState<String?> = mutableStateOf(null)
 
-	private var syncStatus : MutableState<DropboxSyncStatus> = mutableStateOf(DropboxSyncStatus.INIT)
+	private val dropboxSyncStatus = MutableStateFlow<DropboxService.Companion.DropboxSyncStatus>(DropboxService.Companion.DropboxSyncStatus.Init)
+
 
 	@OptIn(ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 		isInStack = true
 
-//		startSyncService()
+		startSyncService()
 
 		val dataStoreInstance = DataStoreInstance(this)
 
@@ -117,6 +124,8 @@ class MainActivity : ComponentActivity() {
 
 				val biometricErrorMessage by this.biometricErrorMessage
 
+				val syncStatus by dropboxSyncStatus.collectAsState()
+
 				AnimatedContent(
 					targetState = isFirstTime,
 					transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
@@ -135,7 +144,11 @@ class MainActivity : ComponentActivity() {
 									onUnlock = { this@MainActivity.launchBiometric() }
 								)
 
-								RepositoryState.SUCCESS -> MainScreen()
+								RepositoryState.SUCCESS -> MainScreen(
+									syncStatus = syncStatus,
+									onClickSyncNow = { dropboxServiceConnectionManager?.service?.initSync() },
+									onClickForceSync = { dropboxServiceConnectionManager?.service?.forceSync() },
+								)
 
 								RepositoryState.ERROR -> RepositoryLockedScreen(
 									errorMessage = biometricErrorMessage,
@@ -152,8 +165,6 @@ class MainActivity : ComponentActivity() {
 			}
 		}
 	}
-
-
 
 	private fun checkBiometricSupport() : Boolean {
 		val keyGuardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
@@ -305,6 +316,26 @@ class MainActivity : ComponentActivity() {
 			Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 		}
 	}
+
+	private var dropboxServiceConnectionManager: DropboxServiceConnectionManager? = null
+
+	private fun startSyncService() {
+		dropboxServiceConnectionManager = DropboxServiceConnectionManager(this) { dropboxService ->
+//			dropboxService.initSync()
+			lifecycleScope.launch(Dispatchers.Default) {
+				dropboxService.dropboxSyncStatus.collect {
+					dropboxSyncStatus.tryEmit(it)
+				}
+			}
+		}
+	}
+
+	override fun onDestroy() {
+		Log.i("npr71", "onDestroy")
+		dropboxServiceConnectionManager?.unbindFromService()
+		super.onDestroy()
+	}
+
 	companion object {
 		var isInStack = false
 	}

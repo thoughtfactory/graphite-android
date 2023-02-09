@@ -31,11 +31,13 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.dropbox.DropboxActivity
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.service.DropboxService
 
 
 @Preview
 @Composable
 fun SyncBottomSheet(
+	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
 	onClickSyncNow : () -> Unit = {},
 	onClickForceSync : () -> Unit = {},
 ) {
@@ -97,6 +99,32 @@ fun SyncBottomSheet(
 					Intent(context, DropboxActivity::class.java).apply {
 						context.startActivity(this)
 					}
+				}
+			}
+		}
+
+		Spacer(modifier = Modifier.height(6.dp))
+
+		if (syncStatus is DropboxService.Companion.DropboxSyncStatus.Syncing) {
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), MaterialTheme.shapes.medium)
+			) {
+				Column(modifier = Modifier) {
+					Text(
+						text = "To upSync ${syncStatus.toUpSyncCount} files",
+						style = MaterialTheme.typography.bodyLarge,
+						color = MaterialTheme.colorScheme.onBackground,
+					)
+
+					Spacer(modifier = Modifier.height(4.dp))
+
+					Text(
+						text = "To downSync ${syncStatus.toDownSyncCount} files",
+						style = MaterialTheme.typography.bodyLarge,
+						color = MaterialTheme.colorScheme.onBackground,
+					)
 				}
 			}
 		}

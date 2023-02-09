@@ -2,10 +2,6 @@ package com.syncodec.graphite.presentation.note.screen.viewerScreen.composable
 
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -29,7 +25,6 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -200,8 +195,6 @@ private fun Header(
 ) {
 	val timestamp = noteViewerTimestamp(userTimestamp)
 
-	var showMap by remember { mutableStateOf(false) }
-
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
@@ -288,31 +281,6 @@ private fun Header(
 					overflow = TextOverflow.Ellipsis,
 					modifier = Modifier.weight(1f)
 				)
-
-				Spacer(modifier = Modifier.width(4.dp))
-
-				IconButton(
-					onClick = { showMap = ! showMap },
-				) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_atlas),
-						contentDescription = "Location",
-						tint = MaterialTheme.colorScheme.onBackground,
-						modifier = Modifier.requiredSize(16.dp)
-					)
-				}
-			}
-		}
-
-		AnimatedVisibility(
-			visible = showMap,
-			enter = expandVertically(tween(300)),
-			exit = shrinkVertically(tween(300))
-		) {
-			Column(modifier = Modifier.fillMaxWidth()) {
-				Spacer(modifier = Modifier.height(4.dp))
-				LocationMap(latLng = latLng)
-				Spacer(modifier = Modifier.height(4.dp))
 			}
 		}
 

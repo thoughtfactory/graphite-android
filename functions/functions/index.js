@@ -14,23 +14,19 @@ const fetch = require('node-fetch');
 
 admin.initializeApp();
 
-exports.deleteUser = functions.https.onRequest(
-    (request, response) => {
-        const data = {
-            uId: request.query.uId
-        };
+// const BASE_ADDRESS = "https://f22d-2001-1970-5d1f-d000-00-dcfb.ngrok.io";
+const BASE_ADDRESS = "https://us-central1-graphite-diary.cloudfunctions.net";
+// const BASE_ADDRESS = "http://localhost:5001";
 
-        admin.auth().deleteUser(data.uId);
-    }
-);
+// exports.deleteUser = functions.https.onRequest(
+//     (request, response) => {
+//         const data = {
+//             uId: request.query.uId
+//         };
 
-exports.dropboxCallback = functions.https.onRequest(
-    (request, response) => {
-        const code = request.query.code;
-
-        response.redirect(`intent://graphite.syncodec.com/dropboxCallback?code=${code}#Intent;scheme=https;package=com.syncodec.graphite;end`);
-    }
-);
+//         admin.auth().deleteUser(data.uId);
+//     }
+// );
 
 exports.submitBugReport = functions.https.onRequest(
     (request, response) => {
@@ -55,30 +51,66 @@ exports.submitBugReport = functions.https.onRequest(
     }
 );
 
-exports.exchangeDropboxCodeForToken = functions.https.onRequest(
+exports.dropboxCallback = functions.https.onRequest(
     (request, response) => {
-        // const code = request.body.data.code;
         const code = request.query.code;
-        console.log(code);
+
+        response.redirect(`intent://graphite.syncodec.com/dropboxCallback?code=${code}#Intent;scheme=https;package=com.syncodec.graphite;end`);
+    }
+);
+
+exports.connectWithDropbox = functions.https.onRequest(
+    (request, response) => {
+        const FIREBASE_FUNCTION_PATH = "dropboxCallback";
+
+        var dbxAuth = new dropbox.DropboxAuth();
+        dbxAuth.setClientId('wqgzkie6sm7xxvw');
+        dbxAuth.getAuthenticationUrl(
+                redirectUri = encodeURIComponent(`${BASE_ADDRESS}/${FIREBASE_FUNCTION_PATH}`),
+                state = null,
+                authType = `code`,
+                tokenAccessType = "offline",
+                scope = null,
+                includeGrantedScope = `none`,
+                isePKCE = false,
+            ).then((authUrl) => {
+                console.log(`authUrl : ${authUrl}`);
+                response.redirect(authUrl);
+            })
+            .catch((reason) => {
+                response.status(200).send({
+                    "response": "Error"
+                });
+            });
+    }
+);
+
+exports.dropboxExchangeCodeForToken2 = functions.https.onRequest(
+    (request, response) => {
+        const code = request.body.data.code;
+
+        const FIREBASE_FUNCTION_PATH = "dropboxCallback";
 
         var dbxAuth = new dropbox.DropboxAuth();
 
         dbxAuth.setClientId('wqgzkie6sm7xxvw');
         dbxAuth.setClientSecret('kgu8ymntbtwnsxc');
 
-        // const redirectUri = `intent://graphite.syncodec.com/dropboxCallback#Intent;scheme=https;package=com.syncodec.graphite;end`
-        // const redirectUri = `http://localhost:5001/graphite-diary/us-central1/dropboxCallback`
-        const redirectUri = `http://localhost:5001/graphite-diary/us-central1/dropboxCallback`
-        dbxAuth.getAccessTokenFromCode(redirectUri, code)
-            .then((token) => {
+        dbxAuth.getAccessTokenFromCode(encodeURIComponent(`${BASE_ADDRESS}/${FIREBASE_FUNCTION_PATH}`), code).then((dropboxResponse) => {
                 response.status(200).send({
-                    "code": code
+                    "data": {
+                        "response" : "Ok",
+                        "data" : dropboxResponse.result
+                    },
                 });
             })
             .catch((reason) => {
+                console.log(reason)
                 response.status(200).send({
-                    "code": code,
-                    "reason": reason
+                    "data": {
+                        "response" : "Error",
+                        "data" : reason
+                    }
                 });
             });
     }

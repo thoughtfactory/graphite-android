@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
+import com.google.firebase.auth.FirebaseUser
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
@@ -68,20 +69,19 @@ import com.syncodec.graphite.utils.LocalAuthenticatorAction
 @Preview
 @Composable
 fun SettingsScreen(
+	firebaseUser : FirebaseUser? = null,
+	onClickSignIn : () -> Unit = {},
+	onClickSignOut : () -> Unit = {},
+	onClickDeleteAccount : () -> Unit = {},
 	navigateTo : (SettingsActivity.Companion.SettingsScreen) -> Unit = {},
+	openDialog : (SettingsDialogType) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
 	val isPro = LocalIsPro.current
-	val firebaseUser = SettingsActivity.LocalFirebaseUser.current
-
-	val onSignIn = SettingsActivity.LocalSignIn.current
-	val onSignOut = SettingsActivity.LocalSignOut.current
-	val onDeleteAccount = SettingsActivity.LocalDeleteAccount.current
 
 	val uriHandler = LocalUriHandler.current
-	val openSheet = SettingsActivity.LocalOpenBottomSheet.current
 	val authenticatorAction = LocalAuthenticatorAction.current
 
 	val darkTheme by dataStoreInstance.getDarkTheme.collectAsState(null)
@@ -93,7 +93,6 @@ fun SettingsScreen(
 
 	var isDarkThemeDropdownMenuVisible by remember { mutableStateOf(false) }
 
-	val openDialog = SettingsActivity.LocalOpenDialog.current
 
 	Column(
 		modifier = Modifier
@@ -120,11 +119,11 @@ fun SettingsScreen(
 			transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) }
 		) {
 			if (it == null) {
-				SettingButton(text = "Sign in", icon = R.drawable.ic_account, onClick = onSignIn)
+				SettingButton(text = "Sign in", icon = R.drawable.ic_account, onClick = onClickSignIn)
 			} else {
 				Column(modifier = Modifier) {
-					SettingButton(text = "Log out", icon = R.drawable.ic_logout, onClick = onSignOut)
-					SettingButton(text = "Delete account", icon = R.drawable.ic_account_delete, onClick = onDeleteAccount)
+					SettingButton(text = "Log out", icon = R.drawable.ic_logout, onClick = onClickSignOut)
+					SettingButton(text = "Delete account", icon = R.drawable.ic_account_delete, onClick = onClickDeleteAccount)
 				}
 			}
 		}
@@ -149,9 +148,9 @@ fun SettingsScreen(
 			text = "Dark mode",
 			icon = R.drawable.ic_bulb,
 			subText = when (darkTheme) {
-				SettingsActivity.Companion.DarkTheme.SYNC_WITH_SYSTEM -> "Sync with system"
-				SettingsActivity.Companion.DarkTheme.ALWAYS_ON -> "Always on"
-				SettingsActivity.Companion.DarkTheme.ALWAYS_OFF -> "Always off"
+				SettingsActivity.Companion.DarkTheme.SyncWithSystem -> "Sync with system"
+				SettingsActivity.Companion.DarkTheme.AlwaysOn -> "Always on"
+				SettingsActivity.Companion.DarkTheme.AlwaysOff -> "Always off"
 				null -> "Sync with system"
 			},
 			isDropdownMenuVisible = isDarkThemeDropdownMenuVisible,
@@ -159,15 +158,15 @@ fun SettingsScreen(
 				DropdownMenuItem(
 					title = "Sync with system",
 					icon = R.drawable.ic_r2d2
-				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.SYNC_WITH_SYSTEM); isDarkThemeDropdownMenuVisible = false },
+				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.SyncWithSystem); isDarkThemeDropdownMenuVisible = false },
 				DropdownMenuItem(
 					title = "Always on",
 					icon = R.drawable.ic_switch_on
-				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.ALWAYS_ON); isDarkThemeDropdownMenuVisible = false },
+				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.AlwaysOn); isDarkThemeDropdownMenuVisible = false },
 				DropdownMenuItem(
 					title = "Always off",
 					icon = R.drawable.ic_switch_off
-				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.ALWAYS_OFF); isDarkThemeDropdownMenuVisible = false },
+				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.AlwaysOff); isDarkThemeDropdownMenuVisible = false },
 			)
 		) { isDarkThemeDropdownMenuVisible = it }
 		SettingButton(text = "Language", icon = R.drawable.ic_language, subText = "English")
@@ -180,11 +179,11 @@ fun SettingsScreen(
 		}
 
 		SettingsContentTitle(title = "DATA")
-		SettingButton(text = "Backup and restore", icon = R.drawable.ic_local_backup) { navigateTo(SettingsActivity.Companion.SettingsScreen.BACKUP_AND_RESTORE) }
+		SettingButton(text = "Backup and restore", icon = R.drawable.ic_local_backup) { navigateTo(SettingsActivity.Companion.SettingsScreen.BackupAndRestore) }
 		SettingButton(text = "Synchronization", icon = R.drawable.ic_sync)
-		SettingButton(text = "Import", icon = R.drawable.ic_import) { openDialog(SettingsDialogType.IMPORT_DATA, null) }
-		SettingButton(text = "Export", icon = R.drawable.ic_export) { openDialog(SettingsDialogType.EXPORT_DATA, null) }
-		SettingButton(text = "Clear data", icon = R.drawable.ic_broom) { openDialog(SettingsDialogType.CLEAR_DATA, null) }
+		SettingButton(text = "Import", icon = R.drawable.ic_import) { navigateTo(SettingsActivity.Companion.SettingsScreen.ImportData) }
+		SettingButton(text = "Export", icon = R.drawable.ic_export) { openDialog(SettingsDialogType.ExportData) }
+		SettingButton(text = "Clear data", icon = R.drawable.ic_broom) { openDialog(SettingsDialogType.ClearData) }
 
 		SettingsContentTitle(title = "EXTENSIONS")
 		SettingSwitch(text = "Year progress bar", icon = R.drawable.ic_advance, isChecked = isYearProgressEnabled != false) {
@@ -194,7 +193,7 @@ fun SettingsScreen(
 			dataStoreInstance.putGeolocation(it)
 		}
 		SettingSwitch(text = "Add note form notification", icon = R.drawable.ic_note_notification, isChecked = isNoteNotificationEnabled != false) {
-			if (isPro) openDialog(SettingsDialogType.NOTIFICATION_PERMISSION, null)
+			if (isPro) openDialog(SettingsDialogType.NotificationPermission)
 			else Toast.makeText(context, "Join Graphite Pro to enable adding notes from notification", Toast.LENGTH_SHORT).show()
 		}
 

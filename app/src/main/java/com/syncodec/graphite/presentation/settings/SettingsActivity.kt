@@ -21,9 +21,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,12 +52,12 @@ import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetL
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
 import com.syncodec.graphite.presentation.settings.composable.screen.BackupAndRestoreScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.localBackup.LocalBackupScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.ImportDataScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.launch
 
@@ -104,106 +102,119 @@ class SettingsActivity : ComponentActivity() {
 		val authenticatorAction : (AuthenticatorScreen) -> Unit = { authenticatorScreen = it }
 
 		setContent {
-			CompositionLocalProvider(
-				LocalAuthenticatorAction provides authenticatorAction
-			) {
-				BaseContent {
-					val scope = rememberCoroutineScope()
-					val systemUiController = rememberSystemUiController()
-					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-					systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+			BaseContent {
+				val scope = rememberCoroutineScope()
+				val systemUiController = rememberSystemUiController()
+				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
 
-					val _firebaseUser by this.firebaseUser
+				val _firebaseUser by this.firebaseUser
 
-					val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-					var bottomSheetType : SettingsBottomSheetType by remember { mutableStateOf(SettingsBottomSheetType.PROFILE) }
+				val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+				var bottomSheetType : SettingsBottomSheetType by remember { mutableStateOf(SettingsBottomSheetType.Profile) }
 
-					fun openSheet(_bottomSheetType : SettingsBottomSheetType) {
-						scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
-					}
+				fun openSheet(_bottomSheetType : SettingsBottomSheetType) {
+					scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
+				}
 
-					fun closeSheet() {
-						scope.launch { modalBottomSheetState.hide() }
-					}
+				fun closeSheet() {
+					scope.launch { modalBottomSheetState.hide() }
+				}
 
-					var showImportDataDialog by remember { mutableStateOf(false) }
-					var showExportDataDialog by remember { mutableStateOf(false) }
-					var showClearDataDialog by remember { mutableStateOf(false) }
-					var showNotificationPermissionDialog by remember { mutableStateOf(false) }
-					var _showDeleteAccountDialog by remember { mutableStateOf(false) }
+				var showImportDataDialog by remember { mutableStateOf(false) }
+				var showImportDataJourneyDialog by remember { mutableStateOf(false) }
+				var showExportDataDialog by remember { mutableStateOf(false) }
+				var showClearDataDialog by remember { mutableStateOf(false) }
+				var showNotificationPermissionDialog by remember { mutableStateOf(false) }
+				var _showDeleteAccountDialog by remember { mutableStateOf(false) }
 
-					var settingsScreen by remember { mutableStateOf(SettingsScreen.SETTINGS) }
+				var settingsScreen by remember { mutableStateOf(SettingsScreen.Settings) }
 
-					fun openDialog(dialogType : SettingsDialogType, data : Any?) {
-						when (dialogType) {
-							SettingsDialogType.IMPORT_DATA -> showImportDataDialog = true
-							SettingsDialogType.EXPORT_DATA -> showExportDataDialog = true
-							SettingsDialogType.CLEAR_DATA -> showClearDataDialog = true
-							SettingsDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = true
-							SettingsDialogType.DELETE_ACCOUNT -> _showDeleteAccountDialog = true
-						}
-					}
+				fun openDialog(dialogType : SettingsDialogType) = when (dialogType) {
+					SettingsDialogType.ImportData -> showImportDataDialog = true
+					SettingsDialogType.ImportDataJourney -> showImportDataJourneyDialog = true
+					SettingsDialogType.ExportData -> showExportDataDialog = true
+					SettingsDialogType.ClearData -> showClearDataDialog = true
+					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = true
+					SettingsDialogType.DeleteAccount -> _showDeleteAccountDialog = true
+				}
 
-					fun closeDialog(dialogType : SettingsDialogType) {
-						when (dialogType) {
-							SettingsDialogType.IMPORT_DATA -> showImportDataDialog = false
-							SettingsDialogType.EXPORT_DATA -> showExportDataDialog = false
-							SettingsDialogType.CLEAR_DATA -> showClearDataDialog = false
-							SettingsDialogType.NOTIFICATION_PERMISSION -> showNotificationPermissionDialog = false
-							SettingsDialogType.DELETE_ACCOUNT -> _showDeleteAccountDialog = false
-						}
-					}
+				fun closeDialog(dialogType : SettingsDialogType) = when (dialogType) {
+					SettingsDialogType.ImportData -> showImportDataDialog = false
+					SettingsDialogType.ImportDataJourney -> showImportDataJourneyDialog = false
+					SettingsDialogType.ExportData -> showExportDataDialog = false
+					SettingsDialogType.ClearData -> showClearDataDialog = false
+					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = false
+					SettingsDialogType.DeleteAccount -> _showDeleteAccountDialog = false
+				}
 
-					this.onBackPressedDispatcher.addCallback(
-						this, object : OnBackPressedCallback(true) {
-							override fun handleOnBackPressed() {
-								if (authenticatorScreen == AuthenticatorScreen.None) {
-									when (settingsScreen) {
-										SettingsScreen.SETTINGS -> finish()
-										SettingsScreen.BACKUP_AND_RESTORE -> settingsScreen = SettingsScreen.SETTINGS
-										SettingsScreen.LOCAL_BACKUP -> settingsScreen = SettingsScreen.BACKUP_AND_RESTORE
-									}
-								} else {
-									authenticatorScreen = AuthenticatorScreen.None
+				this.onBackPressedDispatcher.addCallback(
+					this, object : OnBackPressedCallback(true) {
+						override fun handleOnBackPressed() {
+							if (authenticatorScreen == AuthenticatorScreen.None) {
+								when (settingsScreen) {
+									SettingsScreen.Settings -> finish()
+									SettingsScreen.BackupAndRestore -> settingsScreen = SettingsScreen.Settings
+									SettingsScreen.LocalBackup -> settingsScreen = SettingsScreen.BackupAndRestore
+									SettingsScreen.ImportData -> settingsScreen = SettingsScreen.Settings
 								}
+							} else {
+								authenticatorScreen = AuthenticatorScreen.None
 							}
 						}
-					)
+					}
+				)
 
-					CompositionLocalProvider(
-						LocalFirebaseUser provides _firebaseUser,
-						LocalSignIn provides ::signIn,
-						LocalSignOut provides ::signOut,
-						LocalDeleteAccount provides {
-							closeSheet()
-							openDialog(SettingsDialogType.DELETE_ACCOUNT, null)
-						},
-						LocalShowImportDataDialog provides showImportDataDialog,
-						LocalShowExportDataDialog provides showExportDataDialog,
-						LocalShowClearDataDialog provides showClearDataDialog,
-						LocalShowNotificationPermissionDialog provides showNotificationPermissionDialog,
-						LocalShowDeleteAccountDialog provides _showDeleteAccountDialog,
-						LocalOpenBottomSheet provides ::openSheet,
-						LocalCloseBottomSheet provides ::closeSheet,
-						LocalOpenDialog provides ::openDialog,
-						LocalCloseDialog provides ::closeDialog,
+				GenericScaffold(
+					modalBottomSheetState = modalBottomSheetState,
+					sheetContent = {
+						SheetLayout(
+							bottomSheetType = bottomSheetType,
+							firebaseUser = _firebaseUser,
+							signOut = ::onClickSignOut,
+							closeSheet = ::closeSheet,
+						)
+					},
+					topBar = {
+						TopBar(
+							settingsScreen = settingsScreen,
+							onClickBack = { super.getOnBackPressedDispatcher().onBackPressed() }
+						)
+					},
+					dialogContent = {
+						SettingsDialog(
+							showImportDataDialog = showImportDataDialog,
+							showImportDataJourneyDialog = showImportDataJourneyDialog,
+							showExportDataDialog = showExportDataDialog,
+							showClearDataDialog = showClearDataDialog,
+							closeDialog = ::closeDialog,
+						)
+					},
+				) {
+					AnimatedContent(
+						targetState = settingsScreen,
+						transitionSpec = {
+							scaleIn(tween(300), initialScale = 0.71f) + fadeIn(tween(300)) with scaleOut(
+								tween(300),
+								targetScale = 0.71f
+							) + fadeOut(tween(300))
+						}
 					) {
-						GenericScaffold(
-							modalBottomSheetState = modalBottomSheetState,
-							sheetContent = { SheetLayout(bottomSheetType = bottomSheetType) { closeSheet() } },
-							topBar = { TopBar { super.getOnBackPressedDispatcher().onBackPressed() } },
-							dialogContent = { SettingsDialog() },
-						) {
-							AnimatedContent(
-								targetState = settingsScreen,
-								transitionSpec = { scaleIn(tween(300), initialScale = 0.71f) + fadeIn(tween(300)) with scaleOut(tween(300), targetScale = 0.71f) + fadeOut(tween(300)) }
-							) {
-								when (it) {
-									SettingsScreen.SETTINGS -> SettingsScreen { settingsScreen = it }
-									SettingsScreen.BACKUP_AND_RESTORE -> BackupAndRestoreScreen { settingsScreen = it }
-									SettingsScreen.LOCAL_BACKUP -> LocalBackupScreen()
-								}
-							}
+						when (it) {
+							SettingsScreen.Settings -> SettingsScreen(
+								firebaseUser = _firebaseUser,
+								onClickSignIn = ::onClickSignIn,
+								onClickSignOut = ::onClickSignOut,
+								onClickDeleteAccount = {},
+								navigateTo = { settingsScreen = it },
+								openDialog = ::openDialog,
+							)
+
+							SettingsScreen.BackupAndRestore -> BackupAndRestoreScreen { settingsScreen = it }
+							SettingsScreen.LocalBackup -> LocalBackupScreen()
+							SettingsScreen.ImportData -> ImportDataScreen(
+								openDialog = ::openDialog,
+							)
 						}
 					}
 				}
@@ -255,7 +266,7 @@ class SettingsActivity : ComponentActivity() {
 		}
 	}
 
-	private fun signIn() {
+	private fun onClickSignIn() {
 		Toast.makeText(this, "Signing in...", Toast.LENGTH_SHORT).show()
 		oneTapClient.beginSignIn(signInRequest)
 			.addOnSuccessListener(this) { result ->
@@ -273,7 +284,7 @@ class SettingsActivity : ComponentActivity() {
 			}
 	}
 
-	private fun signOut() {
+	private fun onClickSignOut() {
 		val dataStoreInstance = DataStoreInstance(this)
 		auth.signOut()
 		this.firebaseUser.value = null
@@ -291,32 +302,17 @@ class SettingsActivity : ComponentActivity() {
 	}
 
 	companion object {
-		val LocalFirebaseUser = compositionLocalOf<FirebaseUser?> { null }
-		val LocalSignIn = compositionLocalOf { {} }
-		val LocalSignOut = compositionLocalOf { {} }
-		val LocalDeleteAccount = compositionLocalOf { {} }
-
-		val LocalShowImportDataDialog = compositionLocalOf { false }
-		val LocalShowExportDataDialog = compositionLocalOf { false }
-		val LocalShowClearDataDialog = compositionLocalOf { false }
-		val LocalShowNotificationPermissionDialog = compositionLocalOf { false }
-		val LocalShowDeleteAccountDialog = compositionLocalOf { false }
-
-		val LocalOpenBottomSheet = compositionLocalOf<(SettingsBottomSheetType) -> Unit> { {} }
-		val LocalCloseBottomSheet = compositionLocalOf { { } }
-		val LocalOpenDialog = compositionLocalOf<(SettingsDialogType, Any?) -> Unit> { { _, _ -> } }
-		val LocalCloseDialog = compositionLocalOf<(SettingsDialogType) -> Unit> { {} }
-
 		enum class SettingsScreen {
-			SETTINGS,
-			BACKUP_AND_RESTORE,
-			LOCAL_BACKUP
+			Settings,
+			BackupAndRestore,
+			LocalBackup,
+			ImportData,
 		}
 
 		enum class DarkTheme {
-			SYNC_WITH_SYSTEM,
-			ALWAYS_ON,
-			ALWAYS_OFF
+			SyncWithSystem,
+			AlwaysOn,
+			AlwaysOff
 		}
 	}
 }

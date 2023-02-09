@@ -2,9 +2,6 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.jsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmList
@@ -30,13 +27,12 @@ class TagObject : RealmObject {
 		)
 	}
 
-	fun toSnapshot() = TagSnapshot(
-		id = this.id.toString(),
-		tag = this.tag,
-		color = this.color,
-		objectIdList = this.objectIdList.map { it.toString() }
-	)
-
+	fun clone() : TagObject = TagObject().apply {
+		this.id = this@TagObject.id
+		this.tag = this@TagObject.tag
+		this.color = this@TagObject.color
+		this.objectIdList = this@TagObject.objectIdList
+	}
 
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -72,27 +68,3 @@ data class TagObjectLite(
 	val tag: String,
 	val color: Int
 )
-
-@Keep
-data class TagSnapshot(
-	val id: String,
-	val tag: String,
-	val color: Int,
-	val objectIdList: List<String>
-) {
-	fun toObject() = TagObject().apply {
-		this.id = RealmUUID.from(this@TagSnapshot.id)
-		this.tag = this@TagSnapshot.tag
-		this.color = this@TagSnapshot.color
-		this.objectIdList.addAll(this@TagSnapshot.objectIdList.map { RealmUUID.from(it) })
-	}
-
-	fun toJsonString(): String? {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			return objectMapper.writeValueAsString(this)
-		} catch (e: Exception) {
-			null
-		}
-	}
-}

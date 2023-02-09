@@ -29,7 +29,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
-import com.syncodec.graphite.service.DropboxSyncStatus
+import com.syncodec.graphite.service.DropboxService
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -42,10 +42,12 @@ fun TopBar(
 	componentType : ComponentType = ComponentType.Note,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
+	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
 	onComponentChange : (Int) -> Unit = {},
 	onClickFilter : () -> Unit = {},
 	onClickMenu : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
+	onClickCloud : () -> Unit = {},
 	onClickSearch : () -> Unit = {},
 	onClickDelete : () -> Unit = {},
 ) {
@@ -67,14 +69,16 @@ fun TopBar(
 			currentRoute = currentRoute,
 			isSelecting = isSelecting,
 			selectedSize = selectedSize,
+			syncStatus = syncStatus,
 			onClickMenu = onClickMenu,
 			onClickCancelSelect = onClickCancelSelect,
+			onClickCloud = onClickCloud,
 			onClickSearch = onClickSearch,
 			onClickDelete = onClickDelete,
 		)
 
 		AnimatedVisibility(
-			visible = currentRoute == BottomNavigationItem.Home.route && !isSelecting,
+			visible = currentRoute == BottomNavigationItem.Home.route && ! isSelecting,
 			enter = expandVertically(tween(300)),
 			exit = shrinkVertically(tween(300))
 		) {
@@ -90,13 +94,15 @@ fun TopBar(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun Bar(
-	currentRoute : String?,
-	isSelecting : Boolean,
-	selectedSize : Int,
-	onClickMenu : () -> Unit,
-	onClickCancelSelect : () -> Unit,
-	onClickSearch : () -> Unit,
-	onClickDelete : () -> Unit,
+	currentRoute : String? = null,
+	isSelecting : Boolean = false,
+	selectedSize : Int = 0,
+	syncStatus : DropboxService.Companion.DropboxSyncStatus,
+	onClickMenu : () -> Unit = {},
+	onClickCancelSelect : () -> Unit = {},
+	onClickCloud : () -> Unit = {},
+	onClickSearch : () -> Unit = {},
+	onClickDelete : () -> Unit = {},
 ) {
 
 	val isAuthenticated = LocalIsAuthenticated.current
@@ -142,10 +148,19 @@ private fun Bar(
 		} else {
 			CenterAlignedTopAppBar(
 				navigationIcon = {
-					MenuButton(
-						icon = R.drawable.ic_menu,
-						onClick = onClickMenu,
-					)
+					Row(
+						modifier = Modifier
+					) {
+						MenuButton(
+							icon = R.drawable.ic_menu,
+							onClick = onClickMenu,
+						)
+						MenuButton(
+							icon = R.drawable.ic_vault,
+							tooltip = "Vault",
+							checked = isAuthenticated,
+						) { authenticatorAction(AuthenticatorScreen.Authenticate) }
+					}
 				},
 				title = {
 					Text(
@@ -160,12 +175,10 @@ private fun Bar(
 					)
 				},
 				actions = {
-					MenuButton(
-						icon = R.drawable.ic_vault,
-						tooltip = "Vault",
-						checked = isAuthenticated,
-					) { authenticatorAction(AuthenticatorScreen.Authenticate) }
-
+					CloudButton(
+						syncStatus = syncStatus,
+						onClickSync = onClickCloud
+					)
 					MenuButton(
 						icon = R.drawable.ic_search,
 						onClick = onClickSearch
@@ -230,8 +243,8 @@ private fun ComponentTypeView(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun SyncButton(
-	syncStatus : DropboxSyncStatus,
+private fun CloudButton(
+	syncStatus : DropboxService.Companion.DropboxSyncStatus,
 	onClickSync : () -> Unit
 ) {
 	val infiniteTransition = rememberInfiniteTransition()
@@ -249,37 +262,42 @@ private fun SyncButton(
 		transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
 	) {
 		when (it) {
-			DropboxSyncStatus.INIT -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.Init -> MenuButton(
 				icon = R.drawable.ic_cloud,
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.SYNC_NOT_CONFIGURED -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.SyncNotConfigured -> MenuButton(
 				icon = R.drawable.ic_cloud_dashed,
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.SYNC_DISABLED -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.SyncDisabled -> MenuButton(
 				icon = R.drawable.ic_cloud_disable,
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.NO_INTERNET -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.NoInternet -> MenuButton(
 				icon = R.drawable.ic_no_network,
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.NOT_LOGGED_IN -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.NotLoggedIn -> MenuButton(
 				icon = R.drawable.ic_cloud_disable,
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.CONNECTED -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.Loading -> MenuButton(
 				icon = R.drawable.ic_cloud,
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.SYNCING -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.Connected -> MenuButton(
+				icon = R.drawable.ic_cloud,
+				onClick = onClickSync
+			)
+
+			is DropboxService.Companion.DropboxSyncStatus.Syncing -> MenuButton(
 				icon = R.drawable.ic_cloud_syncing,
 				modifier = Modifier.graphicsLayer {
 					this.alpha = alpha
@@ -287,12 +305,12 @@ private fun SyncButton(
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.SYNC_ERROR -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.SyncError -> MenuButton(
 				icon = R.drawable.ic_cloud_exclamation,
 				onClick = onClickSync
 			)
 
-			DropboxSyncStatus.DRIVE_LOCKED -> MenuButton(
+			is DropboxService.Companion.DropboxSyncStatus.DriveLocked -> MenuButton(
 				icon = R.drawable.ic_cloud_exclamation,
 				onClick = onClickSync
 			)

@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.common.richText
 
 import android.content.Context
+import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -46,8 +47,8 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 	 *
 	 * @author pushpull
 	 * @since 2.2.0
-	 * @param extra Can be used to identify the type of data.
-	 * @param data Handle according to [extra].
+	 * @param requestData Can be used to identify the type of data.
+	 * @param data Handle according to [requestData].
 	 *
 	 * @see [getData]
 	 */
@@ -126,7 +127,13 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 
 	private fun load(trigger : String) = evaluateJavascript(trigger) { result -> }
 
-	fun exec(trigger : String) {
+	fun importData(importFrom : ImportFrom, noteId : String, data : String) {
+		when (importFrom) {
+			ImportFrom.Journey -> exec("editor.importData(\"$noteId\", $data, \"journey\");")
+		}
+	}
+
+	private fun exec(trigger : String) {
 		CoroutineScope(Dispatchers.Default).launch {
 			while (true) {
 				try {
@@ -245,53 +252,53 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 		)
 
 		enum class EditorAction {
-			UNDO,
-			REDO,
-			BOLD,
-			ITALIC,
-			UNDERLINE,
-			STRIKETHROUGH,
-			HARD_LINE_BREAK,
-			CHECK_LIST,
-			BULLET_LIST,
-			ORDERED_LIST,
-			PARAGRAPH,
-			HEADING_1,
-			HEADING_2,
-			HEADING_3,
-			HEADING_4,
-			HEADING_5,
-			HEADING_6,
-			BLOCK_QUOTE,
-			INDENT,
-			OUTDENT,
-			SUPERSCRIPT,
-			SUBSCRIPT,
+			Undo,
+			Redo,
+			Bold,
+			Italic,
+			Underline,
+			StrikeThrough,
+			HardLineBreak,
+			CheckList,
+			BulletList,
+			OrderedList,
+			Paragraph,
+			Heading1,
+			Heading2,
+			Heading3,
+			Heading4,
+			Heading5,
+			Heading6,
+			Blockquote,
+			Indent,
+			Outdent,
+			Superscript,
+			Subscript,
 		}
 
 		val editorActionExecMap : Map<EditorAction, String> = mapOf(
-			EditorAction.UNDO to "editor.commands.undo();",
-			EditorAction.REDO to "editor.commands.redo();",
-			EditorAction.BOLD to "editor.chain().focus().toggleBold().run()",
-			EditorAction.ITALIC to "editor.chain().focus().toggleItalic().run()",
-			EditorAction.UNDERLINE to "editor.chain().focus().toggleUnderline().run()",
-			EditorAction.STRIKETHROUGH to "editor.chain().focus().toggleStrike().run()",
-			EditorAction.HARD_LINE_BREAK to "editor.chain().focus().setHardBreak().run()",
-			EditorAction.CHECK_LIST to "editor.commands.toggleTaskList();",
-			EditorAction.BULLET_LIST to "editor.commands.toggleBulletList();",
-			EditorAction.ORDERED_LIST to "editor.commands.toggleOrderedList();",
-			EditorAction.PARAGRAPH to "editor.commands.toggleHeading({ level: 3 });",
-			EditorAction.HEADING_1 to "editor.commands.toggleHeading({ level: 1 });",
-			EditorAction.HEADING_2 to "editor.commands.toggleHeading({ level: 2 });",
-			EditorAction.HEADING_3 to "editor.commands.toggleHeading({ level: 3 });",
-			EditorAction.HEADING_4 to "editor.commands.toggleHeading({ level: 4 });",
-			EditorAction.HEADING_5 to "editor.commands.toggleHeading({ level: 5 });",
-			EditorAction.HEADING_6 to "editor.commands.toggleHeading({ level: 6 });",
-			EditorAction.BLOCK_QUOTE to "editor.chain().focus().toggleBlockquote().run();",
-			EditorAction.INDENT to "editor.chain().focus().sinkListItem('listItem').run()",
-			EditorAction.OUTDENT to "editor.chain().focus().liftListItem('listItem').run()",
-			EditorAction.SUPERSCRIPT to "editor.chain().focus().toggleSuperscript().run();",
-			EditorAction.SUBSCRIPT to "editor.chain().focus().toggleSubscript().run();",
+			EditorAction.Undo to "editor.commands.undo();",
+			EditorAction.Redo to "editor.commands.redo();",
+			EditorAction.Bold to "editor.chain().focus().toggleBold().run()",
+			EditorAction.Italic to "editor.chain().focus().toggleItalic().run()",
+			EditorAction.Underline to "editor.chain().focus().toggleUnderline().run()",
+			EditorAction.StrikeThrough to "editor.chain().focus().toggleStrike().run()",
+			EditorAction.HardLineBreak to "editor.chain().focus().setHardBreak().run()",
+			EditorAction.CheckList to "editor.commands.toggleTaskList();",
+			EditorAction.BulletList to "editor.commands.toggleBulletList();",
+			EditorAction.OrderedList to "editor.commands.toggleOrderedList();",
+			EditorAction.Paragraph to "editor.commands.toggleHeading({ level: 3 });",
+			EditorAction.Heading1 to "editor.commands.toggleHeading({ level: 1 });",
+			EditorAction.Heading2 to "editor.commands.toggleHeading({ level: 2 });",
+			EditorAction.Heading3 to "editor.commands.toggleHeading({ level: 3 });",
+			EditorAction.Heading4 to "editor.commands.toggleHeading({ level: 4 });",
+			EditorAction.Heading5 to "editor.commands.toggleHeading({ level: 5 });",
+			EditorAction.Heading6 to "editor.commands.toggleHeading({ level: 6 });",
+			EditorAction.Blockquote to "editor.chain().focus().toggleBlockquote().run();",
+			EditorAction.Indent to "editor.chain().focus().sinkListItem('listItem').run()",
+			EditorAction.Outdent to "editor.chain().focus().liftListItem('listItem').run()",
+			EditorAction.Superscript to "editor.chain().focus().toggleSuperscript().run();",
+			EditorAction.Subscript to "editor.chain().focus().toggleSubscript().run();",
 		)
 
 		/**
@@ -305,7 +312,12 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			ExportText,
 			ExportPdf,
 			ExportHtml,
-			ExportMarkdown
+			ExportMarkdown,
+			ImportJourney
+		}
+
+		enum class ImportFrom {
+			Journey
 		}
 	}
 }

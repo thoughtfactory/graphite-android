@@ -2,6 +2,7 @@ package com.syncodec.graphite.utils
 
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.LatLng
 
 
 val monthName: List<String> = listOf(
@@ -74,13 +75,15 @@ enum class ViewType {
 	GRID,
 }
 
-enum class LocationDataState {
-	INIT,
-	LOADING,
-	SUCCESS_NO_LOCATION,
-	SUCCESS_ONLY_ADDRESS,
-	SUCCESS_ONLY_LATLNG,
-	SUCCESS
+sealed class LocationData() {
+	object Init : LocationData()
+	object Loading : LocationData()
+	data class SuccessOnlyLatLng(val latLng : LatLng) : LocationData()
+	data class SuccessOnlyAddress(val address : String) : LocationData()
+	data class Success(val latLng : LatLng, val address : String) : LocationData()
+	object SuccessNoData : LocationData()
+	object NoPermission : LocationData()
+	data class Error(val message : String) : LocationData()
 }
 
 val genreIdMap: Map<Int, String> = mapOf(

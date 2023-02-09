@@ -40,7 +40,7 @@ class RecursiveFileObserver(private val mPath : String, mask : Int, private val 
 			val parent = stack.pop()
 			startWatching(parent)
 			val path = File(parent)
-			val files : Array<File> = path.listFiles()
+			val files : Array<out File>? = path.listFiles()
 			if (files != null) {
 				for (file in files) {
 					if (watch(file)) {
@@ -52,7 +52,7 @@ class RecursiveFileObserver(private val mPath : String, mask : Int, private val 
 	}
 
 	private fun watch(file : File) : Boolean {
-		return file.isDirectory() && ! file.getName().equals(".") && ! file.getName().equals("..")
+		return file.isDirectory && ! file.name.equals(".") && ! file.name.equals("..")
 	}
 
 	private fun stopWatching(path : String) {

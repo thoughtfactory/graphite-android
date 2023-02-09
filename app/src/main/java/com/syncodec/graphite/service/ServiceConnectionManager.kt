@@ -8,9 +8,9 @@ import android.content.ServiceConnection
 import android.os.IBinder
 
 
-class ServiceConnectionManager(context : Context, service : Class<out Service?>) : ServiceConnection {
+class ServiceConnectionManager(context : Context, service : Class<out Service>) : ServiceConnection {
 	private val context : Context
-	val service : Class<out Service?>
+	val service : Class<out Service>
 	private var attemptingToBind = false
 	private var bound = false
 

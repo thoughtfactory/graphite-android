@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.settings.composable.bar
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -10,12 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.settings.SettingsActivity
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun TopBar(
+	settingsScreen : SettingsActivity.Companion.SettingsScreen = SettingsActivity.Companion.SettingsScreen.Settings,
 	onClickBack : () -> Unit,
 ) {
 	TopAppBar(
@@ -27,8 +31,13 @@ fun TopBar(
 			)
 		},
 		title = {
-			Text(
-				text = "Settings",
+			AnimatedText(
+				text = when (settingsScreen) {
+					SettingsActivity.Companion.SettingsScreen.Settings -> "Settings"
+					SettingsActivity.Companion.SettingsScreen.BackupAndRestore -> "Backup & Restore"
+					SettingsActivity.Companion.SettingsScreen.LocalBackup -> "Local Backup"
+					SettingsActivity.Companion.SettingsScreen.ImportData -> "Import Data"
+				},
 				color = MaterialTheme.colorScheme.onBackground,
 				fontWeight = FontWeight.Bold,
 			)

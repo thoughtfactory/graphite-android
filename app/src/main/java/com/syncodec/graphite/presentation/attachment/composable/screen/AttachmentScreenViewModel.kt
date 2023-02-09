@@ -1,32 +1,20 @@
 package com.syncodec.graphite.presentation.attachment.composable.screen
 
-import android.os.FileObserver
-import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository
-import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDirPath
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.ContentStatus
-import com.syncodec.graphite.utils.RecursiveFileObserver
-import com.syncodec.graphite.utils.compress7z
-import com.syncodec.graphite.utils.copyInDirectory
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import org.koin.android.annotation.KoinViewModel
 import java.io.File
 

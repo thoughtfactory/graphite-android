@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.repository
 
+import android.util.Log
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.migration.AutomaticSchemaMigration

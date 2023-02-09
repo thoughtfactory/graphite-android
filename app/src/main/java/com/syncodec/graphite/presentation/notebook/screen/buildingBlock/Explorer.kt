@@ -51,7 +51,7 @@ fun Explorer(
 	) {
 		noteList(
 			noteList = noteObjectList
-				.filter { isNoteListVisible && (if (it.isLocked) isAuthenticated else true) }
+				.filter { if (it.isLocked) isAuthenticated else true }
 				.sortedWith(
 					when (sortOn) {
 						SortOn.Title -> if (sortBy == SortBy.Ascending) compareBy { it.title } else compareByDescending { it.title }
@@ -62,6 +62,7 @@ fun Explorer(
 				),
 			tagList = tagList,
 			selectedIdList = selectedIdList,
+			isVisible = isNoteListVisible,
 			toggleVisibility = onToggleNoteVisibility,
 			onClick = { onClickNote(it.id) },
 			onLongClick = { onLongClickNote(it.id) },
@@ -79,6 +80,7 @@ fun Explorer(
 				),
 			tagList = tagList,
 			selectedIdList = selectedIdList,
+			isVisible = isChapterListVisible,
 			toggleVisibility = onToggleChapterVisibility,
 			onClick = { onClickChapter(it.id) }
 		) { onLongClickChapter(it.id) }

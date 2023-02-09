@@ -318,7 +318,11 @@ editor.importData = (noteId, importData, importer) => {
     data.importer = importer;
     data.noteId = noteId;
 
-    bridge.getData("import_journey", JSON.stringify(data));
+    switch (importer) {
+        case "journey":
+            bridge.getData("ImportJourney", JSON.stringify(data));            
+            break;    
+    }
 };
 
 editor.setData = (title, data) => {

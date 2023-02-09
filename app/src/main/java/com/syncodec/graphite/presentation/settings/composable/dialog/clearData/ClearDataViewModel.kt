@@ -1,8 +1,7 @@
 package com.syncodec.graphite.presentation.settings.composable.dialog.clearData
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import org.koin.android.annotation.KoinViewModel
 
 

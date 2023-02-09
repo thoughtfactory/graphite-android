@@ -60,6 +60,8 @@ fun Context.putSecretData(key : String, value : ByteArray) {
 	}
 }
 
+fun Context.putSecretData(key : String, value : String) = putSecretData(key, value.encodeToByteArray())
+
 fun Context.getSecretData(key : String) : AliceRequest {
 	val keyStore : KeyStore = KeyStore.getInstance("AndroidKeyStore")
 	keyStore.load(null)

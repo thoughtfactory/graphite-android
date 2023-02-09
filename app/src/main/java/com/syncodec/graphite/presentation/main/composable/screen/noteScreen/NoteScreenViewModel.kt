@@ -1,11 +1,11 @@
 package com.syncodec.graphite.presentation.main.composable.screen.noteScreen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.KoinRepository
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -43,6 +42,7 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 						observeNotes()
 						observeTags()
 					}
+
 					else -> null
 				}
 			}
@@ -83,4 +83,20 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 	fun refresh() = observeNotes()
 
 	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+
+	fun addDebugData() {
+		CoroutineScope(Dispatchers.Default).launch {
+			for (i in 0 .. 10) {
+				NoteObject.getRandomInstance().apply {
+					this.title = "Note $i"
+					this.content =
+						"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+							"Content $i".repeat(2)
+						}\"}]}]}"
+					this.parentId = defaultChapterId.value
+					repository.putNote(this)
+				}
+			}
+		}
+	}
 }
