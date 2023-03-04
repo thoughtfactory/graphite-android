@@ -62,7 +62,7 @@ fun TopBar(
 							)
 							MenuButton(
 								icon = R.drawable.ic_favourite,
-								tooltip = "Favourite",
+								tooltip = if (isFavourite) "Favourite" else "Not favourite",
 								checked = isFavourite,
 								shape = MaterialTheme.shapes.medium,
 								onClick = onClickFavourite,
@@ -74,7 +74,10 @@ fun TopBar(
 						Row(
 							modifier = Modifier
 						) {
-							Button(onClick = onClickSave) {
+							Button(
+								shape = MaterialTheme.shapes.medium,
+								onClick = onClickSave,
+							) {
 								Text(text = "Save")
 							}
 							Spacer(modifier = Modifier.width(4.dp))

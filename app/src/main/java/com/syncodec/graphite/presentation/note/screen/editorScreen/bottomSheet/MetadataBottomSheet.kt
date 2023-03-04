@@ -1,5 +1,8 @@
 package com.syncodec.graphite.presentation.note.screen.editorScreen.bottomSheet
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,16 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -38,13 +39,12 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun MetadataBottomSheet(
-	noteId: RealmUUID? = null,
-	createdTimestamp: Long? = null,
-	modifiedTimestamp: Long? = null,
+	noteId : RealmUUID? = null,
+	createdTimestamp : Long? = null,
+	modifiedTimestamp : Long? = null,
 	parentChapterObject : ChapterObject? = null,
 	onClickSelectParentChapter : () -> Unit = {},
 ) {
-
 	GenericBottomSheet(
 		title = "Metadata",
 		icon = R.drawable.ic_info,
@@ -77,21 +77,22 @@ fun MetadataBottomSheet(
 }
 
 @Preview
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ParentCard(
-	chapterId: RealmUUID? = null,
-	chapterTitle: String? = null,
-	onClick: () -> Unit = {},
+	chapterId : RealmUUID? = null,
+	chapterTitle : String? = null,
+	onClick : () -> Unit = {},
 ) {
-	Card(
-		shape = RoundedCornerShape(12.dp),
-		colors = CardDefaults.cardColors(
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
-			contentColor = MaterialTheme.colorScheme.onSurface
-		),
-		onClick = onClick,
-		modifier = Modifier.fillMaxWidth()
+	Box(
+		modifier = Modifier
+			.fillMaxWidth()
+			.background(
+				MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.31f), shape = MaterialTheme.shapes.medium
+			)
+			.clip(MaterialTheme.shapes.medium)
+			.clickable { onClick() }
 	) {
 		Row(
 			modifier = Modifier
@@ -105,15 +106,17 @@ private fun ParentCard(
 				Text(
 					text = chapterTitle ?: "Chapter Untitled",
 					style = MaterialTheme.typography.titleMedium,
-					fontStyle = if (chapterTitle == null) FontStyle.Italic else FontStyle.Normal,
+					fontWeight = if (chapterTitle.isNullOrEmpty()) FontWeight.Normal else FontWeight.Bold,
+					fontStyle = if (chapterTitle.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
 					maxLines = 1,
-					overflow = TextOverflow.Ellipsis
+					overflow = TextOverflow.Ellipsis,
+					color = MaterialTheme.colorScheme.onSurface,
 				)
 
 				Text(
 					text = "$chapterId",
-					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.Bold
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurface,
 				)
 			}
 
@@ -122,8 +125,8 @@ private fun ParentCard(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_notebook),
 				contentDescription = "Parent chapter",
-				tint = MaterialTheme.colorScheme.onBackground,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				tint = MaterialTheme.colorScheme.onSurface,
+				modifier = Modifier.requiredSize(IconButtonSize),
 			)
 			Spacer(modifier = Modifier.width(8.dp))
 		}

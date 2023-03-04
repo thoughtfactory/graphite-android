@@ -16,6 +16,8 @@ fun NoteScreen(
 	isEditing : Boolean? = false,
 	onClickEditNote : () -> Unit = {},
 	afterNoteSaved : (RealmUUID) -> Unit = {},
+	discardChanges : () -> Unit = {},
+	onNoteDeleted : () -> Unit = {},
 	onClickBack : () -> Unit = {},
 ) {
 	Crossfade(
@@ -25,10 +27,15 @@ fun NoteScreen(
 		when (it) {
 			true -> EditorScreen(
 				afterNoteSaved = afterNoteSaved,
+				onClickBack = {
+					if (it) onClickBack()
+					else discardChanges()
+				},
 			)
+
 			false -> ViewerScreen(
-				onClickMenu = {},
 				onClickEditNote = onClickEditNote,
+				onNoteDeleted = onNoteDeleted,
 				onClickBack = onClickBack,
 			)
 

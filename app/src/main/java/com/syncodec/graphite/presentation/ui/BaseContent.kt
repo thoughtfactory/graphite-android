@@ -6,11 +6,14 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -19,8 +22,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.BaseApplication
+import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.ui.authentication.AddPasscodeScreen
 import com.syncodec.graphite.presentation.ui.authentication.AuthenticatorScreen
 import com.syncodec.graphite.presentation.ui.authentication.ChangePasscode
@@ -47,21 +53,24 @@ fun BaseContent(
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val isFollowSystemDarkTheme by dataStoreInstance.getFollowSystemDarkTheme.collectAsState(initial = null)
-	val isForceDarkTheme by dataStoreInstance.getForceDarkTheme.collectAsState(initial = null)
+	val darkTheme by dataStoreInstance.getDarkTheme.collectAsState(initial = null)
+	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
 
 	val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-	val appColorScheme = if (isFollowSystemDarkTheme == true) {
-		when {
-			dynamicColor && isDarkTheme -> dynamicDarkColorScheme(LocalContext.current)
-			dynamicColor && ! isDarkTheme -> dynamicLightColorScheme(LocalContext.current)
-			else -> if (isDarkTheme) darkColorScheme0 else lightColorScheme0
-		}
-	} else {
-		if (isForceDarkTheme == true) darkColorScheme0 else lightColorScheme0
+	val appColorScheme = when (darkTheme) {
+		SettingsActivity.Companion.DarkTheme.SyncWithSystem -> if (isDarkTheme) darkColorScheme0 else lightColorScheme0
+		SettingsActivity.Companion.DarkTheme.AlwaysOn -> darkColorScheme0
+		SettingsActivity.Companion.DarkTheme.AlwaysOff -> lightColorScheme0
+		else -> null
 	}
-
-	val appTypography = UbuntuTypography
+	val appTypography = when (typography) {
+		"PT Mono" -> PTMonoTypography
+		"Ubuntu" -> UbuntuTypography
+		"Montserrat" -> MontserratTypography
+		"Roboto" -> RobotoTypography
+		"Tilt Neon" -> TiltNeonTypography
+		else -> PTMonoTypography
+	}
 
 	val isAuthenticated by BaseApplication.isAuthenticated.collectAsState(initial = false)
 	val authenticatorState by BaseApplication.authenticatorScreen.collectAsState()
@@ -76,11 +85,15 @@ fun BaseContent(
 		BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 	}
 
-	if (isFollowSystemDarkTheme != null && isForceDarkTheme != null) {
-		androidx.compose.material3.MaterialTheme(
-			colorScheme = appColorScheme,
+	appColorScheme?.let { colorScheme ->
+		MaterialTheme(
+			colorScheme = colorScheme,
 			typography = appTypography
 		) {
+			val systemUiController = rememberSystemUiController()
+			systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+			systemUiController.setNavigationBarColor(Color.Black)
+
 			// TODO (M3): MaterialTheme doesn't provide LocalIndication, remove when it does
 			val rippleIndication = rememberRipple()
 
@@ -104,57 +117,61 @@ fun BaseContent(
 							AuthenticatorScreen.None -> newAuthenticatorState
 						}.let { BaseApplication.authenticatorScreen.tryEmit(it) }
 					}
-				},
-				content = {
-					AnimatedContent(targetState = authenticatorState) { target ->
-						when (target) {
-							AuthenticatorScreen.Authenticate -> AuthenticatorScreen(
-								noTry = noTry,
-								onAuthenticate = {
-									val passcode = context.getSecretData("passcode").data?.decodeToString()
+				}
+			) {
+				content()
 
-									if (passcode == it) {
-										BaseApplication.isAuthenticated.tryEmit(true)
-										BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-										noTry = 0
-										Toast.makeText(context, "Vault opened", Toast.LENGTH_SHORT).show()
-									} else {
-										Toast.makeText(context, "Wrong passcode", Toast.LENGTH_SHORT).show()
-										noTry ++
-									}
+				AnimatedContent(
+					targetState = authenticatorState,
+					transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+				) {
+					when (it) {
+						AuthenticatorScreen.Authenticate -> AuthenticatorScreen(
+							noTry = noTry,
+							onAuthenticate = {
+								val passcode = context.getSecretData("passcode").data?.decodeToString()
 
-									if (noTry >= 3) {
-										noTry = 0
-										BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-									}
-								},
-								onClose = ::onClose
-							)
-
-							AuthenticatorScreen.AddPasscode -> AddPasscodeScreen(
-								onPasscodeAdded = {
-									context.putSecretData("passcode", it.toByteArray())
+								if (passcode == it) {
+									BaseApplication.isAuthenticated.tryEmit(true)
 									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-									Toast.makeText(context, "Passcode added", Toast.LENGTH_SHORT).show()
-								},
-								onClose = ::onClose
-							)
+									noTry = 0
+									Toast.makeText(context, "Vault opened", Toast.LENGTH_SHORT).show()
+								} else {
+									Toast.makeText(context, "Wrong passcode", Toast.LENGTH_SHORT).show()
+									noTry ++
+								}
 
-							AuthenticatorScreen.ChangePasscode -> ChangePasscode(
-								onPasscodeAdded = {
-									context.putSecretData("passcode", it.toByteArray())
+								if (noTry >= 3) {
+									noTry = 0
 									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-									Toast.makeText(context, "Passcode updated", Toast.LENGTH_SHORT).show()
-								},
-								onClose = ::onClose
-							)
+								}
+							},
+							onClose = ::onClose
+						)
 
-							AuthenticatorScreen.RemovePasscode -> content()
-							AuthenticatorScreen.None -> content()
-						}
+						AuthenticatorScreen.AddPasscode -> AddPasscodeScreen(
+							onPasscodeAdded = {
+								context.putSecretData("passcode", it.toByteArray())
+								BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+								Toast.makeText(context, "Passcode added", Toast.LENGTH_SHORT).show()
+							},
+							onClose = ::onClose
+						)
+
+						AuthenticatorScreen.ChangePasscode -> ChangePasscode(
+							onPasscodeAdded = {
+								context.putSecretData("passcode", it.toByteArray())
+								BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+								Toast.makeText(context, "Passcode updated", Toast.LENGTH_SHORT).show()
+							},
+							onClose = ::onClose
+						)
+
+						AuthenticatorScreen.RemovePasscode -> null
+						AuthenticatorScreen.None -> null
 					}
 				}
-			)
+			}
 		}
 	}
 }

@@ -98,7 +98,7 @@ fun WhatsNewCard(
 						modifier = Modifier.fillMaxWidth()
 					) {
 						Text(
-							text = "Whats New",
+							text = "Change log",
 							style = MaterialTheme.typography.titleMedium,
 							fontWeight = FontWeight.Bold
 						)

@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,8 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,17 +55,12 @@ import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOpenBottomSheet
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionSetBucketItemObject
-import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.LocalCompositionIsSelected
-import com.syncodec.graphite.presentation.common.LocalCompositionOnSelect
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDIdList
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -76,16 +74,13 @@ import org.burnoutcrew.reorderable.reorderable
 @Composable
 fun BucketLinkListScreen(
 	bucketItemList : List<BucketItemObject> = listOf(),
-	onReorderBucketItemList : (List<BucketItemObject>) -> Unit = {},
+	isSelecting : Boolean = false,
+	selectedIdList : List<RealmUUID> = listOf(),
+	onSelect : (RealmUUID) -> Unit = {},
+	onReorderBucketItemList : (List<RealmUUID>) -> Unit = {},
+	onClickBucketItem : (RealmUUID) -> Unit = {},
 ) {
 	val scope = rememberCoroutineScope()
-
-	val isSelected = LocalCompositionIsSelected.current
-	val onSelected = LocalCompositionOnSelect.current
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDIdList.current
-
-	val setBucketItemObject = LocalCompositionSetBucketItemObject.current
-	val openSheet = LocalCompositionOpenBottomSheet.current
 
 	var isLoading by remember { mutableStateOf(true) }
 
@@ -103,7 +98,7 @@ fun BucketLinkListScreen(
 			bucketItemListOrdered.apply { add(to.index, removeAt(from.index)) }
 		},
 		onDragEnd = { from, to ->
-			scope.launch(Dispatchers.Default) { onReorderBucketItemList(bucketItemListOrdered) }
+			scope.launch(Dispatchers.Default) { onReorderBucketItemList(bucketItemListOrdered.map { it.id }) }
 		}
 	)
 
@@ -137,21 +132,9 @@ fun BucketLinkListScreen(
 							url = bucketItemObject.key,
 							isLocked = bucketItemObject.isLocked,
 							isFavourite = bucketItemObject.isFavourite,
-							isSelected = bucketItemObject.id in selectedRealmUUIDList,
-							onClick = {
-								if (isSelected) {
-									if (bucketItemObject.id in selectedRealmUUIDList) selectedRealmUUIDList.remove(bucketItemObject.id)
-									else selectedRealmUUIDList.add(bucketItemObject.id)
-								} else {
-									setBucketItemObject(bucketItemObject)
-									openSheet(BucketBottomSheetType.CURRENT_LINK)
-								}
-							},
-							onLongClick = {
-								if (bucketItemObject.id in selectedRealmUUIDList) selectedRealmUUIDList.remove(bucketItemObject.id)
-								else selectedRealmUUIDList.add(bucketItemObject.id)
-								onSelected(true)
-							}
+							isSelected = bucketItemObject.id in selectedIdList,
+							onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject.id) },
+							onLongClick = { onSelect(bucketItemObject.id) }
 						)
 					}
 				}
@@ -176,9 +159,10 @@ private fun LinkItem(
 	onClick : () -> Unit = {},
 	onLongClick : () -> Unit = {},
 ) {
+	val hapticFeedback = LocalHapticFeedback.current
 
 	val containerColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
+		targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f) else MaterialTheme.colorScheme.background,
 		animationSpec = tween(300)
 	)
 	val contentColor by animateColorAsState(
@@ -187,6 +171,7 @@ private fun LinkItem(
 	)
 
 	Box(
+		contentAlignment = Alignment.CenterStart,
 		modifier = Modifier
 			.fillMaxWidth()
 			.height(128.dp)
@@ -194,20 +179,23 @@ private fun LinkItem(
 			.combinedClickable(
 				enabled = true,
 				onClick = onClick,
-				onLongClick = onLongClick
+				onLongClick = {
+					hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+					onLongClick()
+				}
 			)
 	) {
 		Row(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(8.dp, 4.dp),
-			verticalAlignment = Alignment.CenterVertically
+			verticalAlignment = Alignment.Top,
+			modifier = Modifier.padding(8.dp, 4.dp),
 		) {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_reorder),
 				contentDescription = null,
 				tint = contentColor.copy(alpha = 0.47f),
-				modifier = handleModifier.size(16.dp)
+				modifier = handleModifier
+					.size(16.dp)
+					.align(Alignment.CenterVertically)
 			)
 
 			Spacer(modifier = Modifier.width(8.dp))
@@ -268,7 +256,7 @@ private fun Thumbnail(
 	var isThumbnailLoaded by remember { mutableStateOf(false) }
 
 	val containerColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+		targetValue = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.71f),
 		animationSpec = tween(300)
 	)
 	val contentColor by animateColorAsState(
@@ -334,37 +322,44 @@ private fun TitleText(
 			style = MaterialTheme.typography.titleMedium,
 			color = contentColor,
 			fontWeight = if (title?.isNotEmpty() == true) FontWeight.Black else FontWeight.Normal,
+			overflow = TextOverflow.Ellipsis,
 			maxLines = 1,
 			modifier = Modifier.weight(1f)
 		)
 
-		if (isLocked) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_lock_close),
-				contentDescription = "Locked",
-				tint = Color.LockClosedContainer,
-				modifier = Modifier.requiredSize(14.dp)
-			)
-			if (isFavourite) {
-				Spacer(modifier = Modifier.width(2.dp))
-				Text(
-					text = "·",
-					style = MaterialTheme.typography.bodyMedium,
-					color = contentColor,
-					fontWeight = FontWeight.Bold,
-					maxLines = 1,
-					modifier = Modifier
-				)
-				Spacer(modifier = Modifier.width(2.dp))
+		if (isLocked || isFavourite) {
+			Box(
+				modifier = Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f), MaterialTheme.shapes.small)
+			) {
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier.padding(8.dp, 4.dp)
+				) {
+					if (isLocked) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_shield),
+							contentDescription = "Locked",
+							tint = Color.LockClosedContainer,
+							modifier = Modifier.requiredSize(14.dp)
+						)
+						if (isFavourite) Text(
+							text = "·",
+							style = MaterialTheme.typography.bodySmall,
+							fontWeight = FontWeight.Bold,
+							maxLines = 1,
+							modifier = Modifier.padding(horizontal = 2.dp)
+						)
+					}
+					if (isFavourite) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_favourite),
+							contentDescription = "Favourite",
+							tint = Color.FavouriteContainer,
+							modifier = Modifier.requiredSize(14.dp)
+						)
+					}
+				}
 			}
-		}
-		if (isFavourite) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_favourite),
-				contentDescription = "Favourite",
-				tint = Color.FavouriteContainer,
-				modifier = Modifier.requiredSize(14.dp)
-			)
 		}
 	}
 }

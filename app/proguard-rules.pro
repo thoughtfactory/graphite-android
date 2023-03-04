@@ -45,6 +45,7 @@
 -keep class com.syncodec.graphite.presentation.common.richText.*
 
 -keep class com.syncodec.graphite.database.** { *; }
+-keep class com.kedia.ogparser.OpenGraphResult
 
 -keep class com.google.android.gms.maps.model.LatLng { *; }
 -keep class com.google.android.gms.internal.** { *; }

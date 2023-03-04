@@ -1,17 +1,17 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.annotation.KoinViewModel
@@ -24,69 +24,72 @@ class BucketScreenCommonViewModel(private val repository : KoinRepository) : Vie
 
 	val bucketObject : MutableStateFlow<BucketObject?> = MutableStateFlow(null)
 
-	val id : MutableState<RealmUUID?> = mutableStateOf(null)
+	val id : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
 
-	val bucketItemList : MutableState<List<BucketItemObject>> = mutableStateOf(listOf())
-	var isLoadedFirstTime : MutableState<Boolean> = mutableStateOf(false)
+	private val _bucketItemList : MutableStateFlow<List<BucketItemObject>> = MutableStateFlow(listOf())
+	private val _orderedBucketItemList : MutableStateFlow<List<BucketItemObject>> = MutableStateFlow(listOf())
+	val bucketItemList : StateFlow<List<BucketItemObject>> = _orderedBucketItemList
+	var isLoadedFirstTime : MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+	init {
+		viewModelScope.launch(Dispatchers.Default) {
+			combine(
+				bucketObject,
+				_bucketItemList,
+			) { bucketObject1, bucketItemList1 ->
+				bucketObject1?.bucketItemOrderList?.let { bucketItemOrder ->
+					bucketItemList1.sortedBy { bucketItemOrder.indexOf(it.id) }
+				} ?: bucketItemList1
+			}.collect {
+				_orderedBucketItemList.tryEmit(it)
+			}
+		}
+	}
 
 	fun initBucket(realmUUID : RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> refreshBucket(realmUUID = realmUUID)
+					RepositoryState.SUCCESS -> loadBucket(realmUUID = realmUUID)
 					else -> null
 				}
 			}
 		}
 	}
 
-	private fun refreshBucket(realmUUID : RealmUUID) {
+	private fun loadBucket(realmUUID : RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			repository.getBucketAsFlow(id = realmUUID).collect {
 				withContext(Dispatchers.Main) {
 					bucketObject.tryEmit(it)
-					id.value = it?.id
+					id.tryEmit(realmUUID)
 				}
 			}
 		}
 
 		viewModelScope.launch(Dispatchers.Default) {
-			repository.getBucketItemFromParentIdAsFlow(parentId = realmUUID).collect {
-				repository.getBucketFromId(id = realmUUID)?.let {
-					bucketItemList.value = it.bucketItemList
-					isLoadedFirstTime.value = true
-				}
+			repository.getBucketItemWithParentIdAsFlow(parentId = realmUUID).collect {
+				_bucketItemList.tryEmit(it)
+				isLoadedFirstTime.tryEmit(true)
 			}
 		}
 	}
 
-	fun onReorderBucketItem(bucketItemList : List<BucketItemObject>) {
-		viewModelScope.launch(Dispatchers.Default) {
-			id.value?.let {
-				repository.reorderBucketItem(it, bucketItemList.map { it.id }) { _, _ -> }
-			}
-		}
+	fun onReorderBucketItem(idOrderList : List<RealmUUID>) {
+		id.value?.let { repository.reorderBucketItemListSuspended(parentId = it, idOrderList = idOrderList) }
 	}
 
 	fun toggleFavourite(bucketItemObject : BucketItemObject) {
-		viewModelScope.launch(Dispatchers.Default) {
-			bucketItemObject.clone().apply {
-				this.isFavourite = ! this.isFavourite
-				this.parentId?.let {
-					repository.putBucketItem(bucketId = it, bucketItemObject = this) { _, _ -> }
-				}
-			}
+		bucketItemObject.clone().apply {
+			this.isFavourite = ! this.isFavourite
+			repository.putBucketItem(bucketItemObject = this)
 		}
 	}
 
 	fun toggleLock(bucketItemObject : BucketItemObject) {
-		viewModelScope.launch(Dispatchers.Default) {
-			bucketItemObject.clone().apply {
-				this.isLocked = ! this.isLocked
-				this.parentId?.let {
-					repository.putBucketItem(bucketId = it, bucketItemObject = this) { _, _ -> }
-				}
-			}
+		bucketItemObject.clone().apply {
+			this.isLocked = ! this.isLocked
+			repository.putBucketItem(bucketItemObject = this)
 		}
 	}
 
@@ -99,9 +102,7 @@ class BucketScreenCommonViewModel(private val repository : KoinRepository) : Vie
 					BucketItemState.GAMMA.name -> BucketItemState.ALPHA.name
 					else -> BucketItemState.ALPHA.name
 				}
-				this.parentId?.let {
-					repository.putBucketItem(bucketId = it, bucketItemObject = this) { _, _ -> }
-				}
+				repository.putBucketItem(bucketItemObject = this)
 			}
 		}
 	}

@@ -1,33 +1,42 @@
 package com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.journey
 
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.importer.JourneyNote
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
-import com.syncodec.graphite.presentation.common.richText.rememberRichTextEditor
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,88 +56,121 @@ fun ImportDataJourneyDialog(
 	val context = LocalContext.current
 	val viewModel : ImportDataJourneyViewModel = koinViewModel()
 	val scope = rememberCoroutineScope()
+	val uriHandler = LocalUriHandler.current
 
 	var isImportingData by remember { mutableStateOf(false) }
 	var importingDataMessage by remember { mutableStateOf("") }
-	var integrityMessage by remember { mutableStateOf(setOf<String>()) }
-	var isIntegrityCheckedFailed by remember { mutableStateOf(false) }
-	var totalSize by remember { mutableStateOf(0L) }
-	var processedSize by remember { mutableStateOf(0L) }
+	var totalSize by remember { mutableStateOf(0) }
+	var processedSize by remember { mutableStateOf(0) }
 
-	val richTextEditor = rememberRichTextEditor()
-	richTextEditor.setGetTextListener(
+	val getTextListener = remember {
 		object : RichTextEditor.GetTextListener {
-			override fun onGetData(requestData : RichTextEditor.Companion.RequestData, data : String?) {
+			override fun onGetData(
+				requestData : RichTextEditor.Companion.RequestData,
+				dataObject : JSONObject,
+				dataJson : JSONObject?,
+				dataText : String?,
+				dataHtml : String?,
+				dataMarkdown : String?,
+				dataTitle : String?
+			) {
 				scope.launch(Dispatchers.Default) {
 					try {
-						data?.let { data ->
-							val dataObject = JSONObject(data)
-							val dataJson = dataObject.optJSONObject("dataJson")
-							val dataText = dataObject.optString("dataText")
-							val importData = dataObject.optJSONObject("importData") ?: JSONObject()
-							val noteId = try {
-								RealmUUID.from(dataObject.optString("noteId"))
-							} catch (e : Exception) {
-								RealmUUID.random()
-							}
-							NoteObject().apply {
-								this.id = noteId
-								this.createdTimestamp = importData.optLong("date_journal").let { if (it == 0L) System.currentTimeMillis() else it }
-								this.modifiedTimestamp = importData.optLong("date_modified").let { if (it == 0L) System.currentTimeMillis() else it }
-								this.userTimestamp = this.createdTimestamp
-								this.title
-								this.color
-								val lat = importData.optDouble("lat")
-								val lng = importData.optDouble("lon")
-								this.setLatLng(LatLng(lat, lng))
-								this.address = importData.optString("address")
-								this.contentThumbnail = dataText.substring(0, minOf(256, dataText.length))
-								this.content = dataJson?.toString()
-								this.thumbnail
-								this.thumbnailType
-								this.isFavourite = importData.optBoolean("favorite")
-								this.isLocked
+						val journeyData = dataObject.optJSONObject("importData") ?: JSONObject()
+						val noteId = try {
+							RealmUUID.from(dataObject.optString("noteId"))
+						} catch (e : Exception) {
+							RealmUUID.random()
+						}
+						NoteObject().apply {
+							this.id = noteId
+							this.createdTimestamp = journeyData.optLong("date_journal").let { if (it == 0L) System.currentTimeMillis() else it }
+							this.modifiedTimestamp = journeyData.optLong("date_modified").let { if (it == 0L) System.currentTimeMillis() else it }
+							this.userTimestamp = this.createdTimestamp
+							val lat = journeyData.optDouble("lat")
+							val lng = journeyData.optDouble("lon")
+							this.setLatLng(LatLng(lat, lng))
+							this.address = journeyData.optString("address")
+							this.contentThumbnail = dataText?.substring(0, minOf(256, dataText.length))
+							this.content = dataJson.toString()
+							this.isFavourite = journeyData.optBoolean("favorite")
 
-								viewModel.concurrentQueue.send(this)
+							viewModel.noteConcurrentQueue.send(Pair(this, false))
+							withContext(Dispatchers.Main) {
+								processedSize += 1
+								importingDataMessage = "Importing data... $processedSize of $totalSize"
+								if (processedSize == totalSize) {
+									isImportingData = false
+									onDismiss()
+								}
 							}
 						}
 					} catch (e : Exception) {
+//						e.printStackTrace()
 					}
 				}
 			}
 		}
-	)
+	}
+
+	val richTextEditor = remember {
+		RichTextEditor.headlessInstance(context).apply {
+			setGetTextListener(getTextListener)
+		}
+	}
 
 	fun importData(zipFile : ZipFile, onSuccessListener : () -> Unit, onFailureListener : () -> Unit) {
-		try {
-			zipFile.entries.toList().filter { ! it.isDirectory && it.name.endsWith(".json") }.let { entries ->
-				scope.launch(Dispatchers.Main) { totalSize = entries.size.toLong() }
-				scope.launch(Dispatchers.Main) { processedSize = entries.size.toLong() }
-				entries.forEach { zipArchiveEntry ->
+		scope.launch(Dispatchers.Default) {
+			withContext(Dispatchers.Main) {
+				importingDataMessage = "Importing data... 0 of ?"
+				isImportingData = true
+			}
+
+			val journeyCacheDir = File(context.cacheDir, "journey").also {
+				it.deleteRecursively()
+				it.mkdirs()
+			}
+			try {
+
+				val entries = zipFile.entries.toList().filter { it.name.endsWith(".json") }
+				val totalSize1 = entries.size
+				withContext(Dispatchers.Main) {
+					totalSize = totalSize1
+					processedSize = 0
+					importingDataMessage = "Importing data... 0 of $totalSize1"
+				}
+				entries.forEachIndexed { index, zipArchiveEntry ->
 					try {
 						zipFile.getInputStream(zipArchiveEntry).bufferedReader().use { reader ->
 							reader.readText()
 						}.let { jsonString ->
 							val journeyNote = viewModel.objectMapper.readValue(jsonString, JourneyNote::class.java)
 							val noteId = RealmUUID.random()
-							richTextEditor.importData(
-								importFrom = RichTextEditor.Companion.ImportFrom.Journey,
-								noteId = noteId.toString(),
-								data = jsonString,
-							)
-							scope.launch(Dispatchers.Main) { processedSize += 1 }
+							journeyNote.photos?.forEach {
+								val photoFile = File(journeyCacheDir, "${RealmUUID.random()}${it?.split(".")?.lastOrNull()?.let { ".$it" } ?: ""}")
+								zipFile.getInputStream(zipFile.getEntry(it)).use { inputStream ->
+									photoFile.outputStream().use { outputStream ->
+										inputStream.copyTo(outputStream)
+									}
+								}
+								viewModel.attachmentConcurrentQueue.send(Pair(noteId, photoFile))
+							}
+							withContext(Dispatchers.Main) {
+								richTextEditor.importData(
+									importFrom = RichTextEditor.Companion.ImportFrom.Journey,
+									noteId = noteId.toString(),
+									data = jsonString,
+									extra = index.toString(),
+								)
+							}
 						}
 					} catch (e : Exception) {
-						e.printStackTrace()
 					}
 				}
-
-				scope.launch(Dispatchers.Main) { totalSize = 0 }
-				scope.launch(Dispatchers.Main) { processedSize = 0 }
+				onSuccessListener()
+			} catch (e : Exception) {
+				onFailureListener()
 			}
-			onSuccessListener()
-		} catch (e : Exception) {
-			onFailureListener()
 		}
 	}
 
@@ -147,22 +189,7 @@ fun ImportDataJourneyDialog(
 					val journeyZipFile = ZipFile(journeyFile)
 					viewModel.checkFileIntegrity(
 						zipFile = journeyZipFile,
-						integrityCallback = { isSafe, exception ->
-							this.launch(Dispatchers.Main) {
-								integrityMessage.toMutableSet().apply {
-									add(exception?.message ?: "Unknown error")
-									integrityMessage = this
-								}
-							}
-
-							if (exception is ImportDataJourneyViewModel.Companion.ImportFromJourneyException) {
-								integrityMessage.toMutableSet().apply {
-									add(exception.message ?: "Unknown error")
-									integrityMessage = this
-								}
-								isIntegrityCheckedFailed = true
-							}
-						},
+						integrityCallback = { isSafe, exception -> },
 						onSuccessListener = {
 							importData(zipFile = journeyZipFile,
 								onSuccessListener = {
@@ -178,7 +205,11 @@ fun ImportDataJourneyDialog(
 							)
 
 						},
-						onFailureListener = {}
+						onFailureListener = {
+							this.launch(Dispatchers.Main) {
+								Toast.makeText(context, "Import failed", Toast.LENGTH_SHORT).show()
+							}
+						}
 					)
 				}
 				try {
@@ -192,7 +223,7 @@ fun ImportDataJourneyDialog(
 	GenericDialog(
 		showDialog = showDialog && ! isImportingData,
 		title = "Import from Journey",
-		contentText = "Select an exported Journey data file to import. It will a zip file. The file will be imported in the default notebook.",
+		contentText = "Select an exported Journey data file to import. It will a zip file. The data will be imported in the default notebook.",
 		dualActionButton = {
 			DualActionButtons(
 				primaryText = "Select",
@@ -201,6 +232,47 @@ fun ImportDataJourneyDialog(
 				onClickSecondary = onDismiss,
 			)
 		},
+		thirdActionButton = {
+			this.apply {
+				Row(
+					verticalAlignment = Alignment.Bottom,
+					modifier = Modifier.fillMaxWidth(),
+				) {
+					ClickableText(
+						text = buildAnnotatedString {
+							val text = "Learn how to import data"
+							this.addStyle(
+								style = SpanStyle(
+									color = MaterialTheme.colorScheme.primary,
+									textDecoration = TextDecoration.Underline,
+									fontStyle = FontStyle.Italic,
+									fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+									fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+								),
+								start = 0,
+								end = text.length
+							)
+							append(text)
+						},
+						onClick = {
+							try {
+								uriHandler.openUri("https://graphite.syncodec.com/#/data/import/journey")
+							} catch (e : Exception) {
+								Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+							}
+						},
+					)
+					Spacer(modifier = Modifier.requiredWidth(4.dp))
+					Icon(
+						painter = painterResource(id = R.drawable.ic_launch),
+						contentDescription = "Learn how to import data",
+						tint = MaterialTheme.colorScheme.onBackground,
+						modifier = Modifier.requiredSize(16.dp)
+					)
+				}
+				Spacer(modifier = Modifier.height(8.dp))
+			}
+		},
 		onDismissRequest = onDismiss
 	)
 
@@ -208,19 +280,8 @@ fun ImportDataJourneyDialog(
 		showDialog = showDialog && isImportingData,
 		title = "Importing data",
 		contentText = importingDataMessage,
-		onDismissRequest = onDismiss
 	) {
-		Column(modifier = Modifier) {
-			integrityMessage.forEach { message ->
-				Text(
-					text = message,
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.error
-				)
-			}
-		}
-
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(12.dp))
 
 		LinearProgressIndicator(
 			progress = processedSize.toFloat() / (totalSize + 1).toFloat(),

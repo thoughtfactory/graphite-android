@@ -17,6 +17,13 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.utils.DataStoreInstance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class WriteNoteNotificationService : Service() {
@@ -27,11 +34,7 @@ class WriteNoteNotificationService : Service() {
 
 		if (hasNotificationId == true) {
 			val notificationId = intent.getIntExtra("notificationId", 0)
-
-			NotificationManagerCompat.from(this).cancel(notificationId)
-
-			val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-			notificationManager.cancel(notificationId)
+			getSystemService(NotificationManager::class.java).cancel(notificationId)
 		}
 
 		super.stopSelf()
@@ -50,36 +53,36 @@ class NotificationReceiver : BroadcastReceiver() {
 		val remoteInput = RemoteInput.getResultsFromIntent(intent)
 
 		if (remoteInput != null) {
-//			val repository2 = Repository2(context)
-//			repository2.isAuthenticated.value = true
-//			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
-//
-//			putNote(repository2, content)
+			val repository2 = KoinRepository().apply { initRepository(context) }
+			repository2.isAuthenticated.tryEmit(true)
+			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
+			putNote(context, repository2, content)
 		}
 	}
 
-//	private fun putNote(
-//		repository2 : Repository2,
-//		content: String
-//	) {
-//		CoroutineScope(Dispatchers.Default).launch {
-//			repository2.repositoryState.collect {
-//				if(it == RepositoryState.SUCCESS) {
-//					repository2.getDefaultChapterId().collect {
-//						NoteObject().apply {
-//							this.content = "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
-//							this.parentId = it
-//							this.contentThumbnail = content.substring(0, minOf(256, content.length))
-//
-////							repository2.putNote(this) { _, _ ->
-////								WriteNoteNotification.showSimpleNotification(context = repository2.context)
-////							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
+	private fun putNote(
+		context : Context,
+		repository2 : KoinRepository,
+		content : String,
+	) {
+		CoroutineScope(Dispatchers.Default).launch {
+			repository2.repositoryState.collect {
+				if (it == RepositoryState.SUCCESS) {
+					repository2.getDefaultChapterId()?.let {
+						NoteObject().apply {
+							this.content =
+								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
+							this.parentId = it
+							this.contentThumbnail = content.substring(0, minOf(256, content.length))
+
+							repository2.putNote(this)
+							WriteNoteNotification.showSimpleNotification(context)
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 
@@ -93,21 +96,17 @@ class WriteNoteNotification {
 
 			val resKey = "KEY_TEXT_REPLY"
 
-			val remoteInput = RemoteInput.Builder(resKey).build()
+			val remoteInput = RemoteInput
+				.Builder(resKey)
+				.build()
 
 			val resultIntent = Intent(context, NotificationReceiver::class.java)
 
-			val resultPendingIntent = PendingIntent
-				.getBroadcast(
-					context,
-					0,
-					resultIntent,
-					PendingIntent.FLAG_MUTABLE
-				)
+			val resultPendingIntent = PendingIntent.getBroadcast(context, 0, resultIntent, PendingIntent.FLAG_MUTABLE)
 
 			val replyAction = NotificationCompat
 				.Action
-				.Builder(android.R.drawable.ic_input_add, "Add", resultPendingIntent)
+				.Builder(R.drawable.ic_add, "Add", resultPendingIntent)
 				.addRemoteInput(remoteInput)
 				.build()
 
@@ -143,14 +142,17 @@ class WriteNoteNotification {
 				description = descriptionText
 			}
 
-			val notificationManager : NotificationManager = with(context) { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+			val notificationManager : NotificationManager = context.getSystemService(NotificationManager::class.java)
 			notificationManager.createNotificationChannel(channel)
+
+			val dataStoreInstance = DataStoreInstance(context)
+			dataStoreInstance.putNoteFromNotification(true)
 		}
 
 		fun cancelNotification(context : Context) {
-			with(NotificationManagerCompat.from(context)) {
-				this.cancel(NOTIFICATION_ID)
-			}
+			context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
+			val dataStoreInstance = DataStoreInstance(context)
+			dataStoreInstance.putNoteFromNotification(false)
 		}
 	}
 }

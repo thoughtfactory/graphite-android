@@ -7,8 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -18,10 +19,11 @@ import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.json.JSONObject
 import org.koin.android.annotation.KoinViewModel
+import java.io.File
 
 
 @KoinViewModel
-class ImportDataJourneyViewModel(private val repository : KoinRepository) : ViewModel() {
+class ImportDataJourneyViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
 
 	val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -29,20 +31,24 @@ class ImportDataJourneyViewModel(private val repository : KoinRepository) : View
 
 	private val defaultChapterId : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
 
-	val concurrentQueue = Channel<NoteObject>(capacity = Channel.Factory.UNLIMITED)
+	val noteConcurrentQueue = Channel<Pair<NoteObject, Boolean>>(capacity = Channel.Factory.UNLIMITED)
+	val attachmentConcurrentQueue = Channel<Pair<RealmUUID, File>>(capacity = Channel.Factory.UNLIMITED)
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if(it == RepositoryState.SUCCESS) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
+				if (it == RepositoryState.SUCCESS) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {
-			concurrentQueue.receiveAsFlow().collect {
-				it.apply {
-					parentId = defaultChapterId.value
-					repository.putNote(this)
-				}
+			noteConcurrentQueue.receiveAsFlow().collect { (noteObject, isLast) ->
+				noteObject.parentId = defaultChapterId.value
+				repository.putNote(noteObject)
+			}
+		}
+		viewModelScope.launch(Dispatchers.Default) {
+			attachmentConcurrentQueue.receiveAsFlow().collect { (noteId, file) ->
+				attachmentRepository.putAttachment(noteId, file)
 			}
 		}
 	}

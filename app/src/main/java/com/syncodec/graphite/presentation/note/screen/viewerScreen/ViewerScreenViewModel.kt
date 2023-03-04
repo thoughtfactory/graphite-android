@@ -4,11 +4,12 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -165,5 +166,24 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 	fun toggleLock() {
 		this.isLocked.tryEmit(this.isLocked.value?.not())
 		putNote()
+	}
+
+	fun setUserTimestamp(timestamp : Long) {
+		this.userTimestamp.tryEmit(timestamp)
+		putNote()
+	}
+
+	fun setParentChapter(chapterObjectLite : ChapterObjectLite) {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.getChapterFromId(id = chapterObjectLite.id).let {
+				this@ViewerScreenViewModel.parentChapter.tryEmit(it)
+				putNote()
+			}
+		}
+	}
+
+	fun deleteNote(id : RealmUUID, callback : suspend () -> Unit) {
+		isOperationPending.tryEmit(true)
+		repository.deleteSuspended(id, callback)
 	}
 }

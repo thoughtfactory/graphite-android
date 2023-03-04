@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,7 +65,6 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DropboxScreen() {
-	val context = LocalContext.current
 	val viewModel : DropboxScreenViewModel = koinViewModel()
 
 	val uriHandler = LocalUriHandler.current
@@ -159,7 +159,11 @@ private fun DropboxSpaceUsage(
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(12.dp, 4.dp)
-				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), MaterialTheme.shapes.medium)
+				.background(
+					MaterialTheme.colorScheme
+						.surfaceColorAtElevation(8.dp)
+						.copy(alpha = 0.47f), MaterialTheme.shapes.medium
+				)
 		) {
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
@@ -270,11 +274,7 @@ private fun ExperimentalCard() {
 					containerColor = Color.DeleteContent,
 					contentColor = Color.DeleteContainer,
 				),
-				onClick = {
-					Intent(context, BugReportActivity::class.java).apply {
-						context.startActivity(this)
-					}
-				},
+				onClick = { context.startActivity(Intent(context, BugReportActivity::class.java)) },
 				modifier = Modifier.fillMaxWidth(),
 			) {
 				Text(text = "Report a bug")

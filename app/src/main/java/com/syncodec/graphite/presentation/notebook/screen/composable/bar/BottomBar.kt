@@ -22,7 +22,7 @@ fun BottomBar(
 	onClickMenu : () -> Unit = {},
 ) {
 	val isAuthenticated = LocalIsAuthenticated.current
-	val authenticatorAction = LocalAuthenticatorAction.current
+	val onAuthenticationAction = LocalAuthenticatorAction.current
 	
 	BottomAppBar(
 		modifier = Modifier.fillMaxWidth(),
@@ -37,7 +37,7 @@ fun BottomBar(
 			icon = R.drawable.ic_vault,
 			checked = isAuthenticated,
 			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
-		) { authenticatorAction(AuthenticatorScreen.Authenticate) }
+		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 
 		MenuButton(
 			icon = R.drawable.ic_menu,

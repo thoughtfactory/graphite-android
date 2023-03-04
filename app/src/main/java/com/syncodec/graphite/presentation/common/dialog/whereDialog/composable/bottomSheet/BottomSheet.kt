@@ -7,16 +7,16 @@ import androidx.compose.ui.tooling.preview.Preview
 
 
 enum class WhereBottomSheetType {
-	CHAPTER
+	Chapter
 }
 
 @Preview
 @Composable
 fun SheetLayout(
-	bottomSheetType : WhereBottomSheetType = WhereBottomSheetType.CHAPTER,
+	bottomSheetType : WhereBottomSheetType = WhereBottomSheetType.Chapter,
 	putChapter : (String, String, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
 ) {
 	when (bottomSheetType) {
-		WhereBottomSheetType.CHAPTER -> ChapterBottomSheet(putChapter = putChapter)
+		WhereBottomSheetType.Chapter -> ChapterBottomSheet(putChapter = putChapter)
 	}
 }

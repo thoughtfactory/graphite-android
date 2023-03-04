@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +54,6 @@ fun ChapterBottomSheet(
 	var coverImage by remember { mutableStateOf<Int?>(null) }
 	var coverUri by remember { mutableStateOf<Uri?>(null) }
 
-
 	GenericBottomSheet(
 		title = "Writing a new chapter?",
 		icon = R.drawable.ic_notebook,
@@ -92,9 +92,10 @@ fun ChapterBottomSheet(
 			colors = ButtonDefaults.buttonColors(
 				containerColor = MaterialTheme.colorScheme.primary,
 				contentColor = MaterialTheme.colorScheme.onPrimary,
-				disabledContainerColor = MaterialTheme.colorScheme.surface,
+				disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 				disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 			),
+			shape = MaterialTheme.shapes.medium,
 			enabled = ! (coverColor == null && coverImage == null && coverUri == null) && titleText.isNotBlank(),
 			modifier = Modifier.fillMaxWidth(),
 			onClick = {

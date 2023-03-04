@@ -4,15 +4,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.rememberCoroutineScope
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.functions.FirebaseFunctions
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.bugReport.composable.BugReportScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.utils.tone
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,11 +20,6 @@ class BugReportActivity : ComponentActivity() {
 
 		setContent {
 			BaseContent {
-				val scope = rememberCoroutineScope()
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
-
 				BugReportScreen(
 					onClickBack = { finish() },
 					onClickSubmit = { bugType, bugComponent, title, description ->
@@ -50,7 +40,6 @@ class BugReportActivity : ComponentActivity() {
 								}
 							}
 							.addOnFailureListener {
-								it.printStackTrace()
 							}
 					}
 				)
@@ -60,66 +49,66 @@ class BugReportActivity : ComponentActivity() {
 
 	companion object {
 		enum class BugType {
-			BUG,
-			FEATURE_REQUEST,
-			OTHER
+			Bug,
+			FeatureRequest,
+			Other
 		}
 
 		enum class BugComponent {
-			NOTE,
-			CHAPTER,
-			NOTEBOOK,
-			BUCKET_LIST,
-			ATTAHCMENT,
-			TAG,
-			BACKUP_AND_SYNC,
+			Note,
+			Chapter,
+			Notebook,
+			BucketList,
+			Attachment,
+			Tag,
+			BackupAndSync,
 			UI,
-			SEARCH,
-			VAULT,
-			DATA,
-			OTHER
+			Search,
+			Vault,
+			Data,
+			Other
 		}
 
 		val bugTypeIconMap = mapOf(
-			BugType.BUG to R.drawable.ic_bug,
-			BugType.FEATURE_REQUEST to R.drawable.ic_sparkle,
-			BugType.OTHER to R.drawable.ic_exclamation
+			BugType.Bug to R.drawable.ic_bug,
+			BugType.FeatureRequest to R.drawable.ic_sparkle,
+			BugType.Other to R.drawable.ic_exclamation
 		)
 
 		val bugComponentIconMap = mapOf(
-			BugComponent.NOTE to R.drawable.ic_pencil,
-			BugComponent.CHAPTER to R.drawable.ic_note,
-			BugComponent.NOTEBOOK to R.drawable.ic_notebook,
-			BugComponent.BUCKET_LIST to R.drawable.ic_bucket,
-			BugComponent.ATTAHCMENT to R.drawable.ic_gallery,
-			BugComponent.TAG to R.drawable.ic_tag,
-			BugComponent.BACKUP_AND_SYNC to R.drawable.ic_local_backup,
+			BugComponent.Note to R.drawable.ic_pencil,
+			BugComponent.Chapter to R.drawable.ic_note,
+			BugComponent.Notebook to R.drawable.ic_notebook,
+			BugComponent.BucketList to R.drawable.ic_bucket,
+			BugComponent.Attachment to R.drawable.ic_gallery,
+			BugComponent.Tag to R.drawable.ic_tag,
+			BugComponent.BackupAndSync to R.drawable.ic_local_backup,
 			BugComponent.UI to R.drawable.ic_theme,
-			BugComponent.SEARCH to R.drawable.ic_search,
-			BugComponent.VAULT to R.drawable.ic_vault,
-			BugComponent.DATA to R.drawable.ic_data,
-			BugComponent.OTHER to R.drawable.ic_exclamation
+			BugComponent.Search to R.drawable.ic_search,
+			BugComponent.Vault to R.drawable.ic_vault,
+			BugComponent.Data to R.drawable.ic_data,
+			BugComponent.Other to R.drawable.ic_exclamation
 		)
 
 		val bugTypeNameMap = mapOf(
-			BugType.BUG to "BUG",
-			BugType.FEATURE_REQUEST to "FEATURE REQUEST",
-			BugType.OTHER to "OTHER"
+			BugType.Bug to "BUG",
+			BugType.FeatureRequest to "FEATURE REQUEST",
+			BugType.Other to "OTHER"
 		)
 
 		val bugComponentNameMap = mapOf(
-			BugComponent.NOTE to "NOTE",
-			BugComponent.CHAPTER to "CHAPTER",
-			BugComponent.NOTEBOOK to "NOTEBOOK",
-			BugComponent.BUCKET_LIST to "BUCKET LIST",
-			BugComponent.ATTAHCMENT to "ATTACHMENT",
-			BugComponent.TAG to "TAG",
-			BugComponent.BACKUP_AND_SYNC to "BACKUP AND SYNC",
+			BugComponent.Note to "NOTE",
+			BugComponent.Chapter to "CHAPTER",
+			BugComponent.Notebook to "NOTEBOOK",
+			BugComponent.BucketList to "BUCKET LIST",
+			BugComponent.Attachment to "ATTACHMENT",
+			BugComponent.Tag to "TAG",
+			BugComponent.BackupAndSync to "BACKUP AND SYNC",
 			BugComponent.UI to "UI",
-			BugComponent.SEARCH to "SEARCH",
-			BugComponent.VAULT to "VAULT",
-			BugComponent.DATA to "DATA",
-			BugComponent.OTHER to "OTHER"
+			BugComponent.Search to "SEARCH",
+			BugComponent.Vault to "VAULT",
+			BugComponent.Data to "DATA",
+			BugComponent.Other to "OTHER"
 		)
 	}
 }

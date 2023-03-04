@@ -5,10 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
@@ -44,10 +41,6 @@ class RawActivity : ComponentActivity() {
 
 		setContent {
 			BaseContent {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-
 				val jsonObject by viewModel.jsonObject
 
 				Crossfade(targetState = jsonObject) {

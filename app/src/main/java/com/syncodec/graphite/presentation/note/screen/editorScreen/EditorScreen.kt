@@ -3,25 +3,27 @@ package com.syncodec.graphite.presentation.note.screen.editorScreen
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarVisuals
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -40,9 +43,9 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDirPath
+import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDir
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.filePreview.FilePreview.Companion.preview
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.common.richText.rememberRichTextEditor
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
@@ -50,11 +53,11 @@ import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.TopBar
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.bottomBar.BottomBar
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bottomSheet.EditorBottomSheetType
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bottomSheet.SheetLayout
-import com.syncodec.graphite.presentation.note.screen.editorScreen.composable.LocationSnackbarHost
 import com.syncodec.graphite.presentation.note.screen.editorScreen.dialog.Dialog
 import com.syncodec.graphite.presentation.note.screen.editorScreen.dialog.EditorDialogType
-import com.syncodec.graphite.utils.copyInputStreamToOutputStream
-import com.syncodec.graphite.utils.getFileName
+import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.FilePreview.Companion.preview
+import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.locationAddressFilter
 import com.syncodec.graphite.utils.reverseGeocode
 import io.realm.kotlin.types.RealmUUID
@@ -62,27 +65,32 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Preview
 @Composable
 fun EditorScreen(
 	afterNoteSaved : (RealmUUID) -> Unit = {},
-	onClickBack : () -> Unit = {},
+	onClickBack : (Boolean) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 	val viewModel : EditorScreenViewModel = koinViewModel()
 
-	val richTextEditor = rememberRichTextEditor()
-	val isReady by richTextEditor.isReady.collectAsState()
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-	val textFormat by richTextEditor.textFormat.collectAsState()
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+	val isGeolocationEnabled by dataStoreInstance.getGeolocation.collectAsState(initial = null)
 
 	val isOperationPending by viewModel.isOperationPending.collectAsState()
+
+	val richTextEditor = rememberRichTextEditor()
+
+	val textFormat by richTextEditor.textFormat.collectAsState()
 
 	val isNewNote by viewModel.isNewNote.collectAsState()
 
@@ -92,6 +100,8 @@ fun EditorScreen(
 	val userTimestamp by viewModel.userTimestamp.collectAsState()
 	val title by viewModel.title.collectAsState()
 	val content by viewModel.content.collectAsState()
+	val latLng by viewModel.latLng.collectAsState()
+	val address by viewModel.address.collectAsState()
 	val parentChapterObject by viewModel.parentChapter.collectAsState()
 
 	var attachmentListSaved by remember { mutableStateOf<List<File>>(listOf()) }
@@ -107,10 +117,8 @@ fun EditorScreen(
 
 	val locationData by viewModel.locationDataState.collectAsState()
 
-	val locationSnackbarHostState = SnackbarHostState()
-
 	val modalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-	var sheetType by remember { mutableStateOf(EditorBottomSheetType.METADATA) }
+	var sheetType by remember { mutableStateOf(EditorBottomSheetType.Metadata) }
 	fun openSheet(type : EditorBottomSheetType) {
 		scope.launch { sheetType = type; modalBottomSheetState.show() }
 	}
@@ -118,17 +126,26 @@ fun EditorScreen(
 	var isDatePickerDialogVisible by remember { mutableStateOf(false) }
 	var isTimePickerDialogVisible by remember { mutableStateOf(false) }
 	var isLocationPermissionDialogVisible by remember { mutableStateOf(false) }
+	var isLocationPickerDialogVisible by remember { mutableStateOf(false) }
+	var isWhereDialogVisible by remember { mutableStateOf(false) }
+	var isDiscardChangesDialogVisible by remember { mutableStateOf(false) }
 
 	fun openDialog(editorDialogType : EditorDialogType) = when (editorDialogType) {
 		EditorDialogType.DatePicker -> isDatePickerDialogVisible = true
 		EditorDialogType.TimePicker -> isTimePickerDialogVisible = true
 		EditorDialogType.LocationPermission -> isLocationPermissionDialogVisible = true
+		EditorDialogType.LocationPicker -> isLocationPickerDialogVisible = true
+		EditorDialogType.Where -> isWhereDialogVisible = true
+		EditorDialogType.DiscardChanges -> isDiscardChangesDialogVisible = true
 	}
 
 	fun closeDialog(editorDialogType : EditorDialogType) = when (editorDialogType) {
 		EditorDialogType.DatePicker -> isDatePickerDialogVisible = false
 		EditorDialogType.TimePicker -> isTimePickerDialogVisible = false
 		EditorDialogType.LocationPermission -> isLocationPermissionDialogVisible = false
+		EditorDialogType.LocationPicker -> isLocationPickerDialogVisible = false
+		EditorDialogType.Where -> isWhereDialogVisible = false
+		EditorDialogType.DiscardChanges -> isDiscardChangesDialogVisible = false
 	}
 
 	var locationCoroutine : CoroutineScope? = null
@@ -144,67 +161,43 @@ fun EditorScreen(
 			if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
 				ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
 			) {
-				viewModel.setLocationPermissionUnabailable()
+				viewModel.setLocationPermissionUnavailable()
 				if (! silent) openDialog(EditorDialogType.LocationPermission)
 				return@launch
 			}
 			fusedLocationClient
 				.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, locationCancellationSource?.token)
 				.addOnSuccessListener { location ->
-					LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = null) }
-					context.reverseGeocode(
-						latitude = location.latitude,
-						longitude = location.longitude,
-						onAddressAvailable = { address ->
-							address?.let { address1 ->
-								locationAddressFilter(address = address1).let { receivedAddress ->
-									scope.launch(Dispatchers.Main) {
-										val message = if (receivedAddress.isNullOrEmpty()) "Lat : ${location.latitude}\nLng : ${location.longitude}"
-										else "${receivedAddress}\nLat : ${location.latitude}\nLng : ${location.longitude}"
-										Log.i("npr71", "snackbar : $message")
-										locationSnackbarHostState.showSnackbar(message = message, duration = SnackbarDuration.Short)
+					try {
+						LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = null) }
+						context.reverseGeocode(
+							latitude = location.latitude,
+							longitude = location.longitude,
+							onAddressAvailable = { address ->
+								address?.let { address1 ->
+									locationAddressFilter(address = address1).let { receivedAddress ->
+										LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = receivedAddress) }
 									}
-
-									LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = receivedAddress) }
-								}
-							} ?: scope.launch(Dispatchers.Main) { Toast.makeText(context, "Error getting address", Toast.LENGTH_SHORT).show() }
-						},
-						onIoException = {
-							LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = null) }
-							scope.launch(Dispatchers.Main) {
-								locationSnackbarHostState.showSnackbar(
-									message = "Lat : ${location?.latitude}\nLng : ${location?.longitude}",
-									duration = SnackbarDuration.Short
-								)
+								} ?: scope.launch(Dispatchers.Main) { Toast.makeText(context, "Error getting address", Toast.LENGTH_SHORT).show() }
+							},
+							onIoException = {
+								LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = null) }
+							},
+							onException = {
+								LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = null) }
 							}
-						},
-						onException = {
-							LatLng(location.latitude, location.longitude).let { viewModel.setLocation(latLng = it, address = null) }
-							scope.launch(Dispatchers.Main) {
-								locationSnackbarHostState.showSnackbar(
-									message = "Lat : ${location?.latitude}\nLng : ${location?.longitude}",
-									duration = SnackbarDuration.Short
-								)
-							}
-						}
-					)
+						)
+					} catch (e : Exception) {
+						viewModel.setLocation(null, null)
+					}
 				}
 		}
 	}
 
 	fun saveAttachments(noteId : RealmUUID, attachmentListToAdd : List<Uri>, attachmentListToRemove : List<File>) {
 		scope.launch(Dispatchers.IO) {
-			val attachmentDir = File(context.attachmentDirPath(noteId = noteId)).also { it.mkdirs() }
-			attachmentListToRemove.forEach { file -> if (file.exists()) file.delete() }
-			attachmentListToAdd.forEach { uri ->
-				val inputStream = context.contentResolver.openInputStream(uri)?.also { inputStream ->
-					val fileName = uri.getFileName(context) ?: RealmUUID.random().toString()
-					val file = File(attachmentDir, fileName).also { it.createNewFile() }
-					context.contentResolver.openOutputStream(Uri.fromFile(file))
-						?.use { outputStream -> copyInputStreamToOutputStream(inputStream, outputStream) }
-				}
-				inputStream?.close()
-			}
+			val attachmentDir = context.attachmentDir(noteId = noteId, true)
+			viewModel.putAttachment(noteId, attachmentListToAdd, attachmentListToRemove)
 			attachmentDir.listFiles()?.forEach { file ->
 				val previewBitmap = file.preview(context = context).first
 				previewBitmap?.let {
@@ -217,40 +210,44 @@ fun EditorScreen(
 
 	LaunchedEffect(key1 = noteId) {
 		noteId?.let { noteId ->
-			val attachmentDir = File(context.attachmentDirPath(noteId = noteId))
+			val attachmentDir = context.attachmentDir(noteId = noteId)
 			if (attachmentDir.exists()) attachmentDir.listFiles().let { attachmentListSaved = it?.toList() ?: listOf() }
 		}
 	}
 
-	LaunchedEffect(key1 = isReady) {
-		if (isReady) {
-			richTextEditor.setGetTextListener(
-				object : RichTextEditor.GetTextListener {
-					override fun onGetData(requestData : RichTextEditor.Companion.RequestData, data : String?) {
-						when (requestData) {
-							RichTextEditor.Companion.RequestData.Save -> {
-								viewModel.setContent(data = data).let {
-									if (! it) scope.launch(Dispatchers.Main) { Toast.makeText(context, "Error saving content", Toast.LENGTH_SHORT).show() }
-									else viewModel.saveNote()
-								}
-							}
-
-							RichTextEditor.Companion.RequestData.Share -> null
-							RichTextEditor.Companion.RequestData.ExportText -> null
-							RichTextEditor.Companion.RequestData.ExportPdf -> null
-							RichTextEditor.Companion.RequestData.ExportHtml -> null
-							RichTextEditor.Companion.RequestData.ExportMarkdown -> null
-							else -> null
+	val getTextListener = remember {
+		object : RichTextEditor.GetTextListener {
+			override fun onGetData(
+				requestData : RichTextEditor.Companion.RequestData,
+				dataObject : JSONObject,
+				dataJson : JSONObject?,
+				dataText : String?,
+				dataHtml : String?,
+				dataMarkdown : String?,
+				dataTitle : String?
+			) {
+				when (requestData) {
+					RichTextEditor.Companion.RequestData.Save -> {
+						viewModel.setContent(dataJson = dataJson, dataText = dataText, title = dataTitle).let {
+							if (! it) scope.launch(Dispatchers.Main) { Toast.makeText(context, "Error saving content", Toast.LENGTH_SHORT).show() }
+							else viewModel.saveNote()
 						}
 					}
+
+					else -> null
 				}
-			)
-			richTextEditor.setData(title = title, content = content)
+			}
 		}
 	}
 
-	LaunchedEffect(key1 = isNewNote, key2 = isReady) {
-		if (isNewNote && isReady) getLocationFromHardware(silent = true)
+	LaunchedEffect(key1 = richTextEditor, key2 = title, key3 = content) {
+		richTextEditor.setGetTextListener(getTextListener)
+		richTextEditor.setData(title, content)
+	}
+
+	LaunchedEffect(key1 = isNewNote, key2 = isGeolocationEnabled) {
+		if (isNewNote && isGeolocationEnabled != false) getLocationFromHardware(silent = true)
+		else viewModel.setLocation(null, null)
 	}
 
 	LaunchedEffect(key1 = onNoteSaved.hashCode(), key2 = noteId) {
@@ -265,14 +262,19 @@ fun EditorScreen(
 		}
 	}
 
+	BackHandler(enabled = true) {
+		if (isOperationPending) Toast.makeText(context, "Operation pending", Toast.LENGTH_SHORT).show()
+		else openDialog(EditorDialogType.DiscardChanges)
+	}
+
 	GenericScaffold(
 		topBar = {
 			TopBar(
 				isOperationPending = false,
-				onSave = richTextEditor::save,
+				onSave = { richTextEditor.save() },
 				onClickBack = {
 					if (isOperationPending) Toast.makeText(context, "Operation pending", Toast.LENGTH_SHORT).show()
-					else onClickBack()
+					else onBackPressedDispatcher?.onBackPressed()
 				},
 			)
 		},
@@ -292,7 +294,7 @@ fun EditorScreen(
 				tagListSaved = tagListSaved,
 				tagListToAdd = tagListToAdd,
 				tagListToRemove = tagListToRemove,
-				onClickSelectParentChapter = {},
+				onClickSelectParentChapter = { openDialog(EditorDialogType.Where) },
 				onAddAttachmentToBuffer = { attachmentListToAdd.toMutableList().apply { addAll(it);attachmentListToAdd = this } },
 				onRemoveBufferedAttachment = { attachmentListToAdd.toMutableList().apply { remove(it);attachmentListToAdd = this } },
 				onRemoveSavedAttachment = {
@@ -323,6 +325,7 @@ fun EditorScreen(
 				},
 				onRemoveLocation = viewModel::removeLocation,
 				onReloadLocation = ::getLocationFromHardware,
+				onSetLocationManually = { openDialog(EditorDialogType.LocationPicker) },
 			)
 		},
 		dialogContent = {
@@ -331,15 +334,23 @@ fun EditorScreen(
 				isDatePickerDialogVisible = isDatePickerDialogVisible,
 				isTimePickerDialogVisible = isTimePickerDialogVisible,
 				isLocationPermissionDialogVisible = isLocationPermissionDialogVisible,
+				isLocationPickerDialogVisible = isLocationPickerDialogVisible,
+				isWhereDialogVisible = isWhereDialogVisible,
+				isDiscardChangesDialogVisible = isDiscardChangesDialogVisible,
 				setUserTimestamp = viewModel::setUserTimestamp,
+				setParentChapter = {
+					it?.id?.let { viewModel.setParentChapter(it) } ?: Toast.makeText(context, "Parent chapter cannot be empty", Toast.LENGTH_SHORT).show()
+				},
+				setLocation = { latLng, address ->
+					locationCancellationSource?.cancel()
+					locationCoroutine?.cancel()
+					viewModel.setLocation(latLng, address)
+					closeDialog(EditorDialogType.LocationPicker)
+				},
+				onDiscardChanges = { onClickBack(isNewNote) },
 				openDialog = ::openDialog,
 				closeDialog = ::closeDialog,
 			)
-		},
-		snackbarHost = {
-			SnackbarHost(hostState = locationSnackbarHostState) {
-				LocationSnackbarHost(snackbarData = it)
-			}
 		},
 		overlayContent = {
 			AnimatedVisibility(
@@ -354,36 +365,56 @@ fun EditorScreen(
 			}
 		}
 	) {
-		Crossfade(
-			targetState = isReady,
-			animationSpec = tween(300),
+		Column(
 			modifier = Modifier.fillMaxSize()
 		) {
-			if (it) {
-				Column(
+//		    !!! AndroidView is wrapped in a box because of a bug in Compose or maybe defined height is set in TipTap and is using same height for the view.
+//		    !!! Modifier.weight(1f) is not working on correctly for AndroidView and is filling available height.
+			Box(
+				modifier = Modifier.weight(1f)
+			) {
+				AndroidView(
+					factory = { richTextEditor },
 					modifier = Modifier.fillMaxSize()
-				) {
-//			    	!!! AndroidView is wrapped in a box because of a bug in Compose or maybe defined height is set in TipTap and is using same height for the view.
-//				    !!! Modifier.weight(1f) is not working on correctly for AndroidView and is filling available height.
-					Box(
-						modifier = Modifier.weight(1f)
-					) {
-						AndroidView(
-							factory = { richTextEditor },
-							modifier = Modifier.fillMaxSize()
-						)
-					}
-					BottomBar(
-						textFormat = textFormat,
-						userTimestamp = userTimestamp,
-						onClickTimePicker = { openDialog(EditorDialogType.DatePicker) },
-						onClickMetadata = { openSheet(EditorBottomSheetType.METADATA) },
-						onClickLocation = { openSheet(EditorBottomSheetType.LOCATION) },
-						onClickAttachment = { openSheet(EditorBottomSheetType.ATTACHMENT) },
-						onClickTag = { openSheet(EditorBottomSheetType.TAG) },
-					) { editorAction -> richTextEditor.onEditorAction(editorAction = editorAction) }
-				}
-			} else LoadingView()
+				)
+			}
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(
+						MaterialTheme.colorScheme
+							.surfaceColorAtElevation(8.dp)
+							.copy(alpha = 0.47f)
+					)
+			) {
+				AnimatedText(
+//					text = if (isGeolocationEnabled != false) address ?: latLng?.toString() ?: "No location" else "Location disabled",
+					text = locationData.let {
+						when (it) {
+							is LocationData.Init -> "Initiating location"
+							is LocationData.Loading -> "Loading location"
+							is LocationData.SuccessOnlyLatLng -> it.latLng.toString()
+							is LocationData.SuccessOnlyAddress -> it.address
+							is LocationData.Success -> it.address
+							is LocationData.SuccessNoData -> "No location"
+							is LocationData.NoPermission -> "Location permission not granted"
+							is LocationData.Error -> "Error loading location"
+						}
+					},
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurface,
+					modifier = Modifier.padding(12.dp, 8.dp),
+				)
+			}
+			BottomBar(
+				textFormat = textFormat,
+				userTimestamp = userTimestamp,
+				onClickTimePicker = { openDialog(EditorDialogType.DatePicker) },
+				onClickMetadata = { openSheet(EditorBottomSheetType.Metadata) },
+				onClickLocation = { openSheet(EditorBottomSheetType.Location) },
+				onClickAttachment = { openSheet(EditorBottomSheetType.Attachment) },
+				onClickTag = { openSheet(EditorBottomSheetType.Tag) },
+			) { editorAction -> richTextEditor.onEditorAction(editorAction = editorAction) }
 		}
 	}
 }

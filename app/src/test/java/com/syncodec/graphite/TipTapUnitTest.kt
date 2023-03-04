@@ -16,7 +16,7 @@ class TipTapUnitTest {
 
 		val passcode = "d5Y3f8*hN8%c%Q3%Jb9vU^8R4MV@z^9*"
 
-		File("./src/main/assets/orbit/index.html").let {
+		File("../tiptap/tmp/index.html").let {
 			val html = it.readText()
 			Alice.encrypt(html, passcode)?.let { File("./src/main/assets/orbit/orbital").writeText(it) }
 

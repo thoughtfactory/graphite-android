@@ -11,7 +11,6 @@ import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,15 +19,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 
 @OptIn(ExperimentalAnimationApi::class)
+@Preview
 @Composable
 fun NotebookHeaderCard(
-	title : String,
-	noEntries : String,
-	color : Color,
+	title : String = "Title",
+	noEntries : String = "0",
+	color : Color = MaterialTheme.colorScheme.background,
+	showTimelineLine : Boolean = true,
 	onClick : (() -> Unit)? = null
 ) {
 	Box(
@@ -39,18 +41,23 @@ fun NotebookHeaderCard(
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier.fillMaxWidth()
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(40.dp)
 		) {
-			Spacer(modifier = Modifier.width(14.dp))
-			Box(
-				modifier = Modifier
-					.width(4.dp)
-					.height(40.dp)
-					.clip(RoundedCornerShape(4.dp))
-					.background(MaterialTheme.colorScheme.primary)
-			)
+			Spacer(modifier = Modifier.width(4.dp))
+			if (showTimelineLine) {
+				Spacer(modifier = Modifier.width(10.dp))
+				Box(
+					modifier = Modifier
+						.width(4.dp)
+						.fillMaxHeight()
+						.clip(MaterialTheme.shapes.small)
+						.background(MaterialTheme.colorScheme.primary)
+				)
 
-			Spacer(modifier = Modifier.width(12.dp))
+				Spacer(modifier = Modifier.width(12.dp))
+			}
 
 			AnimatedContent(
 				targetState = title,

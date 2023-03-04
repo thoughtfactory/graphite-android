@@ -191,7 +191,7 @@ const editor = new Editor.Editor({
             newGroupDelay: 40,
         }),
         Placeholder.Placeholder.configure({
-            placeholder: 'What story did you bring today?',
+            placeholder: 'What story do you bring today?',
             showOnlyWhenEditable: true,
         }),
         Typography.Typography.configure({
@@ -283,20 +283,23 @@ editor.on('transaction', ({
 });
 
 editor.setBaseFontFamily = (fontFamily) => {
+    document.getElementById("title").style.fontFamily = fontFamily;
     document.getElementById("base").style.fontFamily = fontFamily;
 };
 
 editor.setBaseColor = (containerColor, contentColor) => {
-    document.getElementById("base").style.color = contentColor;
+    document.getElementById("title").style.backgroundColor = containerColor;
     document.getElementById("title").style.color = contentColor;
+
     document.getElementById("base").style.background = containerColor;
+    document.getElementById("base").style.color = contentColor;
 };
 
 editor.reCalculateHeight = (height) => {
     document.getElementsByClassName("ProseMirror")[0].style.height = (height + "px")
 }
 
-editor.importData = (noteId, importData, importer) => {
+editor.importData = (noteId, importData, importer, extra) => {
 
     switch (importer) {
         case "graphite":
@@ -317,6 +320,7 @@ editor.importData = (noteId, importData, importer) => {
     data.importData = importData;
     data.importer = importer;
     data.noteId = noteId;
+    data.extra = extra;
 
     switch (importer) {
         case "journey":
@@ -357,7 +361,7 @@ editor.setAndGetData = (title, data, extra) => {
     data.title = document.getElementById("title").value;
     data.extra = extra
 
-    if(extra == "export_markdown") {
+    if(extra == "ExportMarkdown") {
         var turndown = new Turndown();
         data.dataMarkdown = turndown.turndown(editor.getHTML());
     }

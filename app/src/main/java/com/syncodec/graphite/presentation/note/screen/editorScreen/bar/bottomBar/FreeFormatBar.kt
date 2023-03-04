@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,7 +43,7 @@ fun FreeFormatToolbar(
 	Box(
 		contentAlignment = Alignment.Center,
 		modifier = Modifier
-			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.31f), MaterialTheme.shapes.small)
+			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f), MaterialTheme.shapes.small)
 			.clip(MaterialTheme.shapes.small),
 	) {
 		Row(
@@ -180,7 +181,7 @@ private fun FreeToolbarButton(
 	val context = LocalContext.current
 
 	val containerColor by animateColorAsState(
-		targetValue = if (isChecked) MaterialTheme.colorScheme.onSurface else Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), MaterialTheme.colorScheme.surface.toArgb(), 0.31f)),
+		targetValue = if (isChecked) MaterialTheme.colorScheme.onSurface else Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), 0.31f)),
 		animationSpec = tween(300)
 	)
 	val contentColor by animateColorAsState(

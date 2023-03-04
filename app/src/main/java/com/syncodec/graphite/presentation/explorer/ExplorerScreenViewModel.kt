@@ -5,9 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.ContentStatus
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +21,6 @@ import org.koin.android.annotation.KoinViewModel
 class ExplorerScreenViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
-	val contentStatus : MutableStateFlow<ContentStatus> = MutableStateFlow(ContentStatus.Init)
 
 	private val _tagList : MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
 	val tagList : StateFlow<List<TagObject>> = _tagList
@@ -70,9 +68,9 @@ class ExplorerScreenViewModel(private val repository : KoinRepository) : ViewMod
 				_noteList,
 				_chapterObject,
 				_filter
-			) { _noteList, _chapterObject, _filter ->
-				_noteList.filter { note ->
-					chapterObject.value?.id?.let { note.parentChapterId == it } ?: true && _filter(note)
+			) { noteList1, chapterObject1, filter1 ->
+				noteList1.filter { note ->
+					chapterObject.value?.id?.let { note.parentId == it } ?: true && filter1(note)
 				}.let { _filteredNoteList.tryEmit(it) }
 			}.collect()
 		}
@@ -90,5 +88,7 @@ class ExplorerScreenViewModel(private val repository : KoinRepository) : ViewMod
 
 	fun filterOn(filter : (NoteObjectLite) -> Boolean) = _filter.tryEmit(filter)
 
-	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+	fun delete(idList : List<RealmUUID>) {
+		repository.deleteSuspended(idList)
+	}
 }

@@ -27,7 +27,7 @@ fun LazyListScope.noteList(
 	headerMinHeight : Dp = Dp.Hairline,
 	headerBackgroundColor : Color? = null,
 	isVisible : Boolean = true,
-	toggleVisibility : () -> Unit = {},
+	toggleVisibility : (() -> Unit) = {},
 	noteCardColors : NoteCardColors? = null,
 	headerEnabled : Boolean = true,
 	onClick : (NoteObjectLite) -> Unit = {},

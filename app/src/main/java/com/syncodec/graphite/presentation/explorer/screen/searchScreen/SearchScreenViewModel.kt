@@ -7,9 +7,9 @@ import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.AttachmentRepository
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.ContentStatus
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.utils.LoaderStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +23,7 @@ import org.koin.android.annotation.KoinViewModel
 class SearchScreenViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
-	val contentStatus : MutableStateFlow<ContentStatus> = MutableStateFlow(ContentStatus.Init)
+	val loaderStatus : MutableStateFlow<LoaderStatus> = MutableStateFlow(LoaderStatus.Init)
 
 	val tagList : MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
 	private val noteList : MutableStateFlow<List<NoteObject>> = MutableStateFlow(listOf())
@@ -75,36 +75,36 @@ class SearchScreenViewModel(private val repository : KoinRepository, private val
 		searchFilterType : SearchFilterType,
 		searchInChapter : ChapterObjectLite? = null
 	) {
-		this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.Loading)
+		this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Loading)
 
 		when (searchFilterType) {
-			is SearchFilterType.None -> this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.Init)
+			is SearchFilterType.None -> this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Init)
 			is SearchFilterType.Favourite -> noteList.filter { it.isFavourite && if (searchInChapter != null) it.parentId == searchInChapter.id else true }
 				.map { it.toLite() }.let {
 					this@SearchScreenViewModel.filteredNoteList.tryEmit(it)
-					if (it.isEmpty()) this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.LoadedEmpty)
-					else this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.Loaded)
+					if (it.isEmpty()) this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.LoadedEmpty)
+					else this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Loaded)
 				}
 
 			is SearchFilterType.WithAttachment -> noteList.filter { attachmentRepository.haveAttachment(noteId = it.id) && if (searchInChapter != null) it.parentId == searchInChapter.id else true }
 				.map { it.toLite() }.let {
 					this@SearchScreenViewModel.filteredNoteList.tryEmit(it)
-					if (it.isEmpty()) this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.LoadedEmpty)
-					else this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.Loaded)
+					if (it.isEmpty()) this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.LoadedEmpty)
+					else this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Loaded)
 				}
 
 			is SearchFilterType.Locked -> noteList.filter { it.isLocked && if (searchInChapter != null) it.parentId == searchInChapter.id else true }
 				.map { it.toLite() }.let {
 					this@SearchScreenViewModel.filteredNoteList.tryEmit(it)
-					if (it.isEmpty()) this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.LoadedEmpty)
-					else this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.Loaded)
+					if (it.isEmpty()) this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.LoadedEmpty)
+					else this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Loaded)
 				}
 
 			is SearchFilterType.Tag -> noteList.filter { it.id in searchFilterType.tag.objectIdList && if (searchInChapter != null) it.parentId == searchInChapter.id else true }
 				.map { it.toLite() }.let {
 					this@SearchScreenViewModel.filteredNoteList.tryEmit(it)
-					if (it.isEmpty()) this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.LoadedEmpty)
-					else this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.Loaded)
+					if (it.isEmpty()) this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.LoadedEmpty)
+					else this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Loaded)
 				}
 
 			is SearchFilterType.Query -> noteList.filter {
@@ -114,8 +114,8 @@ class SearchScreenViewModel(private val repository : KoinRepository, private val
 			}
 				.map { it.toLite() }.let {
 					this@SearchScreenViewModel.filteredNoteList.tryEmit(it)
-					if (it.isEmpty()) this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.LoadedEmpty)
-					else this@SearchScreenViewModel.contentStatus.tryEmit(ContentStatus.Loaded)
+					if (it.isEmpty()) this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.LoadedEmpty)
+					else this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Loaded)
 				}
 		}
 	}
@@ -132,9 +132,17 @@ class SearchScreenViewModel(private val repository : KoinRepository, private val
 
 	fun filterTag(tag : TagObject) = searchFilterType.tryEmit(SearchFilterType.Tag(tag))
 
+	fun filterTag(tagId : RealmUUID) {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.getTagFromId(tagId)?.let { filterTag(it) }
+		}
+	}
+
 	fun filterQuery(query : String) = searchFilterType.tryEmit(SearchFilterType.Query(query))
 
-	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+	fun delete(idList : List<RealmUUID>) {
+		repository.deleteSuspended(idList)
+	}
 
 	companion object {
 		sealed class SearchFilterType {

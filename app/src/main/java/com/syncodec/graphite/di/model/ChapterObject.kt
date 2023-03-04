@@ -2,21 +2,19 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
-import java.nio.charset.Charset
 import kotlin.random.Random
 
 
 @Keep
+@JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
 class ChapterObject() : RealmObject {
-
-	constructor(byteArray : ByteArray) : this() {
-		val jsonObject = JSONObject(byteArray.toString(Charset.defaultCharset()))
-
+	constructor(jsonObject : JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
 		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())

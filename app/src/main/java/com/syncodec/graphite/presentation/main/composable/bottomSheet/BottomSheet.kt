@@ -28,7 +28,10 @@ fun SheetLayout(
 	when (bottomSheetType) {
 		MainBottomSheetType.Menu -> MenuBottomSheet(closeSheet = closeSheet)
 		MainBottomSheetType.Filter -> FilterBottomSheet()
-		MainBottomSheetType.Bucket -> BucketBottomSheet(putBucket = putBucket)
+		MainBottomSheetType.Bucket -> BucketBottomSheet(
+			putBucket = putBucket,
+			closeSheet = closeSheet,
+		)
 		MainBottomSheetType.Notebook -> NotebookBottomSheet(
 			putNotebook = putNotebook,
 			closeSheet = closeSheet,

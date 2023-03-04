@@ -59,7 +59,7 @@ class DBox(private val context: Context) {
 	@WorkerThread
 	fun getAccessToken(callback : (DropboxResponse) -> Unit) {
 		if (BuildConfig.DEBUG) {
-			callback(DropboxResponse.Success("sl.BYfMoQEjfaxSMMnockXtZZsXQ2CpyTW8-k9lOy2ilun7CcqiM7L4m9oOp0vg7KDMn4Qek3aWKebkpGJ5c627CXu50qN4FpFzJRGL1I9hvjufn0OGlaVNETYWlS2Aka-ryMvhKs2g"))
+			callback(DropboxResponse.Success("sl.BYmub0bKlrWnSbBy2HIMMn_RydCZuTG1K8WgfZ1C6lXgNabiLFZFPVaeEGfGLW5aYr6vgMhj6-2mdf1ykBodCLCztDiT-bAi3DtJOmaRSls2bimRvset2SZu7TuYrnzpGtLQaMh8"))
 			return
 		}
 

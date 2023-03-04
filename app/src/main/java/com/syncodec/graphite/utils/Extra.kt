@@ -5,7 +5,7 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.LatLng
 
 
-val monthName: List<String> = listOf(
+val monthName : List<String> = listOf(
 	"January",
 	"February",
 	"March",
@@ -20,7 +20,7 @@ val monthName: List<String> = listOf(
 	"December"
 )
 
-val monthNameShort: List<String> = listOf(
+val monthNameShort : List<String> = listOf(
 	"Jan",
 	"Feb",
 	"Mar",
@@ -35,18 +35,18 @@ val monthNameShort: List<String> = listOf(
 	"Dec"
 )
 
-val weekNameInitial: List<String> = listOf("S", "M", "T", "W", "T", "F", "S")
+val weekNameInitial : List<String> = listOf("S", "M", "T", "W", "T", "F", "S")
 
-val weekNameShort: List<String> = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+val weekNameShort : List<String> = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
-val bucketTypeToIcon: Map<BucketType, Int> = mapOf(
+val bucketTypeToIcon : Map<BucketType, Int> = mapOf(
 	BucketType.TODO to R.drawable.ic_todo,
 	BucketType.BOOK to R.drawable.ic_book_shelf,
 	BucketType.SHOW to R.drawable.ic_show,
 	BucketType.LINK to R.drawable.ic_link,
 )
 
-val bucketItemNameMap: Map<BucketType, String> = mapOf(
+val bucketItemNameMap : Map<BucketType, String> = mapOf(
 	BucketType.TODO to "Todo",
 	BucketType.BOOK to "Books",
 	BucketType.SHOW to "Movies / Series",
@@ -62,7 +62,7 @@ enum class SortOn {
 	DUE,
 	CREATED,
 	DONE,
-	CUSTOM
+	Custom
 }
 
 enum class SortBy {
@@ -71,11 +71,11 @@ enum class SortBy {
 }
 
 enum class ViewType {
-	LIST,
-	GRID,
+	List,
+	Grid,
 }
 
-sealed class LocationData() {
+sealed class LocationData {
 	object Init : LocationData()
 	object Loading : LocationData()
 	data class SuccessOnlyLatLng(val latLng : LatLng) : LocationData()
@@ -86,7 +86,7 @@ sealed class LocationData() {
 	data class Error(val message : String) : LocationData()
 }
 
-val genreIdMap: Map<Int, String> = mapOf(
+val genreIdMap : Map<Int, String> = mapOf(
 	28 to "action",
 	12 to "adventure",
 	16 to "animation",
@@ -108,7 +108,7 @@ val genreIdMap: Map<Int, String> = mapOf(
 	37 to "western"
 )
 
-val imageList: List<Int> = listOf(
+val imageList : List<Int> = listOf(
 	R.drawable.img_1,
 	R.drawable.img_2,
 	R.drawable.img_3,
@@ -118,7 +118,7 @@ val imageList: List<Int> = listOf(
 	R.drawable.img_7,
 )
 
-val mimeTypeIconMap: Map<String, Int> = mapOf(
+val mimeTypeIconMap : Map<String, Int> = mapOf(
 	"image" to R.drawable.ic_gallery,
 	"video" to R.drawable.ic_file,
 	"audio" to R.drawable.ic_file_audio,
@@ -134,7 +134,7 @@ enum class MimeType {
 	APPLICATION,
 }
 
-val mimeSubTypeIconMap: Map<String, Int> = mapOf(
+val mimeSubTypeIconMap : Map<String, Int> = mapOf(
 	"image/jpeg" to R.drawable.ic_file,
 	"image/png" to R.drawable.ic_file,
 	"image/gif" to R.drawable.ic_file,
@@ -190,6 +190,7 @@ class Extra {
 			ParentId,
 			ChapterId,
 			NoteId,
+			TagId,
 			ShowAll,
 			BUCKET_ID,
 			BUCKET_ITEM_ID,
@@ -202,6 +203,7 @@ class Extra {
 			Filter,
 			ExplorerType
 		}
+
 		enum class ExplorerType {
 			Atlas,
 			Attachment,
@@ -236,10 +238,48 @@ enum class Status {
 	ERROR
 }
 
-enum class ContentStatus {
+enum class LoaderStatus {
 	Init,
 	Error,
 	Loading,
 	LoadedEmpty,
 	Loaded,
+}
+
+sealed class ContentStatus<out T> {
+	object Init : ContentStatus<Nothing>()
+	object Loading : ContentStatus<Nothing>()
+	object LoadedEmpty : ContentStatus<Nothing>()
+	class Loaded<T>(val data : T) : ContentStatus<T>()
+	data class Error(val message : String) : ContentStatus<Nothing>()
+
+	val dataOrNull : T?
+		get() = if (this is Loaded) this.data else null
+
+	override fun equals(other : Any?) : Boolean {
+		if (this === other) return true
+		if (this is Init && other !is Init) return false
+		if (this is Loading && other !is Loading) return false
+		if (this is LoadedEmpty && other !is LoadedEmpty) return false
+		if (this is Error && other !is Error) return false
+		if (this is Loaded && other !is Loaded<*>) return false
+		if (other !is ContentStatus<*>) return false
+
+		if (dataOrNull != other.dataOrNull) return false
+
+		if (this is Error && other is Error) {
+			if (message != other.message) return false
+		}
+
+		if (this is Loaded && other is Loaded<*>) {
+			if (data != other.data) return false
+		}
+
+
+		return true
+	}
+
+	override fun hashCode() : Int {
+		return dataOrNull?.hashCode() ?: 0
+	}
 }

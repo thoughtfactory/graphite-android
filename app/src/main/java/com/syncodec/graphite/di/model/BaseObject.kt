@@ -2,6 +2,7 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -25,9 +26,9 @@ class BaseObject : RealmObject {
 		this.id = this@BaseObject.id
 		this.defaultChapterId = this@BaseObject.defaultChapterId
 		this.lastSyncedTimestamp = this@BaseObject.lastSyncedTimestamp
-		this.notebookIdOrderList = this@BaseObject.notebookIdOrderList
-		this.bucketIdOrderList = this@BaseObject.bucketIdOrderList
-		this.deletedIdList = this@BaseObject.deletedIdList
+		this.notebookIdOrderList = this@BaseObject.notebookIdOrderList.toRealmList()
+		this.bucketIdOrderList = this@BaseObject.bucketIdOrderList.toRealmList()
+		this.deletedIdList = this@BaseObject.deletedIdList.toRealmList()
 	}
 
 	override fun hashCode() : Int {

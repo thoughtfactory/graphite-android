@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -17,20 +16,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.ui.DeleteContainer
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
 
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun RepositoryLockedScreen(
-	errorMessage: String?,
-	onUnlock: () -> Unit
+	errorMessage : String?,
+	onUnlock : () -> Unit
 ) {
 
 	val configuration = LocalConfiguration.current
@@ -45,7 +43,7 @@ fun RepositoryLockedScreen(
 			painter = painterResource(id = R.drawable.il_repository_locked),
 			contentDescription = "Repository Locked",
 			contentScale = ContentScale.Fit,
-			modifier = Modifier.requiredSize(screenWidth*2/3)
+			modifier = Modifier.requiredSize(screenWidth * 2 / 3)
 		)
 
 		Spacer(modifier = Modifier.height(12.dp))
@@ -58,18 +56,17 @@ fun RepositoryLockedScreen(
 
 		Spacer(modifier = Modifier.height(12.dp))
 
-		AnimatedContent(targetState = errorMessage) {
-			Text(
-				text = it ?: "",
-				style = MaterialTheme.typography.bodyMedium,
-				color = Color.Companion.DeleteContainer
-			)
-		}
+		AnimatedText(
+			text = errorMessage,
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.error
+		)
 
 		Spacer(modifier = Modifier.height(24.dp))
 
 		Button(
-			onClick = onUnlock
+			shape = MaterialTheme.shapes.medium,
+			onClick = onUnlock,
 		) {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_biometric),

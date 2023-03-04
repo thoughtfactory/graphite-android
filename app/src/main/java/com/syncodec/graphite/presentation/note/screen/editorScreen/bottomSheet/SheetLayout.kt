@@ -11,16 +11,16 @@ import java.io.File
 
 
 enum class EditorBottomSheetType {
-	METADATA,
-	LOCATION,
-	ATTACHMENT,
-	TAG
+	Metadata,
+	Location,
+	Attachment,
+	Tag
 }
 
 @Preview
 @Composable
 fun SheetLayout(
-	bottomSheetType : EditorBottomSheetType = EditorBottomSheetType.METADATA,
+	bottomSheetType : EditorBottomSheetType = EditorBottomSheetType.Metadata,
 	noteId : RealmUUID? = null,
 	createdTimestamp : Long? = null,
 	modifiedTimestamp : Long? = null,
@@ -42,9 +42,10 @@ fun SheetLayout(
 	onRemoveSavedTag : (TagObjectLite) -> Unit = {},
 	onRemoveLocation : () -> Unit = {},
 	onReloadLocation : () -> Unit = {},
+	onSetLocationManually : () -> Unit = {},
 ) {
 	when (bottomSheetType) {
-		EditorBottomSheetType.METADATA -> MetadataBottomSheet(
+		EditorBottomSheetType.Metadata -> MetadataBottomSheet(
 			noteId = noteId,
 			createdTimestamp = createdTimestamp,
 			modifiedTimestamp = modifiedTimestamp,
@@ -52,13 +53,14 @@ fun SheetLayout(
 			onClickSelectParentChapter = onClickSelectParentChapter,
 		)
 
-		EditorBottomSheetType.LOCATION -> LocationBottomSheet(
+		EditorBottomSheetType.Location -> LocationBottomSheet(
 			locationData = locationData,
 			onRemoveLocation = onRemoveLocation,
 			onReloadLocation = onReloadLocation,
+			onSetLocationManually = onSetLocationManually,
 		)
 
-		EditorBottomSheetType.ATTACHMENT -> AttachmentBottomSheet(
+		EditorBottomSheetType.Attachment -> AttachmentBottomSheet(
 			attachmentListSaved = attachmentListSaved,
 			attachmentListToAdd = attachmentListToAdd,
 			attachmentListToRemove = attachmentListToRemove,
@@ -67,7 +69,7 @@ fun SheetLayout(
 			onRemoveSavedAttachment = onRemoveSavedAttachment,
 		)
 
-		EditorBottomSheetType.TAG -> TagBottomSheet(
+		EditorBottomSheetType.Tag -> TagBottomSheet(
 			tagList = tagList,
 			tagListSaved = tagListSaved,
 			tagListToAdd = tagListToAdd,

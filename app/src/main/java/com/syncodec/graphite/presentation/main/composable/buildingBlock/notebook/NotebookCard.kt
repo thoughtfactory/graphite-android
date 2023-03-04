@@ -16,7 +16,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,6 +39,8 @@ fun NotebookCard(
 	onClick: (() -> Unit)?,
 	onLongClick: (() -> Unit)?
 ) {
+	val hapticFeedback = LocalHapticFeedback.current
+
 	val dragScale by animateFloatAsState(targetValue = if (isDragging) 1.13f else 1f)
 	val borderColor by animateColorAsState(targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
 	val selectScale by animateFloatAsState(targetValue = if (isSelected) 0.895f else 1f)
@@ -59,7 +63,10 @@ fun NotebookCard(
 				.combinedClickable(
 					enabled = onClick != null || onLongClick != null,
 					onClick = { onClick?.invoke() },
-					onLongClick = { onLongClick?.invoke() }
+					onLongClick = {
+						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+						onLongClick?.invoke()
+					}
 				)
 				.graphicsLayer {
 					this.scaleX = selectScale

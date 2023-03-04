@@ -61,7 +61,7 @@
             android:name="com.syncodec.graphite.presentation.main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -124,7 +124,7 @@
             android:name=".presentation.bucket.BucketActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".presentation.bucketItem.BucketItemActivity"
@@ -188,11 +188,11 @@
                 android:resource="@xml/widget_provider" />
         </receiver>
 
-        <service
-            android:name=".service.DropboxService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
+        <!--        <service-->
+        <!--            android:name=".service.DropboxService"-->
+        <!--            android:enabled="true"-->
+        <!--            android:exported="false"-->
+        <!--            android:foregroundServiceType="dataSync" />-->
 
         <service
             android:name=".service.QuickNoteTile"
@@ -207,6 +207,10 @@
 
         <service
             android:name=".notification.NotePinNotificationService"
+            android:enabled="true" />
+
+        <service
+            android:name=".notification.WriteNoteNotificationService"
             android:enabled="true" />
     </application>
 </manifest>

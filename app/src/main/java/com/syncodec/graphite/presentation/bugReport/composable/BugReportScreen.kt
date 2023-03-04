@@ -129,17 +129,18 @@ fun BugReportScreen(
 					containerColor = MaterialTheme.colorScheme.primary,
 					contentColor = MaterialTheme.colorScheme.onPrimary,
 				),
+				shape = MaterialTheme.shapes.medium,
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(12.dp, 0.dp),
 				onClick = {
 					onClickSubmit(
-						selectedBugType ?: BugReportActivity.Companion.BugType.OTHER,
-						selectedBugComponent ?: BugReportActivity.Companion.BugComponent.OTHER,
+						selectedBugType ?: BugReportActivity.Companion.BugType.Other,
+						selectedBugComponent ?: BugReportActivity.Companion.BugComponent.Other,
 						bugTitle,
 						bugDescription,
 					)
-				}
+				},
 			) {
 				Text(text = "Submit")
 			}

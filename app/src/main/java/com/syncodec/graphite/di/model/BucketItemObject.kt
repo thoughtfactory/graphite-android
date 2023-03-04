@@ -1,6 +1,7 @@
 package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
@@ -10,6 +11,7 @@ import com.syncodec.graphite.di.network.ShowData
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.json.JSONObject
 
 
 enum class BucketItemState {
@@ -19,7 +21,23 @@ enum class BucketItemState {
 }
 
 @Keep
-class BucketItemObject : RealmObject {
+@JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
+class BucketItemObject() : RealmObject {
+	constructor(jsonObject : JSONObject) : this() {
+		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
+		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
+		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
+		this.bucketType = jsonObject.optString("bucketType")
+		this.title = jsonObject.optString("title")
+		this.state = jsonObject.optString("state")
+		this.thumbnail = jsonObject.optString("thumbnail")
+		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
+		this.isLocked = jsonObject.optBoolean("isLocked", false)
+		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
+		this.key = jsonObject.optString("key")
+		this.data = jsonObject.optString("data")
+	}
+
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
@@ -85,6 +103,24 @@ class BucketItemObject : RealmObject {
 			this.key = this@BucketItemObject.key
 			this.data = this@BucketItemObject.data
 		}
+	}
+
+	fun toCloudSnapshot() : String {
+		val jsonObject = JSONObject()
+		jsonObject.put("id", this.id.toString())
+		jsonObject.put("createdTimestamp", this.createdTimestamp)
+		jsonObject.put("modifiedTimestamp", this.modifiedTimestamp)
+		jsonObject.put("bucketType", this.bucketType)
+		jsonObject.put("title", this.title)
+		jsonObject.put("state", this.state)
+		jsonObject.put("thumbnail", this.thumbnail)
+		jsonObject.put("isFavourite", this.isFavourite)
+		jsonObject.put("isLocked", this.isLocked)
+		jsonObject.put("parentId", this.parentId?.toString())
+		jsonObject.put("key", this.key)
+		jsonObject.put("data", this.data)
+
+		return jsonObject.toString()
 	}
 
 	override fun hashCode() : Int {

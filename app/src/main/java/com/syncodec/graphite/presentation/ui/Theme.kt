@@ -9,9 +9,9 @@ import com.syncodec.graphite.utils.getInverseBWColor
 
 val lightColorScheme0 = lightColorScheme(
 	primary = Color(0xFF1E2022),
-	onPrimary = Color(0xFFC0CEDD),
+	onPrimary = Color(0xFFDEE2E7),
 	primaryContainer = Color(0xFF0F1316),
-	onPrimaryContainer = Color(0xFFE3F3FF),
+	onPrimaryContainer = Color(0xFFEBEBEB),
 	secondary = Color(0xFF242D34),
 	onSecondary = Color(0xFFA2A9AE),
 	secondaryContainer = Color(0xFF1C3648),

@@ -30,6 +30,8 @@ import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
@@ -45,7 +47,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import org.koin.android.ext.android.inject
+import java.nio.charset.Charset
 import java.util.Date
 import kotlin.reflect.KFunction1
 import kotlin.reflect.KMutableProperty1
@@ -155,7 +159,7 @@ class DropboxService : LifecycleService() {
 	}
 
 	fun initSync() {
-		if (dropboxSyncStatus.value == DropboxSyncStatus.Init) {
+		if (dropboxSyncStatus.value == DropboxSyncStatus.Init || dropboxSyncStatus.value == DropboxSyncStatus.Idle) {
 			Log.i("npr71", "DropboxService: startSync")
 			Toast.makeText(this, "startSync", Toast.LENGTH_SHORT).show()
 			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Loading)
@@ -209,7 +213,7 @@ class DropboxService : LifecycleService() {
 	}
 
 	@WorkerThread
-	private suspend fun DbxClientV2.checkLock() {
+	private fun DbxClientV2.checkLock() {
 		val searchOption = SearchOptions
 			.newBuilder()
 			.withFilenameOnly(true)
@@ -233,9 +237,9 @@ class DropboxService : LifecycleService() {
 					}
 				}
 		} catch (e : InvalidAccessTokenException) {
-			dropboxSyncStatus.tryEmit(DropboxSyncStatus.SyncError)
+			dropboxSyncStatus.tryEmit(DropboxSyncStatus.SyncError("Invalid Access Token"))
 		} catch (e : Exception) {
-			dropboxSyncStatus.tryEmit(DropboxSyncStatus.SyncError)
+			dropboxSyncStatus.tryEmit(DropboxSyncStatus.SyncError("Unknown Error"))
 			e.printStackTrace()
 			Log.i("npr71", "DropboxService: ${e.message}")
 		}
@@ -265,7 +269,7 @@ class DropboxService : LifecycleService() {
 			.deleteV2("/sync/graphite.lock")
 			.let {
 				Log.i("npr71", "DropboxService: unlockDrive: delete success")
-				dropboxSyncStatus.tryEmit(DropboxSyncStatus.Init)
+				dropboxSyncStatus.tryEmit(DropboxSyncStatus.Idle)
 			}
 	}
 
@@ -277,39 +281,199 @@ class DropboxService : LifecycleService() {
 
 			val localChapterList = repository.getAllChapter().map { it.clone() }
 			val localNoteList = repository.getAllNote().map { it.clone() }
+			val localBucketList = repository.getAllBucket().map { it.clone() }
+			val localBucketItemList = repository.getAllBucketItem().map { it.clone() }
+			val localTagList = repository.getAllTag().map { it.clone() }
 
-			syncObjects(
-				localObjectList = localChapterList,
+			val (
+				toUpSyncChapterList,
+				toDownSyncChapterList
+			) = countUnSyncedObjects(
 				cloudObjectMetadata = dropboxMetadata?.chapterMetadata ?: mapOf(),
-				objectPath = "chapter",
+				localObjectList = localChapterList,
 				id = ChapterObject::id,
 				modifiedTimestamp = ChapterObject::modifiedTimestamp,
 				toCloudSnapshot = ChapterObject::toCloudSnapshot
-			) {
-				it.forEach { (chapterObject, operation) ->
-					if (operation == Operation.Create || operation == Operation.Update) {
-						ChapterObject(chapterObject).apply { repository.putChapter(this, false) }
-					} else if (operation == Operation.Delete) {
+			)
+
+			Log.i("npr71", "DropboxService: sync: toUpSyncChapterList: ${toUpSyncChapterList.size}")
+			Log.i("npr71", "DropboxService: sync: toDownSyncChapterList: ${toDownSyncChapterList.size}")
+
+			val (
+				toUpSyncNoteList,
+				toDownSyncNoteList
+			) = countUnSyncedObjects(
+				cloudObjectMetadata = dropboxMetadata?.noteMetadata ?: mapOf(),
+				localObjectList = localNoteList,
+				id = NoteObject::id,
+				modifiedTimestamp = NoteObject::modifiedTimestamp,
+				toCloudSnapshot = NoteObject::toCloudSnapshot
+			)
+
+			Log.i("npr71", "DropboxService: sync: toUpSyncNoteList: ${toUpSyncNoteList.size}")
+			Log.i("npr71", "DropboxService: sync: toDownSyncNoteList: ${toDownSyncNoteList.size}")
+
+			val (
+				toUpSyncBucketList,
+				toDownSyncBucketList
+			) = countUnSyncedObjects(
+				cloudObjectMetadata = dropboxMetadata?.bucketMetadata ?: mapOf(),
+				localObjectList = localBucketList,
+				id = BucketObject::id,
+				modifiedTimestamp = BucketObject::modifiedTimestamp,
+				toCloudSnapshot = BucketObject::toCloudSnapshot
+			)
+
+			Log.i("npr71", "DropboxService: sync: toUpSyncBucketList: ${toUpSyncBucketList.size}")
+			Log.i("npr71", "DropboxService: sync: toDownSyncBucketList: ${toDownSyncBucketList.size}")
+
+			val (
+				toUpSyncBucketItemList,
+				toDownSyncBucketItemList
+			) = countUnSyncedObjects(
+				cloudObjectMetadata = dropboxMetadata?.bucketItemMetadata ?: mapOf(),
+				localObjectList = localBucketItemList,
+				id = BucketItemObject::id,
+				modifiedTimestamp = BucketItemObject::modifiedTimestamp,
+				toCloudSnapshot = BucketItemObject::toCloudSnapshot
+			)
+
+			Log.i("npr71", "DropboxService: sync: toUpSyncBucketItemList: ${toUpSyncBucketItemList.size}")
+			Log.i("npr71", "DropboxService: sync: toDownSyncBucketItemList: ${toDownSyncBucketItemList.size}")
+
+			DropboxSyncStatus.Syncing(
+				toUpSyncChapterCount = toUpSyncChapterList.size,
+				toDownSyncChapterCount = toDownSyncChapterList.size,
+				toUpSyncNoteCount = toUpSyncNoteList.size,
+				toDownSyncNoteCount = toDownSyncNoteList.size,
+				toUpSyncBucketCount = toUpSyncBucketList.size,
+				toDownSyncBucketCount = toDownSyncBucketList.size,
+				toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
+				toDownSyncBucketItemCount = toDownSyncBucketItemList.size
+			).let { dropboxSyncStatus.tryEmit(it) }
+
+			syncObjects(
+				localObjectList = localChapterList,
+				toDownSyncObjectList = toDownSyncChapterList,
+				toUpSyncObjectList = toUpSyncChapterList,
+				objectPath = "chapter",
+				id = ChapterObject::id,
+				toCloudSnapshot = ChapterObject::toCloudSnapshot,
+				updateLocalData = {
+					it.forEach { (chapterObject, operation) ->
+						if (operation == Operation.Create || operation == Operation.Update) {
+							ChapterObject(JSONObject(chapterObject.toString(Charset.defaultCharset()))).apply { repository.putChapter(this, false) }
+						} else if (operation == Operation.Delete) {
 //						repository.deleteChapterSuspended(chapterObject)
+						}
 					}
 				}
+			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
+				dropboxSyncStatus.tryEmit(
+					DropboxSyncStatus.Syncing(
+						toUpSyncChapterCount = toUpSyncCount - toUpSynced,
+						toDownSyncChapterCount = toDownSyncCount - toDownSynced,
+						toUpSyncNoteCount = toUpSyncNoteList.size,
+						toDownSyncNoteCount = toDownSyncNoteList.size,
+						toUpSyncBucketCount = toUpSyncBucketList.size,
+						toDownSyncBucketCount = toDownSyncBucketList.size,
+						toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
+						toDownSyncBucketItemCount = toDownSyncBucketItemList.size,
+					)
+				)
 			}
 
 			syncObjects(
 				localObjectList = localNoteList,
-				cloudObjectMetadata = dropboxMetadata?.noteMetadata ?: mapOf(),
+				toDownSyncObjectList = toDownSyncNoteList,
+				toUpSyncObjectList = toUpSyncNoteList,
 				objectPath = "note",
 				id = NoteObject::id,
-				modifiedTimestamp = NoteObject::modifiedTimestamp,
-				toCloudSnapshot = NoteObject::toCloudSnapshot
-			) {
-				it.forEach { (noteObject, operation) ->
-					if (operation == Operation.Create || operation == Operation.Update) {
-						NoteObject(noteObject).apply { repository.putNote(this, false) }
-					} else if (operation == Operation.Delete) {
-						//						repository.deleteNoteSuspended(noteObject)
+				toCloudSnapshot = NoteObject::toCloudSnapshot,
+				updateLocalData = {
+					it.forEach { (noteObject, operation) ->
+						if (operation == Operation.Create || operation == Operation.Update) {
+							NoteObject(JSONObject(noteObject.toString(Charset.defaultCharset()))).apply { repository.putNote(this, false) }
+						} else if (operation == Operation.Delete) {
+//						repository.deleteNoteSuspended(noteObject)
+						}
 					}
 				}
+			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
+				dropboxSyncStatus.tryEmit(
+					DropboxSyncStatus.Syncing(
+						toUpSyncChapterCount = 0,
+						toDownSyncChapterCount = 0,
+						toUpSyncNoteCount = toUpSyncCount - toUpSynced,
+						toDownSyncNoteCount = toDownSyncCount - toDownSynced,
+						toUpSyncBucketCount = toUpSyncBucketList.size,
+						toDownSyncBucketCount = toDownSyncBucketList.size,
+						toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
+						toDownSyncBucketItemCount = toDownSyncBucketItemList.size,
+					)
+				)
+			}
+
+			syncObjects(
+				localObjectList = localBucketList,
+				toDownSyncObjectList = toDownSyncBucketList,
+				toUpSyncObjectList = toUpSyncBucketList,
+				objectPath = "bucket",
+				id = BucketObject::id,
+				toCloudSnapshot = BucketObject::toCloudSnapshot,
+				updateLocalData = {
+					it.forEach { (bucketObject, operation) ->
+						if (operation == Operation.Create || operation == Operation.Update) {
+							BucketObject(JSONObject(bucketObject.toString(Charset.defaultCharset()))).apply { repository.putBucket(this, false) }
+						} else if (operation == Operation.Delete) {
+
+						}
+					}
+				}
+			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
+				dropboxSyncStatus.tryEmit(
+					DropboxSyncStatus.Syncing(
+						toUpSyncChapterCount = 0,
+						toDownSyncChapterCount = 0,
+						toUpSyncNoteCount = 0,
+						toDownSyncNoteCount = 0,
+						toUpSyncBucketCount = toUpSyncCount - toUpSynced,
+						toDownSyncBucketCount = toDownSyncCount - toDownSynced,
+						toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
+						toDownSyncBucketItemCount = toDownSyncBucketItemList.size,
+					)
+				)
+			}
+
+			syncObjects(
+				localObjectList = localBucketItemList,
+				toDownSyncObjectList = toDownSyncBucketItemList,
+				toUpSyncObjectList = toUpSyncBucketItemList,
+				objectPath = "bucketItem",
+				id = BucketItemObject::id,
+				toCloudSnapshot = BucketItemObject::toCloudSnapshot,
+				updateLocalData = {
+					it.forEach { (bucketItemObject, operation) ->
+						if (operation == Operation.Create || operation == Operation.Update) {
+							BucketItemObject(JSONObject(bucketItemObject.toString(Charset.defaultCharset()))).apply { repository.putBucketItem(this, false) }
+						} else if (operation == Operation.Delete) {
+
+						}
+					}
+				}
+			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
+				dropboxSyncStatus.tryEmit(
+					DropboxSyncStatus.Syncing(
+						toUpSyncChapterCount = 0,
+						toDownSyncChapterCount = 0,
+						toUpSyncNoteCount = 0,
+						toDownSyncNoteCount = 0,
+						toUpSyncBucketCount = 0,
+						toDownSyncBucketCount = toDownSyncBucketList.size,
+						toUpSyncBucketItemCount = toUpSyncCount - toUpSynced,
+						toDownSyncBucketItemCount = toDownSyncCount - toDownSynced,
+					)
+				)
 			}
 
 			updateMetadata()
@@ -354,37 +518,29 @@ class DropboxService : LifecycleService() {
 	}
 
 	@WorkerThread
-	private inline fun <reified T> DbxClientV2.syncObjects(
+	private fun <T> DbxClientV2.syncObjects(
 		localObjectList : List<T>,
-		cloudObjectMetadata : Map<RealmUUID, DropboxInnerMetadata>,
+		toDownSyncObjectList : Map<RealmUUID, Operation> = mapOf(),
+		toUpSyncObjectList : List<RealmUUID> = listOf(),
 		objectPath : String,
 		id : KMutableProperty1<T, RealmUUID>,
-		modifiedTimestamp : KMutableProperty1<T, Long>,
 		toCloudSnapshot : KFunction1<T, String>,
 		updateLocalData : (Map<ByteArray, Operation>) -> Unit = {},
+		progress : (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> }
 	) {
-		val (toUpSyncObjectList, toDownSyncObjectList) = countUnSyncedObjects(
-			cloudObjectMetadata = cloudObjectMetadata,
-			localObjectList = localObjectList,
-			id = id,
-			modifiedTimestamp = modifiedTimestamp,
-			toCloudSnapshot = toCloudSnapshot
-		)
-
-		dropboxSyncStatus.tryEmit(DropboxSyncStatus.Syncing(toUpSyncObjectList.size, toDownSyncObjectList.size))
-
 		val downloadedObjectList = mutableMapOf<ByteArray, Operation>()
 
 		toDownSyncObjectList.toList().forEachIndexed { index, (chapterId, operation) ->
 			downloadedObjectList[downSyncObject(objectPath, chapterId.toString())] = operation
-			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Syncing(toUpSyncObjectList.size, toDownSyncObjectList.size - index))
+			progress(toDownSyncObjectList.size, index, toUpSyncObjectList.size, 0)
 		}
 
 		updateLocalData(downloadedObjectList)
 
 		toUpSyncObjectList.forEachIndexed { index, objectId ->
+			Log.i("npr71", "DropboxService: syncObjects: uploading $objectPath $objectId")
 			upSyncObject(objectPath, objectId.toString(), toCloudSnapshot(localObjectList.first { id.get(it) == objectId }).encodeToByteArray())
-			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Syncing(toUpSyncObjectList.size - index, toDownSyncObjectList.size))
+			progress(0, 0, toUpSyncObjectList.size, index)
 		}
 	}
 
@@ -427,7 +583,6 @@ class DropboxService : LifecycleService() {
 
 			if (localObjectId !in cloudObjectIdList) {
 				toUpSyncObjectList.add(localObjectId)
-				Log.i("npr71", "$localObjectId not in cloudObjectIdList")
 			} else {
 				val remoteHash = cloudObjectMetadata[localObjectId]?.hash
 				val localHash = objectMapper
@@ -439,10 +594,7 @@ class DropboxService : LifecycleService() {
 				if (
 					localHash != remoteHash &&
 					localModifiedTimestamp > (cloudObjectMetadata[localObjectId]?.modifiedTimestamp ?: 0)
-				) {
-					toUpSyncObjectList.add(localObjectId)
-					Log.i("npr71", "$localObjectId localHash != remoteHash && localModifiedTimestamp > cloudModifiedTimestamp")
-				}
+				) toUpSyncObjectList.add(localObjectId)
 			}
 		}
 
@@ -454,10 +606,7 @@ class DropboxService : LifecycleService() {
 				if (
 					localHash != remoteHash &&
 					dbxInnerData.modifiedTimestamp > modifiedTimestamp.get(localObjectList.first { id.get(it) == cloudObjectId })
-				) {
-					toDownSyncObjectList[cloudObjectId] = Operation.Update
-					Log.i("npr71", "$cloudObjectId localHash != remoteHash && cloudModifiedTimestamp > localModifiedTimestamp")
-				}
+				) toDownSyncObjectList[cloudObjectId] = Operation.Update
 			}
 		}
 
@@ -469,17 +618,22 @@ class DropboxService : LifecycleService() {
 		val localChapterList = repository.getAllChapter().map { it.clone() }
 		val localNoteList = repository.getAllNote().map { it.clone() }
 
-		val dropboxMetadata = DropboxMetadata()
+		val chapterMetadata = localChapterList.associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
+		val noteMetadata = localNoteList.associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
+		val bucketMetadata =
+			repository.getAllBucket().associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
+		val bucketItemMetadata =
+			repository.getAllBucketItem().associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
+		val tagMetadata = repository.getAllTag().associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
 
-		localChapterList
-			.associate {
-				Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false))
-			}.let { dropboxMetadata.chapterMetadata.putAll(it) }
+		val dropboxMetadata = DropboxMetadata(
+			chapterMetadata = chapterMetadata,
+			noteMetadata = noteMetadata,
+			bucketMetadata = bucketMetadata,
+			bucketItemMetadata = bucketItemMetadata,
+			tagMetadata = tagMetadata,
+		)
 
-		localNoteList
-			.associate {
-				Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false))
-			}.let { dropboxMetadata.noteMetadata.putAll(it) }
 
 		objectMapper.writeValueAsString(dropboxMetadata).let {
 			files()
@@ -499,13 +653,19 @@ class DropboxService : LifecycleService() {
 	}
 
 	companion object {
-		class DropboxMetadata {
-			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
-			val chapterMetadata : MutableMap<RealmUUID, DropboxInnerMetadata> = mutableMapOf()
 
+		data class DropboxMetadata(
 			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
-			val noteMetadata : MutableMap<RealmUUID, DropboxInnerMetadata> = mutableMapOf()
-		}
+			val chapterMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
+			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
+			val noteMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
+			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
+			val bucketMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
+			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
+			val bucketItemMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
+			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
+			val tagMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
+		)
 
 		data class DropboxInnerMetadata(
 			val modifiedTimestamp : Long,
@@ -521,9 +681,20 @@ class DropboxService : LifecycleService() {
 			object NotLoggedIn : DropboxSyncStatus()
 			object Loading : DropboxSyncStatus()
 			object Connected : DropboxSyncStatus()
-			class Syncing(val toUpSyncCount : Int, val toDownSyncCount : Int) : DropboxSyncStatus()
-			object SyncError : DropboxSyncStatus()
+			class Syncing(
+				val toUpSyncChapterCount : Int = - 1,
+				val toDownSyncChapterCount : Int = - 1,
+				val toUpSyncNoteCount : Int = - 1,
+				val toDownSyncNoteCount : Int = - 1,
+				val toUpSyncBucketCount : Int = - 1,
+				val toDownSyncBucketCount : Int = - 1,
+				val toUpSyncBucketItemCount : Int = - 1,
+				val toDownSyncBucketItemCount : Int = - 1,
+			) : DropboxSyncStatus()
+
+			class SyncError(val message : String) : DropboxSyncStatus()
 			object DriveLocked : DropboxSyncStatus()
+			object Idle : DropboxSyncStatus()
 		}
 
 		enum class Operation {

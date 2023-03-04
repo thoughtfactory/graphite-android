@@ -3,9 +3,6 @@ package com.syncodec.graphite.presentation.notebook
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.notebook.screen.NotebookScreen
 import com.syncodec.graphite.presentation.notebook.screen.NotebookScreenViewModel
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -34,11 +31,6 @@ class NotebookActivity : ComponentActivity() {
 
 		setContent {
 			BaseContent {
-
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-
 				NotebookScreen()
 			}
 		}

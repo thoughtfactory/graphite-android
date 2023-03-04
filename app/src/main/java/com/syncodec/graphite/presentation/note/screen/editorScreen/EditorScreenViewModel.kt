@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.note.screen.editorScreen
 
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
@@ -8,8 +9,9 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
@@ -21,10 +23,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.koin.android.annotation.KoinViewModel
+import java.io.File
 
 
 @KoinViewModel
-class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class EditorScreenViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -101,7 +104,7 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 	 * @author pushpull
 	 * @since 2.2.0
 	 */
-	fun loadNote(noteId : RealmUUID ) = this.noteId.tryEmit(noteId)
+	fun loadNote(noteId : RealmUUID) = this.noteId.tryEmit(noteId)
 
 	private fun loadTags() {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -174,8 +177,8 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 		viewModelScope.launch(Dispatchers.Default) {
 			NoteObject().apply {
 				this@EditorScreenViewModel.noteId.value?.let { this.id = it } ?: run { this@EditorScreenViewModel.noteId.tryEmit(this.id) }
-				this@EditorScreenViewModel.createdTimestamp.value?.let { this.createdTimestamp = it }
 				this.modifiedTimestamp = System.currentTimeMillis()
+				this@EditorScreenViewModel.createdTimestamp.value?.let { this.createdTimestamp = it }
 				this@EditorScreenViewModel.userTimestamp.value?.let { this.userTimestamp = it }
 				this@EditorScreenViewModel.title.value?.let { this.title = it }
 				this@EditorScreenViewModel.color.value?.let { this.color = it }
@@ -189,12 +192,12 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 				this@EditorScreenViewModel.parentChapter.value?.id?.let { this.parentId = it }
 
 				observeSaveOperation(toSaveNoteObject = this)
-				repository.putNote(noteObject = this)
+				repository.putNote(noteObject = this, modifyTimestampAuto = false)
 			}
 		}
 	}
 
-	fun putAttachmentThumbnail(noteId : RealmUUID, thumbnail: Bitmap) {
+	fun putAttachmentThumbnail(noteId : RealmUUID, thumbnail : Bitmap) {
 		repository.putThumbnailInNote(noteId = noteId, thumbnail = thumbnail)
 	}
 
@@ -202,8 +205,8 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 		viewModelScope.launch(Dispatchers.Default) {
 			val tagListToAdd = this@EditorScreenViewModel.tagListToAdd.value.map { it.id }
 			val tagListToRemove = this@EditorScreenViewModel.tagListToRemove.value.map { it.id }
-			this@EditorScreenViewModel.tagListToAdd.tryEmit(emptyList())
-			this@EditorScreenViewModel.tagListToRemove.tryEmit(emptyList())
+			this@EditorScreenViewModel.tagListToAdd.tryEmit(listOf())
+			this@EditorScreenViewModel.tagListToRemove.tryEmit(listOf())
 			repository.updateTagConnections(id = id, tagListToAdd = tagListToAdd, tagListToRemove = tagListToRemove)
 			onNoteSaved.tryEmit(true)
 		}
@@ -226,9 +229,9 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 		try {
 			when {
 				latLng == null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessNoData)
-				latLng == null && !address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyAddress(address))
+				latLng == null && ! address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyAddress(address))
 				latLng != null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyLatLng(latLng))
-				else -> locationDataState.tryEmit(LocationData.Success(latLng!!, address!!))
+				else -> locationDataState.tryEmit(LocationData.Success(latLng !!, address !!))
 			}
 		} catch (e : Exception) {
 			locationDataState.tryEmit(LocationData.Error("Error loading location data"))
@@ -236,6 +239,14 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 	}
 
 	fun setUserTimestamp(timestamp : Long) = this.userTimestamp.tryEmit(timestamp)
+
+	fun setParentChapter(chapterId : RealmUUID) {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.getChapterFromId(id = chapterId)?.let {
+				parentChapter.tryEmit(it)
+			}
+		}
+	}
 
 	fun removeLocation() {
 		this.latLng.tryEmit(null)
@@ -249,21 +260,22 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 		loadLocationData(latLng = latLng, address = address)
 	}
 
-	fun setLocationPermissionUnabailable() = this.locationDataState.tryEmit(LocationData.NoPermission)
+	fun setLocationPermissionUnavailable() = this.locationDataState.tryEmit(LocationData.NoPermission)
 
-	fun setContent(data : String?) : Boolean {
+	fun setContent(dataJson : JSONObject?, dataText : String?, title : String?) : Boolean {
 		return try {
-			val dataObject = JSONObject(data ?: "{}")
-			val dataJson = dataObject.optJSONObject("dataJson")
-			val dataText = dataObject.optString("dataText")
+			(this.contentThumbnail.tryEmit(dataText?.substring(0, minOf(256, dataText.length)))
+					&& this.content.tryEmit(dataJson?.toString())
+					&& this.title.tryEmit(title)).let { return it }
 
-			return (this.contentThumbnail.tryEmit(dataText.substring(0, minOf(256, dataText.length))) &&
-					this.content.tryEmit(dataJson?.toString()) &&
-					this.title.tryEmit(dataObject.optString("title"))
-					)
 		} catch (e : Exception) {
 			false
 		}
+	}
+
+	fun putAttachment(noteId : RealmUUID, attachmentListToAdd : List<Uri>, attachmentListToRemove : List<File>) {
+		attachmentRepository.delete(attachmentListToRemove)
+		attachmentRepository.putAttachment(noteId, attachmentListToAdd)
 	}
 
 	fun saveNote() = this.putNote()

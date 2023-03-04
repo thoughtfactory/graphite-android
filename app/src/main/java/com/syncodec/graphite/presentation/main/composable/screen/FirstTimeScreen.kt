@@ -1,6 +1,8 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
+import android.content.Intent
 import android.graphics.Typeface
+import android.net.Uri
 import android.util.TypedValue
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -31,9 +33,9 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +47,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -69,7 +70,6 @@ import kotlinx.coroutines.launch
 fun FirstTimeScreen(
 	onClickLogin : () -> Unit
 ) {
-
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
@@ -77,9 +77,7 @@ fun FirstTimeScreen(
 	val screenWidth = configuration.screenWidthDp.dp
 	val screenHeight = configuration.screenHeightDp.dp
 
-	val dataStoreInstance = DataStoreInstance(context = context)
-
-	val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
 	val textColor = MaterialTheme.colorScheme.onSurface
 
@@ -88,7 +86,7 @@ fun FirstTimeScreen(
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.surface)
+			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
 	) {
 		Column(
 			modifier = Modifier.fillMaxSize(),
@@ -108,7 +106,7 @@ fun FirstTimeScreen(
 						this.setText("GRAPHITE")
 						this.setTextColor(textColor.toArgb())
 						this.setBackgroundColor(0)
-						this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 31f)
+						this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 47f)
 						this.setTypeface(
 							ResourcesCompat.getFont(context, R.font.graduate_regular),
 							Typeface.BOLD
@@ -124,10 +122,10 @@ fun FirstTimeScreen(
 			AndroidView(
 				factory = {
 					RevealText(it).apply {
-						this.setText("A MOMENT IN TIME")
+						this.setText("A LOCAL FIRST")
 						this.setTextColor(textColor.toArgb())
 						this.setBackgroundColor(0)
-						this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+						this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23f)
 						this.setTypeface(
 							ResourcesCompat.getFont(context, R.font.graduate_regular),
 							Typeface.BOLD
@@ -166,7 +164,7 @@ fun FirstTimeScreen(
 
 @Composable
 private fun ContentCard(
-	showContent: Boolean
+	showContent : Boolean
 ) {
 	val scope = rememberCoroutineScope()
 	var showJournal by remember { mutableStateOf(false) }
@@ -208,7 +206,7 @@ private fun ContentCard(
 					text = "JOURNAL",
 					modifier = Modifier,
 					fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-					fontWeight = FontWeight.Normal,
+					fontWeight = FontWeight.Bold,
 					fontSize = 20.sp,
 					lineHeight = 24.sp,
 					letterSpacing = 2.sp,
@@ -239,7 +237,7 @@ private fun ContentCard(
 					text = "NOTEBOOK",
 					modifier = Modifier,
 					fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-					fontWeight = FontWeight.Normal,
+					fontWeight = FontWeight.Bold,
 					fontSize = 20.sp,
 					lineHeight = 24.sp,
 					letterSpacing = 2.sp,
@@ -270,7 +268,7 @@ private fun ContentCard(
 					text = "BUCKET LIST",
 					modifier = Modifier,
 					fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-					fontWeight = FontWeight.Normal,
+					fontWeight = FontWeight.Bold,
 					fontSize = 20.sp,
 					lineHeight = 24.sp,
 					letterSpacing = 2.sp,
@@ -283,9 +281,9 @@ private fun ContentCard(
 
 @Composable
 private fun LoginCard(
-	modifier: Modifier,
-	onClickLogin: () -> Unit,
-	onClickTryFirst: () -> Unit
+	modifier : Modifier,
+	onClickLogin : () -> Unit,
+	onClickTryFirst : () -> Unit
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
@@ -353,14 +351,14 @@ private fun LoginCard(
 				) {
 					Checkbox(
 						checked = isAgreedToTerms,
-						onCheckedChange = { isAgreedToTerms = !isAgreedToTerms },
+						onCheckedChange = { isAgreedToTerms = ! isAgreedToTerms },
 						colors = CheckboxDefaults.colors(
 							checkedColor = MaterialTheme.colorScheme.primary,
 							uncheckedColor = MaterialTheme.colorScheme.primary,
 						)
 					)
 
-					val annotatedLinkString: AnnotatedString = buildAnnotatedString {
+					val annotatedLinkString : AnnotatedString = buildAnnotatedString {
 						val str = "I agree to the Terms of Service and Privacy Policy"
 						append(str)
 //						** I agree to the
@@ -408,7 +406,6 @@ private fun LoginCard(
 						)
 					}
 
-					val uriHandler = LocalUriHandler.current
 					Column(modifier = Modifier) {
 						Spacer(modifier = Modifier.height(15.dp))
 						ClickableText(
@@ -418,7 +415,9 @@ private fun LoginCard(
 							onClick = {
 								annotatedLinkString
 									.getStringAnnotations("url", it, it)
-									.firstOrNull()?.let { (item, start, end, tag) -> uriHandler.openUri(item) }
+									.firstOrNull()?.let { (item, start, end, tag) ->
+										context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(item)))
+									}
 							}
 						)
 					}

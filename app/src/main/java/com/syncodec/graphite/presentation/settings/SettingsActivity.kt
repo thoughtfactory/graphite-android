@@ -16,18 +16,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.with
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.Identity
@@ -37,6 +35,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.ktx.Firebase
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Purchases
@@ -45,6 +44,7 @@ import com.revenuecat.purchases.interfaces.LogInCallback
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.notification.WriteNoteNotification
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.settings.composable.bar.TopBar
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
@@ -52,13 +52,14 @@ import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetL
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
 import com.syncodec.graphite.presentation.settings.composable.screen.BackupAndRestoreScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.ImportDataScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -99,53 +100,46 @@ class SettingsActivity : ComponentActivity() {
 			.build()
 
 		var authenticatorScreen by mutableStateOf(AuthenticatorScreen.None)
-		val authenticatorAction : (AuthenticatorScreen) -> Unit = { authenticatorScreen = it }
 
 		setContent {
 			BaseContent {
 				val scope = rememberCoroutineScope()
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-
 				val _firebaseUser by this.firebaseUser
+				val dataStoreInstance = remember { DataStoreInstance(context = this) }
 
 				val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 				var bottomSheetType : SettingsBottomSheetType by remember { mutableStateOf(SettingsBottomSheetType.Profile) }
 
-				fun openSheet(_bottomSheetType : SettingsBottomSheetType) {
-					scope.launch { bottomSheetType = _bottomSheetType; modalBottomSheetState.show() }
+				fun openSheet(sheetType : SettingsBottomSheetType) {
+					scope.launch { bottomSheetType = sheetType; modalBottomSheetState.show() }
 				}
 
 				fun closeSheet() {
 					scope.launch { modalBottomSheetState.hide() }
 				}
 
-				var showImportDataDialog by remember { mutableStateOf(false) }
-				var showImportDataJourneyDialog by remember { mutableStateOf(false) }
+				var showBiometricDialog by remember { mutableStateOf(false) }
 				var showExportDataDialog by remember { mutableStateOf(false) }
 				var showClearDataDialog by remember { mutableStateOf(false) }
 				var showNotificationPermissionDialog by remember { mutableStateOf(false) }
-				var _showDeleteAccountDialog by remember { mutableStateOf(false) }
+				var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
 				var settingsScreen by remember { mutableStateOf(SettingsScreen.Settings) }
 
 				fun openDialog(dialogType : SettingsDialogType) = when (dialogType) {
-					SettingsDialogType.ImportData -> showImportDataDialog = true
-					SettingsDialogType.ImportDataJourney -> showImportDataJourneyDialog = true
+					SettingsDialogType.Biometric -> showBiometricDialog = true
 					SettingsDialogType.ExportData -> showExportDataDialog = true
 					SettingsDialogType.ClearData -> showClearDataDialog = true
 					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = true
-					SettingsDialogType.DeleteAccount -> _showDeleteAccountDialog = true
+					SettingsDialogType.DeleteAccount -> showDeleteAccountDialog = true
 				}
 
 				fun closeDialog(dialogType : SettingsDialogType) = when (dialogType) {
-					SettingsDialogType.ImportData -> showImportDataDialog = false
-					SettingsDialogType.ImportDataJourney -> showImportDataJourneyDialog = false
+					SettingsDialogType.Biometric -> showBiometricDialog = false
 					SettingsDialogType.ExportData -> showExportDataDialog = false
 					SettingsDialogType.ClearData -> showClearDataDialog = false
 					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = false
-					SettingsDialogType.DeleteAccount -> _showDeleteAccountDialog = false
+					SettingsDialogType.DeleteAccount -> showDeleteAccountDialog = false
 				}
 
 				this.onBackPressedDispatcher.addCallback(
@@ -166,6 +160,9 @@ class SettingsActivity : ComponentActivity() {
 				)
 
 				GenericScaffold(
+					topBar = {
+						TopBar(settingsScreen = settingsScreen)
+					},
 					modalBottomSheetState = modalBottomSheetState,
 					sheetContent = {
 						SheetLayout(
@@ -175,18 +172,25 @@ class SettingsActivity : ComponentActivity() {
 							closeSheet = ::closeSheet,
 						)
 					},
-					topBar = {
-						TopBar(
-							settingsScreen = settingsScreen,
-							onClickBack = { super.getOnBackPressedDispatcher().onBackPressed() }
-						)
-					},
 					dialogContent = {
 						SettingsDialog(
-							showImportDataDialog = showImportDataDialog,
-							showImportDataJourneyDialog = showImportDataJourneyDialog,
+							showBiometricDialog = showBiometricDialog,
 							showExportDataDialog = showExportDataDialog,
 							showClearDataDialog = showClearDataDialog,
+							onAddBiometricAuth = {
+								dataStoreInstance.putUseBiometric(true)
+								closeDialog(SettingsDialogType.Biometric)
+							},
+							showNotificationPermissionDialog = showNotificationPermissionDialog,
+							showDeleteAccountDialog = showDeleteAccountDialog,
+							onNotificationPermissionAvailable = {
+								if (BaseApplication.isPro.value) WriteNoteNotification.showSimpleNotification(applicationContext)
+								else Toast.makeText(applicationContext, "Join Graphite Pro to access this feature", Toast.LENGTH_SHORT).show()
+							},
+							onDeleteAccount = {
+								deleteAccount()
+								closeDialog(SettingsDialogType.DeleteAccount)
+							},
 							closeDialog = ::closeDialog,
 						)
 					},
@@ -194,10 +198,8 @@ class SettingsActivity : ComponentActivity() {
 					AnimatedContent(
 						targetState = settingsScreen,
 						transitionSpec = {
-							scaleIn(tween(300), initialScale = 0.71f) + fadeIn(tween(300)) with scaleOut(
-								tween(300),
-								targetScale = 0.71f
-							) + fadeOut(tween(300))
+							scaleIn(tween(300), initialScale = 0.71f) + fadeIn(tween(300)) with
+									scaleOut(tween(300), targetScale = 0.71f) + fadeOut(tween(300))
 						}
 					) {
 						when (it) {
@@ -205,13 +207,17 @@ class SettingsActivity : ComponentActivity() {
 								firebaseUser = _firebaseUser,
 								onClickSignIn = ::onClickSignIn,
 								onClickSignOut = ::onClickSignOut,
-								onClickDeleteAccount = {},
+								onClickDeleteAccount = { openDialog(SettingsDialogType.DeleteAccount) },
 								navigateTo = { settingsScreen = it },
 								openDialog = ::openDialog,
 							)
 
 							SettingsScreen.BackupAndRestore -> BackupAndRestoreScreen { settingsScreen = it }
-							SettingsScreen.LocalBackup -> LocalBackupScreen()
+							SettingsScreen.LocalBackup -> LocalBackupScreen(
+								openDialog = ::openDialog,
+								closeDialog = ::closeDialog,
+							)
+
 							SettingsScreen.ImportData -> ImportDataScreen(
 								openDialog = ::openDialog,
 							)
@@ -299,6 +305,32 @@ class SettingsActivity : ComponentActivity() {
 				}
 			}
 		)
+	}
+
+	private fun deleteAccount() {
+		val auth = Firebase.auth
+		val data = hashMapOf("uId" to auth.currentUser?.uid)
+		FirebaseFunctions
+			.getInstance()
+			.getHttpsCallable("deleteAccount")
+			.call(data)
+			.addOnSuccessListener {
+				lifecycleScope.launch(Dispatchers.Main) {
+					val data = it.data as String
+					if (data == "Ok") {
+						Toast.makeText(this@SettingsActivity, "Your account is scheduled for deletion.", Toast.LENGTH_SHORT).show()
+						onClickSignOut()
+					} else if (data == "Error") {
+						Toast.makeText(this@SettingsActivity, "Error deleting account. You can write us a mail about account deletion.", Toast.LENGTH_SHORT)
+							.show()
+					}
+				}
+			}
+			.addOnFailureListener {
+				lifecycleScope.launch(Dispatchers.Main) {
+					Toast.makeText(this@SettingsActivity, "Error deleting account. You can write us a mail about account deletion.", Toast.LENGTH_SHORT).show()
+				}
+			}
 	}
 
 	companion object {

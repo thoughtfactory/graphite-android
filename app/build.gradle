@@ -17,9 +17,9 @@ android {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 33
-		versionCode 30
+		versionCode 33
 
-		versionName '2.1.1'
+		versionName '2.2.0'
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 		vectorDrawables {
@@ -97,22 +97,22 @@ dependencies {
 
 	implementation 'com.jakewharton:process-phoenix:2.1.2'
 
-	implementation 'androidx.work:work-runtime-ktx:2.8.0-rc01'
+	implementation 'androidx.work:work-runtime-ktx:2.8.0'
 	implementation 'androidx.core:core-ktx:1.9.0'
 
 	implementation 'androidx.core:core-ktx:1.9.0'
 
 	implementation 'androidx.activity:activity-compose:1.6.1'
-	implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
+	implementation 'androidx.appcompat:appcompat:1.7.0-alpha02'
 
-	implementation 'androidx.compose.material:material:1.4.0-alpha05'
-	implementation 'androidx.compose.material3:material3:1.1.0-alpha05'
-	implementation 'androidx.compose.ui:ui:1.4.0-alpha05'
-	implementation 'androidx.compose.foundation:foundation:1.3.1'
-	implementation 'androidx.compose.ui:ui-tooling-preview:1.4.0-alpha05'
-	implementation 'androidx.compose.ui:ui-util:1.4.0-alpha05'
+	implementation 'androidx.compose.material:material:1.4.0-beta02'
+	implementation 'androidx.compose.material3:material3:1.1.0-alpha07'
+	implementation 'androidx.compose.ui:ui:1.4.0-beta02'
+	implementation 'androidx.compose.foundation:foundation:1.4.0-beta02'
+	implementation 'androidx.compose.ui:ui-tooling-preview:1.4.0-beta02'
+	implementation 'androidx.compose.ui:ui-util:1.4.0-beta02'
 
-	implementation 'androidx.work:work-runtime-ktx:2.8.0-rc01'
+	implementation 'androidx.work:work-runtime-ktx:2.8.0'
 	implementation "androidx.glance:glance-appwidget:1.0.0-alpha05"
 
 	implementation 'androidx.navigation:navigation-compose:2.5.3'
@@ -120,14 +120,13 @@ dependencies {
 
 	implementation 'androidx.core:core-animation:1.0.0-beta01'
 
-	implementation 'com.google.accompanist:accompanist-insets:0.27.0'
-	implementation 'com.google.accompanist:accompanist-flowlayout:0.27.0'
-	implementation 'com.google.accompanist:accompanist-pager:0.27.0'
-	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.27.0'
-	implementation 'com.google.accompanist:accompanist-permissions:0.27.0'
-	implementation 'com.google.accompanist:accompanist-webview:0.27.0'
-	implementation 'com.google.accompanist:accompanist-swiperefresh:0.27.0'
-	implementation 'com.google.accompanist:accompanist-navigation-animation:0.27.0'
+	implementation 'com.google.accompanist:accompanist-insets:0.29.1-alpha'
+	implementation 'com.google.accompanist:accompanist-flowlayout:0.29.1-alpha'
+	implementation 'com.google.accompanist:accompanist-pager:0.29.1-alpha'
+	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.29.1-alpha'
+	implementation 'com.google.accompanist:accompanist-permissions:0.29.1-alpha'
+	implementation 'com.google.accompanist:accompanist-webview:0.29.1-alpha'
+	implementation 'com.google.accompanist:accompanist-navigation-animation:0.29.1-alpha'
 
 	implementation 'org.burnoutcrew.composereorderable:reorderable:0.9.6'
 	implementation 'com.kizitonwose.calendar:compose:2.1.1'
@@ -143,22 +142,22 @@ dependencies {
 	implementation 'androidx.compose.runtime:runtime:1.3.3'
 
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
-	implementation 'io.realm.kotlin:library-base:1.6.0'
+	implementation 'io.realm.kotlin:library-base:1.6.1'
 
-	implementation 'io.insert-koin:koin-android:3.3.2'
-	implementation 'io.insert-koin:koin-android-compat:3.3.2'
-	implementation 'io.insert-koin:koin-androidx-workmanager:3.3.2'
-	implementation 'io.insert-koin:koin-androidx-navigation:3.3.2'
-	implementation 'io.insert-koin:koin-androidx-compose:3.4.1'
-	implementation 'io.insert-koin:koin-android:3.3.2'
-	implementation 'io.insert-koin:koin-annotations:1.1.0'
+	implementation 'io.insert-koin:koin-android:3.3.3'
+	implementation 'io.insert-koin:koin-android-compat:3.3.3'
+	implementation 'io.insert-koin:koin-androidx-workmanager:3.3.3'
+	implementation 'io.insert-koin:koin-androidx-navigation:3.3.3'
+	implementation 'io.insert-koin:koin-androidx-compose:3.4.2'
+	implementation 'io.insert-koin:koin-android:3.3.3'
+	implementation 'io.insert-koin:koin-annotations:1.1.1'
 	implementation 'androidx.core:core-ktx:1.9.0'
-	ksp 'io.insert-koin:koin-ksp-compiler:1.1.0'
+	ksp 'io.insert-koin:koin-ksp-compiler:1.1.1'
 
-	implementation 'com.fasterxml.jackson.core:jackson-core:2.14.1'
-	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.1'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.1'
-	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.14.1'
+	implementation 'com.fasterxml.jackson.core:jackson-core:2.14.2'
+	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.2'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
+	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2'
 //	implementation 'com.google.api-client:google-api-client-jackson2:2.1.1'
 
 	implementation 'io.coil-kt:coil:2.2.2'
@@ -166,11 +165,11 @@ dependencies {
 	implementation 'io.coil-kt:coil-gif:2.2.2'
 	implementation 'io.coil-kt:coil-video:2.2.2'
 
-	implementation "androidx.exifinterface:exifinterface:1.3.5"
+	implementation "androidx.exifinterface:exifinterface:1.3.6"
 
 	implementation 'com.revenuecat.purchases:purchases:5.6.4'
 
-	implementation platform('com.google.firebase:firebase-bom:31.2.0')
+	implementation platform('com.google.firebase:firebase-bom:31.2.2')
 	implementation 'com.google.android.gms:play-services-auth:20.4.1'
 	implementation 'com.google.firebase:firebase-analytics'
 	implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
@@ -192,11 +191,11 @@ dependencies {
 	implementation 'joda-time:joda-time:2.12.2'
 
 	implementation 'me.jorgecastillo:androidcolorx:0.2.0'
-	implementation 'com.godaddy.android.colorpicker:compose-color-picker-android:0.6.0'
+	implementation 'com.godaddy.android.colorpicker:compose-color-picker-android:0.7.0'
 
 	implementation 'com.tobianoapps:bulletin:1.0.3'
-	implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.0.4'
-	implementation 'com.maxkeppeler.sheets-compose-dialogs:color:1.0.4'
+	implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.1.0'
+	implementation 'com.maxkeppeler.sheets-compose-dialogs:color:1.1.0'
 
 	implementation 'org.apache.commons:commons-compress:1.20'
 	implementation 'org.tukaani:xz:1.5'
@@ -210,11 +209,9 @@ dependencies {
 	implementation 'com.google.android.play:core:1.10.3'
 
 	implementation 'com.google.android.gms:play-services-location:21.0.1'
-//	implementation 'com.google.maps.android:maps-ktx:3.4.0'
 	implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
-
-	implementation 'com.google.maps.android:maps-compose:2.9.1'
-//	implementation 'com.google.maps.android:android-maps-utils-v3:2.4.0'
+	implementation 'com.google.maps.android:maps-compose:2.11.0'
+	implementation 'com.google.maps.android:maps-compose-utils:2.11.0'
 	implementation 'com.google.android.gms:play-services-maps:18.1.0'
 
 	implementation 'androidx.datastore:datastore-preferences-core:1.0.0'
@@ -226,7 +223,7 @@ dependencies {
 //	androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
 //	implementation 'com.google.crypto.tink:tink-android:1.6.1'
 
-	implementation 'com.valentinilk.shimmer:compose-shimmer:1.0.3'
+	implementation 'com.valentinilk.shimmer:compose-shimmer:1.0.4'
 	implementation 'io.github.vanpra.compose-material-dialogs:datetime:0.9.0'
 
 //	implementation 'com.instabug.library:instabug:11.6.0'
@@ -256,4 +253,5 @@ dependencies {
 	debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
 	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.3.3'
 	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.3.3'
+	testImplementation 'org.json:json:20230227'
 }

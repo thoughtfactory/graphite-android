@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.tags.composable.bar
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,21 +16,21 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 @Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(
-	onBackPressed : () -> Unit = {}
-) {
+fun TopBar() {
+
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
 	TopAppBar(
 		navigationIcon = {
 			MenuButton(
 				icon = R.drawable.ic_back,
-				onClick = onBackPressed
+				onClick = { onBackPressedDispatcher?.onBackPressed() }
 			)
 		},
 		title = {
 			Text(
 				text = "Manage Tags",
 				color = MaterialTheme.colorScheme.onBackground,
-				fontWeight = FontWeight.Bold,
 			)
 		},
 		colors = TopAppBarDefaults.topAppBarColors(

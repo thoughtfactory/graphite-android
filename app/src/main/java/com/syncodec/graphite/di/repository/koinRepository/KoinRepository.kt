@@ -13,12 +13,10 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.BucketNotFoundException
-import com.syncodec.graphite.di.repository.ParentChapterNotFoundException
+import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RealmMigrator
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.RealmUUIDReorderComparator
 import com.syncodec.graphite.utils.RecursiveFileObserver
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
@@ -27,6 +25,7 @@ import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.scaleBitmap
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmSchema
@@ -45,6 +44,8 @@ import kotlin.reflect.KClass
 
 class KoinRepository {
 
+	private val attachmentRepository = AttachmentRepository()
+
 	/**
 	 * The state of the repository.This is used to determine if the repository is ready to be used. Use repository when [repositoryState] is [RepositoryState.SUCCESS].
 	 */
@@ -52,7 +53,8 @@ class KoinRepository {
 
 	var realm : Realm? = null
 
-	fun initRealm(context : Context) {
+	fun initRepository(context : Context) {
+		attachmentRepository.initRepository(context)
 		try {
 			var key : ByteArray
 			context.getSecretData("realmKey").let {
@@ -106,7 +108,7 @@ class KoinRepository {
 			repositoryState.value = RepositoryState.SUCCESS
 		} catch (e : Exception) {
 			repositoryState.tryEmit(RepositoryState.ERROR)
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 
@@ -140,6 +142,7 @@ class KoinRepository {
 	}
 
 	suspend fun putDefaultChapterId(id : RealmUUID) {
+		if (realm == null) throw RealmNotInitializedException()
 		realm?.write {
 			val baseObject = this.query(BaseObject::class).first().find()
 			baseObject?.let { findLatest(it)?.defaultChapterId = id }
@@ -147,7 +150,7 @@ class KoinRepository {
 					_baseObject.defaultChapterId = id
 					copyToRealm(_baseObject)
 				}
-		} ?: throw RealmNotInitializedException()
+		}
 	}
 
 	/**
@@ -157,8 +160,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getDefaultChapterIdAsFlow() : Flow<RealmUUID?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BaseObject::class).first().asFlow().map { it.obj?.defaultChapterId }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BaseObject::class).first().asFlow().map { it.obj?.defaultChapterId }
+		}
 	}
 
 	/**
@@ -168,8 +173,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getDefaultChapterId() : RealmUUID? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BaseObject::class).first().find()?.defaultChapterId
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BaseObject::class).first().find()?.defaultChapterId
+		}
 	}
 
 	/**
@@ -180,8 +187,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getBaseObject() : BaseObject? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BaseObject::class).first().find()
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BaseObject::class).first().find()
+		}
 	}
 
 	/**
@@ -192,8 +201,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getBaseObjectAsFlow() : Flow<BaseObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BaseObject::class).first().asFlow().map { it.obj }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BaseObject::class).first().asFlow().map { it.obj }
+		}
 	}
 
 	fun putChapter(chapterObject : ChapterObject, modifyTimestampAuto : Boolean = true) {
@@ -209,43 +220,35 @@ class KoinRepository {
 					latestChapterObject.isFavourite = chapterObject.isFavourite
 					latestChapterObject.isLocked = chapterObject.isLocked
 					latestChapterObject.parentId = chapterObject.parentId
-				}
+				} ?: copyToRealm(chapterObject)
 			} ?: copyToRealm(chapterObject)
-		} ?: throw RealmNotInitializedException()
+		}
 	}
 
 	fun putChapterSuspended(chapterObject : ChapterObject, modifyTimestampAuto : Boolean = true) {
 		CoroutineScope(Dispatchers.Default).launch { putChapter(chapterObject, modifyTimestampAuto) }
 	}
 
-	suspend fun reorderNotebookList(chapterIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
-			if (realm == null) {
-				callback(false, RealmNotInitializedException())
-				return@launch
-			}
-			try {
-				realm !!.write {
-					val storedBaseObject = getBaseObject()
-					storedBaseObject?.let {
-						findLatest(it)
-							?.let { latestBaseObject ->
-								latestBaseObject.notebookIdOrderList.clear()
-								latestBaseObject.notebookIdOrderList.addAll(chapterIdList)
-							}
-					} ?: run {
-						callback(false, Exception())
-					}
+	fun reorderNotebookList(idOrderList : List<RealmUUID>) {
+		realm?.writeBlocking {
+			val storedBaseObject = getBaseObject()
+			storedBaseObject?.let {
+				findLatest(it)?.let { latestBaseObject ->
+					latestBaseObject.notebookIdOrderList = idOrderList.toRealmList()
 				}
-			} catch (e : Exception) {
-				callback(false, e)
 			}
-		}.join()
+		}
+	}
+
+	fun reorderNotebookListSuspended(idOrderList : List<RealmUUID>) {
+		CoroutineScope(Dispatchers.Default).launch { reorderBucketList(idOrderList) }
 	}
 
 	fun getChapterFromIdAsFlow(id : RealmUUID?) : Flow<ChapterObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(ChapterObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		}
 	}
 
 	/**
@@ -255,8 +258,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
 	fun getAllChapter() : List<ChapterObject> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class).find().map { it }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(ChapterObject::class).find().map { it }
+		}
 	}
 
 	/**
@@ -266,8 +271,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
 	fun getAllChapterAsFlow() : Flow<List<ChapterObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class).asFlow().map { it.list.map { it } }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(ChapterObject::class).asFlow().map { it.list.map { it } }
+		}
 	}
 
 	/**
@@ -279,9 +286,12 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getChapterFromId(id : RealmUUID?) : ChapterObject? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(ChapterObject::class, "id == $0 ", id).first().find()
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(ChapterObject::class, "id == $0 ", id).first().find()
+		}
 	}
+
 
 	/**
 	 * Get list of [ChapterObject] with [parentId] as flow. If [parentId] is null, Notebooks are flowed.
@@ -289,8 +299,12 @@ class KoinRepository {
 	 * @since 2.0.0
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
-	fun getChapterWithParentIdAsFlow(parentId : RealmUUID?) : Flow<ResultsChange<ChapterObject>> =
-		realm?.query(ChapterObject::class, "parentId = $0", parentId)?.asFlow() ?: throw RealmNotInitializedException()
+	fun getChapterWithParentIdAsFlow(parentId : RealmUUID?) : Flow<ResultsChange<ChapterObject>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(ChapterObject::class, "parentId = $0", parentId).asFlow()
+		}
+	}
 
 	/**
 	 * @author pushpull
@@ -300,8 +314,12 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if the realm is not initialized.
 	 */
 	fun getChapterWithParentId(parentChapterId : RealmUUID?) : Pair<ChapterObject?, List<ChapterObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else Pair(getChapterFromId(parentChapterId), realm !!.query(ChapterObject::class, "parentId == $0 ", parentChapterId).find().toList())
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(ChapterObject::class, "parentId == $0 ", parentChapterId).find().toList().let {
+				Pair(getChapterFromId(parentChapterId), it)
+			}
+		}
 	}
 
 	/**
@@ -313,7 +331,7 @@ class KoinRepository {
 	 * @param callback Callback with the path list and exception if thrown.
 	 */
 	fun getChapterPath(id : RealmUUID?, includeEdge : Boolean = false) : List<ChapterObjectLite> {
-		try {
+		return try {
 			val chapterObject = getChapterFromId(id)
 			val chapterObjectList = mutableListOf<ChapterObjectLite>()
 			if (includeEdge) chapterObject?.toLite()?.let { chapterObjectList.add(it) }
@@ -322,16 +340,15 @@ class KoinRepository {
 				chapterObjectList.add(parentChapterObject.toLite())
 				parentChapterObject = parentChapterObject.parentId?.let { it1 -> getChapterFromId(it1) }
 			}
-			return chapterObjectList
+			chapterObjectList
 		} catch (e : Exception) {
-			return listOf()
+			listOf()
 		}
 	}
 
 	/**
 	 * Saves a note in the database or updates if already present. No need to pass the parent chapter id as it will read from [noteObject].
 	 *
-	 * To move a note to another chapter, see [moveNoteToChapter].
 	 * @author pushpull
 	 * @since 2.2.0
 	 */
@@ -356,7 +373,7 @@ class KoinRepository {
 					storedNoteObject.parentId = noteObject.parentId
 				} ?: copyToRealm(noteObject)
 			} ?: copyToRealm(noteObject)
-		} ?: throw RealmNotInitializedException()
+		}
 	}
 
 	fun putNoteSuspended(noteObject : NoteObject, modifyTimestampAuto : Boolean = true) {
@@ -375,64 +392,15 @@ class KoinRepository {
 						}
 					}
 				}
-			} ?: throw RealmNotInitializedException()
-		}
-	}
-
-	/**
-	 * Moves an already stored note with [noteId] to another chapter with [chapterId].
-	 * @author pushpull
-	 * @since 2.2.0
-	 */
-	fun moveNoteToChapter(noteId : RealmUUID, chapterId : RealmUUID) {
-		try {
-			if (realm == null) throw RealmNotInitializedException()
-			else CoroutineScope(Dispatchers.Default).launch {
-				realm !!.write {
-					val storedNoteObject = getNoteFromId(noteId)
-					val moveToStoredChapterObject = getChapterFromId(chapterId)
-//  				val moveFromStoredChapterObject = getChapterFromId(storedNoteObject?.parentChapterId)
-					moveToStoredChapterObject?.let {
-						if (storedNoteObject != null) {
-//							findLatest(it)?.noteList?.add(storedNoteObject)
-							findLatest(it)?.title = it.title
-						}
-					}
-				}
-			}
-		} catch (e : Exception) {
-
-		}
-	}
-
-	fun deleteNote(id : RealmUUID, callback : (Boolean, Exception?) -> Unit) {
-		if (realm == null) throw RealmNotInitializedException()
-		else CoroutineScope(Dispatchers.Default).launch {
-			try {
-				realm !!.write {
-					val noteObject = getNoteFromId(id)
-					val chapterObject = noteObject?.parentId?.let { getChapterFromId(it) }
-
-//					noteObject?.id?.let { File("$attachmentDirPath/$it").deleteRecursively() }
-
-					if (chapterObject == null) {
-						if (noteObject != null) findLatest(noteObject)?.let { this.delete(it) }
-						callback(false, ParentChapterNotFoundException())
-						return@write
-					} else {
-						findLatest(noteObject)?.let { this.delete(it) }
-						callback(true, null)
-					}
-				}
-			} catch (e : Exception) {
-				callback(false, e)
 			}
 		}
 	}
 
 	fun getNoteFromId(id : RealmUUID) : NoteObject? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(NoteObject::class, "id == $0 ", id).first().find()
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(NoteObject::class, "id == $0 ", id).first().find()
+		}
 	}
 
 	/**
@@ -444,25 +412,43 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
 	fun getNoteFromIdAsFlow(id : RealmUUID?) : Flow<NoteObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(NoteObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(NoteObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		}
 	}
 
 	fun getAllNoteAsFlow() : Flow<RealmResults<NoteObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(NoteObject::class).asFlow().map { it.list }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(NoteObject::class).asFlow().map { it.list }
+		}
 	}
 
-	fun getAllNoteLiteAsFlow() : Flow<List<NoteObjectLite>> = realm
-		?.let { it.query(NoteObject::class).asFlow().map { it.list.map { it.toLite() } } }
-		?: throw RealmNotInitializedException()
+	fun getAllNoteLiteAsFlow() : Flow<List<NoteObjectLite>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.let { it.query(NoteObject::class).asFlow().map { it.list.map { it.toLite() } } }
+		}
+	}
 
 	/**
 	 * Get all notes with [parentId] as flow.
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getNoteWithParentIdAsFlow(parentId : RealmUUID) : Flow<ResultsChange<NoteObject>> =
-		realm?.query(NoteObject::class, "parentId = $0", parentId)?.asFlow() ?: throw RealmNotInitializedException()
+	fun getNoteWithParentIdAsFlow(parentId : RealmUUID) : Flow<ResultsChange<NoteObject>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(NoteObject::class, "parentId = $0", parentId).asFlow()
+		}
+	}
+
+	fun getNoteWithParentId(parentId : RealmUUID) : RealmResults<NoteObject> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(NoteObject::class, "parentId = $0", parentId).find()
+		}
+	}
 
 	/**
 	 * Get all notes as a list
@@ -472,105 +458,93 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
 	fun getAllNote() : List<NoteObject> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(NoteObject::class).find().map { it }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(NoteObject::class).find().map { it }
+		}
 	}
 
-	fun putBucket(bucketObject : BucketObject, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
-			if (realm == null) {
-				callback(false, RealmNotInitializedException())
-				return@launch
-			}
-			try {
-				realm !!.write {
-					val storedBucketObject = getBucketFromId(bucketObject.id)
-					if (storedBucketObject == null) {
-						this.copyToRealm(bucketObject)
-					} else {
-						findLatest(storedBucketObject)
-							?.let { latestBucketObject ->
-								latestBucketObject.modifiedTimestamp = System.currentTimeMillis()
-								latestBucketObject.title = bucketObject.title
-								latestBucketObject.description = bucketObject.description
-								latestBucketObject.bucketType = bucketObject.bucketType
-								latestBucketObject.isFavourite = bucketObject.isFavourite
-								latestBucketObject.isLocked = bucketObject.isLocked
-							}
-					}
+	fun putBucket(bucketObject : BucketObject, modifyTimestampAuto : Boolean = true) {
+		realm?.writeBlocking {
+			val storedBucketObject = getBucketFromId(bucketObject.id)
+			storedBucketObject?.let {
+				findLatest(it)?.let { latestBucketItemObject ->
+					latestBucketItemObject.createdTimestamp = bucketObject.createdTimestamp
+					latestBucketItemObject.modifiedTimestamp = if (modifyTimestampAuto) System.currentTimeMillis() else bucketObject.modifiedTimestamp
+					latestBucketItemObject.title = bucketObject.title
+					latestBucketItemObject.description = bucketObject.description
+					latestBucketItemObject.bucketType = bucketObject.bucketType
+					latestBucketItemObject.isFavourite = bucketObject.isFavourite
+					latestBucketItemObject.isLocked = bucketObject.isLocked
+				} ?: copyToRealm(bucketObject)
+			} ?: copyToRealm(bucketObject)
+		}
+	}
+
+	fun putBucketSuspended(bucketObject : BucketObject, modifyTimestampAuto : Boolean = true) {
+		CoroutineScope(Dispatchers.Default).launch { putBucket(bucketObject, modifyTimestampAuto) }
+	}
+
+	fun reorderBucketList(idOrderList : List<RealmUUID>) {
+		realm?.writeBlocking {
+			val storedBaseObject = getBaseObject()
+			storedBaseObject?.let {
+				findLatest(it)?.let { latestBaseObject ->
+					latestBaseObject.bucketIdOrderList = idOrderList.toRealmList()
 				}
-			} catch (e : Exception) {
-//				e.printStackTrace()
-				callback(false, e)
 			}
 		}
 	}
 
-	suspend fun reorderBucketList(bucketIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
-			if (realm == null) {
-				callback(false, RealmNotInitializedException())
-				return@launch
-			}
-			try {
-				realm !!.write {
-					val storedBaseObject = getBaseObject()
-					storedBaseObject?.let {
-						findLatest(it)
-							?.let { latestBaseObject ->
-								latestBaseObject.bucketIdOrderList.clear()
-								latestBaseObject.bucketIdOrderList.addAll(bucketIdList)
-							}
-					} ?: run {
-						callback(false, Exception())
-					}
+	fun reorderBucketListSuspended(idOrderList : List<RealmUUID>) {
+		CoroutineScope(Dispatchers.Default).launch { reorderBucketList(idOrderList) }
+	}
+
+	fun putBucketItem(bucketItemObject : BucketItemObject, modifyTimestampAuto : Boolean = true) {
+		realm?.writeBlocking {
+			val storedBucketItemObject = getBucketItemFromId(bucketItemObject.id)
+			storedBucketItemObject?.let {
+				findLatest(it)?.let { latestBucketItemObject ->
+					latestBucketItemObject.createdTimestamp = bucketItemObject.createdTimestamp
+					latestBucketItemObject.modifiedTimestamp = if (modifyTimestampAuto) System.currentTimeMillis() else bucketItemObject.modifiedTimestamp
+					latestBucketItemObject.bucketType = bucketItemObject.bucketType
+					latestBucketItemObject.title = bucketItemObject.title
+					latestBucketItemObject.state = bucketItemObject.state
+					latestBucketItemObject.thumbnail = bucketItemObject.thumbnail
+					latestBucketItemObject.isFavourite = bucketItemObject.isFavourite
+					latestBucketItemObject.isLocked = bucketItemObject.isLocked
+					latestBucketItemObject.parentId = bucketItemObject.parentId
+					latestBucketItemObject.key = bucketItemObject.key
+					latestBucketItemObject.data = bucketItemObject.data
+				} ?: copyToRealm(bucketItemObject)
+			} ?: copyToRealm(bucketItemObject)
+		}
+	}
+
+	fun putBucketItemSuspended(bucketItemObject : BucketItemObject, modifyTimestampAuto : Boolean = true) {
+		CoroutineScope(Dispatchers.Default).launch { putBucketItem(bucketItemObject, modifyTimestampAuto) }
+	}
+
+	fun reorderBucketItemList(parentId : RealmUUID, idOrderList : List<RealmUUID>) {
+		realm?.writeBlocking {
+			val storedBucketObject = getBucketFromId(parentId)
+			storedBucketObject?.let {
+				findLatest(it)?.let { latestBucketObject ->
+					latestBucketObject.bucketItemOrderList = idOrderList.toRealmList()
 				}
-			} catch (e : Exception) {
-				callback(false, e)
 			}
 		}
 	}
 
-	fun putBucketItem(bucketId : RealmUUID, bucketItemObject : BucketItemObject, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
-			if (realm == null) {
-				callback(false, RealmNotInitializedException())
-				return@launch
-			}
-			try {
-				realm !!.write {
-					getBucketFromId(bucketId)?.let { bucket ->
-						val storedBucketItem = bucket.bucketItemList.find { it.id == bucketItemObject.id }
-
-						if (storedBucketItem == null) {
-							findLatest(bucket)?.bucketItemList?.add(bucketItemObject)
-							callback(true, null)
-						} else {
-							findLatest(storedBucketItem)?.let { latestBucketItemObject ->
-								latestBucketItemObject.modifiedTimestamp = System.currentTimeMillis()
-								latestBucketItemObject.title = bucketItemObject.title
-								latestBucketItemObject.state = bucketItemObject.state
-								latestBucketItemObject.thumbnail = bucketItemObject.thumbnail
-								latestBucketItemObject.isFavourite = bucketItemObject.isFavourite
-								latestBucketItemObject.isLocked = bucketItemObject.isLocked
-								latestBucketItemObject.parentId = bucketItemObject.parentId
-								latestBucketItemObject.data = bucketItemObject.data
-								latestBucketItemObject.key = bucketItemObject.key
-							}
-							callback(true, null)
-						}
-					} ?: callback(false, BucketNotFoundException())
-				}
-			} catch (e : Exception) {
-//				e.printStackTrace()
-				callback(false, e)
-			}
-		}
+	fun reorderBucketItemListSuspended(parentId : RealmUUID, idOrderList : List<RealmUUID>) {
+		CoroutineScope(Dispatchers.Default).launch { reorderBucketItemList(parentId, idOrderList) }
 	}
 
 	fun getAllBucketAsFlow() : Flow<RealmResults<BucketObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketObject::class).asFlow().map { it.list }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketObject::class).asFlow().map { it.list }
+		}
 	}
 
 	/**
@@ -581,18 +555,24 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getAllBucket() : List<BucketObject> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketObject::class).find().map { it }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketObject::class).find().map { it }
+		}
 	}
 
 	fun getBucketAsFlow(id : RealmUUID) : Flow<BucketObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		}
 	}
 
 	fun getBucketFromId(id : RealmUUID) : BucketObject? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketObject::class, "id == $0 ", id).first().find()
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketObject::class, "id == $0 ", id).first().find()
+		}
 	}
 
 	/**
@@ -604,8 +584,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getBucketItemAsFlow(id : RealmUUID?) : Flow<BucketItemObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketItemObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
+		}
 	}
 
 	/**
@@ -616,9 +598,18 @@ class KoinRepository {
 	 * @return Flow of RealmResults of BucketItemObject with provided parent id.
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
-	fun getBucketItemFromParentIdAsFlow(parentId : RealmUUID) : Flow<RealmResults<BucketItemObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketItemObject::class, "parentId == $0 ", parentId).asFlow().map { it.list }
+	fun getBucketItemWithParentIdAsFlow(parentId : RealmUUID) : Flow<RealmResults<BucketItemObject>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketItemObject::class, "parentId == $0 ", parentId).asFlow().map { it.list }
+		}
+	}
+
+	fun getBucketItemWithParentId(parentId : RealmUUID) : List<BucketItemObject> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketItemObject::class, "parentId == $0 ", parentId).find().map { it }
+		}
 	}
 
 	/**
@@ -629,83 +620,48 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
 	fun getAllBucketItem() : List<BucketItemObject> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketItemObject::class).find().map { it }
-	}
-
-	fun getBucketItem(id : RealmUUID) : BucketItemObject? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketItemObject::class, "id == $0 ", id).first().find()
-	}
-
-	suspend fun reorderBucketItem(bucketId : RealmUUID, bucketItemIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
-		CoroutineScope(Dispatchers.Default).launch {
-			if (realm == null) {
-				callback(false, RealmNotInitializedException())
-				return@launch
-			}
-			try {
-				realm !!.write {
-					getBucketFromId(bucketId)?.let { bucket ->
-						findLatest(bucket)?.let { latestBucket ->
-							latestBucket.bucketItemList.sortWith(RealmUUIDReorderComparator(bucketItemIdList, BucketItemObject::id))
-							latestBucket.modifiedTimestamp = System.currentTimeMillis()
-						}
-					}
-				}
-			} catch (e : Exception) {
-				callback(false, e)
-			}
-		}.join()
-	}
-
-	fun putTag(tagObject : TagObject, callback : (Boolean, Exception?) -> Unit) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.Default).launch {
-				try {
-					realm?.write {
-						val storedTagObject = getTagFromId(tagObject.id)
-						if (storedTagObject != null) {
-							findLatest(storedTagObject)?.let {
-								it.tag = tagObject.tag
-								it.color = tagObject.color
-							}
-						} else {
-							this@KoinRepository.getAllTag().find { it.tag == tagObject.tag }?.let {
-								it.color = tagObject.color
-							} ?: copyToRealm(tagObject)
-						}
-
-						callback(true, null)
-					}
-				} catch (e : Exception) {
-					callback(false, e)
-				}
-			}
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketItemObject::class).find().map { it }
 		}
 	}
 
-	fun deleteTag(id : RealmUUID?) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.Default).launch {
-				realm?.write {
-					val tagObject = getTagFromId(id)
-					tagObject?.let { findLatest(it)?.let { this.delete(it) } }
-				}
-			}
+	fun getAllBucketItemAsFlow() : Flow<RealmResults<BucketItemObject>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketItemObject::class).asFlow().map { it.list }
 		}
+	}
+
+	fun getBucketItemFromId(id : RealmUUID) : BucketItemObject? {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketItemObject::class, "id == $0 ", id).first().find()
+		}
+	}
+
+	fun putTag(tagObject : TagObject, modifyTimestampAuto : Boolean = true) {
+		realm?.writeBlocking {
+			val storedTagObject = getTagFromId(tagObject.id)
+			storedTagObject?.let {
+				findLatest(it)?.let { latestChapterObject ->
+					latestChapterObject.modifiedTimestamp = if (modifyTimestampAuto) System.currentTimeMillis() else latestChapterObject.modifiedTimestamp
+					latestChapterObject.tag = tagObject.tag
+					latestChapterObject.color = tagObject.color
+				} ?: copyToRealm(tagObject)
+			} ?: copyToRealm(tagObject)
+		}
+	}
+
+	fun putTagSuspended(tagObject : TagObject, modifyTimestampAuto : Boolean = true) {
+		CoroutineScope(Dispatchers.Default).launch { putTag(tagObject, modifyTimestampAuto) }
 	}
 
 	fun getTagFromId(id : RealmUUID?) : TagObject? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(TagObject::class, "id == $0", id).first().find()
-	}
-
-	fun getTagFromIdAsFlow(id : RealmUUID) : Flow<TagObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(TagObject::class, "id == $0", id).first().asFlow().map { it.obj }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(TagObject::class, "id == $0", id).first().find()
+		}
 	}
 
 	fun updateTagConnections(id : RealmUUID, tagListToAdd : List<RealmUUID>, tagListToRemove : List<RealmUUID>) {
@@ -721,64 +677,6 @@ class KoinRepository {
 		}
 	}
 
-	fun connectTag(noteId : RealmUUID, tagIdList : List<RealmUUID>, callback : (Boolean, Exception?) -> Unit) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.Default).launch {
-				try {
-					realm?.write {
-						getAllTag().forEach { findLatest(it)?.objectIdList?.remove(noteId) }
-						tagIdList.forEach {
-							val tagObject = getTagFromId(it)
-							tagObject?.let {
-								findLatest(it)?.objectIdList?.add(noteId)
-							}
-							if (tagObject != null) {
-								findLatest(tagObject)?.let {
-									if (it.objectIdList.contains(noteId)) it.objectIdList.remove(noteId)
-									else {
-										it.objectIdList.add(noteId)
-									}
-								}
-							}
-						}
-						callback(true, null)
-					}
-				} catch (e : Exception) {
-//					e.printStackTrace()
-					callback(false, e)
-				}
-			}
-		}
-	}
-
-	fun connectTag(noteId : RealmUUID, tagId : RealmUUID) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.Default).launch {
-				realm?.write {
-					val tagObject = getTagFromId(tagId)
-					if (tagObject != null) {
-						findLatest(tagObject)?.let {
-							if (it.objectIdList.contains(noteId)) it.objectIdList.remove(noteId)
-							else it.objectIdList.add(noteId)
-						}
-					}
-				}
-			}
-		}
-	}
-
-	fun getTagFromName(tag : String) : TagObject? {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(TagObject::class, "tag == $0", tag).first().find()
-	}
-
-	fun getTagFromNameAsFlow(tag : String) : Flow<TagObject?> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(TagObject::class, "tag == $0", tag).first().asFlow().map { it.obj }
-	}
-
 	/**
 	 * Get all tags as a flow list and observe changes
 	 * @author pushpull
@@ -786,8 +684,10 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
 	fun getAllTagAsFlow() : Flow<RealmResults<TagObject>> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(TagObject::class).asFlow().map { it.list }
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(TagObject::class).asFlow().map { it.list }
+		}
 	}
 
 	/**
@@ -797,45 +697,42 @@ class KoinRepository {
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
 	fun getAllTag() : List<TagObject> {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(TagObject::class).find().map { it }
-	}
-
-	fun isKeyPresentInBucketItem(key : String?) : Boolean {
-		return if (realm == null) throw RealmNotInitializedException()
-		else realm !!.query(BucketItemObject::class, "key == $0 ", key).count().find() > 0
-	}
-
-	fun delete(objectIdList : List<RealmUUID>) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.Default).launch {
-				objectIdList.forEach { delete(it) }
-			}
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(TagObject::class).find().map { it }
 		}
 	}
 
-	private suspend fun delete(objectId : RealmUUID) {
-		realm?.write {
+	private fun delete(id : RealmUUID) {
+		getNoteFromId(id)?.let {
+			attachmentRepository.delete(it.id)
+			realm?.writeBlocking { findLatest(it)?.let { delete(it) } }
+		}
+		getChapterFromId(id)?.let {
+			delete(getNoteWithParentId(id).map { it.id })
+			realm?.writeBlocking { findLatest(it)?.let { delete(it) } }
+		}
+		getBucketItemFromId(id)?.let { realm?.writeBlocking { findLatest(it)?.let { delete(it) } } }
+		getBucketFromId(id)?.let {
+			delete(getBucketItemWithParentId(id).map { it.id })
+			realm?.writeBlocking { findLatest(it)?.let { delete(it) } }
+		}
+		getTagFromId(id)?.let { realm?.writeBlocking { findLatest(it)?.let { delete(it) } } }
+	}
 
-//			** Delete note
-			val noteObject = getNoteFromId(objectId)
-			val parentChapterObject = noteObject?.parentId?.let { getChapterFromId(it) }
+	private fun delete(idList : List<RealmUUID>) = idList.forEach { delete(it) }
 
-			noteObject?.id?.let { this@KoinRepository.deleteNote(it) { _, _ -> } }
+	fun deleteSuspended(id : RealmUUID, callback : suspend () -> Unit = {}) {
+		CoroutineScope(Dispatchers.Default).launch {
+			delete(id)
+			callback()
+		}
+	}
 
-//			** Delete chapter
-			val chapterObject = getChapterFromId(objectId)
-			chapterObject?.let { findLatest(it)?.let { this.delete(it) } }
-
-//			** Delete bucket
-			val bucketObject = getBucketFromId(objectId)
-			bucketObject?.bucketItemList?.map { it.id }?.let { this@KoinRepository.delete(it) }
-			bucketObject?.let { findLatest(it)?.let { this.delete(it) } }
-
-//			** Delete bucket item
-			val bucketItemObject = getBucketItem(objectId)
-			bucketItemObject?.let { findLatest(it)?.let { this.delete(it) } }
+	fun deleteSuspended(idList : List<RealmUUID>, callback : suspend () -> Unit = {}) {
+		CoroutineScope(Dispatchers.Default).launch {
+			delete(idList)
+			callback()
 		}
 	}
 
@@ -846,19 +743,17 @@ class KoinRepository {
 	 * @return Callback with true if successful, false if not along with exception
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
-	fun clearRealm(callback : (Boolean, Exception?) -> Unit) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.Default).launch {
-				try {
-					realm !!.write { this.deleteAll() }
-					callback(true, null)
-				} catch (e : Exception) {
-					callback(false, e)
-				}
+	fun clearRealm(callback : (Boolean, Exception?) -> Unit) = realm?.let {
+		CoroutineScope(Dispatchers.Default).launch {
+			try {
+				attachmentRepository.deleteAll()
+				it.writeBlocking { deleteAll() }
+				callback(true, null)
+			} catch (e : Exception) {
+				callback(false, e)
 			}
 		}
-	}
+	} ?: callback(false, RealmNotInitializedException())
 
 	/**
 	 * Initialize realm with default values. It does not clear anything from realm. See [clearRealm].
@@ -867,24 +762,22 @@ class KoinRepository {
 	 * @return Callback with true if successful, false if not along with exception
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
-	fun initializeRealm(callback : (Boolean, Exception?) -> Unit) {
-		if (realm == null) throw RealmNotInitializedException()
-		else {
-			CoroutineScope(Dispatchers.Default).launch {
-				try {
-					realm?.write { copyToRealm(BaseObject()) }
-					ChapterObject().apply {
-						this.title = "Diary"
-						this.description = "Default diary. Every notes will be saved in this notebook by default"
-						putChapter(chapterObject = this)
-						putDefaultChapterId(this.id)
-					}
-				} catch (e : Exception) {
-					callback(false, e)
+	fun initializeRealm(callback : (Boolean, Exception?) -> Unit) = realm?.let {
+		CoroutineScope(Dispatchers.Default).launch {
+			try {
+				it.write { copyToRealm(BaseObject()) }
+				ChapterObject().apply {
+					this.title = "Diary"
+					this.description = "Default diary. Every notes will be saved in this notebook by default"
+					putChapter(chapterObject = this)
+					putDefaultChapterId(this.id)
+					callback(true, null)
 				}
+			} catch (e : Exception) {
+				callback(false, e)
 			}
 		}
-	}
+	} ?: callback(false, RealmNotInitializedException())
 
 	fun getRealmSnapshot(name : String, path : String) {
 		CoroutineScope(Dispatchers.Default).launch {
@@ -947,8 +840,9 @@ class KoinRepository {
 				File(context.filesDir, "default.realm").delete()
 
 				val observer = RecursiveFileObserver(
-					path = context.filesDir.path,
-					listener = object : RecursiveFileObserver.EventListener {
+					mPath = context.filesDir.path,
+					mask = FileObserver.CLOSE_WRITE,
+					mListener = object : RecursiveFileObserver.EventListener {
 						override fun onEvent(event : Int, file : File?) {
 							if (file?.name == "default.realm" && event == FileObserver.CLOSE_WRITE) callback(true, null)
 						}
@@ -975,6 +869,7 @@ class KoinRepository {
 				snapshotRealm.writeCopyTo(realmConfiguration2)
 				snapshotRealm.close()
 			} catch (e : Exception) {
+//				e.printStackTrace()
 				callback(false, e)
 			}
 		}

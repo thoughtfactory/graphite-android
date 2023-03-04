@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,6 +41,8 @@ fun BottomSheetTextField(
 	label : String = "Label",
 	placeholder : String = "Placeholder",
 	actionButtons : @Composable RowScope.() -> Unit = {},
+	keyboardOptions : KeyboardOptions = KeyboardOptions.Default,
+	keyboardActions : KeyboardActions = KeyboardActions.Default,
 	colors : BottomSheetTextFieldColors = BottomSheetTextFieldDefaults.textFieldColors(),
 	onValueChange : (String) -> Unit = {},
 ) {
@@ -51,6 +55,8 @@ fun BottomSheetTextField(
 			textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textColor),
 			cursorBrush = SolidColor(colors.cursorColor),
 			singleLine = true,
+			keyboardOptions = keyboardOptions,
+			keyboardActions = keyboardActions,
 			onValueChange = onValueChange,
 			modifier = Modifier.weight(1f),
 		) {
@@ -77,13 +83,10 @@ fun BottomSheetTextField(
 			}
 		}
 
-		Spacer(modifier = Modifier.width(4.dp))
+		Spacer(modifier = Modifier.width(2.dp))
 		MenuButton(
 			icon = R.drawable.ic_close,
-			colors = MenuButtonDefaults.menuButtonColors(
-				containerColor = colors.containerColor,
-				iconColor = colors.textColor,
-			)
+			colors = MenuButtonDefaults.menuButtonColorsOnSurface()
 		) { onValueChange("") }
 		actionButtons()
 	}
@@ -158,7 +161,7 @@ object BottomSheetTextFieldDefaults {
 		unfocusedTrailingIconColor : Color = MaterialTheme.colorScheme.onSurface,
 		disabledTrailingIconColor : Color = MaterialTheme.colorScheme.onSurface,
 		errorTrailingIconColor : Color = MaterialTheme.colorScheme.error,
-		placeholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+		placeholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
 		disabledPlaceholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
 	) : BottomSheetTextFieldColors = BottomSheetTextFieldColors(
 		textColor = textColor,

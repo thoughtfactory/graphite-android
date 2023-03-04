@@ -11,13 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltipBox
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,6 +55,40 @@ fun NotebookBottomSheet(
 	var coverColor by remember { mutableStateOf<Color?>(null) }
 	var coverImage by remember { mutableStateOf<Int?>(null) }
 	var coverUri by remember { mutableStateOf<Uri?>(null) }
+
+	fun createNotebook() {
+		scope.launch(Dispatchers.Default) {
+			when {
+				titleText.isEmpty() -> Toast.makeText(context, "Notebook title cannot be empty", Toast.LENGTH_SHORT).show()
+				coverColor == null && coverImage == null && coverUri == null ->
+					Toast.makeText(context, "Select a color or image for notebook", Toast.LENGTH_SHORT).show()
+
+				else -> {
+
+					val bitmap = if (coverImage != null) {
+						BitmapFactory.decodeResource(context.resources, coverImage !!)
+					} else {
+						coverUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
+					}
+
+					val aspectRatio = if (bitmap != null) bitmap.width.toFloat() / bitmap.height.toFloat() else 1f
+
+					val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192) }
+
+					putNotebook(titleText, descriptionText, coverColor, thumbnail)
+
+					keyboardController?.hide()
+					closeSheet()
+
+					titleText = ""
+					descriptionText = ""
+					coverColor = null
+					coverImage = null
+					coverUri = null
+				}
+			}
+		}
+	}
 
 	GenericBottomSheet(
 		title = "Writing a new book?",
@@ -105,39 +135,7 @@ fun NotebookBottomSheet(
 			),
 			enabled = ! (coverColor == null && coverImage == null && coverUri == null) && titleText.isNotBlank(),
 			modifier = Modifier.fillMaxWidth(),
-			onClick = {
-				scope.launch(Dispatchers.Default) {
-					when {
-						titleText.isEmpty() -> Toast.makeText(context, "Notebook title cannot be empty", Toast.LENGTH_SHORT).show()
-						coverColor == null && coverImage == null && coverUri == null ->
-							Toast.makeText(context, "Select a color or image for notebook", Toast.LENGTH_SHORT).show()
-
-						else -> {
-
-							val bitmap = if (coverImage != null) {
-								BitmapFactory.decodeResource(context.resources, coverImage !!)
-							} else {
-								coverUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
-							}
-
-							val aspectRatio = if (bitmap != null) bitmap.width.toFloat() / bitmap.height.toFloat() else 1f
-
-							val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192) }
-
-							putNotebook(titleText, descriptionText, coverColor, thumbnail)
-
-							keyboardController?.hide()
-							closeSheet()
-
-							titleText = ""
-							descriptionText = ""
-							coverColor = null
-							coverImage = null
-							coverUri = null
-						}
-					}
-				}
-			}
+			onClick = ::createNotebook
 		) {
 			Text(text = "Create")
 		}

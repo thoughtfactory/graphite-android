@@ -19,19 +19,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 
-class Printer(context: Context) : WebView(context) {
-
-//	fun print(printAdapter: PrintDocumentAdapter, path: File?, fileName: String?) {
-//		printAdapter.onLayout(null, printAttributes, null, object : LayoutResultCallback() {
-//			override fun onLayoutFinished(info: PrintDocumentInfo, changed: Boolean) {
-//				printAdapter.onWrite(null, getOutputFile(path, fileName), CancellationSignal(), object : WriteResultCallback() {
-//					override fun onWriteFinished(pages: Array<PageRange>) {
-//						super.onWriteFinished(pages)
-//					}
-//				})
-//			}
-//		}, null)
-//	}
+class Printer(context : Context) : WebView(context) {
 
 	init {
 		isVerticalScrollBarEnabled = false
@@ -43,7 +31,7 @@ class Printer(context: Context) : WebView(context) {
 		webViewClient = WebViewClient()
 
 		webChromeClient = object : WebChromeClient() {
-			override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+			override fun onConsoleMessage(consoleMessage : ConsoleMessage) : Boolean {
 				return true
 			}
 		}
@@ -76,7 +64,7 @@ class Printer(context: Context) : WebView(context) {
 	}
 
 
-	fun createWebPrintJob(data: String) {
+	fun createWebPrintJob(data : String) {
 
 		this.loadData(data, "text/html", "UTF-8")
 
@@ -85,7 +73,7 @@ class Printer(context: Context) : WebView(context) {
 			.setMediaSize(PrintAttributes.MediaSize.ISO_A4)
 			.setResolution(Resolution("pdf", "pdf", 600, 600))
 			.setMinMargins(PrintAttributes.Margins.NO_MARGINS).build()
-		val path: File = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/PDFTest/")
+		val path : File = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/PDFTest/")
 //		printDoc(createPrintDocumentAdapter(jobName),attributes, path, "output_" + System.currentTimeMillis() + ".pdf")
 
 

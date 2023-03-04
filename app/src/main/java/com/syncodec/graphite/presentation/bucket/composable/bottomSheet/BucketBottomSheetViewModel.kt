@@ -18,8 +18,8 @@ import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TMDbMovieSearchResult
 import com.syncodec.graphite.di.network.TMDbTvSearchResult
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -38,10 +38,10 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 	val repositoryState = repository.repositoryState
 
 	val bucketObject : MutableStateFlow<BucketObject?> = MutableStateFlow(null)
-	private val mutableBucketItemObject = MutableStateFlow<BucketItemObject?>(null)
-	val bucketItemObject : StateFlow<BucketItemObject?> = mutableBucketItemObject
+	private val mutablePreviewBucketItemObject = MutableStateFlow<BucketItemObject?>(null)
+	val previewBucketItemObject : StateFlow<BucketItemObject?> = mutablePreviewBucketItemObject
 
-	private var bucketItemObjectCoroutineScope: CoroutineScope? = null
+	private var bucketItemObjectCoroutineScope : CoroutineScope? = null
 
 	fun initBucket(realmUUID : RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -64,13 +64,13 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 		}
 	}
 
-	fun setBucketItemObject(bucketItemObject : BucketItemObject?) {
+	fun setPreviewBucketItemObject(id : RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			bucketItemObjectCoroutineScope?.cancel()
 			bucketItemObjectCoroutineScope = this
-			repository.getBucketItemAsFlow(id = bucketItemObject?.id).collect { latestBucketItemObject ->
+			repository.getBucketItemAsFlow(id = id).collect { latestBucketItemObject ->
 				withContext(Dispatchers.Main) {
-					mutableBucketItemObject.tryEmit(latestBucketItemObject)
+					mutablePreviewBucketItemObject.tryEmit(latestBucketItemObject)
 				}
 			}
 		}
@@ -102,7 +102,6 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 		viewModelScope.launch(Dispatchers.IO) {
 			val isUrlValid = URLUtil.isValidUrl(url)
 			if (isUrlValid) {
-
 				val openGraphParser = OpenGraphParser(
 					listener = object : OpenGraphCallback {
 						override fun onError(error : String) {
@@ -110,8 +109,8 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 						}
 
 						override fun onPostResponse(openGraphResult : OpenGraphResult) {
-							onResponse(ApiResult.Success(_data = openGraphResult to null))
-							CoroutineScope(Dispatchers.IO).launch {
+							onResponse(ApiResult.Success(_data = openGraphResult.copy(url = url) to null))
+							viewModelScope.launch(Dispatchers.IO) {
 								Network.retrieveImage(openGraphResult.image) { bitmap ->
 									onResponse(ApiResult.Success(_data = openGraphResult to bitmap))
 								}
@@ -127,7 +126,7 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 		}
 	}
 
-	fun putLink(url: String) {
+	fun putLink(url : String) {
 		CoroutineScope(Dispatchers.IO).launch {
 			val isUrlValid = URLUtil.isValidUrl(url)
 			if (isUrlValid) {
@@ -135,9 +134,7 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 					this.bucketType = BucketType.LINK.name
 					this.parentId = this@BucketBottomSheetViewModel.bucketObject.value?.id
 					this.key = url
-					this@BucketBottomSheetViewModel.bucketObject.value?.id?.let {
-						repository.putBucketItem(it, this) { _, _ -> }
-					}
+					repository.putBucketItem(this)
 				}
 
 				val openGraphParser = OpenGraphParser(
@@ -151,13 +148,9 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 								Network.retrieveImage(openGraphResult.image) { bitmap ->
 									bucketItemObject.title = openGraphResult.title
 									bucketItemObject.thumbnail = bitmap?.encodeBase64()
-									bucketItemObject.putOpenGraphResult(openGraphResult)
+									bucketItemObject.putOpenGraphResult(openGraphResult.copy(url = url))
 
-									CoroutineScope(Dispatchers.Default).launch {
-										this@BucketBottomSheetViewModel.bucketObject.value?.id?.let {
-											repository.putBucketItem(it, bucketItemObject) { _, _ -> }
-										}
-									}
+									repository.putBucketItemSuspended(bucketItemObject)
 								}
 							}
 						}
@@ -176,47 +169,33 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 		todo : String,
 		state : BucketItemState
 	) {
-		CoroutineScope(Dispatchers.Default).launch {
-			BucketItemObject().apply {
-				realmUUID?.let { this.id = it }
-				this.bucketType = BucketType.TODO.name
-				this.title = todo
-				this.state = state.name
-				this.parentId = this@BucketBottomSheetViewModel.bucketObject.value?.id
-				this.key = todo
+		BucketItemObject().apply {
+			realmUUID?.let { this.id = it }
+			this.bucketType = BucketType.TODO.name
+			this.title = todo
+			this.state = state.name
+			this.parentId = this@BucketBottomSheetViewModel.bucketObject.value?.id
+			this.key = todo
 
-				this@BucketBottomSheetViewModel.bucketObject.value?.id?.let {
-					repository.putBucketItem(it, this) { _, _ -> }
-				}
-			}
+			repository.putBucketItemSuspended(this)
 		}
 	}
 
 	fun toggleFavourite(bucketItemObject : BucketItemObject?) {
-		viewModelScope.launch(Dispatchers.Default) {
-			bucketItemObject?.clone()?.apply {
-				this.isFavourite = ! this.isFavourite
-				this.parentId?.let {
-					repository.putBucketItem(bucketId = it, bucketItemObject = this) { _, _ -> }
-				}
-			}
+		bucketItemObject?.clone()?.apply {
+			this.isFavourite = ! this.isFavourite
+			repository.putBucketItemSuspended(bucketItemObject = this)
 		}
 	}
 
 	fun toggleLock(bucketItemObject : BucketItemObject?) {
-		viewModelScope.launch(Dispatchers.Default) {
-			bucketItemObject?.clone()?.apply {
-				this.isLocked = ! this.isLocked
-				this.parentId?.let {
-					repository.putBucketItem(bucketId = it, bucketItemObject = this) { _, _ -> }
-				}
-			}
+		bucketItemObject?.clone()?.apply {
+			this.isLocked = ! this.isLocked
+			repository.putBucketItemSuspended(bucketItemObject = this)
 		}
 	}
 
 	fun deleteBucketItem(realmUUIDList : List<RealmUUID>) {
-		CoroutineScope(Dispatchers.Default).launch {
-			repository.delete(realmUUIDList)
-		}
+		repository.deleteSuspended(realmUUIDList)
 	}
 }

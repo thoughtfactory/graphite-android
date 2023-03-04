@@ -1,17 +1,21 @@
 package com.syncodec.graphite.presentation.main
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -21,14 +25,44 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
-	fun putNotebook(title : String, description : String, color : Color?, bitmap : Bitmap?) {
-		ChapterObject().apply {
+	val defaultChapterId = MutableStateFlow(null as RealmUUID?)
+
+	init {
+		viewModelScope.launch(Dispatchers.Default) {
+			repositoryState.collect { repositoryState1 ->
+				when (repositoryState1) {
+					RepositoryState.SUCCESS -> {
+						repository.getDefaultChapterIdAsFlow().collect {
+//							TODO : Remove null check after after realm update #1289
+							it?.let { it1 -> defaultChapterId.tryEmit(it1) }
+						}
+					}
+
+					else -> null
+				}
+			}
+		}
+	}
+
+	fun putNotebook(
+		title : String,
+		description : String,
+		color : Color?,
+		bitmap : Bitmap?,
+		callback : suspend (String) -> Unit,
+	) {
+		val chapterObject = ChapterObject().apply {
 			this.title = title
 			this.description = description
 			this.color = color?.toArgb()
 			this.thumbnail = bitmap?.encodeBase64()
+		}
 
-			repository.putChapterSuspended(this)
+		if (BaseApplication.isPro.value) repository.putChapterSuspended(chapterObject)
+		else viewModelScope.launch(Dispatchers.Default) {
+			repository.getChapterWithParentId(parentChapterId = null).let {
+				if (it.second.size < 4) repository.putChapterSuspended(chapterObject) else callback("Join Graphite Pro to create more notebooks")
+			}
 		}
 	}
 
@@ -36,19 +70,32 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 		title : String?,
 		description : String?,
 		bucketType : BucketType,
+		callback : suspend (String) -> Unit,
 	) {
-		BucketObject().apply {
+		val bucketObject = BucketObject().apply {
 			this.title = title
 			this.description = description
 			this.bucketType = bucketType.name
+		}
 
-			repository.putBucket(this) { _, _ -> }
+		if (BaseApplication.isPro.value || bucketType == BucketType.TODO) repository.putBucketSuspended(bucketObject)
+		else viewModelScope.launch(Dispatchers.Default) {
+			repository.getAllBucket().let {
+				if (it.count { it.bucketType == bucketType.name } < 1) repository.putBucketSuspended(bucketObject) else callback("Join Graphite Pro to create more ${bucketType.name} buckets")
+			}
 		}
 	}
 
-	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+	fun delete(idList : List<RealmUUID>) {
+		repository.deleteSuspended(idList)
+	}
 
-	fun onAuthenticate() {
+	fun setRepositoryState(repositoryState : RepositoryState) {
+		repository.repositoryState.tryEmit(repositoryState)
+	}
+
+	fun onAuthenticate(context : Context) {
+		repository.initRepository(context)
 		repository.isAuthenticated.tryEmit(true)
 	}
 

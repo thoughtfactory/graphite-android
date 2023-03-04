@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.common.permission
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
@@ -32,35 +33,27 @@ fun NotificationPermissionDialog(
 	val notificationPermission =	rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
 
 	SideEffect {
-		if (showDialog && notificationPermission.status.isGranted) {
-			onPermissionAvailable()
-		}
+		if (showDialog && notificationPermission.status.isGranted) onPermissionAvailable()
 	}
 
 	GenericDialog(
 		showDialog = showDialog && !notificationPermission.status.isGranted,
 		title = "Notification Permission",
+		contentText = "We will need this permission to show you notifications.",
+		dualActionButton = {
+			DualActionButtons(
+				primaryText = "Request",
+				secondaryText = "Discard",
+				onClickPrimary = {
+					Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+						addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+						this.data = Uri.fromParts("package", context.packageName, null)
+						startActivity(context, this, null)
+					}
+				},
+				onClickSecondary = onDismiss
+			)
+		},
 		onDismissRequest = onDismiss
-	) {
-		Text(
-			text = "We will need this permission to show you notifications.",
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		DualActionButtons(
-			primaryText = "Request",
-			secondaryText = "Discard",
-			onClickPrimary = {
-				Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-					addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-					this.data = Uri.fromParts("package", context.packageName, null)
-					startActivity(context, this, null)
-				}
-			},
-			onClickSecondary = onDismiss
-		)
-	}
+	)
 }

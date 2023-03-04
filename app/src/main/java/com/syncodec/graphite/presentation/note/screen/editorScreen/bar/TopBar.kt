@@ -41,8 +41,8 @@ fun TopBar(
 		title = {},
 		actions = {
 			Button(
-				onClick = onSave,
 				shape = MaterialTheme.shapes.medium,
+				onClick = onSave,
 			) {
 				Text(text = "Save")
 			}

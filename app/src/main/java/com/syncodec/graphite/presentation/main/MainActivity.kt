@@ -19,9 +19,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -73,13 +74,10 @@ class MainActivity : ComponentActivity() {
 
 	private val dropboxSyncStatus = MutableStateFlow<DropboxService.Companion.DropboxSyncStatus>(DropboxService.Companion.DropboxSyncStatus.Init)
 
-
 	@OptIn(ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 		isInStack = true
-
-		startSyncService()
 
 		val dataStoreInstance = DataStoreInstance(this)
 
@@ -101,22 +99,23 @@ class MainActivity : ComponentActivity() {
 			.setAutoSelectEnabled(false)
 			.build()
 
-
 		setContent {
 			BaseContent {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-
 				val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
-				val useBiometric by dataStoreInstance.getUseBiometric().collectAsState(initial = null)
-				var isUsedBiometric by remember { mutableStateOf(false) }
+				val isBiometricsEnabled by dataStoreInstance.getUseBiometric().collectAsState(initial = null)
+				var isBiometricUsed by remember { mutableStateOf(false) }
 
-				LaunchedEffect(key1 = useBiometric) {
-					if (useBiometric != null && ! isUsedBiometric) {
-						if (useBiometric == true) launchBiometric()
-						else viewModel.onAuthenticate()
-						isUsedBiometric = true
+				val systemUiController = rememberSystemUiController()
+				if (isFirstTime == true) systemUiController.setStatusBarColor(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
+				else systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+
+				LaunchedEffect(key1 = isBiometricsEnabled) {
+					if (isBiometricsEnabled != null && ! isBiometricUsed) {
+						if (isBiometricsEnabled == true) {
+							viewModel.setRepositoryState(RepositoryState.LOCKED)
+							launchBiometric()
+						} else viewModel.onAuthenticate(applicationContext)
+						isBiometricUsed = true
 					}
 				}
 
@@ -200,7 +199,7 @@ class MainActivity : ComponentActivity() {
 					override fun onAuthenticationSucceeded(result : BiometricPrompt.AuthenticationResult?) {
 						super.onAuthenticationSucceeded(result)
 						Toast.makeText(this@MainActivity, "Authentication Succeeded", Toast.LENGTH_SHORT).show()
-						viewModel.onAuthenticate()
+						viewModel.onAuthenticate(applicationContext)
 					}
 
 					override fun onAuthenticationError(errorCode : Int, errString : CharSequence?) {
@@ -214,7 +213,7 @@ class MainActivity : ComponentActivity() {
 							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT -> null
 							BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT_PERMANENT -> null
 							BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS -> {
-								viewModel.onAuthenticate()
+								viewModel.onAuthenticate(applicationContext)
 							}
 
 							BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL -> Toast.makeText(
@@ -317,7 +316,7 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
-	private var dropboxServiceConnectionManager: DropboxServiceConnectionManager? = null
+	private var dropboxServiceConnectionManager : DropboxServiceConnectionManager? = null
 
 	private fun startSyncService() {
 		dropboxServiceConnectionManager = DropboxServiceConnectionManager(this) { dropboxService ->
@@ -331,7 +330,6 @@ class MainActivity : ComponentActivity() {
 	}
 
 	override fun onDestroy() {
-		Log.i("npr71", "onDestroy")
 		dropboxServiceConnectionManager?.unbindFromService()
 		super.onDestroy()
 	}

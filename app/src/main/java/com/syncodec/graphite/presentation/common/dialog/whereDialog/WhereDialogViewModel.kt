@@ -9,13 +9,16 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -27,10 +30,18 @@ class WhereDialogViewModel(val repository : KoinRepository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
+	private var chapterCounterCoroutine : CoroutineScope? = null
+	private var noteCounterCoroutine : CoroutineScope? = null
+
 	val parentChapter : MutableStateFlow<ChapterObject?> = MutableStateFlow(null)
 	private val allChapterList : MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
 	val visibleChapterList : MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
 	val chapterPath = MutableStateFlow<List<ChapterObjectLite>>(listOf())
+
+	private val _chapterChapterItemCount : MutableStateFlow<Map<RealmUUID?, Int>> = MutableStateFlow(mapOf())
+	val chapterChapterItemCount : StateFlow<Map<RealmUUID?, Int>> = _chapterChapterItemCount
+	private val _chapterNoteItemCount : MutableStateFlow<Map<RealmUUID?, Int>> = MutableStateFlow(mapOf())
+	val chapterNoteItemCount : StateFlow<Map<RealmUUID?, Int>> = _chapterNoteItemCount
 
 	init {
 		observeExplorer()
@@ -42,8 +53,26 @@ class WhereDialogViewModel(val repository : KoinRepository) : ViewModel() {
 		}
 	}
 
-	private suspend fun observeChapter() {
-		repository.getAllChapterAsFlow().collect { allChapterList.tryEmit(it) }
+	private fun observeChapter() {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.getAllChapterAsFlow().collect { allChapterList.tryEmit(it) }
+		}
+
+		viewModelScope.launch(Dispatchers.Default) {
+			chapterCounterCoroutine?.cancel()
+			chapterCounterCoroutine = this
+			repository.getAllChapterAsFlow().cancellable().collect {
+				it.groupingBy { it.parentId }.eachCount().let { _chapterChapterItemCount.tryEmit(it) }
+			}
+		}
+
+		viewModelScope.launch(Dispatchers.Default) {
+			noteCounterCoroutine?.cancel()
+			noteCounterCoroutine = this
+			repository.getAllNoteAsFlow().cancellable().collect {
+				it.groupingBy { it.parentId }.eachCount().let { _chapterNoteItemCount.tryEmit(it) }
+			}
+		}
 	}
 
 	private fun observeExplorer() {
@@ -65,31 +94,27 @@ class WhereDialogViewModel(val repository : KoinRepository) : ViewModel() {
 	}
 
 	@WorkerThread
-	private fun loadChapterPath(chapterId : RealmUUID?) = repository.getChapterPath(id = chapterId, includeEdge = true).let { this@WhereDialogViewModel.chapterPath.tryEmit(it) }
+	private fun loadChapterPath(chapterId : RealmUUID?) =
+		repository.getChapterPath(id = chapterId, includeEdge = true).let { this@WhereDialogViewModel.chapterPath.tryEmit(it) }
 
-	fun putChapter(parentChapterId : RealmUUID?, title : String?, description : String?, color : Color?, bitmap : Bitmap?) {
-		if (BaseApplication.isPro.value) {
-			try {
-				ChapterObject().apply {
-					this.modifiedTimestamp = System.currentTimeMillis()
+	fun putChapter(
+		parentChapterId : RealmUUID?,
+		title : String?,
+		description : String?,
+		color : Color?,
+		thumbnail : Bitmap?,
+		callback : (String) -> Unit
+	) {
+		val chapterObject = ChapterObject().apply {
+			this.title = title
+			this.description = description
+			this.color = color?.toArgb()
+			this.thumbnail = thumbnail?.encodeBase64()
 
-					this.title = title
-					this.description = description
-					this.color = color?.toArgb()
-					this.thumbnail = bitmap?.encodeBase64()
-
-					this.parentId = parentChapterId
-
-					repository.putChapterSuspended(this)
-				}
-			} catch (e : Exception) {
-//	    		    TODO Show error message
-//						e.printStackTrace()
-			}
-		} else {
-//			viewModelScope.launch(Dispatchers.Main) {
-//				Toast.makeText(repository.context, "Join Graphite Pro to add chapters in notebook", Toast.LENGTH_SHORT).show()
-//			}
+			this.parentId = parentChapterId
 		}
+
+		if (BaseApplication.isPro.value) repository.putChapterSuspended(chapterObject)
+		else callback("Join Graphite Pro to create chapters")
 	}
 }

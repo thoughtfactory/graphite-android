@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -25,23 +26,21 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 
 	private var noteObserverCoroutine : CoroutineScope? = null
 	private var defaultChapterObserverCoroutine : CoroutineScope? = null
+	private var tagObserverCoroutine : CoroutineScope? = null
+	private var observeAllCoroutine : CoroutineScope? = null
 
-	val defaultChapterId : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
-	val noteList : MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
+	val defaultChapterId : MutableStateFlow<ByteArray?> = MutableStateFlow(null)
 
-	val isNoteRefreshing : MutableStateFlow<Boolean> = MutableStateFlow(false)
-	val contentStatus : MutableStateFlow<ContentStatus> = MutableStateFlow(ContentStatus.Init)
+	val contentStatus : MutableStateFlow<ContentStatus<List<NoteObjectLite>>> = MutableStateFlow(ContentStatus.Init)
 
+	private val noteList : MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
 	val tagList : MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> {
-						observeNotes()
-						observeTags()
-					}
+					RepositoryState.SUCCESS -> refresh()
 
 					else -> null
 				}
@@ -49,40 +48,58 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 		}
 	}
 
+	private fun observeDefaultChapter() {
+		viewModelScope.launch(Dispatchers.Default) {
+			defaultChapterObserverCoroutine?.cancel()
+			defaultChapterObserverCoroutine = this
+			repository.getDefaultChapterIdAsFlow().cancellable().collect { defaultChapterId.tryEmit(it?.bytes) }
+		}
+	}
+
 	private fun observeNotes() {
 		viewModelScope.launch(Dispatchers.Default) {
-			contentStatus.tryEmit(ContentStatus.Loading)
-			isNoteRefreshing.tryEmit(true)
 			noteObserverCoroutine?.cancel()
 			noteObserverCoroutine = this
-			repository.getDefaultChapterIdAsFlow().collect { defaultChapterId ->
-				defaultChapterObserverCoroutine?.cancel()
-				defaultChapterObserverCoroutine = this
-				this@NoteScreenViewModel.defaultChapterId.tryEmit(defaultChapterId)
-				defaultChapterId?.let {
-					repository.getNoteWithParentIdAsFlow(parentId = it).cancellable().collect { noteObjectResultsChange ->
-						noteObjectResultsChange.list.let { noteObjectList ->
-							this@NoteScreenViewModel.noteList.tryEmit(noteObjectList.map { it.toLite() })
-							if (noteObjectList.isEmpty()) contentStatus.tryEmit(ContentStatus.LoadedEmpty) else contentStatus.tryEmit(ContentStatus.Loaded)
-							isNoteRefreshing.tryEmit(false)
-						}
-					}
-				}
+			repository.getAllNoteLiteAsFlow().cancellable().collect { noteList.tryEmit(it) }
+		}
+	}
+
+	private fun observeAll() {
+		viewModelScope.launch(Dispatchers.Default) {
+			contentStatus.tryEmit(ContentStatus.Loading)
+			observeAllCoroutine?.cancel()
+			observeAllCoroutine = this
+			combine(
+				defaultChapterId,
+				noteList,
+			) { defaultChapterId, noteList ->
+				noteList.filter { it.parentId?.bytes.contentEquals(defaultChapterId) }
+			}.cancellable().collect {
+				if (it.isEmpty()) contentStatus.tryEmit(ContentStatus.LoadedEmpty)
+				else contentStatus.tryEmit(ContentStatus.Loaded(it))
 			}
 		}
 	}
+
 
 	private fun observeTags() {
 		viewModelScope.launch(Dispatchers.Default) {
-			repository.getAllTagAsFlow().collect {
-				tagList.tryEmit(it)
-			}
+			tagObserverCoroutine?.cancel()
+			tagObserverCoroutine = this
+			repository.getAllTagAsFlow().cancellable().collect { tagList.tryEmit(it) }
 		}
 	}
 
-	fun refresh() = observeNotes()
+	fun refresh() {
+		observeAll()
+		observeDefaultChapter()
+		observeNotes()
+		observeTags()
+	}
 
-	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+	fun delete(idList : List<RealmUUID>) {
+		repository.deleteSuspended(idList)
+	}
 
 	fun addDebugData() {
 		CoroutineScope(Dispatchers.Default).launch {
@@ -93,7 +110,7 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 						"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
 							"Content $i".repeat(2)
 						}\"}]}]}"
-					this.parentId = defaultChapterId.value
+					this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
 					repository.putNote(this)
 				}
 			}

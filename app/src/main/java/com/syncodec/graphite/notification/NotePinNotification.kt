@@ -6,7 +6,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -33,7 +32,7 @@ class NotePinNotificationService : Service() {
 
 			NotificationManagerCompat.from(this).cancel(notificationId)
 
-			val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+			val notificationManager = getSystemService(NotificationManager::class.java)
 			notificationManager.cancel(notificationId)
 		}
 
@@ -50,56 +49,37 @@ class NotePinNotificationService : Service() {
 
 class NotePinNotification {
 	companion object {
-		const val CHANNEL_ID = "note_pin_channel"
-		const val NOTIFICATION_ID = 1
-		const val NOTIFICATION_TITLE = "Pinned note"
+		private const val CHANNEL_ID = "note_pin_channel"
 
-		fun showSimpleNotification(
+		fun pinToNotification(
 			context : Context,
 			noteId : RealmUUID,
-			chapterId : RealmUUID,
-			title : String,
+			title : String? = null,
 			content : String,
-			notificationId : Int = Random.nextInt(),
 			priority : Int = NotificationCompat.PRIORITY_DEFAULT,
 			onRequestPermission : () -> Unit
 		) {
-			createNotificationChannel(context)
-
-//			val openActivityActionIntent = PendingIntent.getActivity(
-//				context,
-//				Random.nextInt(),
-//				Intent(context, NoteActivity::class.java).apply {
-//					putExtra(Extra.Companion.Constant.IS_NEW.name, false)
-//					putExtra(Extra.Companion.Constant.CHAPTER_ID.name, chapterId.bytes)
-//					putExtra(Extra.Companion.Constant.NOTE_ID.name, noteId.bytes)
-//					putExtra(Extra.Companion.Constant.FILTER.name, Extra.Companion.Filter.SINGLE_READ.name)
-//
-//					flags = Intent.FLAG_ACTIVITY_NEW_TASK
-//				},
-//				PendingIntent.FLAG_IMMUTABLE
-//			)
-
-			val openActivityActionIntent = TaskStackBuilder.create(context).run {
-//				addNextIntentWithParentStack(resultIntent)
-				Intent(context, NoteActivity::class.java).apply {
-					putExtra(Extra.Companion.Extra.IsNew.name, false)
-					putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
-					putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-
-					flags = Intent.FLAG_ACTIVITY_NEW_TASK
-
-					addNextIntentWithParentStack(this)
-				}
-				getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+			if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+				onRequestPermission()
+				return
 			}
+
+			createNotificationChannel(context)
+			val noteActivity = Intent(context, NoteActivity::class.java).apply {
+				putExtra(Extra.Companion.Extra.IsNew.name, false)
+				putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
+				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+
+				flags = Intent.FLAG_ACTIVITY_NEW_TASK
+			}
+			val openActivityPendingIntent = PendingIntent.getActivity(context, noteId.hashCode(), noteActivity, PendingIntent.FLAG_IMMUTABLE)
 
 			val unpinActionIntent = PendingIntent.getService(
 				context,
 				Random.nextInt(),
 				Intent(context, NotePinNotificationService::class.java).apply {
 					flags = Intent.FLAG_ACTIVITY_NEW_TASK
-					putExtra("notificationId", notificationId)
+					putExtra("notificationId", noteId.hashCode())
 				},
 				PendingIntent.FLAG_IMMUTABLE
 			)
@@ -107,10 +87,10 @@ class NotePinNotification {
 
 			val builder = Notification.Builder(context, CHANNEL_ID)
 				.setSmallIcon(R.drawable.ic_note)
-				.setContentTitle(title)
+				.setContentTitle(title ?: "Untitled")
 				.setContentText(content)
 				.setActions(
-					Notification.Action.Builder(null, "Open", openActivityActionIntent).build(),
+					Notification.Action.Builder(null, "Open", openActivityPendingIntent).build(),
 					Notification.Action.Builder(null, "Unpin", unpinActionIntent).build(),
 				)
 				.addExtras(
@@ -118,16 +98,11 @@ class NotePinNotification {
 						putByteArray(Extra.Companion.Extra.NoteId.name, noteId.bytes)
 					}
 				)
-				.setContentIntent(openActivityActionIntent)
+				.setContentIntent(openActivityPendingIntent)
 				.setOngoing(true)
 
-			with(NotificationManagerCompat.from(context)) {
-				if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-					onRequestPermission()
-					return
-				}
-				notify(notificationId, builder.build())
-			}
+
+			context.getSystemService(NotificationManager::class.java).notify(noteId.hashCode(), builder.build())
 		}
 
 		private fun createNotificationChannel(context : Context) {
@@ -138,7 +113,7 @@ class NotePinNotification {
 				description = descriptionText
 			}
 
-			val notificationManager : NotificationManager = with(context) { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+			val notificationManager : NotificationManager = context.getSystemService(NotificationManager::class.java)
 			notificationManager.createNotificationChannel(channel)
 		}
 

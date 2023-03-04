@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.network.BookData
 import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
+import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Quadruple
 import com.syncodec.graphite.utils.Status
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
@@ -30,7 +31,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 	val bookPageCount : MutableStateFlow<Int?> = MutableStateFlow(null)
 	val bookFirstPublishYear : MutableStateFlow<String?> = MutableStateFlow(null)
 
-	val thumbnail : MutableStateFlow<Bitmap?> = MutableStateFlow(null)
+	val thumbnailContentStatus : MutableStateFlow<ContentStatus<Bitmap?>> = MutableStateFlow(ContentStatus.Init)
 
 	val bookData : MutableStateFlow<BookData?> = MutableStateFlow(null)
 
@@ -83,14 +84,12 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 				OpenLibraryApi.retrieveDescriptionFromKey(key = id) { description ->
 					viewModelScope.launch(Dispatchers.Main) { bookDescription.value = description }
 				}
-				retrieveThumbnail(data = bookData.coverI) {
-					viewModelScope.launch(Dispatchers.Main) { thumbnail.tryEmit(it) }
-				}
+				retrieveThumbnail(data = bookData.coverI) { loadThumbnail(it) }
 			}
 		}
 	}
 
-	override fun loadData(data : String?, thumbnail : String?) {
+	override fun loadData(data : String?) {
 		viewModelScope.launch(Dispatchers.Main) {
 			BookData(jsonString = data).let { bookData ->
 				this@BookScreenViewModel.bookKey.tryEmit(bookData.key)
@@ -101,11 +100,15 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 				this@BookScreenViewModel.bookPageCount.tryEmit(bookData.numberOfPages)
 				this@BookScreenViewModel.bookFirstPublishYear.tryEmit(bookData.firstPublishYear)
 
-				if (thumbnail != null) this@BookScreenViewModel.thumbnail.tryEmit(thumbnail.decodeBase64ToBitmap())
-
 				status.value = Status.LOADED
 			}
 		}
+	}
+
+	override fun loadThumbnail(thumbnail : Bitmap?) {
+		thumbnail?.let {
+			this@BookScreenViewModel.thumbnailContentStatus.tryEmit(ContentStatus.Loaded(it))
+		} ?: this@BookScreenViewModel.thumbnailContentStatus.tryEmit(ContentStatus.LoadedEmpty)
 	}
 
 	override fun getData() : Quadruple<String?, String?, String?, String?> {
@@ -120,7 +123,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 				description = bookDescription.value
 			).toJsonString(),
 			bookKey.value,
-			thumbnail.value?.encodeBase64(),
+			thumbnailContentStatus.value.dataOrNull?.encodeBase64(),
 			bookTitle.value
 		)
 	}

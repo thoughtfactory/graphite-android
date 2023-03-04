@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -32,13 +29,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.firebase.auth.FirebaseUser
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetHeader
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetStrip
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.settings.SettingsActivity
-import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
-import com.syncodec.graphite.presentation.ui.DeleteContainer
-import com.syncodec.graphite.presentation.ui.DeleteContent
 
 
 @Composable
@@ -51,7 +42,6 @@ fun ProfileBottomSheet(
 		title = "Profile",
 		icon = R.drawable.ic_account
 	) {
-
 		ProfileView(
 			displayName = firebaseUser?.displayName ?: "Anonymous",
 			email = firebaseUser?.email ?: "Anonymous",
@@ -70,19 +60,6 @@ fun ProfileBottomSheet(
 		) {
 			Text(text = "Sign Out")
 		}
-
-//		Button(
-//			colors = ButtonDefaults.buttonColors(
-//				containerColor = Color.Companion.DeleteContainer,
-//				contentColor = Color.Companion.DeleteContent,
-//			),
-//			modifier = Modifier
-//				.fillMaxWidth()
-//				.padding(24.dp, 0.dp),
-//			onClick = { openDialog(SettingsDialogType.DELETE_ACCOUNT, null) }
-//		) {
-//			Text(text = "Delete Account")
-//		}
 	}
 }
 
@@ -155,7 +132,7 @@ fun ProfileView(
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(24.dp, 0.dp)
-				.background(MaterialTheme.colorScheme.background.copy(alpha = 0.31f), RoundedCornerShape(12.dp))
+				.background(MaterialTheme.colorScheme.background.copy(alpha = 0.31f), MaterialTheme.shapes.medium)
 		) {
 			Row(
 				verticalAlignment = Alignment.CenterVertically,

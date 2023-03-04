@@ -12,10 +12,12 @@ import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TvData
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
+import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Quadruple
 import com.syncodec.graphite.utils.Status
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.encodeBase64
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,8 +25,6 @@ import kotlinx.coroutines.launch
 
 
 class TvScreenViewModel : AbstractBucketScreenViewModel() {
-
-	val status : MutableState<Status> = mutableStateOf(Status.INIT)
 
 	val tvId : MutableStateFlow<String?> = MutableStateFlow(null)
 	val tvAdult : MutableStateFlow<Boolean?> = MutableStateFlow(null)
@@ -40,7 +40,7 @@ class TvScreenViewModel : AbstractBucketScreenViewModel() {
 	val tvPosterPath : MutableStateFlow<String?> = MutableStateFlow(null)
 	val tvTagline : MutableStateFlow<String?> = MutableStateFlow(null)
 
-	val thumbnail : MutableStateFlow<Bitmap?> = MutableStateFlow(null)
+	val thumbnailContentStatus : MutableStateFlow<ContentStatus<Bitmap?>> = MutableStateFlow(ContentStatus.Init)
 
 	val tvData : MutableStateFlow<TvData?> = MutableStateFlow(null)
 
@@ -110,15 +110,13 @@ class TvScreenViewModel : AbstractBucketScreenViewModel() {
 				response?.body?.string()?.let {
 					val tvData : TvData = TMDbApi.objectMapper.readValue(it, TvData::class.java)
 					loadData(it)
-					retrieveThumbnail(data = tvData.posterPath) { thumbnail.value = it }
-				} ?: run {
-					viewModelScope.launch(Dispatchers.Main) { status.value = Status.ERROR }
+					retrieveThumbnail(data = tvData.posterPath) { loadThumbnail(it) }
 				}
 			}
 		}
 	}
 
-	override fun loadData(data : String?, thumbnail : String?) {
+	override fun loadData(data : String?) {
 		viewModelScope.launch(Dispatchers.Main) {
 			TvData(jsonString = data).let {
 				this@TvScreenViewModel.tvId.tryEmit(it.id)
@@ -134,12 +132,14 @@ class TvScreenViewModel : AbstractBucketScreenViewModel() {
 				this@TvScreenViewModel.tvOverview.tryEmit(it.overview)
 				this@TvScreenViewModel.tvPosterPath.tryEmit(it.posterPath)
 				this@TvScreenViewModel.tvTagline.tryEmit(it.tagline)
-
-				if (thumbnail != null) this@TvScreenViewModel.thumbnail.tryEmit(thumbnail.decodeBase64ToBitmap())
-
-				status.value = Status.LOADED
 			}
 		}
+	}
+
+	override fun loadThumbnail(thumbnail : Bitmap?) {
+		thumbnail?.let {
+			this@TvScreenViewModel.thumbnailContentStatus.tryEmit(ContentStatus.Loaded(it))
+		} ?: this@TvScreenViewModel.thumbnailContentStatus.tryEmit(ContentStatus.LoadedEmpty)
 	}
 
 	override fun getData() : Quadruple<String?, String?, String?, String?> {
@@ -166,7 +166,7 @@ class TvScreenViewModel : AbstractBucketScreenViewModel() {
 				movieData = null,
 			).toJsonString(),
 			tvId.value,
-			thumbnail.value?.encodeBase64(),
+			thumbnailContentStatus.value.dataOrNull?.encodeBase64(),
 			tvName.value,
 		)
 	}
@@ -185,7 +185,7 @@ class TvScreenViewModel : AbstractBucketScreenViewModel() {
 			}
 		} catch (e : Exception) {
 //			TODO Show error
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 }

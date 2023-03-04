@@ -4,8 +4,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreen
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -32,6 +30,7 @@ class AttachmentActivity : ComponentActivity() {
 					Toast.makeText(this.applicationContext, "Error reading data", Toast.LENGTH_SHORT).show()
 					finish()
 				}
+
 				hasNoteId -> {
 					val noteId = intent.getByteArrayExtra(Extra.Companion.Extra.NoteId.name)?.let { RealmUUID.from(it) }
 					noteId?.let {
@@ -41,6 +40,7 @@ class AttachmentActivity : ComponentActivity() {
 						finish()
 					}
 				}
+
 				hasChapterId -> {
 					val chapterId = intent.getByteArrayExtra(Extra.Companion.Extra.ChapterId.name)?.let { RealmUUID.from(it) }
 					chapterId?.let {
@@ -50,6 +50,7 @@ class AttachmentActivity : ComponentActivity() {
 						finish()
 					}
 				}
+
 				else -> {
 					Toast.makeText(this.applicationContext, "Error reading data", Toast.LENGTH_SHORT).show()
 					finish()
@@ -59,13 +60,7 @@ class AttachmentActivity : ComponentActivity() {
 
 		setContent {
 			BaseContent {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
-
-				AttachmentScreen(
-					onClickBack = { this.onBackPressedDispatcher.onBackPressed() },
-				)
+				AttachmentScreen()
 			}
 		}
 	}

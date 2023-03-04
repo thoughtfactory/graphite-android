@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,15 +53,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
-import com.maxkeppeker.sheets.core.models.base.Header
-import com.maxkeppeker.sheets.core.models.base.rememberSheetState
-import com.maxkeppeler.sheets.color.ColorDialog
-import com.maxkeppeler.sheets.color.models.ColorConfig
-import com.maxkeppeler.sheets.color.models.ColorSelection
-import com.maxkeppeler.sheets.color.models.ColorSelectionMode
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
@@ -114,7 +106,7 @@ fun ChapterCoverPicker(
 				containerColor = MaterialTheme.colorScheme.background,
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(32.dp),
+					.height(36.dp),
 			) { coverPickerState = it }
 
 			Spacer(modifier = Modifier.height(8.dp))
@@ -132,7 +124,7 @@ fun ChapterCoverPicker(
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalAnimationApi::class)
 @Preview
 @Composable
 private fun ColorPicker(
@@ -330,7 +322,7 @@ private fun ImagePicker(
 						.clickable {
 							if (isPro) openFilePicker.launch(arrayOf("image/*"))
 							else Toast
-								.makeText(context, "Join Graphite Pro to add custom cover in notebooks", Toast.LENGTH_SHORT)
+								.makeText(context, "Join Graphite Pro to add custom cover in notebooks and chapters", Toast.LENGTH_SHORT)
 								.show()
 						},
 				) {

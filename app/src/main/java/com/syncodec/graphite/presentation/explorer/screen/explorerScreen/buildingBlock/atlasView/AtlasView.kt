@@ -1,14 +1,17 @@
 package com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildingBlock.atlasView
 
 import android.graphics.Bitmap
-import android.util.Log
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,16 +21,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapEffect
@@ -35,16 +40,15 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
+import com.google.maps.android.compose.clustering.Clustering
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.utils.AtlasClusterItem
-import com.syncodec.graphite.utils.ClusterRenderer
+import com.syncodec.graphite.utils.AtlasNoteClusterItem
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.isMarkerVisible
 import com.syncodec.graphite.utils.share
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -118,8 +122,12 @@ fun AtlasView(
 		}
 	}
 
-	var clusterCoroutine by remember { mutableStateOf<CoroutineScope?>(null) }
 	var googleMap1 : GoogleMap? by remember { mutableStateOf(null) }
+
+	LaunchedEffect(cameraPositionState.isMoving, noteList) {
+		if (! cameraPositionState.isMoving)
+			getContextNoteList("In visible region", noteList.filter { note -> note.latLng?.toGLatLng().let { googleMap1?.isMarkerVisible(it) == true } })
+	}
 
 	Box(
 		modifier = Modifier.fillMaxSize()
@@ -131,39 +139,71 @@ fun AtlasView(
 			onMapLoaded = { isMapLoaded = true },
 			modifier = Modifier.matchParentSize(),
 		) {
-			var clusterManager by remember { mutableStateOf<ClusterManager<AtlasClusterItem>?>(null) }
-
 			MapEffect(key1 = null) { googleMap -> googleMap1 = googleMap }
 
-			MapEffect(key1 = noteList) { googleMap ->
-				clusterCoroutine?.cancel()
-				clusterCoroutine = this
-
-				googleMap.clear()
-				if (clusterManager == null) {
-					clusterManager = ClusterManager<AtlasClusterItem>(context, googleMap).also {
-						val clusterRenderer : ClusterRenderer<AtlasClusterItem> = ClusterRenderer(context, googleMap, it)
-						clusterRenderer.minClusterSize = 1
-						it.renderer = clusterRenderer
-						it.cluster()
+			Clustering(
+				items = noteList.mapNotNull { note ->
+					note.latLng?.toGLatLng()?.let { it1 -> AtlasNoteClusterItem(note = note, latLng = it1, itemTitle = null) }
+				},
+				clusterContent = { noteClusterItemCluster ->
+					val bitmap = noteClusterItemCluster
+						.items
+						.firstNotNullOfOrNull { it.note.thumbnail?.decodeBase64ToBitmap() }
+					Box(
+						modifier = Modifier.size(52.dp)
+					) {
+						bitmap?.let { bitmap ->
+							Image(
+								painter = rememberAsyncImagePainter(bitmap),
+								contentDescription = null,
+								contentScale = ContentScale.Crop,
+								modifier = Modifier
+									.align(Alignment.Center)
+									.padding(4.dp)
+									.clip(MaterialTheme.shapes.small),
+							)
+						} ?: Image(
+							painter = painterResource(id = R.drawable.ic_note_cluster),
+							contentDescription = null,
+							modifier = Modifier
+								.align(Alignment.Center)
+								.padding(2.dp),
+						)
+						Text(
+							text = noteClusterItemCluster.size.toString(),
+							color = MaterialTheme.colorScheme.onSurface,
+							style = MaterialTheme.typography.labelMedium,
+							modifier = Modifier
+								.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp), MaterialTheme.shapes.extraSmall)
+								.padding(4.dp, 2.dp)
+								.align(Alignment.TopEnd)
+						)
 					}
-				}
-				getContextNoteList("In visible region", noteList.filter { note -> note.latLng?.toGLatLng().let { googleMap.isMarkerVisible(it) } })
-
-				googleMap.setOnCameraMoveListener { clusterManager?.cluster() }
-
-				noteList
-					.mapNotNull { it.latLng?.toGLatLng()?.let { it1 -> AtlasClusterItem(latLng = it1, itemTitle = null) } }
-					.let {
-						clusterManager?.clearItems()
-						clusterManager?.addItems(it)
-						clusterManager?.cluster()
+				},
+				clusterItemContent = {
+					Box(
+						modifier = Modifier.size(52.dp)
+					) {
+						it.note.thumbnail?.decodeBase64ToBitmap()?.let { bitmap ->
+							Image(
+								painter = rememberAsyncImagePainter(bitmap),
+								contentDescription = null,
+								contentScale = ContentScale.Crop,
+								modifier = Modifier
+									.align(Alignment.Center)
+									.padding(2.dp)
+									.clip(MaterialTheme.shapes.small),
+							)
+						} ?: Image(
+							painter = painterResource(id = R.drawable.ic_note_cluster),
+							contentDescription = null,
+							modifier = Modifier
+								.align(Alignment.Center)
+								.padding(2.dp),
+						)
 					}
-
-				googleMap.setOnCameraIdleListener {
-					getContextNoteList("In visible region", noteList.filter { note -> note.latLng?.toGLatLng().let { googleMap.isMarkerVisible(it) } })
-				}
-			}
+				},
+			)
 		}
 
 		Box(
@@ -183,12 +223,10 @@ fun AtlasView(
 							}
 						}
 					}
-				},
-				modifier = Modifier.align(Alignment.TopEnd)
+				}, modifier = Modifier.align(Alignment.TopEnd)
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_camera),
-					contentDescription = "Zoom to fit all markers"
+					painter = painterResource(id = R.drawable.ic_camera), contentDescription = "Zoom to fit all markers"
 				)
 			}
 
@@ -202,12 +240,10 @@ fun AtlasView(
 							}
 						}
 					}
-				},
-				modifier = Modifier.align(Alignment.BottomEnd)
+				}, modifier = Modifier.align(Alignment.BottomEnd)
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_expand),
-					contentDescription = "Zoom to fit all markers"
+					painter = painterResource(id = R.drawable.ic_expand), contentDescription = "Zoom to fit all markers"
 				)
 			}
 		}

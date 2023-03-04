@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -38,7 +39,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -47,16 +47,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.google.firebase.auth.FirebaseUser
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
+import com.syncodec.graphite.notification.WriteNoteNotification
+import com.syncodec.graphite.presentation.bugReport.BugReportActivity
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
 import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButtonWithDropdown
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingSwitch
+import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingSwitchWithPro
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsContentTitle
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
 import com.syncodec.graphite.presentation.ui.LocalIsPro
@@ -65,7 +71,7 @@ import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalPermissionsApi::class)
 @Preview
 @Composable
 fun SettingsScreen(
@@ -81,18 +87,19 @@ fun SettingsScreen(
 
 	val isPro = LocalIsPro.current
 
-	val uriHandler = LocalUriHandler.current
-	val authenticatorAction = LocalAuthenticatorAction.current
+	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	val darkTheme by dataStoreInstance.getDarkTheme.collectAsState(null)
-	val isTintFavourite by dataStoreInstance.getTintFavorite.collectAsState(initial = null)
+	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
 	val useBiometric = dataStoreInstance.getUseBiometric().collectAsState(initial = null).value
 	val isGeolocationEnabled by dataStoreInstance.getGeolocation.collectAsState(initial = null)
 	val isYearProgressEnabled by dataStoreInstance.getYearProgress.collectAsState(initial = null)
 	val isNoteNotificationEnabled by dataStoreInstance.getNoteFromNotification.collectAsState(initial = null)
 
 	var isDarkThemeDropdownMenuVisible by remember { mutableStateOf(false) }
+	var isTypographyDropdownMenuVisible by remember { mutableStateOf(false) }
 
+	val notificationPermission = rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
 
 	Column(
 		modifier = Modifier
@@ -116,7 +123,8 @@ fun SettingsScreen(
 		SettingsContentTitle(title = "ACCOUNT")
 		AnimatedContent(
 			targetState = firebaseUser,
-			transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) }
+			transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) },
+			label = "profile"
 		) {
 			if (it == null) {
 				SettingButton(text = "Sign in", icon = R.drawable.ic_account, onClick = onClickSignIn)
@@ -138,12 +146,30 @@ fun SettingsScreen(
 		}
 
 		SettingsContentTitle(title = "PREFERENCES")
-		SettingSwitch(
-			text = "Tint favourite note",
-			icon = R.drawable.ic_favourite,
-			isChecked = isTintFavourite != false
-		) { dataStoreInstance.putTintFavorite(it) }
-		SettingButton(text = "Font style", icon = R.drawable.ic_font_family, subText = "Ubuntu")
+		SettingButtonWithDropdown(
+			text = "Typography",
+			icon = R.drawable.ic_font_family,
+			subText = typography ?: "Ubuntu",
+			isDropdownMenuVisible = isTypographyDropdownMenuVisible,
+			dropdownMenuList = listOf(
+				DropdownMenuItem(
+					title = "PT Mono",
+				) { dataStoreInstance.putTypography("PT Mono"); isTypographyDropdownMenuVisible = false },
+				DropdownMenuItem(
+					title = "Ubuntu",
+				) { dataStoreInstance.putTypography("Ubuntu"); isTypographyDropdownMenuVisible = false },
+				DropdownMenuItem(
+					title = "Montserrat",
+				) { dataStoreInstance.putTypography("Montserrat"); isTypographyDropdownMenuVisible = false },
+				DropdownMenuItem(
+					title = "Roboto",
+				) { dataStoreInstance.putTypography("Roboto"); isTypographyDropdownMenuVisible = false },
+				DropdownMenuItem(
+					title = "Tilt Neon",
+				) { dataStoreInstance.putTypography("Tilt Neon"); isTypographyDropdownMenuVisible = false }
+			)
+		) { isTypographyDropdownMenuVisible = it }
+
 		SettingButtonWithDropdown(
 			text = "Dark mode",
 			icon = R.drawable.ic_bulb,
@@ -172,15 +198,19 @@ fun SettingsScreen(
 		SettingButton(text = "Language", icon = R.drawable.ic_language, subText = "English")
 
 		SettingsContentTitle(title = "SECURITY")
-		SettingButton(text = "Add Passcode", icon = R.drawable.ic_passcode) { authenticatorAction(AuthenticatorScreen.AddPasscode) }
-		SettingButton(text = "Change Passcode", icon = R.drawable.ic_passcode_change) { authenticatorAction(AuthenticatorScreen.ChangePasscode) }
+		SettingButton(text = "Add Passcode", icon = R.drawable.ic_passcode) { onAuthenticationAction(AuthenticatorScreen.AddPasscode) }
+		SettingButton(text = "Change Passcode", icon = R.drawable.ic_passcode_change) { onAuthenticationAction(AuthenticatorScreen.ChangePasscode) }
 		SettingSwitch(text = "Biometric Authentication", icon = R.drawable.ic_biometric, isChecked = useBiometric != false) {
-			dataStoreInstance.putUseBiometric(it)
+			when (useBiometric) {
+				true -> dataStoreInstance.putUseBiometric(false)
+				false -> openDialog(SettingsDialogType.Biometric)
+				null -> openDialog(SettingsDialogType.Biometric)
+			}
 		}
 
 		SettingsContentTitle(title = "DATA")
 		SettingButton(text = "Backup and restore", icon = R.drawable.ic_local_backup) { navigateTo(SettingsActivity.Companion.SettingsScreen.BackupAndRestore) }
-		SettingButton(text = "Synchronization", icon = R.drawable.ic_sync)
+		SettingButton(text = "Synchronization", icon = R.drawable.ic_sync, subText = "Coming soon")
 		SettingButton(text = "Import", icon = R.drawable.ic_import) { navigateTo(SettingsActivity.Companion.SettingsScreen.ImportData) }
 		SettingButton(text = "Export", icon = R.drawable.ic_export) { openDialog(SettingsDialogType.ExportData) }
 		SettingButton(text = "Clear data", icon = R.drawable.ic_broom) { openDialog(SettingsDialogType.ClearData) }
@@ -192,14 +222,37 @@ fun SettingsScreen(
 		SettingSwitch(text = "Geotag notes automatically", icon = R.drawable.ic_map_marker, isChecked = isGeolocationEnabled != false) {
 			dataStoreInstance.putGeolocation(it)
 		}
-		SettingSwitch(text = "Add note form notification", icon = R.drawable.ic_note_notification, isChecked = isNoteNotificationEnabled != false) {
-			if (isPro) openDialog(SettingsDialogType.NotificationPermission)
-			else Toast.makeText(context, "Join Graphite Pro to enable adding notes from notification", Toast.LENGTH_SHORT).show()
+		SettingSwitchWithPro(text = "Add note form notification", icon = R.drawable.ic_note_notification, isChecked = isNoteNotificationEnabled != false) {
+			if (isPro) {
+				if (notificationPermission.status.isGranted) {
+					when (isNoteNotificationEnabled) {
+						true -> WriteNoteNotification.cancelNotification(context)
+						false -> WriteNoteNotification.showSimpleNotification(context)
+						null -> WriteNoteNotification.showSimpleNotification(context)
+					}
+				} else {
+					openDialog(SettingsDialogType.NotificationPermission)
+				}
+			} else Toast.makeText(context, "Join Graphite Pro to enable adding notes from notification", Toast.LENGTH_SHORT).show()
 		}
 
 		SettingsContentTitle(title = "ABOUT US")
+		SettingButton(text = "Knowledge Base", icon = R.drawable.ic_book_shelf) {
+			try {
+				try {
+					context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://graphite.syncodec.com/#/quickstart")))
+				} catch (e : ActivityNotFoundException) {
+					Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+				}
+			} catch (e : Exception) {
+				Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+			}
+		}
+		SettingButton(text = "Bug Report", icon = R.drawable.ic_bug) {
+			context.startActivity(Intent(context, BugReportActivity::class.java))
+		}
 		SettingButton(text = "Rate us", icon = R.drawable.ic_star) {
-			Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${BuildConfig.APPLICATION_ID}"))
+			context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${BuildConfig.APPLICATION_ID}")))
 		}
 		SettingButton(text = "Spread a word", icon = R.drawable.ic_share) {
 			try {
@@ -229,10 +282,18 @@ fun SettingsScreen(
 			}
 		}
 		SettingButton(text = "Privacy policy", icon = R.drawable.ic_policy) {
-			uriHandler.openUri("https://graphite.syncodec.com/policy.html")
+			try {
+				context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://graphite.syncodec.com/policy.html")))
+			} catch (e : ActivityNotFoundException) {
+				Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+			}
 		}
 		SettingButton(text = "Terms of service", icon = R.drawable.ic_terms) {
-			uriHandler.openUri("https://graphite.syncodec.com/terms.html")
+			try {
+				context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://graphite.syncodec.com/terms.html")))
+			} catch (e : ActivityNotFoundException) {
+				Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+			}
 		}
 		SettingButton(text = "Open source licenses", icon = R.drawable.ic_code) {
 			context.startActivity(Intent(context, OssLicensesMenuActivity::class.java))

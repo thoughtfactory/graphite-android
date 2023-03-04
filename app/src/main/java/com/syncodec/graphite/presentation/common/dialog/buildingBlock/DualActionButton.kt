@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,14 +20,14 @@ import com.syncodec.graphite.utils.getInverseBWColor
 @Preview
 @Composable
 fun DualActionButtons(
-	primaryText: String = "Primary",
-	secondaryText: String? = null,
-	primaryColor: Color = MaterialTheme.colorScheme.primary,
-	secondaryColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
-	primaryEnabled: Boolean = true,
-	secondaryEnabled: Boolean = true,
-	onClickPrimary: () -> Unit = {},
-	onClickSecondary: () -> Unit = {},
+	primaryText : String = "Primary",
+	secondaryText : String? = null,
+	primaryColor : Color = MaterialTheme.colorScheme.primary,
+	secondaryColor : Color = Color.Transparent,
+	primaryEnabled : Boolean = true,
+	secondaryEnabled : Boolean = true,
+	onClickPrimary : () -> Unit = {},
+	onClickSecondary : () -> Unit = {},
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth()
@@ -37,14 +38,14 @@ fun DualActionButtons(
 				shape = MaterialTheme.shapes.medium,
 				colors = ButtonDefaults.buttonColors(
 					containerColor = secondaryColor,
-					contentColor = secondaryColor.getInverseBWColor(),
+					contentColor = if (secondaryColor == Color.Transparent) MaterialTheme.colorScheme.onSurface else secondaryColor.getInverseBWColor(),
 				),
 				enabled = secondaryEnabled,
 				modifier = Modifier.weight(1f)
 			) {
 				Text(
 					text = it,
-					color = secondaryColor.getInverseBWColor(),
+					color = if (secondaryColor == Color.Transparent) MaterialTheme.colorScheme.onSurface else secondaryColor.getInverseBWColor(),
 				)
 			}
 

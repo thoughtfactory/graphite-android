@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
@@ -83,6 +84,8 @@ fun AnimatedText(
 	fontStyle : FontStyle? = null,
 	fontWeight : FontWeight? = null,
 	textAlign: TextAlign? = null,
+	maxLines : Int = Int.MAX_VALUE,
+	overflow : TextOverflow = TextOverflow.Clip,
 	transitionSpec : AnimatedContentScope<String?>.() -> ContentTransform = { fadeIn(tween(300)) with fadeOut(tween(300)) }
 ) {
 	AnimatedContent(
@@ -93,10 +96,12 @@ fun AnimatedText(
 			text = it ?: "",
 			style = style,
 			color = color,
-			modifier = modifier,
 			fontStyle = fontStyle,
 			fontWeight = fontWeight,
-			textAlign = textAlign
+			textAlign = textAlign,
+			maxLines = maxLines,
+			overflow = overflow,
+			modifier = modifier,
 		)
 	}
 }

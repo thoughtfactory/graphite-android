@@ -6,7 +6,7 @@ import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.ContentStatus
+import com.syncodec.graphite.utils.LoaderStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +32,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 	private var loadNoteCoroutine : CoroutineScope? = null
 	private var loadChapterCoroutine : CoroutineScope? = null
 
-	val contentStatus : MutableStateFlow<ContentStatus> = MutableStateFlow(ContentStatus.Init)
+	val loaderStatus : MutableStateFlow<LoaderStatus> = MutableStateFlow(LoaderStatus.Init)
 	val noteAttachmentListMap : MutableStateFlow<Map<NoteObjectLite, List<File>>> = MutableStateFlow(mapOf())
 
 	val enableNoteNavigation : MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -68,7 +68,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 			loadAllCoroutine?.cancel()
 			loadAllCoroutine = this
 			repository.getAllNoteLiteAsFlow().cancellable().collect {
-				contentStatus.tryEmit(ContentStatus.Loading)
+				loaderStatus.tryEmit(LoaderStatus.Loading)
 				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
 				it.forEach { note ->
 					attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
@@ -76,17 +76,17 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 					}
 				}
 				this@AttachmentScreenViewModel.noteAttachmentListMap.tryEmit(noteAttachmentListMap)
-				if (noteAttachmentListMap.isEmpty()) contentStatus.tryEmit(ContentStatus.LoadedEmpty) else contentStatus.tryEmit(ContentStatus.Loaded)
+				if (noteAttachmentListMap.isEmpty()) loaderStatus.tryEmit(LoaderStatus.LoadedEmpty) else loaderStatus.tryEmit(LoaderStatus.Loaded)
 			}
 		}
 	}
 
 	private fun loadNoteData(id : String) {
-		contentStatus.tryEmit(ContentStatus.Loading)
+		loaderStatus.tryEmit(LoaderStatus.Loading)
 		val noteId = try {
 			RealmUUID.from(id)
 		} catch (e : Exception) {
-			contentStatus.tryEmit(ContentStatus.Error)
+			loaderStatus.tryEmit(LoaderStatus.Error)
 			null
 		}
 		noteId?.let {
@@ -97,20 +97,20 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 					it?.let { noteObject ->
 						attachmentRepository.getAttachmentFromNote(noteId = noteObject.id).let { attachmentList ->
 							noteAttachmentListMap.tryEmit(mapOf(noteObject.toLite() to attachmentList))
-							contentStatus.tryEmit(ContentStatus.Loaded)
+							loaderStatus.tryEmit(LoaderStatus.Loaded)
 						}
-					} ?: contentStatus.tryEmit(ContentStatus.Error)
+					} ?: loaderStatus.tryEmit(LoaderStatus.Error)
 				}
 			}
 		}
 	}
 
 	private fun loadChapterData(id : String) {
-		contentStatus.tryEmit(ContentStatus.Loading)
+		loaderStatus.tryEmit(LoaderStatus.Loading)
 		val chapterId = try {
 			RealmUUID.from(id)
 		} catch (e : Exception) {
-			contentStatus.tryEmit(ContentStatus.Error)
+			loaderStatus.tryEmit(LoaderStatus.Error)
 			null
 		}
 		chapterId?.let {
@@ -125,7 +125,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 						}
 					}
 					this@AttachmentScreenViewModel.noteAttachmentListMap.tryEmit(noteAttachmentListMap)
-					if (noteAttachmentListMap.isEmpty()) contentStatus.tryEmit(ContentStatus.LoadedEmpty) else contentStatus.tryEmit(ContentStatus.Loaded)
+					if (noteAttachmentListMap.isEmpty()) loaderStatus.tryEmit(LoaderStatus.LoadedEmpty) else loaderStatus.tryEmit(LoaderStatus.Loaded)
 				}
 			}
 		}
@@ -147,7 +147,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 	}
 
 	fun deleteAttachment(attachmentList : List<File>) {
-		contentStatus.tryEmit(ContentStatus.Loading)
+		loaderStatus.tryEmit(LoaderStatus.Loading)
 
 		viewModelScope.launch(Dispatchers.Default) {
 			val currentNoteAttachmentListMap = noteAttachmentListMap.value
@@ -160,7 +160,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 			}
 
 			noteAttachmentListMap.tryEmit(newNoteAttachmentListMap)
-			if (newNoteAttachmentListMap.isEmpty()) contentStatus.tryEmit(ContentStatus.LoadedEmpty) else contentStatus.tryEmit(ContentStatus.Loaded)
+			if (newNoteAttachmentListMap.isEmpty()) loaderStatus.tryEmit(LoaderStatus.LoadedEmpty) else loaderStatus.tryEmit(LoaderStatus.Loaded)
 		}
 
 		attachmentRepository.delete(attachmentList)

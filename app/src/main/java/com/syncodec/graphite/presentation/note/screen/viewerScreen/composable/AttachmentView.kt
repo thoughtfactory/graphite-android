@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.note.screen.viewerScreen.composable
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,9 +59,10 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.filePreview.FilePreview.Companion.preview
 import com.syncodec.graphite.presentation.common.text.marqueeText.MarqueeText
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.FilePreview.Companion.preview
+import com.syncodec.graphite.utils.UriPreview.Companion.preview
 import com.syncodec.graphite.utils.share
 import com.syncodec.graphite.utils.viewExternally
 import io.github.esentsov.PackagePrivate
@@ -118,7 +121,11 @@ fun AttachmentView(
 					Column(
 						modifier = Modifier.fillMaxSize()
 					) {
-						AttachmentPreview(file = file) { height -> previewHeight = height }
+						Box(
+							modifier = Modifier.weight(1f)
+						) {
+							AttachmentPreview(file = file) { height -> previewHeight = height }
+						}
 
 						AttachmentNamePlate(file = file)
 					}
@@ -140,7 +147,7 @@ fun AttachmentView(
 }
 
 @Composable
-private fun ColumnScope.AttachmentPreview(
+fun AttachmentPreview(
 	file : File,
 	onGetHeight : (Int) -> Unit = {},
 ) {
@@ -166,10 +173,108 @@ private fun ColumnScope.AttachmentPreview(
 	Box(
 		contentAlignment = Alignment.Center,
 		modifier = Modifier
-			.fillMaxWidth()
-			.weight(1f)
-			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.13f))
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.13f))
 			.clickable { file.viewExternally(context = context) }
+			.onGloballyPositioned { coordinates -> onGetHeight(coordinates.size.height) },
+	) {
+		when (isPreviewAvailable) {
+			true -> {
+				imageBitmap?.let {
+					AsyncImage(
+						model = ImageRequest.Builder(context)
+							.data(it)
+							.crossfade(300)
+							.build(),
+						contentDescription = null,
+						contentScale = ContentScale.Crop,
+						modifier = Modifier
+							.fillMaxSize()
+							.blur(32.dp)
+					)
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
+					)
+					AsyncImage(
+						model = ImageRequest.Builder(context)
+							.data(it)
+							.crossfade(300)
+							.build(),
+						contentDescription = null,
+						contentScale = ContentScale.Fit,
+						modifier = Modifier
+					)
+					if (imageBitmap != null) {
+						imageOverlay?.let {
+							Icon(
+								painter = painterResource(id = it),
+								contentDescription = null,
+								tint = MaterialTheme.colorScheme.background,
+								modifier = Modifier.requiredSize(64.dp)
+							)
+						}
+					}
+				}
+			}
+
+			false -> {
+				Column(
+					horizontalAlignment = Alignment.CenterHorizontally,
+					modifier = Modifier,
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_file),
+						contentDescription = null,
+						tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+						modifier = Modifier.requiredSize(64.dp)
+					)
+					Spacer(modifier = Modifier.height(8.dp))
+					Text(
+						text = "Preview unavailable",
+						style = MaterialTheme.typography.bodyLarge,
+						color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+					)
+				}
+			}
+
+			null -> LoadingView()
+		}
+	}
+}
+
+@Composable
+fun AttachmentPreview(
+	uri : Uri,
+	onGetHeight : (Int) -> Unit = {},
+	onClick: () -> Unit = {},
+) {
+	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
+
+	var isPreviewAvailable by remember { mutableStateOf(null as Boolean?) }
+
+	var imageBitmap by remember { mutableStateOf(null as Bitmap?) }
+	var imageOverlay by remember { mutableStateOf(null as Int?) }
+	LaunchedEffect(key1 = uri) {
+		scope.launch(Dispatchers.IO) {
+			uri.preview(context = context).let {
+				imageBitmap = it.first
+				imageOverlay = it.second
+			}
+			isPreviewAvailable = imageBitmap != null
+		}
+	}
+
+	DisposableEffect(key1 = uri) { onDispose { scope.cancel(); imageBitmap?.recycle() } }
+
+	Box(
+		contentAlignment = Alignment.Center,
+		modifier = Modifier
+			.fillMaxWidth()
+			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.13f))
+			.clickable { onClick() }
 			.onGloballyPositioned { coordinates -> onGetHeight(coordinates.size.height) },
 	) {
 		when (isPreviewAvailable) {
@@ -248,7 +353,7 @@ private fun AttachmentNamePlate(
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f))
+			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f))
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,

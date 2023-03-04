@@ -25,7 +25,10 @@ fun RichText(
           resolvedStyle.paragraphSpacing!!.toDp()
         }
 
-        Column(modifier = modifier, verticalArrangement = spacedBy(blockSpacing)) {
+        Column(
+          verticalArrangement = spacedBy(blockSpacing),
+          modifier = modifier,
+        ) {
           children()
         }
       }

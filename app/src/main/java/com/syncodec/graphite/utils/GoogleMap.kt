@@ -2,14 +2,10 @@ package com.syncodec.graphite.utils
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffXfermode
 import android.graphics.Typeface
 import android.location.Address
 import android.location.Geocoder
 import android.os.Build
-import android.util.TypedValue
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -27,40 +23,52 @@ import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.NoteObjectLite
 import java.io.IOException
 import java.util.Locale
 
 
-fun GoogleMap.isMarkerVisible(markerPosition: LatLng?) = markerPosition?.let { projection.visibleRegion.latLngBounds.contains(it) } ?: false
+fun GoogleMap.isMarkerVisible(markerPosition : LatLng?) = markerPosition?.let { projection.visibleRegion.latLngBounds.contains(it) } ?: false
 
 
 class AtlasClusterItem(
-	val latLng: LatLng,
-	val itemTitle: String?,
+	val latLng : LatLng,
+	val itemTitle : String?,
 ) : ClusterItem {
-	override fun getPosition(): LatLng = latLng
-	override fun getTitle(): String? = itemTitle
-	override fun getSnippet(): String? = null
+	override fun getPosition() : LatLng = latLng
+	override fun getTitle() : String? = itemTitle
+	override fun getSnippet() : String? = null
 }
 
+class AtlasNoteClusterItem(
+	val note : NoteObjectLite,
+	val latLng : LatLng,
+	val itemTitle : String?,
+) : ClusterItem {
+	override fun getPosition() : LatLng = latLng
+	override fun getTitle() : String? = itemTitle
+	override fun getSnippet() : String? = null
+}
+
+
 class ClusterRenderer<T : ClusterItem>(
-	val context: Context,
-	map: GoogleMap,
-	clusterManager: ClusterManager<T>
+	val context : Context,
+	map : GoogleMap,
+	clusterManager : ClusterManager<T>
 ) : DefaultClusterRenderer<T>(context, map, clusterManager) {
-	override fun onBeforeClusterRendered(cluster: Cluster<T>, markerOptions: MarkerOptions) {
+	override fun onBeforeClusterRendered(cluster : Cluster<T>, markerOptions : MarkerOptions) {
 		val atlasItem = AtlasItem(context = context, itemSize = cluster.size)
 		val bitmap = createBitmapFromView(atlasItem, 144, 144)
 		markerOptions.title("").icon(BitmapDescriptorFactory.fromBitmap(bitmap))
 	}
 
-	override fun onBeforeClusterItemRendered(item: T, markerOptions: MarkerOptions) {
+	override fun onBeforeClusterItemRendered(item : T, markerOptions : MarkerOptions) {
 		val atlasItem = AtlasItem(context = context, itemSize = 1)
 		val bitmap = createBitmapFromView(atlasItem, 144, 144)
 		markerOptions.title("").icon(BitmapDescriptorFactory.fromBitmap(bitmap))
 	}
 
-	override fun onClusterUpdated(cluster: Cluster<T>, marker: Marker) {
+	override fun onClusterUpdated(cluster : Cluster<T>, marker : Marker) {
 		val atlasItem = AtlasItem(context = context, itemSize = cluster.size)
 		val bitmap = createBitmapFromView(atlasItem, 144, 144)
 		marker.setIcon(BitmapDescriptorFactory.fromBitmap(bitmap))
@@ -77,7 +85,7 @@ class ClusterRenderer<T : ClusterItem>(
 	override fun shouldRenderAsCluster(cluster : Cluster<T>) : Boolean = cluster.size > 1
 }
 
-class AtlasItem(context: Context, val itemSize: Int) : FrameLayout(context) {
+class AtlasItem(context : Context, val itemSize : Int) : FrameLayout(context) {
 	init {
 		layoutParams = LayoutParams(144, 144)
 

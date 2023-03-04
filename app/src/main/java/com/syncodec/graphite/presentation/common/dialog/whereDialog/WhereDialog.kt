@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.common.dialog.whereDialog
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -20,7 +21,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
@@ -41,6 +42,7 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyVie
 import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.chapterList
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.LocalIsAuthenticated
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -54,19 +56,22 @@ fun WhereDialog(
 	onSetChapter : (ChapterObjectLite?) -> Unit = {},
 	onDismiss : () -> Unit = {},
 ) {
+	val context = LocalContext.current
 	val viewModel : WhereDialogViewModel = koinViewModel()
 	val scope = rememberCoroutineScope()
 
 	val isAuthenticated = LocalIsAuthenticated.current
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-	var bottomSheetType by remember { mutableStateOf(WhereBottomSheetType.CHAPTER) }
+	var bottomSheetType by remember { mutableStateOf(WhereBottomSheetType.Chapter) }
 	fun openSheet(sheetType : WhereBottomSheetType) = scope.launch { bottomSheetType = sheetType; modalBottomSheetState.show() }
 	fun closeSheet() = scope.launch { modalBottomSheetState.hide() }
 
 	val exploreParentChapter by viewModel.parentChapter.collectAsState()
 	val chapterList by viewModel.visibleChapterList.collectAsState()
 	val chapterPath by viewModel.chapterPath.collectAsState()
+	val chapterChapterItemCount by viewModel.chapterChapterItemCount.collectAsState()
+	val chapterNoteItemCount by viewModel.chapterNoteItemCount.collectAsState()
 
 	BackHandler(enabled = showDialog) {
 		onDismiss()
@@ -106,7 +111,7 @@ fun WhereDialog(
 				FloatingActionButton(
 					containerColor = MaterialTheme.colorScheme.primary,
 					contentColor = MaterialTheme.colorScheme.onPrimary,
-					onClick = { openSheet(WhereBottomSheetType.CHAPTER) },
+					onClick = { openSheet(WhereBottomSheetType.Chapter) },
 				) {
 					Icon(
 						painter = painterResource(id = R.drawable.ic_notebook),
@@ -125,15 +130,17 @@ fun WhereDialog(
 							title = title,
 							description = description,
 							color = color,
-							bitmap = bitmap
-						)
+							thumbnail = bitmap,
+						) {
+							scope.launch(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+						}
 						closeSheet()
 					},
 				)
 			},
 		) {
 			AnimatedContent(
-				targetState = chapterList,
+				targetState = chapterList.filter { if (it.isLocked) isAuthenticated else true },
 				transitionSpec = { scaleIn(tween(300), 0.71f) + fadeIn(tween(300)) with scaleOut(tween(300), 0.71f) + fadeOut(tween(300)) }
 			) {
 				if (it.isEmpty()) EmptyView(
@@ -145,6 +152,8 @@ fun WhereDialog(
 				) {
 					chapterList(
 						chapterList = it,
+						chapterNoteItemCount = chapterNoteItemCount,
+						chapterChapterItemCount = chapterChapterItemCount,
 						onClick = { viewModel.exploreChapter(it.id) },
 					)
 				}

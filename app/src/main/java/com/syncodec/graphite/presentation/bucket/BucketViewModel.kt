@@ -1,18 +1,18 @@
 package com.syncodec.graphite.presentation.bucket
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -22,21 +22,23 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
-	val bucketObject : MutableState<BucketObject?> = mutableStateOf(null)
+	val isOperationPending : MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-	val id : MutableState<RealmUUID?> = mutableStateOf(null)
-	val title : MutableState<String?> = mutableStateOf(null)
-	val description : MutableState<String?> = mutableStateOf(null)
-	val bucketType : MutableState<String?> = mutableStateOf(null)
-	val isFavourite : MutableState<Boolean?> = mutableStateOf(null)
-	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
+	val bucketObject : MutableStateFlow<BucketObject?> = MutableStateFlow(null)
 
-	val bucketItemObject : MutableState<BucketItemObject?> = mutableStateOf(null)
+	val id : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
+	val title : MutableStateFlow<String?> = MutableStateFlow(null)
+	val description : MutableStateFlow<String?> = MutableStateFlow(null)
+	val bucketType : MutableStateFlow<String?> = MutableStateFlow(null)
+	val isFavourite : MutableStateFlow<Boolean?> = MutableStateFlow(null)
+	val isLocked : MutableStateFlow<Boolean?> = MutableStateFlow(null)
+
+	val bucketItemObject : MutableStateFlow<BucketItemObject?> = MutableStateFlow(null)
 
 	private var refreshCoroutine : CoroutineScope? = null
 
 	fun loadAndViewData(realmUUID : RealmUUID) {
-		viewModelScope.launch(Dispatchers.IO) {
+		viewModelScope.launch(Dispatchers.Default) {
 			this@BucketViewModel.refreshCoroutine?.cancel()
 			this@BucketViewModel.refreshCoroutine = this
 			repositoryState.collect {
@@ -46,7 +48,7 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 					RepositoryState.LOADING -> null
 					RepositoryState.SUCCESS -> {
 						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
-						onRepositorySuccess(realmUUID = realmUUID)
+						getBucket(realmUUID = realmUUID)
 					}
 
 					RepositoryState.ERROR -> null
@@ -55,21 +57,22 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 		}
 	}
 
-	private suspend fun onRepositorySuccess(realmUUID : RealmUUID) {
+	private suspend fun getBucket(realmUUID : RealmUUID) {
 		repository.getBucketAsFlow(realmUUID).collect {
-			bucketObject.value = it
-
-			this@BucketViewModel.id.value = it?.id
-			this@BucketViewModel.title.value = it?.title
-			this@BucketViewModel.description.value = it?.description
-			this@BucketViewModel.bucketType.value = it?.bucketType
-			this@BucketViewModel.isFavourite.value = it?.isFavourite
-			this@BucketViewModel.isLocked.value = it?.isLocked
+			it?.let { bucketObject ->
+				this@BucketViewModel.bucketObject.tryEmit(bucketObject)
+				this@BucketViewModel.id.tryEmit(bucketObject.id)
+				this@BucketViewModel.title.tryEmit(bucketObject.title)
+				this@BucketViewModel.description.tryEmit(bucketObject.description)
+				this@BucketViewModel.bucketType.tryEmit(bucketObject.bucketType)
+				this@BucketViewModel.isFavourite.tryEmit(bucketObject.isFavourite)
+				this@BucketViewModel.isLocked.tryEmit(bucketObject.isLocked)
+			}
 		}
 	}
 
 	private fun putBucket() {
-		CoroutineScope(Dispatchers.IO).launch {
+		viewModelScope.launch(Dispatchers.Default) {
 			BucketObject().apply {
 				if (this@BucketViewModel.id.value != null) this.id = this@BucketViewModel.id.value !!
 				this.title = this@BucketViewModel.title.value
@@ -78,33 +81,64 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 				this.isFavourite = this@BucketViewModel.isFavourite.value ?: false
 				this.isLocked = this@BucketViewModel.isLocked.value ?: false
 
-				repository.putBucket(this) { _, _ ->
-					loadAndViewData(this.id)
+				repository.putBucket(this)
+			}
+		}
+	}
+
+	fun toggleLock() {
+		this.isLocked.tryEmit(this.isLocked.value?.not())
+		putBucket()
+	}
+
+	fun toggleFavourite() {
+		this.isFavourite.tryEmit(this.isFavourite.value?.not())
+		putBucket()
+	}
+
+	fun updateBucket(title : String?, description : String?) {
+		this.title.tryEmit(title)
+		this.description.tryEmit(description)
+		putBucket()
+	}
+
+	fun shareBucketItems(shareAll : Boolean, realmUUIDList : List<RealmUUID>, callback : suspend (String) -> Unit) {
+		viewModelScope.launch(Dispatchers.Default) {
+			id.value?.let { id ->
+				repository.getBucketItemWithParentId(id).let {
+					it.filter { if (shareAll) true else it.id in realmUUIDList }.let {
+						val baseUrl = when (bucketType.value) {
+							BucketType.TODO.name -> ""
+							BucketType.BOOK.name -> " - https://openlibrary.org"
+							BucketType.SHOW.name -> " - https://www.themoviedb.org/"
+							BucketType.LINK.name -> ""
+							BucketType.UNKNOWN.name -> ""
+							else -> ""
+						}
+
+						var shareText = ""
+						it.forEach {
+							val connector = when (it.getShowData()?.type) {
+								ShowType.TV -> "tv/"
+								ShowType.MOVIE -> "movie/"
+								else -> ""
+							}
+							shareText += "${it.title} $baseUrl$connector${if (bucketType.value == BucketType.TODO.name) "" else it.key}\n"
+						}
+
+						callback(shareText)
+					}
 				}
 			}
 		}
 	}
 
-
-	fun toggleLock() {
-		this.isLocked.value = this.isLocked.value?.not()
-		putBucket()
-	}
-
-	fun toggleFavourite() {
-		this.isFavourite.value = this.isFavourite.value?.not()
-		putBucket()
-	}
-
-	fun updateBucket(title : String?, description : String?) {
-		this.title.value = title
-		this.description.value = description
-		putBucket()
-	}
-
 	fun deleteBucketItem(realmUUIDList : List<RealmUUID>) {
-		CoroutineScope(Dispatchers.Default).launch {
-			repository.delete(realmUUIDList)
-		}
+		repository.deleteSuspended(realmUUIDList)
+	}
+
+	fun deleteBucket(id : RealmUUID, callback : suspend () -> Unit) {
+		this@BucketViewModel.isOperationPending.tryEmit(true)
+		repository.deleteSuspended(id, callback)
 	}
 }

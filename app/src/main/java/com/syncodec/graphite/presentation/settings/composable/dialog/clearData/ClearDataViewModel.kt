@@ -10,7 +10,6 @@ class ClearDataViewModel(private val repository : KoinRepository) : ViewModel() 
 
 	fun clearData(callback : (Boolean, Exception?) -> Unit) {
 		repository.clearRealm { isSuccess, exception ->
-			exception?.printStackTrace()
 			if (isSuccess) repository.initializeRealm(callback)
 			else callback(false, exception)
 		}

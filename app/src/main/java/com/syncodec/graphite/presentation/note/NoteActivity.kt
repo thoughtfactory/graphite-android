@@ -1,15 +1,14 @@
 package com.syncodec.graphite.presentation.note
 
 import android.os.Bundle
-import android.util.Log
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.addCallback
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.note.screen.NoteScreen
 import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
@@ -17,6 +16,7 @@ import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -24,7 +24,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class NoteActivity : ComponentActivity() {
 
-	private val viewModel : NoteViewModel by viewModel()
+	private val isEditing : MutableStateFlow<Boolean> = MutableStateFlow(false)
 	private val editorScreenViewModel : EditorScreenViewModel by viewModel()
 	private val viewerScreenViewModel : ViewerScreenViewModel by viewModel()
 
@@ -50,28 +50,47 @@ class NoteActivity : ComponentActivity() {
 
 		setContent {
 			BaseContent {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
 
-				val isEditing by viewModel.isEditing.collectAsState()
-				Log.i("npr71", "isEditing: $isEditing")
+				this.onBackPressedDispatcher.addCallback {
+					try {
+						(window.decorView.rootView as ViewGroup).removeAllViews()
+					} catch (e : Exception) {
+					}
+					finish()
+				}
+
+				val isEditing by isEditing.collectAsState()
 
 				NoteScreen(
 					isEditing = isEditing,
-					onClickEditNote = { viewModel.isEditing.tryEmit(true) },
+					onClickEditNote = { this.isEditing.tryEmit(true) },
 					afterNoteSaved = { noteId ->
 						viewerScreenViewModel.loadNote(noteId = noteId)
 						lifecycleScope.launch {
 							viewerScreenViewModel.isReady.collect { isReady ->
 								if (isReady) {
 //									editorScreenViewModel.loadNote(noteId = noteId)
-									viewModel.isEditing.tryEmit(false)
+									this@NoteActivity.isEditing.tryEmit(false)
 									cancel()
 								}
 							}
 						}
 					},
-					onClickBack = {},
+					discardChanges = { this.isEditing.tryEmit(false) },
+					onNoteDeleted = {
+						try {
+							(window.decorView.rootView as ViewGroup).removeAllViews()
+						} catch (e : Exception) {
+						}
+						finish()
+					},
+					onClickBack = {
+						try {
+							(window.decorView.rootView as ViewGroup).removeAllViews()
+						} catch (e : Exception) {
+						}
+						finish()
+					},
 				)
 			}
 		}
@@ -88,11 +107,10 @@ class NoteActivity : ComponentActivity() {
 				val hasParentId = intent.hasExtra(Extra.Companion.Extra.ParentId.name)
 				if (hasParentId) {
 					val parentId = intent.getByteArrayExtra(Extra.Companion.Extra.ParentId.name)?.let { RealmUUID.from(it) }
-					parentId?.let { editorScreenViewModel.initNewNote(parentId = it) } ?:
-					Toast.makeText(this, "Parent ID is null", Toast.LENGTH_SHORT).show()
+					parentId?.let { editorScreenViewModel.initNewNote(parentId = it) } ?: Toast.makeText(this, "Parent ID is null", Toast.LENGTH_SHORT).show()
 
 					lifecycleScope.launch {
-						editorScreenViewModel.isReady.collect { if (it) viewModel.isEditing.tryEmit(true) }
+						editorScreenViewModel.isReady.collect { if (it) this@NoteActivity.isEditing.tryEmit(true) }
 					}
 				} else {
 					Toast.makeText(this, "Parent ID is null", Toast.LENGTH_SHORT).show()
@@ -104,7 +122,6 @@ class NoteActivity : ComponentActivity() {
 					val noteId = intent.getByteArrayExtra(Extra.Companion.Extra.NoteId.name)?.let { RealmUUID.from(it) }
 
 					noteId?.let {
-						Toast.makeText(this, "Note ID is $noteId", Toast.LENGTH_SHORT).show()
 						viewerScreenViewModel.loadNote(noteId = it)
 						editorScreenViewModel.loadNote(noteId = it)
 						lifecycleScope.launch {
@@ -115,25 +132,22 @@ class NoteActivity : ComponentActivity() {
 								isNoteViewerReady && isNoteEditorReady
 							}.collect { isReady ->
 								if (isReady) {
-									viewModel.isEditing.tryEmit(false)
+									this@NoteActivity.isEditing.tryEmit(false)
 									cancel()
 								}
 							}
 						}
 					} ?: run {
-						Log.i("npr71", "noteId == null")
-						Toast.makeText(this, "Note ID is null", Toast.LENGTH_SHORT).show()
+						Toast.makeText(this, "Error opening note", Toast.LENGTH_SHORT).show()
 						finish()
 					}
 				} else {
-					Log.i("npr71", "hasNoteId == false")
-					Toast.makeText(this, "Note ID is null", Toast.LENGTH_SHORT).show()
+					Toast.makeText(this, "Error opening note", Toast.LENGTH_SHORT).show()
 					finish()
 				}
 			}
 		} else {
-			Log.i("npr71", "hasIsNew == false")
-			Toast.makeText(this, "Is new is null", Toast.LENGTH_SHORT).show()
+			Toast.makeText(this, "Error opening note", Toast.LENGTH_SHORT).show()
 			finish()
 		}
 	}

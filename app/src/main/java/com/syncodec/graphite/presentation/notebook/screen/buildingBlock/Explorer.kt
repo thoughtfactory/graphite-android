@@ -27,6 +27,8 @@ import io.realm.kotlin.types.RealmUUID
 fun Explorer(
 	noteObjectList : List<NoteObjectLite> = listOf(),
 	chapterObjectList : List<ChapterObject> = listOf(),
+	chapterNoteItemCount : Map<RealmUUID?, Int> = mapOf(),
+	chapterChapterItemCount : Map<RealmUUID?, Int> = mapOf(),
 	tagList : List<TagObject> = listOf(),
 	isNoteListVisible : Boolean = true,
 	isChapterListVisible : Boolean = true,
@@ -78,6 +80,8 @@ fun Explorer(
 						else -> compareBy { it.title }
 					}
 				),
+			chapterNoteItemCount = chapterNoteItemCount,
+			chapterChapterItemCount = chapterChapterItemCount,
 			tagList = tagList,
 			selectedIdList = selectedIdList,
 			isVisible = isChapterListVisible,

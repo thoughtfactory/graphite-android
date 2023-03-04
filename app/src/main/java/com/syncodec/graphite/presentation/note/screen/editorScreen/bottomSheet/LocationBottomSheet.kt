@@ -57,6 +57,7 @@ fun LocationBottomSheet(
 	locationData : LocationData = LocationData.Init,
 	onRemoveLocation : () -> Unit = {},
 	onReloadLocation : () -> Unit = {},
+	onSetLocationManually : () -> Unit = {},
 ) {
 	GenericBottomSheet(
 		title = "Location",
@@ -65,8 +66,9 @@ fun LocationBottomSheet(
 		LocationCard(
 			locationData = locationData,
 			onRemoveLocation = onRemoveLocation,
-			onReloadLocation = onReloadLocation
-		) { }
+			onReloadLocation = onReloadLocation,
+			onSetLocationManually = onSetLocationManually,
+		)
 	}
 }
 

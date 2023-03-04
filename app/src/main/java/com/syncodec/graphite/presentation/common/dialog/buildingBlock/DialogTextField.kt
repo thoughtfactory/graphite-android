@@ -164,7 +164,7 @@ object DialogTextFieldDefaults {
 		unfocusedTrailingIconColor : Color = MaterialTheme.colorScheme.onSurface,
 		disabledTrailingIconColor : Color = MaterialTheme.colorScheme.onSurface,
 		errorTrailingIconColor : Color = MaterialTheme.colorScheme.error,
-		placeholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+		placeholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
 		disabledPlaceholderColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
 	) : DialogTextFieldColors = DialogTextFieldColors(
 		textColor = textColor,

@@ -1,16 +1,16 @@
 package com.syncodec.graphite.presentation.common.text
 
 import android.widget.Toast
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,26 +24,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
 
 
 @Preview
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun KeyValueText(
 	modifier : Modifier = Modifier,
 	key : String = "Key",
 	value : String? = "Value",
-	containerColor : Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+	containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 	contentColor : Color = MaterialTheme.colorScheme.onSurface,
 	maxLines : Int = Int.MAX_VALUE,
-	onClick : () -> Unit = {  },
+	onClick : () -> Unit = { },
 ) {
 	val context = LocalContext.current
 	val clipboardManager : ClipboardManager = LocalClipboardManager.current
 
 	Box(
 		modifier = modifier
-			.padding(0.dp, 4.dp)
+			.padding(0.dp, 2.dp)
 			.background(color = containerColor, shape = MaterialTheme.shapes.medium)
 			.clip(MaterialTheme.shapes.medium)
 			.combinedClickable(
@@ -51,7 +52,9 @@ fun KeyValueText(
 				onClick = onClick,
 				onLongClick = {
 					if (value != null) clipboardManager.setText(AnnotatedString(value))
-					else Toast.makeText(context, "No value to copy", Toast.LENGTH_SHORT).show()
+					else Toast
+						.makeText(context, "No value to copy", Toast.LENGTH_SHORT)
+						.show()
 				},
 				onLongClickLabel = "Copy to clipboard",
 			)
@@ -62,9 +65,9 @@ fun KeyValueText(
 			Text(
 				text = key,
 				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onSurface,
+				color = contentColor.copy(alpha = 0.71f),
 			)
-			Text(
+			AnimatedText(
 				text = if (value.isNullOrEmpty()) "No $key" else value,
 				style = MaterialTheme.typography.bodyMedium,
 				color = contentColor,

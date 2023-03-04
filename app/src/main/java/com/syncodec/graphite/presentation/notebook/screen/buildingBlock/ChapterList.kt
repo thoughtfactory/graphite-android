@@ -7,12 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.ChapterObject
@@ -23,6 +19,8 @@ import io.realm.kotlin.types.RealmUUID
 @OptIn(ExperimentalFoundationApi::class)
 fun LazyListScope.chapterList(
 	chapterList : List<ChapterObject> = listOf(),
+	chapterNoteItemCount : Map<RealmUUID?, Int> = mapOf(),
+	chapterChapterItemCount : Map<RealmUUID?, Int> = mapOf(),
 	tagList : List<TagObject> = listOf(),
 	selectedIdList : List<RealmUUID> = listOf(),
 	headerTitle : String = "Chapters",
@@ -66,8 +64,8 @@ fun LazyListScope.chapterList(
 							isLocked = chapterObject.isLocked,
 							color = chapterObject.color?.let { Color(it) },
 							thumbnail = chapterObject.thumbnail,
-							noteCount = 0,
-							chapterCount = 0,
+							noteCount = chapterNoteItemCount[chapterObject.id] ?: 0,
+							chapterCount = chapterChapterItemCount[chapterObject.id] ?: 0,
 							isSelected = chapterObject.id in selectedIdList,
 							onClick = { onClick(chapterObject) },
 							onLongClick = { onLongClick(chapterObject) },

@@ -1,10 +1,6 @@
 package com.syncodec.graphite.presentation.explorer.screen.explorerScreen
 
 import android.content.Intent
-import android.view.HapticFeedbackConstants
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +9,7 @@ import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,16 +29,17 @@ import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
-import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildingBlock.calendarView.CalendarView
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bar.BottomBar
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bar.TopBar
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bottomSheet.ExplorerBottomSheet
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildingBlock.atlasView.AtlasView
+import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildingBlock.calendarView.CalendarView
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.dialog.ExplorerDialog
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.dialog.ExplorerDialogType
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreen
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.LocalIsAuthenticated
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.compose.koinViewModel
 
@@ -62,6 +60,8 @@ fun ExplorerScreen(
 	val context = LocalContext.current
 	val viewModel : ExplorerScreenViewModel = koinViewModel()
 	val hapticFeedback = LocalHapticFeedback.current
+
+	val isAuthenticated = LocalIsAuthenticated.current
 
 	val filteredNoteList by viewModel.filteredNoteList.collectAsState()
 	val searchInChapter by viewModel.chapterObject.collectAsState()
@@ -94,33 +94,6 @@ fun ExplorerScreen(
 		ExplorerDialogType.Delete -> isDeleteDialogVisible = false
 	}
 
-	val activityLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-		try {
-			it.data?.let { intent ->
-				val hasIntentAction = intent.hasExtra(Extra.Companion.Extra.INTENT_ACTION.name)
-				if (hasIntentAction) {
-					val intentAction = intent.getStringExtra(Extra.Companion.Extra.INTENT_ACTION.name)?.let { it1 ->
-						Extra.Companion.IntentAction.valueOf(it1)
-					}
-					if (intentAction == Extra.Companion.IntentAction.DELETE) {
-						val hasObjectId = intent.hasExtra(Extra.Companion.Extra.OBJECT_ID.name)
-						if (hasObjectId) intent.getByteArrayExtra(Extra.Companion.Extra.OBJECT_ID.name)?.let { bytes ->
-							try {
-//								viewModel.delete(listOf(RealmUUID.from(bytes)))
-							} catch (e : Exception) {
-								null
-							}
-						}
-					}
-				}
-				Extra.Companion.Extra.INTENT_ACTION.name
-				Extra.Companion.Extra.OBJECT_ID.name
-			}
-		} catch (e : Exception) {
-			Toast.makeText(context, "Error performing action", Toast.LENGTH_SHORT).show()
-		}
-	}
-
 	fun onClickNote(id : RealmUUID) {
 		if (isSelecting) {
 			onSelect(id)
@@ -129,8 +102,7 @@ fun ExplorerScreen(
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-
-				activityLauncher.launch(this)
+				context.startActivity(this)
 			}
 		}
 	}
@@ -175,7 +147,7 @@ fun ExplorerScreen(
 				Color(
 					ColorUtils.blendARGB(
 						MaterialTheme.colorScheme.background.toArgb(),
-						MaterialTheme.colorScheme.surface.toArgb(),
+						MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(),
 						if (isSystemInDarkTheme()) 0.71f else 0.17f
 					)
 				)
@@ -198,15 +170,15 @@ fun ExplorerScreen(
 				sheetContentColor = MaterialTheme.colorScheme.onBackground,
 				sheetPeekHeight = 64.dp,
 				backgroundColor = MaterialTheme.colorScheme.background
-			) {
+			) { paddingValues ->
 				Box(
 					modifier = Modifier
 						.fillMaxSize()
-						.padding(it)
+						.padding(paddingValues)
 				) {
 					when (explorerType) {
 						Extra.Companion.ExplorerType.Atlas -> AtlasView(
-							noteList = filteredNoteList
+							noteList = filteredNoteList.filter { if (it.isLocked) isAuthenticated else true }
 						) { title, noteList ->
 							contextNoteList = noteList
 							sheetTitle = title
@@ -214,7 +186,7 @@ fun ExplorerScreen(
 
 						Extra.Companion.ExplorerType.Attachment -> null
 						Extra.Companion.ExplorerType.Calendar -> CalendarView(
-							noteList = filteredNoteList
+							noteList = filteredNoteList.filter { if (it.isLocked) isAuthenticated else true }
 						) { title, noteList ->
 							contextNoteList = noteList
 							sheetTitle = title

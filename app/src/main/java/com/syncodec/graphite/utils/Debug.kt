@@ -20,7 +20,7 @@ class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteOb
 			System.currentTimeMillis() to listOf(
 				NoteObjectLite(
 					id = RealmUUID.random(),
-					parentChapterId = RealmUUID.random(),
+					parentId = RealmUUID.random(),
 					createdTimestamp = System.currentTimeMillis(),
 					modifiedTimestamp = System.currentTimeMillis(),
 					userTimestamp = System.currentTimeMillis(),

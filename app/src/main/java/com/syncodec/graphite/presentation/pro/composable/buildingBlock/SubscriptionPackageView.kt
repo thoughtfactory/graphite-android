@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,13 +31,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.revenuecat.purchases.Package
+import com.syncodec.graphite.presentation.ui.montserratFontFamily
 
 
 @Composable
 fun SubscriptionPackageView(
 	monthlyPackage : Package? = null,
 	annualPackage : Package? = null,
-	onClickPackage: (Package?) -> Unit = { _ -> },
+	onClickPackage : (Package?) -> Unit = { _ -> },
 ) {
 	val savePercent = monthlyPackage?.product?.originalPriceAmountMicros?.let { monthlyPrice ->
 		annualPackage?.product?.originalPriceAmountMicros?.let { annualPrice ->
@@ -61,7 +62,7 @@ fun SubscriptionPackageView(
 			modifier = Modifier
 				.height(with(LocalDensity.current) { annualSize?.height?.toDp() ?: 0.dp })
 				.onGloballyPositioned { monthlySize = it.size }
-				.clip(RoundedCornerShape(24.dp))
+				.clip(MaterialTheme.shapes.large)
 				.clickable { onClickPackage(monthlyPackage) }
 		)
 		AnnualSubscriptionView(
@@ -69,7 +70,7 @@ fun SubscriptionPackageView(
 			savePercent = savePercent,
 			modifier = Modifier
 				.onGloballyPositioned { annualSize = it.size }
-				.clip(RoundedCornerShape(24.dp))
+				.clip(MaterialTheme.shapes.large)
 				.clickable { onClickPackage(annualPackage) }
 		)
 	}
@@ -81,17 +82,16 @@ private fun MonthlySubscriptionView(
 	monthlyPackage : Package?
 ) {
 	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
 	val screenWidth = configuration.screenWidthDp.dp
 
-	val containerColor = MaterialTheme.colorScheme.surface
+	val containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f)
 	val contentColor = MaterialTheme.colorScheme.onSurface
 
 	Box(
 		modifier = modifier
 			.width(screenWidth * 2 / 5)
-			.background(containerColor, RoundedCornerShape(24.dp))
-			.clip(RoundedCornerShape(24.dp))
+			.background(containerColor, MaterialTheme.shapes.extraLarge)
+			.clip(MaterialTheme.shapes.extraLarge)
 	) {
 		Crossfade(targetState = monthlyPackage) { _package ->
 			if (_package == null) {
@@ -103,7 +103,7 @@ private fun MonthlySubscriptionView(
 				) {
 					Text(
 						text = "Monthly Plan",
-						style = MaterialTheme.typography.titleMedium,
+						style = MaterialTheme.typography.titleMedium.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						fontWeight = FontWeight.Bold
 					)
@@ -112,14 +112,14 @@ private fun MonthlySubscriptionView(
 
 					Text(
 						text = _package.product.price,
-						style = MaterialTheme.typography.titleLarge,
+						style = MaterialTheme.typography.titleLarge.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						fontWeight = FontWeight.Bold
 					)
 
 					Text(
 						text = "per month",
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodySmall.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						fontWeight = FontWeight.Bold,
 						textAlign = TextAlign.Center,
@@ -131,7 +131,7 @@ private fun MonthlySubscriptionView(
 
 					Text(
 						text = "Pay monthly\ncancel anytime",
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodySmall.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						textAlign = TextAlign.Center,
 					)
@@ -148,17 +148,16 @@ private fun AnnualSubscriptionView(
 	savePercent : Int? = null
 ) {
 	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
 	val screenWidth = configuration.screenWidthDp.dp
 
-	val containerColor = MaterialTheme.colorScheme.surface
+	val containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f)
 	val contentColor = MaterialTheme.colorScheme.onSurface
 
 	Box(
 		modifier = modifier
 			.width(screenWidth * 2 / 5)
-			.background(containerColor, RoundedCornerShape(24.dp))
-			.clip(RoundedCornerShape(24.dp))
+			.background(containerColor, MaterialTheme.shapes.extraLarge)
+			.clip(MaterialTheme.shapes.extraLarge)
 	) {
 		Crossfade(targetState = annualPackage) { _package ->
 			if (_package == null) {
@@ -170,7 +169,7 @@ private fun AnnualSubscriptionView(
 				) {
 					Text(
 						text = "Annual Plan",
-						style = MaterialTheme.typography.titleMedium,
+						style = MaterialTheme.typography.titleMedium.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						fontWeight = FontWeight.Bold
 					)
@@ -179,14 +178,14 @@ private fun AnnualSubscriptionView(
 
 					Text(
 						text = _package.product.price,
-						style = MaterialTheme.typography.titleLarge,
+						style = MaterialTheme.typography.titleLarge.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						fontWeight = FontWeight.Bold
 					)
 
 					Text(
 						text = "per year",
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodySmall.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						fontWeight = FontWeight.Bold,
 						textAlign = TextAlign.Center,
@@ -196,15 +195,15 @@ private fun AnnualSubscriptionView(
 					Spacer(modifier = Modifier.height(12.dp))
 
 					Box(
-						modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
+						modifier = Modifier.background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
 					) {
 						Text(
 							text = "Save $savePercent%",
-							style = MaterialTheme.typography.bodySmall,
+							style = MaterialTheme.typography.bodySmall.copy(fontFamily = montserratFontFamily),
 							color = MaterialTheme.colorScheme.onPrimary,
 							fontWeight = FontWeight.Bold,
 							textAlign = TextAlign.Center,
-							modifier = Modifier.padding(8.dp, 4.dp)
+							modifier = Modifier.padding(12.dp, 8.dp)
 						)
 					}
 
@@ -212,7 +211,7 @@ private fun AnnualSubscriptionView(
 
 					Text(
 						text = "Pay annually\ncancel anytime",
-						style = MaterialTheme.typography.bodySmall,
+						style = MaterialTheme.typography.bodySmall.copy(fontFamily = montserratFontFamily),
 						color = contentColor,
 						textAlign = TextAlign.Center,
 					)

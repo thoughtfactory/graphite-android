@@ -1,17 +1,17 @@
 package com.syncodec.graphite.presentation.notebook.screen
 
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,8 +26,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -35,17 +33,21 @@ import com.syncodec.graphite.presentation.common.scaffold.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.note.NoteActivity
+import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.Explorer
 import com.syncodec.graphite.presentation.notebook.screen.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.notebook.screen.composable.bar.TopBar
 import com.syncodec.graphite.presentation.notebook.screen.composable.bottomSheet.NotebookBottomSheetType
 import com.syncodec.graphite.presentation.notebook.screen.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.notebook.screen.composable.dialog.NotebookDialog
 import com.syncodec.graphite.presentation.notebook.screen.composable.dialog.NotebookDialogType
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.Explorer
-import com.syncodec.graphite.utils.ContentStatus
+import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.LoaderStatus
+import com.syncodec.graphite.utils.LocalAuthenticatorAction
+import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -58,7 +60,9 @@ fun NotebookScreen() {
 	val scope = rememberCoroutineScope()
 	val viewModel : NotebookScreenViewModel = koinViewModel()
 	val hapticFeedback = LocalHapticFeedback.current
-	val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
+	val isAuthenticated = LocalIsAuthenticated.current
+	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	val defaultChapterId by viewModel.defaultChapterId.collectAsState()
 
@@ -71,8 +75,12 @@ fun NotebookScreen() {
 	val thumbnail by viewModel.thumbnail.collectAsState()
 	val isFavourite by viewModel.isFavourite.collectAsState()
 	val isLocked by viewModel.isLocked.collectAsState()
+
 	val chapterList by viewModel.chapterList.collectAsState()
 	val noteList by viewModel.noteList.collectAsState()
+	val chapterChapterItemCount by viewModel.chapterChapterItemCount.collectAsState()
+	val chapterNoteItemCount by viewModel.chapterNoteItemCount.collectAsState()
+
 	val parentId by viewModel.parentId.collectAsState()
 
 	val chapterPath by viewModel.chapterPath.collectAsState()
@@ -80,7 +88,7 @@ fun NotebookScreen() {
 	val tagList by viewModel.tagList.collectAsState()
 
 	val isChapterRefreshing by viewModel.isChapterRefreshing.collectAsState()
-	val contentStatus by viewModel.contentStatus.collectAsState()
+	val contentStatus by viewModel.loaderStatus.collectAsState()
 
 	var isNoteVisible by remember { mutableStateOf(true) }
 	var isChapterVisible by remember { mutableStateOf(true) }
@@ -101,33 +109,6 @@ fun NotebookScreen() {
 
 	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-	val activityLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-		try {
-			it.data?.let { intent ->
-				val hasIntentAction = intent.hasExtra(Extra.Companion.Extra.INTENT_ACTION.name)
-				if (hasIntentAction) {
-					val intentAction = intent.getStringExtra(Extra.Companion.Extra.INTENT_ACTION.name)?.let { it1 ->
-						Extra.Companion.IntentAction.valueOf(it1)
-					}
-					if (intentAction == Extra.Companion.IntentAction.DELETE) {
-						val hasObjectId = intent.hasExtra(Extra.Companion.Extra.OBJECT_ID.name)
-						if (hasObjectId) intent.getByteArrayExtra(Extra.Companion.Extra.OBJECT_ID.name)?.let { bytes ->
-							try {
-								viewModel.delete(listOf(RealmUUID.from(bytes)))
-							} catch (e : Exception) {
-								null
-							}
-						}
-					}
-				}
-				Extra.Companion.Extra.INTENT_ACTION.name
-				Extra.Companion.Extra.OBJECT_ID.name
-			}
-		} catch (e : Exception) {
-			Toast.makeText(context, "Error performing action", Toast.LENGTH_SHORT).show()
-		}
-	}
-
 	fun onClickNote(id : RealmUUID) {
 		if (isSelecting) {
 			isChapterVisible = false
@@ -137,8 +118,7 @@ fun NotebookScreen() {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-
-				activityLauncher.launch(this)
+				context.startActivity(this)
 			}
 		}
 	}
@@ -155,8 +135,7 @@ fun NotebookScreen() {
 			putExtra(Extra.Companion.Extra.IsNew.name, true)
 			putExtra(Extra.Companion.Extra.ParentId.name, chapterId?.bytes)
 			putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-
-			activityLauncher.launch(this)
+			context.startActivity(this)
 		}
 	}
 
@@ -195,7 +174,7 @@ fun NotebookScreen() {
 	GenericScaffold(
 		topBar = {
 			TopBar(
-				title = title ?: "",
+				title = title,
 				defaultChapterId = defaultChapterId,
 				isLocked = isLocked ?: false,
 				isFavourite = isFavourite ?: false,
@@ -204,7 +183,12 @@ fun NotebookScreen() {
 				selectedSize = selectedIdList.size,
 				onClickBack = { onBackPressedDispatcher?.onBackPressed() },
 				onClickCancelSelect = { isSelecting = false; selectedIdList = listOf() },
-				onClickLock = { chapterId?.let { viewModel.toggleLock(it) } },
+				onClickLock = {
+					if (chapterId == defaultChapterId) Toast.makeText(context, "Cannot lock default chapter", Toast.LENGTH_SHORT).show()
+					else chapterId?.let {
+						if (isAuthenticated) viewModel.toggleLock(it) else onAuthenticationAction(AuthenticatorScreen.Authenticate)
+					}
+				},
 				onClickFavourite = { chapterId?.let { viewModel.toggleFavourite(it) } },
 				onClickFilter = { openSheet(NotebookBottomSheetType.Filter) },
 				onClickDelete = { openDialog(NotebookDialogType.DeleteSelected) },
@@ -212,6 +196,7 @@ fun NotebookScreen() {
 			)
 		},
 		bottomBar = { BottomBar(onClickMenu = { openSheet(NotebookBottomSheetType.Menu) }) },
+		isBottomBarVisible = ! isSelecting,
 		modalBottomSheetState = modalBottomSheetState,
 		sheetContent = {
 			SheetLayout(
@@ -230,8 +215,10 @@ fun NotebookScreen() {
 				onClickDelete = { openDialog(NotebookDialogType.DeleteChapter) },
 				putChapter = { title, description, color, thumbnail ->
 					chapterId?.let {
-						viewModel.putInnerChapter(parentId = it, title = title, description = description, color = color, thumbnail = thumbnail)
-					} ?: Toast.makeText(context, "Error adding chapter", Toast.LENGTH_SHORT).show()
+						viewModel.putInnerChapter(parentId = it, title = title, description = description, color = color, thumbnail = thumbnail) {
+							scope.launch(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+						}
+					} ?: scope.launch(Dispatchers.Main) { Toast.makeText(context, "Error adding chapter", Toast.LENGTH_SHORT).show() }
 				},
 				onCloseSheet = ::closeSheet,
 			)
@@ -269,7 +256,6 @@ fun NotebookScreen() {
 				closeDialog = { closeDialog(it) },
 			)
 		},
-		isBottomBarVisible = ! isSelecting,
 		primaryButton = GenericButton(
 			text = "New Note",
 			icon = R.drawable.ic_pencil,
@@ -281,30 +267,35 @@ fun NotebookScreen() {
 		) { openSheet(NotebookBottomSheetType.Chapter) },
 		isButtonVisible = ! isSelecting,
 	) {
+		val pullRefreshState = rememberPullRefreshState(
+			refreshing = isChapterRefreshing,
+			onRefresh = { chapterId?.let { viewModel.refresh(it) } ?: Toast.makeText(context, "Error refreshing chapter", Toast.LENGTH_SHORT).show() }
+		)
+
 		Crossfade(
 			targetState = contentStatus,
 			animationSpec = tween(300)
 		) { contentStatus ->
 			when (contentStatus) {
-				ContentStatus.Init -> LoadingView()
-				ContentStatus.Error -> ErrorView()
-				ContentStatus.Loading -> LoadingView()
-				ContentStatus.LoadedEmpty -> EmptyView(
+				LoaderStatus.Init -> LoadingView()
+				LoaderStatus.Error -> ErrorView()
+				LoaderStatus.Loading -> LoadingView()
+				LoaderStatus.LoadedEmpty -> EmptyView(
 					image = R.drawable.il_empty_chapter,
 					title = "Keep a diary, and perhaps someday it will keep you",
 					subTitle = "― Mae West",
 				)
 
-				ContentStatus.Loaded -> SwipeRefresh(
-					state = rememberSwipeRefreshState(isRefreshing = isChapterRefreshing),
-					modifier = Modifier.fillMaxSize(),
-					onRefresh = {
-						chapterId?.let { viewModel.refresh(it) } ?: Toast.makeText(context, "Error refreshing chapter", Toast.LENGTH_SHORT).show()
-					}
+				LoaderStatus.Loaded -> Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.pullRefresh(pullRefreshState),
 				) {
 					Explorer(
 						noteObjectList = noteList,
 						chapterObjectList = chapterList,
+						chapterNoteItemCount = chapterNoteItemCount,
+						chapterChapterItemCount = chapterChapterItemCount,
 						tagList = tagList,
 						isNoteListVisible = isNoteVisible,
 						isChapterListVisible = isChapterVisible,

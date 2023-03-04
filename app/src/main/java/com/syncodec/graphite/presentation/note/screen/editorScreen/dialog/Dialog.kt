@@ -7,6 +7,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.presentation.common.dialog.DiscardDialog
+import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialog
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.datetime.date.DatePickerDefaults
 import com.vanpra.composematerialdialogs.datetime.date.datepicker
@@ -24,6 +28,9 @@ enum class EditorDialogType {
 	DatePicker,
 	TimePicker,
 	LocationPermission,
+	LocationPicker,
+	Where,
+	DiscardChanges,
 }
 
 @Preview
@@ -33,7 +40,13 @@ fun Dialog(
 	isDatePickerDialogVisible : Boolean = false,
 	isTimePickerDialogVisible : Boolean = false,
 	isLocationPermissionDialogVisible : Boolean = false,
+	isLocationPickerDialogVisible : Boolean = false,
+	isWhereDialogVisible : Boolean = false,
+	isDiscardChangesDialogVisible : Boolean = false,
 	setUserTimestamp : (Long) -> Unit = {},
+	setParentChapter : (ChapterObjectLite?) -> Unit = {},
+	setLocation : (LatLng, String?) -> Unit = { _, _ -> },
+	onDiscardChanges : () -> Unit = {},
 	openDialog : (EditorDialogType) -> Unit = {},
 	closeDialog : (EditorDialogType) -> Unit = {},
 ) {
@@ -53,7 +66,6 @@ fun Dialog(
 		userTimestamp?.let {
 			LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.systemDefault())
 		} ?: LocalDateTime.now(Clock.systemDefaultZone())
-//		LocalDateTime.now(Clock.systemDefaultZone())
 	}
 
 	LaunchedEffect(key1 = userTimestamp) {
@@ -140,4 +152,22 @@ fun Dialog(
 	}
 
 	LocationPermissionDialog(showDialog = isLocationPermissionDialogVisible) { closeDialog(EditorDialogType.LocationPermission) }
+
+	LocationPickerDialog(
+		showDialog = isLocationPickerDialogVisible,
+		setLocation = setLocation,
+	) { closeDialog(EditorDialogType.LocationPicker) }
+
+	WhereDialog(
+		showDialog = isWhereDialogVisible,
+		parentChapter = null,
+		onSetChapter = setParentChapter,
+		onDismiss = { closeDialog(EditorDialogType.Where) }
+	)
+
+	DiscardDialog(
+		showDialog = isDiscardChangesDialogVisible,
+		onDiscard = onDiscardChanges,
+		onDismiss = { closeDialog(EditorDialogType.DiscardChanges) }
+	)
 }

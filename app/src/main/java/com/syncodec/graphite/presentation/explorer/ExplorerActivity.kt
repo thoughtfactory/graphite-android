@@ -5,21 +5,22 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.ExplorerScreen
+import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
 class ExplorerActivity : ComponentActivity() {
+
+	private val explorerScreenViewModel : ExplorerScreenViewModel by viewModel()
+	private val searScreenViewModel : SearchScreenViewModel by viewModel()
 
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -40,16 +41,22 @@ class ExplorerActivity : ComponentActivity() {
 			}
 		}
 
+		if (explorerType == Extra.Companion.ExplorerType.Search) {
+			val hasTagId = intent.hasExtra(Extra.Companion.Extra.TagId.name)
+			if (hasTagId) {
+				try {
+					val tagId = intent.getByteArrayExtra(Extra.Companion.Extra.TagId.name)?.let { RealmUUID.from(it) }
+					tagId?.let { searScreenViewModel.filterTag(it) }
+				} catch (e : Exception) {
+				}
+			}
+		}
+
 		val chapterId = intent.getByteArrayExtra(Extra.Companion.Extra.ChapterId.name)?.let { RealmUUID.from(it) }
 
 		setContent {
 			setContent {
 				BaseContent {
-
-					val systemUiController = rememberSystemUiController()
-					systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-					systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
-
 					var isSelecting : Boolean by remember { mutableStateOf(false) }
 					var selectedIdList : List<RealmUUID> by remember { mutableStateOf(listOf()) }
 

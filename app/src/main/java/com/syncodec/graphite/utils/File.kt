@@ -7,18 +7,16 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import androidx.exifinterface.media.ExifInterface
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.exifinterface.media.ExifInterface
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDirPath
-import io.realm.kotlin.types.RealmUUID
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
+import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import java.io.*
 import java.util.zip.ZipFile
@@ -60,12 +58,21 @@ fun Uri.mimeType(context : Context) : String? {
 	return context.contentResolver.getType(this)
 }
 
-fun Context.getAttachmentCountFromNoteId(noteId : RealmUUID) : Int {
-	val attachmentDir = File(attachmentDirPath(noteId = noteId))
-	return if (attachmentDir.exists()) attachmentDir.listFiles()?.size ?: 0
-	else 0
+fun Uri.type(context : Context) : String? {
+	return try {
+		mimeType(context)?.split("/")?.get(0)
+	} catch (e : Exception) {
+		null
+	}
 }
 
+fun Uri.subType(context : Context) : String? {
+	return try {
+		mimeType(context)?.split("/")?.get(1)
+	} catch (e : Exception) {
+		null
+	}
+}
 
 fun File.extension() : String? {
 	return try {
@@ -152,10 +159,36 @@ fun File.share(context : Context) {
 	}
 }
 
+fun List<File>.share(context : Context) {
+	if (this.isEmpty()) {
+		Toast.makeText(context, "No files to share", Toast.LENGTH_SHORT).show()
+		return
+	}
+	try {
+		val sharingIntent = Intent(Intent.ACTION_SEND_MULTIPLE)
+
+		sharingIntent.type = "*/*"
+
+		val uris = ArrayList<Uri>()
+		for (file in this) {
+			uris.add(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file))
+		}
+
+		sharingIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+
+		Intent.createChooser(sharingIntent, "Share using").apply {
+			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+			context.startActivity(this)
+		}
+	} catch (e : Exception) {
+//		e.printStackTrace()
+		Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
+	}
+}
+
 fun File.viewExternally(context : Context) {
 	try {
 		Intent(Intent.ACTION_VIEW).apply {
-			Log.i("npr71", "mime : ${mimeType() ?: "*/*"}")
 			setDataAndType(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", this@viewExternally), mimeType() ?: "*/*")
 			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
@@ -280,6 +313,19 @@ fun compress7z(fileToCompress : File, outputFile : SevenZOutputFile, progressRep
 	}
 }
 
+fun extract7z(sevenZFile : SevenZFile, outputFile : File, progressReport : (Int, Int) -> Unit = { _, _ -> }) {
+	val totalPackage = sevenZFile.entries.count()
+	sevenZFile.entries.forEachIndexed { index, sevenZArchiveEntry ->
+		if (sevenZArchiveEntry.isDirectory) File(outputFile, sevenZArchiveEntry.name).mkdirs() else {
+			val file = File(outputFile, sevenZArchiveEntry.name)
+			file.parentFile?.mkdirs()
+			file.outputStream().use { outputStream -> sevenZFile.getInputStream(sevenZArchiveEntry).copyTo(outputStream) }
+		}
+		progressReport(index, totalPackage)
+	}
+	sevenZFile.close()
+}
+
 fun Uri.getPreview(context : Context) : Bitmap? {
 	val type = context.contentResolver.getType(this)?.split("/")
 	val mimeType = type?.getOrNull(0)
@@ -339,13 +385,13 @@ fun Uri.getFileName(context : Context) : String? {
 		val cursor : Cursor? = context.contentResolver.query(this, null, null, null, null)
 		cursor?.use { kursor ->
 			if (kursor.moveToFirst() && kursor.columnCount > 0 && kursor.columnNames.contains(OpenableColumns.DISPLAY_NAME)) {
-				cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME).let { if (it != -1) result = kursor.getString(it) }
+				cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME).let { if (it != - 1) result = kursor.getString(it) }
 			}
 		}
 	}
 	if (result == null) {
 		result = this.path
-		result?.lastIndexOf('/')?.let { if (it != -1) result = result?.substring(it + 1) }
+		result?.lastIndexOf('/')?.let { if (it != - 1) result = result?.substring(it + 1) }
 	}
 	return result
 }

@@ -25,10 +25,10 @@ class DataStoreInstance(private val context : Context) {
 		private val IS_FIRST_TIME = booleanPreferencesKey("is_first_time")
 		private val STORED_VERSION = intPreferencesKey("stored_version")
 		private val PREFERENCE_SUPER_EXPIRY_TIME = stringPreferencesKey("super_expiry_time")
+		private val PREFERENCE_TYPOGRAPHY = stringPreferencesKey("typography")
 		private val PREFERENCE_FOLLOW_SYSTEM_DARK_THEME = booleanPreferencesKey("follow_system_dark_theme")
 		private val PREFERENCE_FORCE_DARK_THEME = booleanPreferencesKey("force_dark_theme")
 		private val PREFERENCE_DARK_THEME = stringPreferencesKey("dark_theme")
-		private val PREFERENCE_TINT_FAVORITE = booleanPreferencesKey("tint_favorite")
 		private val PREFERENCE_GEOLOCATION = booleanPreferencesKey("geolocation")
 		private val PREFERENCE_YEAR_PROGRESS = booleanPreferencesKey("year_progress")
 		private val PREFERENCE_NOTE_FROM_NOTIFICATION = booleanPreferencesKey("note_from_notification")
@@ -40,6 +40,7 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_DROPBOX_REFRESH_TOKEN = stringPreferencesKey("dropbox_refresh_token")
 
 		private val PREFERENCE_SHOW_WHATS_NEW_CARD = intPreferencesKey("show_whats_new_card")
+		private val PREFERENCE_SHOW_UNENCRYPTED_ATTACHMENT_CARD = booleanPreferencesKey("show_unencrypted_attachment_card")
 	}
 
 	val getIsFirstTime : Flow<Boolean> =
@@ -55,7 +56,7 @@ class DataStoreInstance(private val context : Context) {
 		try {
 			preferences[PREFERENCE_SUPER_EXPIRY_TIME]?.let { Alice.decrypt(it, "V0&776*t^nr@!C&18mTFJnHO@9Y0yGM7") ?: "" } ?: ""
 		} catch (exception : Exception) {
-			exception.printStackTrace()
+//			exception.printStackTrace()
 			""
 		}
 	}
@@ -67,10 +68,16 @@ class DataStoreInstance(private val context : Context) {
 					context.dataStore.edit { pref -> pref[PREFERENCE_SUPER_EXPIRY_TIME] = this }
 				}
 			} catch (exception : Exception) {
-				exception.printStackTrace()
+//				exception.printStackTrace()
 			}
 		}
 
+
+	fun putTypography(typography : String) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_TYPOGRAPHY] = typography }
+	}
+
+	val getTypography : Flow<String?> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_TYPOGRAPHY] }
 
 	val getFollowSystemDarkTheme : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_FOLLOW_SYSTEM_DARK_THEME] ?: true }
 
@@ -91,12 +98,6 @@ class DataStoreInstance(private val context : Context) {
 
 	fun putDarkTheme(darkTheme : SettingsActivity.Companion.DarkTheme) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_DARK_THEME] = darkTheme.name }
-	}
-
-	val getTintFavorite : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_TINT_FAVORITE] ?: true }
-
-	fun putTintFavorite(tintFavorite : Boolean) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_TINT_FAVORITE] = tintFavorite }
 	}
 
 	val getGeolocation : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_GEOLOCATION] ?: true }
@@ -127,7 +128,7 @@ class DataStoreInstance(private val context : Context) {
 //			5 -> SortOn.DUE
 //			6 -> SortOn.CREATED
 //			7 -> SortOn.DONE
-			8 -> SortOn.CUSTOM
+			8 -> SortOn.Custom
 			else -> SortOn.Timestamp
 		}
 	}
@@ -150,9 +151,9 @@ class DataStoreInstance(private val context : Context) {
 
 	val getViewType : Flow<ViewType> = context.dataStore.data.map { preferences ->
 		when (preferences[PREFERENCE_VIEW_TYPE] ?: 0) {
-			0 -> ViewType.LIST
-			1 -> ViewType.GRID
-			else -> ViewType.LIST
+			0 -> ViewType.List
+			1 -> ViewType.Grid
+			else -> ViewType.List
 		}
 	}
 
@@ -183,6 +184,13 @@ class DataStoreInstance(private val context : Context) {
 
 	fun putShowWhatsNewCard(showWhatsNewCard : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_WHATS_NEW_CARD] = BuildConfig.VERSION_CODE }
+	}
+
+	val getShowUnencryptedAttachmentCard : Flow<Boolean> =
+		context.dataStore.data.map { preferences -> preferences[PREFERENCE_SHOW_UNENCRYPTED_ATTACHMENT_CARD] ?: true }
+
+	fun putShowUnencryptedAttachmentCard(showUnencryptedAttachmentCard : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_UNENCRYPTED_ATTACHMENT_CARD] = showUnencryptedAttachmentCard }
 	}
 
 	fun clearDatastore() = CoroutineScope(Dispatchers.IO).launch {

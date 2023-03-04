@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.settings.composable.bar
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,14 +21,17 @@ import com.syncodec.graphite.presentation.settings.SettingsActivity
 @Composable
 fun TopBar(
 	settingsScreen : SettingsActivity.Companion.SettingsScreen = SettingsActivity.Companion.SettingsScreen.Settings,
-	onClickBack : () -> Unit,
 ) {
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
 	TopAppBar(
 		modifier = Modifier.fillMaxWidth(),
 		navigationIcon = {
 			MenuButton(
 				icon = R.drawable.ic_back,
-				onClick = onClickBack
+				onClick = {
+					onBackPressedDispatcher?.onBackPressed()
+				}
 			)
 		},
 		title = {

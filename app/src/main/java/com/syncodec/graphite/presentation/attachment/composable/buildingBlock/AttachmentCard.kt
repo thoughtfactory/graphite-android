@@ -10,7 +10,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -45,10 +44,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.attachment.AttachmentPreview
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.filePreview.FilePreview.Companion.preview
-import com.syncodec.graphite.utils.viewExternally
+import com.syncodec.graphite.utils.FilePreview.Companion.preview
+import com.syncodec.graphite.utils.UriPreview.Companion.preview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -58,7 +55,7 @@ import java.io.File
 @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun AttachmentCard(
-	file : File = File("npr.71"),
+	file : File,
 	isSelected : Boolean = false,
 	openNote : () -> Unit = {},
 	onShare : () -> Unit = {},
@@ -99,7 +96,7 @@ fun AttachmentCard(
 			modifier = Modifier
 				.fillMaxSize()
 				.padding(padding)
-				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.13f))
+				.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.13f))
 				.combinedClickable(
 					enabled = true,
 					onClick = onClick,

@@ -22,7 +22,7 @@ import com.syncodec.graphite.presentation.common.richText.viewer.*
 import com.syncodec.graphite.presentation.common.richText.viewer.ListType.*
 import kotlin.math.max
 
-public enum class ListType {
+enum class ListType {
 	/**
 	 * An ordered (numbered) list.
 	 */
@@ -44,25 +44,25 @@ public enum class ListType {
  *
  * These are typically some sort of ordinal text.
  */
-public interface OrderedMarkers {
+interface OrderedMarkers {
 	@Composable
-	public fun drawMarker(
-		level: Int,
-		index: Int
+	fun drawMarker(
+		level : Int,
+		index : Int
 	)
 
-	public companion object {
+	companion object {
 		/**
 		 * Creates an [OrderedMarkers] from an arbitrary composable given the indentation level and
 		 * the index.
 		 */
-		public operator fun invoke(
-			drawMarker: @Composable (level: Int, index: Int) -> Unit
-		): OrderedMarkers = object : OrderedMarkers {
+		operator fun invoke(
+			drawMarker : @Composable (level : Int, index : Int) -> Unit
+		) : OrderedMarkers = object : OrderedMarkers {
 			@Composable
 			override fun drawMarker(
-				level: Int,
-				index: Int
+				level : Int,
+				index : Int
 			) {
 				drawMarker(level, index)
 			}
@@ -74,9 +74,9 @@ public interface OrderedMarkers {
  * Creates an [OrderedMarkers] that will cycle through the values in [markers] for each
  * indentation level given the index.
  */
-public fun RichTextScope.textOrderedMarkers(
-	vararg markers: (index: Int) -> String
-): OrderedMarkers =
+fun RichTextScope.textOrderedMarkers(
+	vararg markers : (index : Int) -> String
+) : OrderedMarkers =
 	OrderedMarkers { level, index ->
 		Text(markers[level % markers.size](index))
 	}
@@ -86,18 +86,18 @@ public fun RichTextScope.textOrderedMarkers(
  *
  * These are typically some sort of bullet point.
  */
-public interface UnorderedMarkers {
+interface UnorderedMarkers {
 	@Composable
-	public fun drawMarker(level: Int)
+	fun drawMarker(level : Int)
 
-	public companion object {
+	companion object {
 		/**
 		 * Creates an [UnorderedMarkers] from an arbitrary composable given the indentation level.
 		 */
-		public operator fun invoke(drawMarker: @Composable (level: Int) -> Unit): UnorderedMarkers =
+		operator fun invoke(drawMarker : @Composable (level : Int) -> Unit) : UnorderedMarkers =
 			object : UnorderedMarkers {
 				@Composable
-				override fun drawMarker(level: Int) = drawMarker(level)
+				override fun drawMarker(level : Int) = drawMarker(level)
 			}
 	}
 }
@@ -106,9 +106,9 @@ public interface UnorderedMarkers {
  * Creates an [UnorderedMarkers] that will cycle through the values in [markers] for each
  * indentation level.
  */
-public fun @Composable RichTextScope.textUnorderedMarkers(
-	vararg markers: String
-): UnorderedMarkers = UnorderedMarkers {
+fun @Composable RichTextScope.textUnorderedMarkers(
+	vararg markers : String
+) : UnorderedMarkers = UnorderedMarkers {
 	Text(markers[it % markers.size])
 }
 
@@ -116,49 +116,46 @@ public fun @Composable RichTextScope.textUnorderedMarkers(
  * Creates an [UnorderedMarkers] that will cycle through the values in [painters] for each
  * indentation level.
  */
-public fun painterUnorderedMarkers(vararg painters: Painter): UnorderedMarkers = UnorderedMarkers {
+fun painterUnorderedMarkers(vararg painters : Painter) : UnorderedMarkers = UnorderedMarkers {
 	Box(Modifier.paint(painters[it % painters.size]))
 }
 
 
-public interface TaskMarkers {
+interface TaskMarkers {
 	@Composable
-	public fun drawMarker(isChecked: Boolean)
+	fun drawMarker(isChecked : Boolean)
 
-	public companion object {
+	companion object {
 		/**
 		 * Creates an [TaskMarkers] from an arbitrary composable given the indentation level.
 		 */
-		public operator fun invoke(drawMarker: @Composable (isChecked: Boolean) -> Unit): TaskMarkers =
+		operator fun invoke(drawMarker : @Composable (isChecked : Boolean) -> Unit) : TaskMarkers =
 			object : TaskMarkers {
 				@Composable
-				override fun drawMarker(isChecked: Boolean) = drawMarker(isChecked)
+				override fun drawMarker(isChecked : Boolean) = drawMarker(isChecked)
 			}
 	}
 }
 
-public fun @Composable RichTextScope.checkTaskMarkers(
-): TaskMarkers = TaskMarkers {
+fun @Composable RichTextScope.checkTaskMarkers(
+) : TaskMarkers = TaskMarkers {
 	Box(
 		contentAlignment = Alignment.Center,
-		modifier = Modifier
-			.height(20.dp),
+		modifier = Modifier.height(20.dp),
 	) {
 		if (it) {
 			Icon(
 				painter = painterResource(id = com.syncodec.graphite.R.drawable.ic_checkbox_checked),
 				contentDescription = "Checked",
 				tint = MaterialTheme.colorScheme.primary,
-				modifier = Modifier
-					.requiredSize(18.dp)
+				modifier = Modifier.requiredSize(18.dp)
 			)
 		} else {
 			Icon(
 				painter = painterResource(id = com.syncodec.graphite.R.drawable.ic_checkbox_unchecked),
 				contentDescription = "Unchecked",
 				tint = MaterialTheme.colorScheme.primary,
-				modifier = Modifier
-					.requiredSize(18.dp)
+				modifier = Modifier.requiredSize(18.dp)
 			)
 		}
 	}
@@ -172,42 +169,42 @@ public fun @Composable RichTextScope.checkTaskMarkers(
  * @param contentsIndent The padding after each marker.
  */
 @Immutable
-public data class ListStyle(
-	val markerIndent: TextUnit? = null,
-	val contentsIndent: TextUnit? = null,
-	val orderedMarkers: (RichTextScope.() -> OrderedMarkers)? = null,
-	val unorderedMarkers: (RichTextScope.() -> UnorderedMarkers)? = null,
-	val taskMarkers: (RichTextScope.() -> TaskMarkers)? = null
+data class ListStyle(
+	val markerIndent : TextUnit? = null,
+	val contentsIndent : TextUnit? = null,
+	val orderedMarkers : (RichTextScope.() -> OrderedMarkers)? = null,
+	val unorderedMarkers : (RichTextScope.() -> UnorderedMarkers)? = null,
+	val taskMarkers : (RichTextScope.() -> TaskMarkers)? = null
 ) {
-	public companion object {
-		public val Default: ListStyle = ListStyle()
+	companion object {
+		val Default : ListStyle = ListStyle()
 	}
 }
 
 private val DefaultMarkerIndent = 8.sp
 private val DefaultContentsIndent = 4.sp
-private val DefaultOrderedMarkers: RichTextScope.() -> OrderedMarkers = {
+private val DefaultOrderedMarkers : RichTextScope.() -> OrderedMarkers = {
 	textOrderedMarkers(
 		{ "${it + 1}." },
 		{
-			('a'..'z').drop(it % 26)
+			('a' .. 'z').drop(it % 26)
 				.first() + "."
 		},
 		{ "${it + 1})" },
 		{
-			('a'..'z').drop(it % 26)
+			('a' .. 'z').drop(it % 26)
 				.first() + ")"
 		}
 	)
 }
-private val DefaultUnorderedMarkers: RichTextScope.() -> UnorderedMarkers = {
+private val DefaultUnorderedMarkers : RichTextScope.() -> UnorderedMarkers = {
 	textUnorderedMarkers("•", "◦", "▸", "▹")
 }
-private val DefaultTaskMarkers: RichTextScope.() -> TaskMarkers = {
+private val DefaultTaskMarkers : RichTextScope.() -> TaskMarkers = {
 	checkTaskMarkers()
 }
 
-internal fun ListStyle.resolveDefaults(): ListStyle = ListStyle(
+internal fun ListStyle.resolveDefaults() : ListStyle = ListStyle(
 	markerIndent = markerIndent ?: DefaultMarkerIndent,
 	contentsIndent = contentsIndent ?: DefaultContentsIndent,
 	orderedMarkers = orderedMarkers ?: DefaultOrderedMarkers,
@@ -221,7 +218,7 @@ private val LocalListLevel = compositionLocalOf { 0 }
  * Composes [children] with their [LocalListLevel] reset back to 0.
  */
 @Composable
-internal fun RestartListLevel(children: @Composable () -> Unit) {
+internal fun RestartListLevel(children : @Composable () -> Unit) {
 	CompositionLocalProvider(LocalListLevel provides 0) {
 		children()
 	}
@@ -236,10 +233,10 @@ internal fun RestartListLevel(children: @Composable () -> Unit) {
 // inline is required for https://github.com/halilozercan/compose-richtext/issues/7
 @Suppress("NOTHING_TO_INLINE")
 @Composable
-public inline fun RichTextScope.FormattedList(
-	listType: ListType,
-	vararg children: Pair<@Composable RichTextScope.() -> Unit, Boolean?>
-): Unit = FormattedList(listType, children.asList()) { it() }
+inline fun RichTextScope.FormattedList(
+	listType : ListType,
+	vararg children : Pair<@Composable RichTextScope.() -> Unit, Boolean?>
+) : Unit = FormattedList(listType, children.asList()) { it() }
 
 /**
  * Creates a formatted list such as a bullet list or numbered list.
@@ -248,15 +245,15 @@ public inline fun RichTextScope.FormattedList(
  * @sample com.zachklipp.richtext.ui.UnorderedListPreview
  */
 @Composable
-public fun <T> RichTextScope.FormattedList(
-	listType: ListType,
-	items: List<Pair<T, Boolean?>>,
-	drawItem: @Composable RichTextScope.(T) -> Unit
+fun <T> RichTextScope.FormattedList(
+	listType : ListType,
+	items : List<Pair<T, Boolean?>>,
+	drawItem : @Composable RichTextScope.(T) -> Unit
 ) {
-	val listStyle = currentRichTextStyle.resolveDefaults().listStyle!!
+	val listStyle = currentRichTextStyle.resolveDefaults().listStyle !!
 	val density = LocalDensity.current
-	val markerIndent = with(density) { listStyle.markerIndent!!.toDp() }
-	val contentsIndent = with(density) { listStyle.contentsIndent!!.toDp() }
+	val markerIndent = with(density) { listStyle.markerIndent !!.toDp() }
+	val contentsIndent = with(density) { listStyle.contentsIndent !!.toDp() }
 	val currentLevel = LocalListLevel.current
 
 	PrefixListLayout(
@@ -264,9 +261,9 @@ public fun <T> RichTextScope.FormattedList(
 		prefixPadding = PaddingValues(start = markerIndent, end = contentsIndent),
 		prefixForIndex = { index ->
 			when (listType) {
-				Ordered -> listStyle.orderedMarkers!!().drawMarker(currentLevel, index)
-				Unordered -> listStyle.unorderedMarkers!!().drawMarker(currentLevel)
-				Task -> listStyle.taskMarkers!!().drawMarker(isChecked = items[index].second!!)
+				Ordered -> listStyle.orderedMarkers !!().drawMarker(currentLevel, index)
+				Unordered -> listStyle.unorderedMarkers !!().drawMarker(currentLevel)
+				Task -> listStyle.taskMarkers !!().drawMarker(isChecked = items[index].second !!)
 			}
 		},
 		itemForIndex = { index ->
@@ -281,10 +278,10 @@ public fun <T> RichTextScope.FormattedList(
 
 @Composable
 private fun PrefixListLayout(
-	count: Int,
-	prefixPadding: PaddingValues,
-	prefixForIndex: @Composable (index: Int) -> Unit,
-	itemForIndex: @Composable (index: Int) -> Unit
+	count : Int,
+	prefixPadding : PaddingValues,
+	prefixForIndex : @Composable (index : Int) -> Unit,
+	itemForIndex : @Composable (index : Int) -> Unit
 ) {
 	Layout(content = {
 		// List markers aren't selectable.
@@ -304,27 +301,17 @@ private fun PrefixListLayout(
 		}
 	}) { measurables, constraints ->
 		check(measurables.size == count * 2)
-		val prefixMeasureables = measurables.asSequence()
-			.take(count)
-		val itemMeasurables = measurables.asSequence()
-			.drop(count)
+		val prefixMeasureables = measurables.asSequence().take(count)
+		val itemMeasurables = measurables.asSequence().drop(count)
 
 		// Measure the prefixes first.
-		val prefixPlaceables = prefixMeasureables.map { marker ->
-			marker.measure(Constraints())
-		}
-			.toList()
-		val widestPrefix = prefixPlaceables.maxByOrNull { it.width }!!
+		val prefixPlaceables = prefixMeasureables.map { marker -> marker.measure(Constraints()) }.toList()
+		val widestPrefix = prefixPlaceables.maxByOrNull { it.width } !!
 
 		// Then measure the items, offset to the right to allow space for the prefixes and gap.
-		val itemConstraints = constraints.copy(
-			maxWidth = (constraints.maxWidth - widestPrefix.width).coerceAtLeast(0)
-		)
-		val itemPlaceables = itemMeasurables.map { item ->
-			item.measure(itemConstraints)
-		}
-			.toList()
-		val widestItem = itemPlaceables.maxByOrNull { it.width }!!
+		val itemConstraints = constraints.copy(maxWidth = (constraints.maxWidth - widestPrefix.width).coerceAtLeast(0))
+		val itemPlaceables = itemMeasurables.map { item -> item.measure(itemConstraints) }.toList()
+		val widestItem = itemPlaceables.maxByOrNull { it.width } !!
 
 		val listWidth = widestPrefix.width + widestItem.width
 		val listHeight = itemPlaceables.sumOf { it.height }
@@ -336,10 +323,7 @@ private fun PrefixListLayout(
 				val prefix = prefixPlaceables[i]
 				val item = itemPlaceables[i]
 				val rowHeight = max(prefix.height, item.height)
-				val size = IntSize(
-					width = widestPrefix.width - prefix.width,
-					height = rowHeight - prefix.height
-				)
+				val size = IntSize(width = widestPrefix.width - prefix.width, height = rowHeight - prefix.height)
 				val prefixOffset = Alignment.TopEnd.align(
 					size = size,
 					space = size,

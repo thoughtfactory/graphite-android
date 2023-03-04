@@ -35,8 +35,9 @@ import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.note.NoteActivity
-import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.LoaderStatus
+import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.viewExternally
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
@@ -45,14 +46,14 @@ import java.io.File
 @Preview
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun AttachmentScreen(
-	onClickBack : () -> Unit = {},
-) {
+fun AttachmentScreen() {
 	val context = LocalContext.current
 	val viewModel : AttachmentScreenViewModel = koinViewModel()
 	val haptic = LocalHapticFeedback.current
 
-	val contentStatus by viewModel.contentStatus.collectAsState()
+	val isAuthenticated = LocalIsAuthenticated.current
+
+	val contentStatus by viewModel.loaderStatus.collectAsState()
 	val enableNoteNavigation by viewModel.enableNoteNavigation.collectAsState()
 	val noteAttachmentListMap by viewModel.noteAttachmentListMap.collectAsState()
 
@@ -150,7 +151,6 @@ fun AttachmentScreen(
 			TopBar(
 				isSelecting = isSelecting,
 				selectedSize = selectedFileList.size,
-				onClickBack = onClickBack,
 				onClickCancelSelect = { isSelecting = false; selectedFileList = listOf() },
 				onClickDelete = { openDialog(AttachmentDialogType.Delete) },
 			)
@@ -175,41 +175,43 @@ fun AttachmentScreen(
 			animationSpec = tween(300)
 		) {
 			when (it) {
-				ContentStatus.Init -> LoadingView()
-				ContentStatus.Error -> ErrorView()
-				ContentStatus.Loading -> LoadingView()
-				ContentStatus.LoadedEmpty -> EmptyView()
-				ContentStatus.Loaded -> LazyVerticalGrid(
+				LoaderStatus.Init -> LoadingView()
+				LoaderStatus.Error -> ErrorView()
+				LoaderStatus.Loading -> LoadingView()
+				LoaderStatus.LoadedEmpty -> EmptyView()
+				LoaderStatus.Loaded -> LazyVerticalGrid(
 					columns = GridCells.Adaptive(144.dp),
 				) {
-					noteAttachmentListMap.forEach { (note, attachmentList) ->
-						item(
-							span = { GridItemSpan(maxCurrentLineSpan) }
-						) {
-							AttachmentHeader(
-								noteId = note.id,
-								title = note.title,
-								isFavourite = note.isFavourite,
-								isLocked = note.isLocked,
-								attachmentCount = attachmentList.size,
-								onClick = { onClickHeader(note = note, attachmentList = attachmentList) },
-								onLongClick = { onLongClickHeader(attachmentList = attachmentList) },
-							)
-						}
-						attachmentList.forEach { file ->
-							item {
-								AttachmentCard(
-									file = file,
-									isSelected = file in selectedFileList,
-									openNote = {},
-									onShare = {},
-									onClick = { onClickAttachment(file) },
-									onLongClick = { onLongClickAttachment(file) },
+					noteAttachmentListMap
+						.filter { if (it.key.isLocked) isAuthenticated else true }
+						.forEach { (note, attachmentList) ->
+							item(
+								span = { GridItemSpan(maxCurrentLineSpan) }
+							) {
+								AttachmentHeader(
+									noteId = note.id,
+									title = note.title,
+									isFavourite = note.isFavourite,
+									isLocked = note.isLocked,
+									attachmentCount = attachmentList.size,
+									onClick = { onClickHeader(note = note, attachmentList = attachmentList) },
+									onLongClick = { onLongClickHeader(attachmentList = attachmentList) },
 								)
 							}
+							attachmentList.forEach { file ->
+								item {
+									AttachmentCard(
+										file = file,
+										isSelected = file in selectedFileList,
+										openNote = {},
+										onShare = {},
+										onClick = { onClickAttachment(file) },
+										onLongClick = { onLongClickAttachment(file) },
+									)
+								}
+							}
+							item(span = { GridItemSpan(maxCurrentLineSpan) }) { Box(modifier = Modifier) }
 						}
-						item(span = { GridItemSpan(maxCurrentLineSpan) }) { Box(modifier = Modifier) }
-					}
 				}
 			}
 		}

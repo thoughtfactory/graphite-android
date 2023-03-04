@@ -50,7 +50,7 @@ fun EmptyView(
 			BucketType.TODO -> "\"Not all those who wander are lost.\""
 			BucketType.BOOK -> "\"One was a book thief.\nThe other stole the sky.\""
 			BucketType.SHOW -> "\"The secret to film is that it's an illusion.\""
-			BucketType.LINK -> "\"As a research tool, the Internet is a invaluable.\""
+			BucketType.LINK -> "\"How powerful is it to yield all the knowledge of humanity!!!\nUse it wisely.\""
 			BucketType.UNKNOWN -> "\"Uh Ohh!!! Something's not right\""
 		}
 	}
@@ -60,7 +60,7 @@ fun EmptyView(
 			BucketType.TODO -> "― J.R.R. Tolkien"
 			BucketType.BOOK -> "― Markus Zusak"
 			BucketType.SHOW -> "― George Lucas"
-			BucketType.LINK -> "― Noam Chomsky"
+			BucketType.LINK -> ""
 			BucketType.UNKNOWN -> "Error reading data"
 		}
 	}

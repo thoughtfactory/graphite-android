@@ -1,47 +1,35 @@
 package com.syncodec.graphite.presentation.bucketItem
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.lifecycle.lifecycleScope
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.BookData
 import com.syncodec.graphite.di.network.ShowData
 import com.syncodec.graphite.di.network.ShowType
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionOnShare
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionShowBookInfoDialog
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionShowDeleteDialog
-import com.syncodec.graphite.presentation.bucketItem.composable.LocalCompositionShowShowInfoDialog
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BucketItemScreen
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.bookScreen.BookScreenViewModel
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.movieScreen.MovieScreenViewModel
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.tvScreen.TvScreenViewModel
-import com.syncodec.graphite.presentation.common.LocalCompositionCloseDialog
-import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.common.dialog.DialogType
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.serializable
-import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -52,7 +40,7 @@ class BucketItemActivity : ComponentActivity() {
 
 	var bucketType = mutableStateOf<BucketType?>(null)
 
-	var loaderCoroutineScope : CoroutineScope? = null
+	private var loaderCoroutineScope : CoroutineScope? = null
 
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -61,104 +49,90 @@ class BucketItemActivity : ComponentActivity() {
 
 		setContent {
 			BaseContent {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.surface.tone(isSystemInDarkTheme(), 1))
-
-				val isVaultOpened = LocalIsAuthenticated.current
-				val authenticator = LocalAuthenticatorAction.current
-
 				val isNew by viewModel.isNew
 				val isFavourite by viewModel.isFavourite
 				val isLocked by viewModel.isLocked
 
-				var showShowInfoDialog by remember { mutableStateOf(false) }
-				var showBookInfoDialog by remember { mutableStateOf(false) }
-				var showDeleteDialog by remember { mutableStateOf(false) }
-
 				val bucketItemObject by viewModel.bucketItemObject
-
 				val showType by viewModel.showType.collectAsState()
+				val bucketType by bucketType
 
-				fun openDialog(dialogType : DialogType) {
-					when (dialogType) {
-						DialogType.SHOW_INFO -> showShowInfoDialog = true
-						DialogType.BOOK_INFO -> showBookInfoDialog = true
-						DialogType.DELETE -> showDeleteDialog = true
-						else -> null
-					}
-				}
-
-				fun closeDialog(dialogType : DialogType) {
-					when (dialogType) {
-						DialogType.SHOW_INFO -> showShowInfoDialog = false
-						DialogType.BOOK_INFO -> showBookInfoDialog = false
-						DialogType.DELETE -> showDeleteDialog = false
-						else -> null
-					}
-				}
-
-				CompositionLocalProvider(
-					LocalCompositionShowShowInfoDialog provides showShowInfoDialog,
-					LocalCompositionShowBookInfoDialog provides showBookInfoDialog,
-					LocalCompositionShowDeleteDialog provides showDeleteDialog,
-					LocalCompositionOpenDialog provides ::openDialog,
-					LocalCompositionCloseDialog provides ::closeDialog,
-					LocalCompositionOnShare provides this::onShare
-				) {
-					val bucketType by bucketType
-					BucketItemScreen(
-						bucketItemObject = bucketItemObject,
-						bucketType = bucketType,
-						showType = showType,
-						isSaved = isNew?.not(),
-						isFavourite = isFavourite ?: false,
-						isLocked = isLocked ?: false,
-						onClickSave = {
-							screenViewModel.getData().let { (data, key, thumbnail, title) ->
-								viewModel.data.value = data
+				BucketItemScreen(
+					bucketItemObject = bucketItemObject,
+					bucketType = bucketType,
+					showType = showType,
+					isSaved = isNew?.not(),
+					isFavourite = isFavourite ?: false,
+					isLocked = isLocked ?: false,
+					onClickSave = {
+						screenViewModel.getData().let { (data, key, thumbnail, title) ->
+							viewModel.data.value = data
+							viewModel.key.value = key
+							viewModel.thumbnail.value = thumbnail
+							viewModel.title.value = title
+						}
+						viewModel.putBucketItem()
+					},
+					onClickFavourite = {
+						if (isNew == true) {
+							screenViewModel.getData().let { (bookData, key, thumbnail, title) ->
+								viewModel.data.value = bookData
 								viewModel.key.value = key
 								viewModel.thumbnail.value = thumbnail
 								viewModel.title.value = title
 							}
-							viewModel.putBucketItem()
-						},
-						onClickFavourite = {
-							if (isNew == true) {
-								screenViewModel.getData().let { (bookData, bookKey, thumbnail, title) ->
-									viewModel.data.value = bookData
-									viewModel.key.value = bookKey
-									viewModel.thumbnail.value = thumbnail
-									viewModel.title.value = title
-								}
+						}
+						viewModel.onToggleFavourite()
+					},
+					onClickLock = {
+						if (isNew == true) {
+							screenViewModel.getData().let { (bookData, key, thumbnail, title) ->
+								viewModel.data.value = bookData
+								viewModel.key.value = key
+								viewModel.thumbnail.value = thumbnail
+								viewModel.title.value = title
 							}
-							viewModel.onToggleFavourite()
-						},
-						onClickLock = {
-							if (isNew == true) {
-								screenViewModel.getData().let { (bookData, bookKey, thumbnail, title) ->
-									viewModel.data.value = bookData
-									viewModel.key.value = bookKey
-									viewModel.thumbnail.value = thumbnail
-									viewModel.title.value = title
-								}
+						}
+						viewModel.onToggleLock()
+					},
+					onChangeState = {
+						if (isNew == true) {
+							screenViewModel.getData().let { (bookData, key, thumbnail, title) ->
+								viewModel.data.value = bookData
+								viewModel.key.value = key
+								viewModel.thumbnail.value = thumbnail
+								viewModel.title.value = title
 							}
-							viewModel.onToggleLock()
-						},
-						onChangeState = {
-							if (isNew == true) {
-								screenViewModel.getData().let { (bookData, bookKey, thumbnail, title) ->
-									viewModel.data.value = bookData
-									viewModel.key.value = bookKey
-									viewModel.thumbnail.value = thumbnail
-									viewModel.title.value = title
+						}
+						viewModel.onChangeState(it)
+					},
+					onShare = {
+						screenViewModel.getData().let { (data, key, thumbnail, title) ->
+							val shareData = when (bucketType) {
+								BucketType.BOOK -> "I'm reading $title. Find it on https://openlibrary.org$key"
+								BucketType.SHOW -> when (showType) {
+									ShowType.MOVIE -> "I'm watching $title. Find it on https://www.themoviedb.org/movie/$key"
+									ShowType.TV -> "I'm watching $title. Find it on https://www.themoviedb.org/tv/$key"
+									else -> ""
 								}
+
+								else -> ""
 							}
-							viewModel.onChangeState(it)
-						},
-						onClickBack = { finish() },
-					)
-				}
+							onShare(shareData)
+						}
+					},
+					onDelete = {
+						bucketItemObject?.id?.let { id ->
+							viewModel.delete(id) {
+								withContext(Dispatchers.Main) {
+									Toast.makeText(this@BucketItemActivity, "${bucketItemObject?.title}", Toast.LENGTH_SHORT).show()
+								}
+								finish()
+							}
+						}
+					},
+					onClickBack = { finish() },
+				)
 			}
 		}
 	}
@@ -234,8 +208,8 @@ class BucketItemActivity : ComponentActivity() {
 				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 				finish()
 			} else {
-				viewModel.loadData(bucketItemId = bucketItemId, bucketId = bucketId)
-				CoroutineScope(Dispatchers.Default).launch {
+				viewModel.loadData(bucketItemId = bucketItemId)
+				lifecycleScope.launch(Dispatchers.Default) {
 					loaderCoroutineScope?.cancel()
 					loaderCoroutineScope = this
 					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
@@ -243,7 +217,8 @@ class BucketItemActivity : ComponentActivity() {
 					}.collect { (data, thumbnail) ->
 						val bookData = BookData(data)
 						viewModel.key.tryEmit(bookData.key)
-						screenViewModel.loadData(data = data, thumbnail = thumbnail)
+						screenViewModel.loadData(data = data)
+						screenViewModel.loadThumbnail(thumbnail = thumbnail?.decodeBase64ToBitmap())
 					}
 				}
 			}
@@ -300,8 +275,8 @@ class BucketItemActivity : ComponentActivity() {
 				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 				finish()
 			} else {
-				viewModel.loadData(bucketItemId = bucketItemId, bucketId = bucketId, showType = ShowType.MOVIE)
-				CoroutineScope(Dispatchers.Default).launch {
+				viewModel.loadData(bucketItemId = bucketItemId, showType = ShowType.MOVIE)
+				lifecycleScope.launch(Dispatchers.Default) {
 					loaderCoroutineScope?.cancel()
 					loaderCoroutineScope = this
 					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
@@ -309,7 +284,8 @@ class BucketItemActivity : ComponentActivity() {
 					}.collect { (data, thumbnail) ->
 						val showData = ShowData(data)
 						viewModel.key.tryEmit(showData.movieData?.id)
-						screenViewModel.loadData(data = showData.movieData?.toJsonString(), thumbnail = thumbnail)
+						screenViewModel.loadData(data = showData.movieData?.toJsonString())
+						screenViewModel.loadThumbnail(thumbnail = thumbnail?.decodeBase64ToBitmap())
 					}
 				}
 			}
@@ -339,8 +315,8 @@ class BucketItemActivity : ComponentActivity() {
 				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 				finish()
 			} else {
-				viewModel.loadData(bucketItemId = bucketItemId, bucketId = bucketId, showType = ShowType.TV)
-				CoroutineScope(Dispatchers.Default).launch {
+				viewModel.loadData(bucketItemId = bucketItemId, showType = ShowType.TV)
+				lifecycleScope.launch(Dispatchers.Default) {
 					loaderCoroutineScope?.cancel()
 					loaderCoroutineScope = this
 					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
@@ -348,32 +324,23 @@ class BucketItemActivity : ComponentActivity() {
 					}.collect { (data, thumbnail) ->
 						val showData = ShowData(data)
 						viewModel.key.tryEmit(showData.tvData?.id)
-						screenViewModel.loadData(data = showData.tvData?.toJsonString(), thumbnail = thumbnail)
+						screenViewModel.loadData(data = showData.tvData?.toJsonString())
+						screenViewModel.loadThumbnail(thumbnail = thumbnail?.decodeBase64ToBitmap())
 					}
 				}
 			}
 		}
 	}
 
-	private fun onShare() {
-//		var shareText = when(viewModel.bucketType.value) {
-//			BucketType.BOOK -> "I'm reading ${viewModel.bookTitle.value} by ${viewModel.bookAuthorList.joinToString(", ")}. Find it on https://openlibrary.org${viewModel.bookKey.value}"
-//			BucketType.SHOW -> when(viewModel.showType.value) {
-//				ShowType.MOVIE -> "I'm watching ${viewModel.movieTitle.value}. Find it on https://www.themoviedb.org/movie/${viewModel.movieId.value}"
-//				ShowType.TV -> "I'm watching ${viewModel.tvName.value}. Find it on https://www.themoviedb.org/tv/${viewModel.tvId.value}"
-//				else -> ""
-//			}
-//			else -> ""
-//		}
+	private fun onShare(data : String) {
+		Intent(Intent.ACTION_SEND).apply {
+			type = "text/html"
+			putExtra(Intent.EXTRA_SUBJECT, data)
+//			putExtra(Intent.EXTRA_TEXT, Html.fromHtml(shareText, Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST))
+			putExtra(Intent.EXTRA_TEXT, data)
 
-//		Intent(Intent.ACTION_SEND).apply {
-//			type = "text/html"
-//			putExtra(Intent.EXTRA_SUBJECT, shareText)
-////			putExtra(Intent.EXTRA_TEXT, Html.fromHtml(shareText, Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST))
-//			putExtra(Intent.EXTRA_TEXT, shareText)
-//
-//			if (resolveActivity(this@BucketItemActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
-//			else Toast.makeText(this@BucketItemActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
-//		}
+			if (resolveActivity(this@BucketItemActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
+			else Toast.makeText(this@BucketItemActivity, "No app found on your phone which can perform this action", Toast.LENGTH_SHORT).show()
+		}
 	}
 }

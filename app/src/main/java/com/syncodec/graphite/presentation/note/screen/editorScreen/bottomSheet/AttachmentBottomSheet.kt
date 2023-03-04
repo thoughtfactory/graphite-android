@@ -8,8 +8,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -23,11 +21,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,19 +39,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.attachment.AttachmentPreview
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.text.marqueeText.MarqueeText
+import com.syncodec.graphite.presentation.note.screen.viewerScreen.composable.AttachmentPreview
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
 import com.syncodec.graphite.utils.getFileName
 import io.github.esentsov.PackagePrivate
@@ -79,7 +87,8 @@ fun AttachmentBottomSheet(
 	}
 	val openFilePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenMultipleDocuments()) { uriList ->
 		try {
-			if (uriList.isNotEmpty()) onAddAttachmentToBuffer(uriList)
+			if (uriList.isNotEmpty()) onAddAttachmentToBuffer(uriList.take(8 - (attachmentListSaved.size + attachmentListToAdd.size)))
+			else Toast.makeText(context, "No files selected", Toast.LENGTH_SHORT).show()
 		} catch (e : Exception) {
 			Toast.makeText(context, "Failed to add attachment", Toast.LENGTH_SHORT).show()
 		}
@@ -94,16 +103,22 @@ fun AttachmentBottomSheet(
 				{
 					BottomSheetButton(title = "Camera", icon = R.drawable.ic_camera) {
 						photoUri = createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first
-						takePicture.launch(photoUri)
+						if (attachmentListSaved.size + attachmentListToAdd.size < 8) takePicture.launch(photoUri)
+						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
 					}
 				},
 				{
 					BottomSheetButton(title = "Gallery", icon = R.drawable.ic_gallery) {
-						openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
+						if (attachmentListSaved.size + attachmentListToAdd.size < 8) openFilePicker.launch(arrayOf("image/*", "video/*", "audio/*"))
+						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
+
 					}
 				},
 				{
-					BottomSheetButton(title = "File", icon = R.drawable.ic_file) { openFilePicker.launch(arrayOf("*/*")) }
+					BottomSheetButton(title = "File", icon = R.drawable.ic_file) {
+						if (attachmentListSaved.size + attachmentListToAdd.size < 8) openFilePicker.launch(arrayOf("*/*"))
+						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
+					}
 				}
 			)
 		)
@@ -123,6 +138,8 @@ fun AttachmentBottomSheet(
 		}
 
 		if (attachmentListSaved.isNotEmpty() || attachmentListToAdd.isNotEmpty()) {
+			Spacer(modifier = Modifier.height(6.dp))
+			PlainTextWarning()
 			Spacer(modifier = Modifier.height(4.dp))
 
 			LazyVerticalGrid(
@@ -143,18 +160,8 @@ fun AttachmentBottomSheet(
 							AttachmentPreview(file = file)
 							AttachmentOverlay(
 								fileName = file.name ?: "Unknown",
+								isDeleting = file in attachmentListToRemove,
 							) { onRemoveSavedAttachment(file) }
-							androidx.compose.animation.AnimatedVisibility(
-								visible = file in attachmentListToRemove,
-								enter = fadeIn(tween(300)),
-								exit = fadeOut(tween(300))
-							) {
-								Box(
-									modifier = Modifier
-										.fillMaxSize()
-										.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f))
-								)
-							}
 						}
 					}
 				}
@@ -188,6 +195,7 @@ private fun AttachmentOverlay(
 	fileName : String = "file_name",
 	type : String? = null,
 	isUnSaved : Boolean = false,
+	isDeleting : Boolean = false,
 	onClick : () -> Unit = {},
 ) {
 	Column(
@@ -198,19 +206,26 @@ private fun AttachmentOverlay(
 		Row(
 			modifier = Modifier.fillMaxWidth()
 		) {
-			if (isUnSaved) Box(
+			if (isUnSaved) Icon(
+				painter = painterResource(id = R.drawable.ic_new_sticker),
+				contentDescription = "New attachment",
+				tint = Color.Unspecified,
 				modifier = Modifier
 					.requiredSize(32.dp)
-					.padding(12.dp)
-					.background(MaterialTheme.colorScheme.error, CircleShape)
+					.padding(2.dp)
+					.graphicsLayer { rotationZ = -45f }
 			)
 			Spacer(modifier = Modifier.weight(1f))
 			MenuButton(
 				icon = R.drawable.ic_close,
 				colors = MenuButtonDefaults.menuButtonColors(
-					containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.71f),
-					iconColor = MaterialTheme.colorScheme.onErrorContainer
+					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
+					iconColor = MaterialTheme.colorScheme.onBackground,
+					checkedContainerColor = MaterialTheme.colorScheme.error,
+					checkedIconColor = MaterialTheme.colorScheme.onError,
 				),
+				checked = isDeleting,
+				buttonSize = 16.dp,
 				onClick = onClick
 			)
 		}
@@ -220,14 +235,81 @@ private fun AttachmentOverlay(
 		) {
 			MarqueeText(
 				text = fileName,
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onPrimary,
-				fontWeight = FontWeight.Bold,
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurface,
 				modifier = Modifier
 					.fillMaxWidth()
-					.background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+					.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp), MaterialTheme.shapes.small)
 					.padding(8.dp)
+
 			)
+		}
+	}
+}
+
+@Preview
+@Composable
+fun PlainTextWarning() {
+	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
+	val showUnencryptedAttachmentCard by dataStoreInstance.getShowUnencryptedAttachmentCard.collectAsState(initial = null)
+
+	AnimatedVisibility(
+		visible = showUnencryptedAttachmentCard == true,
+		enter = expandVertically(tween(300)),
+		exit = shrinkVertically(tween(300))
+	) {
+		Box(
+			modifier = Modifier
+				.fillMaxWidth()
+				.background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.large)
+		) {
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(16.dp, 16.dp, 16.dp, 8.dp)
+			) {
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier,
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_warning),
+						contentDescription = "Plain Text Warning",
+						tint = MaterialTheme.colorScheme.onErrorContainer,
+					)
+					Spacer(modifier = Modifier.width(12.dp))
+					Text(
+						text = "Unencrypted Data",
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.Bold,
+						color = MaterialTheme.colorScheme.onErrorContainer,
+					)
+				}
+
+				Spacer(modifier = Modifier.height(8.dp))
+
+				Text(
+					text = "Attachments are not encrypted and and are stored as raw files on the device.",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onErrorContainer
+				)
+
+				Spacer(modifier = Modifier.height(8.dp))
+
+				Button(
+					colors = ButtonDefaults.buttonColors(
+						containerColor = MaterialTheme.colorScheme.error,
+						contentColor = MaterialTheme.colorScheme.onError,
+					),
+					shape = MaterialTheme.shapes.medium,
+					modifier = Modifier.fillMaxWidth(),
+					onClick = { dataStoreInstance.putShowUnencryptedAttachmentCard(false) },
+				) {
+					Text(text = "Dismiss")
+				}
+			}
 		}
 	}
 }

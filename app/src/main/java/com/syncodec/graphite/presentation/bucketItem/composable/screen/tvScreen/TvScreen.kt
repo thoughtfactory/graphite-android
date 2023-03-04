@@ -1,6 +1,14 @@
 package com.syncodec.graphite.presentation.bucketItem.composable.screen.tvScreen
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,13 +20,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,7 +38,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,12 +50,13 @@ import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.InfoSurface
-import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.presentation.common.dialog.DialogType
+import com.syncodec.graphite.utils.ContentStatus
+import com.valentinilk.shimmer.shimmer
 
 
+@OptIn(ExperimentalAnimationApi::class)
 @Preview
 @Composable
 fun TvScreen(
@@ -59,23 +69,16 @@ fun TvScreen(
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
 
-	val uriHandler = LocalUriHandler.current
-
 	val tvId by viewModel.tvId.collectAsState()
-	val tvAdult by viewModel.tvAdult.collectAsState()
 	val tvFirstAirDate by viewModel.tvFirstAirDate.collectAsState()
 	val tvGenres by viewModel.tvGenres.collectAsState()
-	val tvHomepage by viewModel.tvHomepage.collectAsState()
 	val tvNumberOfSeasons by viewModel.tvNumberOfSeasons.collectAsState()
 	val tvNumberOfEpisodes by viewModel.tvNumberOfEpisodes.collectAsState()
-	val tvOriginalLanguage by viewModel.tvOriginalLanguage.collectAsState()
 	val tvName by viewModel.tvName.collectAsState()
-	val tvOriginalName by viewModel.tvOriginalName.collectAsState()
 	val tvOverview by viewModel.tvOverview.collectAsState()
-	val tvPosterPath by viewModel.tvPosterPath.collectAsState()
 	val tvTagline by viewModel.tvTagline.collectAsState()
 
-	val thumbnail by viewModel.thumbnail.collectAsState()
+	val thumbnailStatus by viewModel.thumbnailContentStatus.collectAsState()
 
 	val stateList = listOf(
 		StateData(
@@ -84,17 +87,15 @@ fun TvScreen(
 		),
 		StateData(
 			title = "Watching",
-			icon = R.drawable.ic_clock,
+			icon = R.drawable.ic_advance,
 		),
 		StateData(
 			title = "Watched",
-			icon = R.drawable.ic_check,
+			icon = R.drawable.ic_done,
 		),
 	)
 
 	val scrollState = rememberScrollState()
-
-	val openDialog = LocalCompositionOpenDialog.current
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -109,26 +110,47 @@ fun TvScreen(
 			modifier = Modifier
 				.width(screenWidth / 2)
 				.aspectRatio(0.6666f)
-				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.extraLarge)
+				.background(
+					MaterialTheme.colorScheme
+						.surfaceColorAtElevation(8.dp)
+						.copy(alpha = 0.31f), MaterialTheme.shapes.extraLarge
+				)
 				.clip(MaterialTheme.shapes.extraLarge)
+				.then(if (thumbnailStatus is ContentStatus.Loaded) Modifier else Modifier.shimmer())
 		) {
-			AsyncImage(
-				model = ImageRequest.Builder(context)
-					.data(thumbnail)
-					.crossfade(300)
-					.build(),
-				placeholder = null,
-				contentDescription = tvName,
-				contentScale = ContentScale.Crop,
-				modifier = Modifier.fillMaxSize(),
-			)
+			when (thumbnailStatus) {
+				is ContentStatus.Init -> Box(modifier = Modifier.fillMaxSize())
+				is ContentStatus.Loading -> Box(modifier = Modifier.fillMaxSize())
+				is ContentStatus.LoadedEmpty -> Text(
+					text = "Thumbnail unavailable",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurface,
+					fontWeight = FontWeight.Bold,
+				)
+
+				is ContentStatus.Loaded -> AsyncImage(
+					model = ImageRequest.Builder(context)
+						.data(thumbnailStatus.dataOrNull)
+						.crossfade(300)
+						.build(),
+					placeholder = null,
+					contentDescription = tvName,
+					contentScale = ContentScale.Crop,
+					modifier = Modifier.fillMaxSize()
+				)
+
+				is ContentStatus.Error -> Text(
+					text = "Thumbnail unavailable",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurface,
+					fontWeight = FontWeight.Bold,
+				)
+			}
 		}
 
 		Spacer(modifier = Modifier.height(24.dp))
 
-		InfoSurface(
-			onClick = { openDialog(DialogType.SHOW_INFO) },
-		) {
+		InfoSurface {
 			Column(
 				modifier = Modifier.fillMaxWidth()
 			) {
@@ -180,11 +202,10 @@ fun TvScreen(
 		StateButton(
 			stateList = stateList,
 			currentState = currentState,
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 			modifier = Modifier
 				.fillMaxWidth()
 				.padding(16.dp, 0.dp)
-				.height(40.dp),
+				.height(36.dp),
 			onChangeState = onChangeState,
 		)
 
@@ -203,28 +224,41 @@ fun TvScreen(
 					modifier = Modifier.fillMaxWidth()
 				)
 
-				Text(
-					text = tvOverview ?: "",
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurface,
-				)
+				AnimatedContent(
+					targetState = tvOverview,
+					transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) }
+				) {
+					if (it.isNullOrEmpty()) {
+						Text(
+							text = "No description available",
+							style = MaterialTheme.typography.bodyMedium,
+							color = MaterialTheme.colorScheme.onSurface,
+						)
+					} else {
+						Text(
+							text = it,
+							style = MaterialTheme.typography.bodyMedium,
+							color = MaterialTheme.colorScheme.onSurface,
+							overflow = TextOverflow.Ellipsis,
+						)
+					}
+				}
 			}
 		}
 
-		Spacer(modifier = Modifier.height(8.dp))
-
-		FlowRow(
-			mainAxisAlignment = FlowMainAxisAlignment.SpaceBetween,
-			lastLineMainAxisAlignment = FlowMainAxisAlignment.Start,
-			mainAxisSpacing = 8.dp,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp, 0.dp),
-		) {
-			tvGenres.forEach { genre ->
-				if (genre.name != null) {
+		tvGenres.filter { it.name != null }.let { genreList ->
+			Spacer(modifier = Modifier.height(8.dp))
+			FlowRow(
+				mainAxisAlignment = FlowMainAxisAlignment.SpaceBetween,
+				lastLineMainAxisAlignment = FlowMainAxisAlignment.Start,
+				mainAxisSpacing = 8.dp,
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(16.dp, 0.dp),
+			) {
+				genreList.forEach { genre ->
 					Box(
-						modifier = Modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+						modifier = Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f), MaterialTheme.shapes.small)
 					) {
 						Text(
 							text = genre.name ?: return@Box,
@@ -241,24 +275,35 @@ fun TvScreen(
 		Spacer(modifier = Modifier.height(4.dp))
 
 		Button(
+			shape = MaterialTheme.shapes.medium,
 			onClick = {
 				try {
-					uriHandler.openUri("https://www.themoviedb.org/tv/$tvId/")
+					context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.themoviedb.org/tv/$tvId")))
 				} catch (e : Exception) {
 					Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
 				}
 			},
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp, 0.dp)
+			modifier = Modifier.weight(1f),
 		) {
 			Text(text = "Open in TMDB")
+			Spacer(modifier = Modifier.width(6.dp))
+			Icon(
+				painter = painterResource(id = R.drawable.ic_launch),
+				contentDescription = "Open in TMDB",
+				modifier = Modifier.size(20.dp),
+			)
 		}
 
 		Spacer(modifier = Modifier.height(6.dp))
 
 		InfoSurface(
-			onClick = { uriHandler.openUri("https://www.themoviedb.org/") }
+			onClick = {
+				try {
+					context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.themoviedb.org/")))
+				} catch (e : Exception) {
+					Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+				}
+			},
 		) {
 			Column(
 				modifier = Modifier.fillMaxWidth()

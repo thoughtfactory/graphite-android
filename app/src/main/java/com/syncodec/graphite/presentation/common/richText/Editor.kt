@@ -1,7 +1,8 @@
 package com.syncodec.graphite.presentation.common.richText
 
 import android.content.Context
-import android.util.Log
+import android.print.PrintAttributes
+import android.print.PrintManager
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -13,22 +14,29 @@ import androidx.annotation.Keep
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.accompanist.web.AccompanistWebViewClient
+import com.google.accompanist.web.WebView
+import com.google.accompanist.web.WebViewNavigator
+import com.google.accompanist.web.rememberWebViewState
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.toHexString
 import io.github.esentsov.FilePrivate
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -36,11 +44,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 
-class RichTextEditor(context : Context, val containerColor : Color, contentColor : Color, screenHeightPx : Int, typography : Int?) : WebView(context) {
+class RichTextEditor(
+	context : Context,
+	val containerColor : Color = Color.Unspecified,
+	val contentColor : Color = Color.Unspecified,
+	val typography : String? = null,
+	val screenHeightPx : Int = 0
+) : WebView(context) {
+
 	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-
 
 	/**
 	 * Override [GetTextListener] to get data from the editor.
@@ -53,7 +68,30 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 	 * @see [getData]
 	 */
 	interface GetTextListener {
-		fun onGetData(requestData : RequestData, data : String?)
+		fun onGetData(
+			requestData : RequestData,
+			dataObject : JSONObject,
+			dataJson : JSONObject?,
+			dataText : String?,
+			dataHtml : String?,
+			dataMarkdown : String?,
+			dataTitle : String?
+		)
+
+		companion object {
+			fun instance() : GetTextListener = object : GetTextListener {
+				override fun onGetData(
+					requestData : RequestData,
+					dataObject : JSONObject,
+					dataJson : JSONObject?,
+					dataText : String?,
+					dataHtml : String?,
+					dataMarkdown : String?,
+					dataTitle : String?,
+				) {
+				}
+			}
+		}
 	}
 
 	private var getTextListener : GetTextListener? = null
@@ -81,7 +119,6 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 
 		webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage : ConsoleMessage) : Boolean {
-//				Log.d("npr71 : RichTextEditor", consoleMessage.message())
 				return true
 			}
 		}
@@ -114,22 +151,18 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			}
 		}
 
-		exec("editor.setBaseColor('${containerColor.toHexString()}', '${contentColor.toHexString()}');")
+		setTypography(typography)
+		setColor(containerColor, contentColor)
+	}
 
-		when (typography) {
-			0 -> exec("editor.setBaseFontFamily(\"overlock\");")
-			1 -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
-			2 -> exec("editor.setBaseFontFamily(\"ubuntu\");")
-			3 -> exec("editor.setBaseFontFamily(\"atwriter\");")
-			else -> exec("editor.setBaseFontFamily(\"source_sans_pro\");")
+	private fun load(trigger : String) {
+		evaluateJavascript(trigger) { result ->
 		}
 	}
 
-	private fun load(trigger : String) = evaluateJavascript(trigger) { result -> }
-
-	fun importData(importFrom : ImportFrom, noteId : String, data : String) {
+	fun importData(importFrom : ImportFrom, noteId : String, data : String, extra : String? = null) {
 		when (importFrom) {
-			ImportFrom.Journey -> exec("editor.importData(\"$noteId\", $data, \"journey\");")
+			ImportFrom.Journey -> exec("editor.importData(\"$noteId\", $data, \"journey\", \"$extra\");")
 		}
 	}
 
@@ -138,7 +171,8 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			while (true) {
 				try {
 					if (isReady.value) break
-				} catch (exception : Exception) {
+				} catch (e : Exception) {
+//					e.printStackTrace()
 				}
 				delay(400)
 			}
@@ -155,8 +189,38 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 	 * @since 2.2.0
 	 * */
 	fun setData(title : String?, content : String?) = exec("editor.setData(\"${title ?: ""}\", ${content});")
+
+	fun setAndGetData(title : String?, content : String?, extra : String?) = exec("editor.setAndGetData(\"${title ?: ""}\", ${content}, \"$extra\");")
 	fun onEditorAction(editorAction : EditorAction) = editorActionExecMap[editorAction]?.let { exec(it) }
 	fun save() = exec("editor.getData(\"${RequestData.Save.name}\");")
+
+	fun setColor(containerColor : Color, contentColor : Color) =
+		exec("editor.setBaseColor('${containerColor.toHexString()}', '${contentColor.toHexString()}');")
+
+	fun setTypography(typography : String?) = typography?.let { exec("editor.setBaseFontFamily(\"$it\");") }
+
+	fun print() {
+		CoroutineScope(Dispatchers.Main).launch {
+			try {
+				val dataStoreInstance = DataStoreInstance(context = context)
+				val id = RealmUUID.random().toString()
+				dataStoreInstance.getTypography.collect { typography ->
+					setTypography(typography)
+					setColor(Color.White, Color.Black)
+
+					val printManager = context.getSystemService(PrintManager::class.java)
+					val printAdapter = createPrintDocumentAdapter(id)
+					printManager.print(
+						id,
+						printAdapter,
+						PrintAttributes.Builder().build()
+					)
+				}
+			} catch (e : Exception) {
+//				e.printStackTrace()
+			}
+		}
+	}
 
 	/**
 	 * Exposed to JS for TipTap to callback when it is ready to use. This is deeply coupled to the JS code as well as how [exec] is called.
@@ -195,6 +259,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 	 *  *   [RequestData.ExportText] : JSON string. Contains dataText.
 	 *  *   [RequestData.ExportPdf] : JSON string. Contains dataText.
 	 *  *   [RequestData.ExportHtml] : JSON string. Contains dataHtml.
+	 *  *   [RequestData.ExportJson] : JSONObject. Contains dataJson.
 	 *  *   [RequestData.ExportMarkdown] : JSON string. Contains dataText.
 	 * @see [GetTextListener.onGetData]
 	 */
@@ -202,12 +267,23 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 	@JavascriptInterface
 	fun getData(requestData : String?, data : String?) {
 		try {
-			RequestData.values().find { it.name == requestData }?.let { getTextListener?.onGetData(it, data) }
+			val dataObject = JSONObject(data ?: "{}")
+			val dataJson = dataObject.optJSONObject("dataJson")
+			val dataText = dataObject.optString("dataText")
+			val dataHtml = dataObject.optString("dataHtml")
+			val dataMarkdown = dataObject.optString("dataMarkdown")
+			val dataTitle = dataObject.optString("title")
+
+			if (requestData == RequestData.ExportPdf.name) print()
+			else RequestData.values().find { it.name == requestData }
+				?.let { getTextListener?.onGetData(it, dataObject, dataJson, dataText, dataHtml, dataMarkdown, dataTitle) }
 		} catch (_ : Exception) {
 		}
 	}
 
 	companion object {
+		fun headlessInstance(context : Context) = RichTextEditor(context)
+
 		@Keep
 		data class TextFormat(
 			val bold : Boolean = false,
@@ -313,6 +389,7 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 			ExportPdf,
 			ExportHtml,
 			ExportMarkdown,
+			ExportJson,
 			ImportJourney
 		}
 
@@ -323,21 +400,52 @@ class RichTextEditor(context : Context, val containerColor : Color, contentColor
 }
 
 @Composable
-fun rememberRichTextEditor() : RichTextEditor {
+fun RichTextEditor(
+	getTextListener : RichTextEditor.GetTextListener = RichTextEditor.GetTextListener.instance(),
+	onCreated : (RichTextEditor) -> Unit = {},
+) {
 	val context = LocalContext.current
-	val configuration = LocalConfiguration.current
-	val screenHeight = (configuration.screenHeightDp.dp.value * 0.8).toInt()
+	val scope = rememberCoroutineScope()
+	val state = rememberWebViewState("about:blank")
 
-	val density = LocalDensity.current
+	val accompanistWebViewClient = remember {
+		AccompanistWebViewClient()
+	}
 
-	val screenHeightPx = with(density) { configuration.screenHeightDp.dp.roundToPx() }
+	val webViewNavigator = remember {
+		WebViewNavigator(scope)
+	}
 
 	val containerColor = MaterialTheme.colorScheme.background
 	val contentColor = MaterialTheme.colorScheme.onBackground
-//	val typography by DataStoreInstance(context).getTypography.collectAsState(initial = null)
-	val typography = null
 
-	val richTextEditor : RichTextEditor = remember { RichTextEditor(context, containerColor, contentColor, screenHeight, typography) }
+	WebView(
+		state = state,
+		onCreated = { onCreated(it as RichTextEditor) },
+		captureBackPresses = false,
+		client = accompanistWebViewClient,
+		navigator = webViewNavigator,
+		factory = {
+			RichTextEditor(it, containerColor, contentColor).apply {
+				setGetTextListener(getTextListener)
+			}
+		}
+	)
+}
+
+@Composable
+fun rememberRichTextEditor() : RichTextEditor {
+	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
+	val containerColor = MaterialTheme.colorScheme.background
+	val contentColor = MaterialTheme.colorScheme.onBackground
+	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
+
+	val richTextEditor : RichTextEditor = remember { RichTextEditor(context, containerColor, contentColor) }
+	LaunchedEffect(key1 = typography) {
+		richTextEditor.setTypography(typography ?: "PT Mono")
+	}
 
 	val lifecycleObserver = rememberRichTextEditorLifecycleObserver(richTextEditor)
 	val lifecycle = LocalLifecycleOwner.current.lifecycle

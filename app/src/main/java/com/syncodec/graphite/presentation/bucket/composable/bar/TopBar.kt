@@ -1,6 +1,6 @@
 package com.syncodec.graphite.presentation.bucket.composable.bar
 
-import android.widget.Toast
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -8,22 +8,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionOnShare
-import com.syncodec.graphite.presentation.common.LocalCompositionOpenDialog
-import com.syncodec.graphite.presentation.common.LocalCompositionSelectedRealmUUIDIdList
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.presentation.common.dialog.DialogType
 
 
 @Preview
@@ -33,24 +28,35 @@ fun TopBar(
 	isLocked : Boolean = false,
 	isFavourite : Boolean = false,
 	bucketType : BucketType = BucketType.UNKNOWN,
-	viewState: Int = 0,
-	isSelected : Boolean = false,
+	viewState : Int = 0,
+	isSelecting : Boolean = false,
+	selectedItemSize : Int = 0,
+	onCancelSelection : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onStateChange : (Int) -> Unit = {},
-	onClickBack : () -> Unit = {},
+	onShare : () -> Unit = {},
+	onDelete : () -> Unit = {},
 ) {
+
+	val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(MaterialTheme.colorScheme.background)
 	) {
 		Crossfade(
-			targetState = isSelected,
+			targetState = isSelecting,
 			animationSpec = tween(durationMillis = 300)
 		) {
 			if (it) {
-				SelectionBar()
+				SelectionBar(
+					selectedItemSize = selectedItemSize,
+					onCancelSelection = onCancelSelection,
+					onShare = onShare,
+					onDelete = onDelete,
+				)
 			} else {
 				Bar(
 					title = title,
@@ -58,13 +64,13 @@ fun TopBar(
 					isFavourite = isFavourite,
 					onClickFavourite = onClickFavourite,
 					onClickLock = onClickLock,
-					onClickBack = onClickBack
+					onClickBack = { backPressedDispatcher?.onBackPressed() }
 				)
 			}
 		}
 
 		AnimatedVisibility(
-			visible = ! isSelected && bucketType != BucketType.LINK,
+			visible = ! isSelecting && bucketType != BucketType.LINK,
 			enter = expandVertically(tween(300)),
 			exit = shrinkVertically(tween(300))
 		) {
@@ -85,7 +91,7 @@ private fun Bar(
 	isLocked : Boolean = false,
 	onClickFavourite : () -> Unit = {},
 	onClickLock : () -> Unit = {},
-	onClickBack: () -> Unit = {},
+	onClickBack : () -> Unit = {},
 ) {
 	TopAppBar(
 		navigationIcon = {
@@ -103,7 +109,6 @@ private fun Bar(
 				Text(
 					text = it ?: "Untitled",
 					color = MaterialTheme.colorScheme.onBackground,
-					fontWeight = FontWeight.Bold,
 					fontStyle = if (it == null) FontStyle.Italic else FontStyle.Normal
 				)
 			}
@@ -115,7 +120,7 @@ private fun Bar(
 				checked = isLocked,
 				onClick = onClickLock
 			)
-			
+
 			MenuButton(
 				icon = R.drawable.ic_favourite,
 				tooltip = "Favourite",
@@ -134,19 +139,23 @@ private fun Bar(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
-private fun SelectionBar() {
-
-	val context = LocalContext.current
-
-	val selectedRealmUUIDList = LocalCompositionSelectedRealmUUIDIdList.current
-
-	val openDialog = LocalCompositionOpenDialog.current
-	val onShare = LocalCompositionOnShare.current
-
+private fun SelectionBar(
+	selectedItemSize : Int = 0,
+	onCancelSelection : () -> Unit = {},
+	onShare : () -> Unit = {},
+	onDelete : () -> Unit = {},
+) {
 	TopAppBar(
+		navigationIcon = {
+			MenuButton(
+				icon = R.drawable.ic_close,
+				tooltip = "Cancel selection",
+				onClick = onCancelSelection,
+			)
+		},
 		title = {
 			AnimatedText(
-				text = if (selectedRealmUUIDList.size == 0) "No items selected" else if (selectedRealmUUIDList.size == 1) "1 item selected" else "${selectedRealmUUIDList.size} items selected",
+				text = if (selectedItemSize == 0) "No items selected" else if (selectedItemSize == 1) "1 item selected" else "${selectedItemSize} items selected",
 				color = MaterialTheme.colorScheme.onBackground,
 				transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
 			)
@@ -155,19 +164,15 @@ private fun SelectionBar() {
 			MenuButton(
 				icon = R.drawable.ic_share,
 				tooltip = "Share items",
-			) {
-				if (selectedRealmUUIDList.isEmpty()) Toast.makeText(context, "No items selected", Toast.LENGTH_SHORT).show()
-				else onShare(false)
-			}
+				onClick = onShare
+			)
 
 			MenuButton(
 				icon = R.drawable.ic_delete,
 				tooltip = "Delete items",
-				colors = MenuButtonDefaults.deleteButtonColors()
-			) {
-				if (selectedRealmUUIDList.isEmpty()) Toast.makeText(context, "No items selected", Toast.LENGTH_SHORT).show()
-				else openDialog(DialogType.DELETE)
-			}
+				colors = MenuButtonDefaults.deleteButtonColors(),
+				onClick = onDelete
+			)
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 	)

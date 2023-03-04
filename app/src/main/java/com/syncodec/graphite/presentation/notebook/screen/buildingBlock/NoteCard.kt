@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -50,15 +51,13 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LocationContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.utils.LocalBackgroundColor
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import com.syncodec.graphite.utils.getAttachmentCountFromNoteId
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo
 import io.realm.kotlin.types.RealmUUID
@@ -106,9 +105,9 @@ class NoteCardColors constructor(
 object NoteCardDefaults {
 	@Composable
 	fun noteCardColors(
-		containerColor : Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
+		containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
 		contentColor : Color = MaterialTheme.colorScheme.onSurface,
-		selectedContainerColor : Color = MaterialTheme.colorScheme.surface,
+		selectedContainerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp),
 		selectedContentColor : Color = MaterialTheme.colorScheme.onSurface,
 		backgroundColor : Color = MaterialTheme.colorScheme.background,
 	) : NoteCardColors = NoteCardColors(
@@ -125,7 +124,7 @@ object NoteCardDefaults {
 		iconColor : Color = MaterialTheme.colorScheme.onBackground,
 		checkedContainerColor : Color = MaterialTheme.colorScheme.background,
 		checkedIconColor : Color = MaterialTheme.colorScheme.onBackground,
-		backgroundColor : Color = MaterialTheme.colorScheme.surface,
+		backgroundColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp),
 	) : NoteCardColors = NoteCardColors(
 		containerColor = containerColor,
 		contentColor = iconColor,

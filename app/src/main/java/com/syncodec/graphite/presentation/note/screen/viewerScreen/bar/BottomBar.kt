@@ -1,38 +1,45 @@
 package com.syncodec.graphite.presentation.note.screen.viewerScreen.bar
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenu
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
-import io.realm.kotlin.types.RealmUUID
 
 
 @Preview
 @Composable
 fun BottomBar(
-	isOperationPending : Boolean = false,
-	noteId : RealmUUID? = null,
+	onClickExportAsTxt : () -> Unit = {},
+	onClickExportAsPdf : () -> Unit = {},
+	onClickExportAsHtml : () -> Unit = {},
+	onClickExportAsJson : () -> Unit = {},
+	onClickExportAsMarkdown : () -> Unit = {},
+	onClickExportAttachments : () -> Unit = {},
 	onClickMetadata : () -> Unit = {},
-	onClickPin : () -> Unit = {},
-	onClickShare : () -> Unit = {},
 	onClickEditNote : () -> Unit = {}
 ) {
-	val context = LocalContext.current
 
 	val isAuthenticated = LocalIsAuthenticated.current
-	val authenticatorAction = LocalAuthenticatorAction.current
+	val onAuthenticationAction = LocalAuthenticatorAction.current
+
+	var isExportDropdownVisible by remember { mutableStateOf(false) }
 
 	BottomAppBar(
 		modifier = Modifier.fillMaxWidth(),
@@ -46,20 +53,27 @@ fun BottomBar(
 			onClick = onClickMetadata
 		)
 
-		MenuButton(
-			icon = R.drawable.ic_pin,
-			tooltip = "Pin Note in Notification",
-			checked = NotePinNotification.isNotificationPinned(context, noteId),
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
-			onClick = onClickPin
-		)
+		Box {
+			MenuButton(
+				icon = R.drawable.ic_export,
+				tooltip = "Export Note",
+				colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+				onClick = { isExportDropdownVisible = true }
+			)
 
-		MenuButton(
-			icon = R.drawable.ic_share,
-			tooltip = "Share Note",
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
-			onClick = onClickShare
-		)
+			DropdownMenu(
+				title = "Export note",
+				itemList = listOf(
+					DropdownMenuItem(title = "As txt", icon = R.drawable.ic_file_txt, onClick = onClickExportAsTxt),
+					DropdownMenuItem(title = "As pdf", icon = R.drawable.ic_file_pdf, onClick = onClickExportAsPdf),
+					DropdownMenuItem(title = "As html", icon = R.drawable.ic_file_html, onClick = onClickExportAsHtml, isPro = true),
+					DropdownMenuItem(title = "As json", icon = R.drawable.ic_file_json, onClick = onClickExportAsJson, isPro = true),
+					DropdownMenuItem(title = "As markdown", icon = R.drawable.ic_file_md, onClick = onClickExportAsMarkdown, isPro = true),
+					DropdownMenuItem(title = "Attachments", icon = R.drawable.ic_gallery, onClick = onClickExportAttachments),
+				),
+				isVisible = isExportDropdownVisible,
+			) { isExportDropdownVisible = false }
+		}
 
 		Spacer(modifier = Modifier.weight(1f))
 
@@ -68,7 +82,7 @@ fun BottomBar(
 			tooltip = "Vault",
 			checked = isAuthenticated,
 			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
-		) { authenticatorAction(AuthenticatorScreen.Authenticate) }
+		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 
 		MenuButton(
 			icon = R.drawable.ic_pencil,

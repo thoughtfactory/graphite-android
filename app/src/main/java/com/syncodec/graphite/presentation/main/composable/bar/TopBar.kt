@@ -106,7 +106,7 @@ private fun Bar(
 ) {
 
 	val isAuthenticated = LocalIsAuthenticated.current
-	val authenticatorAction = LocalAuthenticatorAction.current
+	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	val containerColor by animateColorAsState(
 		targetValue = when (currentRoute) {
@@ -132,7 +132,7 @@ private fun Bar(
 				},
 				title = {
 					AnimatedText(
-						text = if (selectedSize == 0) "No items selected" else if (selectedSize == 1) "1 item selected" else "${selectedSize ?: "No"} items selected",
+						text = if (selectedSize == 0) "No items selected" else if (selectedSize == 1) "1 item selected" else "${selectedSize} items selected",
 						color = MaterialTheme.colorScheme.onBackground,
 					)
 				},
@@ -155,11 +155,6 @@ private fun Bar(
 							icon = R.drawable.ic_menu,
 							onClick = onClickMenu,
 						)
-						MenuButton(
-							icon = R.drawable.ic_vault,
-							tooltip = "Vault",
-							checked = isAuthenticated,
-						) { authenticatorAction(AuthenticatorScreen.Authenticate) }
 					}
 				},
 				title = {
@@ -175,10 +170,15 @@ private fun Bar(
 					)
 				},
 				actions = {
-					CloudButton(
-						syncStatus = syncStatus,
-						onClickSync = onClickCloud
-					)
+//					CloudButton(
+//						syncStatus = syncStatus,
+//						onClickSync = onClickCloud
+//					)
+					MenuButton(
+						icon = R.drawable.ic_vault,
+						tooltip = "Vault",
+						checked = isAuthenticated,
+					) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 					MenuButton(
 						icon = R.drawable.ic_search,
 						onClick = onClickSearch
@@ -227,7 +227,7 @@ private fun ComponentTypeView(
 				currentState = componentType.ordinal,
 				onChangeState = onStateChange,
 				modifier = Modifier
-					.height(32.dp)
+					.height(36.dp)
 					.weight(1f)
 			)
 			MenuButton(
@@ -312,6 +312,11 @@ private fun CloudButton(
 
 			is DropboxService.Companion.DropboxSyncStatus.DriveLocked -> MenuButton(
 				icon = R.drawable.ic_cloud_exclamation,
+				onClick = onClickSync
+			)
+
+			is DropboxService.Companion.DropboxSyncStatus.Idle -> MenuButton(
+				icon = R.drawable.ic_cloud,
 				onClick = onClickSync
 			)
 		}

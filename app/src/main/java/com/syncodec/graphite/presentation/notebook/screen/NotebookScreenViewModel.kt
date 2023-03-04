@@ -6,19 +6,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.utils.ContentStatus
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.utils.LoaderStatus
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
@@ -35,6 +38,8 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 
 	/** Cancelled and reassigned when [loadData] is called. This is scoped to the ViewModel.*/
 	private var chapterReaderCoroutine : CoroutineScope? = null
+	private var chapterCounterCoroutine : CoroutineScope? = null
+	private var noteCounterCoroutine : CoroutineScope? = null
 
 	val defaultChapterId = MutableStateFlow<RealmUUID?>(null)
 
@@ -48,14 +53,23 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 	val thumbnail = MutableStateFlow<String?>(null)
 	val isFavourite = MutableStateFlow<Boolean?>(null)
 	val isLocked = MutableStateFlow<Boolean?>(null)
-	val chapterList = MutableStateFlow<List<ChapterObject>>(listOf())
-	val noteList = MutableStateFlow<List<NoteObjectLite>>(listOf())
+
+	private val _chapterList = MutableStateFlow<List<ChapterObject>>(listOf())
+	private val _noteList = MutableStateFlow<List<NoteObjectLite>>(listOf())
+	val chapterList : StateFlow<List<ChapterObject>> = _chapterList
+	val noteList : StateFlow<List<NoteObjectLite>> = _noteList
+
+	private val _chapterChapterItemCount : MutableStateFlow<Map<RealmUUID?, Int>> = MutableStateFlow(mapOf())
+	val chapterChapterItemCount : StateFlow<Map<RealmUUID?, Int>> = _chapterChapterItemCount
+	private val _chapterNoteItemCount : MutableStateFlow<Map<RealmUUID?, Int>> = MutableStateFlow(mapOf())
+	val chapterNoteItemCount : StateFlow<Map<RealmUUID?, Int>> = _chapterNoteItemCount
+
 	val parentId = MutableStateFlow<ByteArray?>(null)
 
 	val chapterPath = MutableStateFlow<List<ChapterObjectLite>>(listOf())
 
 	val isChapterRefreshing : MutableStateFlow<Boolean> = MutableStateFlow(false)
-	val contentStatus = MutableStateFlow(ContentStatus.Init)
+	val loaderStatus = MutableStateFlow(LoaderStatus.Init)
 
 	val tagList = MutableStateFlow<List<TagObject>>(listOf())
 
@@ -86,7 +100,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 	fun loadChapter(chapterId : RealmUUID?) = this.chapterId.tryEmit(chapterId)
 
 	private fun loadData(chapterId : RealmUUID) {
-		contentStatus.tryEmit(ContentStatus.Loading)
+		loaderStatus.tryEmit(LoaderStatus.Loading)
 		viewModelScope.launch(Dispatchers.Default) {
 			chapterReaderCoroutine?.cancel()
 			chapterReaderCoroutine = this
@@ -109,9 +123,25 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 					loadChapterList(parentId = chapterObject1.id)
 					loadChapterPath(chapterId = chapterObject1.id).let {
 						this@NotebookScreenViewModel.chapterPath.tryEmit(it)
-						contentStatus.tryEmit(ContentStatus.Loaded)
+						loaderStatus.tryEmit(LoaderStatus.Loaded)
 					}
 				}
+			}
+		}
+
+		viewModelScope.launch(Dispatchers.Default) {
+			chapterCounterCoroutine?.cancel()
+			chapterCounterCoroutine = this
+			repository.getAllChapterAsFlow().cancellable().collect {
+				it.groupingBy { it.parentId }.eachCount().let { _chapterChapterItemCount.tryEmit(it) }
+			}
+		}
+
+		viewModelScope.launch(Dispatchers.Default) {
+			noteCounterCoroutine?.cancel()
+			noteCounterCoroutine = this
+			repository.getAllNoteAsFlow().cancellable().collect {
+				it.groupingBy { it.parentId }.eachCount().let { _chapterNoteItemCount.tryEmit(it) }
 			}
 		}
 	}
@@ -121,7 +151,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			noteLoaderCoroutine?.cancel()
 			noteLoaderCoroutine = this
 			repository.getNoteWithParentIdAsFlow(parentId = parentId).collect { noteList ->
-				this@NotebookScreenViewModel.noteList.tryEmit(noteList.list.map { it.toLite() })
+				this@NotebookScreenViewModel._noteList.tryEmit(noteList.list.map { it.toLite() })
 			}
 		}
 	}
@@ -131,7 +161,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			chapterLoaderCoroutine?.cancel()
 			chapterLoaderCoroutine = this
 			repository.getChapterWithParentIdAsFlow(parentId = parentId).collect { chapterList ->
-				this@NotebookScreenViewModel.chapterList.tryEmit(chapterList.list)
+				this@NotebookScreenViewModel._chapterList.tryEmit(chapterList.list)
 			}
 		}
 	}
@@ -139,17 +169,25 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 	@WorkerThread
 	private fun loadChapterPath(chapterId : RealmUUID) = repository.getChapterPath(id = chapterId, includeEdge = true)
 
-	fun putInnerChapter(parentId : RealmUUID?, title : String?, description : String?, color : Color?, thumbnail : Bitmap?) {
-		ChapterObject().apply {
+	fun putInnerChapter(
+		parentId : RealmUUID?,
+		title : String?,
+		description : String?,
+		color : Color?,
+		thumbnail : Bitmap?,
+		callback : (String?) -> Unit
+	) {
+		val chapterObject = ChapterObject().apply {
 			this.title = title
 			this.description = description
 			this.color = color?.toArgb()
 			this.thumbnail = thumbnail?.encodeBase64()
 
 			this.parentId = parentId
-
-			repository.putChapterSuspended(this)
 		}
+
+		if (BaseApplication.isPro.value) repository.putChapterSuspended(chapterObject)
+		else callback("Join Graphite Pro to create chapters")
 	}
 
 	fun updateChapter(chapterId : RealmUUID, title : String?, description : String?, color : Color?, thumbnail : Bitmap?) {
@@ -208,12 +246,14 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 		}
 	}
 
-	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+	fun delete(idList : List<RealmUUID>) {
+		repository.deleteSuspended(idList = idList)
+	}
 
 	fun deleteCurrentChapter(id : RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			parentId.value?.let { loadChapter(chapterId = RealmUUID.Companion.from(it)) }
-			repository.delete(listOf(id))
+			repository.deleteSuspended(id)
 		}
 	}
 }

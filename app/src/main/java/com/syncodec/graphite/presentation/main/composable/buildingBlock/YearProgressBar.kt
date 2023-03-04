@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -97,9 +96,9 @@ fun YearProgressBar(
 					Box(
 						modifier = Modifier
 							.weight(1f)
-							.clip(RoundedCornerShape(50))
 							.background(Color.Transparent)
-							.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50)),
+							.clip(MaterialTheme.shapes.small)
+							.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small),
 					) {
 						Box(
 							modifier = Modifier

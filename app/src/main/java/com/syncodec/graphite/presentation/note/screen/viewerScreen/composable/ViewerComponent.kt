@@ -1,11 +1,12 @@
 package com.syncodec.graphite.presentation.note.screen.viewerScreen.composable
 
 
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -32,14 +32,13 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,21 +51,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMapOptions
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObjectLite
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.richText.viewer.BlockQuote
 import com.syncodec.graphite.presentation.common.richText.viewer.FormattedList
 import com.syncodec.graphite.presentation.common.richText.viewer.Heading
@@ -80,7 +72,6 @@ import com.syncodec.graphite.presentation.common.richText.viewer.string.RichText
 import com.syncodec.graphite.presentation.common.richText.viewer.string.Text
 import com.syncodec.graphite.presentation.common.richText.viewer.string.richTextString
 import com.syncodec.graphite.presentation.common.text.marqueeText.MarqueeText
-import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.noteViewerTimestamp
 import com.syncodec.graphite.utils.roundTo
@@ -118,18 +109,20 @@ private const val STRIKE = "strike"
 private const val SUPERSCRIPT = "superscript"
 private const val SUBSCRIPT = "subscript"
 
+@Preview
 @Composable
 fun ViewerComponent(
-	noteId : RealmUUID,
-	content : String?,
-	userTimestamp : Long,
-	title : String?,
-	latLng : LatLng?,
-	address : String?,
-	parentChapter : ChapterObject?,
-	attachmentList : List<File>,
-	tagList : List<TagObjectLite>,
-	onClickChapter : () -> Unit,
+	noteId : RealmUUID = RealmUUID.random(),
+	content : String? = null,
+	userTimestamp : Long = 0L,
+	title : String? = null,
+	latLng : LatLng? = null,
+	address : String? = null,
+	parentChapter : ChapterObject? = null,
+	attachmentList : List<File> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
+	onClickTimestamp : () -> Unit = {},
+	onClickChapter : () -> Unit = {},
 ) {
 	val context = LocalContext.current
 
@@ -153,7 +146,7 @@ fun ViewerComponent(
 		)
 
 		Box(
-			modifier = Modifier.padding(12.dp, 0.dp)
+			modifier = Modifier.padding(4.dp, 0.dp)
 		) {
 			Header(
 				userTimestamp = userTimestamp,
@@ -162,36 +155,41 @@ fun ViewerComponent(
 				address = address,
 				parentChapter = parentChapter,
 				tagList = tagList,
+				onClickTimestamp = onClickTimestamp,
 				onClickChapter = onClickChapter
 			)
 		}
 
-		Spacer(modifier = Modifier.height(16.dp))
+		Spacer(modifier = Modifier.height(8.dp))
 
-		if (tipTapData != null) {
+		tipTapData?.let {
 			Box(
 				modifier = Modifier.padding(12.dp, 0.dp)
 			) {
 				RenderContent(
-					tipTapData = tipTapData,
+					tipTapData = it,
 					richTextScope = null,
 					nestLevel = 0
 				)
 			}
 		}
+
 		Spacer(modifier = Modifier.height(96.dp))
 	}
 }
 
+@OptIn(ExperimentalAnimationApi::class)
+@Preview
 @Composable
 private fun Header(
-	userTimestamp : Long,
-	title : String?,
-	latLng : LatLng?,
-	address : String?,
-	parentChapter : ChapterObject?,
-	tagList : List<TagObjectLite>,
-	onClickChapter : () -> Unit
+	userTimestamp : Long = 0L,
+	title : String? = null,
+	latLng : LatLng? = null,
+	address : String? = null,
+	parentChapter : ChapterObject? = null,
+	tagList : List<TagObjectLite> = listOf(),
+	onClickTimestamp : () -> Unit = {},
+	onClickChapter : () -> Unit = {},
 ) {
 	val timestamp = noteViewerTimestamp(userTimestamp)
 
@@ -202,69 +200,51 @@ private fun Header(
 			modifier = Modifier,
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			Text(
-				text = timestamp[0],
-				style = MaterialTheme.typography.bodyMedium.copy(fontSize = 48.sp),
-				color = MaterialTheme.colorScheme.primary
-			)
-			Spacer(modifier = Modifier.width(4.dp))
-			Column(
-				modifier = Modifier,
-				verticalArrangement = Arrangement.SpaceBetween
+			Box(
+				modifier = Modifier
+					.clip(MaterialTheme.shapes.medium)
+					.clickable { onClickTimestamp() }
 			) {
-				Text(
-					text = timestamp[1],
-					style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.primary
-				)
-				Spacer(modifier = Modifier.height(4.dp))
-				Text(
-					text = timestamp[2],
-					style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.primary
-				)
-			}
-			Spacer(modifier = Modifier.weight(1f))
-			if (parentChapter != null) {
-				Box(
-					modifier = Modifier
-						.widthIn(96.dp)
-						.background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
-						.clip(MaterialTheme.shapes.medium)
-						.clickable { onClickChapter() }
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier.padding(4.dp),
 				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						modifier = Modifier.padding(12.dp, 8.dp)
+					AnimatedText(
+						text = timestamp[0],
+						style = MaterialTheme.typography.displaySmall,
+						color = MaterialTheme.colorScheme.onBackground,
+						fontWeight = FontWeight.Bold,
+					)
+					Spacer(modifier = Modifier.width(4.dp))
+					Column(
+						verticalArrangement = Arrangement.SpaceBetween,
+						modifier = Modifier,
 					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_notebook),
-							contentDescription = "Chapter",
-							tint = MaterialTheme.colorScheme.onSurface,
-							modifier = Modifier
-								.requiredSize(IconButtonSize)
-								.padding(2.dp)
-						)
-						Spacer(modifier = Modifier.width(8.dp))
-						Text(
-							text = parentChapter.title ?: "",
-							style = MaterialTheme.typography.bodyMedium,
-							color = MaterialTheme.colorScheme.onSurface,
+						AnimatedText(
+							text = timestamp[1],
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
 							fontWeight = FontWeight.Bold,
-							maxLines = 1,
-							overflow = TextOverflow.Ellipsis
+						)
+						Spacer(modifier = Modifier.height(2.dp))
+						AnimatedText(
+							text = timestamp[2],
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+							fontWeight = FontWeight.Bold,
 						)
 					}
 				}
 			}
+			Spacer(modifier = Modifier.weight(1f))
+			Spacer(modifier = Modifier.width(8.dp))
+			ParentChapterView(parentChapter = parentChapter, onClickChapter = onClickChapter)
+			Spacer(modifier = Modifier.width(8.dp))
 		}
 		if (! address.isNullOrBlank() || latLng != null) {
-			Spacer(modifier = Modifier.height(4.dp))
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
+				modifier = Modifier.padding(8.dp, 0.dp)
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_map_marker),
@@ -277,7 +257,7 @@ private fun Header(
 					text = address ?: ("Lat : ${latLng?.latitude?.roundTo(6)}, " +
 							"Lng : ${latLng?.longitude?.roundTo(6)}"),
 					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSurface,
+					color = MaterialTheme.colorScheme.onBackground,
 					overflow = TextOverflow.Ellipsis,
 					modifier = Modifier.weight(1f)
 				)
@@ -285,96 +265,91 @@ private fun Header(
 		}
 
 		if (tagList.isNotEmpty()) {
+			Spacer(modifier = Modifier.height(8.dp))
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
 					.horizontalScroll(rememberScrollState())
 			) {
+				Spacer(modifier = Modifier.width(8.dp))
 				tagList.forEach {
 					Box(
-						modifier = Modifier.background(color = Color(it.color).copy(alpha = 0.71f), shape = MaterialTheme.shapes.medium)
+						modifier = Modifier.background(color = Color(it.color).copy(alpha = 0.71f), shape = MaterialTheme.shapes.small)
 					) {
 						Text(
 							text = it.tag,
 							style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
 							color = Color(it.color).getInverseBWColor(),
-							modifier = Modifier.padding(12.dp, 8.dp)
+							modifier = Modifier.padding(8.dp, 4.dp)
 						)
 					}
 					Spacer(modifier = Modifier.width(4.dp))
 				}
+				Spacer(modifier = Modifier.width(4.dp))
 			}
 		}
 		if (! title.isNullOrBlank()) {
 			Spacer(modifier = Modifier.height(4.dp))
 			Text(
 				text = title,
-				modifier = Modifier,
 				style = MaterialTheme.typography.headlineLarge,
 				color = MaterialTheme.colorScheme.onBackground,
 				fontWeight = FontWeight.Bold,
 				maxLines = 2,
-				overflow = TextOverflow.Ellipsis
+				overflow = TextOverflow.Ellipsis,
+				modifier = Modifier.padding(8.dp, 0.dp),
 			)
 		}
 	}
 }
 
 @Composable
-private fun LocationMap(
-	latLng : LatLng?,
+private fun ParentChapterView(
+	parentChapter : ChapterObject?,
+	onClickChapter : () -> Unit = {},
 ) {
-	val context = LocalContext.current
-	val cameraPositionState = rememberCameraPositionState()
-
-	LaunchedEffect(key1 = latLng) {
-		latLng?.toGLatLng()?.let {
-			cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(it, 13f))
-		}
-	}
-
-	GoogleMap(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(128.dp)
-			.clip(MaterialTheme.shapes.medium),
-		cameraPositionState = cameraPositionState,
-		googleMapOptionsFactory = {
-			GoogleMapOptions().apply {
-				this.rotateGesturesEnabled(false)
-				this.rotateGesturesEnabled(false)
-				this.scrollGesturesEnabledDuringRotateOrZoom(false)
-				this.tiltGesturesEnabled(false)
-				this.zoomGesturesEnabled(false)
+	parentChapter?.let {
+		Box(
+			modifier = Modifier
+				.background(
+					MaterialTheme.colorScheme
+						.surfaceColorAtElevation(8.dp)
+						.copy(alpha = 0.47f),
+					MaterialTheme.shapes.small
+				)
+				.clip(MaterialTheme.shapes.small)
+				.clickable { onClickChapter() },
+		) {
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier.padding(12.dp, 8.dp),
+			) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_notebook),
+					contentDescription = "Parent Chapter",
+					tint = MaterialTheme.colorScheme.onSurface,
+					modifier = Modifier.requiredSize(20.dp)
+				)
+				Spacer(modifier = Modifier.width(8.dp))
+				Text(
+					text = if (it.title.isNullOrBlank()) it.id.toString() else it.title ?: it.id.toString(),
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurface,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+					modifier = Modifier,
+				)
 			}
-		},
-		uiSettings = MapUiSettings(
-			compassEnabled = false,
-			indoorLevelPickerEnabled = false,
-			mapToolbarEnabled = false,
-			myLocationButtonEnabled = false,
-			rotationGesturesEnabled = false,
-			scrollGesturesEnabled = false,
-			scrollGesturesEnabledDuringRotateOrZoom = false,
-			tiltGesturesEnabled = false,
-			zoomControlsEnabled = false,
-			zoomGesturesEnabled = false
-		),
-		properties = MapProperties(
-			mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (isSystemInDarkTheme()) R.raw.map_style_dark else R.raw.map_style_light)
-		),
-	) {
-		Marker(
-			state = MarkerState(position = cameraPositionState.position.target),
-		)
+		}
 	}
 }
 
+@Preview
 @Composable
 private fun RenderContent(
-	tipTapData : JSONObject,
-	richTextScope : RichTextScope?,
-	nestLevel : Int
+	tipTapData : JSONObject = JSONObject("{\"type\":\"doc\",\"content\":[{\"type\":\"taskList\",\"content\":[{\"type\":\"taskItem\",\"attrs\":{\"checked\":false},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Alpha\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":false},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Beta\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]},{\"type\":\"taskItem\",\"attrs\":{\"checked\":true},\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"Gamma\"}]}]}]}]}"),
+	richTextScope : RichTextScope? = null,
+	nestLevel : Int = 0
 ) {
 
 	when (tipTapData.optString(CONTENT_TYPE)) {
@@ -499,6 +474,7 @@ private fun RichTextScope.RenderParagraph(
 			text = toRichTextString(),
 			modifier = Modifier,
 			onTextLayout = {
+//				Log.i("npr71", "onTextLayout: ${it.didOverflowHeight}")
 			}
 		)
 	}
@@ -588,14 +564,14 @@ private fun RichTextScope.RenderBlockquote(
 	}
 }
 
+@Preview
 @Composable
 private fun RichTextScope.RenderList(
-	contentList : JSONArray?,
-	listType : ListType,
-	nestLevel : Int,
+	contentList : JSONArray? = null,
+	listType : ListType = ListType.Unordered,
+	nestLevel : Int = 0,
 ) {
-	val itemList : MutableList<Pair<@Composable (RichTextScope.() -> Unit), Boolean?>> =
-		mutableListOf()
+	val itemList : MutableList<Pair<@Composable (RichTextScope.() -> Unit), Boolean?>> = mutableListOf()
 
 	for (i in 0 until (contentList?.length() ?: 0)) {
 		val content = contentList !!.optJSONObject(i)

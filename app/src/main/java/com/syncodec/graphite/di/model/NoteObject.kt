@@ -2,6 +2,7 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
@@ -10,15 +11,12 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
-import java.nio.charset.Charset
 
 
 @Keep
+@JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
 class NoteObject() : RealmObject {
-
-	constructor(byteArray : ByteArray) : this() {
-		val jsonObject = JSONObject(byteArray.toString(Charset.defaultCharset()))
-
+	constructor(jsonObject : JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
 		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
@@ -67,8 +65,8 @@ class NoteObject() : RealmObject {
 			latLng?.let {
 				val latitude = it.latitude
 				val longitude = it.longitude
-				if(latitude == null || longitude == null) this.latLng = null
-				else if (latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+				if (latitude == null || longitude == null) this.latLng = null
+				else if (latitude >= - 90 && latitude <= 90 && longitude >= - 180 && longitude <= 180) {
 					val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 					this.latLng = objectMapper.writeValueAsString(it)
 				} else this.latLng = null
@@ -88,12 +86,13 @@ class NoteObject() : RealmObject {
 			return null
 		}
 	}
+
 	override fun toString() : String = this.id.toString()
 
 	fun toLite() : NoteObjectLite {
 		return NoteObjectLite(
 			id = this.id,
-			parentChapterId = this.parentId,
+			parentId = this.parentId,
 			createdTimestamp = this.createdTimestamp,
 			modifiedTimestamp = this.modifiedTimestamp,
 			userTimestamp = this.userTimestamp,
@@ -219,7 +218,7 @@ class NoteObject() : RealmObject {
 @Keep
 data class NoteObjectLite(
 	val id : RealmUUID,
-	val parentChapterId : RealmUUID?,
+	val parentId : RealmUUID?,
 	val createdTimestamp : Long,
 	val modifiedTimestamp : Long,
 	val userTimestamp : Long,
@@ -238,7 +237,7 @@ data class NoteObjectLite(
 		if (other !is NoteObjectLite) return false
 
 		if (id != other.id) return false
-		if (parentChapterId != other.parentChapterId) return false
+		if (parentId != other.parentId) return false
 		if (createdTimestamp != other.createdTimestamp) return false
 		if (modifiedTimestamp != other.modifiedTimestamp) return false
 		if (userTimestamp != other.userTimestamp) return false
@@ -257,7 +256,7 @@ data class NoteObjectLite(
 
 	override fun hashCode() : Int {
 		var result = id.hashCode()
-		result = 31 * result + (parentChapterId?.hashCode() ?: 0)
+		result = 31 * result + (parentId?.hashCode() ?: 0)
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
 		result = 31 * result + userTimestamp.hashCode()
@@ -283,4 +282,6 @@ data class LatLng(
 		return if (latitude == null || longitude == null) null
 		else com.google.android.gms.maps.model.LatLng(latitude !!, longitude !!)
 	}
+
+	override fun toString() : String = "Lat : $latitude, Lng : $longitude"
 }

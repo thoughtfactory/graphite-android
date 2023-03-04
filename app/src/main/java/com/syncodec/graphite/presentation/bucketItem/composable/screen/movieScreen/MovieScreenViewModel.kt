@@ -12,10 +12,12 @@ import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TMDbApi.objectMapper
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
+import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Quadruple
 import com.syncodec.graphite.utils.Status
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.encodeBase64
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,8 +25,6 @@ import kotlinx.coroutines.launch
 
 
 class MovieScreenViewModel : AbstractBucketScreenViewModel() {
-
-	val status : MutableState<Status> = mutableStateOf(Status.INIT)
 
 	val movieId : MutableStateFlow<String?> = MutableStateFlow(null)
 	val movieAdult : MutableStateFlow<Boolean?> = MutableStateFlow(null)
@@ -40,7 +40,7 @@ class MovieScreenViewModel : AbstractBucketScreenViewModel() {
 	val movieTitle : MutableStateFlow<String?> = MutableStateFlow(null)
 	val movieTagline : MutableStateFlow<String?> = MutableStateFlow(null)
 
-	val thumbnail : MutableStateFlow<Bitmap?> = MutableStateFlow(null)
+	val thumbnailContentStatus : MutableStateFlow<ContentStatus<Bitmap?>> = MutableStateFlow(ContentStatus.Init)
 
 	val movieData : MutableStateFlow<MovieData?> = MutableStateFlow(null)
 
@@ -110,15 +110,13 @@ class MovieScreenViewModel : AbstractBucketScreenViewModel() {
 				response?.body?.string()?.let {
 					val movieData : MovieData = objectMapper.readValue(it, MovieData::class.java)
 					loadData(it)
-					retrieveThumbnail(data = movieData.posterPath) { thumbnail.value = it }
-				} ?: run {
-					viewModelScope.launch(Dispatchers.Main) { status.value = Status.ERROR }
+					retrieveThumbnail(data = movieData.posterPath) { loadThumbnail(it) }
 				}
 			}
 		}
 	}
 
-	override fun loadData(data : String?, thumbnail : String?) {
+	override fun loadData(data : String?) {
 		viewModelScope.launch(Dispatchers.Main) {
 			MovieData(jsonString = data).let {
 				this@MovieScreenViewModel.movieId.tryEmit(it.id)
@@ -134,12 +132,14 @@ class MovieScreenViewModel : AbstractBucketScreenViewModel() {
 				this@MovieScreenViewModel.movieRuntime.tryEmit(it.runtime)
 				this@MovieScreenViewModel.movieTitle.tryEmit(it.title)
 				this@MovieScreenViewModel.movieTagline.tryEmit(it.tagline)
-
-				if (thumbnail != null) this@MovieScreenViewModel.thumbnail.tryEmit(thumbnail.decodeBase64ToBitmap())
-
-				status.value = Status.LOADED
 			}
 		}
+	}
+
+	override fun loadThumbnail(thumbnail : Bitmap?) {
+		thumbnail?.let {
+			this@MovieScreenViewModel.thumbnailContentStatus.tryEmit(ContentStatus.Loaded(it))
+		} ?: this@MovieScreenViewModel.thumbnailContentStatus.tryEmit(ContentStatus.LoadedEmpty)
 	}
 
 	override fun getData() : Quadruple<String?, String?, String?, String?> {
@@ -165,7 +165,7 @@ class MovieScreenViewModel : AbstractBucketScreenViewModel() {
 				movieData = movieData,
 			).toJsonString(),
 			movieId.value,
-			thumbnail.value?.encodeBase64(),
+			thumbnailContentStatus.value.dataOrNull?.encodeBase64(),
 			movieTitle.value,
 		)
 	}
@@ -184,7 +184,7 @@ class MovieScreenViewModel : AbstractBucketScreenViewModel() {
 			}
 		} catch (e : Exception) {
 //			TODO Show error
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 }

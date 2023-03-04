@@ -7,15 +7,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,30 +19,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.presentation.common.text.LargeTextField
-import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.compose.koinViewModel
 
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Preview
 @Composable
-fun AddTodoBottomSheet() {
+fun AddTodoBottomSheet(
+	closeSheet : () -> Unit = {}
+) {
 	val viewModel : BucketBottomSheetViewModel = koinViewModel()
 
-	val bucketItem by viewModel.bucketItemObject.collectAsState()
-
-	val keyboardController = LocalSoftwareKeyboardController.current
-
 	var todoText by remember { mutableStateOf("") }
-
-	var isTextFocused by remember { mutableStateOf(false) }
-
-	val closeSheet = LocalCompositionCloseBottomSheet.current
 
 	val stateList = listOf(
 		StateData(
@@ -56,7 +46,7 @@ fun AddTodoBottomSheet() {
 		),
 		StateData(
 			title = "Doing",
-			icon = R.drawable.ic_clock,
+			icon = R.drawable.ic_advance,
 			stateTint = MaterialTheme.colorScheme.primary
 		),
 		StateData(
@@ -68,13 +58,8 @@ fun AddTodoBottomSheet() {
 
 	var currentState by remember { mutableStateOf(0) }
 
-	LaunchedEffect(key1 = bucketItem) {
-		currentState = if (bucketItem == null) 0 else BucketItemState.values().find { it.name == bucketItem?.state }?.ordinal ?: 0
-		todoText = bucketItem?.title ?: ""
-	}
-
-	fun onAddTodo(realmUUID: RealmUUID?) {
-		viewModel.putTodo(realmUUID = realmUUID, todo = todoText, state = BucketItemState.values().getOrElse(currentState) { BucketItemState.ALPHA })
+	fun onAddTodo() {
+		viewModel.putTodo(realmUUID = null, todo = todoText, state = BucketItemState.values().getOrElse(currentState) { BucketItemState.ALPHA })
 		todoText = ""
 		closeSheet()
 	}
@@ -83,36 +68,41 @@ fun AddTodoBottomSheet() {
 		title = "Add Todo",
 		icon = R.drawable.ic_todo,
 	) {
-
-		LargeTextField(
-			modifier = Modifier,
+		BottomSheetTextField(
 			value = todoText,
 			placeholder = "Todo",
-			isFocused = isTextFocused,
-			onFocusChanged = { isTextFocused = it },
+			actionButtons = {
+				MenuButton(
+					icon = R.drawable.ic_add,
+					colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+					onClick = ::onAddTodo,
+				)
+			},
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
 				autoCorrect = true,
 				keyboardType = KeyboardType.Text,
 				imeAction = ImeAction.Go
 			),
-			keyboardActions = KeyboardActions(onGo = { onAddTodo(realmUUID = bucketItem?.id) }),
-			trailingIcon = R.drawable.ic_add,
-			onClickTrailingIcon = { onAddTodo(realmUUID = bucketItem?.id) },
-		) { todoText = it }
+			keyboardActions = KeyboardActions(
+				onGo = { onAddTodo() },
+				onDone = { onAddTodo() }
+			),
+			colors = BottomSheetTextFieldDefaults.textFieldColors(),
+			onValueChange = { todoText = it },
+		)
 
-		Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(4.dp))
 
 		StateButton(
 			stateList = stateList,
 			currentState = currentState,
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(32.dp),
+				.height(36.dp),
 		) {
 			currentState = it
-			bucketItem?.let { onAddTodo(realmUUID = bucketItem?.id) }
+			onAddTodo()
 		}
 	}
 }

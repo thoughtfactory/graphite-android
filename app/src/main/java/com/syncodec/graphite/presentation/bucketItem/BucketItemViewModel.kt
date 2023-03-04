@@ -39,8 +39,8 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 	val bucketItemObject : MutableState<BucketItemObject?> = mutableStateOf(null)
 
 	val key : MutableStateFlow<String?> = MutableStateFlow(null)
-	val data: MutableStateFlow<String?> = MutableStateFlow(null)
-	val thumbnail: MutableStateFlow<String?> = MutableStateFlow(null)
+	val data : MutableStateFlow<String?> = MutableStateFlow(null)
+	val thumbnail : MutableStateFlow<String?> = MutableStateFlow(null)
 
 	val showType : MutableStateFlow<ShowType?> = MutableStateFlow(null)
 
@@ -56,7 +56,7 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 		this.showType.tryEmit(showType)
 	}
 
-	fun loadData(bucketItemId : RealmUUID, bucketId : RealmUUID, showType : ShowType? = null) {
+	fun loadData(bucketItemId : RealmUUID, showType : ShowType? = null) {
 		this.isNew.value = false
 		this.showType.tryEmit(showType)
 
@@ -100,11 +100,8 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 				this.key = this@BucketItemViewModel.key.value
 				this.thumbnail = this@BucketItemViewModel.thumbnail.value
 
-				this.parentId?.let {
-					repository.putBucketItem(it, this) { isSuccess, _ ->
-						if (isSuccess) loadData(this.id, it, showType = showType.value)
-					}
-				}
+				repository.putBucketItem(this)
+				loadData(this.id, showType = showType.value)
 			}
 		}
 	}
@@ -122,5 +119,9 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 	fun onChangeState(state : Int) {
 		this.state.value = BucketItemState.values()[state]
 		putBucketItem()
+	}
+
+	fun delete(realmUUID : RealmUUID, callback : suspend () -> Unit) {
+		repository.deleteSuspended(realmUUID, callback)
 	}
 }

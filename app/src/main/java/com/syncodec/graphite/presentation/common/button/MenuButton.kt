@@ -15,7 +15,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipState
+import androidx.compose.material3.PlainTooltipState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -30,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import kotlinx.coroutines.launch
@@ -78,7 +80,7 @@ object MenuButtonDefaults {
 	fun menuButtonColors(
 		containerColor : Color = MaterialTheme.colorScheme.background,
 		iconColor : Color = MaterialTheme.colorScheme.onBackground,
-		checkedContainerColor : Color = MaterialTheme.colorScheme.surface,
+		checkedContainerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f),
 		checkedIconColor : Color = MaterialTheme.colorScheme.onSurface,
 	) : MenuButtonColors = MenuButtonColors(
 		containerColor = containerColor,
@@ -89,7 +91,7 @@ object MenuButtonDefaults {
 
 	@Composable
 	fun menuButtonColorsOnSurface(
-		containerColor : Color = Color.Transparent,
+		containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 		iconColor : Color = MaterialTheme.colorScheme.onSurface,
 		checkedContainerColor : Color = MaterialTheme.colorScheme.background,
 		checkedIconColor : Color = MaterialTheme.colorScheme.onBackground,
@@ -125,6 +127,7 @@ fun MenuButton(
 	enabled : Boolean = true,
 	shape : Shape = MaterialTheme.shapes.medium,
 	colors : MenuButtonColors = MenuButtonDefaults.menuButtonColors(),
+	buttonSize : Dp = IconButtonSize,
 	showTooltipOnClick : Boolean = false,
 	onClick : () -> Unit = {},
 ) {
@@ -142,21 +145,21 @@ fun MenuButton(
 	val rippleColor = if (checked == true) colors.containerColor else colors.checkedContainerColor
 	val rippleIndication = rememberRipple(color = rippleColor)
 
-	val tooltipState = remember { TooltipState() }
+	val tooltipState = remember { PlainTooltipState() }
 
 	CompositionLocalProvider(
 		LocalIndication provides rippleIndication,
 	) {
-		PlainTooltipBox(
-			tooltip = {
-				Text(text = tooltip ?: "", style = MaterialTheme.typography.bodyMedium)
-			},
-			tooltipState = tooltipState,
-		) {
+//		PlainTooltipBox(
+//			tooltip = {
+//				Text(text = tooltip ?: "", style = MaterialTheme.typography.bodyMedium)
+//			},
+//			tooltipState = tooltipState,
+//		) {
 			Box(
 				contentAlignment = Alignment.Center,
 				modifier = modifier
-					.requiredSize((IconButtonSize * 2) + 2.dp)
+					.requiredSize((buttonSize * 2) + 2.dp)
 					.padding(2.dp)
 					.background(containerColor, shape)
 					.clip(shape)
@@ -173,9 +176,9 @@ fun MenuButton(
 					painter = painterResource(id = icon),
 					contentDescription = tooltip,
 					tint = iconColor.copy(alpha = if (enabled) 1f else 0.31f),
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(buttonSize)
 				)
 			}
-		}
+//		}
 	}
 }

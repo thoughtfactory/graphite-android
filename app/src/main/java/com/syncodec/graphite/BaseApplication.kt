@@ -22,17 +22,17 @@ import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
 import com.syncodec.graphite.presentation.dropbox.screen.DropboxScreenViewModel
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
+import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
-import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
-import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.settings.composable.dialog.clearData.ClearDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.dialog.exportData.ExportDataViewModel
-import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.ImportDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.googleKeep.ImportDataGoogleKeepViewModel
+import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.graphite.ImportDataGraphiteViewModel
 import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.journey.ImportDataJourneyViewModel
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
@@ -58,6 +58,9 @@ class BaseApplication : Application() {
 
 	override fun onCreate() {
 		super.onCreate()
+		FirebaseApp.initializeApp(this)
+
+//		LeakCanary.config = LeakCanary.config.copy(dumpHeap = false)
 
 		initDirectory()
 
@@ -66,15 +69,18 @@ class BaseApplication : Application() {
 			androidContext(this@BaseApplication)
 			modules(
 				module {
-					single { KoinRepository().apply { this.initRealm(context = this@BaseApplication) } }
 					single { AttachmentRepository().apply { this.initRepository(context = this@BaseApplication) } }
+					single {
+						KoinRepository().apply {
+//						this.initRepository(context = this@BaseApplication)
+						}
+					}
 					single { DBox(this@BaseApplication) }
 
 					viewModelOf(::MainViewModel)
 					viewModelOf(::NoteScreenViewModel)
 					viewModelOf(::BucketScreenViewModel)
 					viewModelOf(::NotebookScreenViewModel)
-					viewModelOf(::NoteViewModel)
 					viewModelOf(::EditorScreenViewModel)
 					viewModelOf(::ViewerScreenViewModel)
 					viewModelOf(::BucketViewModel)
@@ -86,8 +92,9 @@ class BaseApplication : Application() {
 					viewModelOf(::TagsViewModel)
 					viewModelOf(::AttachmentScreenViewModel)
 					viewModelOf(::ExportDataViewModel)
-					viewModelOf(::ImportDataViewModel)
+					viewModelOf(::ImportDataGraphiteViewModel)
 					viewModelOf(::ImportDataJourneyViewModel)
+					viewModelOf(::ImportDataGoogleKeepViewModel)
 					viewModelOf(::ClearDataViewModel)
 					viewModelOf(::LocalBackupViewModel)
 					viewModelOf(::LocalBackupViewModel)
@@ -100,7 +107,6 @@ class BaseApplication : Application() {
 
 		dataStore = DataStoreInstance(this)
 		Purchases.debugLogsEnabled = false
-		FirebaseApp.initializeApp(this)
 		val auth = Firebase.auth
 
 		val purchasesConfiguration = PurchasesConfiguration
@@ -114,10 +120,10 @@ class BaseApplication : Application() {
 				dataStore.getSuperExpiryTime.collect { superExpiryTimeString ->
 					try {
 						val currentTimestamp = System.currentTimeMillis()
-						if (superExpiryTimeString == "") {
-							getRevenueCatInfo(auth)
-						} else {
-							if (superExpiryTimeString.toLong() > currentTimestamp) isPro.tryEmit(true) else getRevenueCatInfo(auth)
+						when {
+							superExpiryTimeString == "" -> getRevenueCatInfo(auth)
+							superExpiryTimeString.toLong() > currentTimestamp -> isPro.tryEmit(true)
+							else -> getRevenueCatInfo(auth)
 						}
 					} catch (e : Exception) {
 						getRevenueCatInfo(auth)
@@ -130,35 +136,8 @@ class BaseApplication : Application() {
 	private fun initDirectory() {
 		val filesDir = this.filesDir
 		val dataDir = File(filesDir, "data").also { it.mkdirs() }
-		val attachmentDir = File(dataDir, "attachments").also { it.mkdirs() }
+		val attachmentDir = File(dataDir, "attachment").also { it.mkdirs() }
 	}
-
-//	fun watchWatchdog() {
-//		CoroutineScope(Dispatchers.Default).launch {
-//			delay(5000)
-//			while (true) {
-//				if (MainActivity.isInStack) {
-//					startWatchdog()
-////		    		TODO: Set this to 5 seconds
-//					delay(30000)
-//				} else {
-//					watchdogServiceConnection.unbindFromService()
-//					break
-//				}
-//			}
-//		}
-//	}
-
-//	var watchdogService : WatchdogService? = null
-//	private val watchdogServiceConnection = WatchdogServiceConnectionManager(this) {
-//		watchdogService = it
-//	}
-//
-//	private fun startWatchdog() {
-//		Intent(this.applicationContext, WatchdogService::class.java).apply {
-//			watchdogServiceConnection.bindToService()
-//		}
-//	}
 
 	private fun getRevenueCatInfo(auth : FirebaseAuth) {
 		Purchases
@@ -180,7 +159,7 @@ class BaseApplication : Application() {
 	}
 
 	companion object {
-		val isPro : MutableStateFlow<Boolean> = MutableStateFlow(true)
+		val isPro : MutableStateFlow<Boolean> = MutableStateFlow(false)
 
 		val isAuthenticated : MutableStateFlow<Boolean> = MutableStateFlow(false)
 		val authenticatorScreen : MutableStateFlow<AuthenticatorScreen> = MutableStateFlow(AuthenticatorScreen.None)

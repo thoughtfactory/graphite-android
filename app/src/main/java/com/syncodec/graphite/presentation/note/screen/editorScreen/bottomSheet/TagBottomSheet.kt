@@ -18,16 +18,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -73,42 +76,39 @@ fun TagBottomSheet(
 			tagList
 				.sortedBy { tagListToAdd.contains(it).not() }
 				.forEach {
-				item(key = it.id.toString()) {
-					Box(
-						modifier = Modifier.animateItemPlacement()
-					) {
-						TagItem(
-							tag = it,
-							isSelected = false,
+					item(key = it.id.toString()) {
+						Box(
+							modifier = Modifier.animateItemPlacement()
 						) {
-							when {
-								tagListSaved.contains(it) -> onRemoveSavedTag(it)
-								tagListToAdd.contains(it) -> onRemoveBufferedTag(it)
-								else -> onAddTagToBuffer(it)
+							TagItem(
+								tag = it,
+								isSelected = it in tagListSaved || it in tagListToAdd,
+							) {
+								when (it) {
+									in tagListSaved -> onRemoveSavedTag(it)
+									in tagListToAdd -> onRemoveBufferedTag(it)
+									else -> onAddTagToBuffer(it)
+								}
 							}
 						}
 					}
 				}
-			}
 
 		}
 
 		Spacer(modifier = Modifier.height(4.dp))
 
 		Button(
-			onClick = {
-				Intent(context, TagsActivity::class.java).apply {
-					context.startActivity(this)
-				}
-			},
-			modifier = Modifier.fillMaxWidth()
+			shape = MaterialTheme.shapes.medium,
+			modifier = Modifier.fillMaxWidth(),
+			onClick = { context.startActivity(Intent(context, TagsActivity::class.java)) },
 		) {
 			Text(text = "Manage Tags")
 		}
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ConnectedTagView(
 	tagListSaved : List<TagObjectLite> = listOf(),
@@ -123,7 +123,16 @@ private fun ConnectedTagView(
 		tagListSaved.forEach {
 			item(key = it.tag.hashCode() + it.color.hashCode() + 1) {
 				SuggestionChip(
-					onClick = { onRemoveSavedTag(it) },
+					icon = if (it in tagListToRemove) {
+						{
+							Icon(
+								painter = painterResource(id = R.drawable.ic_close),
+								contentDescription = "Remove Tag",
+								tint = Color(it.color).getInverseBWColor(),
+								modifier = Modifier.requiredSize(12.dp)
+							)
+						}
+					} else null,
 					label = {
 						Text(
 							text = it.tag,
@@ -135,6 +144,7 @@ private fun ConnectedTagView(
 						labelColor = Color(it.color).getInverseBWColor(),
 					),
 					border = null,
+					onClick = { onRemoveSavedTag(it) },
 					modifier = Modifier
 						.padding(4.dp, 0.dp)
 						.animateItemPlacement()
@@ -144,7 +154,6 @@ private fun ConnectedTagView(
 		tagListToAdd.forEach {
 			item(key = it.tag.hashCode() + it.color.hashCode()) {
 				SuggestionChip(
-					onClick = { onRemoveBufferedTag(it) },
 					icon = {
 						Box(
 							modifier = Modifier
@@ -163,6 +172,7 @@ private fun ConnectedTagView(
 						labelColor = Color(it.color).getInverseBWColor(),
 					),
 					border = null,
+					onClick = { onRemoveBufferedTag(it) },
 					modifier = Modifier
 						.padding(4.dp, 0.dp)
 						.animateItemPlacement()
@@ -184,7 +194,9 @@ private fun TagItem(
 			.height(48.dp)
 			.padding(0.dp, 2.dp)
 			.background(
-				if (isSelected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
+				if (isSelected) MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp) else MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.31f),
 				MaterialTheme.shapes.medium
 			)
 			.clip(MaterialTheme.shapes.medium)
@@ -210,9 +222,9 @@ private fun TagItem(
 
 			Spacer(
 				modifier = Modifier
-					.width(80.dp)
-					.height(12.dp)
-					.background(Color(tag.color), RoundedCornerShape(25))
+					.width(128.dp)
+					.height(16.dp)
+					.background(Color(tag.color), MaterialTheme.shapes.extraSmall)
 			)
 
 			Spacer(modifier = Modifier.width(12.dp))

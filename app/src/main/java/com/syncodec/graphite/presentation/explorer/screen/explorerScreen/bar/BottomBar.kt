@@ -35,7 +35,7 @@ fun BottomBar(
 ) {
 
 	val isAuthenticated = LocalIsAuthenticated.current
-	val authenticatorAction = LocalAuthenticatorAction.current
+	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	BottomAppBar(
 		modifier = Modifier.fillMaxWidth(),
@@ -75,7 +75,7 @@ fun BottomBar(
 			tooltip = "Vault",
 			checked = isAuthenticated,
 			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
-		) { authenticatorAction(AuthenticatorScreen.Authenticate) }
+		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 
 		Spacer(modifier = Modifier.width(12.dp))
 	}

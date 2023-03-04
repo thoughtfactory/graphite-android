@@ -2,24 +2,49 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.json.JSONObject
 
 
 @Keep
-class TagObject : RealmObject {
-	@PrimaryKey var id: RealmUUID = RealmUUID.random()
+@JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
+class TagObject() : RealmObject {
+	constructor(jsonObject : JSONObject) : this() {
+		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
+		this.tag = jsonObject.optString("tag")
+		this.color = jsonObject.optInt("color").let { if (it == 0) getRandomColor().toArgb() else it }
+		this.modifiedTimestamp = jsonObject.optLong("userTimestamp", System.currentTimeMillis())
+		jsonObject.optJSONArray("objectIdList")?.let { jsonArray ->
+			for (i in 0 until jsonArray.length()) {
+				try {
+					RealmUUID.from(jsonArray.optString(i)).let { realmUUID ->
+						this.objectIdList.add(realmUUID)
+					}
+				} catch (e : Exception) {
+					e.printStackTrace()
+				}
+			}
+		}
+	}
 
-	var tag: String = ""
-	var color: Int = getRandomColor().toArgb()
+	@PrimaryKey
+	var id : RealmUUID = RealmUUID.random()
 
-	var objectIdList: RealmList<RealmUUID> = realmListOf()
+	var tag : String = ""
+	var color : Int = getRandomColor().toArgb()
 
-	fun toLite(): TagObjectLite {
+	var modifiedTimestamp : Long = System.currentTimeMillis()
+
+	var objectIdList : RealmList<RealmUUID> = realmListOf()
+
+	fun toLite() : TagObjectLite {
 		return TagObjectLite(
 			id = id,
 			tag = tag,
@@ -31,7 +56,19 @@ class TagObject : RealmObject {
 		this.id = this@TagObject.id
 		this.tag = this@TagObject.tag
 		this.color = this@TagObject.color
-		this.objectIdList = this@TagObject.objectIdList
+		this.objectIdList = this@TagObject.objectIdList.toRealmList()
+	}
+
+	fun toCloudSnapshot() : String {
+		val jsonObject = JSONObject()
+
+		jsonObject.put("id", id.toString())
+		jsonObject.put("tag", tag)
+		jsonObject.put("color", color)
+		jsonObject.put("modifiedTimestamp", modifiedTimestamp)
+		objectIdList.map { it.toString() }.let { jsonObject.put("objectIdList", it) }
+
+		return jsonObject.toString()
 	}
 
 	override fun hashCode() : Int {
@@ -64,7 +101,7 @@ class TagObject : RealmObject {
 
 @Keep
 data class TagObjectLite(
-	val id: RealmUUID,
-	val tag: String,
-	val color: Int
+	val id : RealmUUID,
+	val tag : String,
+	val color : Int
 )

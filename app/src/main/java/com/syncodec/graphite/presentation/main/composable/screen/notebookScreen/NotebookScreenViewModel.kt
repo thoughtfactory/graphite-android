@@ -3,14 +3,15 @@ package com.syncodec.graphite.presentation.main.composable.screen.notebookScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -26,12 +27,10 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 	private var notebookObserverCoroutine : CoroutineScope? = null
 	private var notebookOrderObserverCoroutine : CoroutineScope? = null
 
-	private val notebookUnorderedList : MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
-	private val notebookOrderList : MutableStateFlow<List<RealmUUID>> = MutableStateFlow(listOf())
-	val notebookList : MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
-
-	val isNotebookRefreshing : MutableStateFlow<Boolean> = MutableStateFlow(false)
-	val contentStatus : MutableStateFlow<ContentStatus> = MutableStateFlow(ContentStatus.Init)
+	private val _notebookUnorderedList : MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
+	private val _notebookOrderList : MutableStateFlow<List<RealmUUID>> = MutableStateFlow(listOf())
+	private val _notebookListStatus : MutableStateFlow<ContentStatus<List<ChapterObject>>> = MutableStateFlow(ContentStatus.Init)
+	val notebookListStatus : StateFlow<ContentStatus<List<ChapterObject>>> = _notebookListStatus
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -44,40 +43,50 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 		}
 
 		viewModelScope.launch(Dispatchers.Default) {
-			notebookUnorderedList.combine(notebookOrderList) { unorderedList, orderList ->
+			combine(
+				_notebookUnorderedList,
+				_notebookOrderList
+			) { unorderedList, orderList ->
 				unorderedList.sortedBy { orderList.indexOf(it.id) }
-			}.collectLatest { notebookList.tryEmit(it) }
+			}.collectLatest {
+				if (it.isEmpty()) _notebookListStatus.tryEmit(ContentStatus.LoadedEmpty) else _notebookListStatus.tryEmit(ContentStatus.Loaded(it))
+			}
 		}
 	}
 
 	private fun observeNotebooks() {
 		viewModelScope.launch(Dispatchers.Default) {
-			isNotebookRefreshing.tryEmit(true)
+			_notebookListStatus.tryEmit(ContentStatus.Loading)
 			notebookObserverCoroutine?.cancel()
 			notebookObserverCoroutine = this
-			repository.getChapterWithParentIdAsFlow(parentId = null).cancellable().collect { notebookObjectList ->
-				notebookUnorderedList.tryEmit(notebookObjectList.list)
-				if (notebookObjectList.list.isEmpty()) contentStatus.tryEmit(ContentStatus.LoadedEmpty) else contentStatus.tryEmit(ContentStatus.Loaded)
-				isNotebookRefreshing.tryEmit(false)
+			_notebookUnorderedList.tryEmit(listOf())
+			repository.getChapterWithParentIdAsFlow(parentId = null).cancellable().collect { notebookList ->
+				_notebookUnorderedList.tryEmit(notebookList.list)
+				if (notebookList.list.isEmpty()) _notebookListStatus.tryEmit(ContentStatus.LoadedEmpty) else _notebookListStatus.tryEmit(
+					ContentStatus.Loaded(
+						notebookList.list
+					)
+				)
 			}
 		}
 
 		viewModelScope.launch(Dispatchers.Default) {
 			notebookOrderObserverCoroutine?.cancel()
 			notebookOrderObserverCoroutine = this
+			_notebookOrderList.tryEmit(listOf())
 			repository.getBaseObjectAsFlow().cancellable().collectLatest {
-				notebookOrderList.tryEmit(it?.notebookIdOrderList ?: listOf())
+				_notebookOrderList.tryEmit(it?.notebookIdOrderList ?: listOf())
 			}
 		}
 	}
 
-	fun onReorderNotebookList(newNotebookListOrder : List<ChapterObject>) {
-		viewModelScope.launch(Dispatchers.Default) {
-			repository.reorderNotebookList(newNotebookListOrder.map { it.id }) { _, _ -> }
-		}
+	fun onReorderBucketList(idOrderList : List<RealmUUID>) {
+		repository.reorderNotebookList(idOrderList)
 	}
 
 	fun refresh() = observeNotebooks()
 
-	fun delete(idList : List<RealmUUID>) = viewModelScope.launch(Dispatchers.Default) { repository.delete(idList) }
+	fun delete(idList : List<RealmUUID>) {
+		repository.deleteSuspended(idList)
+	}
 }

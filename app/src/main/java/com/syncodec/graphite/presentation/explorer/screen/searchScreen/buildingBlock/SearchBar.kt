@@ -55,10 +55,12 @@ fun SearchBar(
 			}
 		},
 		colors = TextFieldDefaults.textFieldColors(
-			textColor = MaterialTheme.colorScheme.onBackground,
+			focusedTextColor = MaterialTheme.colorScheme.onBackground,
+			unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
 			containerColor = MaterialTheme.colorScheme.background,
 			cursorColor = MaterialTheme.colorScheme.onBackground,
-			placeholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f),
+			focusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f),
+			unfocusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f),
 		),
 		modifier = Modifier.fillMaxWidth()
 	)

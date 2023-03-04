@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -64,6 +63,7 @@ private data class BucketButtonData(
 @Composable
 fun BucketBottomSheet(
 	putBucket : (String?, String?, BucketType) -> Unit = { _, _, _ -> },
+	closeSheet : () -> Unit = {},
 ) {
 	val context = LocalContext.current
 
@@ -154,6 +154,7 @@ fun BucketBottomSheet(
 				bucketDescriptionText = ""
 				selectedBucketType = null
 				keyboardController?.hide()
+				closeSheet()
 			},
 		) {
 			Text(text = "Create")
@@ -167,7 +168,8 @@ private fun BucketButton(
 	bucketButtonData : BucketButtonData
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
+			.copy(alpha = 0.31f),
 		animationSpec = tween(600)
 	)
 	val contentColor by animateColorAsState(
@@ -188,7 +190,7 @@ private fun BucketButton(
 				.height(84.dp)
 				.padding(6.dp, 0.dp)
 				.focusable(true)
-				.clip(RoundedCornerShape(12.dp)),
+				.clip(MaterialTheme.shapes.medium),
 			onClick = bucketButtonData.onClick
 		) {
 			Column(

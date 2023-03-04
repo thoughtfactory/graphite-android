@@ -4,12 +4,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -25,16 +22,17 @@ import com.revenuecat.purchases.models.StoreTransaction
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.DataStoreInstance
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 
 class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 
-	private val monthlyPackage : MutableState<Package?> = mutableStateOf(null)
-	private val annualPackage : MutableState<Package?> = mutableStateOf(null)
-	private val lifetimePackage : MutableState<Package?> = mutableStateOf(null)
+	private val auth = Firebase.auth
+	private val productPackage = MutableStateFlow<ContentStatus<ProductPackage>>(ContentStatus.Init)
 
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -43,18 +41,11 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 
 		setContent {
 			BaseContent {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-				systemUiController.setNavigationBarColor(MaterialTheme.colorScheme.background)
-
-				val _monthlyPackage by this.monthlyPackage
-				val _annualPackage by this.annualPackage
-				val _lifetimePackage by this.lifetimePackage
+				val productPackage1 by productPackage.collectAsState()
 
 				SubscriptionScreen(
-					monthlyPackage = _monthlyPackage,
-					annualPackage = _annualPackage,
-					lifetimePackage = _lifetimePackage,
+					contentStatus = productPackage1,
+					userEmail = auth.currentUser?.email,
 					onClickPackage = this::purchaseProduct,
 					onRestore = this::onRestore,
 				)
@@ -63,30 +54,37 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 	}
 
 	private fun getProducts() {
+		productPackage.tryEmit(ContentStatus.Loading)
 		try {
 			Purchases.sharedInstance.getOfferingsWith(
 				onError = { error ->
+					productPackage.tryEmit(ContentStatus.Error("Error retrieving data. Please try again later."))
 					Toast.makeText(this, "Error retrieving data. Please try again later.", Toast.LENGTH_SHORT).show()
 				}
 			) { offerings ->
-				monthlyPackage.value = offerings.current?.monthly
-				annualPackage.value = offerings.current?.annual
-				lifetimePackage.value = offerings.current?.lifetime
+				val monthlyPackage = offerings.current?.monthly
+				val annualPackage = offerings.current?.annual
+				val lifetimePackage = offerings.current?.lifetime
+				if (monthlyPackage == null || annualPackage == null || lifetimePackage == null) {
+					productPackage.tryEmit(ContentStatus.Error("Error retrieving data. Please try again later."))
+					Toast.makeText(this, "Error retrieving data. Please try again later.", Toast.LENGTH_SHORT).show()
+					return@getOfferingsWith
+				} else {
+					productPackage.tryEmit(ContentStatus.Loaded(ProductPackage(monthlyPackage, annualPackage, lifetimePackage)))
+				}
 			}
 		} catch (e : Exception) {
 			Toast.makeText(this, "Error retrieving data. Please try again later.", Toast.LENGTH_SHORT).show()
 		}
 	}
 
-	private fun purchaseProduct(_package : Package?) {
-		val auth = Firebase.auth
-
+	private fun purchaseProduct(toPurchasePackage : Package?) {
 		if (auth.currentUser?.uid == null) {
 			Toast.makeText(this, "Please login to make purchase", Toast.LENGTH_SHORT).show()
 			return
 		}
 
-		if (_package == null) {
+		if (toPurchasePackage == null) {
 			Toast.makeText(this, "Error retrieving data. Please try again later.", Toast.LENGTH_SHORT).show()
 			return
 		}
@@ -99,7 +97,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 					setAttributes(mapOf("\$email" to auth.currentUser?.email))
 					purchasePackage(
 						activity = this@ProActivity,
-						packageToPurchase = _package,
+						packageToPurchase = toPurchasePackage,
 						listener = object : PurchaseCallback {
 							override fun onCompleted(storeTransaction : StoreTransaction, customerInfo : CustomerInfo) {
 								BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
@@ -133,36 +131,38 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		} else {
 			superRestore(
 				onSuccess = {},
-				onFailure = {
-					Purchases
-						.sharedInstance
-						.apply {
-							setAttributes(mapOf("\$email" to auth.currentUser?.email))
-							logIn(
-								newAppUserID = auth.currentUser !!.uid,
-								callback = object : LogInCallback {
-									override fun onError(error : PurchasesError) {
-									}
-
-									override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
-										BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
-										if (BaseApplication.isPro.value) {
-											lifecycleScope.launch(Dispatchers.Main) {
-												Toast.makeText(this@ProActivity.applicationContext, "Purchase restored", Toast.LENGTH_SHORT).show()
-												this@ProActivity.finish()
-											}
-										} else {
-											lifecycleScope.launch(Dispatchers.Main) {
-												Toast.makeText(this@ProActivity.applicationContext, "No purchase found", Toast.LENGTH_SHORT).show()
-											}
-										}
-									}
-								}
-							)
-						}
-				}
+				onFailure = { revenueCatRestore() }
 			)
 		}
+	}
+
+	private fun revenueCatRestore() {
+		Purchases
+			.sharedInstance
+			.apply {
+				setAttributes(mapOf("\$email" to auth.currentUser?.email))
+				logIn(
+					newAppUserID = auth.currentUser !!.uid,
+					callback = object : LogInCallback {
+						override fun onError(error : PurchasesError) {
+						}
+
+						override fun onReceived(customerInfo : CustomerInfo, created : Boolean) {
+							BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
+							if (BaseApplication.isPro.value) {
+								lifecycleScope.launch(Dispatchers.Main) {
+									Toast.makeText(this@ProActivity.applicationContext, "Welcome to Graphite Pro", Toast.LENGTH_SHORT).show()
+									this@ProActivity.finish()
+								}
+							} else {
+								lifecycleScope.launch(Dispatchers.Main) {
+									Toast.makeText(this@ProActivity.applicationContext, "No purchase found", Toast.LENGTH_SHORT).show()
+								}
+							}
+						}
+					}
+				)
+			}
 	}
 
 	private fun superRestore(onSuccess : () -> Unit, onFailure : () -> Unit) {
@@ -178,17 +178,18 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 				.addOnSuccessListener { documentSnapshot ->
 					val expiryTimestamp = documentSnapshot.getTimestamp("override")?.seconds?.times(1000)
 					val currentTimestamp = System.currentTimeMillis()
-					if ((expiryTimestamp != null) && (expiryTimestamp > currentTimestamp)) {
-						dataStoreInstance.putSuperExpiryTime(expiryTimestamp)
-						BaseApplication.isPro.tryEmit(true)
-						lifecycleScope.launch(Dispatchers.Main) {
-							Toast.makeText(this@ProActivity, "Welcome to Graphite Pro", Toast.LENGTH_LONG).show()
-						}
-						onSuccess()
-						finish()
-					} else {
-						onFailure()
-					}
+
+					expiryTimestamp?.minus(currentTimestamp)?.let {
+						if (it > 0) {
+							dataStoreInstance.putSuperExpiryTime(expiryTimestamp)
+							BaseApplication.isPro.tryEmit(true)
+							lifecycleScope.launch(Dispatchers.Main) {
+								Toast.makeText(this@ProActivity, "Welcome to Graphite Pro", Toast.LENGTH_LONG).show()
+							}
+							onSuccess()
+							finish()
+						} else onFailure()
+					} ?: onFailure()
 				}
 				.addOnFailureListener {
 					onFailure()
@@ -200,5 +201,13 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 
 	override fun onReceived(customerInfo : CustomerInfo) {
 
+	}
+
+	companion object {
+		data class ProductPackage(
+			val monthlyPackage : Package,
+			val annualPackage : Package,
+			val lifetimePackage : Package,
+		)
 	}
 }

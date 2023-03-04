@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.notebook.screen.composable.bar
 
+import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -11,19 +12,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.utils.LocalIsAuthenticated
 import io.realm.kotlin.types.RealmUUID
 
 
 @Preview
 @Composable
 fun TopBar(
-	title : String = "",
+	title : String? = null,
 	defaultChapterId : RealmUUID? = null,
 	isLocked : Boolean = false,
 	isFavourite : Boolean = false,
@@ -68,7 +72,7 @@ fun TopBar(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 private fun Bar(
-	title : String = "",
+	title : String? = null,
 	isLocked : Boolean = false,
 	isFavourite : Boolean = false,
 	isSelecting : Boolean = false,
@@ -80,6 +84,8 @@ private fun Bar(
 	onClickFilter : () -> Unit = {},
 	onClickDelete : () -> Unit = {},
 ) {
+	val context = LocalContext.current
+
 	Crossfade(
 		targetState = isSelecting,
 		animationSpec = tween(300)
@@ -94,7 +100,7 @@ private fun Bar(
 				},
 				title = {
 					AnimatedText(
-						text = if (selectedSize == 0) "No items selected" else if (selectedSize == 1) "1 item selected" else "${selectedSize ?: "No"} items selected",
+						text = if (selectedSize == 0) "No items selected" else if (selectedSize == 1) "1 item selected" else "$selectedSize items selected",
 						color = MaterialTheme.colorScheme.onBackground,
 					)
 				},
@@ -116,7 +122,10 @@ private fun Bar(
 					)
 				},
 				title = {
-					AnimatedText(text = title)
+					AnimatedText(
+						text = title ?: "Untitled",
+						fontStyle = if (title.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
+					)
 				},
 				actions = {
 					MenuButton(

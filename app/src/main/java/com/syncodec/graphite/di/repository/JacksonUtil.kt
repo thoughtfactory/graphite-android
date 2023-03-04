@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.KeyDeserializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.fasterxml.jackson.databind.util.StdConverter
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmUUID
 import java.io.IOException
 import java.util.Base64
@@ -48,4 +50,9 @@ class RealmUUIDSerializer(t : Class<RealmUUID?>? = null) : StdSerializer<RealmUU
 	) {
 		jgen.writeString(value.toString())
 	}
+}
+
+class RealmListConverter : StdConverter<RealmList<RealmUUID>, List<RealmUUID>>() {
+	override fun convert(value : RealmList<RealmUUID>?) : List<RealmUUID> = value?.toList() ?: emptyList()
+
 }

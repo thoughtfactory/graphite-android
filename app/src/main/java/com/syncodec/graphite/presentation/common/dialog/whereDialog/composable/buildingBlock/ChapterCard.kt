@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -78,7 +79,7 @@ fun ChapterCard(
 	onLongClick : () -> Unit = {}
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.surface else color ?: MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
+		targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp) else color ?: MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 		animationSpec = tween(300)
 	)
 	val contentColor by animateColorAsState(

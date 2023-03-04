@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,19 +21,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revenuecat.purchases.Package
+import com.syncodec.graphite.presentation.ui.MontserratTypography
+import com.syncodec.graphite.presentation.ui.montserratFontFamily
 
 
 @Composable
 fun LifetimePackageView(
 	lifetimePackage : Package? = null,
-	onClickPackage: (Package?) -> Unit = {},
+	onClickPackage : (Package?) -> Unit = {},
 ) {
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(24.dp, 0.dp)
-			.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-			.clip(RoundedCornerShape(24.dp))
+			.background(
+				MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.31f), MaterialTheme.shapes.extraLarge
+			)
+			.clip(MaterialTheme.shapes.extraLarge)
 			.clickable { onClickPackage(lifetimePackage) }
 	) {
 		Crossfade(targetState = lifetimePackage) { _package ->
@@ -52,7 +58,7 @@ fun LifetimePackageView(
 					) {
 						Text(
 							text = "Keep forever",
-							style = MaterialTheme.typography.titleMedium,
+							style = MaterialTheme.typography.titleMedium.copy(fontFamily = montserratFontFamily),
 							fontWeight = FontWeight.Bold,
 						)
 
@@ -60,7 +66,7 @@ fun LifetimePackageView(
 
 						Text(
 							text = "Unlock all features forever",
-							style = MaterialTheme.typography.bodyMedium,
+							style = MaterialTheme.typography.bodyMedium.copy(fontFamily = montserratFontFamily),
 						)
 					}
 
@@ -68,7 +74,7 @@ fun LifetimePackageView(
 
 					Text(
 						text = _package.product.price,
-						style = MaterialTheme.typography.titleLarge,
+						style = MaterialTheme.typography.titleLarge.copy(fontFamily = montserratFontFamily),
 						fontWeight = FontWeight.Bold
 					)
 				}

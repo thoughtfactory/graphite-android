@@ -1,6 +1,8 @@
 package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
+import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -28,6 +30,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,9 +42,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -52,11 +55,13 @@ import coil.request.ImageRequest
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.network.ApiStatus
-import com.syncodec.graphite.presentation.bucket.composable.LocalCompositionCloseBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.text.KeyValueText
-import com.syncodec.graphite.presentation.common.text.LargeTextField
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -66,19 +71,19 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalAnimationApi::class, ExperimentalComposeUiApi::class)
 @Preview
 @Composable
-fun AddLinkBottomSheet() {
+fun AddLinkBottomSheet(
+	closeSheet : () -> Unit = {}
+) {
+	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 	val viewModel : BucketBottomSheetViewModel = koinViewModel()
 
 	val keyboardController = LocalSoftwareKeyboardController.current
+	val clipboardManager = LocalClipboardManager.current
 
 	var urlText by remember { mutableStateOf("") }
 
-	var isTextFocused by remember { mutableStateOf(false) }
-
 	var status : Status by remember { mutableStateOf(Status.INIT) }
-
-	val closeSheet = LocalCompositionCloseBottomSheet.current
 
 	var openGraphResult by remember { mutableStateOf<OpenGraphResult?>(null) }
 	var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -116,29 +121,41 @@ fun AddLinkBottomSheet() {
 		title = "Add Link",
 		icon = R.drawable.ic_link,
 	) {
-
-		LargeTextField(
-			modifier = Modifier,
+		BottomSheetTextField(
 			value = urlText,
 			placeholder = "http:// or https://",
-			isFocused = isTextFocused,
-			onFocusChanged = { isTextFocused = it },
+			actionButtons = {
+				MenuButton(
+					icon = R.drawable.ic_paste,
+					colors = MenuButtonDefaults.menuButtonColorsOnSurface()
+				) {
+					try {
+						if (clipboardManager.hasText()) clipboardManager.getText()?.let { clipboardText -> urlText = clipboardText.text }
+						else Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+					} catch (e : Exception) {
+						Toast.makeText(context, "Error copying text from clipboard", Toast.LENGTH_SHORT).show()
+					}
+				}
+			},
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
 				autoCorrect = true,
 				keyboardType = KeyboardType.Text,
-				imeAction = ImeAction.Go
+				imeAction = ImeAction.Search
 			),
 			keyboardActions = KeyboardActions(
-				onGo = {
+				onSearch = {
 					putLink(urlText)
 					urlText = ""
-					closeSheet()
+				},
+				onDone = {
+					putLink(urlText)
+					urlText = ""
 				}
 			),
-			trailingIcon = R.drawable.ic_close,
-			onClickTrailingIcon = { urlText = "" },
-		) { urlText = it }
+			colors = BottomSheetTextFieldDefaults.textFieldColors(),
+			onValueChange = { urlText = it },
+		)
 
 		Spacer(modifier = Modifier.height(2.dp))
 
@@ -146,15 +163,16 @@ fun AddLinkBottomSheet() {
 			modifier = Modifier.fillMaxWidth()
 		) {
 			Button(
+				colors = ButtonDefaults.buttonColors(
+					containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
+					contentColor = MaterialTheme.colorScheme.onSurface
+				),
+				shape = MaterialTheme.shapes.medium,
 				onClick = {
 					getLinkPreview(urlText)
 					keyboardController?.hide()
 				},
 				modifier = Modifier.weight(1f),
-				colors = ButtonDefaults.buttonColors(
-					containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
-					contentColor = MaterialTheme.colorScheme.onSurface
-				)
 			) {
 				Text(text = "Preview")
 			}
@@ -162,6 +180,7 @@ fun AddLinkBottomSheet() {
 			Spacer(modifier = Modifier.width(8.dp))
 
 			Button(
+				shape = MaterialTheme.shapes.medium,
 				onClick = {
 					putLink(urlText)
 					urlText = ""
@@ -178,8 +197,8 @@ fun AddLinkBottomSheet() {
 		AnimatedContent(
 			targetState = status,
 			transitionSpec = { scaleIn(tween(300)) + fadeIn(tween(300)) with scaleOut(tween(300)) + fadeOut(tween(300)) }
-		) {
-			when (it) {
+		) { status1 ->
+			when (status1) {
 				Status.INIT -> SearchResultStatusView(
 					imageId = R.drawable.il_bucket_link_search,
 					text = "Spotify, YouTube, Netflix anything you want to save!",
@@ -199,18 +218,16 @@ fun AddLinkBottomSheet() {
 				}
 
 				Status.LOADED -> {
-					if (openGraphResult != null) {
+					openGraphResult?.let {
 						LinkPreview(
-							openGraphResult = openGraphResult !!,
+							openGraphResult = it,
 							bitmap = bitmap,
 						)
-					} else {
-						SearchResultStatusView(
-							imageId = R.drawable.il_bucket_link_search,
-							text = "No preview available",
-							contentDescription = "No preview available",
-						)
-					}
+					} ?: SearchResultStatusView(
+						imageId = R.drawable.il_bucket_link_search,
+						text = "No preview available",
+						contentDescription = "No preview available",
+					)
 				}
 
 				Status.ERROR -> SearchResultStatusView(
@@ -234,7 +251,6 @@ private fun LinkPreview(
 	bitmap : Bitmap? = null,
 ) {
 	val context = LocalContext.current
-	val uriHandler = LocalUriHandler.current
 
 	Column(
 		modifier = Modifier
@@ -249,15 +265,11 @@ private fun LinkPreview(
 			modifier = Modifier.fillMaxWidth()
 		)
 
-		Spacer(modifier = Modifier.height(4.dp))
-
 		KeyValueText(
 			key = "Description",
 			value = openGraphResult.description,
 			modifier = Modifier.fillMaxWidth()
 		)
-
-		Spacer(modifier = Modifier.height(4.dp))
 
 		KeyValueText(
 			key = "URL",
@@ -266,7 +278,7 @@ private fun LinkPreview(
 			modifier = Modifier.fillMaxWidth()
 		) {
 			try {
-				uriHandler.openUri(openGraphResult.url !!)
+				context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(openGraphResult.url)))
 			} catch (e : Exception) {
 				Toast.makeText(context, "Unable to open link", Toast.LENGTH_SHORT).show()
 			}

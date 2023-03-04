@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,8 +52,11 @@ import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.common.text.LargeTextField
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +71,7 @@ import org.koin.androidx.compose.koinViewModel
 fun AddBookBottomSheet() {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
-	val viewModel: BucketBottomSheetViewModel = koinViewModel()
+	val viewModel : BucketBottomSheetViewModel = koinViewModel()
 
 	val bucketObject by viewModel.bucketObject.collectAsState()
 
@@ -89,10 +93,12 @@ fun AddBookBottomSheet() {
 					ApiStatus.LOADING -> {
 						status = Status.LOADING
 					}
+
 					ApiStatus.SUCCESS -> {
 						status = Status.LOADED
 						openLibraryTitleSearchResult = apiResult.data
 					}
+
 					ApiStatus.ERROR -> {
 						status = Status.ERROR
 						openLibraryTitleSearchResult = null
@@ -106,12 +112,15 @@ fun AddBookBottomSheet() {
 		title = "Umm... What was that book",
 		icon = R.drawable.ic_book,
 	) {
-		LargeTextField(
-			modifier = Modifier,
+		BottomSheetTextField(
 			value = queryText,
 			placeholder = "Search for books",
-			isFocused = isTextFocused,
-			onFocusChanged = { isTextFocused = it },
+			actionButtons = {
+				MenuButton(
+					icon = R.drawable.ic_search,
+					colors = MenuButtonDefaults.menuButtonColorsOnSurface()
+				) { onSearch() }
+			},
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
 				autoCorrect = true,
@@ -122,9 +131,9 @@ fun AddBookBottomSheet() {
 				onSearch = { onSearch() },
 				onDone = { onSearch() }
 			),
-			trailingIcon = R.drawable.ic_search,
-			onClickTrailingIcon = { onSearch() }
-		) { queryText = it }
+			colors = BottomSheetTextFieldDefaults.textFieldColors(),
+			onValueChange = { queryText = it },
+		)
 
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -222,7 +231,7 @@ private fun BookCard(
 			contentAlignment = Alignment.Center,
 			modifier = Modifier
 				.aspectRatio(0.6666f)
-				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.medium)
+				.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.71f), MaterialTheme.shapes.medium)
 				.clip(MaterialTheme.shapes.medium)
 				.clickable { onClick() }
 		) {

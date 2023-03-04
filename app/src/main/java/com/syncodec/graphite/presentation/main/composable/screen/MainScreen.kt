@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.ExperimentalMaterialApi
@@ -8,6 +9,7 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,7 +34,9 @@ import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.service.DropboxService
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -56,6 +60,8 @@ fun MainScreen(
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 	val viewModel : MainViewModel = koinViewModel()
+
+	val defaultChapterId by viewModel.defaultChapterId.collectAsState()
 
 	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
 
@@ -149,8 +155,16 @@ fun MainScreen(
 			SheetLayout(
 				bottomSheetType = bottomSheetType,
 				syncStatus = syncStatus,
-				putBucket = viewModel::putBucket,
-				putNotebook = viewModel::putNotebook,
+				putBucket = { title, description, bucketType ->
+					viewModel.putBucket(title, description, bucketType) {
+						withContext(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+					}
+				},
+				putNotebook = { title, description, color, bitmap ->
+					viewModel.putNotebook(title, description, color, bitmap) {
+						withContext(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+					}
+				},
 				onClickSyncNow = onClickSyncNow,
 				onClickForceSync = onClickForceSync,
 				closeSheet = ::closeSheet
@@ -160,7 +174,17 @@ fun MainScreen(
 			MainDialog(
 				showNotificationPermissionDialog = showNotificationPermissionDialog,
 				showDeleteDialog = showDeleteDialog,
-				onDelete = { viewModel.delete(idList = selectedIdList.toList()); isSelecting = false; selectedIdList = listOf() },
+				onDelete = {
+					if (defaultChapterId in selectedIdList) {
+						Toast.makeText(context, "Cannot delete default chapter", Toast.LENGTH_SHORT).show()
+					}
+					selectedIdList.toMutableList().let {
+						it.remove(defaultChapterId)
+						viewModel.delete(idList = it.toList())
+					}
+					isSelecting = false
+					selectedIdList = listOf()
+				},
 				closeDialog = ::closeDialog,
 			)
 		}

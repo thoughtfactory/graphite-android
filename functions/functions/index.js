@@ -18,15 +18,30 @@ admin.initializeApp();
 const BASE_ADDRESS = "https://us-central1-graphite-diary.cloudfunctions.net";
 // const BASE_ADDRESS = "http://localhost:5001";
 
-// exports.deleteUser = functions.https.onRequest(
-//     (request, response) => {
-//         const data = {
-//             uId: request.query.uId
-//         };
+exports.deleteAccount = functions.https.onRequest(
+    (request, response) => {
+        const data = {
+            uId: request.body.data.uId
+        };
 
-//         admin.auth().deleteUser(data.uId);
-//     }
-// );
+        console.log(data.uId);
+
+        const docRef = admin.firestore().collection('toDelete').doc(data.uId);
+
+        docRef.set({
+            timestamp: admin.firestore.Timestamp.now(),
+        }).then((result => {
+            response.status(200).send({
+                "data": "Ok"
+            });
+        }))
+        .finally(() => {
+            response.status(200).send({
+                "data": "Error"
+            });
+        });
+    }
+);
 
 exports.submitBugReport = functions.https.onRequest(
     (request, response) => {
@@ -99,8 +114,8 @@ exports.dropboxExchangeCodeForToken2 = functions.https.onRequest(
         dbxAuth.getAccessTokenFromCode(encodeURIComponent(`${BASE_ADDRESS}/${FIREBASE_FUNCTION_PATH}`), code).then((dropboxResponse) => {
                 response.status(200).send({
                     "data": {
-                        "response" : "Ok",
-                        "data" : dropboxResponse.result
+                        "response": "Ok",
+                        "data": dropboxResponse.result
                     },
                 });
             })
@@ -108,8 +123,8 @@ exports.dropboxExchangeCodeForToken2 = functions.https.onRequest(
                 console.log(reason)
                 response.status(200).send({
                     "data": {
-                        "response" : "Error",
-                        "data" : reason
+                        "response": "Error",
+                        "data": reason
                     }
                 });
             });

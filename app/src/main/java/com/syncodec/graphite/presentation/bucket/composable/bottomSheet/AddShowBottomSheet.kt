@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,10 +59,13 @@ import com.syncodec.graphite.di.network.TvData
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
+import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.presentation.common.text.LargeTextField
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
@@ -145,12 +149,15 @@ fun AddShowBottomSheet() {
 		icon = R.drawable.ic_show,
 	) {
 
-		LargeTextField(
-			modifier = Modifier,
+		BottomSheetTextField(
 			value = queryText,
 			placeholder = if (currentState == 0) "Search for a movie" else "Search for a tv show",
-			isFocused = isTextFocused,
-			onFocusChanged = { isTextFocused = it },
+			actionButtons = {
+				MenuButton(
+					icon = R.drawable.ic_search,
+					colors = MenuButtonDefaults.menuButtonColorsOnSurface()
+				) { onSearch() }
+			},
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
 				autoCorrect = true,
@@ -161,9 +168,9 @@ fun AddShowBottomSheet() {
 				onSearch = { onSearch() },
 				onDone = { onSearch() }
 			),
-			trailingIcon = R.drawable.ic_search,
-			onClickTrailingIcon = { onSearch() }
-		) { queryText = it }
+			colors = BottomSheetTextFieldDefaults.textFieldColors(),
+			onValueChange = { queryText = it },
+		)
 
 		Spacer(modifier = Modifier.height(4.dp))
 
@@ -180,11 +187,10 @@ fun AddShowBottomSheet() {
 					stateTint = MaterialTheme.colorScheme.primary
 				)
 			),
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 			currentState = currentState,
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(32.dp)
+				.height(36.dp)
 		) { currentState = it }
 
 		Spacer(modifier = Modifier.height(4.dp))
@@ -264,6 +270,7 @@ fun AddShowBottomSheet() {
 	}
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun LoadedView(
 	tmDbMovieSearchResult : TMDbMovieSearchResult? = null,
@@ -279,39 +286,48 @@ private fun LoadedView(
 			contentDescription = "Show not found"
 		)
 	} else {
-		LazyVerticalGrid(
-			columns = GridCells.Fixed(3),
+		AnimatedContent(
+			targetState = currentState,
+			transitionSpec = { scaleIn(tween(300)) + fadeIn(tween(300)) with scaleOut(tween(300)) + fadeOut(tween(300)) }
 		) {
-			if (currentState == 0) {
-				tmDbMovieSearchResult?.results?.forEach { movieData ->
-					movieData?.let {
-						item {
-							ShowCard(
-								title = it.title,
-								posterPath = it.posterPath,
-								releaseDate = it.releaseDate,
-							) { onClickMovie(it) }
+			if (it == 0) {
+				LazyVerticalGrid(
+					columns = GridCells.Fixed(3),
+				) {
+					tmDbMovieSearchResult?.results?.forEach { movieData ->
+						movieData?.let {
+							item {
+								ShowCard(
+									title = it.title,
+									posterPath = it.posterPath,
+									releaseDate = it.releaseDate,
+								) { onClickMovie(it) }
+							}
 						}
 					}
+					item { Spacer(modifier = Modifier.height(32.dp)) }
+					item { Spacer(modifier = Modifier.height(32.dp)) }
+					item { Spacer(modifier = Modifier.height(32.dp)) }
 				}
-				item { Spacer(modifier = Modifier.height(32.dp)) }
-				item { Spacer(modifier = Modifier.height(32.dp)) }
-				item { Spacer(modifier = Modifier.height(32.dp)) }
-			} else if (currentState == 1) {
-				tmDbTvSearchResult?.results?.forEach { tvData ->
-					tvData?.let {
-						item {
-							ShowCard(
-								title = it.name,
-								posterPath = it.posterPath,
-								releaseDate = it.firstAirDate,
-							) { onClickTv(it) }
+			} else {
+				LazyVerticalGrid(
+					columns = GridCells.Fixed(3),
+				) {
+					tmDbTvSearchResult?.results?.forEach { tvData ->
+						tvData?.let {
+							item {
+								ShowCard(
+									title = it.name,
+									posterPath = it.posterPath,
+									releaseDate = it.firstAirDate,
+								) { onClickTv(it) }
+							}
 						}
 					}
+					item { Spacer(modifier = Modifier.height(32.dp)) }
+					item { Spacer(modifier = Modifier.height(32.dp)) }
+					item { Spacer(modifier = Modifier.height(32.dp)) }
 				}
-				item { Spacer(modifier = Modifier.height(32.dp)) }
-				item { Spacer(modifier = Modifier.height(32.dp)) }
-				item { Spacer(modifier = Modifier.height(32.dp)) }
 			}
 		}
 	}
@@ -334,7 +350,7 @@ private fun ShowCard(
 			contentAlignment = Alignment.Center,
 			modifier = Modifier
 				.aspectRatio(0.6666f)
-				.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.medium)
+				.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.71f), MaterialTheme.shapes.medium)
 				.clip(MaterialTheme.shapes.medium)
 				.clickable { onClick() }
 		) {
@@ -351,7 +367,7 @@ private fun ShowCard(
 					contentScale = ContentScale.Crop,
 					modifier = Modifier
 						.aspectRatio(0.6666f)
-						.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.medium)
+						.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.71f), MaterialTheme.shapes.medium)
 						.clip(MaterialTheme.shapes.medium)
 						.clickable { onClick() },
 				)

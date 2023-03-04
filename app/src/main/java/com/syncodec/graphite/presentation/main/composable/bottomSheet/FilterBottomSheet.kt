@@ -18,6 +18,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,7 +49,7 @@ fun FilterBottomSheet(
 
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
 	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
-	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.LIST)
+	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
 
 	GenericBottomSheet(
 		title = "Filter and View",
@@ -125,9 +126,9 @@ private fun ColumnScope.SortOnView(
 		FilterButton(
 			text = "Custom",
 			icon = R.drawable.ic_reorder,
-			highlight = sortOn == SortOn.CUSTOM,
+			highlight = sortOn == SortOn.Custom,
 			modifier = Modifier.weight(1f),
-		) { onClick(SortOn.CUSTOM) }
+		) { onClick(SortOn.Custom) }
 	}
 }
 
@@ -161,7 +162,7 @@ private fun ColumnScope.SortByView(
 @Preview
 @Composable
 private fun ColumnScope.ViewTypeView(
-	viewType : ViewType = ViewType.LIST,
+	viewType : ViewType = ViewType.List,
 	onClick : (ViewType) -> Unit = {},
 ) {
 	BottomSheetKeyText(text = "View Type")
@@ -172,16 +173,16 @@ private fun ColumnScope.ViewTypeView(
 		FilterButton(
 			text = "List",
 			icon = R.drawable.ic_view_list,
-			highlight = viewType == ViewType.LIST,
+			highlight = viewType == ViewType.List,
 			modifier = Modifier.weight(1f),
-		) { onClick(ViewType.LIST) }
+		) { onClick(ViewType.List) }
 		Spacer(modifier = Modifier.width(8.dp))
 		FilterButton(
 			text = "Grid",
 			icon = R.drawable.ic_view_grid,
-			highlight = viewType == ViewType.GRID,
+			highlight = viewType == ViewType.Grid,
 			modifier = Modifier.weight(1f),
-		) { onClick(ViewType.GRID) }
+		) { onClick(ViewType.Grid) }
 	}
 }
 
@@ -193,7 +194,11 @@ private fun FilterButton(
 	highlight : Boolean = false,
 	onClick : () -> Unit = {},
 ) {
-	val containerColor by animateColorAsState(targetValue = if (highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0.47f))
+	val containerColor by animateColorAsState(
+		targetValue = if (highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceColorAtElevation(
+			8.dp
+		).copy(alpha = 0.47f)
+	)
 	val contentColor by animateColorAsState(targetValue = if (highlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
 
 	Box(

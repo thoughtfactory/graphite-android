@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
@@ -14,26 +13,36 @@ import org.junit.Test
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class ExampleUnitTest {
-	@Test
-	fun addition_isCorrect() {
-		assertEquals(4, 2 + 2)
-	}
 
-	data class TestData(val realmUUID : RealmUUID?)
+	data class WrappedRealmUUId(val realmUUID : RealmUUID?)
 
 	@Test
-	fun mutableStateFlow_null_test() {
+	fun realmUUId_null_flow_test() {
 		val flow = MutableStateFlow<RealmUUID?>(null)
 		runBlocking {
 			this.launch {
-				flow.collect {
-					println(it)
-				}
+				flow.collect { println(it) }
 			}
 			for (i in 0 .. 10) {
 				flow.tryEmit(RealmUUID.random())
 				delay(100)
 				flow.tryEmit(null as RealmUUID?)
+				delay(100)
+			}
+		}
+	}
+
+	@Test
+	fun wrapped_realmUUId_null_flow_test() {
+		val flow = MutableStateFlow<WrappedRealmUUId?>(null)
+		runBlocking {
+			this.launch {
+				flow.collect { println(it) }
+			}
+			for (i in 0 .. 10) {
+				flow.tryEmit(WrappedRealmUUId(RealmUUID.random()))
+				delay(100)
+				flow.tryEmit(null as WrappedRealmUUId?)
 				delay(100)
 			}
 		}
