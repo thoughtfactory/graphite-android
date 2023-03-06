@@ -74,6 +74,7 @@ import java.io.File
 @Preview
 @Composable
 fun EditorScreen(
+	editor : RichTextEditor,
 	afterNoteSaved : (RealmUUID) -> Unit = {},
 	onClickBack : (Boolean) -> Unit = {},
 ) {
@@ -88,9 +89,7 @@ fun EditorScreen(
 
 	val isOperationPending by viewModel.isOperationPending.collectAsState()
 
-	val richTextEditor = rememberRichTextEditor()
-
-	val textFormat by richTextEditor.textFormat.collectAsState()
+	val textFormat by editor.textFormat.collectAsState()
 
 	val isNewNote by viewModel.isNewNote.collectAsState()
 
@@ -240,9 +239,9 @@ fun EditorScreen(
 		}
 	}
 
-	LaunchedEffect(key1 = richTextEditor, key2 = title, key3 = content) {
-		richTextEditor.setGetTextListener(getTextListener)
-		richTextEditor.setData(title, content)
+	LaunchedEffect(key1 = title, key2 = content) {
+		editor.setGetTextListener(getTextListener)
+		editor.setData(title, content)
 	}
 
 	LaunchedEffect(key1 = isNewNote, key2 = isGeolocationEnabled) {
@@ -271,7 +270,7 @@ fun EditorScreen(
 		topBar = {
 			TopBar(
 				isOperationPending = false,
-				onSave = { richTextEditor.save() },
+				onSave = { editor.save() },
 				onClickBack = {
 					if (isOperationPending) Toast.makeText(context, "Operation pending", Toast.LENGTH_SHORT).show()
 					else onBackPressedDispatcher?.onBackPressed()
@@ -374,7 +373,7 @@ fun EditorScreen(
 				modifier = Modifier.weight(1f)
 			) {
 				AndroidView(
-					factory = { richTextEditor },
+					factory = { editor },
 					modifier = Modifier.fillMaxSize()
 				)
 			}
@@ -414,7 +413,7 @@ fun EditorScreen(
 				onClickLocation = { openSheet(EditorBottomSheetType.Location) },
 				onClickAttachment = { openSheet(EditorBottomSheetType.Attachment) },
 				onClickTag = { openSheet(EditorBottomSheetType.Tag) },
-			) { editorAction -> richTextEditor.onEditorAction(editorAction = editorAction) }
+			) { editorAction -> editor.onEditorAction(editorAction = editorAction) }
 		}
 	}
 }

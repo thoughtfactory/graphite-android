@@ -128,6 +128,12 @@ class RichTextEditor(
 
 		addJavascriptInterface(this, "bridge")
 
+
+		setTypography(typography)
+		setColor(containerColor, contentColor)
+	}
+
+	suspend fun loadEditor() {
 		context.assets.open("orbit/orbital").let {
 			val buffer = ByteArray(it.available())
 			it.read(buffer)
@@ -135,24 +141,19 @@ class RichTextEditor(
 			val encHtml = String(buffer)
 			val passcode = "d5Y3f8*hN8%c%Q3%Jb9vU^8R4MV@z^9*"
 
-			CoroutineScope(Dispatchers.IO).launch {
-				try {
-					Alice.decrypt(encHtml, passcode).let { html ->
-						withContext(Dispatchers.Main) {
-							if (html == null) Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
-							else loadDataWithBaseURL("file:///android_asset/orbit", html, "text/html", "UTF-8", null)
-						}
-					}
-				} catch (e : Exception) {
+			try {
+				Alice.decrypt(encHtml, passcode).let { html ->
 					withContext(Dispatchers.Main) {
-						Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
+						if (html == null) Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
+						else loadDataWithBaseURL("file:///android_asset/orbit", html, "text/html", "UTF-8", null)
 					}
+				}
+			} catch (e : Exception) {
+				withContext(Dispatchers.Main) {
+					Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
 				}
 			}
 		}
-
-		setTypography(typography)
-		setColor(containerColor, contentColor)
 	}
 
 	private fun load(trigger : String) {

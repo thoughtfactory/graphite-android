@@ -90,7 +90,10 @@ fun Dialog(
 			backgroundColor = MaterialTheme.colorScheme.background,
 			shape = MaterialTheme.shapes.extraLarge,
 			elevation = 0.dp,
-			onCloseRequest = { closeDialog(EditorDialogType.DatePicker) }
+			onCloseRequest = {
+				closeDialog(EditorDialogType.DatePicker)
+				datePickerDialogState.hide()
+			}
 		) {
 			datepicker(
 				initialDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.systemDefault()).toLocalDate(),
@@ -106,6 +109,7 @@ fun Dialog(
 			) { date ->
 				setUserTimestamp(localDatetime.with(date).toInstant(OffsetDateTime.now().offset).toEpochMilli())
 				closeDialog(EditorDialogType.DatePicker)
+				datePickerDialogState.hide()
 				openDialog(EditorDialogType.TimePicker)
 			}
 		}
@@ -127,7 +131,10 @@ fun Dialog(
 			backgroundColor = MaterialTheme.colorScheme.background,
 			shape = MaterialTheme.shapes.extraLarge,
 			elevation = 0.dp,
-			onCloseRequest = { closeDialog(EditorDialogType.TimePicker) }
+			onCloseRequest = {
+				closeDialog(EditorDialogType.TimePicker)
+				timePickerDialogState.hide()
+			}
 		) {
 			timepicker(
 				initialTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeStamp), ZoneOffset.systemDefault()).toLocalTime(),
@@ -147,6 +154,7 @@ fun Dialog(
 					setUserTimestamp(it.toInstant(OffsetDateTime.now().offset).toEpochMilli())
 				}
 				closeDialog(EditorDialogType.TimePicker)
+				timePickerDialogState.hide()
 			}
 		}
 	}

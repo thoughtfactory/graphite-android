@@ -6,15 +6,20 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
+import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.screen.NoteScreen
 import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -48,8 +53,25 @@ class NoteActivity : ComponentActivity() {
 			finish()
 		}
 
+		val editor = RichTextEditor(this).apply {
+			lifecycleScope.launch(Dispatchers.IO) { loadEditor() }
+		}
+		val dataStoreInstance = DataStoreInstance(this)
+
 		setContent {
 			BaseContent {
+
+				val containerColor = MaterialTheme.colorScheme.background
+				val contentColor = MaterialTheme.colorScheme.onBackground
+				val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
+
+				LaunchedEffect(key1 = containerColor, key2 = contentColor) {
+					editor.setColor(containerColor, contentColor)
+				}
+
+				LaunchedEffect(key1 = typography) {
+					editor.setTypography(typography)
+				}
 
 				this.onBackPressedDispatcher.addCallback {
 					try {
@@ -62,6 +84,7 @@ class NoteActivity : ComponentActivity() {
 				val isEditing by isEditing.collectAsState()
 
 				NoteScreen(
+					editor = editor,
 					isEditing = isEditing,
 					onClickEditNote = { this.isEditing.tryEmit(true) },
 					afterNoteSaved = { noteId ->
