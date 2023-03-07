@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.functions.FirebaseFunctions
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.bugReport.composable.BugReportScreen
@@ -22,11 +23,12 @@ class BugReportActivity : ComponentActivity() {
 			BaseContent {
 				BugReportScreen(
 					onClickBack = { finish() },
-					onClickSubmit = { bugType, bugComponent, title, description ->
+					onClickSubmit = { bugType, bugComponent, title, email, description ->
 						val data = hashMapOf(
 							"bugType" to bugType.name,
 							"bugComponent" to bugComponent.name,
 							"title" to title,
+							"email" to email,
 							"description" to description
 						)
 						FirebaseFunctions
@@ -34,12 +36,15 @@ class BugReportActivity : ComponentActivity() {
 							.getHttpsCallable("submitBugReport")
 							.call(data)
 							.addOnSuccessListener {
-								CoroutineScope(Dispatchers.Main).launch {
+								lifecycleScope.launch(Dispatchers.Main) {
 									Toast.makeText(this@BugReportActivity, "Report submitted", Toast.LENGTH_SHORT).show()
 									finish()
 								}
 							}
 							.addOnFailureListener {
+								lifecycleScope.launch(Dispatchers.Main) {
+									Toast.makeText(this@BugReportActivity, "Error submitting report. You can mail us on support@syncodec.com", Toast.LENGTH_SHORT).show()
+								}
 							}
 					}
 				)

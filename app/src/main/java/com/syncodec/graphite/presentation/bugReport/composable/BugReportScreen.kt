@@ -56,13 +56,14 @@ import com.syncodec.graphite.presentation.ui.IconButtonSize
 @Composable
 fun BugReportScreen(
 	onClickBack : () -> Unit = {},
-	onClickSubmit : (BugReportActivity.Companion.BugType, BugReportActivity.Companion.BugComponent, String, String) -> Unit = { _, _, _, _ -> }
+	onClickSubmit : (BugReportActivity.Companion.BugType, BugReportActivity.Companion.BugComponent, String, String, String) -> Unit = { _, _, _, _, _ -> }
 ) {
 
 	var selectedBugType by remember { mutableStateOf<BugReportActivity.Companion.BugType?>(null) }
 	var selectedBugComponent by remember { mutableStateOf<BugReportActivity.Companion.BugComponent?>(null) }
 
 	var bugTitle by remember { mutableStateOf("") }
+	var email by remember { mutableStateOf("") }
 	var bugDescription by remember { mutableStateOf("") }
 
 	var isBugTypeExpanded by remember { mutableStateOf(false) }
@@ -112,6 +113,18 @@ fun BugReportScreen(
 			Spacer(modifier = Modifier.height(4.dp))
 
 			OutlinedTextField(
+				value = email,
+				onValueChange = { email = it },
+				label = { Text(text = "Email") },
+				placeholder = { Text(text = "Report is anonymous by default") },
+				shape = MaterialTheme.shapes.medium,
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(12.dp, 0.dp),
+			)
+			Spacer(modifier = Modifier.height(4.dp))
+
+			OutlinedTextField(
 				value = bugDescription,
 				onValueChange = { bugDescription = it },
 				label = { Text(text = "Description") },
@@ -138,6 +151,7 @@ fun BugReportScreen(
 						selectedBugType ?: BugReportActivity.Companion.BugType.Other,
 						selectedBugComponent ?: BugReportActivity.Companion.BugComponent.Other,
 						bugTitle,
+						email,
 						bugDescription,
 					)
 				},

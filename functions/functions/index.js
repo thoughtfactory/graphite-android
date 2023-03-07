@@ -50,6 +50,7 @@ exports.submitBugReport = functions.https.onRequest(
             "bugType": request.body.data.bugType,
             "bugComponent": request.body.data.bugComponent,
             "title": request.body.data.title,
+            "email": request.body.data.email,
             "description": request.body.data.description
         };
 

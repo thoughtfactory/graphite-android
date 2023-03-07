@@ -9,7 +9,6 @@ import io.realm.kotlin.migration.AutomaticSchemaMigration
 class RealmMigrator : AutomaticSchemaMigration {
 
 	override fun migrate(migrationContext : AutomaticSchemaMigration.MigrationContext) {
-		migrate0to1(migrationContext.oldRealm, migrationContext.newRealm)
 	}
 
 	private fun migrate0to1(oldRealm : DynamicRealm, newRealm : DynamicMutableRealm) {
