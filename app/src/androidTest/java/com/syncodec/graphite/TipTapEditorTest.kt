@@ -22,7 +22,7 @@ class TipTapEditorTest {
 		val passcode = "d5Y3f8*hN8%c%Q3%Jb9vU^8R4MV@z^9*"
 
 		val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-		appContext.assets.open("orbit/tiptap.html").let {
+		appContext.assets.open("orbit/tmp/index.html").let {
 			val html = String(it.readAllBytes())
 			Alice.encrypt(html, passcode).let {
 				if (it != null) File(appContext.filesDir, "orbital").writeText(it)

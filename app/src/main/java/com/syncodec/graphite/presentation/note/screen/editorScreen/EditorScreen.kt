@@ -99,8 +99,6 @@ fun EditorScreen(
 	val userTimestamp by viewModel.userTimestamp.collectAsState()
 	val title by viewModel.title.collectAsState()
 	val content by viewModel.content.collectAsState()
-	val latLng by viewModel.latLng.collectAsState()
-	val address by viewModel.address.collectAsState()
 	val parentChapterObject by viewModel.parentChapter.collectAsState()
 
 	var attachmentListSaved by remember { mutableStateOf<List<File>>(listOf()) }

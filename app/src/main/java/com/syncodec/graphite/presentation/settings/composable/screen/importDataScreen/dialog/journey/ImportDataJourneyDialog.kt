@@ -115,6 +115,7 @@ fun ImportDataJourneyDialog(
 
 	val richTextEditor = remember {
 		RichTextEditor.headlessInstance(context).apply {
+			scope.launch(Dispatchers.IO) { loadEditor() }
 			setGetTextListener(getTextListener)
 		}
 	}

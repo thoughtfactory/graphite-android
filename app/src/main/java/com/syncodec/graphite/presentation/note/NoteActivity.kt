@@ -65,12 +65,14 @@ class NoteActivity : ComponentActivity() {
 				val contentColor = MaterialTheme.colorScheme.onBackground
 				val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
 
-				LaunchedEffect(key1 = containerColor, key2 = contentColor) {
+				val isEditorReady by editor.isReady.collectAsState(initial = false)
+
+				LaunchedEffect(key1 = containerColor, key2 = contentColor, key3 = isEditorReady) {
 					editor.setColor(containerColor, contentColor)
 				}
 
 				LaunchedEffect(key1 = typography) {
-					editor.setTypography(typography)
+					editor.setTypography(typography ?: "PT Mono")
 				}
 
 				this.onBackPressedDispatcher.addCallback {

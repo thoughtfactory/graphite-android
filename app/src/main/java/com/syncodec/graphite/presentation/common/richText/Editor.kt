@@ -124,13 +124,9 @@ class RichTextEditor(
 		}
 
 		setBackgroundColor(0)
-		setLayerType(LAYER_TYPE_SOFTWARE, null)
+		setLayerType(LAYER_TYPE_HARDWARE, null)
 
 		addJavascriptInterface(this, "bridge")
-
-
-		setTypography(typography)
-		setColor(containerColor, contentColor)
 	}
 
 	suspend fun loadEditor() {
