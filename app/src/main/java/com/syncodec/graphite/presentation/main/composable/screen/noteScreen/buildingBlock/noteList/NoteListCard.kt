@@ -174,7 +174,7 @@ private fun NoteSurface(
 	val context = LocalContext.current
 	val haptic = LocalHapticFeedback.current
 
-	val attachmentCount = context.getAttachmentCountFromNoteId(noteId = id)
+	val attachmentCount = context.getAttachmentCountFromNoteId(parentId = id)
 
 	Box(
 		modifier = Modifier

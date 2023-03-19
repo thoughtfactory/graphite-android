@@ -51,19 +51,10 @@ fun TopBar(
 	onClickSearch : () -> Unit = {},
 	onClickDelete : () -> Unit = {},
 ) {
-	val containerColor by animateColorAsState(
-		targetValue = when (currentRoute) {
-			BottomNavigationItem.Home.route -> MaterialTheme.colorScheme.background
-			BottomNavigationItem.Calendar.route -> MaterialTheme.colorScheme.background
-			BottomNavigationItem.Atlas.route -> MaterialTheme.colorScheme.background
-			else -> MaterialTheme.colorScheme.background
-		}
-	)
-
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(containerColor)
+			.background(MaterialTheme.colorScheme.background)
 	) {
 		Bar(
 			currentRoute = currentRoute,
@@ -108,19 +99,10 @@ private fun Bar(
 	val isAuthenticated = LocalIsAuthenticated.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current
 
-	val containerColor by animateColorAsState(
-		targetValue = when (currentRoute) {
-			"graphite" -> MaterialTheme.colorScheme.background
-			"bucket" -> MaterialTheme.colorScheme.background
-			"calendar" -> MaterialTheme.colorScheme.background
-			"atlas" -> MaterialTheme.colorScheme.background
-			else -> MaterialTheme.colorScheme.background
-		}
-	)
-
 	Crossfade(
 		targetState = isSelecting,
-		animationSpec = tween(300)
+		animationSpec = tween(300),
+		label = "isSelecting"
 	) {
 		if (it) {
 			TopAppBar(
@@ -143,7 +125,7 @@ private fun Bar(
 						onClick = onClickDelete
 					)
 				},
-				colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor)
+				colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 			)
 		} else {
 			CenterAlignedTopAppBar(
@@ -155,6 +137,11 @@ private fun Bar(
 							icon = R.drawable.ic_menu,
 							onClick = onClickMenu,
 						)
+						MenuButton(
+							icon = R.drawable.ic_vault,
+							tooltip = "Vault",
+							checked = isAuthenticated,
+						) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 					}
 				},
 				title = {
@@ -170,21 +157,16 @@ private fun Bar(
 					)
 				},
 				actions = {
-//					CloudButton(
-//						syncStatus = syncStatus,
-//						onClickSync = onClickCloud
-//					)
-					MenuButton(
-						icon = R.drawable.ic_vault,
-						tooltip = "Vault",
-						checked = isAuthenticated,
-					) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
+					CloudButton(
+						syncStatus = syncStatus,
+						onClickSync = onClickCloud
+					)
 					MenuButton(
 						icon = R.drawable.ic_search,
 						onClick = onClickSearch
 					)
 				},
-				colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = containerColor)
+				colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 			)
 		}
 	}
@@ -254,73 +236,23 @@ private fun CloudButton(
 		animationSpec = infiniteRepeatable(
 			animation = tween(710, easing = LinearEasing),
 			repeatMode = RepeatMode.Reverse
-		)
+		),
+		label = "blink"
 	)
 
-	AnimatedContent(
-		targetState = syncStatus,
-		transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
-	) {
-		when (it) {
-			is DropboxService.Companion.DropboxSyncStatus.Init -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.SyncNotConfigured -> MenuButton(
-				icon = R.drawable.ic_cloud_dashed,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.SyncDisabled -> MenuButton(
-				icon = R.drawable.ic_cloud_disable,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.NoInternet -> MenuButton(
-				icon = R.drawable.ic_no_network,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.NotLoggedIn -> MenuButton(
-				icon = R.drawable.ic_cloud_disable,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Loading -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Connected -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Syncing -> MenuButton(
-				icon = R.drawable.ic_cloud_syncing,
-				modifier = Modifier.graphicsLayer {
-					this.alpha = alpha
-				},
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.SyncError -> MenuButton(
-				icon = R.drawable.ic_cloud_exclamation,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.DriveLocked -> MenuButton(
-				icon = R.drawable.ic_cloud_exclamation,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Idle -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-		}
-	}
+	MenuButton(
+		icon = when(syncStatus) {
+			is DropboxService.Companion.DropboxSyncStatus.Init -> R.drawable.ic_cloud
+			is DropboxService.Companion.DropboxSyncStatus.Idle -> R.drawable.ic_cloud
+			is DropboxService.Companion.DropboxSyncStatus.Loading -> R.drawable.ic_cloud_dashed
+			is DropboxService.Companion.DropboxSyncStatus.Locked -> R.drawable.ic_cloud_x
+			is DropboxService.Companion.DropboxSyncStatus.Connected -> R.drawable.ic_cloud_syncing
+			is DropboxService.Companion.DropboxSyncStatus.Syncing -> R.drawable.ic_cloud_syncing
+			is DropboxService.Companion.DropboxSyncStatus.Disconnected -> R.drawable.ic_cloud_x
+			is DropboxService.Companion.DropboxSyncStatus.Failed -> R.drawable.ic_cloud_x
+		},
+		onClick = onClickSync
+	)
 }
 
 val Color.Companion.SyncCheck : Color

@@ -19,12 +19,11 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoadingView(
+	modifier : Modifier = Modifier.fillMaxSize(),
 	backgroundColor : Color = Color.Transparent,
 ) {
 	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.background(backgroundColor),
+		modifier = modifier.background(backgroundColor),
 		contentAlignment = Alignment.Center
 	) {
 		CircularProgressIndicator(

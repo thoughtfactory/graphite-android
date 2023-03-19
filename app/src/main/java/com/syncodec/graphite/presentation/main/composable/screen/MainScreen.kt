@@ -19,7 +19,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import com.google.accompanist.pager.ExperimentalPagerApi
+import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.explorer.ExplorerActivity
 import com.syncodec.graphite.presentation.main.MainViewModel
@@ -48,12 +48,13 @@ enum class ComponentType {
 
 @OptIn(
 	ExperimentalMaterialApi::class,
-	ExperimentalPagerApi::class,
 	ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class
 )
 @Composable
 fun MainScreen(
 	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
+	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
+	testDropboxConnection : () -> Unit = {},
 	onClickSyncNow : () -> Unit = {},
 	onClickForceSync : () -> Unit = {},
 ) {
@@ -68,10 +69,9 @@ fun MainScreen(
 	val keyboardController = LocalSoftwareKeyboardController.current
 	val focusManager = LocalFocusManager.current
 
-	var bottomSheetType : MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.Menu) }
 	var currentComponentType : ComponentType by remember { mutableStateOf(ComponentType.Note) }
-
-	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+	var bottomSheetType : MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.Menu) }
+	val modalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
 	LaunchedEffect(key1 = modalBottomSheetState.currentValue) {
 		if (modalBottomSheetState.currentValue == ModalBottomSheetValue.Hidden) {
@@ -125,7 +125,10 @@ fun MainScreen(
 					isSelecting = false
 					selectedIdList = listOf()
 				},
-				onClickCloud = { openSheet(MainBottomSheetType.Sync) },
+				onClickCloud = {
+					testDropboxConnection()
+					openSheet(MainBottomSheetType.Sync)
+				},
 				onClickSearch = {
 					Intent(context, ExplorerActivity::class.java).apply {
 						putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Search.name)
@@ -155,6 +158,7 @@ fun MainScreen(
 			SheetLayout(
 				bottomSheetType = bottomSheetType,
 				syncStatus = syncStatus,
+				testConnectionResponse = testConnectionResponse,
 				putBucket = { title, description, bucketType ->
 					viewModel.putBucket(title, description, bucketType) {
 						withContext(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }

@@ -18,10 +18,10 @@
         android:appCategory="productivity"
         android:description="@string/app_description"
         android:fullBackupContent="false"
+        android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
-        android:hardwareAccelerated="true"
         android:resizeableActivity="true"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="false"
@@ -62,6 +62,7 @@
             android:name="com.syncodec.graphite.presentation.main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
+            android:usesCleartextTraffic="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -152,7 +153,13 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.dropbox.DropboxActivity"
+            android:name=".presentation.bugReport.BugReportActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".presentation.sync.dropbox.DropboxSyncActivity"
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize">
@@ -170,7 +177,13 @@
         </activity>
 
         <activity
-            android:name=".presentation.bugReport.BugReportActivity"
+            android:name=".presentation.sync.googleDrive.GoogleDriveSyncActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".presentation.sync.oneDrive.OneDriveSyncActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
@@ -189,11 +202,11 @@
                 android:resource="@xml/widget_provider" />
         </receiver>
 
-        <!--        <service-->
-        <!--            android:name=".service.DropboxService"-->
-        <!--            android:enabled="true"-->
-        <!--            android:exported="false"-->
-        <!--            android:foregroundServiceType="dataSync" />-->
+        <service
+            android:name=".service.DropboxService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <service
             android:name=".service.QuickNoteTile"

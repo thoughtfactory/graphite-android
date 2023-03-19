@@ -4,16 +4,21 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.FileObserver
 import android.util.Log
+import android.widget.Toast
+import com.jakewharton.processphoenix.ProcessPhoenix
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.DeletedAttachment
+import com.syncodec.graphite.di.model.DeletedObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.AttachmentRepository
+import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDirPath
 import com.syncodec.graphite.di.repository.RealmMigrator
 import com.syncodec.graphite.di.repository.RealmNotInitializedException
 import com.syncodec.graphite.di.repository.RepositoryState
@@ -21,8 +26,12 @@ import com.syncodec.graphite.utils.RecursiveFileObserver
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
+import com.syncodec.graphite.utils.compress7z
+import com.syncodec.graphite.utils.copyInDirectory
 import com.syncodec.graphite.utils.encodeBase64
+import com.syncodec.graphite.utils.extract7z
 import com.syncodec.graphite.utils.scaleBitmap
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.toRealmList
@@ -33,18 +42,24 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.apache.commons.compress.archivers.sevenz.SevenZFile
+import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import java.io.File
+import java.io.InputStream
 import java.security.SecureRandom
 import kotlin.reflect.KClass
 
 
 class KoinRepository {
 
-	private val attachmentRepository = AttachmentRepository()
+	lateinit var context : Context
+	val attachmentRepository = AttachmentRepository()
 
 	/**
 	 * The state of the repository.This is used to determine if the repository is ready to be used. Use repository when [repositoryState] is [RepositoryState.SUCCESS].
@@ -54,6 +69,7 @@ class KoinRepository {
 	var realm : Realm? = null
 
 	fun initRepository(context : Context) {
+		this.context = context
 		attachmentRepository.initRepository(context)
 		try {
 			var key : ByteArray
@@ -82,7 +98,9 @@ class KoinRepository {
 						NoteObject::class,
 						BucketObject::class,
 						BucketItemObject::class,
-						TagObject::class
+						TagObject::class,
+						DeletedObject::class,
+						DeletedAttachment::class,
 					)
 				)
 				.encryptionKey(key)
@@ -100,7 +118,7 @@ class KoinRepository {
 						}
 					}
 				}
-				.schemaVersion(2)
+				.schemaVersion(SCHEMA_VERSION)
 				.migration(RealmMigrator())
 				.build()
 
@@ -207,6 +225,19 @@ class KoinRepository {
 		}
 	}
 
+	fun putBaseObject(baseObject : BaseObject) {
+		realm?.writeBlocking {
+			val storedBaseObject = getBaseObject()
+			storedBaseObject?.let {
+				findLatest(it)?.let { latestBaseObject ->
+					latestBaseObject.defaultChapterId = baseObject.defaultChapterId
+					latestBaseObject.notebookIdOrderList = baseObject.notebookIdOrderList
+					latestBaseObject.bucketIdOrderList = baseObject.bucketIdOrderList
+				} ?: copyToRealm(baseObject)
+			} ?: copyToRealm(baseObject)
+		}
+	}
+
 	fun putChapter(chapterObject : ChapterObject, modifyTimestampAuto : Boolean = true) {
 		realm?.writeBlocking {
 			val storedChapterObject = getChapterFromId(chapterObject.id)
@@ -260,7 +291,7 @@ class KoinRepository {
 	fun getAllChapter() : List<ChapterObject> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(ChapterObject::class).find().map { it }
+			else realm.query(ChapterObject::class).find()
 		}
 	}
 
@@ -367,7 +398,6 @@ class KoinRepository {
 					storedNoteObject.contentThumbnail = noteObject.contentThumbnail
 					storedNoteObject.content = noteObject.content
 					storedNoteObject.thumbnail = noteObject.thumbnail
-					storedNoteObject.thumbnailType = noteObject.thumbnailType
 					storedNoteObject.isFavourite = noteObject.isFavourite
 					storedNoteObject.isLocked = noteObject.isLocked
 					storedNoteObject.parentId = noteObject.parentId
@@ -703,35 +733,90 @@ class KoinRepository {
 		}
 	}
 
-	private fun delete(id : RealmUUID) {
+	fun deleteAttachment(attachmentList : List<File>, keepHistory : Boolean = true) {
+		if (keepHistory) attachmentList
+			.map {
+				DeletedAttachment()
+					.apply {
+						it.parentFile?.name?.let { it1 -> RealmUUID.Companion.from(it1) }?.let { this.parentId = it }
+						this.name = it.name
+					}
+			}.let { deletedFileList ->
+				getBaseObject()?.let { realm?.writeBlocking { findLatest(it)?.deletedAttachmentSet?.addAll(deletedFileList) } }
+			}
+		attachmentRepository.delete(attachmentList)
+	}
+
+	private fun delete(id : RealmUUID, keepHistory : Boolean) {
 		getNoteFromId(id)?.let {
+			deleteAttachment(attachmentRepository.getAttachmentFromNote(it.id), keepHistory)
 			attachmentRepository.delete(it.id)
-			realm?.writeBlocking { findLatest(it)?.let { delete(it) } }
+			realm?.writeBlocking {
+				findLatest(it)?.let {
+					if (keepHistory) updateDeleteHistory(id, NoteObject::class.simpleName)
+					delete(it)
+				}
+			}
 		}
 		getChapterFromId(id)?.let {
 			delete(getNoteWithParentId(id).map { it.id })
-			realm?.writeBlocking { findLatest(it)?.let { delete(it) } }
+			realm?.writeBlocking {
+				findLatest(it)?.let {
+					if (keepHistory) updateDeleteHistory(id, ChapterObject::class.simpleName)
+					delete(it)
+				}
+			}
 		}
-		getBucketItemFromId(id)?.let { realm?.writeBlocking { findLatest(it)?.let { delete(it) } } }
+		getBucketItemFromId(id)?.let {
+			realm?.writeBlocking {
+				findLatest(it)?.let {
+					if (keepHistory) updateDeleteHistory(id, BucketItemObject::class.simpleName)
+					delete(it)
+				}
+			}
+		}
 		getBucketFromId(id)?.let {
 			delete(getBucketItemWithParentId(id).map { it.id })
-			realm?.writeBlocking { findLatest(it)?.let { delete(it) } }
+			realm?.writeBlocking {
+				findLatest(it)?.let {
+					if (keepHistory) updateDeleteHistory(id, BucketObject::class.simpleName)
+					delete(it)
+				}
+			}
 		}
-		getTagFromId(id)?.let { realm?.writeBlocking { findLatest(it)?.let { delete(it) } } }
+		getTagFromId(id)?.let {
+			realm?.writeBlocking {
+				findLatest(it)?.let {
+					if (keepHistory) updateDeleteHistory(id, TagObject::class.simpleName)
+					delete(it)
+				}
+			}
+		}
 	}
 
-	private fun delete(idList : List<RealmUUID>) = idList.forEach { delete(it) }
+	private fun MutableRealm.updateDeleteHistory(id : RealmUUID, objectType : String?) {
+		getBaseObject()?.let { baseObject ->
+			DeletedObject().apply {
+				this.id = id
+				this.deletedTimestamp = System.currentTimeMillis()
+				this.objectType = objectType
+				findLatest(baseObject)?.deletedObjectSet?.add(this@apply)
+			}
+		}
+	}
 
-	fun deleteSuspended(id : RealmUUID, callback : suspend () -> Unit = {}) {
+	private fun delete(idList : Collection<RealmUUID>, keepHistory : Boolean = true) = idList.forEach { delete(it, keepHistory) }
+
+	fun deleteSuspended(id : RealmUUID, keepHistory : Boolean = true, callback : suspend () -> Unit = {}) {
 		CoroutineScope(Dispatchers.Default).launch {
-			delete(id)
+			delete(id, keepHistory)
 			callback()
 		}
 	}
 
-	fun deleteSuspended(idList : List<RealmUUID>, callback : suspend () -> Unit = {}) {
+	fun deleteSuspended(idList : Collection<RealmUUID>, keepHistory : Boolean = true, callback : suspend () -> Unit = {}) {
 		CoroutineScope(Dispatchers.Default).launch {
-			delete(idList)
+			delete(idList, keepHistory)
 			callback()
 		}
 	}
@@ -789,10 +874,12 @@ class KoinRepository {
 						NoteObject::class,
 						BucketObject::class,
 						BucketItemObject::class,
-						TagObject::class
+						TagObject::class,
+						DeletedObject::class,
+						DeletedAttachment::class,
 					)
 				)
-				.schemaVersion(2)
+				.schemaVersion(SCHEMA_VERSION)
 				.directory(path)
 				.name(name)
 				.migration(RealmMigrator())
@@ -813,10 +900,12 @@ class KoinRepository {
 							NoteObject::class,
 							BucketObject::class,
 							BucketItemObject::class,
-							TagObject::class
+							TagObject::class,
+							DeletedObject::class,
+							DeletedAttachment::class,
 						)
 					)
-					.schemaVersion(2)
+					.schemaVersion(SCHEMA_VERSION)
 					.directory(path)
 					.name(name)
 					.migration(RealmMigrator())
@@ -858,11 +947,13 @@ class KoinRepository {
 							NoteObject::class,
 							BucketObject::class,
 							BucketItemObject::class,
-							TagObject::class
+							TagObject::class,
+							DeletedObject::class,
+							DeletedAttachment::class,
 						)
 					)
 					.encryptionKey(key)
-					.schemaVersion(2)
+					.schemaVersion(SCHEMA_VERSION)
 					.migration(RealmMigrator())
 					.build()
 
@@ -875,7 +966,83 @@ class KoinRepository {
 		}
 	}
 
+	val snapshot = Snapshot()
+
+	inner class Snapshot {
+
+		private fun getImportSnapshotDir() = File(context.cacheDir, "importSnapshot").also {
+			it.deleteRecursively()
+			it.mkdirs()
+		}
+
+		fun generate(callback : (File) -> Unit) {
+			val snapshotDir = File(context.cacheDir, "snapshot").also {
+				it.deleteRecursively()
+				it.mkdirs()
+			}
+			val fileName = "graphite_snapshot_${System.currentTimeMillis()}"
+			val currentSnapshotDir = File(snapshotDir, fileName).also {
+				it.mkdirs()
+			}
+
+			val observer = RecursiveFileObserver(
+				mPath = currentSnapshotDir.path,
+				mask = FileObserver.CLOSE_WRITE,
+				mListener = object : RecursiveFileObserver.EventListener {
+					override fun onEvent(event : Int, file : File?) {
+						if (event == FileObserver.CLOSE_WRITE && file == File(currentSnapshotDir, "$fileName.realm")) {
+							val attachmentFolder = File(currentSnapshotDir, "attachment").also { it.mkdirs() }
+							copyInDirectory(File(context.attachmentDirPath()), attachmentFolder)
+
+							val sevenZFile = File(snapshotDir, "${fileName}.7z")
+							val sevenZOutput = SevenZOutputFile(sevenZFile)
+							compress7z(currentSnapshotDir, sevenZOutput) { progress, total -> }
+
+							callback(sevenZFile)
+						}
+					}
+				}
+			)
+
+			observer.startWatching()
+			getRealmSnapshot("$fileName.realm", currentSnapshotDir.path)
+		}
+
+		fun restore(inputStream : InputStream, callback : (Boolean) -> Unit) {
+			val importSnapshotDir = getImportSnapshotDir()
+
+			val sevenZImportFile = File(importSnapshotDir, "graphite_snapshot.7z")
+			sevenZImportFile.outputStream().use { outputStream ->
+				inputStream.copyTo(outputStream)
+				outputStream.close()
+			}
+			inputStream.close()
+
+			val sevenZFile = SevenZFile(sevenZImportFile)
+			val snapshotDir = File(importSnapshotDir, "snapshot")
+			extract7z(sevenZFile, snapshotDir) { progress, total -> }
+
+			attachmentRepository.deleteAll()
+
+			snapshotDir.listFiles()?.firstOrNull { it.name.endsWith(".realm") }?.let {
+				restoreRealmSnapshot(context, it.name, snapshotDir.path) { isSuccess, exception ->
+					if (isSuccess) {
+						snapshotDir.listFiles()?.firstOrNull { it.name == "attachment" }?.let { attachmentDir ->
+							attachmentRepository.importAttachmentFromGraphite(attachmentDir)
+							ProcessPhoenix.triggerRebirth(context)
+						}
+					} else {
+						callback(false)
+					}
+				}
+			}
+		}
+	}
+
 	companion object {
+
+		const val SCHEMA_VERSION = 3L
+
 		sealed class RealmSnapshotCopyStatus {
 			object Success : RealmSnapshotCopyStatus()
 			object Error : RealmSnapshotCopyStatus()

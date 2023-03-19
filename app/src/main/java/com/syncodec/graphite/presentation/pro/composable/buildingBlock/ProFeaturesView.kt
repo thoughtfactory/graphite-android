@@ -1,11 +1,13 @@
 package com.syncodec.graphite.presentation.pro.composable.buildingBlock
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,20 +20,17 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.pager.HorizontalPagerIndicator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProFeaturesView() {
 
-	val pagerState = rememberPagerState(3132)
+	val pagerState = androidx.compose.foundation.pager.rememberPagerState(initialPage = 3132)
 
 	LaunchedEffect(key1 = null) {
 		launch {
@@ -47,7 +46,7 @@ fun ProFeaturesView() {
 		modifier = Modifier.fillMaxWidth()
 	) {
 		HorizontalPager(
-			count = 7171,
+			pageCount = 7171,
 			state = pagerState,
 		) {
 			when (it % 7) {

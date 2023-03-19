@@ -11,7 +11,6 @@ import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
-import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
@@ -20,7 +19,7 @@ import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBo
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
-import com.syncodec.graphite.presentation.dropbox.screen.DropboxScreenViewModel
+import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.main.MainViewModel
@@ -69,12 +68,7 @@ class BaseApplication : Application() {
 			androidContext(this@BaseApplication)
 			modules(
 				module {
-					single { AttachmentRepository().apply { this.initRepository(context = this@BaseApplication) } }
-					single {
-						KoinRepository().apply {
-//						this.initRepository(context = this@BaseApplication)
-						}
-					}
+					single { KoinRepository() }
 					single { DBox(this@BaseApplication) }
 
 					viewModelOf(::MainViewModel)
@@ -100,7 +94,7 @@ class BaseApplication : Application() {
 					viewModelOf(::LocalBackupViewModel)
 					viewModelOf(::WhereDialogViewModel)
 					viewModelOf(::ExplorerScreenViewModel)
-					viewModelOf(::DropboxScreenViewModel)
+					viewModelOf(::DropboxSyncViewModel)
 				}
 			)
 		}

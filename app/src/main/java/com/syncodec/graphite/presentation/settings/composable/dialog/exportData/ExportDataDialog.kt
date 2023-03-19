@@ -143,7 +143,7 @@ fun ExportDataDialog(
 								}
 							}
 						}
-						viewModel.attachmentRepository.getAttachmentDir().let {
+						viewModel.repository.attachmentRepository.getAttachmentDir().let {
 							File(exportFileDir, "attachment").let { attachmentFile ->
 								attachmentFile.mkdirs()
 								it.copyRecursively(attachmentFile)

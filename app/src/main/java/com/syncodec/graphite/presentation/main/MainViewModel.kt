@@ -12,20 +12,25 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class MainViewModel(private val repository : KoinRepository) : ViewModel() {
+class MainViewModel(private val repository : KoinRepository, private val dBox : DBox) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
 	val defaultChapterId = MutableStateFlow(null as RealmUUID?)
+
+	private val _testConnectionResponse = MutableStateFlow(null as DBox.Companion.TestConnectionResponse?)
+	val testConnectionResponse : StateFlow<DBox.Companion.TestConnectionResponse?> = _testConnectionResponse
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -42,6 +47,8 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 				}
 			}
 		}
+
+//		testDropboxConnection()
 	}
 
 	fun putNotebook(
@@ -105,5 +112,11 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	fun onDeauthenticate() {
 		repository.isAuthenticated.tryEmit(false)
+	}
+
+	fun testDropboxConnection() {
+		viewModelScope.launch(Dispatchers.IO) {
+			dBox.testConnection { _testConnectionResponse.tryEmit(it) }
+		}
 	}
 }

@@ -99,6 +99,8 @@ class MainActivity : ComponentActivity() {
 			.setAutoSelectEnabled(false)
 			.build()
 
+		startSyncService()
+
 		setContent {
 			BaseContent {
 				val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
@@ -124,18 +126,21 @@ class MainActivity : ComponentActivity() {
 				val biometricErrorMessage by this.biometricErrorMessage
 
 				val syncStatus by dropboxSyncStatus.collectAsState()
+				val testConnectionResponse by viewModel.testConnectionResponse.collectAsState(initial = null)
 
 				AnimatedContent(
 					targetState = isFirstTime,
 					transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
-					modifier = Modifier.fillMaxSize()
+					modifier = Modifier.fillMaxSize(),
+					label = "isFirstTime"
 				) {
 					when (it) {
 						true -> FirstTimeScreen(onClickLogin = this@MainActivity::signIn)
 						false -> AnimatedContent(
 							targetState = repositoryState,
 							transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
-							modifier = Modifier.fillMaxSize()
+							modifier = Modifier.fillMaxSize(),
+							label = "repositoryState"
 						) {
 							when (it) {
 								RepositoryState.LOCKED -> RepositoryLockedScreen(
@@ -145,8 +150,13 @@ class MainActivity : ComponentActivity() {
 
 								RepositoryState.SUCCESS -> MainScreen(
 									syncStatus = syncStatus,
-									onClickSyncNow = { dropboxServiceConnectionManager?.service?.initSync() },
-									onClickForceSync = { dropboxServiceConnectionManager?.service?.forceSync() },
+									testConnectionResponse = testConnectionResponse,
+									testDropboxConnection = { viewModel.testDropboxConnection() },
+									onClickSyncNow = {
+										Log.i("npr", "onClickSyncNow : ${dropboxServiceConnectionManager == null} : ${dropboxServiceConnectionManager?.service == null}")
+										dropboxServiceConnectionManager?.service?.initSync()
+									},
+//									onClickForceSync = { dropboxServiceConnectionManager?.service?.forceSync() },
 								)
 
 								RepositoryState.ERROR -> RepositoryLockedScreen(

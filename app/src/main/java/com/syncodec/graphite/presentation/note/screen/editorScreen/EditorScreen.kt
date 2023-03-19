@@ -47,7 +47,6 @@ import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attach
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
-import com.syncodec.graphite.presentation.common.richText.rememberRichTextEditor
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.TopBar
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.bottomBar.BottomBar
@@ -193,7 +192,7 @@ fun EditorScreen(
 
 	fun saveAttachments(noteId : RealmUUID, attachmentListToAdd : List<Uri>, attachmentListToRemove : List<File>) {
 		scope.launch(Dispatchers.IO) {
-			val attachmentDir = context.attachmentDir(noteId = noteId, true)
+			val attachmentDir = context.attachmentDir(parentId = noteId, true)
 			viewModel.putAttachment(noteId, attachmentListToAdd, attachmentListToRemove)
 			attachmentDir.listFiles()?.forEach { file ->
 				val previewBitmap = file.preview(context = context).first
@@ -207,7 +206,7 @@ fun EditorScreen(
 
 	LaunchedEffect(key1 = noteId) {
 		noteId?.let { noteId ->
-			val attachmentDir = context.attachmentDir(noteId = noteId)
+			val attachmentDir = context.attachmentDir(parentId = noteId)
 			if (attachmentDir.exists()) attachmentDir.listFiles().let { attachmentListSaved = it?.toList() ?: listOf() }
 		}
 	}

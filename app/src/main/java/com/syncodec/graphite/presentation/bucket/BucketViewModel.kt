@@ -139,6 +139,6 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	fun deleteBucket(id : RealmUUID, callback : suspend () -> Unit) {
 		this@BucketViewModel.isOperationPending.tryEmit(true)
-		repository.deleteSuspended(id, callback)
+		repository.deleteSuspended(id = id, callback = callback)
 	}
 }

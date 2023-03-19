@@ -27,15 +27,18 @@ class BucketItemObject() : RealmObject {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
 		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
-		this.bucketType = jsonObject.optString("bucketType")
-		this.title = jsonObject.optString("title")
-		this.state = jsonObject.optString("state")
-		this.thumbnail = jsonObject.optString("thumbnail")
+		this.bucketType = jsonObject.optString("bucketType").let { if (it.isNullOrEmpty() || it == "null") BucketType.UNKNOWN.name else it }
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.state = jsonObject.optString("state").let { if (it.isNullOrEmpty() || it == "null") BucketItemState.ALPHA.name else it }
+		this.thumbnail = jsonObject.optString("thumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
-		this.key = jsonObject.optString("key")
-		this.data = jsonObject.optString("data")
+		this.key = jsonObject.optString("key").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.data = jsonObject.optString("data").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.overWritable = jsonObject.optBoolean("overWritable", true)
+		this.deletable = jsonObject.optBoolean("deletable", true)
+		this.localOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -53,6 +56,10 @@ class BucketItemObject() : RealmObject {
 
 	var key : String? = null
 	var data : String? = null
+
+	var overWritable : Boolean = true
+	var deletable : Boolean = true
+	var localOnly : Boolean = false
 
 	fun getBookData() : BookData? {
 		return try {
@@ -102,6 +109,9 @@ class BucketItemObject() : RealmObject {
 			this.parentId = this@BucketItemObject.parentId
 			this.key = this@BucketItemObject.key
 			this.data = this@BucketItemObject.data
+			this.overWritable = this@BucketItemObject.overWritable
+			this.deletable = this@BucketItemObject.deletable
+			this.localOnly = this@BucketItemObject.localOnly
 		}
 	}
 
@@ -119,6 +129,8 @@ class BucketItemObject() : RealmObject {
 		jsonObject.put("parentId", this.parentId?.toString())
 		jsonObject.put("key", this.key)
 		jsonObject.put("data", this.data)
+		jsonObject.put("overWritable", this.overWritable)
+		jsonObject.put("deletable", this.deletable)
 
 		return jsonObject.toString()
 	}
@@ -136,6 +148,9 @@ class BucketItemObject() : RealmObject {
 		result = 31 * result + (parentId?.hashCode() ?: 0)
 		result = 31 * result + (key?.hashCode() ?: 0)
 		result = 31 * result + (data?.hashCode() ?: 0)
+		result = 31 * result + overWritable.hashCode()
+		result = 31 * result + deletable.hashCode()
+		result = 31 * result + localOnly.hashCode()
 		return result
 	}
 
@@ -155,7 +170,20 @@ class BucketItemObject() : RealmObject {
 		if (parentId != other.parentId) return false
 		if (key != other.key) return false
 		if (data != other.data) return false
+		if (overWritable != other.overWritable) return false
+		if (deletable != other.deletable) return false
+		if (localOnly != other.localOnly) return false
 
 		return true
+	}
+
+	companion object {
+		fun fromCloudSnapshot(snapshot: ByteArray) : BucketItemObject? {
+			return try {
+				BucketItemObject(JSONObject(String(snapshot, Charsets.UTF_8)))
+			} catch (e : Exception) {
+				null
+			}
+		}
 	}
 }

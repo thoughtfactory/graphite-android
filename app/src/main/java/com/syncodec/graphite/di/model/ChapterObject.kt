@@ -18,8 +18,8 @@ class ChapterObject() : RealmObject {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
 		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
-		this.title = jsonObject.optString("title")
-		this.description = jsonObject.optString("description")
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.color = jsonObject.optInt("color")
 		this.thumbnail = jsonObject.optString("thumbnail")
 		if (this.thumbnail == "null") {
@@ -29,6 +29,9 @@ class ChapterObject() : RealmObject {
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
+		this.overWritable = jsonObject.optBoolean("overWritable", true)
+		this.deletable = jsonObject.optBoolean("deletable", true)
+		this.localOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -45,7 +48,9 @@ class ChapterObject() : RealmObject {
 
 	var parentId : RealmUUID? = null
 
-	var lastSyncedTimestamp : Long = 0
+	var overWritable : Boolean = true
+	var deletable : Boolean = true
+	var localOnly : Boolean = false
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
@@ -120,6 +125,16 @@ class ChapterObject() : RealmObject {
 
 		return true
 	}
+
+	companion object {
+		fun fromCloudSnapshot(snapshot : ByteArray) : ChapterObject? {
+			return try {
+				ChapterObject(JSONObject(String(snapshot, Charsets.UTF_8)))
+			} catch (e : Exception) {
+				null
+			}
+		}
+	}
 }
 
 @Keep
@@ -132,7 +147,10 @@ data class ChapterObjectLite(
 	val color : Int?,
 	val isFavourite : Boolean,
 	val isLocked : Boolean,
-	val parentId : RealmUUID?
+	val parentId : RealmUUID?,
+	val overWritable : Boolean = true,
+	val deletable : Boolean = true,
+	val localOnly : Boolean = false,
 ) {
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -144,6 +162,9 @@ data class ChapterObjectLite(
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + (parentId?.hashCode() ?: 0)
+		result = 31 * result + overWritable.hashCode()
+		result = 31 * result + deletable.hashCode()
+		result = 31 * result + localOnly.hashCode()
 		return result
 	}
 
@@ -160,6 +181,9 @@ data class ChapterObjectLite(
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 		if (parentId != other.parentId) return false
+		if (overWritable != other.overWritable) return false
+		if (deletable != other.deletable) return false
+		if (localOnly != other.localOnly) return false
 
 		return true
 	}
@@ -175,7 +199,10 @@ data class ChapterObjectLite(
 				color = getRandomColor().toArgb(),
 				isFavourite = Random.nextBoolean(),
 				isLocked = Random.nextBoolean(),
-				parentId = RealmUUID.random()
+				parentId = RealmUUID.random(),
+				overWritable = Random.nextBoolean(),
+				deletable = Random.nextBoolean(),
+				localOnly = Random.nextBoolean()
 			)
 		}
 	}

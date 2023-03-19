@@ -20,38 +20,42 @@ import androidx.annotation.WorkerThread
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.dropbox.core.DbxRequestConfig
-import com.dropbox.core.InvalidAccessTokenException
 import com.dropbox.core.v2.DbxClientV2
-import com.dropbox.core.v2.files.SearchOptions
+import com.dropbox.core.v2.files.DeleteErrorException
+import com.dropbox.core.v2.files.DownloadErrorException
 import com.dropbox.core.v2.files.WriteMode
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.common.collect.Maps
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.DeletedObject
 import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
 import com.syncodec.graphite.di.repository.RealmUUIDKeyDeserializer
 import com.syncodec.graphite.di.repository.RealmUUIDSerializer
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.di.sync.dropbox.DBox
-import com.syncodec.graphite.di.sync.dropbox.DropboxResponse
-import com.syncodec.graphite.utils.dbxHash
-import com.syncodec.graphite.utils.sha256
+import com.syncodec.graphite.utils.toDbxHashString
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.koin.android.ext.android.inject
-import java.nio.charset.Charset
+import java.io.InputStream
 import java.util.Date
-import kotlin.reflect.KFunction1
 import kotlin.reflect.KMutableProperty1
 
 
@@ -68,6 +72,10 @@ class DropboxService : LifecycleService() {
 					RealmUUID::class.java,
 					RealmUUIDDeserializer()
 				)
+				.addKeyDeserializer(
+					RealmUUID::class.java,
+					RealmUUIDKeyDeserializer()
+				)
 		)
 	}.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -77,11 +85,20 @@ class DropboxService : LifecycleService() {
 
 	private var dropboxServiceBinder : IBinder? = DropboxServiceBinder()
 
-	//	val presenter : Presenter by inject()
+//	Don't make these private or lateinit
 	val repository : KoinRepository by inject()
+	val attachmentRepository : AttachmentRepository by inject()
 	val dBox : DBox by inject()
 
 	val dropboxSyncStatus = MutableStateFlow<DropboxSyncStatus>(DropboxSyncStatus.Init)
+
+	init {
+		lifecycleScope.launch(Dispatchers.Default) {
+			dropboxSyncStatus.collect {
+				Log.i("npr71", "DropboxService: dropboxSyncStatus: ${it::class.simpleName}")
+			}
+		}
+	}
 
 	// Handler that receives messages from the thread
 	private inner class ServiceHandler(looper : Looper) : Handler(looper) {
@@ -106,13 +123,12 @@ class DropboxService : LifecycleService() {
 	private fun moveToForeground() {
 		val channelId = "dropboxSyncService"
 		val channelName = "Dropbox Sync"
-		val chan = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
+		val chan = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW)
 		chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
 		getSystemService(NotificationManager::class.java).createNotificationChannel(chan)
 
-
 		val notification : Notification = Notification.Builder(this, channelId)
-			.setContentTitle("Synchronizing")
+			.setContentTitle("Graphite")
 			.setContentText("Synchronizing with Dropbox")
 			.setSmallIcon(R.drawable.ic_ring)
 			.setOngoing(true)
@@ -158,493 +174,476 @@ class DropboxService : LifecycleService() {
 		Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
 	}
 
+	var lockCoroutineScope : CoroutineScope? = null
+
 	fun initSync() {
-		if (dropboxSyncStatus.value == DropboxSyncStatus.Init || dropboxSyncStatus.value == DropboxSyncStatus.Idle) {
-			Log.i("npr71", "DropboxService: startSync")
+		Log.i("npr71", "DropboxService : fun : initSync")
+		if (dropboxSyncStatus.value is DropboxSyncStatus.Init || dropboxSyncStatus.value is DropboxSyncStatus.Idle) {
 			Toast.makeText(this, "startSync", Toast.LENGTH_SHORT).show()
 			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Loading)
 
 			val config = DbxRequestConfig("Graphite")
 			dBox.getAccessToken {
-				if (it is DropboxResponse.Success<*>) {
-					DbxClientV2(config, it.result as String).let {
+				if (it is DBox.Companion.AccessTokenResponseResponse.Success) {
+					val accessToken =
+						"sl.BadrlZktMta_HVrMyLAq6j1ti92zsvD-kvRZLooMNg9yK9a_Lym1V_euCoIZnZtxPkzUwrFmWjjEXiYlL8CftktmSNc6u6V7WYjllgyi8VH4UXThIpIp7dLjkd88MtUfca0IgThnXPU"
+//					DbxClientV2(config, it.result as String).let {
+					DbxClientV2(config, accessToken).let { dbxClientV2 ->
 						dropboxSyncStatus.tryEmit(DropboxSyncStatus.Connected)
 						lifecycleScope.launch(Dispatchers.IO) {
-							it.checkLock()
-						}
-					}
-				}
-			}
-
-			lifecycleScope.launch(Dispatchers.Default) {
-				while (true) {
-					serviceHandler?.sendEmptyMessage(0)
-					delay(5000)
-				}
-			}
-		}
-	}
-
-	fun forceSync() {
-		if (dropboxSyncStatus.value !is DropboxSyncStatus.Loading && dropboxSyncStatus.value !is DropboxSyncStatus.Connected && dropboxSyncStatus.value !is DropboxSyncStatus.Syncing) {
-			Log.i("npr71", "DropboxService: startSync")
-			Toast.makeText(this, "startSync", Toast.LENGTH_SHORT).show()
-			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Loading)
-
-			val config = DbxRequestConfig("Graphite")
-			dBox.getAccessToken {
-				if (it is DropboxResponse.Success<*>) {
-					DbxClientV2(config, it.result as String).let {
-						dropboxSyncStatus.tryEmit(DropboxSyncStatus.Connected)
-						lifecycleScope.launch(Dispatchers.IO) {
-							it.checkLock()
-						}
-					}
-				}
-			}
-
-			lifecycleScope.launch(Dispatchers.Default) {
-				while (true) {
-					serviceHandler?.sendEmptyMessage(0)
-					delay(5000)
-				}
-			}
-		}
-	}
-
-	@WorkerThread
-	private fun DbxClientV2.checkLock() {
-		val searchOption = SearchOptions
-			.newBuilder()
-			.withFilenameOnly(true)
-			.withFileExtensions(listOf("lock"))
-			.build()
-
-		try {
-			files()
-				.searchV2Builder("graphite")
-				.withOptions(searchOption)
-				.start()
-				.matches
-				.isEmpty()
-				.let { isEmpty ->
-					if (isEmpty) {
-						lockDrive()
-						sync()
-						unlockDrive()
-					} else {
-						dropboxSyncStatus.tryEmit(DropboxSyncStatus.DriveLocked)
-					}
-				}
-		} catch (e : InvalidAccessTokenException) {
-			dropboxSyncStatus.tryEmit(DropboxSyncStatus.SyncError("Invalid Access Token"))
-		} catch (e : Exception) {
-			dropboxSyncStatus.tryEmit(DropboxSyncStatus.SyncError("Unknown Error"))
-			e.printStackTrace()
-			Log.i("npr71", "DropboxService: ${e.message}")
-		}
-	}
-
-	@WorkerThread
-	fun DbxClientV2.lockDrive() {
-		Log.i("npr71", "DropboxService: lockDrive")
-		val currentTimestamp = "${System.currentTimeMillis()}".toByteArray()
-
-		files()
-			.upload("/sync/graphite.lock")
-			.uploadAndFinish(currentTimestamp.inputStream()) {
-				if (it == currentTimestamp.size.toLong()) {
-					Log.i("npr71", "DropboxService: lockDrive: upload success")
-					dropboxSyncStatus.tryEmit(DropboxSyncStatus.Syncing(0, 0))
-				} else {
-					Log.i("npr71", "DropboxService: lockDrive: upload failed")
-				}
-			}
-	}
-
-	@WorkerThread
-	fun DbxClientV2.unlockDrive() {
-		Log.i("npr71", "DropboxService: unlockDrive")
-		files()
-			.deleteV2("/sync/graphite.lock")
-			.let {
-				Log.i("npr71", "DropboxService: unlockDrive: delete success")
-				dropboxSyncStatus.tryEmit(DropboxSyncStatus.Idle)
-			}
-	}
-
-	@WorkerThread
-	fun DbxClientV2.sync() {
-		downloadMetadata().let { dropboxMetadata ->
-
-			Log.i("npr71", "DropboxService: sync: dropboxMetadata: $dropboxMetadata")
-
-			val localChapterList = repository.getAllChapter().map { it.clone() }
-			val localNoteList = repository.getAllNote().map { it.clone() }
-			val localBucketList = repository.getAllBucket().map { it.clone() }
-			val localBucketItemList = repository.getAllBucketItem().map { it.clone() }
-			val localTagList = repository.getAllTag().map { it.clone() }
-
-			val (
-				toUpSyncChapterList,
-				toDownSyncChapterList
-			) = countUnSyncedObjects(
-				cloudObjectMetadata = dropboxMetadata?.chapterMetadata ?: mapOf(),
-				localObjectList = localChapterList,
-				id = ChapterObject::id,
-				modifiedTimestamp = ChapterObject::modifiedTimestamp,
-				toCloudSnapshot = ChapterObject::toCloudSnapshot
-			)
-
-			Log.i("npr71", "DropboxService: sync: toUpSyncChapterList: ${toUpSyncChapterList.size}")
-			Log.i("npr71", "DropboxService: sync: toDownSyncChapterList: ${toDownSyncChapterList.size}")
-
-			val (
-				toUpSyncNoteList,
-				toDownSyncNoteList
-			) = countUnSyncedObjects(
-				cloudObjectMetadata = dropboxMetadata?.noteMetadata ?: mapOf(),
-				localObjectList = localNoteList,
-				id = NoteObject::id,
-				modifiedTimestamp = NoteObject::modifiedTimestamp,
-				toCloudSnapshot = NoteObject::toCloudSnapshot
-			)
-
-			Log.i("npr71", "DropboxService: sync: toUpSyncNoteList: ${toUpSyncNoteList.size}")
-			Log.i("npr71", "DropboxService: sync: toDownSyncNoteList: ${toDownSyncNoteList.size}")
-
-			val (
-				toUpSyncBucketList,
-				toDownSyncBucketList
-			) = countUnSyncedObjects(
-				cloudObjectMetadata = dropboxMetadata?.bucketMetadata ?: mapOf(),
-				localObjectList = localBucketList,
-				id = BucketObject::id,
-				modifiedTimestamp = BucketObject::modifiedTimestamp,
-				toCloudSnapshot = BucketObject::toCloudSnapshot
-			)
-
-			Log.i("npr71", "DropboxService: sync: toUpSyncBucketList: ${toUpSyncBucketList.size}")
-			Log.i("npr71", "DropboxService: sync: toDownSyncBucketList: ${toDownSyncBucketList.size}")
-
-			val (
-				toUpSyncBucketItemList,
-				toDownSyncBucketItemList
-			) = countUnSyncedObjects(
-				cloudObjectMetadata = dropboxMetadata?.bucketItemMetadata ?: mapOf(),
-				localObjectList = localBucketItemList,
-				id = BucketItemObject::id,
-				modifiedTimestamp = BucketItemObject::modifiedTimestamp,
-				toCloudSnapshot = BucketItemObject::toCloudSnapshot
-			)
-
-			Log.i("npr71", "DropboxService: sync: toUpSyncBucketItemList: ${toUpSyncBucketItemList.size}")
-			Log.i("npr71", "DropboxService: sync: toDownSyncBucketItemList: ${toDownSyncBucketItemList.size}")
-
-			DropboxSyncStatus.Syncing(
-				toUpSyncChapterCount = toUpSyncChapterList.size,
-				toDownSyncChapterCount = toDownSyncChapterList.size,
-				toUpSyncNoteCount = toUpSyncNoteList.size,
-				toDownSyncNoteCount = toDownSyncNoteList.size,
-				toUpSyncBucketCount = toUpSyncBucketList.size,
-				toDownSyncBucketCount = toDownSyncBucketList.size,
-				toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
-				toDownSyncBucketItemCount = toDownSyncBucketItemList.size
-			).let { dropboxSyncStatus.tryEmit(it) }
-
-			syncObjects(
-				localObjectList = localChapterList,
-				toDownSyncObjectList = toDownSyncChapterList,
-				toUpSyncObjectList = toUpSyncChapterList,
-				objectPath = "chapter",
-				id = ChapterObject::id,
-				toCloudSnapshot = ChapterObject::toCloudSnapshot,
-				updateLocalData = {
-					it.forEach { (chapterObject, operation) ->
-						if (operation == Operation.Create || operation == Operation.Update) {
-							ChapterObject(JSONObject(chapterObject.toString(Charset.defaultCharset()))).apply { repository.putChapter(this, false) }
-						} else if (operation == Operation.Delete) {
-//						repository.deleteChapterSuspended(chapterObject)
-						}
-					}
-				}
-			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
-				dropboxSyncStatus.tryEmit(
-					DropboxSyncStatus.Syncing(
-						toUpSyncChapterCount = toUpSyncCount - toUpSynced,
-						toDownSyncChapterCount = toDownSyncCount - toDownSynced,
-						toUpSyncNoteCount = toUpSyncNoteList.size,
-						toDownSyncNoteCount = toDownSyncNoteList.size,
-						toUpSyncBucketCount = toUpSyncBucketList.size,
-						toDownSyncBucketCount = toDownSyncBucketList.size,
-						toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
-						toDownSyncBucketItemCount = toDownSyncBucketItemList.size,
-					)
-				)
-			}
-
-			syncObjects(
-				localObjectList = localNoteList,
-				toDownSyncObjectList = toDownSyncNoteList,
-				toUpSyncObjectList = toUpSyncNoteList,
-				objectPath = "note",
-				id = NoteObject::id,
-				toCloudSnapshot = NoteObject::toCloudSnapshot,
-				updateLocalData = {
-					it.forEach { (noteObject, operation) ->
-						if (operation == Operation.Create || operation == Operation.Update) {
-							NoteObject(JSONObject(noteObject.toString(Charset.defaultCharset()))).apply { repository.putNote(this, false) }
-						} else if (operation == Operation.Delete) {
-//						repository.deleteNoteSuspended(noteObject)
-						}
-					}
-				}
-			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
-				dropboxSyncStatus.tryEmit(
-					DropboxSyncStatus.Syncing(
-						toUpSyncChapterCount = 0,
-						toDownSyncChapterCount = 0,
-						toUpSyncNoteCount = toUpSyncCount - toUpSynced,
-						toDownSyncNoteCount = toDownSyncCount - toDownSynced,
-						toUpSyncBucketCount = toUpSyncBucketList.size,
-						toDownSyncBucketCount = toDownSyncBucketList.size,
-						toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
-						toDownSyncBucketItemCount = toDownSyncBucketItemList.size,
-					)
-				)
-			}
-
-			syncObjects(
-				localObjectList = localBucketList,
-				toDownSyncObjectList = toDownSyncBucketList,
-				toUpSyncObjectList = toUpSyncBucketList,
-				objectPath = "bucket",
-				id = BucketObject::id,
-				toCloudSnapshot = BucketObject::toCloudSnapshot,
-				updateLocalData = {
-					it.forEach { (bucketObject, operation) ->
-						if (operation == Operation.Create || operation == Operation.Update) {
-							BucketObject(JSONObject(bucketObject.toString(Charset.defaultCharset()))).apply { repository.putBucket(this, false) }
-						} else if (operation == Operation.Delete) {
-
-						}
-					}
-				}
-			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
-				dropboxSyncStatus.tryEmit(
-					DropboxSyncStatus.Syncing(
-						toUpSyncChapterCount = 0,
-						toDownSyncChapterCount = 0,
-						toUpSyncNoteCount = 0,
-						toDownSyncNoteCount = 0,
-						toUpSyncBucketCount = toUpSyncCount - toUpSynced,
-						toDownSyncBucketCount = toDownSyncCount - toDownSynced,
-						toUpSyncBucketItemCount = toUpSyncBucketItemList.size,
-						toDownSyncBucketItemCount = toDownSyncBucketItemList.size,
-					)
-				)
-			}
-
-			syncObjects(
-				localObjectList = localBucketItemList,
-				toDownSyncObjectList = toDownSyncBucketItemList,
-				toUpSyncObjectList = toUpSyncBucketItemList,
-				objectPath = "bucketItem",
-				id = BucketItemObject::id,
-				toCloudSnapshot = BucketItemObject::toCloudSnapshot,
-				updateLocalData = {
-					it.forEach { (bucketItemObject, operation) ->
-						if (operation == Operation.Create || operation == Operation.Update) {
-							BucketItemObject(JSONObject(bucketItemObject.toString(Charset.defaultCharset()))).apply { repository.putBucketItem(this, false) }
-						} else if (operation == Operation.Delete) {
-
-						}
-					}
-				}
-			) { toDownSyncCount, toDownSynced, toUpSyncCount, toUpSynced ->
-				dropboxSyncStatus.tryEmit(
-					DropboxSyncStatus.Syncing(
-						toUpSyncChapterCount = 0,
-						toDownSyncChapterCount = 0,
-						toUpSyncNoteCount = 0,
-						toDownSyncNoteCount = 0,
-						toUpSyncBucketCount = 0,
-						toDownSyncBucketCount = toDownSyncBucketList.size,
-						toUpSyncBucketItemCount = toUpSyncCount - toUpSynced,
-						toDownSyncBucketItemCount = toDownSyncCount - toDownSynced,
-					)
-				)
-			}
-
-			updateMetadata()
-		}
-	}
-
-	private fun DbxClientV2.downloadMetadata() : DropboxMetadata? {
-
-		val searchOption = SearchOptions
-			.newBuilder()
-			.withFilenameOnly(true)
-			.withFileExtensions(listOf("json"))
-			.withPath("/sync")
-			.build()
-
-		files()
-			.searchV2Builder("metadata")
-			.withOptions(searchOption)
-			.start()
-			.matches
-			.isEmpty()
-			.let { isEmpty ->
-				if (isEmpty) {
-					Log.i("npr71", "DropboxService: downloadMetadata: metadata not found")
-					return null
-				} else {
-					files()
-						.downloadBuilder("/sync/metadata.json")
-						.start()
-						.inputStream
-						.readBytes()
-						.let {
-							return try {
-								objectMapper.readValue<DropboxMetadata>(it)
-							} catch (e : Exception) {
-								e.printStackTrace()
-								null
+							dbxClientV2.checkLock {
+								dropboxSyncStatus.tryEmit(DropboxSyncStatus.Syncing())
+								dbxClientV2.lock()
+								dbxClientV2.sync()
+								lockCoroutineScope?.cancel()
+								dbxClientV2.unlock()
 							}
 						}
+					}
 				}
 			}
-	}
 
-	@WorkerThread
-	private fun <T> DbxClientV2.syncObjects(
-		localObjectList : List<T>,
-		toDownSyncObjectList : Map<RealmUUID, Operation> = mapOf(),
-		toUpSyncObjectList : List<RealmUUID> = listOf(),
-		objectPath : String,
-		id : KMutableProperty1<T, RealmUUID>,
-		toCloudSnapshot : KFunction1<T, String>,
-		updateLocalData : (Map<ByteArray, Operation>) -> Unit = {},
-		progress : (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> }
-	) {
-		val downloadedObjectList = mutableMapOf<ByteArray, Operation>()
-
-		toDownSyncObjectList.toList().forEachIndexed { index, (chapterId, operation) ->
-			downloadedObjectList[downSyncObject(objectPath, chapterId.toString())] = operation
-			progress(toDownSyncObjectList.size, index, toUpSyncObjectList.size, 0)
-		}
-
-		updateLocalData(downloadedObjectList)
-
-		toUpSyncObjectList.forEachIndexed { index, objectId ->
-			Log.i("npr71", "DropboxService: syncObjects: uploading $objectPath $objectId")
-			upSyncObject(objectPath, objectId.toString(), toCloudSnapshot(localObjectList.first { id.get(it) == objectId }).encodeToByteArray())
-			progress(0, 0, toUpSyncObjectList.size, index)
+			lifecycleScope.launch(Dispatchers.Default) {
+				while (true) {
+					serviceHandler?.sendEmptyMessage(0)
+					delay(5000)
+				}
+			}
 		}
 	}
 
-	@WorkerThread
-	private fun DbxClientV2.downSyncObject(objectPath : String, objectId : String) = files()
-		.downloadBuilder("/sync/$objectPath/$objectId.json")
-		.start()
-		.inputStream
-		.readBytes()
+	/**
+	 * @return true if lock is present
+	 */
+	private suspend fun DbxClientV2.checkLock(callback : suspend () -> Unit) {
+		try {
+			files().download(Path.Lock.path)
+			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Locked)
+		} catch (e : DownloadErrorException) {
+			if (e.errorValue.pathValue.isNotFound) callback()
+			else dropboxSyncStatus.tryEmit(DropboxSyncStatus.Failed)
+		} catch (e : Exception) {
+			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Failed)
+		}
+	}
 
-	@WorkerThread
-	private fun DbxClientV2.upSyncObject(objectPath : String, objectId : String, byteArray : ByteArray) {
-		val inputStream = byteArray.inputStream()
+	private fun DbxClientV2.lock() {
+		lifecycleScope.launch(Dispatchers.IO) {
+			lockCoroutineScope?.cancel()
+			lockCoroutineScope = this
+			kotlin.run breaking@{
+				while (true) {
+					dropboxSyncStatus.value.let {
+						when (it) {
+							is DropboxSyncStatus.Connected -> {
+								delay(30000)
+							}
+
+							is DropboxSyncStatus.Syncing -> {
+								reLock(it.sessionId)
+								delay(30000)
+							}
+
+							is DropboxSyncStatus.Idle -> {
+								return@breaking
+							}
+
+							else -> return@breaking
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private suspend fun DbxClientV2.unlock(repeat : Int = 13) {
+		for (i in 0 until repeat) {
+			try {
+				files().deleteV2(Path.Lock.path)
+				dropboxSyncStatus.tryEmit(DropboxSyncStatus.Idle)
+				break
+			} catch (e : DownloadErrorException) {
+				if (e.errorValue.pathValue.isNotFound) {
+					dropboxSyncStatus.tryEmit(DropboxSyncStatus.Idle)
+					break
+				}
+			} catch (e : Exception) {
+			}
+			delay(1300)
+		}
+	}
+
+	private fun DbxClientV2.reLock(sessionId : String) {
+		val timestamp = System.currentTimeMillis()
+		val jsonObject = JSONObject()
+		jsonObject.put("sessionId", sessionId)
+		jsonObject.put("timestamp", timestamp)
 		files()
-			.uploadBuilder("/sync/$objectPath/$objectId.json")
+			.uploadBuilder(Path.Lock.path)
 			.withMode(WriteMode.OVERWRITE)
-			.withStrictConflict(false)
-			.withAutorename(false)
-			.start()
-			.uploadAndFinish(inputStream) { inputStream.close() }
+			.withClientModified(Date(timestamp))
+			.uploadAndFinish(jsonObject.toString().toByteArray().inputStream())
 	}
 
 	@WorkerThread
-	private fun <T> countUnSyncedObjects(
-		cloudObjectMetadata : Map<RealmUUID, DropboxInnerMetadata>,
-		localObjectList : List<T>,
-		id : KMutableProperty1<T, RealmUUID>,
-		modifiedTimestamp : KMutableProperty1<T, Long>,
-		toCloudSnapshot : KFunction1<T, String>,
-	) : Pair<List<RealmUUID>, Map<RealmUUID, Operation>> {
-		val toUpSyncObjectList = mutableListOf<RealmUUID>()
-		val toDownSyncObjectList = mutableMapOf<RealmUUID, Operation>()
+	private fun DbxClientV2.sync() {
+		val baseObject = repository.getBaseObject()
+		val noteObjectList = repository.getAllNote()
+		val chapterObjectList = repository.getAllChapter()
+		val bucketItemObjectList = repository.getAllBucketItem()
+		val bucketObjectList = repository.getAllBucket()
+		val tagObjectList = repository.getAllTag()
 
-		val localObjectIdList = localObjectList.map { id.get(it) }
-		val cloudObjectIdList = cloudObjectMetadata.keys
+		val localDeletedObjectIdList = baseObject?.deletedObjectSet ?: setOf()
 
-		localObjectList.forEach { localChapterObject ->
-			val localObjectId = id.get(localChapterObject)
-			val localModifiedTimestamp = modifiedTimestamp.get(localChapterObject)
-
-			if (localObjectId !in cloudObjectIdList) {
-				toUpSyncObjectList.add(localObjectId)
-			} else {
-				val remoteHash = cloudObjectMetadata[localObjectId]?.hash
-				val localHash = objectMapper
-					.writeValueAsString(localChapterObject)
-					.toByteArray()
-					.dbxHash()
-					.joinToString("") { java.lang.String.format("%02x", it) }
-
-				if (
-					localHash != remoteHash &&
-					localModifiedTimestamp > (cloudObjectMetadata[localObjectId]?.modifiedTimestamp ?: 0)
-				) toUpSyncObjectList.add(localObjectId)
-			}
-		}
-
-		cloudObjectMetadata.forEach { (cloudObjectId, dbxInnerData) ->
-			if (cloudObjectId !in localObjectIdList) toDownSyncObjectList[cloudObjectId] = Operation.Create
-			else {
-				val remoteHash = dbxInnerData.hash
-				val localHash = toCloudSnapshot(localObjectList.first { id.get(it) == cloudObjectId })
-				if (
-					localHash != remoteHash &&
-					dbxInnerData.modifiedTimestamp > modifiedTimestamp.get(localObjectList.first { id.get(it) == cloudObjectId })
-				) toDownSyncObjectList[cloudObjectId] = Operation.Update
-			}
-		}
-
-		return Pair(toUpSyncObjectList, toDownSyncObjectList)
-	}
-
-	private fun DbxClientV2.updateMetadata() {
-
-		val localChapterList = repository.getAllChapter().map { it.clone() }
-		val localNoteList = repository.getAllNote().map { it.clone() }
-
-		val chapterMetadata = localChapterList.associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
-		val noteMetadata = localNoteList.associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
-		val bucketMetadata =
-			repository.getAllBucket().associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
-		val bucketItemMetadata =
-			repository.getAllBucketItem().associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
-		val tagMetadata = repository.getAllTag().associate { Pair(it.id, DropboxInnerMetadata(it.modifiedTimestamp, it.toCloudSnapshot().sha256(), false)) }
-
-		val dropboxMetadata = DropboxMetadata(
-			chapterMetadata = chapterMetadata,
-			noteMetadata = noteMetadata,
-			bucketMetadata = bucketMetadata,
-			bucketItemMetadata = bucketItemMetadata,
-			tagMetadata = tagMetadata,
+		val chapterMetadataPath = "${Path.Root.path}/${ChapterObject::class.simpleName}/metadata.json"
+		calculateDiffAndSync(
+			metadataPath = chapterMetadataPath,
+			localObjectList = chapterObjectList.associateBy { it.id },
+			localDeletedLocalObjectList = localDeletedObjectIdList,
+			modifiedTimestamp = ChapterObject::modifiedTimestamp,
 		)
 
+		val noteMetadataPath = "${Path.Root.path}/${NoteObject::class.simpleName}/metadata.json"
+		calculateDiffAndSync(
+			metadataPath = noteMetadataPath,
+			localObjectList = noteObjectList.associateBy { it.id },
+			localDeletedLocalObjectList = localDeletedObjectIdList,
+			modifiedTimestamp = NoteObject::modifiedTimestamp,
+		)
 
-		objectMapper.writeValueAsString(dropboxMetadata).let {
-			files()
-				.uploadBuilder("/sync/metadata.json")
-				.withClientModified(Date(System.currentTimeMillis()))
-				.withMode(WriteMode.OVERWRITE)
-				.withStrictConflict(false)
-				.withAutorename(false)
-				.start()
-				.uploadAndFinish(it.encodeToByteArray().inputStream())
+		val bucketMetadataPath = "${Path.Root.path}/${BucketObject::class.simpleName}/metadata.json"
+		calculateDiffAndSync(
+			metadataPath = bucketMetadataPath,
+			localObjectList = bucketObjectList.associateBy { it.id },
+			localDeletedLocalObjectList = localDeletedObjectIdList,
+			modifiedTimestamp = BucketObject::modifiedTimestamp,
+		)
+
+		val bucketItemMetadataPath = "${Path.Root.path}/${BucketItemObject::class.simpleName}/metadata.json"
+		calculateDiffAndSync(
+			metadataPath = bucketItemMetadataPath,
+			localObjectList = bucketItemObjectList.associateBy { it.id },
+			localDeletedLocalObjectList = localDeletedObjectIdList,
+			modifiedTimestamp = BucketItemObject::modifiedTimestamp,
+		)
+
+		val tagMetadataPath = "${Path.Root.path}/${TagObject::class.simpleName}/metadata.json"
+		calculateDiffAndSync(
+			metadataPath = tagMetadataPath,
+			localObjectList = tagObjectList.associateBy { it.id },
+			localDeletedLocalObjectList = localDeletedObjectIdList,
+			modifiedTimestamp = TagObject::modifiedTimestamp,
+		)
+
+		val baseObjectMetadataPath = "${Path.Root.path}/${BaseObject::class.simpleName}/metadata.json"
+		syncBaseObject(
+			metadataPath = baseObjectMetadataPath,
+			localBaseObject = baseObject,
+		)
+	}
+
+	private inline fun <reified T> DbxClientV2.calculateDiffAndSync(
+		metadataPath : String,
+		localObjectList : Map<RealmUUID, T>,
+		localDeletedLocalObjectList : Set<DeletedObject>,
+		modifiedTimestamp : KMutableProperty1<T, Long>,
+	) {
+		downloadMetadata(metadataPath) { remoteObjectList ->
+			val toDownSyncObjectIdList = mutableMapOf<RealmUUID, Operation>()
+			val toUpSyncObjectIdList = mutableMapOf<RealmUUID, Operation>()
+
+			val leftObjectIdList = localObjectList.mapValues {
+				ObjectMetadata(
+					modifiedTimestamp = modifiedTimestamp.get(it.value),
+					hash = it.value.let {
+						when (it) {
+							is ChapterObject -> it.toCloudSnapshot().toDbxHashString()
+							is NoteObject -> it.toCloudSnapshot().toDbxHashString()
+							is BucketObject -> it.toCloudSnapshot().toDbxHashString()
+							is BucketItemObject -> it.toCloudSnapshot().toDbxHashString()
+							else -> ""
+						}
+					},
+					isDeleted = false,
+				)
+			}.toMutableMap()
+			localDeletedLocalObjectList.filter { it.objectType == T::class.java.simpleName }.forEach {
+				leftObjectIdList[it.id] = ObjectMetadata(modifiedTimestamp = it.deletedTimestamp, hash = "", isDeleted = true)
+			}
+			val rightObjectIdList = remoteObjectList.toMap()
+			val diff = Maps.difference(leftObjectIdList, rightObjectIdList)
+			diff.entriesOnlyOnLeft().forEach { (id, objectMetadata) ->
+				if (objectMetadata.isDeleted) toUpSyncObjectIdList[id] =
+					localDeletedLocalObjectList.find { it.id == id }?.let { Operation.Delete(it.objectType) } ?: Operation.Delete()
+				else toUpSyncObjectIdList[id] = Operation.Create
+			}
+			diff.entriesOnlyOnRight().forEach { (id, objectMetadata) ->
+				if (objectMetadata.isDeleted) toDownSyncObjectIdList[id] = Operation.Delete()
+				else toDownSyncObjectIdList[id] = Operation.Create
+			}
+			diff.entriesDiffering().forEach { (id, difference) ->
+				val leftValue = difference.leftValue()
+				val rightValue = difference.rightValue()
+				if (leftValue.hash != rightValue.hash) {
+					when {
+						leftValue.modifiedTimestamp == rightValue.modifiedTimestamp -> null
+						leftValue.modifiedTimestamp > rightValue.modifiedTimestamp && leftValue.isDeleted -> {
+							localDeletedLocalObjectList.find { it.id == id }?.let { Operation.Delete(it.objectType) }?.let { toUpSyncObjectIdList[id] = it }
+						}
+
+						leftValue.modifiedTimestamp > rightValue.modifiedTimestamp -> toUpSyncObjectIdList[id] = Operation.Update
+						rightValue.isDeleted -> toDownSyncObjectIdList[id] = Operation.Delete()
+						else -> toDownSyncObjectIdList[id] = Operation.Update
+					}
+				}
+			}
+
+			toDownSyncObjectIdList.filter { it.value !is Operation.Delete }.forEach { downSync<T>(it.key, it.value) }
+			toDownSyncObjectIdList.filter { it.value is Operation.Delete }.let { repository.deleteSuspended(idList = it.keys, keepHistory = false) }
+			toUpSyncObjectIdList.forEach { upSync(it.key, localObjectList[it.key], it.value) }
+
+			updateMetadata(
+				localObjectList = localObjectList,
+				remoteObjectList = remoteObjectList,
+				deletedLocalObjectList = localDeletedLocalObjectList,
+				modifiedTimestamp = modifiedTimestamp,
+			)
 		}
+	}
+
+	private inline fun <reified T> DbxClientV2.downSync(id : RealmUUID, operation : Operation) {
+		when (operation) {
+			is Operation.Create -> download("${Path.Root.path}/${T::class.simpleName}/${id}.json").let {
+				when (T::class) {
+					ChapterObject::class -> {
+						ChapterObject.fromCloudSnapshot(it)?.let { repository.putChapter(it, modifyTimestampAuto = false) }
+					}
+
+					NoteObject::class -> {
+						NoteObject.fromCloudSnapshot(it)?.let { repository.putNote(it, modifyTimestampAuto = false) }
+					}
+
+					BucketObject::class -> {
+						BucketObject.fromCloudSnapshot(it)?.let { repository.putBucket(it, modifyTimestampAuto = false) }
+					}
+
+					BucketItemObject::class -> {
+						BucketItemObject.fromCloudSnapshot(it)?.let { repository.putBucketItem(it, modifyTimestampAuto = false) }
+					}
+
+					else -> null
+				}
+			}
+
+			is Operation.Update -> download("${Path.Root.path}/${T::class.simpleName}/${id}.json").let {
+				when (T::class) {
+					ChapterObject::class -> {
+						ChapterObject.fromCloudSnapshot(it)?.let { repository.putChapter(it, modifyTimestampAuto = false) }
+					}
+
+					NoteObject::class -> {
+						NoteObject.fromCloudSnapshot(it)?.let { repository.putNote(it, modifyTimestampAuto = false) }
+					}
+
+					BucketObject::class -> {
+						BucketObject.fromCloudSnapshot(it)?.let { repository.putBucket(it, modifyTimestampAuto = false) }
+					}
+
+					BucketItemObject::class -> {
+						BucketItemObject.fromCloudSnapshot(it)?.let { repository.putBucketItem(it, modifyTimestampAuto = false) }
+					}
+
+					else -> null
+				}
+			}
+
+			is Operation.Delete -> repository.deleteSuspended(id = id, keepHistory = false)
+		}
+	}
+
+	private inline fun <reified T> DbxClientV2.upSync(id : RealmUUID, localObject : T?, operation : Operation) {
+		val cloudSnapshot = when (localObject) {
+			is ChapterObject -> localObject.toCloudSnapshot()
+			is NoteObject -> localObject.toCloudSnapshot()
+			is BucketObject -> localObject.toCloudSnapshot()
+			is BucketItemObject -> localObject.toCloudSnapshot()
+
+			else -> null
+		}
+
+		when (operation) {
+			is Operation.Create -> cloudSnapshot?.byteInputStream()?.let { upload("${Path.Root.path}/${T::class.simpleName}/${id}.json", it) }
+			is Operation.Update -> cloudSnapshot?.byteInputStream()?.let { upload("${Path.Root.path}/${T::class.simpleName}/${id}.json", it) }
+			is Operation.Delete -> {
+				try {
+					files().deleteV2("${Path.Root.path}/${operation.objectType}/${id}.json")
+				} catch (e : DeleteErrorException) {
+					if (e.errorValue.pathLookupValue.isNotFound) {
+						// ignore
+					} else {
+						dropboxSyncStatus.tryEmit(DropboxSyncStatus.Failed)
+					}
+				} catch (e : Exception) {
+					dropboxSyncStatus.tryEmit(DropboxSyncStatus.Failed)
+				}
+			}
+		}
+	}
+
+	private fun DbxClientV2.syncBaseObject(
+		metadataPath : String,
+		localBaseObject : BaseObject?,
+	) {
+		try {
+			download("${Path.Root.path}/Attachment/metadata.json").let {
+				val localDeletedAttachmentSet = localBaseObject?.deletedAttachmentSet ?: setOf()
+				val localSavedAttachmentList = attachmentRepository
+					.getAttachmentDir()
+					.listFiles()
+					?.map { attachmentDir ->
+						attachmentDir.listFiles()
+							?.map { AttachmentMetadata(parentId = RealmUUID.Companion.from(attachmentDir.name), name = it.name, isDeleted = false) } ?: listOf()
+					}?.flatten() ?: listOf()
+
+				val remoteAttachmentSet = objectMapper.readValue(it, object : TypeReference<MutableSet<AttachmentMetadata>>() {})
+
+//				Delete local attachment
+				remoteAttachmentSet.filter { it.isDeleted }.forEach {
+					attachmentRepository.delete(parentId = it.parentId, name = it.name)
+				}
+
+//				Download attachment
+				remoteAttachmentSet.filter { !it.isDeleted && it !in localSavedAttachmentList}.forEach {
+					download("${Path.Root.path}/Attachment/${it.parentId}/${it.name}").let { byteArray ->
+						attachmentRepository.putAttachment(parentId = it.parentId, name = it.name, byteArray = byteArray)
+					}
+				}
+
+				// Delete remote attachment
+				localDeletedAttachmentSet.forEach {
+					try {
+						files().deleteV2("${Path.Root.path}/Attachment/${it.parentId}/${it.name}")
+					} catch (e : Exception) {
+					}
+				}
+
+				// Upload attachment
+				localSavedAttachmentList.filter { it !in remoteAttachmentSet }.forEach {
+					attachmentRepository.getAttachment(parentId = it.parentId, name = it.name)?.let { file ->
+						upload("${Path.Root.path}/Attachment/${it.parentId}/${it.name}", file.inputStream())
+					}
+				}
+
+				// Upload metadata
+				remoteAttachmentSet.addAll(localSavedAttachmentList)
+				localDeletedAttachmentSet.map {
+					AttachmentMetadata(parentId = it.parentId, name = it.name, isDeleted = true)
+				}.let { remoteAttachmentSet.addAll(it) }
+
+				objectMapper.writeValueAsBytes(remoteAttachmentSet).inputStream().let {
+					upload("${Path.Root.path}/Attachment/metadata.json", it)
+				}
+			}
+		} catch (e : DownloadErrorException) {
+			if (e.errorValue.pathValue.isNotFound) {
+				val attachmentList = mutableListOf<AttachmentMetadata>()
+				attachmentRepository
+					.getAttachmentDir()
+					.listFiles()
+					?.forEach { attachmentDir ->
+						attachmentDir
+							.listFiles()
+							?.forEach {
+								upload("${Path.Root.path}/Attachment/${attachmentDir.name}/${it.name}", it.inputStream())
+								AttachmentMetadata(
+									parentId = RealmUUID.Companion.from(attachmentDir.name),
+									name = it.name,
+									isDeleted = false
+								).let { attachmentList.add(it) }
+							}
+					}
+				objectMapper.writeValueAsBytes(attachmentList).inputStream().let {
+					upload("${Path.Root.path}/Attachment/metadata.json", it)
+				}
+			}
+		} catch (e : Exception) {
+			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Failed)
+		}
+	}
+
+	private fun DbxClientV2.downloadMetadata(path : String, response : (Map<RealmUUID, ObjectMetadata>) -> Unit) {
+		try {
+			return files()
+				.download(path)
+				.inputStream
+				.readBytes()
+				.let { objectMapper.readValue<Map<RealmUUID, ObjectMetadata>>(it) }
+				.let { response(it) }
+		} catch (e : DownloadErrorException) {
+			e.printStackTrace()
+			if (e.errorValue.pathValue.isNotFound) {
+				response(mapOf())
+			} else {
+				dropboxSyncStatus.tryEmit(DropboxSyncStatus.Failed)
+			}
+		} catch (e : Exception) {
+			dropboxSyncStatus.tryEmit(DropboxSyncStatus.Failed)
+//			e.printStackTrace()
+		}
+	}
+
+	@WorkerThread
+	private inline fun <reified T> DbxClientV2.updateMetadata(
+		localObjectList : Map<RealmUUID, T>,
+		remoteObjectList : Map<RealmUUID, ObjectMetadata>,
+		deletedLocalObjectList : Set<DeletedObject>,
+		modifiedTimestamp : KMutableProperty1<T, Long>,
+	) {
+		val metadata : MutableMap<RealmUUID, ObjectMetadata> = mutableMapOf()
+
+		remoteObjectList.forEach { (id, dropboxInnerMetadata) ->
+			metadata[id] = dropboxInnerMetadata
+		}
+		localObjectList.forEach { (id, realmObject) ->
+			when (realmObject) {
+				is NoteObject -> realmObject.toCloudSnapshot()
+				is ChapterObject -> realmObject.toCloudSnapshot()
+				is BucketObject -> realmObject.toCloudSnapshot()
+				is BucketItemObject -> realmObject.toCloudSnapshot()
+				else -> return@forEach
+			}.let {
+				val hash = it.toDbxHashString()
+				val modifiedTimestamp = modifiedTimestamp.get(realmObject)
+				metadata[id] = ObjectMetadata(
+					hash = hash,
+					modifiedTimestamp = modifiedTimestamp,
+					isDeleted = false,
+				)
+			}
+		}
+		deletedLocalObjectList.forEach { deletedObject ->
+			metadata[deletedObject.id] = ObjectMetadata(modifiedTimestamp = deletedObject.deletedTimestamp, hash = "", isDeleted = true)
+		}
+
+		val metadataPath = "${Path.Root.path}/${T::class.simpleName}/metadata.json"
+		upload(metadataPath, objectMapper.writeValueAsBytes(metadata).inputStream())
+	}
+
+	private fun DbxClientV2.upload(path : String, inputStream : InputStream) {
+		this
+			.files()
+			.uploadBuilder(path)
+			.withMode(WriteMode.OVERWRITE)
+			.uploadAndFinish(inputStream)
+	}
+
+	private fun DbxClientV2.download(path : String) : ByteArray {
+		return this
+			.files()
+			.download(path)
+			.inputStream
+			.readBytes()
 	}
 
 	inner class DropboxServiceBinder : Binder() {
@@ -654,53 +653,45 @@ class DropboxService : LifecycleService() {
 
 	companion object {
 
-		data class DropboxMetadata(
-			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
-			val chapterMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
-			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
-			val noteMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
-			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
-			val bucketMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
-			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
-			val bucketItemMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
-			@JsonDeserialize(keyUsing = RealmUUIDKeyDeserializer::class)
-			val tagMetadata : Map<RealmUUID, DropboxInnerMetadata> = mapOf(),
+		sealed class DropboxSyncStatus {
+			object Init : DropboxSyncStatus()
+			object Idle : DropboxSyncStatus()
+			object Loading : DropboxSyncStatus()
+			object Locked : DropboxSyncStatus()
+			object Connected : DropboxSyncStatus()
+			data class Syncing(val sessionId : String = RealmUUID.random().toString()) : DropboxSyncStatus()
+			object Disconnected : DropboxSyncStatus()
+			object Failed : DropboxSyncStatus()
+		}
+
+		enum class Path(val path : String) {
+			Root("/sync"),
+			DeviceMetadata("/sync/device.metadata"),
+			Lock("/sync/graphite.lock"),
+			NoteMetadata("/sync/graphite.metadata"),
+		}
+
+		data class DeviceMetadata(
+			val deviceId : String,
+			val lastSyncTimestamp : Long,
 		)
 
-		data class DropboxInnerMetadata(
+		data class ObjectMetadata(
 			val modifiedTimestamp : Long,
 			val hash : String,
 			val isDeleted : Boolean
 		)
 
-		sealed class DropboxSyncStatus {
-			object Init : DropboxSyncStatus()
-			object SyncNotConfigured : DropboxSyncStatus()
-			object SyncDisabled : DropboxSyncStatus()
-			object NoInternet : DropboxSyncStatus()
-			object NotLoggedIn : DropboxSyncStatus()
-			object Loading : DropboxSyncStatus()
-			object Connected : DropboxSyncStatus()
-			class Syncing(
-				val toUpSyncChapterCount : Int = - 1,
-				val toDownSyncChapterCount : Int = - 1,
-				val toUpSyncNoteCount : Int = - 1,
-				val toDownSyncNoteCount : Int = - 1,
-				val toUpSyncBucketCount : Int = - 1,
-				val toDownSyncBucketCount : Int = - 1,
-				val toUpSyncBucketItemCount : Int = - 1,
-				val toDownSyncBucketItemCount : Int = - 1,
-			) : DropboxSyncStatus()
+		data class AttachmentMetadata(
+			val parentId : RealmUUID,
+			val name : String,
+			val isDeleted : Boolean,
+		)
 
-			class SyncError(val message : String) : DropboxSyncStatus()
-			object DriveLocked : DropboxSyncStatus()
-			object Idle : DropboxSyncStatus()
-		}
-
-		enum class Operation {
-			Create,
-			Update,
-			Delete
+		sealed class Operation {
+			object Create : Operation()
+			object Update : Operation()
+			class Delete(val objectType : String? = null) : Operation()
 		}
 	}
 }

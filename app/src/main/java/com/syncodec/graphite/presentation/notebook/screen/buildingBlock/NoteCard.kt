@@ -186,7 +186,7 @@ fun NoteCard(
 						title = title,
 						isFavourite = isFavourite,
 						isLocked = isLocked,
-						attachmentCount = context.getAttachmentCountFromNoteId(noteId = id)
+						attachmentCount = context.getAttachmentCountFromNoteId(parentId = id)
 					)
 					Spacer(modifier = Modifier.height(4.dp))
 					Content(

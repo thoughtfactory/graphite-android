@@ -116,6 +116,8 @@ fun String.decrypt(key : String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm") : String? {
 
 fun ByteArray.toHex() : String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
 
+fun String.toDbxHashString() : String = toByteArray().dbxHashString()
+
 fun ByteArray.dbxHash() : ByteArray {
 	val digest : MessageDigest = MessageDigest.getInstance("SHA-256")
 

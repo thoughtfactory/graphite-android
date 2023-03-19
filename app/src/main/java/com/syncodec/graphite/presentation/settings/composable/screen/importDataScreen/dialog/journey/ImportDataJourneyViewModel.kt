@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import io.realm.kotlin.types.RealmUUID
@@ -23,7 +22,7 @@ import java.io.File
 
 
 @KoinViewModel
-class ImportDataJourneyViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
+class ImportDataJourneyViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -48,7 +47,7 @@ class ImportDataJourneyViewModel(private val repository : KoinRepository, privat
 		}
 		viewModelScope.launch(Dispatchers.Default) {
 			attachmentConcurrentQueue.receiveAsFlow().collect { (noteId, file) ->
-				attachmentRepository.putAttachment(noteId, file)
+				repository.attachmentRepository.putAttachment(noteId, file)
 			}
 		}
 	}

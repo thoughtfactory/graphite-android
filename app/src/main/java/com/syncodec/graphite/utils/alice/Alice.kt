@@ -99,6 +99,10 @@ fun Context.getSecretData(key : String) : AliceRequest {
 	}
 }
 
+fun Context.deleteSecretData(key : String) {
+	getSharedPreferences("alice", Context.MODE_PRIVATE).edit().remove("${key}_iv_and_encrypted_key").apply()
+}
+
 fun generateSecretKey() {
 	val keyStore = KeyStore.getInstance("AndroidKeyStore")
 	keyStore.load(null)

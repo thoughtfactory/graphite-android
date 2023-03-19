@@ -21,14 +21,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -53,6 +49,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGr
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.info.PlainTextWarning
 import com.syncodec.graphite.presentation.common.text.marqueeText.MarqueeText
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.composable.AttachmentPreview
 import com.syncodec.graphite.utils.DataStoreInstance
@@ -76,6 +73,8 @@ fun AttachmentBottomSheet(
 	onRemoveSavedAttachment : (File) -> Unit = {},
 ) {
 	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context) }
+	val showPlainTextWarning by dataStoreInstance.showPlainTextWarningAttachment.collectAsState(initial = false)
 
 	var photoUri : Uri? by remember { mutableStateOf(null) }
 	val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isCaptured ->
@@ -139,7 +138,7 @@ fun AttachmentBottomSheet(
 
 		if (attachmentListSaved.isNotEmpty() || attachmentListToAdd.isNotEmpty()) {
 			Spacer(modifier = Modifier.height(6.dp))
-			PlainTextWarning()
+			PlainTextWarning(isVisible = showPlainTextWarning) { dataStoreInstance.putShowPlainTextWarningAttachment(false) }
 			Spacer(modifier = Modifier.height(4.dp))
 
 			LazyVerticalGrid(
@@ -213,7 +212,7 @@ private fun AttachmentOverlay(
 				modifier = Modifier
 					.requiredSize(32.dp)
 					.padding(2.dp)
-					.graphicsLayer { rotationZ = -45f }
+					.graphicsLayer { rotationZ = - 45f }
 			)
 			Spacer(modifier = Modifier.weight(1f))
 			MenuButton(
@@ -243,73 +242,6 @@ private fun AttachmentOverlay(
 					.padding(8.dp)
 
 			)
-		}
-	}
-}
-
-@Preview
-@Composable
-fun PlainTextWarning() {
-	val context = LocalContext.current
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-
-	val showUnencryptedAttachmentCard by dataStoreInstance.getShowUnencryptedAttachmentCard.collectAsState(initial = null)
-
-	AnimatedVisibility(
-		visible = showUnencryptedAttachmentCard == true,
-		enter = expandVertically(tween(300)),
-		exit = shrinkVertically(tween(300))
-	) {
-		Box(
-			modifier = Modifier
-				.fillMaxWidth()
-				.background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.large)
-		) {
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(16.dp, 16.dp, 16.dp, 8.dp)
-			) {
-				Row(
-					verticalAlignment = Alignment.CenterVertically,
-					modifier = Modifier,
-				) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_warning),
-						contentDescription = "Plain Text Warning",
-						tint = MaterialTheme.colorScheme.onErrorContainer,
-					)
-					Spacer(modifier = Modifier.width(12.dp))
-					Text(
-						text = "Unencrypted Data",
-						style = MaterialTheme.typography.titleMedium,
-						fontWeight = FontWeight.Bold,
-						color = MaterialTheme.colorScheme.onErrorContainer,
-					)
-				}
-
-				Spacer(modifier = Modifier.height(8.dp))
-
-				Text(
-					text = "Attachments are not encrypted and and are stored as raw files on the device.",
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onErrorContainer
-				)
-
-				Spacer(modifier = Modifier.height(8.dp))
-
-				Button(
-					colors = ButtonDefaults.buttonColors(
-						containerColor = MaterialTheme.colorScheme.error,
-						contentColor = MaterialTheme.colorScheme.onError,
-					),
-					shape = MaterialTheme.shapes.medium,
-					modifier = Modifier.fillMaxWidth(),
-					onClick = { dataStoreInstance.putShowUnencryptedAttachmentCard(false) },
-				) {
-					Text(text = "Dismiss")
-				}
-			}
 		}
 	}
 }

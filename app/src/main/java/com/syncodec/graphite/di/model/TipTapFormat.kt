@@ -18,6 +18,12 @@ data class Content(
 		val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 		return objectMapper.writeValueAsString(this)
 	}
+
+	override fun toString() : String {
+		return content?.let {
+			it.joinToString(separator = "") { it.toString() }
+		} ?: text ?: ""
+	}
 }
 
 @Keep

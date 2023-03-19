@@ -2,16 +2,16 @@ package com.syncodec.graphite.presentation.bucket.composable.screen.bookScreen
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -25,7 +25,7 @@ import org.koin.androidx.compose.koinViewModel
 
 
 @Preview
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BucketBookScreen(
 	pagerState : PagerState = rememberPagerState(),
@@ -50,11 +50,12 @@ fun BucketBookScreen(
 
 	Crossfade(
 		targetState = isLoadedFirstTime,
-		animationSpec = tween(300)
+		animationSpec = tween(300),
+		label = "bookScreenPager_animation"
 	) {
 		if (it) {
 			HorizontalPager(
-				count = 4,
+				pageCount = 4,
 				state = pagerState,
 				userScrollEnabled = ! isSelecting,
 			) {

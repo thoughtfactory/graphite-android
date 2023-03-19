@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,10 +55,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -76,8 +76,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @PackagePrivate
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun AttachmentView(
 	noteId : RealmUUID,
@@ -112,9 +112,9 @@ fun AttachmentView(
 				var previewHeight by remember { mutableStateOf(null as Int?) }
 
 				HorizontalPager(
-					count = attachmentList.size,
+					pageCount = attachmentList.size,
 					state = pagerState,
-					itemSpacing = 4.dp,
+					pageSpacing = 4.dp,
 					modifier = Modifier.fillMaxSize()
 				) { page ->
 					val file = attachmentList.getOrNull(page) ?: return@HorizontalPager
@@ -174,7 +174,11 @@ fun AttachmentPreview(
 		contentAlignment = Alignment.Center,
 		modifier = Modifier
 			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.13f))
+			.background(
+				MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.13f)
+			)
 			.clickable { file.viewExternally(context = context) }
 			.onGloballyPositioned { coordinates -> onGetHeight(coordinates.size.height) },
 	) {
@@ -248,7 +252,7 @@ fun AttachmentPreview(
 fun AttachmentPreview(
 	uri : Uri,
 	onGetHeight : (Int) -> Unit = {},
-	onClick: () -> Unit = {},
+	onClick : () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
@@ -273,7 +277,11 @@ fun AttachmentPreview(
 		contentAlignment = Alignment.Center,
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.13f))
+			.background(
+				MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.13f)
+			)
 			.clickable { onClick() }
 			.onGloballyPositioned { coordinates -> onGetHeight(coordinates.size.height) },
 	) {
@@ -353,7 +361,11 @@ private fun AttachmentNamePlate(
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f))
+			.background(
+				MaterialTheme.colorScheme
+					.surfaceColorAtElevation(8.dp)
+					.copy(alpha = 0.47f)
+			)
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
@@ -374,7 +386,7 @@ private fun AttachmentNamePlate(
 	}
 }
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Preview
 @Composable
 private fun AttachmentActionButtons(
@@ -401,25 +413,25 @@ private fun AttachmentActionButtons(
 				modifier = Modifier.fillMaxWidth()
 			) {
 				AnimatedVisibility(
-					visible = pagerState.currentPage > 0,
+					visible = pagerState.canScrollBackward,
 					enter = scaleIn(tween(300), 0.71f) + fadeIn(tween(300)),
 					exit = scaleOut(tween(300), 0.71f) + fadeOut(tween(300)),
 				) {
 					MenuButton(
 						icon = R.drawable.ic_caret,
-						onClick = { scope.launch { pagerState.animateScrollToPage(max(pagerState.currentPage - 1, 0)) } },
+						onClick = { if (pagerState.canScrollBackward) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
 						modifier = Modifier.graphicsLayer { rotationZ = - 90f }
 					)
 				}
 				Spacer(modifier = Modifier.weight(1f))
 				AnimatedVisibility(
-					visible = pagerState.currentPage < pagerState.pageCount - 1,
+					visible = pagerState.canScrollForward,
 					enter = scaleIn(tween(300), 0.71f) + fadeIn(tween(300)),
 					exit = scaleOut(tween(300), 0.71f) + fadeOut(tween(300)),
 				) {
 					MenuButton(
 						icon = R.drawable.ic_caret,
-						onClick = { scope.launch { pagerState.animateScrollToPage(min(pagerState.currentPage + 1, pagerState.pageCount - 1)) } },
+						onClick = { if (pagerState.canScrollForward) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
 						modifier = Modifier.graphicsLayer { rotationZ = 90f }
 					)
 				}

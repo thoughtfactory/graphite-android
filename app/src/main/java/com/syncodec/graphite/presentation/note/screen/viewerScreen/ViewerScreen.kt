@@ -153,7 +153,7 @@ fun ViewerScreen(
 	fun getAttachments(noteId : RealmUUID) {
 		scope.launch(Dispatchers.IO) {
 			withContext(Dispatchers.Main) {
-				attachmentList = context.attachmentDir(noteId = noteId).listFiles()?.toList() ?: listOf()
+				attachmentList = context.attachmentDir(parentId = noteId).listFiles()?.toList() ?: listOf()
 			}
 		}
 	}

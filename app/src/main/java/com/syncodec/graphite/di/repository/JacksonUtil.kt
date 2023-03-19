@@ -16,7 +16,7 @@ import java.io.IOException
 import java.util.Base64
 
 
-class RealmUUIDDeserializer(vc : Class<*>? = null) : StdDeserializer<RealmUUID?>(vc) {
+class RealmUUIDDeserializer(vc : Class<RealmUUID>? = null) : StdDeserializer<RealmUUID?>(vc) {
 	@Throws(IOException::class, JsonProcessingException::class)
 	override fun deserialize(jp : JsonParser, ctxt : DeserializationContext?) : RealmUUID {
 		val node : JsonNode = jp.codec.readTree(jp)
@@ -25,6 +25,7 @@ class RealmUUIDDeserializer(vc : Class<*>? = null) : StdDeserializer<RealmUUID?>
 			val id = node.asText()
 			if (id == null || id.isEmpty()) throw Exception() else return RealmUUID.from(id)
 		} catch (e : Exception) {
+			e.printStackTrace()
 			node["bytes"]?.asText()?.let {
 				return RealmUUID.from(Base64.getDecoder().decode(it))
 			} ?: throw Exception()

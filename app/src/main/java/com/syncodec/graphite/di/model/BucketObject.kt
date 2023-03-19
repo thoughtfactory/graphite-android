@@ -9,6 +9,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
+import kotlin.reflect.KFunction
 
 
 enum class BucketType {
@@ -27,11 +28,21 @@ class BucketObject() : RealmObject {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
 		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
-		this.title = jsonObject.optString("title")
-		this.description = jsonObject.optString("description")
-		this.bucketType = jsonObject.optString("bucketType")
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.bucketType = jsonObject.optString("bucketType").let { if (it.isNullOrEmpty() || it == "null") BucketType.UNKNOWN.name else it }
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
+		this.bucketItemOrderList = jsonObject.optJSONArray("bucketItemOrderList")?.let { jsonArray ->
+			val realmList = realmListOf<RealmUUID>()
+			for (i in 0 until jsonArray.length()) {
+				realmList.add(RealmUUID.from(jsonArray.getString(i)))
+			}
+			realmList
+		} ?: realmListOf()
+		this.overWritable = jsonObject.optBoolean("overWritable", true)
+		this.deletable = jsonObject.optBoolean("deletable", true)
+		this.localOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -47,6 +58,10 @@ class BucketObject() : RealmObject {
 
 	var bucketItemOrderList : RealmList<RealmUUID> = realmListOf()
 
+	var overWritable : Boolean = true
+	var deletable : Boolean = true
+	var localOnly : Boolean = false
+
 	fun clone() : BucketObject = BucketObject().apply {
 		this.id = this@BucketObject.id
 		this.createdTimestamp = this@BucketObject.createdTimestamp
@@ -57,6 +72,9 @@ class BucketObject() : RealmObject {
 		this.isFavourite = this@BucketObject.isFavourite
 		this.isLocked = this@BucketObject.isLocked
 		this.bucketItemOrderList = this@BucketObject.bucketItemOrderList.toRealmList()
+		this.overWritable = this@BucketObject.overWritable
+		this.deletable = this@BucketObject.deletable
+		this.localOnly = this@BucketObject.localOnly
 	}
 
 	fun toCloudSnapshot() : String {
@@ -69,6 +87,9 @@ class BucketObject() : RealmObject {
 		jsonObject.put("bucketType", this.bucketType)
 		jsonObject.put("isFavourite", this.isFavourite)
 		jsonObject.put("isLocked", this.isLocked)
+		jsonObject.put("bucketItemOrderList", this.bucketItemOrderList.map { it.toString() })
+		jsonObject.put("overWritable", this.overWritable)
+		jsonObject.put("deletable", this.deletable)
 
 		return jsonObject.toString()
 	}
@@ -83,6 +104,9 @@ class BucketObject() : RealmObject {
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + bucketItemOrderList.hashCode()
+		result = 31 * result + overWritable.hashCode()
+		result = 31 * result + deletable.hashCode()
+		result = 31 * result + localOnly.hashCode()
 		return result
 	}
 
@@ -99,7 +123,20 @@ class BucketObject() : RealmObject {
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 		if (bucketItemOrderList != other.bucketItemOrderList) return false
+		if (overWritable != other.overWritable) return false
+		if (deletable != other.deletable) return false
+		if (localOnly != other.localOnly) return false
 
 		return true
+	}
+
+	companion object {
+		fun fromCloudSnapshot(snapshot : ByteArray) : BucketObject? {
+			return try {
+				BucketObject(JSONObject(String(snapshot, Charsets.UTF_8)))
+			} catch (e : Exception) {
+				null
+			}
+		}
 	}
 }

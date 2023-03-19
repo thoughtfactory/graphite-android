@@ -209,8 +209,11 @@ fun SettingsScreen(
 		}
 
 		SettingsContentTitle(title = "DATA")
-		SettingButton(text = "Backup and restore", icon = R.drawable.ic_local_backup) { navigateTo(SettingsActivity.Companion.SettingsScreen.BackupAndRestore) }
-		SettingButton(text = "Synchronization", icon = R.drawable.ic_sync, subText = "Coming soon")
+		SettingButton(
+			text = "Backup and Sync",
+			icon = R.drawable.ic_local_backup,
+			subText = "Manage"
+		) { navigateTo(SettingsActivity.Companion.SettingsScreen.BackupAndSync) }
 		SettingButton(text = "Import", icon = R.drawable.ic_import) { navigateTo(SettingsActivity.Companion.SettingsScreen.ImportData) }
 		SettingButton(text = "Export", icon = R.drawable.ic_export) { openDialog(SettingsDialogType.ExportData) }
 		SettingButton(text = "Clear data", icon = R.drawable.ic_broom) { openDialog(SettingsDialogType.ClearData) }
@@ -314,9 +317,7 @@ private fun ProfileCard(
 	photoUrl : Uri? = null,
 	isPro : Boolean = false,
 ) {
-
 	val context = LocalContext.current
-	var isError by remember { mutableStateOf(false) }
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -330,7 +331,6 @@ private fun ProfileCard(
 				.error(R.drawable.ic_user_male)
 				.build(),
 			placeholder = null,
-			onError = { isError = true },
 			contentDescription = email,
 			contentScale = ContentScale.Crop,
 			modifier = Modifier

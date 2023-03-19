@@ -11,7 +11,6 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import io.realm.kotlin.types.RealmUUID
@@ -26,7 +25,7 @@ import java.io.File
 
 
 @KoinViewModel
-class ImportDataGraphiteViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
+class ImportDataGraphiteViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -51,7 +50,7 @@ class ImportDataGraphiteViewModel(private val repository : KoinRepository, priva
 		}
 		viewModelScope.launch(Dispatchers.Default) {
 			attachmentConcurrentQueue.receiveAsFlow().collect { (noteId, file) ->
-				attachmentRepository.putAttachment(noteId, file)
+				repository.attachmentRepository.putAttachment(noteId, file)
 			}
 		}
 	}
@@ -90,7 +89,7 @@ class ImportDataGraphiteViewModel(private val repository : KoinRepository, priva
 				if (tagDir.isDirectory) tagDir.listFiles()
 					?.forEach { TagObject(JSONObject(it.readText())).let { repository.putTag(it); progress(progressCount ++, total) } }
 
-				attachmentRepository.importAttachmentFromGraphite(attachmentDir)
+				repository.attachmentRepository.importAttachmentFromGraphite(attachmentDir)
 
 				callback(true)
 			} catch (e : Exception) {

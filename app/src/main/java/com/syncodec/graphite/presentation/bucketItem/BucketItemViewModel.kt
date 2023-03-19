@@ -121,7 +121,7 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 		putBucketItem()
 	}
 
-	fun delete(realmUUID : RealmUUID, callback : suspend () -> Unit) {
-		repository.deleteSuspended(realmUUID, callback)
+	fun delete(id : RealmUUID, callback : suspend () -> Unit) {
+		repository.deleteSuspended(id = id, callback = callback)
 	}
 }

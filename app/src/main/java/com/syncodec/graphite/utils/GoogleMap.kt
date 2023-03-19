@@ -137,7 +137,7 @@ fun Context.reverseGeocode(
 				onAddressAvailable(addresses.getOrNull(0))
 			}
 		} else {
-//				Deprecation is handled in upper block
+//			Deprecation is handled in upper block
 			val addresses = geocoder.getFromLocation(latitude, longitude, 1)
 			onAddressAvailable(addresses?.firstOrNull())
 		}

@@ -30,7 +30,6 @@ class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteOb
 					address = "Nirma University",
 					contentThumbnail = "Looking down the misty path to uncertain destinations",
 					thumbnail = null,
-					thumbnailType = null,
 					isFavourite = true,
 					isLocked = false,
 				)

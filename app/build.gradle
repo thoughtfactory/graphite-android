@@ -17,6 +17,7 @@ android {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 33
+		compileSdkPreview "UpsideDownCake"
 		versionCode 37
 
 		versionName '2.2.0'
@@ -102,44 +103,43 @@ dependencies {
 
 	implementation 'androidx.core:core-ktx:1.9.0'
 
-	implementation 'androidx.activity:activity-compose:1.6.1'
+	implementation 'androidx.activity:activity-compose:1.8.0-alpha02'
 	implementation 'androidx.appcompat:appcompat:1.7.0-alpha02'
 
-	implementation 'androidx.compose.material:material:1.4.0-beta02'
-	implementation 'androidx.compose.material3:material3:1.1.0-alpha07'
-	implementation 'androidx.compose.ui:ui:1.4.0-beta02'
-	implementation 'androidx.compose.foundation:foundation:1.4.0-beta02'
-	implementation 'androidx.compose.ui:ui-tooling-preview:1.4.0-beta02'
-	implementation 'androidx.compose.ui:ui-util:1.4.0-beta02'
+	implementation 'androidx.compose.material:material:1.4.0-rc01'
+	implementation 'androidx.compose.material3:material3:1.1.0-alpha08'
+	implementation 'androidx.compose.ui:ui:1.4.0-rc01'
+	implementation 'androidx.compose.foundation:foundation:1.4.0-rc01'
+	implementation 'androidx.compose.ui:ui-tooling-preview:1.4.0-rc01'
+	implementation 'androidx.compose.ui:ui-util:1.4.0-rc01'
 
 	implementation 'androidx.work:work-runtime-ktx:2.8.0'
 	implementation "androidx.glance:glance-appwidget:1.0.0-alpha05"
 
-	implementation 'androidx.navigation:navigation-compose:2.5.3'
+	implementation 'androidx.navigation:navigation-compose:2.6.0-alpha07'
 	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.1'
 
 	implementation 'androidx.core:core-animation:1.0.0-beta01'
 
-	implementation 'com.google.accompanist:accompanist-insets:0.29.1-alpha'
-	implementation 'com.google.accompanist:accompanist-flowlayout:0.29.1-alpha'
-	implementation 'com.google.accompanist:accompanist-pager:0.29.1-alpha'
-	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.29.1-alpha'
-	implementation 'com.google.accompanist:accompanist-permissions:0.29.1-alpha'
-	implementation 'com.google.accompanist:accompanist-webview:0.29.1-alpha'
-	implementation 'com.google.accompanist:accompanist-navigation-animation:0.29.1-alpha'
+	implementation 'com.google.accompanist:accompanist-insets:0.29.2-rc'
+	implementation 'com.google.accompanist:accompanist-flowlayout:0.29.2-rc'
+	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.29.2-rc'
+	implementation 'com.google.accompanist:accompanist-permissions:0.29.2-rc'
+	implementation 'com.google.accompanist:accompanist-webview:0.29.2-rc'
+	implementation 'com.google.accompanist:accompanist-navigation-animation:0.29.2-rc'
 
 	implementation 'org.burnoutcrew.composereorderable:reorderable:0.9.6'
-	implementation 'com.kizitonwose.calendar:compose:2.1.1'
+	implementation 'com.kizitonwose.calendar:compose:2.2.0'
 
-	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.1'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1'
-	implementation 'androidx.lifecycle:lifecycle-service:2.5.1'
+	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.0'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.0'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0'
+	implementation 'androidx.lifecycle:lifecycle-service:2.6.0'
 
 	implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
 
-	implementation 'androidx.compose.runtime:runtime:1.3.3'
+	implementation 'androidx.compose.runtime:runtime:1.4.0-rc01'
 
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
 	implementation 'io.realm.kotlin:library-base:1.6.1'
@@ -165,11 +165,20 @@ dependencies {
 	implementation 'io.coil-kt:coil-gif:2.2.2'
 	implementation 'io.coil-kt:coil-video:2.2.2'
 
+//	Google drive
+//	implementation 'com.google.api-client:google-api-client:2.0.0'
+//	implementation 'com.google.oauth-client:google-oauth-client-jetty:1.34.1'
+//	implementation 'com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0'
+//	implementation 'com.google.http-client:google-http-client-gson:1.42.1'
+//	implementation('com.google.api-client:google-api-client-android:1.26.0') {
+//		exclude group: 'org.apache.httpcomponents'
+//	}
+
 	implementation "androidx.exifinterface:exifinterface:1.3.6"
 
 	implementation 'com.revenuecat.purchases:purchases:5.6.4'
 
-	implementation platform('com.google.firebase:firebase-bom:31.2.2')
+	implementation platform('com.google.firebase:firebase-bom:31.2.3')
 	implementation 'com.google.android.gms:play-services-auth:20.4.1'
 	implementation 'com.google.firebase:firebase-analytics'
 	implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
@@ -210,8 +219,8 @@ dependencies {
 
 	implementation 'com.google.android.gms:play-services-location:21.0.1'
 	implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
-	implementation 'com.google.maps.android:maps-compose:2.11.0'
-	implementation 'com.google.maps.android:maps-compose-utils:2.11.0'
+	implementation 'com.google.maps.android:maps-compose:2.11.1'
+	implementation 'com.google.maps.android:maps-compose-utils:2.11.1'
 	implementation 'com.google.android.gms:play-services-maps:18.1.0'
 
 	implementation 'androidx.datastore:datastore-preferences-core:1.0.0'
@@ -246,12 +255,12 @@ dependencies {
 
 	androidTestImplementation 'androidx.test.ext:junit:1.1.5'
 	androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.3.3'
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.4.0-rc01'
 
-	debugImplementation 'androidx.compose.ui:ui-tooling:1.3.3'
-	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.3.3'
+	debugImplementation 'androidx.compose.ui:ui-tooling:1.4.0-rc01'
+	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.4.0-rc01'
 	debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.3.3'
-	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.3.3'
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.4.0-rc01'
+	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.4.0-rc01'
 	testImplementation 'org.json:json:20230227'
 }

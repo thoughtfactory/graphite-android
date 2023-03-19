@@ -6,7 +6,6 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RepositoryState
 import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
 import com.syncodec.graphite.utils.LoaderStatus
@@ -20,7 +19,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class SearchScreenViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
+class SearchScreenViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 	val loaderStatus : MutableStateFlow<LoaderStatus> = MutableStateFlow(LoaderStatus.Init)
@@ -86,7 +85,7 @@ class SearchScreenViewModel(private val repository : KoinRepository, private val
 					else this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.Loaded)
 				}
 
-			is SearchFilterType.WithAttachment -> noteList.filter { attachmentRepository.haveAttachment(noteId = it.id) && if (searchInChapter != null) it.parentId == searchInChapter.id else true }
+			is SearchFilterType.WithAttachment -> noteList.filter { repository.attachmentRepository.haveAttachment(parentId = it.id) && if (searchInChapter != null) it.parentId == searchInChapter.id else true }
 				.map { it.toLite() }.let {
 					this@SearchScreenViewModel.filteredNoteList.tryEmit(it)
 					if (it.isEmpty()) this@SearchScreenViewModel.loaderStatus.tryEmit(LoaderStatus.LoadedEmpty)

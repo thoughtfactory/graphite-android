@@ -37,10 +37,11 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_VIEW_TYPE = intPreferencesKey("view_type")
 		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
 		private val PREFERENCE_IS_SYNC_ENABLED = booleanPreferencesKey("is_sync_enabled")
-		private val PREFERENCE_DROPBOX_REFRESH_TOKEN = stringPreferencesKey("dropbox_refresh_token")
 
 		private val PREFERENCE_SHOW_WHATS_NEW_CARD = intPreferencesKey("show_whats_new_card")
-		private val PREFERENCE_SHOW_UNENCRYPTED_ATTACHMENT_CARD = booleanPreferencesKey("show_unencrypted_attachment_card")
+		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_ATTACHMENT = booleanPreferencesKey("show_plain_text_warning_attachment")
+		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_LOCAL = booleanPreferencesKey("show_plain_text_warning_local")
+		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_DROPBOX = booleanPreferencesKey("show_plain_text_warning_dropbox")
 	}
 
 	val getIsFirstTime : Flow<Boolean> =
@@ -167,16 +168,10 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_USE_BIOMETRIC] = useBiometric }
 	}
 
-	fun getIsSyncEnabled() : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_SYNC_ENABLED] ?: true }
+	val isSyncEnabled : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_SYNC_ENABLED] ?: true }
 
 	fun setIsSyncEnabled(isSyncEnabled : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_IS_SYNC_ENABLED] = isSyncEnabled }
-	}
-
-	fun getDropboxRefreshToken() : Flow<String> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_DROPBOX_REFRESH_TOKEN] ?: "" }
-
-	fun putDropboxRefreshToken(refreshToken : String) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_DROPBOX_REFRESH_TOKEN] = refreshToken }
 	}
 
 	val getShowWhatsNewCard : Flow<Boolean> =
@@ -186,11 +181,25 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_WHATS_NEW_CARD] = BuildConfig.VERSION_CODE }
 	}
 
-	val getShowUnencryptedAttachmentCard : Flow<Boolean> =
-		context.dataStore.data.map { preferences -> preferences[PREFERENCE_SHOW_UNENCRYPTED_ATTACHMENT_CARD] ?: true }
+	val showPlainTextWarningLocal : Flow<Boolean> =
+		context.dataStore.data.map { preferences -> preferences[PREFERENCE_SHOW_PLAIN_TEXT_WARNING_LOCAL] ?: true }
 
-	fun putShowUnencryptedAttachmentCard(showUnencryptedAttachmentCard : Boolean) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_UNENCRYPTED_ATTACHMENT_CARD] = showUnencryptedAttachmentCard }
+	fun putShowPlainTextWarningLocal(showUnencryptedWarningLocal : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_PLAIN_TEXT_WARNING_LOCAL] = showUnencryptedWarningLocal }
+	}
+
+	val showPlainTextWarningDropbox : Flow<Boolean> =
+		context.dataStore.data.map { preferences -> preferences[PREFERENCE_SHOW_PLAIN_TEXT_WARNING_DROPBOX] ?: true }
+
+	fun putShowPlainTextWarningDropbox(showUnencryptedWarningDropbox : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_PLAIN_TEXT_WARNING_DROPBOX] = showUnencryptedWarningDropbox }
+	}
+
+	val showPlainTextWarningAttachment : Flow<Boolean> =
+		context.dataStore.data.map { preferences -> preferences[PREFERENCE_SHOW_PLAIN_TEXT_WARNING_ATTACHMENT] ?: true }
+
+	fun putShowPlainTextWarningAttachment(showUnencryptedAttachment : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_PLAIN_TEXT_WARNING_ATTACHMENT] = showUnencryptedAttachment }
 	}
 
 	fun clearDatastore() = CoroutineScope(Dispatchers.IO).launch {
