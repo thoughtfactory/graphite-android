@@ -31,7 +31,7 @@ class ChapterObject() : RealmObject {
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
 		this.overWritable = jsonObject.optBoolean("overWritable", true)
 		this.deletable = jsonObject.optBoolean("deletable", true)
-		this.localOnly = jsonObject.optBoolean("localOnly", false)
+		this.isLocalOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -50,7 +50,7 @@ class ChapterObject() : RealmObject {
 
 	var overWritable : Boolean = true
 	var deletable : Boolean = true
-	var localOnly : Boolean = false
+	var isLocalOnly : Boolean = false
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(

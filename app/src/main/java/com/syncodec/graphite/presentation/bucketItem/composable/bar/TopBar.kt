@@ -21,15 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun TopBar(
 	isSaved : Boolean = false,
+	isLocalOnly : Boolean = false,
 	isFavourite : Boolean = false,
 	isLocked : Boolean = false,
 	onClickSave : () -> Unit = {},
+	onClickLocalOnly : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onClickBack : () -> Unit = {}
@@ -46,13 +49,25 @@ fun TopBar(
 		actions = {
 			AnimatedContent(
 				targetState = isSaved,
-				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + fadeOut(tween(300), 0.71f) }
+				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + fadeOut(tween(300), 0.71f) }, 
+				label = "isSaved_animation"
 			) {
 				when (it) {
 					true -> {
 						Row(
 							modifier = Modifier
 						) {
+							MenuButton(
+								icon = if (isLocalOnly) R.drawable.ic_cloud_disable else R.drawable.ic_cloud,
+								tooltip = "Local only",
+								checked = isLocalOnly,
+								colors = MenuButtonDefaults.menuButtonColors(
+									checkedContainerColor = MenuButtonDefaults.deleteButtonColors().checkedContainerColor,
+									checkedIconColor = MenuButtonDefaults.deleteButtonColors().checkedIconColor,
+								),
+								onClick = onClickLocalOnly
+							)
+
 							MenuButton(
 								icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
 								tooltip = if (isLocked) "Locked" else "Not locked",

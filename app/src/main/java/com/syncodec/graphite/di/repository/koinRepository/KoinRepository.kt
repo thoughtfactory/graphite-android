@@ -250,6 +250,7 @@ class KoinRepository {
 					latestChapterObject.thumbnail = chapterObject.thumbnail
 					latestChapterObject.isFavourite = chapterObject.isFavourite
 					latestChapterObject.isLocked = chapterObject.isLocked
+					latestChapterObject.isLocalOnly = chapterObject.isLocalOnly
 					latestChapterObject.parentId = chapterObject.parentId
 				} ?: copyToRealm(chapterObject)
 			} ?: copyToRealm(chapterObject)
@@ -401,6 +402,7 @@ class KoinRepository {
 					storedNoteObject.isFavourite = noteObject.isFavourite
 					storedNoteObject.isLocked = noteObject.isLocked
 					storedNoteObject.parentId = noteObject.parentId
+					storedNoteObject.isLocalOnly = noteObject.isLocalOnly
 				} ?: copyToRealm(noteObject)
 			} ?: copyToRealm(noteObject)
 		}

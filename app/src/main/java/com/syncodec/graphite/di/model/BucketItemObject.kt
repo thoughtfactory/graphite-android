@@ -2,16 +2,24 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.kedia.ogparser.OpenGraphResult
-import com.syncodec.graphite.di.network.BookData
-import com.syncodec.graphite.di.network.ShowData
+import com.syncodec.graphite.di.network.MovieData
+import com.syncodec.graphite.di.network.ShowType
+import com.syncodec.graphite.di.network.TvData
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
+import java.io.Serializable
 
 
 enum class BucketItemState {
@@ -38,7 +46,7 @@ class BucketItemObject() : RealmObject {
 		this.data = jsonObject.optString("data").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.overWritable = jsonObject.optBoolean("overWritable", true)
 		this.deletable = jsonObject.optBoolean("deletable", true)
-		this.localOnly = jsonObject.optBoolean("localOnly", false)
+		this.isLocalOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -59,31 +67,22 @@ class BucketItemObject() : RealmObject {
 
 	var overWritable : Boolean = true
 	var deletable : Boolean = true
-	var localOnly : Boolean = false
+	var isLocalOnly : Boolean = false
 
-	fun getBookData() : BookData? {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			objectMapper.readValue(data, BookData::class.java)
-		} catch (e : Exception) {
-//			e.printStackTrace()
-			null
-		}
-	}
+	private val json = Json { ignoreUnknownKeys = true }
 
-	fun getShowData() : ShowData? {
+	fun getData() : BucketItemData? {
 		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			objectMapper.readValue(data, ShowData::class.java)
+			this.data?.let { json.decodeFromString<BucketItemData>(it) }
 		} catch (e : Exception) {
-//			e.printStackTrace()
+			e.printStackTrace()
 			null
 		}
 	}
 
 	fun getOpenGraphResult() : OpenGraphResult? {
 		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			val objectMapper = jsonMapper { addModule(kotlinModule()) }
 			objectMapper.readValue(data, OpenGraphResult::class.java)
 		} catch (e : Exception) {
 //			e.printStackTrace()
@@ -111,7 +110,7 @@ class BucketItemObject() : RealmObject {
 			this.data = this@BucketItemObject.data
 			this.overWritable = this@BucketItemObject.overWritable
 			this.deletable = this@BucketItemObject.deletable
-			this.localOnly = this@BucketItemObject.localOnly
+			this.isLocalOnly = this@BucketItemObject.isLocalOnly
 		}
 	}
 
@@ -123,7 +122,6 @@ class BucketItemObject() : RealmObject {
 		jsonObject.put("bucketType", this.bucketType)
 		jsonObject.put("title", this.title)
 		jsonObject.put("state", this.state)
-		jsonObject.put("thumbnail", this.thumbnail)
 		jsonObject.put("isFavourite", this.isFavourite)
 		jsonObject.put("isLocked", this.isLocked)
 		jsonObject.put("parentId", this.parentId?.toString())
@@ -150,7 +148,7 @@ class BucketItemObject() : RealmObject {
 		result = 31 * result + (data?.hashCode() ?: 0)
 		result = 31 * result + overWritable.hashCode()
 		result = 31 * result + deletable.hashCode()
-		result = 31 * result + localOnly.hashCode()
+		result = 31 * result + isLocalOnly.hashCode()
 		return result
 	}
 
@@ -172,18 +170,173 @@ class BucketItemObject() : RealmObject {
 		if (data != other.data) return false
 		if (overWritable != other.overWritable) return false
 		if (deletable != other.deletable) return false
-		if (localOnly != other.localOnly) return false
+		if (isLocalOnly != other.isLocalOnly) return false
 
 		return true
 	}
 
 	companion object {
-		fun fromCloudSnapshot(snapshot: ByteArray) : BucketItemObject? {
+		fun fromCloudSnapshot(snapshot : ByteArray) : BucketItemObject? {
 			return try {
 				BucketItemObject(JSONObject(String(snapshot, Charsets.UTF_8)))
 			} catch (e : Exception) {
 				null
 			}
+		}
+
+		@kotlinx.serialization.Serializable
+		@Keep
+		@JsonIgnoreProperties(ignoreUnknown = true)
+		sealed class BucketItemData : Serializable {
+
+			@kotlinx.serialization.Serializable
+			@Keep
+			@JsonIgnoreProperties(ignoreUnknown = true)
+			data class BookData(
+				@JsonProperty("key")
+				var key : String? = null,
+				@JsonProperty("title")
+				var title : String? = null,
+				@JsonProperty("cover_i")
+				var coverI : String? = null,    // Url for cover
+				@JsonProperty("author_name")
+				var authorList : List<String?>? = null,
+				@JsonProperty("first_publish_year")
+				var firstPublishYear : String? = null,
+				@JsonProperty("number_of_pages_median")
+				var numberOfPages : Int? = null,
+				@JsonProperty("description")
+				var description : String? = null,
+			) : BucketItemData() {
+				constructor(jsonString : String?) : this(null, null, null, null, null, null, null) {
+					if (jsonString != null) {
+						try {
+							val objectMapper : ObjectMapper =
+								jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+							val bookData = objectMapper.readValue(jsonString, BookData::class.java)
+							this.key = bookData.key
+							this.title = bookData.title
+							this.coverI = bookData.coverI
+							this.authorList = bookData.authorList
+							this.firstPublishYear = bookData.firstPublishYear
+							this.numberOfPages = bookData.numberOfPages
+							this.description = bookData.description
+						} catch (e : Exception) {
+
+						}
+					}
+				}
+
+				fun toJsonString() : String {
+					return try {
+						val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+						objectMapper.writeValueAsString(this)
+					} catch (e : Exception) {
+//			            e.printStackTrace()
+						"null"
+					}
+				}
+
+				override fun equals(other : Any?) : Boolean {
+					if (this === other) return true
+					if (other !is BookData) return false
+
+					if (key != other.key) return false
+					if (title != other.title) return false
+					if (coverI != other.coverI) return false
+					if (authorList != other.authorList) return false
+					if (firstPublishYear != other.firstPublishYear) return false
+					if (numberOfPages != other.numberOfPages) return false
+					if (description != other.description) return false
+
+					return true
+				}
+
+				override fun hashCode() : Int {
+					var result = key?.hashCode() ?: 0
+					result = 31 * result + (title?.hashCode() ?: 0)
+					result = 31 * result + (coverI?.hashCode() ?: 0)
+					result = 31 * result + (authorList?.hashCode() ?: 0)
+					result = 31 * result + (firstPublishYear?.hashCode() ?: 0)
+					result = 31 * result + (numberOfPages ?: 0)
+					result = 31 * result + (description?.hashCode() ?: 0)
+					return result
+				}
+			}
+
+			@kotlinx.serialization.Serializable
+			@Keep
+			data class ShowData(
+				@JsonProperty("type")
+				@SerialName("type")
+				var type : ShowType? = null,
+				@JsonProperty("tvData")
+				@SerialName("tvData")
+				var tvData : TvData? = null,
+				@JsonProperty("movieData")
+				@SerialName("movieData")
+				var movieData : MovieData? = null,
+			) : BucketItemData() {
+				constructor(data : String?) : this(null, null, null) {
+					if (data != null) {
+						try {
+							val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }
+							val showData = objectMapper.readValue(data, ShowData::class.java)
+							this.type = showData.type
+							this.tvData = showData.tvData
+							this.movieData = showData.movieData
+						} catch (e : Exception) {
+
+						}
+					}
+				}
+
+				fun posterPath() : String? {
+					return when (type) {
+						ShowType.TV -> tvData?.posterPath
+						ShowType.MOVIE -> movieData?.posterPath
+						else -> null
+					}
+				}
+
+				fun toJsonString() : String {
+					return try {
+						val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+						objectMapper.writeValueAsString(this)
+					} catch (e : Exception) {
+//			            e.printStackTrace()
+						"null"
+					}
+				}
+
+				override fun hashCode() : Int {
+					var result = type?.hashCode() ?: 0
+					result = 31 * result + (tvData?.hashCode() ?: 0)
+					result = 31 * result + (movieData?.hashCode() ?: 0)
+					return result
+				}
+
+				override fun equals(other : Any?) : Boolean {
+					if (this === other) return true
+					if (other !is ShowData) return false
+
+					if (type != other.type) return false
+					if (tvData != other.tvData) return false
+					if (movieData != other.movieData) return false
+
+					return true
+				}
+			}
+
+			@Keep
+			data class OpenGraphResult(
+				var title : String? = null,
+				var description : String? = null,
+				var url : String? = null,
+				var image : String? = null,
+				var siteName : String? = null,
+				var type : String? = null
+			) : BucketItemData()
 		}
 	}
 }

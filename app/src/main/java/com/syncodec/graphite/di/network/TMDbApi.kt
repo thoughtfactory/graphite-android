@@ -1,5 +1,7 @@
 package com.syncodec.graphite.di.network
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -9,6 +11,9 @@ import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.utils.alice.Alice
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -58,16 +63,51 @@ object TMDbApi {
 		}
 	}
 
-	fun retrieveShowPoster(posterPath : String?, onResponse : (Response?) -> Unit) {
+	fun retrieveShowPoster(posterPath : String?, onResponse : (Bitmap?) -> Unit) {
 		if (posterPath == null) onResponse(null)
 		else {
-			val url = "https://image.tmdb.org/t/p/w500$posterPath"
+			try {
+				val url = "https://image.tmdb.org/t/p/w500$posterPath"
 
-			val request = Request.Builder()
-				.url(url)
-				.build()
+				val request = Request.Builder()
+					.url(url)
+					.build()
 
-			onResponse(client.newCall(request).execute())
+				try {
+					client.newCall(request).execute().body.byteStream().let { inputStream ->
+						val bitmap = BitmapFactory.decodeStream(inputStream)
+						onResponse(bitmap)
+					}
+				} catch (e : Exception) {
+					onResponse(null)
+				}
+			} catch (e : Exception) {
+				onResponse(null)
+			}
+		}
+	}
+
+	fun retrieveShowPoster(posterPath : String?) : Bitmap? {
+		if (posterPath == null) return null
+		else {
+			try {
+				val url = "https://image.tmdb.org/t/p/w500$posterPath"
+
+				val request = Request.Builder()
+					.url(url)
+					.build()
+
+				try {
+					client.newCall(request).execute().body.byteStream().let { inputStream ->
+						val bitmap = BitmapFactory.decodeStream(inputStream)
+						return bitmap
+					}
+				} catch (e : Exception) {
+					return null
+				}
+			} catch (e : Exception) {
+				return null
+			}
 		}
 	}
 
@@ -122,35 +162,49 @@ data class TMDbTvSearchResult(
 	val totalResults : Int?
 )
 
+@kotlinx.serialization.Serializable
 @Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class MovieData(
 	@JsonProperty("adult")
-	var adult : Boolean?,
+	@SerialName("adult")
+	var adult : Boolean? = null,
 	@JsonProperty("genres")
-	var genres : List<Genre?>?,
+	@SerialName("genres")
+	var genres : List<Genre?>? = null,
 	@JsonProperty("homepage")
-	var homepage : String?,
+	@SerialName("homepage")
+	var homepage : String? = null,
 	@JsonProperty("id")
-	var id : String?,
+	@SerialName("id")
+	var id : String?    = null,
 	@JsonProperty("imdb_id")
-	var imdbId : String?,
+	@SerialName("imdb_id")
+	var imdbId : String? = null,
 	@JsonProperty("original_language")
-	var originalLanguage : String?,
+	@SerialName("original_language")
+	var originalLanguage : String? = null,
 	@JsonProperty("original_title")
-	var originalTitle : String?,
+	@SerialName("original_title")
+	var originalTitle : String? = null,
 	@JsonProperty("overview")
-	var overview : String?,
+	@SerialName("overview")
+	var overview : String? = null,
 	@JsonProperty("poster_path")
-	var posterPath : String?,
+	@SerialName("poster_path")
+	var posterPath : String? = null,
 	@JsonProperty("release_date")
-	var releaseDate : String?,
+	@SerialName("release_date")
+	var releaseDate : String? = null,
 	@JsonProperty("runtime")
-	var runtime : Int?,
+	@SerialName("runtime")
+	var runtime : Int? = null,
 	@JsonProperty("tagline")
-	var tagline : String?,
+	@SerialName("tagline")
+	var tagline : String? = null,
 	@JsonProperty("title")
-	var title : String?,
+	@SerialName("title")
+	var title : String? = null,
 ) : Serializable {
 	constructor(jsonString : String?) : this(null, null, null, null, null, null, null, null, null, null, null, null, null) {
 		if (jsonString != null) {
@@ -225,35 +279,49 @@ data class MovieData(
 	}
 }
 
+@kotlinx.serialization.Serializable
 @Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class TvData(
 	@JsonProperty("adult")
-	var adult : Boolean?,
+	@SerialName("adult")
+	var adult : Boolean? = null,
 	@JsonProperty("first_air_date")
-	var firstAirDate : String?,
+	@SerialName("first_air_date")
+	var firstAirDate : String? = null,
 	@JsonProperty("homepage")
-	var homepage : String?,
+	@SerialName("homepage")
+	var homepage : String? = null,
 	@JsonProperty("genres")
-	var genres : List<Genre?>?,
+	@SerialName("genres")
+	var genres : List<Genre?>? = null,
 	@JsonProperty("id")
-	var id : String?,
+	@SerialName("id")
+	var id : String? = null,
 	@JsonProperty("name")
-	var name : String?,
+	@SerialName("name")
+	var name : String? = null,
 	@JsonProperty("number_of_episodes")
-	var numberOfEpisodes : Int?,
+	@SerialName("number_of_episodes")
+	var numberOfEpisodes : Int? = null,
 	@JsonProperty("number_of_seasons")
-	var numberOfSeasons : Int?,
+	@SerialName("number_of_seasons")
+	var numberOfSeasons : Int? = null,
 	@JsonProperty("original_language")
-	var originalLanguage : String?,
+	@SerialName("original_language")
+	var originalLanguage : String? = null,
 	@JsonProperty("original_name")
-	var originalName : String?,
+	@SerialName("original_name")
+	var originalName : String? = null,
 	@JsonProperty("overview")
-	var overview : String?,
+	@SerialName("overview")
+	var overview : String? = null,
 	@JsonProperty("poster_path")
-	var posterPath : String?,
+	@SerialName("poster_path")
+	var posterPath : String? = null,
 	@JsonProperty("tagline")
-	var tagline : String?,
+	@SerialName("tagline")
+	var tagline : String? = null,
 ) : Serializable {
 	constructor(jsonString : String?) : this(null, null, null, null, null, null, null, null, null, null, null, null, null) {
 		if (jsonString != null) {
@@ -328,13 +396,16 @@ data class TvData(
 	}
 }
 
+@kotlinx.serialization.Serializable
 @Keep
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Genre(
 	@JsonProperty("id")
-	var id : Int?,
+	@SerialName("id")
+	var id : Int? = null,
 	@JsonProperty("name")
-	var name : String?
+	@SerialName("name")
+	var name : String? = null,
 ) : Serializable {
 	override fun hashCode() : Int {
 		var result = id ?: 0
@@ -348,55 +419,6 @@ data class Genre(
 
 		if (id != other.id) return false
 		if (name != other.name) return false
-
-		return true
-	}
-}
-
-@Keep
-data class ShowData(
-	var type : ShowType?,
-	var tvData : TvData? = null,
-	var movieData : MovieData? = null
-) {
-	constructor(data : String?) : this(null, null, null) {
-		if (data != null) {
-			try {
-				val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-				val showData = objectMapper.readValue(data, ShowData::class.java)
-				this.type = showData.type
-				this.tvData = showData.tvData
-				this.movieData = showData.movieData
-			} catch (e : Exception) {
-
-			}
-		}
-	}
-
-	fun toJsonString() : String {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			objectMapper.writeValueAsString(this)
-		} catch (e : Exception) {
-//			e.printStackTrace()
-			"null"
-		}
-	}
-
-	override fun hashCode() : Int {
-		var result = type?.hashCode() ?: 0
-		result = 31 * result + (tvData?.hashCode() ?: 0)
-		result = 31 * result + (movieData?.hashCode() ?: 0)
-		return result
-	}
-
-	override fun equals(other : Any?) : Boolean {
-		if (this === other) return true
-		if (other !is ShowData) return false
-
-		if (type != other.type) return false
-		if (tvData != other.tvData) return false
-		if (movieData != other.movieData) return false
 
 		return true
 	}

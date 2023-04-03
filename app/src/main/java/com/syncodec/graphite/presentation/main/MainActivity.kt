@@ -45,13 +45,14 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.service.DropboxService
 import com.syncodec.graphite.service.DropboxServiceConnectionManager
+import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.Dispatchers
@@ -72,7 +73,7 @@ class MainActivity : ComponentActivity() {
 
 	private var biometricErrorMessage : MutableState<String?> = mutableStateOf(null)
 
-	private val dropboxSyncStatus = MutableStateFlow<DropboxService.Companion.DropboxSyncStatus>(DropboxService.Companion.DropboxSyncStatus.Init)
+	private val syncStatus = MutableStateFlow<SyncerService.Companion.SyncStatus>(SyncerService.Companion.SyncStatus.Init)
 
 	@OptIn(ExperimentalAnimationApi::class)
 	override fun onCreate(savedInstanceState : Bundle?) {
@@ -99,8 +100,6 @@ class MainActivity : ComponentActivity() {
 			.setAutoSelectEnabled(false)
 			.build()
 
-		startSyncService()
-
 		setContent {
 			BaseContent {
 				val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
@@ -125,8 +124,18 @@ class MainActivity : ComponentActivity() {
 
 				val biometricErrorMessage by this.biometricErrorMessage
 
-				val syncStatus by dropboxSyncStatus.collectAsState()
+				val syncStatus by syncStatus.collectAsState()
 				val testConnectionResponse by viewModel.testConnectionResponse.collectAsState(initial = null)
+
+				LaunchedEffect(key1 = testConnectionResponse) {
+					if(testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) {
+						startSyncService()
+					}
+				}
+
+				LaunchedEffect(key1 = null) {
+					viewModel.testDropboxConnection()
+				}
 
 				AnimatedContent(
 					targetState = isFirstTime,
@@ -151,10 +160,10 @@ class MainActivity : ComponentActivity() {
 								RepositoryState.SUCCESS -> MainScreen(
 									syncStatus = syncStatus,
 									testConnectionResponse = testConnectionResponse,
-									testDropboxConnection = { viewModel.testDropboxConnection() },
+									testDropboxConnection = {  },
 									onClickSyncNow = {
 										Log.i("npr", "onClickSyncNow : ${dropboxServiceConnectionManager == null} : ${dropboxServiceConnectionManager?.service == null}")
-										dropboxServiceConnectionManager?.service?.initSync()
+										dropboxServiceConnectionManager?.service?.startSync()
 									},
 //									onClickForceSync = { dropboxServiceConnectionManager?.service?.forceSync() },
 								)
@@ -329,11 +338,10 @@ class MainActivity : ComponentActivity() {
 	private var dropboxServiceConnectionManager : DropboxServiceConnectionManager? = null
 
 	private fun startSyncService() {
-		dropboxServiceConnectionManager = DropboxServiceConnectionManager(this) { dropboxService ->
-//			dropboxService.initSync()
-			lifecycleScope.launch(Dispatchers.Default) {
-				dropboxService.dropboxSyncStatus.collect {
-					dropboxSyncStatus.tryEmit(it)
+		if (dropboxServiceConnectionManager == null) {
+			dropboxServiceConnectionManager = DropboxServiceConnectionManager(this) { dropboxService ->
+				lifecycleScope.launch(Dispatchers.Default) {
+					dropboxService.syncStatus.collect { syncStatus.tryEmit(it) }
 				}
 			}
 		}

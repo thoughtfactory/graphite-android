@@ -1,21 +1,16 @@
 package com.syncodec.graphite.di.model
 
-import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
-import com.syncodec.graphite.di.repository.RealmUUIDKeyDeserializer
-import com.syncodec.graphite.di.repository.RealmUUIDSerializer
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
-import java.nio.charset.Charset
 
 
 @Keep
@@ -44,7 +39,7 @@ class NoteObject() : RealmObject {
 
 		this.overWritable = jsonObject.optBoolean("overWritable", true)
 		this.deletable = jsonObject.optBoolean("deletable", true)
-		this.localOnly = jsonObject.optBoolean("localOnly", false)
+		this.isLocalOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -67,7 +62,7 @@ class NoteObject() : RealmObject {
 
 	var overWritable : Boolean = true
 	var deletable : Boolean = true
-	var localOnly : Boolean = false
+	var isLocalOnly : Boolean = false
 
 	fun setLatLng(latLng : LatLng?) {
 		try {
@@ -123,7 +118,7 @@ class NoteObject() : RealmObject {
 			isLocked = this.isLocked,
 			overWritable = this.overWritable,
 			deletable = this.deletable,
-			localOnly = this.localOnly
+			localOnly = this.isLocalOnly
 		)
 	}
 
@@ -144,7 +139,7 @@ class NoteObject() : RealmObject {
 		this.parentId = this@NoteObject.parentId
 		this.overWritable = this@NoteObject.overWritable
 		this.deletable = this@NoteObject.deletable
-		this.localOnly = this@NoteObject.localOnly
+		this.isLocalOnly = this@NoteObject.isLocalOnly
 	}
 
 	fun toCloudSnapshot() : String {
@@ -184,7 +179,7 @@ class NoteObject() : RealmObject {
 		result = 31 * result + parentId.hashCode()
 		result = 31 * result + overWritable.hashCode()
 		result = 31 * result + deletable.hashCode()
-		result = 31 * result + localOnly.hashCode()
+		result = 31 * result + isLocalOnly.hashCode()
 		return result
 	}
 
@@ -208,7 +203,7 @@ class NoteObject() : RealmObject {
 		if (parentId != other.parentId) return false
 		if (overWritable != other.overWritable) return false
 		if (deletable != other.deletable) return false
-		if (localOnly != other.localOnly) return false
+		if (isLocalOnly != other.isLocalOnly) return false
 
 		return true
 	}
@@ -244,7 +239,7 @@ class NoteObject() : RealmObject {
 				this.parentId = RealmUUID.random()
 				this.overWritable = true
 				this.deletable = true
-				this.localOnly = false
+				this.isLocalOnly = false
 			}
 		}
 	}

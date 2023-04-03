@@ -32,6 +32,7 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.SheetLayou
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialog
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.service.DropboxService
+import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +53,7 @@ enum class ComponentType {
 )
 @Composable
 fun MainScreen(
-	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
 	testDropboxConnection : () -> Unit = {},
 	onClickSyncNow : () -> Unit = {},

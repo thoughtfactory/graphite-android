@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +28,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
-import com.syncodec.graphite.service.DropboxService
+import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -42,7 +41,7 @@ fun TopBar(
 	componentType : ComponentType = ComponentType.Note,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
-	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onComponentChange : (Int) -> Unit = {},
 	onClickFilter : () -> Unit = {},
 	onClickMenu : () -> Unit = {},
@@ -88,7 +87,7 @@ private fun Bar(
 	currentRoute : String? = null,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
-	syncStatus : DropboxService.Companion.DropboxSyncStatus,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onClickMenu : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
 	onClickCloud : () -> Unit = {},
@@ -226,7 +225,7 @@ private fun ComponentTypeView(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun CloudButton(
-	syncStatus : DropboxService.Companion.DropboxSyncStatus,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onClickSync : () -> Unit
 ) {
 	val infiniteTransition = rememberInfiniteTransition()
@@ -242,14 +241,15 @@ private fun CloudButton(
 
 	MenuButton(
 		icon = when(syncStatus) {
-			is DropboxService.Companion.DropboxSyncStatus.Init -> R.drawable.ic_cloud
-			is DropboxService.Companion.DropboxSyncStatus.Idle -> R.drawable.ic_cloud
-			is DropboxService.Companion.DropboxSyncStatus.Loading -> R.drawable.ic_cloud_dashed
-			is DropboxService.Companion.DropboxSyncStatus.Locked -> R.drawable.ic_cloud_x
-			is DropboxService.Companion.DropboxSyncStatus.Connected -> R.drawable.ic_cloud_syncing
-			is DropboxService.Companion.DropboxSyncStatus.Syncing -> R.drawable.ic_cloud_syncing
-			is DropboxService.Companion.DropboxSyncStatus.Disconnected -> R.drawable.ic_cloud_x
-			is DropboxService.Companion.DropboxSyncStatus.Failed -> R.drawable.ic_cloud_x
+			is SyncerService.Companion.SyncStatus.Init -> R.drawable.ic_cloud
+			is SyncerService.Companion.SyncStatus.Idle -> R.drawable.ic_cloud
+			is SyncerService.Companion.SyncStatus.Loading -> R.drawable.ic_cloud_dashed
+			is SyncerService.Companion.SyncStatus.Locked -> R.drawable.ic_cloud_x
+			is SyncerService.Companion.SyncStatus.Connected -> R.drawable.ic_cloud_syncing
+			is SyncerService.Companion.SyncStatus.Syncing -> R.drawable.ic_cloud_syncing
+			is SyncerService.Companion.SyncStatus.Disconnected -> R.drawable.ic_cloud_x
+			is SyncerService.Companion.SyncStatus.Paused -> R.drawable.ic_cloud_x
+			is SyncerService.Companion.SyncStatus.Failed -> R.drawable.ic_cloud_x
 		},
 		onClick = onClickSync
 	)

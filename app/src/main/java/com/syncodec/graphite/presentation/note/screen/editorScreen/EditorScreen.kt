@@ -6,6 +6,8 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -263,6 +265,17 @@ fun EditorScreen(
 		else openDialog(EditorDialogType.DiscardChanges)
 	}
 
+	val openEditorPicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
+		if (uri != null) {
+			context.contentResolver.openInputStream(uri)?.let { inputStream ->
+				inputStream.readBytes().let { byteArray ->
+					editor.loadExternalEditor(String(byteArray))
+				}
+				inputStream.close()
+			}
+		}
+	}
+
 	GenericScaffold(
 		topBar = {
 			TopBar(
@@ -410,6 +423,7 @@ fun EditorScreen(
 				onClickLocation = { openSheet(EditorBottomSheetType.Location) },
 				onClickAttachment = { openSheet(EditorBottomSheetType.Attachment) },
 				onClickTag = { openSheet(EditorBottomSheetType.Tag) },
+				onClickSwapEditor = { openEditorPicker.launch(arrayOf("text/html")) },
 			) { editorAction -> editor.onEditorAction(editorAction = editorAction) }
 		}
 	}

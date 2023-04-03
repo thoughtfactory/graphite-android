@@ -219,7 +219,10 @@ fun DropboxSyncScreen(
 					icon = R.drawable.ic_sync,
 					isChecked = isSyncEnabled != false,
 					enabled = isSyncEnabled != null && testConnectionResponse is DBox.Companion.TestConnectionResponse.Success,
-				) { dataStoreInstance.setIsSyncEnabled(it) }
+				) {
+					dataStoreInstance.setIsSyncEnabled(it)
+					if (! it) Toast.makeText(context, "Sync will be paused after completing current process", Toast.LENGTH_SHORT).show()
+				}
 				SettingButton(
 					text = "Take Snapshot",
 					icon = R.drawable.ic_easy,

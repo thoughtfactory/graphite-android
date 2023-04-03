@@ -29,6 +29,7 @@ fun BottomBar(
 	onClickLocation : () -> Unit = {},
 	onClickAttachment : () -> Unit = {},
 	onClickTag : () -> Unit = {},
+	onClickSwapEditor : () -> Unit = {},
 	onEditorAction : (RichTextEditor.Companion.EditorAction) -> Unit = {},
 ) {
 	var isHeadingBarVisible by remember { mutableStateOf(false) }
@@ -57,6 +58,7 @@ fun BottomBar(
 			onClickAttachment = onClickAttachment,
 			onClickTag = onClickTag,
 			onClickHeading = { isHeadingBarVisible = true },
+			onClickSwapEditor = onClickSwapEditor,
 			onEditorAction = onEditorAction,
 		)
 		Spacer(modifier = Modifier.height(12.dp))

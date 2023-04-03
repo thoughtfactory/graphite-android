@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.main.composable.screen.noteScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.fido.fido2.api.common.RSAAlgorithm
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import kotlin.random.Random
 
 
 @KoinViewModel
@@ -105,10 +107,11 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 		CoroutineScope(Dispatchers.Default).launch {
 			for (i in 0 .. 10) {
 				NoteObject.getRandomInstance().apply {
-					this.title = "Note $i"
+					this.id = RealmUUID.random()
+					this.title = "Note ${Random.nextInt()}}"
 					this.content =
 						"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-							"Content $i".repeat(2)
+							"Content ${this.id}"
 						}\"}]}]}"
 					this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
 					repository.putNote(this)

@@ -74,6 +74,7 @@ fun ViewerScreen(
 	val address by viewModel.address.collectAsState()
 	val content by viewModel.content.collectAsState()
 	val contentThumbnail by viewModel.contentThumbnail.collectAsState()
+	val isLocalOnly by viewModel.isLocalOnly.collectAsState()
 	val isFavourite by viewModel.isFavourite.collectAsState()
 	val isLocked by viewModel.isLocked.collectAsState()
 	val parentChapter by viewModel.parentChapter.collectAsState()
@@ -211,8 +212,14 @@ fun ViewerScreen(
 		topBar = {
 			TopBar(
 				isOperationPending = isOperationPending,
+				isLocalOnly = isLocalOnly ?: false,
 				isFavourite = isFavourite ?: false,
 				isLocked = isLocked ?: false,
+				onClickLocalOnly = {
+					viewModel.toggleLocalOnly()
+					if (isLocalOnly == true) Toast.makeText(context, "Note will be synced to the cloud", Toast.LENGTH_SHORT).show()
+					else Toast.makeText(context, "Note will not be synced to the cloud", Toast.LENGTH_SHORT).show()
+				},
 				onClickFavourite = viewModel::toggleFavourite,
 				onClickLock = {
 					if (isAuthenticated) viewModel.toggleLock()
@@ -295,7 +302,8 @@ fun ViewerScreen(
 	) {
 		Crossfade(
 			targetState = noteId,
-			animationSpec = tween(300)
+			animationSpec = tween(300),
+			label = "noteId_animation",
 		) {
 			it?.let {
 				ViewerComponent(

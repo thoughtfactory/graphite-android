@@ -1,17 +1,15 @@
 package com.syncodec.graphite.presentation.bucketItem.composable.screen.bookScreen
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.network.BookData
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
 import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Quadruple
 import com.syncodec.graphite.utils.Status
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.encodeBase64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,7 +31,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 
 	val thumbnailContentStatus : MutableStateFlow<ContentStatus<Bitmap?>> = MutableStateFlow(ContentStatus.Init)
 
-	val bookData : MutableStateFlow<BookData?> = MutableStateFlow(null)
+	val bookData : MutableStateFlow<BucketItemObject.Companion.BucketItemData.BookData?> = MutableStateFlow(null)
 
 	init {
 		observeData()
@@ -59,7 +57,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 					val pageCount = flowResult[5] as Int?
 					val firstPublishYear = flowResult[6] as String?
 
-					BookData(
+					BucketItemObject.Companion.BucketItemData.BookData(
 						key = key,
 						title = title,
 						coverI = coverI,
@@ -79,7 +77,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 
 	override fun initData(id : String, data : String?) {
 		viewModelScope.launch(Dispatchers.IO) {
-			BookData(jsonString = data).let { bookData ->
+			BucketItemObject.Companion.BucketItemData.BookData(jsonString = data).let { bookData ->
 				loadData(data)
 				OpenLibraryApi.retrieveDescriptionFromKey(key = id) { description ->
 					viewModelScope.launch(Dispatchers.Main) { bookDescription.value = description }
@@ -91,7 +89,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 
 	override fun loadData(data : String?) {
 		viewModelScope.launch(Dispatchers.Main) {
-			BookData(jsonString = data).let { bookData ->
+			BucketItemObject.Companion.BucketItemData.BookData(jsonString = data).let { bookData ->
 				this@BookScreenViewModel.bookKey.tryEmit(bookData.key)
 				this@BookScreenViewModel.bookTitle.tryEmit(bookData.title)
 				this@BookScreenViewModel.bookCoverI.tryEmit(bookData.coverI)
@@ -113,7 +111,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 
 	override fun getData() : Quadruple<String?, String?, String?, String?> {
 		return Quadruple(
-			BookData(
+			BucketItemObject.Companion.BucketItemData.BookData(
 				key = bookKey.value,
 				title = bookTitle.value,
 				coverI = bookCoverI.value,
@@ -131,14 +129,7 @@ class BookScreenViewModel : AbstractBucketScreenViewModel() {
 	override fun retrieveThumbnail(data : String?, onSuccess : (Bitmap) -> Unit) {
 		try {
 			viewModelScope.launch(Dispatchers.IO) {
-				OpenLibraryApi.retrieveBookCover(coverI = data) {
-					it?.body?.byteStream()?.let { inputStream ->
-						val bitmap = BitmapFactory.decodeStream(inputStream)
-						onSuccess(bitmap)
-					} ?: run {
-//				        TODO Show error
-					}
-				}
+				OpenLibraryApi.retrieveBookCover(coverI = data) { it?.let(onSuccess) }
 			}
 		} catch (e : Exception) {
 //			TODO Show error

@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.showScreen
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,7 +69,14 @@ fun BucketShowGridScreen(
 								putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketId?.bytes)
 								putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
 								putExtra(Extra.Companion.Extra.BUCKET_ITEM_ID.name, bucketItemObject.id.bytes)
-								putExtra(Extra.Companion.Extra.SHOW_TYPE.name, bucketItemObject.getShowData()?.type?.name)
+								Log.i("npr71", "BucketShowGridScreen: LoL")
+								bucketItemObject.getData()?.let { data ->
+									Log.i("npr71", "BucketShowGridScreen: ${data::class.java.simpleName}")
+									if (data is BucketItemObject.Companion.BucketItemData.ShowData) {
+										Log.i("npr71", "BucketShowGridScreen: ${data.type?.name}")
+										putExtra(Extra.Companion.Extra.SHOW_TYPE.name, data.type?.name)
+									}
+								}
 
 								context.startActivity(this)
 							}

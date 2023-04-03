@@ -10,9 +10,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.network.BookData
-import com.syncodec.graphite.di.network.ShowData
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BucketItemScreen
@@ -52,6 +51,7 @@ class BucketItemActivity : ComponentActivity() {
 				val isNew by viewModel.isNew
 				val isFavourite by viewModel.isFavourite
 				val isLocked by viewModel.isLocked
+				val isLocalOnly by viewModel.isLocalOnly
 
 				val bucketItemObject by viewModel.bucketItemObject
 				val showType by viewModel.showType.collectAsState()
@@ -62,6 +62,7 @@ class BucketItemActivity : ComponentActivity() {
 					bucketType = bucketType,
 					showType = showType,
 					isSaved = isNew?.not(),
+					isLocalOnly = isLocalOnly ?: false,
 					isFavourite = isFavourite ?: false,
 					isLocked = isLocked ?: false,
 					onClickSave = {
@@ -72,6 +73,11 @@ class BucketItemActivity : ComponentActivity() {
 							viewModel.title.value = title
 						}
 						viewModel.putBucketItem()
+					},
+					onClickLocalOnly = {
+						viewModel.onToggleLocalOnly()
+						if (isLocalOnly == true) Toast.makeText(this, "Note will be synced to the cloud", Toast.LENGTH_SHORT).show()
+						else Toast.makeText(this, "Note will not be synced to the cloud", Toast.LENGTH_SHORT).show()
 					},
 					onClickFavourite = {
 						if (isNew == true) {
@@ -193,7 +199,7 @@ class BucketItemActivity : ComponentActivity() {
 				finish()
 			} else {
 				val bookId = intent.getStringExtra(Extra.Companion.Extra.BOOK_ID.name)
-				val bookData = intent.serializable<BookData>(Extra.Companion.Extra.BUCKET_EXTRA_DATA.name)
+				val bookData = intent.serializable<BucketItemObject.Companion.BucketItemData.BookData>(Extra.Companion.Extra.BUCKET_EXTRA_DATA.name)
 
 				if (bookId == null || bookData == null) {
 					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
@@ -215,7 +221,7 @@ class BucketItemActivity : ComponentActivity() {
 					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
 						Pair(data, thumbnail)
 					}.collect { (data, thumbnail) ->
-						val bookData = BookData(data)
+						val bookData = BucketItemObject.Companion.BucketItemData.BookData(data)
 						viewModel.key.tryEmit(bookData.key)
 						screenViewModel.loadData(data = data)
 						screenViewModel.loadThumbnail(thumbnail = thumbnail?.decodeBase64ToBitmap())
@@ -282,7 +288,7 @@ class BucketItemActivity : ComponentActivity() {
 					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
 						Pair(data, thumbnail)
 					}.collect { (data, thumbnail) ->
-						val showData = ShowData(data)
+						val showData = BucketItemObject.Companion.BucketItemData.ShowData(data)
 						viewModel.key.tryEmit(showData.movieData?.id)
 						screenViewModel.loadData(data = showData.movieData?.toJsonString())
 						screenViewModel.loadThumbnail(thumbnail = thumbnail?.decodeBase64ToBitmap())
@@ -322,7 +328,7 @@ class BucketItemActivity : ComponentActivity() {
 					combine(viewModel.data, viewModel.thumbnail) { data, thumbnail ->
 						Pair(data, thumbnail)
 					}.collect { (data, thumbnail) ->
-						val showData = ShowData(data)
+						val showData = BucketItemObject.Companion.BucketItemData.ShowData(data)
 						viewModel.key.tryEmit(showData.tvData?.id)
 						screenViewModel.loadData(data = showData.tvData?.toJsonString())
 						screenViewModel.loadThumbnail(thumbnail = thumbnail?.decodeBase64ToBitmap())

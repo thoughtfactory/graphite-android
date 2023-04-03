@@ -34,6 +34,7 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 	val state : MutableState<BucketItemState?> = mutableStateOf(null)
 	val isFavourite : MutableState<Boolean?> = mutableStateOf(null)
 	val isLocked : MutableState<Boolean?> = mutableStateOf(null)
+	val isLocalOnly : MutableState<Boolean?> = mutableStateOf(null)
 	val parentId = mutableStateOf<RealmUUID?>(null)
 
 	val bucketItemObject : MutableState<BucketItemObject?> = mutableStateOf(null)
@@ -51,6 +52,7 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 		this.bucketType.value = bucketType
 		this.isFavourite.value = false
 		this.isLocked.value = false
+		this.isLocalOnly.value = false
 		this.parentId.value = bucketId
 
 		this.showType.tryEmit(showType)
@@ -74,6 +76,7 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 					this@BucketItemViewModel.state.value = BucketItemState.values().find { it.name == bucketItem?.state }
 					this@BucketItemViewModel.isFavourite.value = bucketItem?.isFavourite
 					this@BucketItemViewModel.isLocked.value = bucketItem?.isLocked
+					this@BucketItemViewModel.isLocalOnly.value = bucketItem?.isLocalOnly
 					this@BucketItemViewModel.parentId.value = bucketItem?.parentId
 
 					this@BucketItemViewModel.data.tryEmit(bucketItem?.data)
@@ -94,6 +97,7 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 				this.state = this@BucketItemViewModel.state.value?.name ?: BucketItemState.ALPHA.name
 				this.isFavourite = this@BucketItemViewModel.isFavourite.value ?: false
 				this.isLocked = this@BucketItemViewModel.isLocked.value ?: false
+				this.isLocalOnly = this@BucketItemViewModel.isLocalOnly .value ?: false
 				this.parentId = this@BucketItemViewModel.parentId.value
 
 				this.data = this@BucketItemViewModel.data.value
@@ -113,6 +117,11 @@ class BucketItemViewModel(private val repository : KoinRepository) : ViewModel()
 
 	fun onToggleLock() {
 		isLocked.value = isLocked.value?.not()
+		putBucketItem()
+	}
+
+	fun onToggleLocalOnly() {
+		isLocalOnly.value = isLocalOnly.value?.not()
 		putBucketItem()
 	}
 

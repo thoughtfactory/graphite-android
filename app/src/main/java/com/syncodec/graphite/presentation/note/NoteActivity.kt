@@ -58,6 +58,8 @@ class NoteActivity : ComponentActivity() {
 		}
 		val dataStoreInstance = DataStoreInstance(this)
 
+
+
 		setContent {
 			BaseContent {
 

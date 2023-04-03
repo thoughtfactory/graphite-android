@@ -14,12 +14,13 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottom
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ErrorView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
 import com.syncodec.graphite.service.DropboxService
+import com.syncodec.graphite.service.SyncerService
 
 
 @Preview
 @Composable
 fun SyncBottomSheet(
-	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
 	onClickSyncNow : () -> Unit = {},
 	onClickForceSync : () -> Unit = {},

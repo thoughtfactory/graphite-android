@@ -29,6 +29,7 @@ import io.realm.kotlin.types.RealmUUID
 fun TopBar(
 	title : String? = null,
 	defaultChapterId : RealmUUID? = null,
+	isLocalOnly : Boolean = false,
 	isLocked : Boolean = false,
 	isFavourite : Boolean = false,
 	chapterPath : List<ChapterObjectLite> = listOf(),
@@ -36,6 +37,7 @@ fun TopBar(
 	selectedSize : Int = 0,
 	onClickBack : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
+	onClickLocalOnly : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickFilter : () -> Unit = {},
@@ -47,12 +49,14 @@ fun TopBar(
 	) {
 		Bar(
 			title = title,
+			isLocalOnly = isLocalOnly,
 			isLocked = isLocked,
 			isFavourite = isFavourite,
 			isSelecting = isSelecting,
 			selectedSize = selectedSize,
 			onClickBack = onClickBack,
 			onClickCancelSelect = onClickCancelSelect,
+			onClickLocalOnly = onClickLocalOnly,
 			onClickLock = onClickLock,
 			onClickFavourite = onClickFavourite,
 			onClickFilter = onClickFilter,
@@ -73,12 +77,14 @@ fun TopBar(
 @Composable
 private fun Bar(
 	title : String? = null,
+	isLocalOnly : Boolean = false,
 	isLocked : Boolean = false,
 	isFavourite : Boolean = false,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
 	onClickBack : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
+	onClickLocalOnly : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickFilter : () -> Unit = {},
@@ -88,7 +94,8 @@ private fun Bar(
 
 	Crossfade(
 		targetState = isSelecting,
-		animationSpec = tween(300)
+		animationSpec = tween(300),
+		label = "isSelecting_animation"
 	) {
 		if (it) {
 			TopAppBar(
@@ -131,6 +138,17 @@ private fun Bar(
 					MenuButton(
 						icon = R.drawable.ic_filter,
 						onClick = onClickFilter
+					)
+
+					MenuButton(
+						icon = if (isLocalOnly) R.drawable.ic_cloud_disable else R.drawable.ic_cloud,
+						tooltip = "Local only",
+						checked = isLocalOnly,
+						colors = MenuButtonDefaults.menuButtonColors(
+							checkedContainerColor = MenuButtonDefaults.deleteButtonColors().checkedContainerColor,
+							checkedIconColor = MenuButtonDefaults.deleteButtonColors().checkedIconColor,
+						),
+						onClick = onClickLocalOnly
 					)
 
 					MenuButton(

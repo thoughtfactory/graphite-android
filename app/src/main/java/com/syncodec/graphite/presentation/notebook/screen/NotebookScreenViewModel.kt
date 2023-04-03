@@ -53,6 +53,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 	val thumbnail = MutableStateFlow<String?>(null)
 	val isFavourite = MutableStateFlow<Boolean?>(null)
 	val isLocked = MutableStateFlow<Boolean?>(null)
+	val isLocalOnly = MutableStateFlow<Boolean?>(null)
 
 	private val _chapterList = MutableStateFlow<List<ChapterObject>>(listOf())
 	private val _noteList = MutableStateFlow<List<NoteObjectLite>>(listOf())
@@ -116,6 +117,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 					this@NotebookScreenViewModel.thumbnail.tryEmit(chapterObject1.thumbnail)
 					this@NotebookScreenViewModel.isFavourite.tryEmit(chapterObject1.isFavourite)
 					this@NotebookScreenViewModel.isLocked.tryEmit(chapterObject1.isLocked)
+					this@NotebookScreenViewModel.isLocalOnly.tryEmit(chapterObject1.isLocalOnly)
 
 					this@NotebookScreenViewModel.parentId.tryEmit(chapterObject1.parentId?.bytes)
 
@@ -200,6 +202,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			this.thumbnail = thumbnail?.encodeBase64()
 			this.isFavourite = this@NotebookScreenViewModel.isFavourite.value ?: false
 			this.isLocked = this@NotebookScreenViewModel.isLocked.value ?: false
+			this.isLocalOnly = this@NotebookScreenViewModel.isLocalOnly.value ?: false
 
 			this.parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }
 			repository.putChapterSuspended(this)
@@ -218,6 +221,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			this.thumbnail = this@NotebookScreenViewModel.thumbnail.value
 			this.isFavourite = (this@NotebookScreenViewModel.isFavourite.value ?: false).not()
 			this.isLocked = this@NotebookScreenViewModel.isLocked.value ?: false
+			this.isLocalOnly = this@NotebookScreenViewModel.isLocalOnly .value ?: false
 
 			this.parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }
 			repository.putChapterSuspended(this)
@@ -234,6 +238,24 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			this.thumbnail = this@NotebookScreenViewModel.thumbnail.value
 			this.isFavourite = this@NotebookScreenViewModel.isFavourite.value ?: false
 			this.isLocked = (this@NotebookScreenViewModel.isLocked.value ?: false).not()
+			this.isLocalOnly = this@NotebookScreenViewModel.isLocalOnly .value ?: false
+
+			this.parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }
+			repository.putChapterSuspended(this)
+		}
+	}
+
+	fun toggleLocalOnly(chapterId : RealmUUID) {
+		ChapterObject().apply {
+			this.id = chapterId
+			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: System.currentTimeMillis()
+			this.title = this@NotebookScreenViewModel.title.value
+			this.description = this@NotebookScreenViewModel.description.value
+			this.color = this@NotebookScreenViewModel.color.value
+			this.thumbnail = this@NotebookScreenViewModel.thumbnail.value
+			this.isFavourite = this@NotebookScreenViewModel.isFavourite.value ?: false
+			this.isLocked = this@NotebookScreenViewModel.isLocked.value ?: false
+			this.isLocalOnly = this@NotebookScreenViewModel.isLocalOnly.value?.not() ?: false
 
 			this.parentId = this@NotebookScreenViewModel.parentId.value?.let { RealmUUID.Companion.from(it) }
 			repository.putChapterSuspended(this)

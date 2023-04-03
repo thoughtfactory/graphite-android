@@ -45,9 +45,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.ApiStatus
-import com.syncodec.graphite.di.network.BookData
 import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
 import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
@@ -137,7 +137,10 @@ fun AddBookBottomSheet() {
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		AnimatedContent(targetState = status) {
+		AnimatedContent(
+			targetState = status,
+			label = "status_animation"
+		) {
 			when (it) {
 				Status.INIT -> {
 					SearchResultStatusView(
@@ -189,7 +192,7 @@ fun AddBookBottomSheet() {
 @Composable
 private fun LoadedView(
 	openLibraryTitleSearchResult : OpenLibraryTitleSearchResult? = null,
-	onClickBook : (BookData) -> Unit = {}
+	onClickBook : (BucketItemObject.Companion.BucketItemData.BookData) -> Unit = {}
 ) {
 	if (openLibraryTitleSearchResult?.docs?.isEmpty() == true) {
 		SearchResultStatusView(
@@ -218,7 +221,7 @@ private fun LoadedView(
 
 @Composable
 private fun BookCard(
-	bookData : BookData,
+	bookData : BucketItemObject.Companion.BucketItemData.BookData,
 	onClick : () -> Unit
 ) {
 	val context = LocalContext.current

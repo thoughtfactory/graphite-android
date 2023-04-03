@@ -14,6 +14,7 @@ import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -169,6 +170,8 @@ class DataStoreInstance(private val context : Context) {
 	}
 
 	val isSyncEnabled : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_SYNC_ENABLED] ?: true }
+
+	suspend fun isSyncEnabled() : Boolean = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_SYNC_ENABLED] ?: true }.first()
 
 	fun setIsSyncEnabled(isSyncEnabled : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_IS_SYNC_ENABLED] = isSyncEnabled }

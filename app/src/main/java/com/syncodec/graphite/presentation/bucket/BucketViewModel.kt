@@ -118,12 +118,15 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 
 						var shareText = ""
 						it.forEach {
-							val connector = when (it.getShowData()?.type) {
-								ShowType.TV -> "tv/"
-								ShowType.MOVIE -> "movie/"
-								else -> ""
+							val data = it.getData()
+							if (data is BucketItemObject.Companion.BucketItemData.ShowData?) {
+								val connector = when (data?.type) {
+									ShowType.TV -> "tv/"
+									ShowType.MOVIE -> "movie/"
+									else -> ""
+								}
+								shareText += "${it.title} $baseUrl$connector${if (bucketType.value == BucketType.TODO.name) "" else it.key}\n"
 							}
-							shareText += "${it.title} $baseUrl$connector${if (bucketType.value == BucketType.TODO.name) "" else it.key}\n"
 						}
 
 						callback(shareText)
