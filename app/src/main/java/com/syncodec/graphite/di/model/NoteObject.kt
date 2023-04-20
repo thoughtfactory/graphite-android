@@ -10,6 +10,9 @@ import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
 
 
@@ -29,10 +32,10 @@ class NoteObject() : RealmObject {
 			val lng = latLngObject.optDouble("longitude")
 			this.setLatLng(LatLng(lat, lng))
 		}
-		this.address = jsonObject.optString("address")
-		this.contentThumbnail = jsonObject.optString("contentThumbnail")
-		this.content = jsonObject.optString("content")
-		this.thumbnail = jsonObject.optString("thumbnail")
+		this.address = jsonObject.optString("address").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.contentThumbnail = jsonObject.optString("contentThumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.content = jsonObject.optString("content").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.thumbnail = jsonObject.optString("thumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
@@ -149,7 +152,6 @@ class NoteObject() : RealmObject {
 		jsonObject.put("modifiedTimestamp", this.modifiedTimestamp)
 		jsonObject.put("userTimestamp", this.userTimestamp)
 		jsonObject.put("title", this.title)
-		jsonObject.put("color", this.color)
 		jsonObject.put("latLng", this.latLng)
 		jsonObject.put("address", this.address)
 		jsonObject.put("content", this.content)
@@ -212,10 +214,9 @@ class NoteObject() : RealmObject {
 	companion object {
 		fun fromCloudSnapshot(snapshot : ByteArray) : NoteObject? {
 			return try {
-				val objectMapper = jsonMapper {}.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-
+				val json = Json { ignoreUnknownKeys = true }
 				val jsonObject = JSONObject(String(snapshot))
-				val tipTapContent = objectMapper.readValue(jsonObject.getString("content"), Content::class.java).toString()
+				val tipTapContent = json.decodeFromString<Content>(jsonObject.getString("content")).toString()
 				jsonObject.put("contentThumbnail" , tipTapContent.substring(0, minOf(256, tipTapContent.length)))
 				NoteObject(jsonObject)
 			} catch (e : Exception) {
@@ -310,6 +311,7 @@ data class NoteObjectLite(
 }
 
 @Keep
+@Serializable
 data class LatLng(
 	var latitude : Double? = null,
 	var longitude : Double? = null

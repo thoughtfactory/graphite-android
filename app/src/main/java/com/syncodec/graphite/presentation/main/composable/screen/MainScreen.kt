@@ -31,7 +31,6 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottom
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialog
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
-import com.syncodec.graphite.service.DropboxService
 import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
@@ -170,6 +169,7 @@ fun MainScreen(
 						withContext(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
 					}
 				},
+				onClickTestConnection = testDropboxConnection,
 				onClickSyncNow = onClickSyncNow,
 				onClickForceSync = onClickForceSync,
 				closeSheet = ::closeSheet

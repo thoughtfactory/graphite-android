@@ -1,20 +1,43 @@
 package com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet
 
+import android.content.Intent
+import android.util.Log
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
+import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.info.InfoCard
+import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ConnectedView
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ErrorView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
-import com.syncodec.graphite.service.DropboxService
+import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
 import com.syncodec.graphite.service.SyncerService
+import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
 
 
 @Preview
@@ -22,13 +45,17 @@ import com.syncodec.graphite.service.SyncerService
 fun SyncBottomSheet(
 	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
+	onClickTestConnection : () -> Unit = {},
 	onClickSyncNow : () -> Unit = {},
 	onClickForceSync : () -> Unit = {},
 ) {
+	val context = LocalContext.current
+
 	GenericBottomSheet(
 		title = "Sync",
 		icon = R.drawable.ic_cloud
 	) {
+		Log.i("npr71", "testConnectionResponse: $testConnectionResponse")
 		when (testConnectionResponse) {
 			is DBox.Companion.TestConnectionResponse.Loading -> LoadingView(
 				modifier = Modifier
@@ -41,17 +68,98 @@ fun SyncBottomSheet(
 				name = testConnectionResponse.fullAccount.name?.displayName,
 				spaceTotal = testConnectionResponse.spaceUsage.allocation?.individualValue?.allocated,
 				spaceUsed = testConnectionResponse.spaceUsage.used,
+				syncStatus = syncStatus,
 				onForceSync = onClickForceSync,
 				onSync = onClickSyncNow,
 			)
 
 			is DBox.Companion.TestConnectionResponse.NotLoggedIn -> NotLoggedInView()
-			is DBox.Companion.TestConnectionResponse.Error -> ErrorView()
+			is DBox.Companion.TestConnectionResponse.Error -> ErrorCard(onClickTestConnection = onClickTestConnection) {
+				context.startActivity(Intent(context, DropboxSyncActivity::class.java))
+			}
 			else -> LoadingView(
 				modifier = Modifier
 					.requiredSize(48.dp)
 					.padding(8.dp)
 			)
+		}
+	}
+}
+
+@Preview
+@Composable
+private fun ErrorCard(
+	onClickTestConnection : () -> Unit = {},
+	onClickManage : () -> Unit = {},
+) {
+	val context = LocalContext.current
+	val isInternetAvailable = context.isInternetAvailable()
+
+	val title = if (isInternetAvailable) "Error connecting with Dropbox" else "No internet connection"
+	val description = if (isInternetAvailable) "Ensure you have a working internet connection and try again." else "It seems you are not connected to internet. Please connect to internet and try again."
+
+	Card(
+		shape = MaterialTheme.shapes.medium,
+		colors = CardDefaults.cardColors(
+			containerColor = MaterialTheme.colorScheme.errorContainer,
+			contentColor = MaterialTheme.colorScheme.onErrorContainer,
+		),
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(0.dp, 4.dp),
+	) {
+		Column(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(16.dp)
+		) {
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier.fillMaxWidth(),
+			) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_warning),
+					contentDescription = title,
+					modifier = Modifier.requiredSize(32.dp)
+				)
+				Spacer(modifier = Modifier.width(12.dp))
+				Text(
+					text = title,
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.Bold
+				)
+			}
+			Spacer(modifier = Modifier.height(12.dp))
+			Text(
+				text = description,
+				style = MaterialTheme.typography.bodyMedium,
+			)
+			Spacer(modifier = Modifier.height(24.dp))
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier.fillMaxWidth(),
+			) {
+				Button(
+					shape = MaterialTheme.shapes.medium,
+					colors = ButtonDefaults.buttonColors(
+						containerColor = MaterialTheme.colorScheme.error,
+						contentColor = MaterialTheme.colorScheme.onError,
+					),
+					modifier = Modifier.weight(1f),
+					onClick = onClickManage,
+				) {
+					Text(text = "Manage")
+				}
+				Spacer(modifier = Modifier.width(2.dp))
+				MenuButton(
+					icon = R.drawable.ic_refresh,
+					colors = MenuButtonDefaults.deleteButtonColors(
+						containerColor = MaterialTheme.colorScheme.error,
+						iconColor = MaterialTheme.colorScheme.onError,
+					),
+					onClick = onClickTestConnection
+				)
+			}
 		}
 	}
 }

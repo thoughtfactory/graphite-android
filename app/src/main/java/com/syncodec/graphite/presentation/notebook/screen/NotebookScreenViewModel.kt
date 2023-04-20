@@ -80,7 +80,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) repository.getAllTagAsFlow()
+				if (it == RepositoryState.Success) repository.getAllTagAsFlow()
 					.collect { tagObjectList -> this@NotebookScreenViewModel.tagList.tryEmit(tagObjectList) }
 			}
 		}
@@ -89,7 +89,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			combine(repositoryState, chapterId) { repositoryState, chapterId ->
 				repositoryState to chapterId
 			}.collect { (repositoryState, chapterId) ->
-				if (repositoryState == RepositoryState.SUCCESS) chapterId?.let { loadData(it) }
+				if (repositoryState == RepositoryState.Success) chapterId?.let { loadData(it) }
 			}
 		}
 

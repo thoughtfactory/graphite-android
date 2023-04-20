@@ -41,7 +41,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository) : ViewM
 			combine(loadAll, repositoryState) { loadAll, repositoryState ->
 				loadAll to repositoryState
 			}.collect { (loadAll, repositoryState) ->
-				if (loadAll && repositoryState == RepositoryState.SUCCESS) loadAllData()
+				if (loadAll && repositoryState == RepositoryState.Success) loadAllData()
 			}
 		}
 
@@ -49,7 +49,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository) : ViewM
 			combine(noteId, repositoryState) { noteId, repositoryState ->
 				noteId to repositoryState
 			}.collect { (noteId, repositoryState) ->
-				if (! noteId.isNullOrEmpty() && repositoryState == RepositoryState.SUCCESS) loadNoteData(noteId)
+				if (! noteId.isNullOrEmpty() && repositoryState == RepositoryState.Success) loadNoteData(noteId)
 			}
 		}
 
@@ -57,7 +57,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository) : ViewM
 			combine(chapterId, repositoryState) { chapterId, repositoryState ->
 				chapterId to repositoryState
 			}.collect { (chapterId, repositoryState) ->
-				if (! chapterId.isNullOrEmpty() && repositoryState == RepositoryState.SUCCESS) loadChapterData(chapterId)
+				if (! chapterId.isNullOrEmpty() && repositoryState == RepositoryState.Success) loadChapterData(chapterId)
 			}
 		}
 	}

@@ -47,7 +47,7 @@ class DBox(private val context : Context) {
 								val accessToken = data["access_token"] as String
 
 								context.putSecretData("dropbox_refresh_token", refreshToken)
-
+								Log.i("npr71", "exchangeCodeForToken: $refreshToken")
 								callback(ExchangeCodeForTokenResponse.Success)
 							}
 					} catch (e : Exception) {
@@ -97,6 +97,7 @@ class DBox(private val context : Context) {
 		context.getSecretData("dropbox_refresh_token").let {
 			if (it.result == AliceRequestResult.KEY_NOT_FOUND) null else it.data?.decodeToString()
 		}.let { refreshToken ->
+			Log.i("npr71", "getAccessToken : refreshToken : $refreshToken")
 			try {
 				val data = hashMapOf("refreshToken" to refreshToken)
 

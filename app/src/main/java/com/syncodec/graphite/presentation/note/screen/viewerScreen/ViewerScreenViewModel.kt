@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.note.screen.viewerScreen
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
@@ -61,13 +60,13 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 		initObserver()
 	}
 
-	/** Observes [repositoryState] and [noteId] and calls [setupViewer] when [repositoryState] is [RepositoryState.SUCCESS] are [noteId] is not null.*/
+	/** Observes [repositoryState] and [noteId] and calls [setupViewer] when [repositoryState] is [RepositoryState.Success] are [noteId] is not null.*/
 	private fun initObserver() {
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(repositoryState, noteId) { repositoryState, noteId ->
 				repositoryState to noteId
 			}.collect { (repositoryState, noteId) ->
-				if (repositoryState == RepositoryState.SUCCESS) noteId?.let {
+				if (repositoryState == RepositoryState.Success) noteId?.let {
 					setupViewer(it)
 					loadTags(it)
 				}

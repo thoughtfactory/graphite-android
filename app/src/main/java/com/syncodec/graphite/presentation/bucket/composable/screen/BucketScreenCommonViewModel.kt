@@ -50,7 +50,7 @@ class BucketScreenCommonViewModel(private val repository : KoinRepository) : Vie
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> loadBucket(realmUUID = realmUUID)
+					RepositoryState.Success -> loadBucket(realmUUID = realmUUID)
 					else -> null
 				}
 			}

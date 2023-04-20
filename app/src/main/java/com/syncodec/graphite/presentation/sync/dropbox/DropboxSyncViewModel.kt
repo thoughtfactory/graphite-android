@@ -30,9 +30,7 @@ class DropboxSyncViewModel(private val repository : KoinRepository, private val 
 
 	fun testConnection(callback : (DBox.Companion.TestConnectionResponse) -> Unit) {
 		callback(DBox.Companion.TestConnectionResponse.Loading)
-		viewModelScope.launch(Dispatchers.IO) {
-			dBox.testConnection(callback)
-		}
+		viewModelScope.launch(Dispatchers.IO) { dBox.testConnection(callback) }
 	}
 
 	fun disconnect(callback : () -> Unit) {

@@ -13,6 +13,7 @@ plugins {
 
 android {
 	compileSdk 33
+	compileSdkPreview "UpsideDownCake"
 
 	defaultConfig {
 		applicationId 'com.syncodec.graphite'
@@ -152,7 +153,6 @@ dependencies {
 	implementation 'io.insert-koin:koin-androidx-compose:3.4.2'
 	implementation 'io.insert-koin:koin-android:3.3.3'
 	implementation 'io.insert-koin:koin-annotations:1.1.1'
-	implementation 'androidx.core:core-ktx:1.9.0'
 	ksp 'io.insert-koin:koin-ksp-compiler:1.1.1'
 
 //	Serialization
@@ -238,10 +238,7 @@ dependencies {
 	implementation 'com.valentinilk.shimmer:compose-shimmer:1.0.4'
 	implementation 'io.github.vanpra.compose-material-dialogs:datetime:0.9.0'
 
-//	implementation 'com.instabug.library:instabug:11.6.0'
-
 	implementation 'com.github.skydoves:colorpicker-compose:1.0.1'
-	implementation 'com.github.LucasFsc:Html2Pdf:0.2-beta'
 	implementation 'io.noties.markwon:core:4.6.2'
 
 	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.5'
@@ -252,18 +249,53 @@ dependencies {
 	implementation 'io.github.esentsov:kotlin-visibility:1.1.0'
 
 //	Test
-	implementation 'androidx.test:core-ktx:1.5.0'
+	// Core library
+	androidTestImplementation "androidx.test:core-ktx:1.5.0"
+
+	// Reflection
+	implementation "org.jetbrains.kotlin:kotlin-reflect:1.8.20"
+
+	// AndroidJUnitRunner and JUnit Rules
+	androidTestImplementation "androidx.test:runner:1.5.2"
+	androidTestImplementation "androidx.test:rules:1.5.0"
+
+	// Assertions
+	androidTestImplementation "androidx.test.ext:junit-ktx:1.1.5"
+	androidTestImplementation "androidx.test.ext:truth:1.5.0"
+
+	// Mock
+	androidTestImplementation "org.mockito:mockito-core:4.5.1"
+	androidTestImplementation "org.mockito.kotlin:mockito-kotlin:4.1.0"
+
+	// Mockk
+//	testImplementation "io.mockk:mockk:1.13.5"
+//	androidTestImplementation "io.mockk:mockk-android:1.13.5"
+//	androidTestImplementation "io.mockk:mockk-agent:1.13.5"
+
+	// Espresso dependencies
+	androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+	androidTestImplementation "androidx.test.espresso:espresso-contrib:3.5.1"
+	androidTestImplementation "androidx.test.espresso:espresso-intents:3.5.1"
+	androidTestImplementation "androidx.test.espresso:espresso-accessibility:3.5.1"
+	androidTestImplementation "androidx.test.espresso:espresso-web:3.5.1"
+	androidTestImplementation "androidx.test.espresso.idling:idling-concurrent:3.5.1"
+
+	// Compose dependencies
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha02'
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha02'
+
+	debugImplementation 'androidx.compose.ui:ui-tooling:1.5.0-alpha02'
+	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.5.0-alpha02'
+	debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
+	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.5.0-alpha02'
+
+	// The following Espresso dependency can be either "implementation",
+	// or "androidTestImplementation", depending on whether you want the
+	// dependency to appear on your APK’"s compile classpath or the test APK
+	// classpath.
+	androidTestImplementation "androidx.test.espresso:espresso-idling-resource:3.5.1"
+
 
 	testImplementation 'junit:junit:4.13.2'
-
-	androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-	androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.4.0-rc01'
-
-	debugImplementation 'androidx.compose.ui:ui-tooling:1.4.0-rc01'
-	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.4.0-rc01'
-	debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.4.0-rc01'
-	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.4.0-rc01'
 	testImplementation 'org.json:json:20230227'
 }

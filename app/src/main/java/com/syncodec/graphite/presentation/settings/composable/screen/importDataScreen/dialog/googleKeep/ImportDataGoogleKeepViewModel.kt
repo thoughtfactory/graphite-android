@@ -34,7 +34,7 @@ class ImportDataGoogleKeepViewModel(private val repository : KoinRepository) : V
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
+				if (it == RepositoryState.Success) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {

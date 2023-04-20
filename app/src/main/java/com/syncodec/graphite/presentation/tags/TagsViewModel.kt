@@ -31,21 +31,21 @@ class TagsViewModel(private val repository : KoinRepository) : ViewModel() {
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			when (repositoryState.value) {
-				RepositoryState.INIT -> null
-				RepositoryState.LOADING -> null
-				RepositoryState.LOCKED -> null
-				RepositoryState.SUCCESS -> {
+				RepositoryState.Init -> null
+				RepositoryState.Loading -> null
+				RepositoryState.Locked -> null
+				RepositoryState.Success -> {
 					viewModelScope.launch(Dispatchers.Default) {
-						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+						if (repositoryState.value != RepositoryState.Success) this.cancel()
 						repository.getAllTagAsFlow().collect { _tagList.tryEmit(it) }
 					}
 					viewModelScope.launch(Dispatchers.Default) {
-						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+						if (repositoryState.value != RepositoryState.Success) this.cancel()
 						repository.getAllNoteAsFlow().collect { _noteIdList.tryEmit(it.map { it.id }) }
 					}
 				}
 
-				RepositoryState.ERROR -> null
+				RepositoryState.Error -> null
 			}
 		}
 

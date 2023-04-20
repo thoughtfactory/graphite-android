@@ -74,13 +74,13 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 		loadTags()
 	}
 
-	/** Observes [repositoryState] and [noteId] and calls [getNote] when [repositoryState] is [RepositoryState.SUCCESS] and [noteId] is not null.*/
+	/** Observes [repositoryState] and [noteId] and calls [getNote] when [repositoryState] is [RepositoryState.Success] and [noteId] is not null.*/
 	private fun initObserver() {
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(repositoryState, noteId) { repositoryState, noteId ->
 				repositoryState to noteId
 			}.collect { (repositoryState, noteId) ->
-				if (repositoryState == RepositoryState.SUCCESS) noteId?.let { getNote(it) }
+				if (repositoryState == RepositoryState.Success) noteId?.let { getNote(it) }
 			}
 		}
 

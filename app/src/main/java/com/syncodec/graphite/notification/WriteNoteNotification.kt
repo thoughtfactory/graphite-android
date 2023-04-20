@@ -67,7 +67,7 @@ class NotificationReceiver : BroadcastReceiver() {
 	) {
 		CoroutineScope(Dispatchers.Default).launch {
 			repository2.repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) {
+				if (it == RepositoryState.Success) {
 					repository2.getDefaultChapterId()?.let {
 						NoteObject().apply {
 							this.content =

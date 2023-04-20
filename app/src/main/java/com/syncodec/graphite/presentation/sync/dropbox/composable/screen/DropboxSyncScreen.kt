@@ -181,9 +181,7 @@ fun DropboxSyncScreen(
 				) {
 					dataStoreInstance.putShowPlainTextWarningDropbox(false)
 				}
-				DropboxConnection(
-					testConnectionResponse = testConnectionResponse,
-				)
+				DropboxConnection(testConnectionResponse = testConnectionResponse,)
 				SettingButton(
 					text = "Connect with Dropbox",
 					icon = R.drawable.ic_logo_dropbox,

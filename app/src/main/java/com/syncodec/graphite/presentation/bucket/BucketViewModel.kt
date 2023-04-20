@@ -43,15 +43,15 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 			this@BucketViewModel.refreshCoroutine = this
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> null
-					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> null
-					RepositoryState.SUCCESS -> {
-						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+					RepositoryState.Init -> null
+					RepositoryState.Locked -> null
+					RepositoryState.Loading -> null
+					RepositoryState.Success -> {
+						if (repositoryState.value != RepositoryState.Success) this.cancel()
 						getBucket(realmUUID = realmUUID)
 					}
 
-					RepositoryState.ERROR -> null
+					RepositoryState.Error -> null
 				}
 			}
 		}

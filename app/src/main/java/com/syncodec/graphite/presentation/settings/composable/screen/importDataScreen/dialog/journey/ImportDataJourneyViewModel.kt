@@ -36,7 +36,7 @@ class ImportDataJourneyViewModel(private val repository : KoinRepository) : View
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
+				if (it == RepositoryState.Success) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {

@@ -36,7 +36,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> observeNotebooks()
+					RepositoryState.Success -> observeNotebooks()
 					else -> null
 				}
 			}

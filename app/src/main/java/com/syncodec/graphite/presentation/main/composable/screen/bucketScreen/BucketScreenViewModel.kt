@@ -39,7 +39,7 @@ class BucketScreenViewModel(private val repository : KoinRepository) : ViewModel
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> observeBuckets()
+					RepositoryState.Success -> observeBuckets()
 					else -> null
 				}
 			}

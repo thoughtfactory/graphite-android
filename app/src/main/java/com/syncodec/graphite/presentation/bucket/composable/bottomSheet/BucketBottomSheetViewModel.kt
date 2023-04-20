@@ -47,7 +47,7 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> refreshBucket(realmUUID = realmUUID)
+					RepositoryState.Success -> refreshBucket(realmUUID = realmUUID)
 					else -> null
 				}
 			}

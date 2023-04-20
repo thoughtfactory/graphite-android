@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.main
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
@@ -29,14 +30,15 @@ class MainViewModel(private val repository : KoinRepository, private val dBox : 
 
 	val defaultChapterId = MutableStateFlow(null as RealmUUID?)
 
-	private val _testConnectionResponse = MutableStateFlow(null as DBox.Companion.TestConnectionResponse?)
+//	private val _testConnectionResponse = MutableStateFlow(null as DBox.Companion.TestConnectionResponse?)
+	private val _testConnectionResponse = MutableStateFlow<DBox.Companion.TestConnectionResponse?>(DBox.Companion.TestConnectionResponse.Error(Exception("Test Connection Error"), ""))
 	val testConnectionResponse : StateFlow<DBox.Companion.TestConnectionResponse?> = _testConnectionResponse
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect { repositoryState1 ->
 				when (repositoryState1) {
-					RepositoryState.SUCCESS -> {
+					RepositoryState.Success -> {
 						repository.getDefaultChapterIdAsFlow().collect {
 //							TODO : Remove null check after after realm update #1289
 							it?.let { it1 -> defaultChapterId.tryEmit(it1) }
@@ -115,6 +117,7 @@ class MainViewModel(private val repository : KoinRepository, private val dBox : 
 	}
 
 	fun testDropboxConnection() {
+		Log.d("MainViewModel", "testDropboxConnection: ")
 		viewModelScope.launch(Dispatchers.IO) {
 			dBox.testConnection { _testConnectionResponse.tryEmit(it) }
 		}

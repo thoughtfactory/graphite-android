@@ -1,6 +1,8 @@
 package com.syncodec.graphite.presentation.sync.dropbox
 
 import android.os.Bundle
+import android.os.NetworkOnMainThreadException
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.sync.dropbox.composable.screen.DropboxSyncScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -33,11 +36,11 @@ class DropboxSyncActivity : ComponentActivity() {
 			val code = intent?.data?.getQueryParameter("code")
 			code?.let {
 				viewModel.exchangeCodeForToken(it) {
-					viewModel.testConnection { testConnectionResponse.tryEmit(it) }
+					lifecycleScope.launch(Dispatchers.IO) { viewModel.testConnection { testConnectionResponse.tryEmit(it) } }
 				}
-			} ?: viewModel.testConnection { testConnectionResponse.tryEmit(it) }
+			} ?: lifecycleScope.launch(Dispatchers.IO) { viewModel.testConnection { testConnectionResponse.tryEmit(it) } }
 		} catch (e : Exception) {
-			viewModel.testConnection { testConnectionResponse.tryEmit(it) }
+			lifecycleScope.launch(Dispatchers.IO) { viewModel.testConnection { testConnectionResponse.tryEmit(it) } }
 		}
 
 		setContent {
@@ -58,14 +61,18 @@ class DropboxSyncActivity : ComponentActivity() {
 					onTestConnection = { viewModel.testConnection { testConnectionResponse.tryEmit(it) } },
 					onAuthorize = {
 						viewModel.exchangeCodeForToken(it) {
-							viewModel.testConnection { testConnectionResponse.tryEmit(it) }
+							if (it is DBox.Companion.ExchangeCodeForTokenResponse.Success) lifecycleScope.launch(Dispatchers.IO) {
+								viewModel.testConnection {
+									if (it is DBox.Companion.TestConnectionResponse.Error && it.exception is NetworkOnMainThreadException) {
+										viewModel.testConnection { testConnectionResponse.tryEmit(it) }
+									} else testConnectionResponse.tryEmit(it)
+								}
+							}
 						}
 					},
 					onReconnect = {},
 					onDisconnect = { viewModel.disconnect { viewModel.testConnection { testConnectionResponse.tryEmit(it) } } },
-					onClickTakeSnapshot = {
-						viewModel.generateSnapshot() { isGeneratingSnapshot = it }
-					},
+					onClickTakeSnapshot = { viewModel.generateSnapshot() { isGeneratingSnapshot = it } },
 					onClickShareSnapshot = { metadata ->
 						viewModel.downloadSnapshot(metadata) { downloadSnapshotResponse ->
 							if (downloadSnapshotResponse is DBox.Companion.DownloadSnapshotResponse.Success) {
@@ -76,9 +83,7 @@ class DropboxSyncActivity : ComponentActivity() {
 									}
 									val file = File(snapshotDir, downloadSnapshotResponse.fileName)
 									file.outputStream().use { downloadSnapshotResponse.inputStream.copyTo(it) }
-									scope.launch(Dispatchers.Main) {
-										file.share(context)
-									}
+									scope.launch(Dispatchers.Main) { file.share(context) }
 								}
 							}
 						}

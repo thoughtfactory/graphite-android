@@ -2,6 +2,7 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import android.net.Uri
+import com.syncodec.graphite.service.syncService.DropboxService
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.getFileName
 import io.realm.kotlin.types.RealmUUID
@@ -11,7 +12,6 @@ import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.File
-import java.io.InputStream
 
 
 class AttachmentRepository {
@@ -31,8 +31,8 @@ class AttachmentRepository {
 		file.copyTo(newFile, true)
 	}
 
-	fun putAttachment(parentId : RealmUUID, name : String, byteArray : ByteArray) {
-		val newFile = File(context.attachmentDir(parentId, true), name).also { it.createNewFile() }
+	fun putAttachment(parentId : RealmUUID, fileName : String, byteArray : ByteArray) {
+		val newFile = File(context.attachmentDir(parentId, true), fileName).also { it.createNewFile() }
 		newFile.writeBytes(byteArray)
 	}
 
@@ -135,16 +135,16 @@ class AttachmentRepository {
 		}
 	}
 
-	fun delete(parentId : RealmUUID, name:String) {
+	fun delete(parentId : RealmUUID, fileName : String) {
 		try {
-			val file = File("${attachmentDir.path}/$parentId/$name")
+			val file = File("${attachmentDir.path}/$parentId/$fileName")
 			if (file.exists()) file.delete()
 		} catch (e : Exception) {
 
 		}
 	}
 
-	fun deleteSuspended(parentId : RealmUUID, name:String) {
+	fun deleteSuspended(parentId : RealmUUID, name : String) {
 		CoroutineScope(Dispatchers.IO).launch {
 			delete(parentId, name)
 		}
@@ -159,6 +159,26 @@ class AttachmentRepository {
 				}
 			}
 		}
+	}
+
+	fun getAttachmentMetadataMap() : Map<RealmUUID, List<DropboxService.Companion.AttachmentMetadata>> {
+		val attachmentMetadataMap = mutableMapOf<RealmUUID, List<DropboxService.Companion.AttachmentMetadata>>()
+		attachmentDir.listFiles()?.forEach { noteAttachmentDir ->
+			val noteId = try {
+				RealmUUID.from(noteAttachmentDir.name)
+			} catch (e : Exception) {
+				return@forEach
+			}
+			val attachmentMetadataList = noteAttachmentDir.listFiles()?.map { attachmentFile ->
+				DropboxService.Companion.AttachmentMetadata(
+					fileName = attachmentFile.name,
+					parentId = noteId,
+					isDeleted = false
+				)
+			} ?: listOf()
+			attachmentMetadataMap[noteId] = attachmentMetadataList
+		}
+		return attachmentMetadataMap
 	}
 
 	companion object {

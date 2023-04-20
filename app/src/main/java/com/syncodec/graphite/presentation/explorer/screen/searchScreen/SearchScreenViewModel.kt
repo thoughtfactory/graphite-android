@@ -37,7 +37,7 @@ class SearchScreenViewModel(private val repository : KoinRepository) : ViewModel
 
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) {
+				if (it == RepositoryState.Success) {
 					viewModelScope.launch(Dispatchers.Default) {
 						repository.getAllTagAsFlow().collect { tagList ->
 							this@SearchScreenViewModel.tagList.tryEmit(tagList)

@@ -240,17 +240,18 @@ private fun CloudButton(
 	)
 
 	MenuButton(
-		icon = when(syncStatus) {
-			is SyncerService.Companion.SyncStatus.Init -> R.drawable.ic_cloud
-			is SyncerService.Companion.SyncStatus.Idle -> R.drawable.ic_cloud
-			is SyncerService.Companion.SyncStatus.Loading -> R.drawable.ic_cloud_dashed
-			is SyncerService.Companion.SyncStatus.Locked -> R.drawable.ic_cloud_x
-			is SyncerService.Companion.SyncStatus.Connected -> R.drawable.ic_cloud_syncing
-			is SyncerService.Companion.SyncStatus.Syncing -> R.drawable.ic_cloud_syncing
-			is SyncerService.Companion.SyncStatus.Disconnected -> R.drawable.ic_cloud_x
-			is SyncerService.Companion.SyncStatus.Paused -> R.drawable.ic_cloud_x
-			is SyncerService.Companion.SyncStatus.Failed -> R.drawable.ic_cloud_x
-		},
+//		icon = when(syncStatus) {
+//			is SyncerService.Companion.SyncStatus.Init -> R.drawable.ic_cloud
+//			is SyncerService.Companion.SyncStatus.Idle -> R.drawable.ic_cloud
+//			is SyncerService.Companion.SyncStatus.Loading -> R.drawable.ic_cloud_dashed
+//			is SyncerService.Companion.SyncStatus.Locked -> R.drawable.ic_cloud_x
+//			is SyncerService.Companion.SyncStatus.Connected -> R.drawable.ic_cloud_syncing
+//			is SyncerService.Companion.SyncStatus.Syncing -> R.drawable.ic_cloud_syncing
+//			is SyncerService.Companion.SyncStatus.Disconnected -> R.drawable.ic_cloud_x
+//			is SyncerService.Companion.SyncStatus.Paused -> R.drawable.ic_cloud_x
+//			is SyncerService.Companion.SyncStatus.Failed -> R.drawable.ic_cloud_x
+//		},
+		icon = R.drawable.ic_cloud,
 		onClick = onClickSync
 	)
 }

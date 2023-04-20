@@ -4,9 +4,11 @@ import androidx.annotation.Keep
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
+import kotlinx.serialization.Serializable
 
 
 @Keep
+@Serializable
 data class Content(
 	val type : String? = null,
 	val attrs : Attrs? = null,
@@ -27,6 +29,7 @@ data class Content(
 }
 
 @Keep
+@Serializable
 data class Attrs(
 	val textAlign : String? = null,
 	val checked : Boolean? = null,
@@ -48,6 +51,7 @@ data class Attrs(
 }
 
 @Keep
+@Serializable
 data class Mark(
 	val type : String? = null,
 )

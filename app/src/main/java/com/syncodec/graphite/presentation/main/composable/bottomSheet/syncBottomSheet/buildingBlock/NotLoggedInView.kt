@@ -85,7 +85,7 @@ fun NotLoggedInView() {
 			modifier = Modifier.fillMaxWidth(),
 			onClick = { context.startActivity(Intent(context, DropboxSyncActivity::class.java)) },
 		) {
-			Text(text = "Setup")
+			Text(text = "Manage")
 		}
 	}
 }

@@ -48,7 +48,7 @@ class WhereDialogViewModel(val repository : KoinRepository) : ViewModel() {
 
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) observeChapter()
+				if (it == RepositoryState.Success) observeChapter()
 			}
 		}
 	}

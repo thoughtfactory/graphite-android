@@ -2,11 +2,11 @@ package com.syncodec.graphite.di.repository
 
 
 enum class RepositoryState {
-	INIT,
-	LOCKED,
-	LOADING,
-	SUCCESS,
-	ERROR
+	Init,
+	Locked,
+	Loading,
+	Success,
+	Error,
 }
 
 class RealmNotInitializedException : Exception("Realm not initialized")

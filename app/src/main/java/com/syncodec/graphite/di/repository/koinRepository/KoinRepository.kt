@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.FileObserver
 import android.util.Log
-import android.widget.Toast
 import com.jakewharton.processphoenix.ProcessPhoenix
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.BaseObject
@@ -42,12 +41,10 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import java.io.File
@@ -62,9 +59,9 @@ class KoinRepository {
 	val attachmentRepository = AttachmentRepository()
 
 	/**
-	 * The state of the repository.This is used to determine if the repository is ready to be used. Use repository when [repositoryState] is [RepositoryState.SUCCESS].
+	 * The state of the repository.This is used to determine if the repository is ready to be used. Use repository when [repositoryState] is [RepositoryState.Success].
 	 */
-	val repositoryState : MutableStateFlow<RepositoryState> = MutableStateFlow(RepositoryState.INIT)
+	val repositoryState : MutableStateFlow<RepositoryState> = MutableStateFlow(RepositoryState.Init)
 
 	var realm : Realm? = null
 
@@ -123,9 +120,9 @@ class KoinRepository {
 				.build()
 
 			realm = Realm.open(realmConfiguration)
-			repositoryState.value = RepositoryState.SUCCESS
+			repositoryState.value = RepositoryState.Success
 		} catch (e : Exception) {
-			repositoryState.tryEmit(RepositoryState.ERROR)
+			repositoryState.tryEmit(RepositoryState.Error)
 //			e.printStackTrace()
 		}
 	}
@@ -225,17 +222,26 @@ class KoinRepository {
 		}
 	}
 
-	fun putBaseObject(baseObject : BaseObject) {
+	fun putBaseObject(baseObject : BaseObject, modifyTimestampAuto : Boolean = true, clearDeleted : Boolean = false) {
 		realm?.writeBlocking {
 			val storedBaseObject = getBaseObject()
 			storedBaseObject?.let {
 				findLatest(it)?.let { latestBaseObject ->
+					latestBaseObject.modifiedTimestamp = if (modifyTimestampAuto) System.currentTimeMillis() else latestBaseObject.modifiedTimestamp
 					latestBaseObject.defaultChapterId = baseObject.defaultChapterId
 					latestBaseObject.notebookIdOrderList = baseObject.notebookIdOrderList
 					latestBaseObject.bucketIdOrderList = baseObject.bucketIdOrderList
+					if (clearDeleted) {
+						latestBaseObject.deletedObjectSet.clear()
+						latestBaseObject.deletedAttachmentSet.clear()
+					}
 				} ?: copyToRealm(baseObject)
 			} ?: copyToRealm(baseObject)
 		}
+	}
+
+	fun putBaseObjectSuspended(baseObject : BaseObject, modifyTimestampAuto : Boolean = true, clearDeleted : Boolean = false) {
+		CoroutineScope(Dispatchers.Default).launch { putBaseObject(baseObject, modifyTimestampAuto, clearDeleted = clearDeleted) }
 	}
 
 	fun putChapter(chapterObject : ChapterObject, modifyTimestampAuto : Boolean = true) {
@@ -611,7 +617,7 @@ class KoinRepository {
 	 * Returns flow of bucket item with provided id as flow
 	 * @author pushpull
 	 * @since 2.2.0
-	 * @param RealmUUID of the bucket item. Can be null but then it will return null.
+	 * @param id (RealmUUID) of the bucket item. Can be null but then it will return null.
 	 * @return Flow of BucketItemObject with provided id.
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
@@ -741,7 +747,7 @@ class KoinRepository {
 				DeletedAttachment()
 					.apply {
 						it.parentFile?.name?.let { it1 -> RealmUUID.Companion.from(it1) }?.let { this.parentId = it }
-						this.name = it.name
+						this.fileName = it.name
 					}
 			}.let { deletedFileList ->
 				getBaseObject()?.let { realm?.writeBlocking { findLatest(it)?.deletedAttachmentSet?.addAll(deletedFileList) } }

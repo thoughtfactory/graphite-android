@@ -41,6 +41,7 @@ class BaseObject : RealmObject {
 
 	fun toCloudSnapshot() : String {
 		val jsonObject = JSONObject()
+		jsonObject.put("defaultChapterId", defaultChapterId?.toString() ?: "")
 		jsonObject.put("notebookIdOrderList", notebookIdOrderList.map { it.toString() })
 		jsonObject.put("bucketIdOrderList", bucketIdOrderList.map { it.toString() })
 		jsonObject.put("modifiedTimestamp", modifiedTimestamp)
@@ -72,10 +73,16 @@ class BaseObject : RealmObject {
 	}
 
 	companion object {
-		fun fromCloudSnapshot(snapshot: ByteArray) : BaseObject? {
+		fun fromCloudSnapshot(snapshot : ByteArray) : BaseObject? {
 			try {
 				val jsonObject = JSONObject(String(snapshot, Charsets.UTF_8))
 				val baseObject = BaseObject()
+				jsonObject.getString("defaultChapterId").let {
+					if (it.isNotEmpty()) try {
+						baseObject.defaultChapterId = RealmUUID.from(it)
+					} catch (_ : Exception) {
+					}
+				}
 				jsonObject.getJSONArray("notebookIdOrderList").let {
 					val size = it.length()
 					for (i in 0 until size) {
@@ -90,7 +97,7 @@ class BaseObject : RealmObject {
 				}
 				baseObject.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
 				return baseObject
-			} catch (e: Exception) {
+			} catch (e : Exception) {
 				return null
 			}
 		}
@@ -126,11 +133,11 @@ class DeletedObject : RealmObject {
 @Keep
 class DeletedAttachment : RealmObject {
 	var parentId : RealmUUID = RealmUUID.random()
-	var name : String = ""
+	var fileName : String = ""
 
 	override fun hashCode() : Int {
 		var result = parentId.hashCode()
-		result = 31 * result + name.hashCode()
+		result = 31 * result + fileName.hashCode()
 		return result
 	}
 
@@ -139,12 +146,12 @@ class DeletedAttachment : RealmObject {
 		if (other !is DeletedAttachment) return false
 
 		if (parentId != other.parentId) return false
-		if (name != other.name) return false
+		if (fileName != other.fileName) return false
 
 		return true
 	}
 
 	override fun toString() : String {
-		return "$parentId/$name"
+		return "$parentId/$fileName"
 	}
 }

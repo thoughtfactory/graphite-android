@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
 import android.os.CancellationSignal
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -51,7 +50,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.service.DropboxServiceConnectionManager
+import com.syncodec.graphite.service.syncService.DropboxServiceConnectionManager
 import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
@@ -113,7 +112,7 @@ class MainActivity : ComponentActivity() {
 				LaunchedEffect(key1 = isBiometricsEnabled) {
 					if (isBiometricsEnabled != null && ! isBiometricUsed) {
 						if (isBiometricsEnabled == true) {
-							viewModel.setRepositoryState(RepositoryState.LOCKED)
+							viewModel.setRepositoryState(RepositoryState.Locked)
 							launchBiometric()
 						} else viewModel.onAuthenticate(applicationContext)
 						isBiometricUsed = true
@@ -125,10 +124,10 @@ class MainActivity : ComponentActivity() {
 				val biometricErrorMessage by this.biometricErrorMessage
 
 				val syncStatus by syncStatus.collectAsState()
-				val testConnectionResponse by viewModel.testConnectionResponse.collectAsState(initial = null)
+				val testConnectionResponse by viewModel.testConnectionResponse.collectAsState(initial = DBox.Companion.TestConnectionResponse.Error(Exception("Test Connection Error"), ""))
 
 				LaunchedEffect(key1 = testConnectionResponse) {
-					if(testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) {
+					if (testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) {
 						startSyncService()
 					}
 				}
@@ -152,23 +151,20 @@ class MainActivity : ComponentActivity() {
 							label = "repositoryState"
 						) {
 							when (it) {
-								RepositoryState.LOCKED -> RepositoryLockedScreen(
+								RepositoryState.Locked -> RepositoryLockedScreen(
 									errorMessage = biometricErrorMessage,
 									onUnlock = { this@MainActivity.launchBiometric() }
 								)
 
-								RepositoryState.SUCCESS -> MainScreen(
+								RepositoryState.Success -> MainScreen(
 									syncStatus = syncStatus,
 									testConnectionResponse = testConnectionResponse,
-									testDropboxConnection = {  },
-									onClickSyncNow = {
-										Log.i("npr", "onClickSyncNow : ${dropboxServiceConnectionManager == null} : ${dropboxServiceConnectionManager?.service == null}")
-										dropboxServiceConnectionManager?.service?.startSync()
-									},
-//									onClickForceSync = { dropboxServiceConnectionManager?.service?.forceSync() },
+									testDropboxConnection = { viewModel.testDropboxConnection() },
+									onClickSyncNow = { dropboxServiceConnectionManager?.service?.onClickSyncNow() },
+									onClickForceSync = { dropboxServiceConnectionManager?.service?.onClickForceSync() },
 								)
 
-								RepositoryState.ERROR -> RepositoryLockedScreen(
+								RepositoryState.Error -> RepositoryLockedScreen(
 									errorMessage = biometricErrorMessage,
 									onUnlock = { this@MainActivity.launchBiometric() }
 								)

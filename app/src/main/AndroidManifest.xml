@@ -203,7 +203,7 @@
         </receiver>
 
         <service
-            android:name=".service.DropboxService"
+            android:name=".service.syncService.DropboxService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

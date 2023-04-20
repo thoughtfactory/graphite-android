@@ -83,79 +83,72 @@ abstract class SyncerService : LifecycleService() {
 	lateinit var dataStoreInstance : DataStoreInstance
 
 	companion object {
+		data class SyncObjectStatus(
+			val toUpSyncCount : Int,
+			val toDownSyncCount : Int,
+			val isSynced : Boolean,
+		)
+
+
+		/**
+		*   Possible Sync Status
+		*   *   Init: Initial state. Can be triggered to sync. Automatic sync will be triggered.
+		*   *   Idle: Synced with Dropbox. Can be triggered to sync again.
+		*   *   Locked: Locked for sync. Can be triggered to sync again.
+		*   *   Connected: Connected to Dropbox. Cannot be triggered to sync.
+		*   *   Syncing: Syncing with Dropbox. Cannot be triggered to sync.
+		*   *   Paused: Paused for sync. Can be triggered to sync again.
+		*   *   Failed: Failed for sync. Can be triggered to sync again.
+		*   *   CredentialError: Failed for sync due to credential error. Connect with Dropbox again.
+		 */
 		sealed class SyncStatus() {
+			/*
+			* Init: Initial state. Can be triggered to sync. Automatic sync will be triggered.
+			* */
 			object Init : SyncStatus()
+
+			/*
+			* Idle: Synced with Dropbox. Can be triggered to sync again.
+			* */
 			data class Idle(val syncedTimestamp : Long) : SyncStatus()
-			object Loading : SyncStatus()
+
+			/*
+			* Locked: Locked for sync. Can be triggered to sync again.
+			* */
 			object Locked : SyncStatus()
+
+			/*
+			* Connected: Connected to Dropbox. Cannot be triggered to sync.
+			*  */
 			object Connected : SyncStatus()
-			object Disconnected : SyncStatus()
-			data class Syncing(val sessionId : String = RealmUUID.random().toString()) : SyncStatus()
+
+			/*
+			* Syncing: Syncing with Dropbox. Cannot be triggered to sync.
+			* */
+			data class Syncing(
+				val sessionId : String = RealmUUID.random().toString(),
+				val chapterSyncObjectStatus : SyncObjectStatus? = null,
+				val noteSyncObjectStatus : SyncObjectStatus? = null,
+				val bucketSyncObjectStatus : SyncObjectStatus? = null,
+				val bucketItemSyncObjectStatus : SyncObjectStatus? = null,
+				val tagSyncObjectStatus : SyncObjectStatus? = null,
+				val attachmentSyncObjectStatus : SyncObjectStatus? = null,
+			) : SyncStatus()
+
+			/*
+			* Paused: Paused for sync. Can be triggered to sync again.
+			* */
 			object Paused : SyncStatus()
+
+			/*
+			* Failed: Failed for sync. Can be triggered to sync again.
+			* */
 			data class Failed(val reason : String) : SyncStatus()
-		}
 
-		sealed class DriveState() {
-			object Available : DriveState()
-			object Locked : DriveState()
-			object LockExpired : DriveState()
-			data class Unknown(val exception : Exception) : DriveState()
-		}
-
-		sealed class UnlockResult() {
-			object Success : UnlockResult()
-			object Failed : UnlockResult()
-			object LockExpired : UnlockResult()
-		}
-
-		data class ObjectMetadata(
-			val modifiedTimestamp : Long,
-			val hash : String,
-			val isDeleted : Boolean
-		)
-
-		data class AttachmentMetadata(
-			val parentId : RealmUUID,
-			val name : String,
-			val isDeleted : Boolean,
-		)
-
-		sealed class Operation {
-			object Create : Operation()
-			object Update : Operation()
-			class Delete(val objectType : String? = null) : Operation()
-		}
-
-		sealed class DownloadResult {
-			data class Success(val byteArray : ByteArray) : DownloadResult() {
-				override fun equals(other : Any?) : Boolean {
-					if (this === other) return true
-					if (other !is Success) return false
-
-					if (! byteArray.contentEquals(other.byteArray)) return false
-
-					return true
-				}
-
-				override fun hashCode() : Int {
-					return byteArray.contentHashCode()
-				}
-			}
-
-			object UnknownError : DownloadResult()
-			object NetworkError : DownloadResult()
-		}
-
-		sealed class UpSyncResult {
-			object Success : UpSyncResult()
-			object UnknownError : UpSyncResult()
-			object NetworkError : UpSyncResult()
-		}
-
-		sealed class RectifyResult {
-			object Success : RectifyResult()
-			object UnknownError : RectifyResult()
-			object NetworkError : RectifyResult()
+			/*
+			* CredentialError: Failed for sync due to credential error. Connect with Dropbox again.
+			*  */
+			object CredentialError : SyncStatus()
 		}
 	}
 }

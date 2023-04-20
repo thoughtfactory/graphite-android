@@ -37,7 +37,7 @@ class ExplorerScreenViewModel(private val repository : KoinRepository) : ViewMod
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) {
+				if (it == RepositoryState.Success) {
 					observeNotes()
 					observeTags()
 					observeFilter()
