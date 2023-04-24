@@ -17,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +36,7 @@ import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ConnectedView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
+import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
 import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
@@ -48,6 +50,7 @@ fun SyncBottomSheet(
 	onClickTestConnection : () -> Unit = {},
 	onClickSyncNow : () -> Unit = {},
 	onClickForceSync : () -> Unit = {},
+	closeSheet : () -> Unit = {},
 ) {
 	val context = LocalContext.current
 
@@ -55,12 +58,13 @@ fun SyncBottomSheet(
 		title = "Sync",
 		icon = R.drawable.ic_cloud
 	) {
-		Log.i("npr71", "testConnectionResponse: $testConnectionResponse")
 		when (testConnectionResponse) {
-			is DBox.Companion.TestConnectionResponse.Loading -> LoadingView(
-				modifier = Modifier
-					.requiredSize(48.dp)
-					.padding(8.dp)
+			is DBox.Companion.TestConnectionResponse.Loading -> LoadingCard(
+				onClickTestConnection = onClickTestConnection,
+				onClickManage = {
+					context.startActivity(Intent(context, DropboxSyncActivity::class.java))
+					closeSheet()
+				}
 			)
 
 			is DBox.Companion.TestConnectionResponse.Success -> ConnectedView(
@@ -71,16 +75,23 @@ fun SyncBottomSheet(
 				syncStatus = syncStatus,
 				onForceSync = onClickForceSync,
 				onSync = onClickSyncNow,
+				onClickManage = {
+					context.startActivity(Intent(context, DropboxSyncActivity::class.java))
+					closeSheet()
+				},
 			)
 
 			is DBox.Companion.TestConnectionResponse.NotLoggedIn -> NotLoggedInView()
 			is DBox.Companion.TestConnectionResponse.Error -> ErrorCard(onClickTestConnection = onClickTestConnection) {
+				closeSheet()
 				context.startActivity(Intent(context, DropboxSyncActivity::class.java))
 			}
-			else -> LoadingView(
-				modifier = Modifier
-					.requiredSize(48.dp)
-					.padding(8.dp)
+			else -> LoadingCard(
+				onClickTestConnection = onClickTestConnection,
+				onClickManage = {
+					closeSheet()
+					context.startActivity(Intent(context, DropboxSyncActivity::class.java))
+				}
 			)
 		}
 	}
@@ -160,6 +171,50 @@ private fun ErrorCard(
 					onClick = onClickTestConnection
 				)
 			}
+		}
+	}
+}
+
+@Preview
+@Composable
+private fun LoadingCard(
+	onClickTestConnection : () -> Unit = {},
+	onClickManage : () -> Unit = {},
+) {
+	Column(
+		horizontalAlignment = Alignment.CenterHorizontally,
+		modifier = Modifier.fillMaxWidth()
+	) {
+		LoadingView(
+			modifier = Modifier
+				.requiredSize(48.dp)
+				.padding(8.dp)
+		)
+		Spacer(modifier = Modifier.height(24.dp))
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Button(
+				shape = MaterialTheme.shapes.medium,
+				colors = ButtonDefaults.buttonColors(
+					containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
+					contentColor = MaterialTheme.colorScheme.onSurface,
+				),
+				modifier = Modifier.weight(1f),
+				onClick = onClickManage,
+			) {
+				Text(text = "Manage")
+			}
+			Spacer(modifier = Modifier.width(2.dp))
+			MenuButton(
+				icon = R.drawable.ic_refresh,
+				colors = MenuButtonDefaults.deleteButtonColors(
+					containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
+					iconColor = MaterialTheme.colorScheme.onSurface,
+				),
+				onClick = onClickTestConnection
+			)
 		}
 	}
 }

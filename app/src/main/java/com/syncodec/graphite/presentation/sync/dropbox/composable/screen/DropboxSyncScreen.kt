@@ -1,7 +1,10 @@
 package com.syncodec.graphite.presentation.sync.dropbox.composable.screen
 
 import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -12,8 +15,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -33,6 +38,9 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dropbox.core.v2.files.Metadata
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.bugReport.BugReportActivity
@@ -52,10 +60,14 @@ import com.syncodec.graphite.presentation.sync.dropbox.composable.dialog.Dropbox
 import com.syncodec.graphite.presentation.sync.dropbox.composable.dialog.DropboxDialogType
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.util.Date
+import java.util.Locale
 
 
 @Preview
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun DropboxSyncScreen(
 	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
@@ -181,7 +193,7 @@ fun DropboxSyncScreen(
 				) {
 					dataStoreInstance.putShowPlainTextWarningDropbox(false)
 				}
-				DropboxConnection(testConnectionResponse = testConnectionResponse,)
+				DropboxConnection(testConnectionResponse = testConnectionResponse)
 				SettingButton(
 					text = "Connect with Dropbox",
 					icon = R.drawable.ic_logo_dropbox,
@@ -219,7 +231,7 @@ fun DropboxSyncScreen(
 					enabled = isSyncEnabled != null && testConnectionResponse is DBox.Companion.TestConnectionResponse.Success,
 				) {
 					dataStoreInstance.setIsSyncEnabled(it)
-					if (! it) Toast.makeText(context, "Sync will be paused after completing current process", Toast.LENGTH_SHORT).show()
+					if (! it) Toast.makeText(context, "Sync is paused", Toast.LENGTH_SHORT).show()
 				}
 				SettingButton(
 					text = "Take Snapshot",
@@ -234,12 +246,34 @@ fun DropboxSyncScreen(
 					text = "Learn more about backup and sync",
 					icon = R.drawable.ic_info,
 				) { uriHandler.openUri("https://graphite.syncodec.com/#/backup_and_sync") }
-				SettingsContentTitle(title = "SNAPSHOT WAREHOUSE")
-				snapshotList?.forEach {
-					SnapshotButton(
-						fileName = it.name
-					) { selectedSnapshot = it }
-				} ?: DropboxEmptySnapshot()
+				SettingsContentTitle(
+					title = "SNAPSHOT WAREHOUSE"
+				) {
+					AnimatedVisibility(visible = isGeneratingSnapshot) {
+						CircularProgressIndicator(
+							color = MaterialTheme.colorScheme.onSurface,
+							strokeWidth = 2.dp,
+							modifier = Modifier.size(16.dp),
+						)
+					}
+				}
+				snapshotList?.map {
+					Pair(
+						it, try {
+							it.name.split("_").last().split(".").first().toLong()
+						} catch (e : Exception) {
+							- 1
+						}
+					)
+				}
+					?.sortedByDescending { it.second }
+					?.forEachIndexed { index, pair ->
+						SnapshotButton(
+							fileName = pair.first.name,
+							createdTimestamp = pair.second,
+							isLatest = index == 0,
+						) { selectedSnapshot = pair.first }
+					} ?: DropboxEmptySnapshot()
 				Spacer(modifier = Modifier.height(128.dp))
 			}
 

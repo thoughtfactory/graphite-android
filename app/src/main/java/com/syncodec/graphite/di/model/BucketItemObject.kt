@@ -44,9 +44,6 @@ class BucketItemObject() : RealmObject {
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
 		this.key = jsonObject.optString("key").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.data = jsonObject.optString("data").let { if (it.isNullOrEmpty() || it == "null") null else it }
-		this.overWritable = jsonObject.optBoolean("overWritable", true)
-		this.deletable = jsonObject.optBoolean("deletable", true)
-		this.isLocalOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -64,10 +61,6 @@ class BucketItemObject() : RealmObject {
 
 	var key : String? = null
 	var data : String? = null
-
-	var overWritable : Boolean = true
-	var deletable : Boolean = true
-	var isLocalOnly : Boolean = false
 
 	private val json = Json { ignoreUnknownKeys = true }
 
@@ -108,9 +101,6 @@ class BucketItemObject() : RealmObject {
 			this.parentId = this@BucketItemObject.parentId
 			this.key = this@BucketItemObject.key
 			this.data = this@BucketItemObject.data
-			this.overWritable = this@BucketItemObject.overWritable
-			this.deletable = this@BucketItemObject.deletable
-			this.isLocalOnly = this@BucketItemObject.isLocalOnly
 		}
 	}
 
@@ -127,8 +117,6 @@ class BucketItemObject() : RealmObject {
 		jsonObject.put("parentId", this.parentId?.toString())
 		jsonObject.put("key", this.key)
 		jsonObject.put("data", this.data)
-		jsonObject.put("overWritable", this.overWritable)
-		jsonObject.put("deletable", this.deletable)
 
 		return jsonObject.toString()
 	}
@@ -146,9 +134,6 @@ class BucketItemObject() : RealmObject {
 		result = 31 * result + (parentId?.hashCode() ?: 0)
 		result = 31 * result + (key?.hashCode() ?: 0)
 		result = 31 * result + (data?.hashCode() ?: 0)
-		result = 31 * result + overWritable.hashCode()
-		result = 31 * result + deletable.hashCode()
-		result = 31 * result + isLocalOnly.hashCode()
 		return result
 	}
 
@@ -168,9 +153,6 @@ class BucketItemObject() : RealmObject {
 		if (parentId != other.parentId) return false
 		if (key != other.key) return false
 		if (data != other.data) return false
-		if (overWritable != other.overWritable) return false
-		if (deletable != other.deletable) return false
-		if (isLocalOnly != other.isLocalOnly) return false
 
 		return true
 	}

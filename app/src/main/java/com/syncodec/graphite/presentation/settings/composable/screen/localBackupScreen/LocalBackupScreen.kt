@@ -208,13 +208,26 @@ fun LocalBackupScreen(
 			}
 
 			SettingsContentTitle(title = "SNAPSHOT WAREHOUSE")
-
-			snapshotList.forEach { snapshotFile ->
-				SnapshotButton(fileName = snapshotFile.name ?: "") {
-					snapshotToRestore = snapshotFile
-					showRestoreSnapshotDialog = true
-				}
+			snapshotList.map {
+				Pair(
+					it, try {
+						it.name?.split("_")?.last()?.split(".")?.first()?.toLong() ?: -1
+					} catch (e : Exception) {
+						- 1
+					}
+				)
 			}
+				.sortedByDescending { it.second }
+				.forEachIndexed { index, pair ->
+					SnapshotButton(
+						fileName = pair.first.name ?: "graphite_snapshot",
+						createdTimestamp = pair.second,
+						isLatest = index == 0,
+					) {
+						snapshotToRestore = pair.first
+						showRestoreSnapshotDialog = true
+					}
+				}
 		}
 
 		PullRefreshIndicator(
@@ -240,20 +253,20 @@ fun LocalBackupScreen(
 @Composable
 fun SnapshotButton(
 	fileName : String = "graphite_snapshot_1683227400000.7z",
+	createdTimestamp : Long = - 1,
+	isLatest : Boolean = false,
 	onClick : () -> Unit = {}
 ) {
-	val createdTimestamp = fileName.split("_").last().split(".").first().let {
-		try {
-			val date = Date(it.toLong())
-			val formatter = SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault())
-			formatter.format(date)
-		} catch (e : Exception) {
-			"Unknown"
-		}
-	}
+	val formatter = SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault())
+	val date = formatter.format(Date(maxOf(createdTimestamp, 0L)))
+
 	SettingButton(
 		text = fileName,
-		infoText = "Created on $createdTimestamp",
+		infoText = when {
+			createdTimestamp == - 1L -> "Created: Unknown"
+			isLatest -> "$date\nLatest"
+			else -> date
+		},
 		icon = R.drawable.ic_snapshot_stored,
 		subText = "Restore",
 		onClick = onClick

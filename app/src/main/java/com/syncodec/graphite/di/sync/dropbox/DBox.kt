@@ -1,12 +1,12 @@
 package com.syncodec.graphite.di.sync.dropbox
 
 import android.content.Context
-import android.util.Log
 import androidx.annotation.WorkerThread
 import com.dropbox.core.BadRequestException
 import com.dropbox.core.DbxRequestConfig
 import com.dropbox.core.InvalidAccessTokenException
 import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.v2.files.ListFolderErrorException
 import com.dropbox.core.v2.files.Metadata
 import com.dropbox.core.v2.users.DbxUserUsersRequests
 import com.dropbox.core.v2.users.FullAccount
@@ -14,6 +14,7 @@ import com.dropbox.core.v2.users.SpaceUsage
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.utils.alice.AliceRequestResult
+import com.syncodec.graphite.utils.alice.deleteSecretData
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
 import kotlinx.coroutines.CoroutineScope
@@ -47,7 +48,6 @@ class DBox(private val context : Context) {
 								val accessToken = data["access_token"] as String
 
 								context.putSecretData("dropbox_refresh_token", refreshToken)
-								Log.i("npr71", "exchangeCodeForToken: $refreshToken")
 								callback(ExchangeCodeForTokenResponse.Success)
 							}
 					} catch (e : Exception) {
@@ -67,37 +67,43 @@ class DBox(private val context : Context) {
 
 	@WorkerThread
 	fun getAccessToken(callback : (AccessTokenResponseResponse) -> Unit) {
-		if (dbxAccessToken != null && dbxAccessToken !!.second > System.currentTimeMillis()) try {
-			DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
-				callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
-				return
+		if (dbxAccessToken != null && dbxAccessToken !!.second > System.currentTimeMillis()) {
+			try {
+				DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
+					callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
+					return
+				}
+			} catch (e : Exception) {
+				e.printStackTrace()
 			}
-		} catch (e : Exception) {
-		}
-		else context.getSecretData("dropbox_access_token").let {
-			if (it.result == AliceRequestResult.SUCCESS) {
-				val jsonObject = it.data?.decodeToString()?.let { it1 -> JSONObject(it1) }
-				val accessToken = jsonObject?.getString("accessToken")
-				val expiresAt = jsonObject?.getLong("expiresAt")
-				if (accessToken != null && expiresAt != null) {
-					dbxAccessToken = Pair(accessToken, expiresAt)
-					if (expiresAt > System.currentTimeMillis()) {
-						try {
-							DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
-								callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
-								return
+		} else {
+			context.getSecretData("dropbox_access_token").let {
+				if (it.result == AliceRequestResult.SUCCESS) {
+					val jsonObject = it.data?.decodeToString()?.let { it1 -> JSONObject(it1) }
+					val accessToken = jsonObject?.getString("accessToken")
+					val expiresAt = jsonObject?.getLong("expiresAt")
+					if (accessToken != null && expiresAt != null) {
+						dbxAccessToken = Pair(accessToken, expiresAt)
+						if (expiresAt > System.currentTimeMillis()) {
+							try {
+								DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
+									callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
+									return
+								}
+							} catch (e : Exception) {
+								e.printStackTrace()
 							}
-						} catch (e : Exception) {
 						}
 					}
 				}
 			}
 		}
-
 		context.getSecretData("dropbox_refresh_token").let {
-			if (it.result == AliceRequestResult.KEY_NOT_FOUND) null else it.data?.decodeToString()
-		}.let { refreshToken ->
-			Log.i("npr71", "getAccessToken : refreshToken : $refreshToken")
+			if (it.result == AliceRequestResult.KEY_NOT_FOUND) {
+				callback(AccessTokenResponseResponse.KeyNotFound)
+				null
+			} else it.data?.decodeToString()
+		}?.let { refreshToken ->
 			try {
 				val data = hashMapOf("refreshToken" to refreshToken)
 
@@ -141,7 +147,6 @@ class DBox(private val context : Context) {
 	fun testConnection(callback : (TestConnectionResponse) -> Unit) {
 		callback(TestConnectionResponse.Loading)
 		getAccessToken { accessTokenResponseResponse ->
-			Log.i("npr71", "dropbox test connection: $accessTokenResponseResponse")
 			when (accessTokenResponseResponse) {
 				is AccessTokenResponseResponse.Success -> {
 					try {
@@ -153,11 +158,13 @@ class DBox(private val context : Context) {
 					}
 				}
 
+				is AccessTokenResponseResponse.KeyNotFound -> {
+					callback(TestConnectionResponse.NotLoggedIn)
+				}
+
 				is AccessTokenResponseResponse.Error -> {
-					Log.i("npr71", "dropbox test connection error: ${accessTokenResponseResponse.exception}")
-					Log.i("npr71", "dropbox test connection error: ${accessTokenResponseResponse.exception.message}")
 					accessTokenResponseResponse.exception.printStackTrace()
-					when(accessTokenResponseResponse.exception) {
+					when (accessTokenResponseResponse.exception) {
 						is JSONException -> {
 							if (accessTokenResponseResponse.exception.message == "No value for access_token") {
 								callback(TestConnectionResponse.NotLoggedIn)
@@ -165,9 +172,11 @@ class DBox(private val context : Context) {
 								callback(TestConnectionResponse.Error(accessTokenResponseResponse.exception, accessTokenResponseResponse.message))
 							}
 						}
+
 						is InvalidAccessTokenException -> {
 							callback(TestConnectionResponse.NotLoggedIn)
 						}
+
 						else -> {
 							callback(TestConnectionResponse.Error(accessTokenResponseResponse.exception, accessTokenResponseResponse.message))
 						}
@@ -212,6 +221,10 @@ class DBox(private val context : Context) {
 					}
 				}
 
+				is AccessTokenResponseResponse.KeyNotFound -> {
+					callback(GetSnapshotResponse.Error(Exception("Key not found"), "Not logged in."))
+				}
+
 				is AccessTokenResponseResponse.Error -> {
 					callback(GetSnapshotResponse.Error(accessTokenResponseResponse.exception, accessTokenResponseResponse.message))
 				}
@@ -222,8 +235,9 @@ class DBox(private val context : Context) {
 	@WorkerThread
 	fun disconnect(callback : () -> Unit) {
 		getAccessToken { accessTokenResponseResponse ->
-//			context.putSecretData("dropbox_refresh_token", "")
-//			context.putSecretData("dropbox_access_token", "")
+			context.deleteSecretData("dropbox_refresh_token")
+			context.deleteSecretData("dropbox_access_token")
+			dbxAccessToken = null
 			when (accessTokenResponseResponse) {
 				is AccessTokenResponseResponse.Success -> {
 					try {
@@ -234,6 +248,10 @@ class DBox(private val context : Context) {
 					} catch (e : Exception) {
 						callback()
 					}
+				}
+
+				is AccessTokenResponseResponse.KeyNotFound -> {
+					callback()
 				}
 
 				is AccessTokenResponseResponse.Error -> {
@@ -253,8 +271,27 @@ class DBox(private val context : Context) {
 				CoroutineScope(Dispatchers.IO).launch {
 					if (accessTokenResponseResponse is AccessTokenResponseResponse.Success) {
 						val dbxClientV2 = DbxClientV2(config, accessTokenResponseResponse.accessToken)
-						dbxClientV2.files().listFolder("/backup").cursor.let {
-							dbxClientV2.files().listFolderLongpoll(it).let { onChange(true) }
+						try {
+							dbxClientV2.files().listFolder("/backup").cursor.let {
+								dbxClientV2.files().listFolderLongpoll(it).let { onChange(true) }
+							}
+						} catch (e : ListFolderErrorException) {
+							if (e.errorValue.pathValue.isNotFound) {
+								dbxClientV2.files().createFolderV2("/backup").let {
+									dbxClientV2.files().listFolder("/backup").cursor.let {
+										dbxClientV2.files().listFolderLongpoll(it).let { onChange(true) }
+									}
+								}
+							}
+						} catch (e : Exception) {
+							try {
+								dbxClientV2.files().createFolderV2("/backup").let {
+									dbxClientV2.files().listFolder("/backup").cursor.let {
+										dbxClientV2.files().listFolderLongpoll(it).let { onChange(true) }
+									}
+								}
+							} catch (_ : Exception) {
+							}
 						}
 					}
 				}
@@ -316,6 +353,7 @@ class DBox(private val context : Context) {
 
 		sealed class AccessTokenResponseResponse {
 			class Success(val accessToken : String) : AccessTokenResponseResponse()
+			object KeyNotFound : AccessTokenResponseResponse()
 			class Error(val exception : Exception, val message : String) : AccessTokenResponseResponse()
 		}
 

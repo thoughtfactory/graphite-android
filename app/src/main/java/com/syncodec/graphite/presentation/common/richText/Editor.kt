@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.common.richText
 import android.content.Context
 import android.print.PrintAttributes
 import android.print.PrintManager
+import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -129,7 +130,7 @@ class RichTextEditor(
 		if (!BuildConfig.DEBUG) setBackgroundColor(0)
 		setLayerType(LAYER_TYPE_HARDWARE, null)
 
-		setWebContentsDebuggingEnabled(true)
+		setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
 		addJavascriptInterface(this, "bridge")
 	}
@@ -272,6 +273,7 @@ class RichTextEditor(
 	@FilePrivate
 	@JavascriptInterface
 	fun getData(requestData : String?, data : String?) {
+		Log.d("npr71", "getData: $requestData")
 		try {
 			val dataObject = JSONObject(data ?: "{}")
 			val dataJson = dataObject.optJSONObject("dataJson")

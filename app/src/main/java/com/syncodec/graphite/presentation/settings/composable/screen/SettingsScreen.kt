@@ -135,13 +135,27 @@ fun SettingsScreen(
 				}
 			}
 		}
-		AnimatedVisibility(
-			visible = ! isPro,
-			enter = expandVertically(tween(300)),
-			exit = shrinkVertically(tween(300))
+		AnimatedContent(
+			targetState = isPro,
+			transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) },
+			label = "isPro_animation",
 		) {
-			SettingButton(text = "Subscription", icon = R.drawable.ic_subscription) {
-				context.startActivity(Intent(context, ProActivity::class.java))
+			if (it) {
+				SettingButton(
+					text = "Manage Subscription",
+					subText = "Play Store",
+					icon = R.drawable.ic_subscription,
+				) {
+					try {
+						context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions?package=com.syncodec.graphite")))
+					} catch (_: Exception) {
+						openDialog(SettingsDialogType.ManageSubscription)
+					}
+				}
+			} else {
+				SettingButton(text = "Subscription", icon = R.drawable.ic_subscription) {
+					context.startActivity(Intent(context, ProActivity::class.java))
+				}
 			}
 		}
 
@@ -174,15 +188,15 @@ fun SettingsScreen(
 			text = "Dark mode",
 			icon = R.drawable.ic_bulb,
 			subText = when (darkTheme) {
-				SettingsActivity.Companion.DarkTheme.SyncWithSystem -> "Sync with system"
+				SettingsActivity.Companion.DarkTheme.SyncWithSystem -> "Same as system"
 				SettingsActivity.Companion.DarkTheme.AlwaysOn -> "Always on"
 				SettingsActivity.Companion.DarkTheme.AlwaysOff -> "Always off"
-				null -> "Sync with system"
+				null -> "Same as system"
 			},
 			isDropdownMenuVisible = isDarkThemeDropdownMenuVisible,
 			dropdownMenuList = listOf(
 				DropdownMenuItem(
-					title = "Sync with system",
+					title = "Same as system",
 					icon = R.drawable.ic_r2d2
 				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.SyncWithSystem); isDarkThemeDropdownMenuVisible = false },
 				DropdownMenuItem(

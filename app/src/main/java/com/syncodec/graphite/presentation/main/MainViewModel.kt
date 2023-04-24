@@ -70,7 +70,7 @@ class MainViewModel(private val repository : KoinRepository, private val dBox : 
 		if (BaseApplication.isPro.value) repository.putChapterSuspended(chapterObject)
 		else viewModelScope.launch(Dispatchers.Default) {
 			repository.getChapterWithParentId(parentChapterId = null).let {
-				if (it.second.size < 4) repository.putChapterSuspended(chapterObject) else callback("Join Graphite Pro to create more notebooks")
+				if (it.size < 4) repository.putChapterSuspended(chapterObject) else callback("Join Graphite Pro to create more notebooks")
 			}
 		}
 	}
@@ -117,7 +117,6 @@ class MainViewModel(private val repository : KoinRepository, private val dBox : 
 	}
 
 	fun testDropboxConnection() {
-		Log.d("MainViewModel", "testDropboxConnection: ")
 		viewModelScope.launch(Dispatchers.IO) {
 			dBox.testConnection { _testConnectionResponse.tryEmit(it) }
 		}

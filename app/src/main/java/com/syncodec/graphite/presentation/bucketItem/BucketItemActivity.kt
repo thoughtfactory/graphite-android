@@ -51,7 +51,6 @@ class BucketItemActivity : ComponentActivity() {
 				val isNew by viewModel.isNew
 				val isFavourite by viewModel.isFavourite
 				val isLocked by viewModel.isLocked
-				val isLocalOnly by viewModel.isLocalOnly
 
 				val bucketItemObject by viewModel.bucketItemObject
 				val showType by viewModel.showType.collectAsState()
@@ -62,7 +61,6 @@ class BucketItemActivity : ComponentActivity() {
 					bucketType = bucketType,
 					showType = showType,
 					isSaved = isNew?.not(),
-					isLocalOnly = isLocalOnly ?: false,
 					isFavourite = isFavourite ?: false,
 					isLocked = isLocked ?: false,
 					onClickSave = {
@@ -73,11 +71,6 @@ class BucketItemActivity : ComponentActivity() {
 							viewModel.title.value = title
 						}
 						viewModel.putBucketItem()
-					},
-					onClickLocalOnly = {
-						viewModel.onToggleLocalOnly()
-						if (isLocalOnly == true) Toast.makeText(this, "Note will be synced to the cloud", Toast.LENGTH_SHORT).show()
-						else Toast.makeText(this, "Note will not be synced to the cloud", Toast.LENGTH_SHORT).show()
 					},
 					onClickFavourite = {
 						if (isNew == true) {

@@ -222,7 +222,7 @@ class KoinRepository {
 		}
 	}
 
-	fun putBaseObject(baseObject : BaseObject, modifyTimestampAuto : Boolean = true, clearDeleted : Boolean = false) {
+	fun downSyncBaseObject(baseObject : BaseObject, modifyTimestampAuto : Boolean = true) {
 		realm?.writeBlocking {
 			val storedBaseObject = getBaseObject()
 			storedBaseObject?.let {
@@ -231,17 +231,13 @@ class KoinRepository {
 					latestBaseObject.defaultChapterId = baseObject.defaultChapterId
 					latestBaseObject.notebookIdOrderList = baseObject.notebookIdOrderList
 					latestBaseObject.bucketIdOrderList = baseObject.bucketIdOrderList
-					if (clearDeleted) {
-						latestBaseObject.deletedObjectSet.clear()
-						latestBaseObject.deletedAttachmentSet.clear()
-					}
 				} ?: copyToRealm(baseObject)
 			} ?: copyToRealm(baseObject)
 		}
 	}
 
-	fun putBaseObjectSuspended(baseObject : BaseObject, modifyTimestampAuto : Boolean = true, clearDeleted : Boolean = false) {
-		CoroutineScope(Dispatchers.Default).launch { putBaseObject(baseObject, modifyTimestampAuto, clearDeleted = clearDeleted) }
+	fun downSyncBaseObjectSuspended(baseObject : BaseObject, modifyTimestampAuto : Boolean = true) {
+		CoroutineScope(Dispatchers.Default).launch { downSyncBaseObject(baseObject, modifyTimestampAuto) }
 	}
 
 	fun putChapter(chapterObject : ChapterObject, modifyTimestampAuto : Boolean = true) {
@@ -256,7 +252,6 @@ class KoinRepository {
 					latestChapterObject.thumbnail = chapterObject.thumbnail
 					latestChapterObject.isFavourite = chapterObject.isFavourite
 					latestChapterObject.isLocked = chapterObject.isLocked
-					latestChapterObject.isLocalOnly = chapterObject.isLocalOnly
 					latestChapterObject.parentId = chapterObject.parentId
 				} ?: copyToRealm(chapterObject)
 			} ?: copyToRealm(chapterObject)
@@ -351,12 +346,10 @@ class KoinRepository {
 	 * @return Pair of the chapter and the child chapters list.
 	 * @throws [RealmNotInitializedException] if the realm is not initialized.
 	 */
-	fun getChapterWithParentId(parentChapterId : RealmUUID?) : Pair<ChapterObject?, List<ChapterObject>> {
+	fun getChapterWithParentId(parentChapterId : RealmUUID?) : RealmResults<ChapterObject> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(ChapterObject::class, "parentId == $0 ", parentChapterId).find().toList().let {
-				Pair(getChapterFromId(parentChapterId), it)
-			}
+			else realm.query(ChapterObject::class, "parentId == $0 ", parentChapterId).find()
 		}
 	}
 
@@ -408,7 +401,6 @@ class KoinRepository {
 					storedNoteObject.isFavourite = noteObject.isFavourite
 					storedNoteObject.isLocked = noteObject.isLocked
 					storedNoteObject.parentId = noteObject.parentId
-					storedNoteObject.isLocalOnly = noteObject.isLocalOnly
 				} ?: copyToRealm(noteObject)
 			} ?: copyToRealm(noteObject)
 		}
@@ -755,49 +747,55 @@ class KoinRepository {
 		attachmentRepository.delete(attachmentList)
 	}
 
+	/**
+	 * Deletes [NoteObject], [ChapterObject], [BucketItemObject], [BucketObject] or [TagObject]
+	 *
+	 * [NoteObject] will delete all associated [AttachmentObject]
+	 *
+	 * [ChapterObject] will delete all [NoteObject]s with [ChapterObject.id] as [NoteObject.parentId] and [ChapterObject]s with [ChapterObject.parentId] as [ChapterObject.id]
+	 *
+	 * [BucketObject] will delete all [BucketItemObject]s with [BucketObject.id] as [BucketItemObject.parentId]
+	 *
+	 * [TagObject] will not delete any associated objects
+	 * @author pushpull
+	 * @since 2.3.0
+	 * @param id [RealmUUID] of [RealmObject]
+	 * @param keepHistory if true, id will be added to [BaseObject.deletedObjectSet]
+	 */
 	private fun delete(id : RealmUUID, keepHistory : Boolean) {
 		getNoteFromId(id)?.let {
 			deleteAttachment(attachmentRepository.getAttachmentFromNote(it.id), keepHistory)
 			attachmentRepository.delete(it.id)
 			realm?.writeBlocking {
-				findLatest(it)?.let {
-					if (keepHistory) updateDeleteHistory(id, NoteObject::class.simpleName)
-					delete(it)
-				}
+				if (keepHistory) updateDeleteHistory(id, NoteObject::class.simpleName)
+				findLatest(it)?.let { delete(it) }
 			}
 		}
 		getChapterFromId(id)?.let {
-			delete(getNoteWithParentId(id).map { it.id })
+			delete(getChapterWithParentId(id).map { it.id }, keepHistory)
+			delete(getNoteWithParentId(id).map { it.id }, keepHistory)
 			realm?.writeBlocking {
-				findLatest(it)?.let {
-					if (keepHistory) updateDeleteHistory(id, ChapterObject::class.simpleName)
-					delete(it)
-				}
+				if (keepHistory) updateDeleteHistory(id, ChapterObject::class.simpleName)
+				findLatest(it)?.let { delete(it) }
 			}
 		}
 		getBucketItemFromId(id)?.let {
 			realm?.writeBlocking {
-				findLatest(it)?.let {
-					if (keepHistory) updateDeleteHistory(id, BucketItemObject::class.simpleName)
-					delete(it)
-				}
+				if (keepHistory) updateDeleteHistory(id, BucketItemObject::class.simpleName)
+				findLatest(it)?.let { delete(it) }
 			}
 		}
 		getBucketFromId(id)?.let {
-			delete(getBucketItemWithParentId(id).map { it.id })
+			delete(getBucketItemWithParentId(id).map { it.id }, keepHistory)
 			realm?.writeBlocking {
-				findLatest(it)?.let {
-					if (keepHistory) updateDeleteHistory(id, BucketObject::class.simpleName)
-					delete(it)
-				}
+				if (keepHistory) updateDeleteHistory(id, BucketObject::class.simpleName)
+				findLatest(it)?.let { delete(it) }
 			}
 		}
 		getTagFromId(id)?.let {
 			realm?.writeBlocking {
-				findLatest(it)?.let {
-					if (keepHistory) updateDeleteHistory(id, TagObject::class.simpleName)
-					delete(it)
-				}
+				if (keepHistory) updateDeleteHistory(id, TagObject::class.simpleName)
+				findLatest(it)?.let { delete(it) }
 			}
 		}
 	}
@@ -1030,18 +1028,21 @@ class KoinRepository {
 			val snapshotDir = File(importSnapshotDir, "snapshot")
 			extract7z(sevenZFile, snapshotDir) { progress, total -> }
 
+			// Delete attachment folder
 			attachmentRepository.deleteAll()
 
 			snapshotDir.listFiles()?.firstOrNull { it.name.endsWith(".realm") }?.let {
 				restoreRealmSnapshot(context, it.name, snapshotDir.path) { isSuccess, exception ->
+					Log.d("npr71", "isSuccess = $isSuccess, exception = $exception")
 					if (isSuccess) {
 						snapshotDir.listFiles()?.firstOrNull { it.name == "attachment" }?.let { attachmentDir ->
 							attachmentRepository.importAttachmentFromGraphite(attachmentDir)
 							ProcessPhoenix.triggerRebirth(context)
+						} ?: kotlin.run {
+//							Trigger rebirth if attachment folder is not found
+							ProcessPhoenix.triggerRebirth(context)
 						}
-					} else {
-						callback(false)
-					}
+					} else callback(false)
 				}
 			}
 		}

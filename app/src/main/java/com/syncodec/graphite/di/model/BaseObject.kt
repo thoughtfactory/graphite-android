@@ -17,28 +17,47 @@ import org.json.JSONObject
 class BaseObject : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
+
+	/**
+	 * The [RealmUUID] of the default chapter. Should never be null.
+	 */
 	var defaultChapterId : RealmUUID? = null
 
+	/**
+	 * Stores the order of the [ChapterObject]s to render in NotebookScreen.
+	 */
 	var notebookIdOrderList : RealmList<RealmUUID> = realmListOf()
+
+	/**
+	 * Stores the order of the [BucketObject]s to render in ListScreen.
+	 */
 	var bucketIdOrderList : RealmList<RealmUUID> = realmListOf()
 
+	/**
+	 * It keeps track of deleted objects so that they can be deleted from the cloud.
+	 */
 	var deletedObjectSet : RealmSet<DeletedObject> = realmSetOf()
-	var deletedAttachmentSet : RealmSet<DeletedAttachment> = realmSetOf()
 
-	var lastSyncedTimestamp : Long = 0
+	/**
+	 * It keeps track of deleted attachments so that they can be deleted from the cloud.
+	 */
+	var deletedAttachmentSet : RealmSet<DeletedAttachment> = realmSetOf()
 
 	var modifiedTimestamp : Long = System.currentTimeMillis()
 
 	fun clone() : BaseObject = BaseObject().apply {
 		this.id = this@BaseObject.id
 		this.defaultChapterId = this@BaseObject.defaultChapterId
-		this.lastSyncedTimestamp = this@BaseObject.lastSyncedTimestamp
 		this.notebookIdOrderList = this@BaseObject.notebookIdOrderList.toRealmList()
 		this.bucketIdOrderList = this@BaseObject.bucketIdOrderList.toRealmList()
 		this.deletedObjectSet = this@BaseObject.deletedObjectSet.toRealmSet()
 		this.modifiedTimestamp = this@BaseObject.modifiedTimestamp
 	}
 
+	/**
+	 * It converts the object to a JSON string to be stored in the cloud.
+	 * All properties of the object are not needed to be stored in the cloud.
+	 */
 	fun toCloudSnapshot() : String {
 		val jsonObject = JSONObject()
 		jsonObject.put("defaultChapterId", defaultChapterId?.toString() ?: "")
@@ -51,7 +70,6 @@ class BaseObject : RealmObject {
 	override fun hashCode() : Int {
 		var result = id.hashCode()
 		result = 31 * result + (defaultChapterId?.hashCode() ?: 0)
-		result = 31 * result + lastSyncedTimestamp.hashCode()
 		result = 31 * result + bucketIdOrderList.hashCode()
 		result = 31 * result + deletedObjectSet.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
@@ -64,7 +82,6 @@ class BaseObject : RealmObject {
 
 		if (id != other.id) return false
 		if (defaultChapterId != other.defaultChapterId) return false
-		if (lastSyncedTimestamp != other.lastSyncedTimestamp) return false
 		if (bucketIdOrderList != other.bucketIdOrderList) return false
 		if (deletedObjectSet != other.deletedObjectSet) return false
 		if (modifiedTimestamp != other.modifiedTimestamp) return false
@@ -104,11 +121,29 @@ class BaseObject : RealmObject {
 	}
 }
 
+/**
+ * It is used to keep track of deleted objects so that they can be deleted from the cloud.
+ * @author pushpull
+ * @since 2.3.0
+ */
 @Keep
 class DeletedObject : RealmObject {
+	/**
+	 * The [RealmUUID] of the deleted object.
+	 */
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
+
+	/**
+	 * The timestamp of when the object was deleted.
+	 * If cloud modified timestamp is less than this, then the object should be deleted from the cloud.
+	 */
 	var deletedTimestamp : Long = 0
+
+	/**
+	 * The type of the deleted object. String representation of T::class.simpleName
+	 * It is used to determine the type of the object when it is deleted from the cloud.
+	 */
 	var objectType : String? = ""
 
 	override fun hashCode() : Int {
@@ -130,9 +165,21 @@ class DeletedObject : RealmObject {
 	}
 }
 
+/**
+ * It is used to keep track of deleted attachments so that they can be deleted from the cloud.
+ * @author pushpull
+ * @since 2.3.0
+ */
 @Keep
 class DeletedAttachment : RealmObject {
+	/**
+	 * The [RealmUUID] of the parent [NoteObject].
+	 */
 	var parentId : RealmUUID = RealmUUID.random()
+
+	/**
+	 * The name of the deleted attachment.
+	 */
 	var fileName : String = ""
 
 	override fun hashCode() : Int {

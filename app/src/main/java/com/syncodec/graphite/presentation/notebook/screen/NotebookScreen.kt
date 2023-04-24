@@ -75,7 +75,6 @@ fun NotebookScreen() {
 	val thumbnail by viewModel.thumbnail.collectAsState()
 	val isFavourite by viewModel.isFavourite.collectAsState()
 	val isLocked by viewModel.isLocked.collectAsState()
-	val isLocalOnly by viewModel.isLocalOnly.collectAsState()
 
 	val chapterList by viewModel.chapterList.collectAsState()
 	val noteList by viewModel.noteList.collectAsState()
@@ -177,7 +176,6 @@ fun NotebookScreen() {
 			TopBar(
 				title = title,
 				defaultChapterId = defaultChapterId,
-				isLocalOnly = isLocalOnly ?: false,
 				isLocked = isLocked ?: false,
 				isFavourite = isFavourite ?: false,
 				chapterPath = chapterPath,
@@ -185,13 +183,6 @@ fun NotebookScreen() {
 				selectedSize = selectedIdList.size,
 				onClickBack = { onBackPressedDispatcher?.onBackPressed() },
 				onClickCancelSelect = { isSelecting = false; selectedIdList = listOf() },
-				onClickLocalOnly = {
-					chapterId?.let {
-						viewModel.toggleLocalOnly(it)
-						if (isLocalOnly == true) Toast.makeText(context, "Notebook/Chapter will be synced to the cloud", Toast.LENGTH_SHORT).show()
-						else Toast.makeText(context, "Notebook/Chapter will not be synced to the cloud", Toast.LENGTH_SHORT).show()
-					} ?: Toast.makeText(context, "Cannot toggle local only for default chapter", Toast.LENGTH_SHORT).show()
-				},
 				onClickLock = {
 					if (chapterId == defaultChapterId)
 					else chapterId?.let {

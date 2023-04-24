@@ -56,10 +56,7 @@ class TagsViewModel(private val repository : KoinRepository) : ViewModel() {
 			) { tagList, noteIdList ->
 				tagList.map { tagObject ->
 					tagObject.clone().apply {
-						Log.i("npr71", "noteIdList: $noteIdList")
-						objectIdList = objectIdList.filter { it in noteIdList }.toRealmList().also {
-							Log.i("npr71", "objectIdList: $objectIdList")
-						}
+						objectIdList = objectIdList.filter { it in noteIdList }.toRealmList()
 					}
 				}
 			}.collect { _recalculatedTagList.tryEmit(it) }

@@ -36,11 +36,9 @@ fun BucketItemScreen(
 	bucketType : BucketType? = null,
 	showType : ShowType? = null,
 	isSaved : Boolean? = false,
-	isLocalOnly : Boolean = false,
 	isFavourite : Boolean = false,
 	isLocked : Boolean = false,
 	onClickSave : () -> Unit = {},
-	onClickLocalOnly : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onChangeState : (Int) -> Unit = {},
@@ -75,11 +73,9 @@ fun BucketItemScreen(
 				topBar = {
 					TopBar(
 						isSaved = it,
-						isLocalOnly = isLocalOnly,
 						isFavourite = isFavourite,
 						isLocked = isLocked,
 						onClickSave = onClickSave,
-						onClickLocalOnly = onClickLocalOnly,
 						onClickFavourite = onClickFavourite,
 						onClickLock = { if (isAuthenticated) onClickLock() else onAuthenticationAction(AuthenticatorScreen.Authenticate) },
 						onClickBack = onClickBack,

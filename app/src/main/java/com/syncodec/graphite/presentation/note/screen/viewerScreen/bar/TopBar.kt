@@ -26,7 +26,6 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.Dropdown
 @Composable
 fun TopBar(
 	isOperationPending : Boolean = false,
-	isLocalOnly : Boolean = false,
 	isFavourite : Boolean = false,
 	isLocked : Boolean = false,
 	onClickLocalOnly : () -> Unit = {},
@@ -52,16 +51,6 @@ fun TopBar(
 		},
 		title = {},
 		actions = {
-			MenuButton(
-				icon = if (isLocalOnly) R.drawable.ic_cloud_disable else R.drawable.ic_cloud,
-				tooltip = "Local only",
-				checked = isLocalOnly,
-				colors = MenuButtonDefaults.menuButtonColors(
-					checkedContainerColor = MenuButtonDefaults.deleteButtonColors().checkedContainerColor,
-					checkedIconColor = MenuButtonDefaults.deleteButtonColors().checkedIconColor,
-				),
-				onClick = onClickLocalOnly
-			)
 			MenuButton(
 				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
 				tooltip = "Lock",

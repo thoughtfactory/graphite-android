@@ -92,6 +92,13 @@ class TagObject() : RealmObject {
 	}
 
 	companion object {
+		fun fromCloudSnapshot(snapshot : ByteArray) : TagObject? {
+			return try {
+				TagObject(JSONObject(String(snapshot, Charsets.UTF_8)))
+			} catch (e : Exception) {
+				null
+			}
+		}
 		fun getRandomInstance() = TagObject().apply {
 			tag = "Tag ${System.currentTimeMillis()}"
 			color = getRandomColor().toArgb()

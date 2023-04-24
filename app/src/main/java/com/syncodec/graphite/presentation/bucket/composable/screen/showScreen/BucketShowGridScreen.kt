@@ -69,11 +69,8 @@ fun BucketShowGridScreen(
 								putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketId?.bytes)
 								putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
 								putExtra(Extra.Companion.Extra.BUCKET_ITEM_ID.name, bucketItemObject.id.bytes)
-								Log.i("npr71", "BucketShowGridScreen: LoL")
 								bucketItemObject.getData()?.let { data ->
-									Log.i("npr71", "BucketShowGridScreen: ${data::class.java.simpleName}")
 									if (data is BucketItemObject.Companion.BucketItemData.ShowData) {
-										Log.i("npr71", "BucketShowGridScreen: ${data.type?.name}")
 										putExtra(Extra.Companion.Extra.SHOW_TYPE.name, data.type?.name)
 									}
 								}

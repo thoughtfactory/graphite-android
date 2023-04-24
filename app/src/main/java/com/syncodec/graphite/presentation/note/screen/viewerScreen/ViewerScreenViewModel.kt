@@ -48,7 +48,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 	val contentThumbnail : MutableStateFlow<String?> = MutableStateFlow(null)
 	val content : MutableStateFlow<String?> = MutableStateFlow(null)
 	val thumbnail : MutableStateFlow<Bitmap?> = MutableStateFlow(null)
-	val isLocalOnly : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val isFavourite : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val isLocked : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val parentId : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
@@ -110,7 +109,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 					this@ViewerScreenViewModel.contentThumbnail.tryEmit(it.contentThumbnail)
 					this@ViewerScreenViewModel.content.tryEmit(it.content)
 					this@ViewerScreenViewModel.thumbnail.tryEmit(it.thumbnail?.decodeBase64ToBitmap())
-					this@ViewerScreenViewModel.isLocalOnly.tryEmit(it.isLocalOnly)
 					this@ViewerScreenViewModel.isFavourite.tryEmit(it.isFavourite)
 					this@ViewerScreenViewModel.isLocked.tryEmit(it.isLocked)
 					this@ViewerScreenViewModel.parentId.tryEmit(it.parentId)
@@ -137,7 +135,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 				this@ViewerScreenViewModel.contentThumbnail.value?.let { this.contentThumbnail = it }
 				this@ViewerScreenViewModel.content.value?.let { this.content = it }
 //				this@EditorScreenViewModel.thumbnail.value?.let { this.thumbnail = it }
-				this@ViewerScreenViewModel.isLocalOnly.value?.let { this.isLocalOnly = it }
 				this@ViewerScreenViewModel.isFavourite.value?.let { this.isFavourite = it }
 				this@ViewerScreenViewModel.isLocked.value?.let { this.isLocked = it }
 				this@ViewerScreenViewModel.parentChapter.value?.id?.let { this.parentId = it }
@@ -156,11 +153,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 				if (noteObject == toSaveNoteObject) cancel()
 			}
 		}
-	}
-
-	fun toggleLocalOnly() {
-		this.isLocalOnly.tryEmit(this.isLocalOnly.value?.not() ?: true)
-		putNote()
 	}
 
 	fun toggleFavourite() {

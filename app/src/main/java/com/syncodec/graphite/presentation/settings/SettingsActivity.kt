@@ -123,6 +123,7 @@ class SettingsActivity : ComponentActivity() {
 				var showClearDataDialog by remember { mutableStateOf(false) }
 				var showNotificationPermissionDialog by remember { mutableStateOf(false) }
 				var showDeleteAccountDialog by remember { mutableStateOf(false) }
+				var showManageSubscriptionDialog by remember { mutableStateOf(false) }
 
 				var settingsScreen by remember { mutableStateOf(SettingsScreen.Settings) }
 
@@ -132,6 +133,7 @@ class SettingsActivity : ComponentActivity() {
 					SettingsDialogType.ClearData -> showClearDataDialog = true
 					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = true
 					SettingsDialogType.DeleteAccount -> showDeleteAccountDialog = true
+					SettingsDialogType.ManageSubscription -> showManageSubscriptionDialog = true
 				}
 
 				fun closeDialog(dialogType : SettingsDialogType) = when (dialogType) {
@@ -140,6 +142,7 @@ class SettingsActivity : ComponentActivity() {
 					SettingsDialogType.ClearData -> showClearDataDialog = false
 					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = false
 					SettingsDialogType.DeleteAccount -> showDeleteAccountDialog = false
+					SettingsDialogType.ManageSubscription -> showManageSubscriptionDialog = false
 				}
 
 				this.onBackPressedDispatcher.addCallback(
@@ -190,6 +193,7 @@ class SettingsActivity : ComponentActivity() {
 							},
 							showNotificationPermissionDialog = showNotificationPermissionDialog,
 							showDeleteAccountDialog = showDeleteAccountDialog,
+							showManageSubscriptionDialog = showManageSubscriptionDialog,
 							onNotificationPermissionAvailable = {
 								if (BaseApplication.isPro.value) WriteNoteNotification.showSimpleNotification(applicationContext)
 								else Toast.makeText(applicationContext, "Join Graphite Pro to access this feature", Toast.LENGTH_SHORT).show()

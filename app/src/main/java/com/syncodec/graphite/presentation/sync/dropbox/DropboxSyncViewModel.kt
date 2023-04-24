@@ -70,9 +70,7 @@ class DropboxSyncViewModel(private val repository : KoinRepository, private val 
 			callback(false)
 		}
 		viewModelScope.launch(Dispatchers.IO) {
-			repository.snapshot.generate {
-				dBox.snapshot.uploadSnapshot(it)
-			}
+			repository.snapshot.generate { dBox.snapshot.uploadSnapshot(it) }
 		}
 	}
 

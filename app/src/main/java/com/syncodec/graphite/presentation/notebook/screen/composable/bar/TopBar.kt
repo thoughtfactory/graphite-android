@@ -29,7 +29,6 @@ import io.realm.kotlin.types.RealmUUID
 fun TopBar(
 	title : String? = null,
 	defaultChapterId : RealmUUID? = null,
-	isLocalOnly : Boolean = false,
 	isLocked : Boolean = false,
 	isFavourite : Boolean = false,
 	chapterPath : List<ChapterObjectLite> = listOf(),
@@ -49,7 +48,6 @@ fun TopBar(
 	) {
 		Bar(
 			title = title,
-			isLocalOnly = isLocalOnly,
 			isLocked = isLocked,
 			isFavourite = isFavourite,
 			isSelecting = isSelecting,
@@ -77,7 +75,6 @@ fun TopBar(
 @Composable
 private fun Bar(
 	title : String? = null,
-	isLocalOnly : Boolean = false,
 	isLocked : Boolean = false,
 	isFavourite : Boolean = false,
 	isSelecting : Boolean = false,
@@ -138,17 +135,6 @@ private fun Bar(
 					MenuButton(
 						icon = R.drawable.ic_filter,
 						onClick = onClickFilter
-					)
-
-					MenuButton(
-						icon = if (isLocalOnly) R.drawable.ic_cloud_disable else R.drawable.ic_cloud,
-						tooltip = "Local only",
-						checked = isLocalOnly,
-						colors = MenuButtonDefaults.menuButtonColors(
-							checkedContainerColor = MenuButtonDefaults.deleteButtonColors().checkedContainerColor,
-							checkedIconColor = MenuButtonDefaults.deleteButtonColors().checkedIconColor,
-						),
-						onClick = onClickLocalOnly
 					)
 
 					MenuButton(

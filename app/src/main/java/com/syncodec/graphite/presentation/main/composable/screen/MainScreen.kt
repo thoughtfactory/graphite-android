@@ -126,7 +126,15 @@ fun MainScreen(
 					selectedIdList = listOf()
 				},
 				onClickCloud = {
-					testDropboxConnection()
+					if (syncStatus is SyncerService.Companion.SyncStatus.Init
+						|| syncStatus is SyncerService.Companion.SyncStatus.Paused
+						|| syncStatus is SyncerService.Companion.SyncStatus.Locked
+						|| syncStatus is SyncerService.Companion.SyncStatus.CredentialError
+						|| syncStatus is SyncerService.Companion.SyncStatus.Idle
+						|| syncStatus is SyncerService.Companion.SyncStatus.Failed
+					) {
+						testDropboxConnection()
+					}
 					openSheet(MainBottomSheetType.Sync)
 				},
 				onClickSearch = {

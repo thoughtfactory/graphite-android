@@ -73,7 +73,7 @@ fun RestoreSnapshotDialog(
 		icon = R.drawable.ic_warning,
 		iconTint = MaterialTheme.colorScheme.error,
 		title = "Restore Snapshot",
-		contentText = "Restoring snapshot is a destructive operation. Take a snapshot of the current state of data in case something goes wrong.",
+		contentText = "Restoring snapshot is a destructive operation. Take a snapshot of the current state of data in case something goes wrong.\n\nDeleting snapshot directly from Graphite is not supported yet but you can delete it from Dropbox.",
 		dualActionButton = {
 			DualActionButtons(
 				primaryText = "Restore${if (timeout > 0) " ($timeout)" else ""}",

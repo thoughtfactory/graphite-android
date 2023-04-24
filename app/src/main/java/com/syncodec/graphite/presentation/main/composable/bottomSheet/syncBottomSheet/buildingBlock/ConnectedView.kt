@@ -70,6 +70,7 @@ fun ConnectedView(
 	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onForceSync : () -> Unit = {},
 	onSync : () -> Unit = {},
+	onClickManage : () -> Unit = {},
 ) {
 	val context = LocalContext.current
 
@@ -121,6 +122,7 @@ fun ConnectedView(
 		SyncButton(
 			onSync = onSync,
 			onForceSync = onForceSync,
+			onClickManage = onClickManage,
 		)
 	}
 }
@@ -208,9 +210,8 @@ private fun ColumnScope.DropboxSpaceUsage(
 private fun ColumnScope.SyncButton(
 	onSync : () -> Unit = {},
 	onForceSync : () -> Unit = {},
+	onClickManage : () -> Unit = {},
 ) {
-	val context = LocalContext.current
-
 	this.apply {
 		Button(
 			colors = ButtonDefaults.buttonColors(
@@ -219,7 +220,7 @@ private fun ColumnScope.SyncButton(
 			),
 			shape = MaterialTheme.shapes.medium,
 			modifier = Modifier.fillMaxWidth(),
-			onClick = { context.startActivity(Intent(context, DropboxSyncActivity::class.java)) },
+			onClick = onClickManage,
 		) {
 			Text(text = "Manage")
 		}

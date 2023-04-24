@@ -10,6 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.javascriptengine.JavaScriptIsolate
+import androidx.javascriptengine.JavaScriptSandbox
 import androidx.lifecycle.lifecycleScope
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.screen.NoteScreen
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.util.concurrent.TimeUnit
 
 
 class NoteActivity : ComponentActivity() {
@@ -57,8 +60,6 @@ class NoteActivity : ComponentActivity() {
 			lifecycleScope.launch(Dispatchers.IO) { loadEditor() }
 		}
 		val dataStoreInstance = DataStoreInstance(this)
-
-
 
 		setContent {
 			BaseContent {

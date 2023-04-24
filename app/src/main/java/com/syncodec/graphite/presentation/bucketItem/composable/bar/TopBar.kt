@@ -28,7 +28,6 @@ import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 @Composable
 fun TopBar(
 	isSaved : Boolean = false,
-	isLocalOnly : Boolean = false,
 	isFavourite : Boolean = false,
 	isLocked : Boolean = false,
 	onClickSave : () -> Unit = {},
@@ -57,17 +56,6 @@ fun TopBar(
 						Row(
 							modifier = Modifier
 						) {
-							MenuButton(
-								icon = if (isLocalOnly) R.drawable.ic_cloud_disable else R.drawable.ic_cloud,
-								tooltip = "Local only",
-								checked = isLocalOnly,
-								colors = MenuButtonDefaults.menuButtonColors(
-									checkedContainerColor = MenuButtonDefaults.deleteButtonColors().checkedContainerColor,
-									checkedIconColor = MenuButtonDefaults.deleteButtonColors().checkedIconColor,
-								),
-								onClick = onClickLocalOnly
-							)
-
 							MenuButton(
 								icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
 								tooltip = if (isLocked) "Locked" else "Not locked",

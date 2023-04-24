@@ -25,8 +25,8 @@ class AttachmentRepository {
 		this::attachmentDir.isInitialized
 	}
 
-	fun putAttachment(parentId : RealmUUID, file : File) {
-		val fileName = "${RealmUUID.random()}_${file.name.split(".").lastOrNull()?.let { ".$it" }}"
+	fun putAttachment(parentId : RealmUUID, file : File, keepName : Boolean = false) {
+		val fileName = if (keepName) file.name else "${RealmUUID.random()}_${file.name.split(".").lastOrNull()?.let { ".$it" }}"
 		val newFile = File(context.attachmentDir(parentId, true), fileName).also { it.createNewFile() }
 		file.copyTo(newFile, true)
 	}
@@ -36,9 +36,9 @@ class AttachmentRepository {
 		newFile.writeBytes(byteArray)
 	}
 
-	fun putAttachment(parentId : RealmUUID, uriList : List<Uri>) {
+	fun putAttachment(parentId : RealmUUID, uriList : List<Uri>, keepName : Boolean = false) {
 		uriList.forEach { uri ->
-			val fileName = "${RealmUUID.random()}_${uri.getFileName(context)}"
+			val fileName = if (keepName) context.getFileName(uri) else "${RealmUUID.random()}_${uri.getFileName(context)}"
 			val inputStream = context.contentResolver.openInputStream(uri)?.also { inputStream ->
 				val file = File(context.attachmentDir(parentId, true), fileName).also { it.createNewFile() }
 				file.outputStream().use { outputStream -> copyInputStreamToOutputStream(inputStream, outputStream) }
@@ -47,10 +47,10 @@ class AttachmentRepository {
 		}
 	}
 
-	fun putAttachment(parentId : RealmUUID, zipFile : ZipFile, attachmentList : List<ZipArchiveEntry>) {
+	fun putAttachment(parentId : RealmUUID, zipFile : ZipFile, attachmentList : List<ZipArchiveEntry>, keepName : Boolean = false) {
 		attachmentList.forEach { zipArchiveEntry ->
 			val inputStream = zipFile.getInputStream(zipArchiveEntry).also { inputStream ->
-				val fileName = "${RealmUUID.random()}.${zipArchiveEntry.name.split(".").last()}"
+				val fileName = if (keepName) zipArchiveEntry.name else "${RealmUUID.random()}.${zipArchiveEntry.name.split(".").last()}"
 				val file = File(context.attachmentDir(parentId, true), fileName).also { it.createNewFile() }
 				file.outputStream().use { outputStream -> copyInputStreamToOutputStream(inputStream, outputStream) }
 			}
@@ -111,7 +111,7 @@ class AttachmentRepository {
 					}
 					val noteAttachmentDir = File("${attachmentDir.path}/$parentId")
 					if (! noteAttachmentDir.exists()) noteAttachmentDir.mkdirs()
-					it.listFiles()?.forEach { attachment -> putAttachment(parentId, attachment) }
+					it.listFiles()?.forEach { attachment -> putAttachment(parentId = parentId, file = attachment, keepName = true) }
 				}
 			}
 		} catch (e : Exception) {

@@ -12,7 +12,8 @@ enum class SettingsDialogType {
 	ExportData,
 	ClearData,
 	NotificationPermission,
-	DeleteAccount
+	DeleteAccount,
+	ManageSubscription,
 }
 
 @Preview
@@ -23,6 +24,7 @@ fun SettingsDialog(
 	showClearDataDialog : Boolean = false,
 	showNotificationPermissionDialog : Boolean = false,
 	showDeleteAccountDialog : Boolean = false,
+	showManageSubscriptionDialog : Boolean = false,
 	onAddBiometricAuth : () -> Unit = { },
 	onNotificationPermissionAvailable : () -> Unit = { },
 	onDeleteAccount : () -> Unit = { },
@@ -43,5 +45,9 @@ fun SettingsDialog(
 		showDialog = showDeleteAccountDialog,
 		onDelete = onDeleteAccount,
 		onDismiss = { closeDialog(SettingsDialogType.DeleteAccount) }
+	)
+	ManageSubscriptionDialog(
+		showDialog = showManageSubscriptionDialog,
+		onDismiss = { closeDialog(SettingsDialogType.ManageSubscription) }
 	)
 }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import kotlinx.serialization.Serializable
 
-
+typealias TipTapContent = Content
 @Keep
 @Serializable
 data class Content(
@@ -25,6 +25,17 @@ data class Content(
 		return content?.let {
 			it.joinToString(separator = "") { it.toString() }
 		} ?: text ?: ""
+	}
+
+	fun toTxt() : String {
+		// new line when type is paragraph or heading or blockquote or hardBreak
+		val newLine = when (type) {
+			"paragraph", "heading", "blockquote", "hardBreak" -> "\n"
+			else -> ""
+		}
+		content?.let {
+			return it.joinToString(separator = "") { it.toTxt() } + newLine
+		} ?: return text ?: ""
 	}
 }
 

@@ -1,20 +1,13 @@
 package com.syncodec.graphite.presentation.main.composable.bar
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +21,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
+import com.syncodec.graphite.presentation.ui.SyncState
 import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
@@ -228,56 +222,11 @@ private fun CloudButton(
 	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onClickSync : () -> Unit
 ) {
-	val infiniteTransition = rememberInfiniteTransition()
-	val alpha by infiniteTransition.animateFloat(
-		initialValue = 1f,
-		targetValue = 0.47f,
-		animationSpec = infiniteRepeatable(
-			animation = tween(710, easing = LinearEasing),
-			repeatMode = RepeatMode.Reverse
-		),
-		label = "blink"
-	)
-
 	MenuButton(
-//		icon = when(syncStatus) {
-//			is SyncerService.Companion.SyncStatus.Init -> R.drawable.ic_cloud
-//			is SyncerService.Companion.SyncStatus.Idle -> R.drawable.ic_cloud
-//			is SyncerService.Companion.SyncStatus.Loading -> R.drawable.ic_cloud_dashed
-//			is SyncerService.Companion.SyncStatus.Locked -> R.drawable.ic_cloud_x
-//			is SyncerService.Companion.SyncStatus.Connected -> R.drawable.ic_cloud_syncing
-//			is SyncerService.Companion.SyncStatus.Syncing -> R.drawable.ic_cloud_syncing
-//			is SyncerService.Companion.SyncStatus.Disconnected -> R.drawable.ic_cloud_x
-//			is SyncerService.Companion.SyncStatus.Paused -> R.drawable.ic_cloud_x
-//			is SyncerService.Companion.SyncStatus.Failed -> R.drawable.ic_cloud_x
-//		},
-		icon = R.drawable.ic_cloud,
+		icon = SyncState.syncStatusIcon[syncStatus::class] ?: R.drawable.ic_cloud,
+		colors = MenuButtonDefaults.menuButtonColors(
+			iconColor = SyncState.getSyncStatusIconColor(syncStatus = syncStatus),
+		),
 		onClick = onClickSync
 	)
 }
-
-val Color.Companion.SyncCheck : Color
-	get() = Color(0xFF82AAE3)
-
-val Color.Companion.SyncNotCongifured : Color
-	get() = Color(0xFFE94560)
-val Color.Companion.SyncDisabled : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncNoInternet : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncNotLoggedIn : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncConnected : Color
-	get() = Color(0xFF82AAE3)
-
-val Color.Companion.SyncSyncing : Color
-	get() = Color(0xFF82AAE3)
-
-val Color.Companion.SyncError : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncLocked : Color
-	get() = Color(0xFFE94560)

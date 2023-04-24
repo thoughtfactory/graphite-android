@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import android.graphics.Color
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -14,6 +15,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
+import kotlin.random.Random
 
 
 @Keep
@@ -39,10 +41,6 @@ class NoteObject() : RealmObject {
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
-
-		this.overWritable = jsonObject.optBoolean("overWritable", true)
-		this.deletable = jsonObject.optBoolean("deletable", true)
-		this.isLocalOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -62,10 +60,6 @@ class NoteObject() : RealmObject {
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
-
-	var overWritable : Boolean = true
-	var deletable : Boolean = true
-	var isLocalOnly : Boolean = false
 
 	fun setLatLng(latLng : LatLng?) {
 		try {
@@ -119,9 +113,6 @@ class NoteObject() : RealmObject {
 			thumbnail = this.thumbnail,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked,
-			overWritable = this.overWritable,
-			deletable = this.deletable,
-			localOnly = this.isLocalOnly
 		)
 	}
 
@@ -140,9 +131,6 @@ class NoteObject() : RealmObject {
 		this.isFavourite = this@NoteObject.isFavourite
 		this.isLocked = this@NoteObject.isLocked
 		this.parentId = this@NoteObject.parentId
-		this.overWritable = this@NoteObject.overWritable
-		this.deletable = this@NoteObject.deletable
-		this.isLocalOnly = this@NoteObject.isLocalOnly
 	}
 
 	fun toCloudSnapshot() : String {
@@ -158,8 +146,6 @@ class NoteObject() : RealmObject {
 		jsonObject.put("isFavourite", this.isFavourite)
 		jsonObject.put("isLocked", this.isLocked)
 		jsonObject.put("parentId", this.parentId?.toString())
-		jsonObject.put("overWritable", this.overWritable)
-		jsonObject.put("deletable", this.deletable)
 
 		return jsonObject.toString()
 	}
@@ -179,9 +165,6 @@ class NoteObject() : RealmObject {
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + parentId.hashCode()
-		result = 31 * result + overWritable.hashCode()
-		result = 31 * result + deletable.hashCode()
-		result = 31 * result + isLocalOnly.hashCode()
 		return result
 	}
 
@@ -203,9 +186,6 @@ class NoteObject() : RealmObject {
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 		if (parentId != other.parentId) return false
-		if (overWritable != other.overWritable) return false
-		if (deletable != other.deletable) return false
-		if (isLocalOnly != other.isLocalOnly) return false
 
 		return true
 	}
@@ -216,7 +196,7 @@ class NoteObject() : RealmObject {
 			return try {
 				val json = Json { ignoreUnknownKeys = true }
 				val jsonObject = JSONObject(String(snapshot))
-				val tipTapContent = json.decodeFromString<Content>(jsonObject.getString("content")).toString()
+				val tipTapContent = json.decodeFromString<TipTapContent>(jsonObject.getString("content")).toString()
 				jsonObject.put("contentThumbnail" , tipTapContent.substring(0, minOf(256, tipTapContent.length)))
 				NoteObject(jsonObject)
 			} catch (e : Exception) {
@@ -230,17 +210,14 @@ class NoteObject() : RealmObject {
 				this.modifiedTimestamp = System.currentTimeMillis()
 				this.userTimestamp = System.currentTimeMillis()
 
-				this.title = "New Note"
-				this.color = 0
+				this.title = "Random Title ${Random.nextInt()}"
+				this.color = Color.argb(255, Random.nextInt(256), Random.nextInt(256), Random.nextInt(256))
 				setLatLng(LatLng(0.0, 0.0))
-				this.address = "New Address"
-				this.contentThumbnail = "New Content Thumbnail"
-				this.isFavourite = false
-				this.isLocked = false
+				this.address = "Random Address ${Random.nextInt()}"
+				this.contentThumbnail = "Random Content Thumbnail ${Random.nextInt()}"
+				this.isFavourite = Random.nextBoolean()
+				this.isLocked = Random.nextBoolean()
 				this.parentId = RealmUUID.random()
-				this.overWritable = true
-				this.deletable = true
-				this.isLocalOnly = false
 			}
 		}
 	}

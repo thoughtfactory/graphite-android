@@ -19,4 +19,14 @@ class TipTapUnitTest {
 			File("./src/main/assets/orbit/orbital2").readText().let { Alice.decrypt(it, passcode).let { assertEquals(html, it) } }
 		}
 	}
+
+	@Test
+	fun generateDecryptedTipTap() {
+
+		val passcode = "d5Y3f8*hN8%c%Q3%Jb9vU^8R4MV@z^9*"
+
+		File("./src/main/assets/orbit/orbital").readText().let { Alice.decrypt(it, passcode).let {
+			File("../tiptap/dec.html").writeText(it!!)
+		} }
+	}
 }

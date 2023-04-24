@@ -34,9 +34,16 @@ class DropboxSyncActivity : ComponentActivity() {
 
 		try {
 			val code = intent?.data?.getQueryParameter("code")
+
 			code?.let {
 				viewModel.exchangeCodeForToken(it) {
-					lifecycleScope.launch(Dispatchers.IO) { viewModel.testConnection { testConnectionResponse.tryEmit(it) } }
+					if (it is DBox.Companion.ExchangeCodeForTokenResponse.Success) lifecycleScope.launch(Dispatchers.IO) {
+						viewModel.testConnection {
+							if (it is DBox.Companion.TestConnectionResponse.Error && it.exception is NetworkOnMainThreadException) {
+								viewModel.testConnection { testConnectionResponse.tryEmit(it) }
+							} else testConnectionResponse.tryEmit(it)
+						}
+					}
 				}
 			} ?: lifecycleScope.launch(Dispatchers.IO) { viewModel.testConnection { testConnectionResponse.tryEmit(it) } }
 		} catch (e : Exception) {

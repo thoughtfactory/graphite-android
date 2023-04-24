@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note.screen.viewerScreen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -23,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.syncodec.graphite.di.model.Content
+import com.syncodec.graphite.di.model.TipTapContent
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDir
 import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -43,6 +46,8 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
@@ -52,6 +57,7 @@ import java.io.File
 @Preview
 @Composable
 fun ViewerScreen(
+	editor : RichTextEditor,
 	onClickEditNote : () -> Unit = {},
 	onNoteDeleted : () -> Unit = {},
 	onClickBack : () -> Unit = {},
@@ -74,7 +80,6 @@ fun ViewerScreen(
 	val address by viewModel.address.collectAsState()
 	val content by viewModel.content.collectAsState()
 	val contentThumbnail by viewModel.contentThumbnail.collectAsState()
-	val isLocalOnly by viewModel.isLocalOnly.collectAsState()
 	val isFavourite by viewModel.isFavourite.collectAsState()
 	val isLocked by viewModel.isLocked.collectAsState()
 	val parentChapter by viewModel.parentChapter.collectAsState()
@@ -94,6 +99,7 @@ fun ViewerScreen(
 				dataMarkdown : String?,
 				dataTitle : String?
 			) {
+				Log.i("npr71", "onGetData")
 				when (requestData) {
 					RichTextEditor.Companion.RequestData.Save -> null
 					RichTextEditor.Companion.RequestData.Share -> null
@@ -144,12 +150,6 @@ fun ViewerScreen(
 		}
 	}
 
-	val richTextEditor = remember {
-		RichTextEditor.headlessInstance(context).apply {
-			setGetTextListener(getTextListener)
-		}
-	}
-
 	//	TODO: Observe changes in attachment directory
 	fun getAttachments(noteId : RealmUUID) {
 		scope.launch(Dispatchers.IO) {
@@ -157,6 +157,10 @@ fun ViewerScreen(
 				attachmentList = context.attachmentDir(parentId = noteId).listFiles()?.toList() ?: listOf()
 			}
 		}
+	}
+
+	LaunchedEffect(key1 = null) {
+		editor.setGetTextListener(getTextListener)
 	}
 
 	LaunchedEffect(key1 = noteId) { noteId?.let { getAttachments(it) } }
@@ -212,14 +216,8 @@ fun ViewerScreen(
 		topBar = {
 			TopBar(
 				isOperationPending = isOperationPending,
-				isLocalOnly = isLocalOnly ?: false,
 				isFavourite = isFavourite ?: false,
 				isLocked = isLocked ?: false,
-				onClickLocalOnly = {
-					viewModel.toggleLocalOnly()
-					if (isLocalOnly == true) Toast.makeText(context, "Note will be synced to the cloud", Toast.LENGTH_SHORT).show()
-					else Toast.makeText(context, "Note will not be synced to the cloud", Toast.LENGTH_SHORT).show()
-				},
 				onClickFavourite = viewModel::toggleFavourite,
 				onClickLock = {
 					if (isAuthenticated) viewModel.toggleLock()
@@ -232,12 +230,22 @@ fun ViewerScreen(
 		},
 		bottomBar = {
 			BottomBar(
-				onClickExportAsTxt = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportText.name) },
-				onClickExportAsPdf = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportPdf.name) },
-				onClickExportAsHtml = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportHtml.name) },
-				onClickExportAsJson = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportJson.name) },
+				onClickExportAsTxt = {
+					val json = Json { ignoreUnknownKeys = true }
+					val tipTapContent = json.decodeFromString<TipTapContent>(content ?: "")
+					File(File(context.cacheDir, "export"), "$noteId.txt").let {
+						it.mkdirs()
+						it.delete()
+						it.createNewFile()
+						it.writeText(tipTapContent.toTxt())
+						it.share(context = context)
+					}
+				},
+				onClickExportAsPdf = { editor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportPdf.name) },
+				onClickExportAsHtml = { editor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportHtml.name) },
+				onClickExportAsJson = { editor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportJson.name) },
 				onClickExportAsMarkdown = {
-					richTextEditor.setAndGetData(
+					editor.setAndGetData(
 						title ?: "",
 						content ?: "",
 						RichTextEditor.Companion.RequestData.ExportMarkdown.name

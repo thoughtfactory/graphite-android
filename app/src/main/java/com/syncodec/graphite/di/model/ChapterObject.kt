@@ -29,9 +29,6 @@ class ChapterObject() : RealmObject {
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
-		this.overWritable = jsonObject.optBoolean("overWritable", true)
-		this.deletable = jsonObject.optBoolean("deletable", true)
-		this.isLocalOnly = jsonObject.optBoolean("localOnly", false)
 	}
 
 	@PrimaryKey
@@ -47,10 +44,6 @@ class ChapterObject() : RealmObject {
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
-
-	var overWritable : Boolean = true
-	var deletable : Boolean = true
-	var isLocalOnly : Boolean = false
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
@@ -148,9 +141,6 @@ data class ChapterObjectLite(
 	val isFavourite : Boolean,
 	val isLocked : Boolean,
 	val parentId : RealmUUID?,
-	val overWritable : Boolean = true,
-	val deletable : Boolean = true,
-	val localOnly : Boolean = false,
 ) {
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -162,9 +152,6 @@ data class ChapterObjectLite(
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + (parentId?.hashCode() ?: 0)
-		result = 31 * result + overWritable.hashCode()
-		result = 31 * result + deletable.hashCode()
-		result = 31 * result + localOnly.hashCode()
 		return result
 	}
 
@@ -181,9 +168,6 @@ data class ChapterObjectLite(
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 		if (parentId != other.parentId) return false
-		if (overWritable != other.overWritable) return false
-		if (deletable != other.deletable) return false
-		if (localOnly != other.localOnly) return false
 
 		return true
 	}
@@ -200,9 +184,6 @@ data class ChapterObjectLite(
 				isFavourite = Random.nextBoolean(),
 				isLocked = Random.nextBoolean(),
 				parentId = RealmUUID.random(),
-				overWritable = Random.nextBoolean(),
-				deletable = Random.nextBoolean(),
-				localOnly = Random.nextBoolean()
 			)
 		}
 	}

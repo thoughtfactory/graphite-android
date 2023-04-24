@@ -46,6 +46,7 @@ fun SheetLayout(
 			onClickTestConnection = onClickTestConnection,
 			onClickSyncNow = onClickSyncNow,
 			onClickForceSync = onClickForceSync,
+			closeSheet = closeSheet,
 		)
 	}
 }
