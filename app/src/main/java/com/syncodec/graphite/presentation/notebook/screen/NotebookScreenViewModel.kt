@@ -11,8 +11,7 @@ import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.LoaderStatus
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
@@ -28,7 +27,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class NotebookScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class NotebookScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 	val chapterId = MutableStateFlow<RealmUUID?>(null)
@@ -79,7 +78,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.Success) repository.getAllTagAsFlow()
+				if (it == Repository.Companion.RepositoryState.Success) repository.getAllTagAsFlow()
 					.collect { tagObjectList -> this@NotebookScreenViewModel.tagList.tryEmit(tagObjectList) }
 			}
 		}
@@ -88,7 +87,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 			combine(repositoryState, chapterId) { repositoryState, chapterId ->
 				repositoryState to chapterId
 			}.collect { (repositoryState, chapterId) ->
-				if (repositoryState == RepositoryState.Success) chapterId?.let { loadData(it) }
+				if (repositoryState == Repository.Companion.RepositoryState.Success) chapterId?.let { loadData(it) }
 			}
 		}
 

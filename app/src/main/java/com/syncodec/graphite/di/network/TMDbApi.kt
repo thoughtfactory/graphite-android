@@ -21,9 +21,12 @@ import java.io.Serializable
 import java.net.URLEncoder
 
 
+@kotlinx.serialization.Serializable
 enum class ShowType {
+	@SerialName(value = "MOVIE")
 	MOVIE,
-	TV
+	@SerialName(value = "TV")
+	TV,
 }
 
 object TMDbApi {
@@ -177,7 +180,7 @@ data class MovieData(
 	var homepage : String? = null,
 	@JsonProperty("id")
 	@SerialName("id")
-	var id : String?    = null,
+	var id : String? = null,
 	@JsonProperty("imdb_id")
 	@SerialName("imdb_id")
 	var imdbId : String? = null,

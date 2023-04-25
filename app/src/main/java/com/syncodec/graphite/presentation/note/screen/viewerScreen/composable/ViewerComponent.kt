@@ -474,7 +474,6 @@ private fun RichTextScope.RenderParagraph(
 			text = toRichTextString(),
 			modifier = Modifier,
 			onTextLayout = {
-//				Log.i("npr71", "onTextLayout: ${it.didOverflowHeight}")
 			}
 		)
 	}

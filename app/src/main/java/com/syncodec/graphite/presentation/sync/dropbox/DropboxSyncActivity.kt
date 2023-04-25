@@ -103,6 +103,7 @@ class DropboxSyncActivity : ComponentActivity() {
 									if (! it) {
 										scope.launch(Dispatchers.Main) {
 											Toast.makeText(context, "Failed to restore snapshot", Toast.LENGTH_SHORT).show()
+											isRestoringSnapshot = false
 										}
 									}
 								}

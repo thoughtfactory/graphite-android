@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.kedia.ogparser.OpenGraphResult
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.network.MovieData
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TvData
@@ -17,6 +18,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import java.io.Serializable
@@ -66,7 +68,9 @@ class BucketItemObject() : RealmObject {
 
 	fun getData() : BucketItemData? {
 		return try {
-			this.data?.let { json.decodeFromString<BucketItemData>(it) }
+//			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+//			objectMapper.readValue(data, BucketItemData::class.java)
+			this.data?.let { json.decodeFromString<BucketItemData.ShowData?>(it) }
 		} catch (e : Exception) {
 			e.printStackTrace()
 			null
@@ -176,26 +180,31 @@ class BucketItemObject() : RealmObject {
 			@JsonIgnoreProperties(ignoreUnknown = true)
 			data class BookData(
 				@JsonProperty("key")
+				@SerialName("key")
 				var key : String? = null,
 				@JsonProperty("title")
+				@SerialName("title")
 				var title : String? = null,
 				@JsonProperty("cover_i")
+				@SerialName("cover_i")
 				var coverI : String? = null,    // Url for cover
 				@JsonProperty("author_name")
+				@SerialName("author_name")
 				var authorList : List<String?>? = null,
 				@JsonProperty("first_publish_year")
+				@SerialName("first_publish_year")
 				var firstPublishYear : String? = null,
 				@JsonProperty("number_of_pages_median")
+				@SerialName("number_of_pages_median")
 				var numberOfPages : Int? = null,
 				@JsonProperty("description")
+				@SerialName("description")
 				var description : String? = null,
 			) : BucketItemData() {
 				constructor(jsonString : String?) : this(null, null, null, null, null, null, null) {
 					if (jsonString != null) {
 						try {
-							val objectMapper : ObjectMapper =
-								jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-							val bookData = objectMapper.readValue(jsonString, BookData::class.java)
+							val bookData : BookData = Json.decodeFromString(jsonString)
 							this.key = bookData.key
 							this.title = bookData.title
 							this.coverI = bookData.coverI
@@ -204,15 +213,16 @@ class BucketItemObject() : RealmObject {
 							this.numberOfPages = bookData.numberOfPages
 							this.description = bookData.description
 						} catch (e : Exception) {
-
+							e.printStackTrace()
 						}
 					}
 				}
 
 				fun toJsonString() : String {
 					return try {
-						val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-						objectMapper.writeValueAsString(this)
+//						val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+//						objectMapper.writeValueAsString(this)
+						Json.encodeToString(this)
 					} catch (e : Exception) {
 //			            e.printStackTrace()
 						"null"
@@ -262,8 +272,7 @@ class BucketItemObject() : RealmObject {
 				constructor(data : String?) : this(null, null, null) {
 					if (data != null) {
 						try {
-							val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }
-							val showData = objectMapper.readValue(data, ShowData::class.java)
+							val showData : ShowData= Json.decodeFromString(data)
 							this.type = showData.type
 							this.tvData = showData.tvData
 							this.movieData = showData.movieData
@@ -283,8 +292,7 @@ class BucketItemObject() : RealmObject {
 
 				fun toJsonString() : String {
 					return try {
-						val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-						objectMapper.writeValueAsString(this)
+						Json.encodeToString(this)
 					} catch (e : Exception) {
 //			            e.printStackTrace()
 						"null"

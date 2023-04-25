@@ -8,8 +8,7 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +21,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class ViewerScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 	val noteId = MutableStateFlow<RealmUUID?>(null)
@@ -65,7 +64,7 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 			combine(repositoryState, noteId) { repositoryState, noteId ->
 				repositoryState to noteId
 			}.collect { (repositoryState, noteId) ->
-				if (repositoryState == RepositoryState.Success) noteId?.let {
+				if (repositoryState == Repository.Companion.RepositoryState.Success) noteId?.let {
 					setupViewer(it)
 					loadTags(it)
 				}

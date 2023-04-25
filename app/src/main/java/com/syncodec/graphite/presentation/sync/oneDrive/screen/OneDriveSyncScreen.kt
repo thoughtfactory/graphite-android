@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.bugReport.BugReportActivity
+import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
 import com.syncodec.graphite.presentation.ui.DeleteContainer
@@ -137,7 +137,7 @@ private fun ExperimentalCard() {
 					containerColor = Color.DeleteContent,
 					contentColor = Color.DeleteContainer,
 				),
-				onClick = { context.startActivity(Intent(context, BugReportActivity::class.java)) },
+				onClick = { context.startActivity(Intent(context, ReportActivity::class.java)) },
 				modifier = Modifier.fillMaxWidth(),
 			) {
 				Text(text = "Report a bug")

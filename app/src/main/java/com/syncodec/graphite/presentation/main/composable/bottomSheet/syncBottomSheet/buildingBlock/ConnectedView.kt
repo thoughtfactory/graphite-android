@@ -1,18 +1,8 @@
 package com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock
 
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
-import androidx.compose.animation.animateColor
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -26,7 +16,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -44,20 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
-import com.syncodec.graphite.service.SyncerService
+import com.syncodec.graphite.service.syncService.SyncerService
 
 
 @Preview
@@ -264,7 +247,7 @@ private fun SyncStatusCard(
 ) {
 	when (syncStatus) {
 		is SyncerService.Companion.SyncStatus.Init -> SyncStatusCardMessage(message = "Initializing... Try to connect with Dropbox.")
-		is SyncerService.Companion.SyncStatus.Idle -> SyncStatusCardMessage(message = "Idle")
+		is SyncerService.Companion.SyncStatus.Idle -> SyncStatusCardMessage(message = if (syncStatus.isAutoSyncDisabled) "Idle. Auto sync is disabled." else "Idle")
 		is SyncerService.Companion.SyncStatus.Locked -> SyncStatusCardMessage(
 			message = "It seems that another device is syncing. Trying again in few moments...\nIf you believe no other device is syncing or problem persists, try to force sync.",
 			containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -278,8 +261,8 @@ private fun SyncStatusCard(
 			containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
 			contentColor = MaterialTheme.colorScheme.onSurface,
 		)
-		is SyncerService.Companion.SyncStatus.Paused -> SyncStatusCardMessage(
-			message = "Sync is disabled. Enable it in settings.",
+		is SyncerService.Companion.SyncStatus.AutoSyncDisabled -> SyncStatusCardMessage(
+			message = "Auto sync is disabled. You can enable it from settings or sync manually.",
 			containerColor = Color(0x71FFD93D),
 			contentColor = MaterialTheme.colorScheme.onSurface,
 		)

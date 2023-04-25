@@ -43,7 +43,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
@@ -51,7 +51,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.service.syncService.DropboxServiceConnectionManager
-import com.syncodec.graphite.service.SyncerService
+import com.syncodec.graphite.service.syncService.SyncerService
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.Dispatchers
@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
 				LaunchedEffect(key1 = isBiometricsEnabled) {
 					if (isBiometricsEnabled != null && ! isBiometricUsed) {
 						if (isBiometricsEnabled == true) {
-							viewModel.setRepositoryState(RepositoryState.Locked)
+							viewModel.setRepositoryState(Repository.Companion.RepositoryState.Locked)
 							launchBiometric()
 						} else viewModel.onAuthenticate(applicationContext)
 						isBiometricUsed = true
@@ -151,12 +151,12 @@ class MainActivity : ComponentActivity() {
 							label = "repositoryState"
 						) {
 							when (it) {
-								RepositoryState.Locked -> RepositoryLockedScreen(
+								Repository.Companion.RepositoryState.Locked -> RepositoryLockedScreen(
 									errorMessage = biometricErrorMessage,
 									onUnlock = { this@MainActivity.launchBiometric() }
 								)
 
-								RepositoryState.Success -> MainScreen(
+								Repository.Companion.RepositoryState.Success -> MainScreen(
 									syncStatus = syncStatus,
 									testConnectionResponse = testConnectionResponse,
 									testDropboxConnection = { viewModel.testDropboxConnection() },
@@ -164,7 +164,7 @@ class MainActivity : ComponentActivity() {
 									onClickForceSync = { dropboxServiceConnectionManager?.service?.onClickForceSync() },
 								)
 
-								RepositoryState.Error -> RepositoryLockedScreen(
+								Repository.Companion.RepositoryState.Error -> RepositoryLockedScreen(
 									errorMessage = biometricErrorMessage,
 									onUnlock = { this@MainActivity.launchBiometric() }
 								)

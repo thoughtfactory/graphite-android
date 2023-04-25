@@ -8,8 +8,7 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -20,11 +19,10 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
-import kotlin.random.Random
 
 
 @KoinViewModel
-class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class NoteScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -44,7 +42,7 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.Success -> refresh()
+					Repository.Companion.RepositoryState.Success -> refresh()
 
 					else -> null
 				}

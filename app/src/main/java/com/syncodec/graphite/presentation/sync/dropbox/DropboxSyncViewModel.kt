@@ -3,7 +3,7 @@ package com.syncodec.graphite.presentation.sync.dropbox
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dropbox.core.v2.files.Metadata
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +14,7 @@ import java.io.InputStream
 
 
 @KoinViewModel
-class DropboxSyncViewModel(private val repository : KoinRepository, private val dBox : DBox) : ViewModel() {
+class DropboxSyncViewModel(private val repository : Repository, private val dBox : DBox) : ViewModel() {
 
 	val _snapshotList : MutableStateFlow<List<Metadata>?> = MutableStateFlow(null)
 	val snapshotList : StateFlow<List<Metadata>?> = _snapshotList

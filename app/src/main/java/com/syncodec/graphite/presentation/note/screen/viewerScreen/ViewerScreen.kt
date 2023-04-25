@@ -99,7 +99,6 @@ fun ViewerScreen(
 				dataMarkdown : String?,
 				dataTitle : String?
 			) {
-				Log.i("npr71", "onGetData")
 				when (requestData) {
 					RichTextEditor.Companion.RequestData.Save -> null
 					RichTextEditor.Companion.RequestData.Share -> null

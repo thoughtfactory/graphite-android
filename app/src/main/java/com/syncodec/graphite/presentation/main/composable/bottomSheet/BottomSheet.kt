@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.SyncBottomSheet
-import com.syncodec.graphite.service.SyncerService
+import com.syncodec.graphite.service.syncService.SyncerService
 
 
 enum class MainBottomSheetType {

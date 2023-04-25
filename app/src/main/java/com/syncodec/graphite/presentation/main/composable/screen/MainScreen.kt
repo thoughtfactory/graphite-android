@@ -31,7 +31,7 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottom
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialog
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
-import com.syncodec.graphite.service.SyncerService
+import com.syncodec.graphite.service.syncService.SyncerService
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -127,7 +127,7 @@ fun MainScreen(
 				},
 				onClickCloud = {
 					if (syncStatus is SyncerService.Companion.SyncStatus.Init
-						|| syncStatus is SyncerService.Companion.SyncStatus.Paused
+						|| syncStatus is SyncerService.Companion.SyncStatus.AutoSyncDisabled
 						|| syncStatus is SyncerService.Companion.SyncStatus.Locked
 						|| syncStatus is SyncerService.Companion.SyncStatus.CredentialError
 						|| syncStatus is SyncerService.Companion.SyncStatus.Idle

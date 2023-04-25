@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ServiceTestRule
 import com.syncodec.graphite.service.syncService.DropboxService
+import com.syncodec.graphite.service.syncService.SyncerService
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Assert
 import org.junit.Rule

@@ -1,12 +1,9 @@
 package com.syncodec.graphite.presentation.tags
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RealmNotInitializedException
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +16,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class TagsViewModel(private val repository : KoinRepository) : ViewModel() {
+class TagsViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -31,21 +28,21 @@ class TagsViewModel(private val repository : KoinRepository) : ViewModel() {
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			when (repositoryState.value) {
-				RepositoryState.Init -> null
-				RepositoryState.Loading -> null
-				RepositoryState.Locked -> null
-				RepositoryState.Success -> {
+				Repository.Companion.RepositoryState.Init -> null
+				Repository.Companion.RepositoryState.Loading -> null
+				Repository.Companion.RepositoryState.Locked -> null
+				Repository.Companion.RepositoryState.Success -> {
 					viewModelScope.launch(Dispatchers.Default) {
-						if (repositoryState.value != RepositoryState.Success) this.cancel()
+						if (repositoryState.value != Repository.Companion.RepositoryState.Success) this.cancel()
 						repository.getAllTagAsFlow().collect { _tagList.tryEmit(it) }
 					}
 					viewModelScope.launch(Dispatchers.Default) {
-						if (repositoryState.value != RepositoryState.Success) this.cancel()
+						if (repositoryState.value != Repository.Companion.RepositoryState.Success) this.cancel()
 						repository.getAllNoteAsFlow().collect { _noteIdList.tryEmit(it.map { it.id }) }
 					}
 				}
 
-				RepositoryState.Error -> null
+				Repository.Companion.RepositoryState.Error -> null
 			}
 		}
 
@@ -73,8 +70,7 @@ class TagsViewModel(private val repository : KoinRepository) : ViewModel() {
 
 				if (repository.getAllTag().size < 8) repository.putTag(tagObject)
 				else callback("Join Graphite Pro to add more tags")
-			} catch (e : RealmNotInitializedException) {
-			} catch (e : Exception) {
+			} catch (_ : Exception) {
 			}
 		}
 	}

@@ -50,7 +50,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.syncodec.graphite.fileprovider"
+            android:authorities="com.syncodec.graphite.debug.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -153,7 +153,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.bugReport.BugReportActivity"
+            android:name=".presentation.report.ReportActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />

@@ -22,7 +22,7 @@ import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.ui.SyncState
-import com.syncodec.graphite.service.SyncerService
+import com.syncodec.graphite.service.syncService.SyncerService
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -216,7 +216,6 @@ private fun ComponentTypeView(
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun CloudButton(
 	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,

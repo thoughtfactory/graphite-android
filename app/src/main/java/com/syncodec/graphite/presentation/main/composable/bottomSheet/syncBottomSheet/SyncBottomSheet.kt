@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,13 +31,10 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.common.info.InfoCard
-import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ConnectedView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
-import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
-import com.syncodec.graphite.service.SyncerService
+import com.syncodec.graphite.service.syncService.SyncerService
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
 
 

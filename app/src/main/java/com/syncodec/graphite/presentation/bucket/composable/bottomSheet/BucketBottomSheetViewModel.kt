@@ -18,8 +18,7 @@ import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TMDbMovieSearchResult
 import com.syncodec.graphite.di.network.TMDbTvSearchResult
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -33,7 +32,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class BucketBottomSheetViewModel(private val repository : KoinRepository) : ViewModel() {
+class BucketBottomSheetViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -47,7 +46,7 @@ class BucketBottomSheetViewModel(private val repository : KoinRepository) : View
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.Success -> refreshBucket(realmUUID = realmUUID)
+					Repository.Companion.RepositoryState.Success -> refreshBucket(realmUUID = realmUUID)
 					else -> null
 				}
 			}

@@ -11,7 +11,7 @@ import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
@@ -68,7 +68,7 @@ class BaseApplication : Application() {
 			androidContext(this@BaseApplication)
 			modules(
 				module {
-					single { KoinRepository() }
+					single { Repository() }
 					single { DBox(this@BaseApplication) }
 
 					viewModelOf(::MainViewModel)

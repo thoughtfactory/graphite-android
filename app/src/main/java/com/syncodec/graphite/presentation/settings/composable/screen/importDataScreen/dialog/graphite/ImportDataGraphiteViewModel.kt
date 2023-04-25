@@ -11,8 +11,7 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +24,7 @@ import java.io.File
 
 
 @KoinViewModel
-class ImportDataGraphiteViewModel(private val repository : KoinRepository) : ViewModel() {
+class ImportDataGraphiteViewModel(private val repository : Repository) : ViewModel() {
 
 	val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -39,7 +38,7 @@ class ImportDataGraphiteViewModel(private val repository : KoinRepository) : Vie
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.Success) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
+				if (it == Repository.Companion.RepositoryState.Success) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {

@@ -1,10 +1,7 @@
 package com.syncodec.graphite.presentation.sync.dropbox.composable.screen
 
 import android.content.Intent
-import android.os.Build
-import android.provider.Settings
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -38,12 +35,9 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dropbox.core.v2.files.Metadata
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.sync.dropbox.DBox
-import com.syncodec.graphite.presentation.bugReport.BugReportActivity
+import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
@@ -53,21 +47,16 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Sett
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingSwitch
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsContentTitle
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.SnapshotButton
-import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
 import com.syncodec.graphite.presentation.sync.dropbox.composable.buildingBlock.DropboxConnection
 import com.syncodec.graphite.presentation.sync.dropbox.composable.buildingBlock.DropboxEmptySnapshot
 import com.syncodec.graphite.presentation.sync.dropbox.composable.dialog.DropboxDialog
 import com.syncodec.graphite.presentation.sync.dropbox.composable.dialog.DropboxDialogType
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.util.Date
-import java.util.Locale
 
 
 @Preview
-@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DropboxSyncScreen(
 	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
@@ -87,7 +76,7 @@ fun DropboxSyncScreen(
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 	val uriHandler = LocalUriHandler.current
 
-	val isSyncEnabled by dataStoreInstance.isSyncEnabled.collectAsState(initial = null)
+	val isAutoSyncEnabled by dataStoreInstance.isAutoSyncEnabled.collectAsState(initial = null)
 	val showPlainTextWarning by dataStoreInstance.showPlainTextWarningDropbox.collectAsState(initial = false)
 
 	var isEnterAuthCodeDialogVisible by remember { mutableStateOf(false) }
@@ -178,7 +167,7 @@ fun DropboxSyncScreen(
 					colors = InfoCardDefaults.warningCardColors(),
 					buttonText = "Report Bug",
 					modifier = Modifier.padding(horizontal = 12.dp)
-				) { context.startActivity(Intent(context, BugReportActivity::class.java)) }
+				) { context.startActivity(Intent(context, ReportActivity::class.java)) }
 				InfoCard(
 					title = "Backup vs Sync",
 					description = "Backup is a one time process that saves your data to the cloud at a regular interval (not available yet) or manually. Sync is a continuous process that keeps your data in sync with the cloud to be available on other devices.",
@@ -224,14 +213,15 @@ fun DropboxSyncScreen(
 					enabled = testConnectionResponse is DBox.Companion.TestConnectionResponse.Success,
 				) { openDialog(DropboxDialogType.Disconnect) }
 				SettingSwitch(
-					text = "Enable sync",
-					subText = if (isSyncEnabled == true) "Sync is enabled" else "Sync is paused",
+					text = "Auto Sync",
+					subText = if (isAutoSyncEnabled == true) "Auto sync is enabled" else "Auto sync is disabled",
 					icon = R.drawable.ic_sync,
-					isChecked = isSyncEnabled != false,
-					enabled = isSyncEnabled != null && testConnectionResponse is DBox.Companion.TestConnectionResponse.Success,
+					isChecked = isAutoSyncEnabled != false,
+					enabled = isAutoSyncEnabled != null && testConnectionResponse is DBox.Companion.TestConnectionResponse.Success,
 				) {
-					dataStoreInstance.setIsSyncEnabled(it)
-					if (! it) Toast.makeText(context, "Sync is paused", Toast.LENGTH_SHORT).show()
+					dataStoreInstance.setIsAutoSyncEnabled(it)
+					if (it) Toast.makeText(context, "Auto sync is enabled", Toast.LENGTH_SHORT).show()
+					else Toast.makeText(context, "Auto sync is disabled", Toast.LENGTH_SHORT).show()
 				}
 				SettingButton(
 					text = "Take Snapshot",

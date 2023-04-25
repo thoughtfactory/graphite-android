@@ -3,8 +3,7 @@ package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +19,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class BucketScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class BucketScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -39,7 +38,7 @@ class BucketScreenViewModel(private val repository : KoinRepository) : ViewModel
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.Success -> observeBuckets()
+					Repository.Companion.RepositoryState.Success -> observeBuckets()
 					else -> null
 				}
 			}

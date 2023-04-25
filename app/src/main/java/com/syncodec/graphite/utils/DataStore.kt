@@ -14,7 +14,6 @@ import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -37,7 +36,7 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_SORT_BY = intPreferencesKey("sort_by")
 		private val PREFERENCE_VIEW_TYPE = intPreferencesKey("view_type")
 		private val PREFERENCE_USE_BIOMETRIC = booleanPreferencesKey("use_biometric")
-		private val PREFERENCE_IS_SYNC_ENABLED = booleanPreferencesKey("is_sync_enabled")
+		private val PREFERENCE_IS_AUTO_SYNC_ENABLED = booleanPreferencesKey("is_auto_sync_enabled")
 
 		private val PREFERENCE_SHOW_WHATS_NEW_CARD = intPreferencesKey("show_whats_new_card")
 		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_ATTACHMENT = booleanPreferencesKey("show_plain_text_warning_attachment")
@@ -169,12 +168,10 @@ class DataStoreInstance(private val context : Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_USE_BIOMETRIC] = useBiometric }
 	}
 
-	val isSyncEnabled : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_SYNC_ENABLED] ?: true }
+	val isAutoSyncEnabled : Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_AUTO_SYNC_ENABLED] ?: true }
 
-	suspend fun isSyncEnabled() : Boolean = context.dataStore.data.map { preferences -> preferences[PREFERENCE_IS_SYNC_ENABLED] ?: true }.first()
-
-	fun setIsSyncEnabled(isSyncEnabled : Boolean) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_IS_SYNC_ENABLED] = isSyncEnabled }
+	fun setIsAutoSyncEnabled(isSyncEnabled : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_IS_AUTO_SYNC_ENABLED] = isSyncEnabled }
 	}
 
 	val getShowWhatsNewCard : Flow<Boolean> =

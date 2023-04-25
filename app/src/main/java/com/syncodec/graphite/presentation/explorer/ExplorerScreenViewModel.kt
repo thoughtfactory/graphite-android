@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +17,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ExplorerScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class ExplorerScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -37,7 +36,7 @@ class ExplorerScreenViewModel(private val repository : KoinRepository) : ViewMod
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.Success) {
+				if (it == Repository.Companion.RepositoryState.Success) {
 					observeNotes()
 					observeTags()
 					observeFilter()

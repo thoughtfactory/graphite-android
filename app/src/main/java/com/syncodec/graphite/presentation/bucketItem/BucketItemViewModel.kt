@@ -8,7 +8,7 @@ import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.ShowType
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.Status
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +19,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class BucketItemViewModel(private val repository : KoinRepository) : ViewModel() {
+class BucketItemViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 	val status : MutableState<Status> = mutableStateOf(Status.INIT)

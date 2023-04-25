@@ -13,16 +13,14 @@ plugins {
 
 android {
 	compileSdk 33
-	compileSdkPreview "UpsideDownCake"
 
 	defaultConfig {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 33
-		compileSdkPreview "UpsideDownCake"
-		versionCode 37
+		versionCode 40
 
-		versionName '2.2.0'
+		versionName '2.3.0'
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 		vectorDrawables {
@@ -57,11 +55,9 @@ android {
 			shrinkResources true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 		}
-//		debug {
-//			minifyEnabled true
-//			shrinkResources true
-//			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-//		}
+		debug {
+			applicationIdSuffix '.debug'
+		}
 	}
 
 	compileOptions {
@@ -111,7 +107,7 @@ dependencies {
 
 	implementation 'androidx.core:core-ktx:1.9.0'
 
-	implementation 'androidx.activity:activity-compose:1.8.0-alpha02'
+	implementation 'androidx.activity:activity-compose:1.7.1'   //  Dont use alpha release until UpsideDownCake is released
 	implementation 'androidx.appcompat:appcompat:1.7.0-alpha02'
 
 	implementation 'androidx.compose.material:material:1.4.0-rc01'

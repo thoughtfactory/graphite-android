@@ -1,0 +1,92 @@
+{
+  "project_info": {
+    "project_number": "948547440986",
+    "project_id": "graphite-diary",
+    "storage_bucket": "graphite-diary.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:948547440986:android:aac47be09b9afcbc0ca363",
+        "android_client_info": {
+          "package_name": "com.syncodec.graphite"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "948547440986-950pc2pvua7sa2krjg30m79ll5jaab2v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.syncodec.graphite",
+            "certificate_hash": "7dddaaa56c84dff70e7f679132f7fc0611e13ec9"
+          }
+        },
+        {
+          "client_id": "948547440986-9vgtqqqpbclgsp18aicdn7cug6ngv8fi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.syncodec.graphite",
+            "certificate_hash": "58ddcd2308888b43290403ac95f0699b723759fb"
+          }
+        },
+        {
+          "client_id": "948547440986-dnn5f2vdurja5739eqjq774h7ela2rsc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.syncodec.graphite",
+            "certificate_hash": "175ca3620c50d241e7e420b5eee111a0eb49be2f"
+          }
+        },
+        {
+          "client_id": "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKOa6d_fHXKAsIZRELfGlkLq4Sw0hFpbg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:948547440986:android:e5fbd0c8d10de24b0ca363",
+        "android_client_info": {
+          "package_name": "com.syncodec.graphite.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKOa6d_fHXKAsIZRELfGlkLq4Sw0hFpbg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

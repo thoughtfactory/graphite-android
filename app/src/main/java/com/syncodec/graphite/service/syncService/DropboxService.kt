@@ -9,7 +9,6 @@ import android.icu.util.TimeZone
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.dropbox.core.DbxRequestConfig
 import com.dropbox.core.NetworkIOException
@@ -33,7 +32,6 @@ import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
 import com.syncodec.graphite.di.sync.dropbox.DBox
-import com.syncodec.graphite.service.SyncerService
 import com.syncodec.graphite.utils.toDbxHashString
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -83,7 +81,10 @@ class DropboxService : SyncerService() {
 			}
 		}
 
-		onClickSyncNow()
+		lifecycleScope.launch(Dispatchers.IO) {
+			val isAutoSyncEnabled = dataStoreInstance.isAutoSyncEnabled.first()
+			if (isAutoSyncEnabled) onClickSyncNow() else syncStatus.tryEmit(SyncerService.Companion.SyncStatus.AutoSyncDisabled)
+		}
 	}
 
 	private fun stopper() {
@@ -94,7 +95,7 @@ class DropboxService : SyncerService() {
 					syncStatus.value is SyncerService.Companion.SyncStatus.Init ||
 					syncStatus.value is SyncerService.Companion.SyncStatus.Idle ||
 					syncStatus.value is SyncerService.Companion.SyncStatus.Locked ||
-					syncStatus.value is SyncerService.Companion.SyncStatus.Paused ||
+					syncStatus.value is SyncerService.Companion.SyncStatus.AutoSyncDisabled ||
 					syncStatus.value is SyncerService.Companion.SyncStatus.Failed ||
 					syncStatus.value is SyncerService.Companion.SyncStatus.CredentialError
 				) {
@@ -108,71 +109,33 @@ class DropboxService : SyncerService() {
 
 	override fun onBind(intent : Intent) : IBinder? {
 		super.onBind(intent)
-		Toast.makeText(this, "service bind", Toast.LENGTH_SHORT).show()
 		return dropboxServiceBinder
 	}
 
 	val dBox : DBox by inject()
 
 	fun onClickSyncNow() {
-		lifecycleScope.launch(Dispatchers.IO) {
-			val isSyncEnabled = dataStoreInstance.isSyncEnabled.first()
-			when (syncStatus.value) {
-				is SyncerService.Companion.SyncStatus.Init -> {
-					if (isSyncEnabled) {
-						syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Init)
-						sync()
-					} else syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Paused)
-				}
-
-				is SyncerService.Companion.SyncStatus.Idle -> {
-					if (isSyncEnabled) {
-						syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Idle(0))
-						reSyncCoroutine?.cancel()
-						reSyncCoroutine = null
-						sync()
-					} else syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Paused)
-				}
-
-				is SyncerService.Companion.SyncStatus.Locked -> {
-					if (isSyncEnabled) {
-						reSyncCoroutine?.cancel()
-						reSyncCoroutine = null
-						syncCoroutine?.cancel()
-						syncCoroutine = null
-						sync()
-					} else syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Paused)
-				}
-
-				is SyncerService.Companion.SyncStatus.Connected -> null
-				is SyncerService.Companion.SyncStatus.Syncing -> null
-				is SyncerService.Companion.SyncStatus.Paused -> null
-				is SyncerService.Companion.SyncStatus.Failed -> {
-					if (isSyncEnabled) {
-						reSyncCoroutine?.cancel()
-						reSyncCoroutine = null
-						syncCoroutine?.cancel()
-						syncCoroutine = null
-						sync()
-					} else syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Paused)
-				}
-
-				is SyncerService.Companion.SyncStatus.CredentialError -> null
-			}
+		if (syncStatus.value is SyncerService.Companion.SyncStatus.Init
+			|| syncStatus.value is SyncerService.Companion.SyncStatus.Idle
+			|| syncStatus.value is SyncerService.Companion.SyncStatus.Locked
+			|| syncStatus.value is SyncerService.Companion.SyncStatus.AutoSyncDisabled
+			|| syncStatus.value is SyncerService.Companion.SyncStatus.Failed
+			|| syncStatus.value is SyncerService.Companion.SyncStatus.CredentialError
+		) {
+			reSyncCoroutine?.cancel()
+			reSyncCoroutine = null
+			syncCoroutine?.cancel()
+			syncCoroutine = null
+			sync()
 		}
 	}
 
 	fun onClickForceSync() {
-		lifecycleScope.launch(Dispatchers.IO) {
-			val isSyncEnabled = dataStoreInstance.isSyncEnabled.first()
-			if (isSyncEnabled) {
-				reSyncCoroutine?.cancel()
-				reSyncCoroutine = null
-				syncCoroutine?.cancel()
-				syncCoroutine = null
-				sync(forced = true)
-			} else syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Paused)
-		}
+		reSyncCoroutine?.cancel()
+		reSyncCoroutine = null
+		syncCoroutine?.cancel()
+		syncCoroutine = null
+		sync(forced = true)
 	}
 
 	private fun getDbxClient(callback : (DbxClientV2?) -> Unit) {
@@ -252,7 +215,6 @@ class DropboxService : SyncerService() {
 		keepLockAlive(sessionId)
 		gatherData(rectify = rectify)
 		unlock(sessionId = sessionId)
-		syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Idle(syncedTimestamp = System.currentTimeMillis()))
 		reSync()
 	}
 
@@ -267,12 +229,14 @@ class DropboxService : SyncerService() {
 		syncCoroutine = null
 		reSyncCoroutine?.cancel()
 		lifecycleScope.launch(Dispatchers.IO) {
-			val isSyncEnabled = dataStoreInstance.isSyncEnabled.first()
-			if (! isSyncEnabled) syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Paused)
-			else {
+			val isAutoSyncEnabled = dataStoreInstance.isAutoSyncEnabled.first()
+			if (isAutoSyncEnabled) {
+				syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Idle(syncedTimestamp = System.currentTimeMillis(), isAutoSyncDisabled  = false))
 				reSyncCoroutine = this
 				delay(30000)
 				sync()
+			} else {
+				syncStatus.tryEmit(SyncerService.Companion.SyncStatus.Idle(syncedTimestamp = System.currentTimeMillis(), isAutoSyncDisabled  = true))
 			}
 		}
 	}
@@ -357,14 +321,16 @@ class DropboxService : SyncerService() {
 		val localDeletedObjectIdList = baseObject?.deletedObjectSet ?: setOf()
 
 //		!!! Why the fuck do I need to make these two methods??? BECAUSE JAVA BYTECODE SHOULD BE LESS THAN 64 KB FOR EACH METHODS
-		val (chapterMetadata, noteMetadata) = syncNotes(
+//		noteMetadata is used to sync latest version of attachments. Others are only for symmetry as of now but will be used when
+//		attachments would be available for chapters, buckets and bucketItems
+		val (_, noteMetadata) = syncNotes(
 			noteObjectList = noteObjectList,
 			chapterObjectList = chapterObjectList,
 			localDeletedObjectIdList = localDeletedObjectIdList,
 			rectify = rectify,
 		)
 
-		val (bucketMetadata, bucketItemMetadata) = syncBuckets(
+		val (_, _) = syncBuckets(
 			bucketObjectList = bucketObjectList,
 			bucketItemObjectList = bucketItemObjectList,
 			localDeletedObjectIdList = localDeletedObjectIdList,
@@ -547,12 +513,12 @@ class DropboxService : SyncerService() {
 
 			when {
 				localObjectMetadata.modifiedTimestamp > remoteObjectMetadata.modifiedTimestamp -> {
-					if (localObjectMetadata.isDeleted) toUpSyncObjectIdList[realmUUId] = Pair(localObjectMetadata, Operation.Delete(T::class.simpleName))
+					if (localObjectMetadata.isDeleted) toUpSyncObjectIdList[realmUUId] = Pair(localObjectMetadata, Operation.Delete())
 					else toUpSyncObjectIdList[realmUUId] = Pair(localObjectMetadata, Operation.Upsert)
 				} // local is newer
 				localObjectMetadata.modifiedTimestamp < remoteObjectMetadata.modifiedTimestamp -> {
 					if (remoteObjectMetadata.isDeleted) toDownSyncObjectIdList[realmUUId] =
-						Pair(remoteObjectMetadata, Operation.Delete(T::class.simpleName))
+						Pair(remoteObjectMetadata, Operation.Delete())
 					else toDownSyncObjectIdList[realmUUId] = Pair(remoteObjectMetadata, Operation.Upsert)
 				} // remote is newer
 				else -> null // equal
@@ -774,7 +740,7 @@ class DropboxService : SyncerService() {
 		toUpSyncAttachmentList.addAll(localOnlyAttachmentMap.map { it.value })
 		toDownSyncAttachmentList.addAll(cloudOnlyAttachmentMap.map { it.value })
 
-		differentAttachmentMap.forEach { (attachmentIdentity, valueDifference) ->
+		differentAttachmentMap.forEach { (_, valueDifference) ->
 			val localAttachmentMetadata = valueDifference.leftValue()
 			val cloudAttachmentMetadata = valueDifference.rightValue()
 			when {
@@ -846,9 +812,8 @@ class DropboxService : SyncerService() {
 	private fun DbxClientV2.updateAttachmentMetadata(attachmentMetadataList : Set<AttachmentMetadata>) {
 		val path = "${Path.Root.path}/Attachment/metadata.json"
 		try {
-			json.encodeToString(SetSerializer(AttachmentMetadata.serializer()), attachmentMetadataList).let { jsonString ->
-				uploadData(path = path, inputStream = jsonString.byteInputStream())
-			}
+			val attachmentMetadataSerialized =json.encodeToString(SetSerializer(AttachmentMetadata.serializer()), attachmentMetadataList)
+			uploadData(path = path, inputStream = attachmentMetadataSerialized.byteInputStream())
 		} catch (e : Exception) {
 			e.printStackTrace()
 		}
@@ -995,7 +960,6 @@ class DropboxService : SyncerService() {
 		var cursor : String?    //  = null
 		var hasMore : Boolean   //  = false
 
-		val attachmentList : MutableList<String> = mutableListOf()
 		val attachmentMetadataList : MutableList<AttachmentMetadata> = mutableListOf()
 
 		if (rectify) {
@@ -1147,7 +1111,6 @@ class DropboxService : SyncerService() {
 		isSynced : Boolean,
 	) {
 		if (syncStatus.value is SyncerService.Companion.SyncStatus.Syncing) {
-			val currentSyncStatus = syncStatus.value as SyncerService.Companion.SyncStatus.Syncing
 
 			val syncObjectStatus = SyncerService.Companion.SyncObjectStatus(
 				toUpSyncCount = toUpSyncCount,
@@ -1217,7 +1180,7 @@ class DropboxService : SyncerService() {
 
 		sealed class Operation {
 			object Upsert : Operation()
-			class Delete(val objectType : String? = null) : Operation()
+			class Delete : Operation()
 		}
 
 		sealed class DownloadResult<out T> {

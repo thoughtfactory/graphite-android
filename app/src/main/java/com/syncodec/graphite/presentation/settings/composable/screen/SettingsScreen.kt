@@ -55,7 +55,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.notification.WriteNoteNotification
-import com.syncodec.graphite.presentation.bugReport.BugReportActivity
+import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
 import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.settings.SettingsActivity
@@ -265,8 +265,12 @@ fun SettingsScreen(
 				Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
 			}
 		}
-		SettingButton(text = "Bug Report", icon = R.drawable.ic_bug) {
-			context.startActivity(Intent(context, BugReportActivity::class.java))
+		SettingButton(
+			text = "Feedback",
+			icon = R.drawable.ic_bug,
+			infoText = "Report a bug or suggest a feature or maybe a simple hi"
+		) {
+			context.startActivity(Intent(context, ReportActivity::class.java))
 		}
 		SettingButton(text = "Rate us", icon = R.drawable.ic_star) {
 			context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${BuildConfig.APPLICATION_ID}")))

@@ -6,8 +6,7 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.LoaderStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +18,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class SearchScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class SearchScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 	val loaderStatus : MutableStateFlow<LoaderStatus> = MutableStateFlow(LoaderStatus.Init)
@@ -37,7 +36,7 @@ class SearchScreenViewModel(private val repository : KoinRepository) : ViewModel
 
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.Success) {
+				if (it == Repository.Companion.RepositoryState.Success) {
 					viewModelScope.launch(Dispatchers.Default) {
 						repository.getAllTagAsFlow().collect { tagList ->
 							this@SearchScreenViewModel.tagList.tryEmit(tagList)

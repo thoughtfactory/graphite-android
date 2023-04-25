@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +17,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class BucketScreenCommonViewModel(private val repository : KoinRepository) : ViewModel() {
+class BucketScreenCommonViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -50,7 +49,7 @@ class BucketScreenCommonViewModel(private val repository : KoinRepository) : Vie
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.Success -> loadBucket(realmUUID = realmUUID)
+					Repository.Companion.RepositoryState.Success -> loadBucket(realmUUID = realmUUID)
 					else -> null
 				}
 			}
@@ -82,14 +81,14 @@ class BucketScreenCommonViewModel(private val repository : KoinRepository) : Vie
 	fun toggleFavourite(bucketItemObject : BucketItemObject) {
 		bucketItemObject.clone().apply {
 			this.isFavourite = ! this.isFavourite
-			repository.putBucketItem(bucketItemObject = this)
+			repository.putBucketItemSuspended(bucketItemObject = this)
 		}
 	}
 
 	fun toggleLock(bucketItemObject : BucketItemObject) {
 		bucketItemObject.clone().apply {
 			this.isLocked = ! this.isLocked
-			repository.putBucketItem(bucketItemObject = this)
+			repository.putBucketItemSuspended(bucketItemObject = this)
 		}
 	}
 
@@ -102,7 +101,7 @@ class BucketScreenCommonViewModel(private val repository : KoinRepository) : Vie
 					BucketItemState.GAMMA.name -> BucketItemState.ALPHA.name
 					else -> BucketItemState.ALPHA.name
 				}
-				repository.putBucketItem(bucketItemObject = this)
+				repository.putBucketItemSuspended(bucketItemObject = this)
 			}
 		}
 	}

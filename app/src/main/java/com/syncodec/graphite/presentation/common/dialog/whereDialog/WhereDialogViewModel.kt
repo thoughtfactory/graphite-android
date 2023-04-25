@@ -9,8 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +25,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class WhereDialogViewModel(val repository : KoinRepository) : ViewModel() {
+class WhereDialogViewModel(val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -48,7 +47,7 @@ class WhereDialogViewModel(val repository : KoinRepository) : ViewModel() {
 
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.Success) observeChapter()
+				if (it == Repository.Companion.RepositoryState.Success) observeChapter()
 			}
 		}
 	}

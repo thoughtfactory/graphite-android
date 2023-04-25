@@ -3,8 +3,7 @@ package com.syncodec.graphite.presentation.attachment.composable.screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.LoaderStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +18,7 @@ import java.io.File
 
 
 @KoinViewModel
-class AttachmentScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class AttachmentScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -41,7 +40,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository) : ViewM
 			combine(loadAll, repositoryState) { loadAll, repositoryState ->
 				loadAll to repositoryState
 			}.collect { (loadAll, repositoryState) ->
-				if (loadAll && repositoryState == RepositoryState.Success) loadAllData()
+				if (loadAll && repositoryState == Repository.Companion.RepositoryState.Success) loadAllData()
 			}
 		}
 
@@ -49,7 +48,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository) : ViewM
 			combine(noteId, repositoryState) { noteId, repositoryState ->
 				noteId to repositoryState
 			}.collect { (noteId, repositoryState) ->
-				if (! noteId.isNullOrEmpty() && repositoryState == RepositoryState.Success) loadNoteData(noteId)
+				if (! noteId.isNullOrEmpty() && repositoryState == Repository.Companion.RepositoryState.Success) loadNoteData(noteId)
 			}
 		}
 
@@ -57,7 +56,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository) : ViewM
 			combine(chapterId, repositoryState) { chapterId, repositoryState ->
 				chapterId to repositoryState
 			}.collect { (chapterId, repositoryState) ->
-				if (! chapterId.isNullOrEmpty() && repositoryState == RepositoryState.Success) loadChapterData(chapterId)
+				if (! chapterId.isNullOrEmpty() && repositoryState == Repository.Companion.RepositoryState.Success) loadChapterData(chapterId)
 			}
 		}
 	}

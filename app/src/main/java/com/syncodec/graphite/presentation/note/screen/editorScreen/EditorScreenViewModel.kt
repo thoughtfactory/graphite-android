@@ -9,8 +9,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
@@ -26,7 +25,7 @@ import java.io.File
 
 
 @KoinViewModel
-class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -80,7 +79,7 @@ class EditorScreenViewModel(private val repository : KoinRepository) : ViewModel
 			combine(repositoryState, noteId) { repositoryState, noteId ->
 				repositoryState to noteId
 			}.collect { (repositoryState, noteId) ->
-				if (repositoryState == RepositoryState.Success) noteId?.let { getNote(it) }
+				if (repositoryState == Repository.Companion.RepositoryState.Success) noteId?.let { getNote(it) }
 			}
 		}
 

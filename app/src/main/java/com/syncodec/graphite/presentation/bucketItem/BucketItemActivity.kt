@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.ShowType
@@ -74,8 +75,8 @@ class BucketItemActivity : ComponentActivity() {
 					},
 					onClickFavourite = {
 						if (isNew == true) {
-							screenViewModel.getData().let { (bookData, key, thumbnail, title) ->
-								viewModel.data.value = bookData
+							screenViewModel.getData().let { (data, key, thumbnail, title) ->
+								viewModel.data.value = data
 								viewModel.key.value = key
 								viewModel.thumbnail.value = thumbnail
 								viewModel.title.value = title
@@ -85,8 +86,8 @@ class BucketItemActivity : ComponentActivity() {
 					},
 					onClickLock = {
 						if (isNew == true) {
-							screenViewModel.getData().let { (bookData, key, thumbnail, title) ->
-								viewModel.data.value = bookData
+							screenViewModel.getData().let { (data, key, thumbnail, title) ->
+								viewModel.data.value = data
 								viewModel.key.value = key
 								viewModel.thumbnail.value = thumbnail
 								viewModel.title.value = title
@@ -96,8 +97,8 @@ class BucketItemActivity : ComponentActivity() {
 					},
 					onChangeState = {
 						if (isNew == true) {
-							screenViewModel.getData().let { (bookData, key, thumbnail, title) ->
-								viewModel.data.value = bookData
+							screenViewModel.getData().let { (data, key, thumbnail, title) ->
+								viewModel.data.value = data
 								viewModel.key.value = key
 								viewModel.thumbnail.value = thumbnail
 								viewModel.title.value = title
@@ -241,12 +242,14 @@ class BucketItemActivity : ComponentActivity() {
 				}
 
 				else -> {
-					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info1.", Toast.LENGTH_SHORT).show()
+					else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 					finish()
 				}
 			}
 		} else {
-			Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+			if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info2.", Toast.LENGTH_SHORT).show()
+			else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 			finish()
 		}
 	}
@@ -259,19 +262,22 @@ class BucketItemActivity : ComponentActivity() {
 				val movieId = intent.getStringExtra(Extra.Companion.Extra.MOVIE_ID.name)
 
 				if (movieId == null) {
-					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info3.", Toast.LENGTH_SHORT).show()
+					else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 					finish()
 				} else {
 					viewModel.initData(bucketId = bucketId, bucketType = BucketType.SHOW, showType = ShowType.MOVIE)
 					screenViewModel.initData(id = movieId, data = null)
 				}
 			} else {
-				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info4.", Toast.LENGTH_SHORT).show()
+				else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 				finish()
 			}
 		} else {
 			if (bucketItemId == null) {
-				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info5.", Toast.LENGTH_SHORT).show()
+				else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 				finish()
 			} else {
 				viewModel.loadData(bucketItemId = bucketItemId, showType = ShowType.MOVIE)
@@ -299,19 +305,22 @@ class BucketItemActivity : ComponentActivity() {
 				val tvId = intent.getStringExtra(Extra.Companion.Extra.TV_ID.name)
 
 				if (tvId == null) {
-					Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+					if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info6.", Toast.LENGTH_SHORT).show()
+					else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 					finish()
 				} else {
 					viewModel.initData(bucketId = bucketId, bucketType = BucketType.SHOW, showType = ShowType.TV)
 					screenViewModel.initData(id = tvId, data = null)
 				}
 			} else {
-				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info7.", Toast.LENGTH_SHORT).show()
+				else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 				finish()
 			}
 		} else {
 			if (bucketItemId == null) {
-				Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
+				if (BuildConfig.DEBUG) Toast.makeText(this.applicationContext, "Error reading info8.", Toast.LENGTH_SHORT).show()
+				else Toast.makeText(this.applicationContext, "Error reading info.", Toast.LENGTH_SHORT).show()
 				finish()
 			} else {
 				viewModel.loadData(bucketItemId = bucketItemId, showType = ShowType.TV)
