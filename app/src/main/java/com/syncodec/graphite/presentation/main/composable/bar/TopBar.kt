@@ -1,21 +1,13 @@
 package com.syncodec.graphite.presentation.main.composable.bar
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +21,8 @@ import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
-import com.syncodec.graphite.service.DropboxService
+import com.syncodec.graphite.presentation.ui.SyncState
+import com.syncodec.graphite.service.syncService.SyncerService
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -42,7 +35,7 @@ fun TopBar(
 	componentType : ComponentType = ComponentType.Note,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
-	syncStatus : DropboxService.Companion.DropboxSyncStatus = DropboxService.Companion.DropboxSyncStatus.Init,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onComponentChange : (Int) -> Unit = {},
 	onClickFilter : () -> Unit = {},
 	onClickMenu : () -> Unit = {},
@@ -51,19 +44,10 @@ fun TopBar(
 	onClickSearch : () -> Unit = {},
 	onClickDelete : () -> Unit = {},
 ) {
-	val containerColor by animateColorAsState(
-		targetValue = when (currentRoute) {
-			BottomNavigationItem.Home.route -> MaterialTheme.colorScheme.background
-			BottomNavigationItem.Calendar.route -> MaterialTheme.colorScheme.background
-			BottomNavigationItem.Atlas.route -> MaterialTheme.colorScheme.background
-			else -> MaterialTheme.colorScheme.background
-		}
-	)
-
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(containerColor)
+			.background(MaterialTheme.colorScheme.background)
 	) {
 		Bar(
 			currentRoute = currentRoute,
@@ -97,7 +81,7 @@ private fun Bar(
 	currentRoute : String? = null,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
-	syncStatus : DropboxService.Companion.DropboxSyncStatus,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onClickMenu : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
 	onClickCloud : () -> Unit = {},
@@ -108,19 +92,10 @@ private fun Bar(
 	val isAuthenticated = LocalIsAuthenticated.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current
 
-	val containerColor by animateColorAsState(
-		targetValue = when (currentRoute) {
-			"graphite" -> MaterialTheme.colorScheme.background
-			"bucket" -> MaterialTheme.colorScheme.background
-			"calendar" -> MaterialTheme.colorScheme.background
-			"atlas" -> MaterialTheme.colorScheme.background
-			else -> MaterialTheme.colorScheme.background
-		}
-	)
-
 	Crossfade(
 		targetState = isSelecting,
-		animationSpec = tween(300)
+		animationSpec = tween(300),
+		label = "isSelecting"
 	) {
 		if (it) {
 			TopAppBar(
@@ -143,7 +118,7 @@ private fun Bar(
 						onClick = onClickDelete
 					)
 				},
-				colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor)
+				colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 			)
 		} else {
 			CenterAlignedTopAppBar(
@@ -155,6 +130,11 @@ private fun Bar(
 							icon = R.drawable.ic_menu,
 							onClick = onClickMenu,
 						)
+						MenuButton(
+							icon = R.drawable.ic_vault,
+							tooltip = "Vault",
+							checked = isAuthenticated,
+						) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 					}
 				},
 				title = {
@@ -170,21 +150,16 @@ private fun Bar(
 					)
 				},
 				actions = {
-//					CloudButton(
-//						syncStatus = syncStatus,
-//						onClickSync = onClickCloud
-//					)
-					MenuButton(
-						icon = R.drawable.ic_vault,
-						tooltip = "Vault",
-						checked = isAuthenticated,
-					) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
+					CloudButton(
+						syncStatus = syncStatus,
+						onClickSync = onClickCloud
+					)
 					MenuButton(
 						icon = R.drawable.ic_search,
 						onClick = onClickSearch
 					)
 				},
-				colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = containerColor)
+				colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 			)
 		}
 	}
@@ -241,110 +216,16 @@ private fun ComponentTypeView(
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun CloudButton(
-	syncStatus : DropboxService.Companion.DropboxSyncStatus,
+	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
 	onClickSync : () -> Unit
 ) {
-	val infiniteTransition = rememberInfiniteTransition()
-	val alpha by infiniteTransition.animateFloat(
-		initialValue = 1f,
-		targetValue = 0.47f,
-		animationSpec = infiniteRepeatable(
-			animation = tween(710, easing = LinearEasing),
-			repeatMode = RepeatMode.Reverse
-		)
+	MenuButton(
+		icon = SyncState.syncStatusIcon[syncStatus::class] ?: R.drawable.ic_cloud,
+		colors = MenuButtonDefaults.menuButtonColors(
+			iconColor = SyncState.getSyncStatusIconColor(syncStatus = syncStatus),
+		),
+		onClick = onClickSync
 	)
-
-	AnimatedContent(
-		targetState = syncStatus,
-		transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
-	) {
-		when (it) {
-			is DropboxService.Companion.DropboxSyncStatus.Init -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.SyncNotConfigured -> MenuButton(
-				icon = R.drawable.ic_cloud_dashed,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.SyncDisabled -> MenuButton(
-				icon = R.drawable.ic_cloud_disable,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.NoInternet -> MenuButton(
-				icon = R.drawable.ic_no_network,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.NotLoggedIn -> MenuButton(
-				icon = R.drawable.ic_cloud_disable,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Loading -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Connected -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Syncing -> MenuButton(
-				icon = R.drawable.ic_cloud_syncing,
-				modifier = Modifier.graphicsLayer {
-					this.alpha = alpha
-				},
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.SyncError -> MenuButton(
-				icon = R.drawable.ic_cloud_exclamation,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.DriveLocked -> MenuButton(
-				icon = R.drawable.ic_cloud_exclamation,
-				onClick = onClickSync
-			)
-
-			is DropboxService.Companion.DropboxSyncStatus.Idle -> MenuButton(
-				icon = R.drawable.ic_cloud,
-				onClick = onClickSync
-			)
-		}
-	}
 }
-
-val Color.Companion.SyncCheck : Color
-	get() = Color(0xFF82AAE3)
-
-val Color.Companion.SyncNotCongifured : Color
-	get() = Color(0xFFE94560)
-val Color.Companion.SyncDisabled : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncNoInternet : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncNotLoggedIn : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncConnected : Color
-	get() = Color(0xFF82AAE3)
-
-val Color.Companion.SyncSyncing : Color
-	get() = Color(0xFF82AAE3)
-
-val Color.Companion.SyncError : Color
-	get() = Color(0xFFE94560)
-
-val Color.Companion.SyncLocked : Color
-	get() = Color(0xFFE94560)

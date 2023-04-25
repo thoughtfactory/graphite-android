@@ -1,7 +1,12 @@
 package com.syncodec.graphite.presentation.common.button
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -117,7 +122,7 @@ object MenuButtonDefaults {
 }
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun MenuButton(
 	modifier : Modifier = Modifier,
@@ -172,12 +177,18 @@ fun MenuButton(
 						onLongClick = { scope.launch { tooltipState.show() } },
 					)
 			) {
-				Icon(
-					painter = painterResource(id = icon),
-					contentDescription = tooltip,
-					tint = iconColor.copy(alpha = if (enabled) 1f else 0.31f),
-					modifier = Modifier.requiredSize(buttonSize)
-				)
+				AnimatedContent(
+					targetState = icon,
+					transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300))},
+					label = "menuButton"
+				) {
+					Icon(
+						painter = painterResource(id = it),
+						contentDescription = tooltip,
+						tint = iconColor.copy(alpha = if (enabled) 1f else 0.31f),
+						modifier = Modifier.requiredSize(buttonSize)
+					)
+				}
 			}
 //		}
 	}

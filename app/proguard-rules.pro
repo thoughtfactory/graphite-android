@@ -46,6 +46,15 @@
 
 -keep class com.syncodec.graphite.database.** { *; }
 -keep class com.kedia.ogparser.OpenGraphResult
+-keep class com.syncodec.graphite.di.model.TipTapFormatKt
+# Change here com.yourcompany.yourpackage
+-keep,includedescriptorclasses class com.syncodec.graphite.**$$serializer { *; }
+-keepclassmembers class com.syncodec.graphite.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.yourcompany.yourpackage.** { # <-- change package name to your app's
+    kotlinx.serialization.KSerializer serializer(...);
+}
 
 -keep class com.google.android.gms.maps.model.LatLng { *; }
 -keep class com.google.android.gms.internal.** { *; }

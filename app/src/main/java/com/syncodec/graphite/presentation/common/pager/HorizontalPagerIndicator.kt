@@ -1,7 +1,9 @@
 package com.syncodec.graphite.presentation.common.pager
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
@@ -15,18 +17,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.PagerState
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HorizontalPagerIndicator(
 	pagerState: PagerState,
 	modifier: Modifier = Modifier,
-	pageCount: Int = pagerState.pageCount,
+	pageCount: Int = 0,
 	pageIndexMapping: (Int) -> Int = { it },
 	activeColor: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 	inactiveColor: Color = activeColor.copy(ContentAlpha.disabled),
@@ -60,7 +60,7 @@ fun HorizontalPagerIndicator(
 			Modifier
 				.offset {
 					val position = pageIndexMapping(pagerState.currentPage)
-					val offset = pagerState.currentPageOffset
+					val offset = pagerState.currentPageOffsetFraction
 					val next = pageIndexMapping(pagerState.currentPage + offset.sign.toInt())
 					val scrollPosition = ((next - position) * offset.absoluteValue + position)
 						.coerceIn(0f, (pageCount - 1).coerceAtLeast(0).toFloat())

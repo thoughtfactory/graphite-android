@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.accompanist.pager.ExperimentalPagerApi
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.ExplorerScreen
@@ -90,7 +89,6 @@ fun BottomNavigationBar(
 	}
 }
 
-@ExperimentalPagerApi
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
@@ -104,6 +102,7 @@ fun MainNavigation(
 ) {
 	Crossfade(
 		targetState = currentRoute,
+		label = "currentRoute_animation",
 	) {
 		when (it) {
 			BottomNavigationItem.Home -> HomeScreen(

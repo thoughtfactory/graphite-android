@@ -18,8 +18,8 @@ class ChapterObject() : RealmObject {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
 		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
-		this.title = jsonObject.optString("title")
-		this.description = jsonObject.optString("description")
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.color = jsonObject.optInt("color")
 		this.thumbnail = jsonObject.optString("thumbnail")
 		if (this.thumbnail == "null") {
@@ -44,8 +44,6 @@ class ChapterObject() : RealmObject {
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
-
-	var lastSyncedTimestamp : Long = 0
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
@@ -120,6 +118,16 @@ class ChapterObject() : RealmObject {
 
 		return true
 	}
+
+	companion object {
+		fun fromCloudSnapshot(snapshot : ByteArray) : ChapterObject? {
+			return try {
+				ChapterObject(JSONObject(String(snapshot, Charsets.UTF_8)))
+			} catch (e : Exception) {
+				null
+			}
+		}
+	}
 }
 
 @Keep
@@ -132,7 +140,7 @@ data class ChapterObjectLite(
 	val color : Int?,
 	val isFavourite : Boolean,
 	val isLocked : Boolean,
-	val parentId : RealmUUID?
+	val parentId : RealmUUID?,
 ) {
 	override fun hashCode() : Int {
 		var result = id.hashCode()
@@ -175,7 +183,7 @@ data class ChapterObjectLite(
 				color = getRandomColor().toArgb(),
 				isFavourite = Random.nextBoolean(),
 				isLocked = Random.nextBoolean(),
-				parentId = RealmUUID.random()
+				parentId = RealmUUID.random(),
 			)
 		}
 	}

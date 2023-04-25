@@ -37,6 +37,7 @@ fun NoteScreen(
 			)
 
 			false -> ViewerScreen(
+				editor = editor,
 				onClickEditNote = onClickEditNote,
 				onNoteDeleted = onNoteDeleted,
 				onClickBack = onClickBack,

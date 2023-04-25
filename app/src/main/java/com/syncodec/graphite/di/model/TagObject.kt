@@ -18,7 +18,7 @@ import org.json.JSONObject
 class TagObject() : RealmObject {
 	constructor(jsonObject : JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
-		this.tag = jsonObject.optString("tag")
+		this.tag = jsonObject.optString("tag").let { if (it.isNullOrEmpty() || it == "null") this.id.toString() else it }
 		this.color = jsonObject.optInt("color").let { if (it == 0) getRandomColor().toArgb() else it }
 		this.modifiedTimestamp = jsonObject.optLong("userTimestamp", System.currentTimeMillis())
 		jsonObject.optJSONArray("objectIdList")?.let { jsonArray ->
@@ -92,6 +92,13 @@ class TagObject() : RealmObject {
 	}
 
 	companion object {
+		fun fromCloudSnapshot(snapshot : ByteArray) : TagObject? {
+			return try {
+				TagObject(JSONObject(String(snapshot, Charsets.UTF_8)))
+			} catch (e : Exception) {
+				null
+			}
+		}
 		fun getRandomInstance() = TagObject().apply {
 			tag = "Tag ${System.currentTimeMillis()}"
 			color = getRandomColor().toArgb()

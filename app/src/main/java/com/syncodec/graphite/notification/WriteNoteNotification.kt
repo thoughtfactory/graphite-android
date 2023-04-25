@@ -18,8 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.DataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +52,7 @@ class NotificationReceiver : BroadcastReceiver() {
 		val remoteInput = RemoteInput.getResultsFromIntent(intent)
 
 		if (remoteInput != null) {
-			val repository2 = KoinRepository().apply { initRepository(context) }
+			val repository2 = Repository().apply { initRepository(context) }
 			repository2.isAuthenticated.tryEmit(true)
 			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
 			putNote(context, repository2, content)
@@ -62,12 +61,12 @@ class NotificationReceiver : BroadcastReceiver() {
 
 	private fun putNote(
 		context : Context,
-		repository2 : KoinRepository,
+		repository2 : Repository,
 		content : String,
 	) {
 		CoroutineScope(Dispatchers.Default).launch {
 			repository2.repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) {
+				if (it == Repository.Companion.RepositoryState.Success) {
 					repository2.getDefaultChapterId()?.let {
 						NoteObject().apply {
 							this.content =

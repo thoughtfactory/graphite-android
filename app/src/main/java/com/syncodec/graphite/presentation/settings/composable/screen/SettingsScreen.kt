@@ -55,7 +55,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.notification.WriteNoteNotification
-import com.syncodec.graphite.presentation.bugReport.BugReportActivity
+import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
 import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.settings.SettingsActivity
@@ -135,13 +135,27 @@ fun SettingsScreen(
 				}
 			}
 		}
-		AnimatedVisibility(
-			visible = ! isPro,
-			enter = expandVertically(tween(300)),
-			exit = shrinkVertically(tween(300))
+		AnimatedContent(
+			targetState = isPro,
+			transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) },
+			label = "isPro_animation",
 		) {
-			SettingButton(text = "Subscription", icon = R.drawable.ic_subscription) {
-				context.startActivity(Intent(context, ProActivity::class.java))
+			if (it) {
+				SettingButton(
+					text = "Manage Subscription",
+					subText = "Play Store",
+					icon = R.drawable.ic_subscription,
+				) {
+					try {
+						context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions?package=com.syncodec.graphite")))
+					} catch (_: Exception) {
+						openDialog(SettingsDialogType.ManageSubscription)
+					}
+				}
+			} else {
+				SettingButton(text = "Subscription", icon = R.drawable.ic_subscription) {
+					context.startActivity(Intent(context, ProActivity::class.java))
+				}
 			}
 		}
 
@@ -174,15 +188,15 @@ fun SettingsScreen(
 			text = "Dark mode",
 			icon = R.drawable.ic_bulb,
 			subText = when (darkTheme) {
-				SettingsActivity.Companion.DarkTheme.SyncWithSystem -> "Sync with system"
+				SettingsActivity.Companion.DarkTheme.SyncWithSystem -> "Same as system"
 				SettingsActivity.Companion.DarkTheme.AlwaysOn -> "Always on"
 				SettingsActivity.Companion.DarkTheme.AlwaysOff -> "Always off"
-				null -> "Sync with system"
+				null -> "Same as system"
 			},
 			isDropdownMenuVisible = isDarkThemeDropdownMenuVisible,
 			dropdownMenuList = listOf(
 				DropdownMenuItem(
-					title = "Sync with system",
+					title = "Same as system",
 					icon = R.drawable.ic_r2d2
 				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.SyncWithSystem); isDarkThemeDropdownMenuVisible = false },
 				DropdownMenuItem(
@@ -209,8 +223,11 @@ fun SettingsScreen(
 		}
 
 		SettingsContentTitle(title = "DATA")
-		SettingButton(text = "Backup and restore", icon = R.drawable.ic_local_backup) { navigateTo(SettingsActivity.Companion.SettingsScreen.BackupAndRestore) }
-		SettingButton(text = "Synchronization", icon = R.drawable.ic_sync, subText = "Coming soon")
+		SettingButton(
+			text = "Backup and Sync",
+			icon = R.drawable.ic_local_backup,
+			subText = "Manage"
+		) { navigateTo(SettingsActivity.Companion.SettingsScreen.BackupAndSync) }
 		SettingButton(text = "Import", icon = R.drawable.ic_import) { navigateTo(SettingsActivity.Companion.SettingsScreen.ImportData) }
 		SettingButton(text = "Export", icon = R.drawable.ic_export) { openDialog(SettingsDialogType.ExportData) }
 		SettingButton(text = "Clear data", icon = R.drawable.ic_broom) { openDialog(SettingsDialogType.ClearData) }
@@ -248,8 +265,12 @@ fun SettingsScreen(
 				Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
 			}
 		}
-		SettingButton(text = "Bug Report", icon = R.drawable.ic_bug) {
-			context.startActivity(Intent(context, BugReportActivity::class.java))
+		SettingButton(
+			text = "Feedback",
+			icon = R.drawable.ic_bug,
+			infoText = "Report a bug or suggest a feature or maybe a simple hi"
+		) {
+			context.startActivity(Intent(context, ReportActivity::class.java))
 		}
 		SettingButton(text = "Rate us", icon = R.drawable.ic_star) {
 			context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${BuildConfig.APPLICATION_ID}")))
@@ -314,9 +335,7 @@ private fun ProfileCard(
 	photoUrl : Uri? = null,
 	isPro : Boolean = false,
 ) {
-
 	val context = LocalContext.current
-	var isError by remember { mutableStateOf(false) }
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -330,7 +349,6 @@ private fun ProfileCard(
 				.error(R.drawable.ic_user_male)
 				.build(),
 			placeholder = null,
-			onError = { isError = true },
 			contentDescription = email,
 			contentScale = ContentScale.Crop,
 			modifier = Modifier

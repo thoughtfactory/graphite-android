@@ -100,11 +100,11 @@ fun SubscriptionScreen(
 					onClickPackage = onClickPackage
 				)
 				Spacer(modifier = Modifier.height(16.dp))
-				LifetimePackageView(
-					lifetimePackage = contentStatus.dataOrNull?.lifetimePackage,
-					onClickPackage = onClickPackage
-				)
-				Spacer(modifier = Modifier.height(16.dp))
+//				LifetimePackageView(
+//					lifetimePackage = contentStatus.dataOrNull?.lifetimePackage,
+//					onClickPackage = onClickPackage
+//				)
+//				Spacer(modifier = Modifier.height(16.dp))
 
 				Text(
 					text = userEmail?.let { "Logged in as $it" } ?: "Not logged in",

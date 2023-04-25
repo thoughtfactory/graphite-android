@@ -3,9 +3,7 @@ package com.syncodec.graphite.presentation.attachment.composable.screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.repository.AttachmentRepository
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
-import com.syncodec.graphite.di.repository.RepositoryState
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.LoaderStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +18,7 @@ import java.io.File
 
 
 @KoinViewModel
-class AttachmentScreenViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
+class AttachmentScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -42,7 +40,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 			combine(loadAll, repositoryState) { loadAll, repositoryState ->
 				loadAll to repositoryState
 			}.collect { (loadAll, repositoryState) ->
-				if (loadAll && repositoryState == RepositoryState.SUCCESS) loadAllData()
+				if (loadAll && repositoryState == Repository.Companion.RepositoryState.Success) loadAllData()
 			}
 		}
 
@@ -50,7 +48,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 			combine(noteId, repositoryState) { noteId, repositoryState ->
 				noteId to repositoryState
 			}.collect { (noteId, repositoryState) ->
-				if (! noteId.isNullOrEmpty() && repositoryState == RepositoryState.SUCCESS) loadNoteData(noteId)
+				if (! noteId.isNullOrEmpty() && repositoryState == Repository.Companion.RepositoryState.Success) loadNoteData(noteId)
 			}
 		}
 
@@ -58,7 +56,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 			combine(chapterId, repositoryState) { chapterId, repositoryState ->
 				chapterId to repositoryState
 			}.collect { (chapterId, repositoryState) ->
-				if (! chapterId.isNullOrEmpty() && repositoryState == RepositoryState.SUCCESS) loadChapterData(chapterId)
+				if (! chapterId.isNullOrEmpty() && repositoryState == Repository.Companion.RepositoryState.Success) loadChapterData(chapterId)
 			}
 		}
 	}
@@ -71,7 +69,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 				loaderStatus.tryEmit(LoaderStatus.Loading)
 				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
 				it.forEach { note ->
-					attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
+					repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
 						if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
 					}
 				}
@@ -95,7 +93,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 				loadNoteCoroutine = this
 				repository.getNoteFromIdAsFlow(id = it).cancellable().collect {
 					it?.let { noteObject ->
-						attachmentRepository.getAttachmentFromNote(noteId = noteObject.id).let { attachmentList ->
+						repository.attachmentRepository.getAttachmentFromNote(parentId = noteObject.id).let { attachmentList ->
 							noteAttachmentListMap.tryEmit(mapOf(noteObject.toLite() to attachmentList))
 							loaderStatus.tryEmit(LoaderStatus.Loaded)
 						}
@@ -120,7 +118,7 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 				repository.getNoteWithParentIdAsFlow(parentId = it).cancellable().collect {
 					val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
 					it.list.forEach { note ->
-						attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
+						repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
 							if (attachmentList.isNotEmpty()) noteAttachmentListMap[note.toLite()] = attachmentList
 						}
 					}
@@ -163,6 +161,6 @@ class AttachmentScreenViewModel(private val repository : KoinRepository, private
 			if (newNoteAttachmentListMap.isEmpty()) loaderStatus.tryEmit(LoaderStatus.LoadedEmpty) else loaderStatus.tryEmit(LoaderStatus.Loaded)
 		}
 
-		attachmentRepository.delete(attachmentList)
+		repository.deleteAttachment(attachmentList, )
 	}
 }

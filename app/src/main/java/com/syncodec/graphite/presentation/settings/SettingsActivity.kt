@@ -45,13 +45,13 @@ import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.notification.WriteNoteNotification
+import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.settings.composable.bar.TopBar
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
-import com.syncodec.graphite.presentation.settings.composable.screen.BackupAndRestoreScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.BackupAndSyncScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.ImportDataScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupScreen
@@ -123,6 +123,7 @@ class SettingsActivity : ComponentActivity() {
 				var showClearDataDialog by remember { mutableStateOf(false) }
 				var showNotificationPermissionDialog by remember { mutableStateOf(false) }
 				var showDeleteAccountDialog by remember { mutableStateOf(false) }
+				var showManageSubscriptionDialog by remember { mutableStateOf(false) }
 
 				var settingsScreen by remember { mutableStateOf(SettingsScreen.Settings) }
 
@@ -132,6 +133,7 @@ class SettingsActivity : ComponentActivity() {
 					SettingsDialogType.ClearData -> showClearDataDialog = true
 					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = true
 					SettingsDialogType.DeleteAccount -> showDeleteAccountDialog = true
+					SettingsDialogType.ManageSubscription -> showManageSubscriptionDialog = true
 				}
 
 				fun closeDialog(dialogType : SettingsDialogType) = when (dialogType) {
@@ -140,6 +142,7 @@ class SettingsActivity : ComponentActivity() {
 					SettingsDialogType.ClearData -> showClearDataDialog = false
 					SettingsDialogType.NotificationPermission -> showNotificationPermissionDialog = false
 					SettingsDialogType.DeleteAccount -> showDeleteAccountDialog = false
+					SettingsDialogType.ManageSubscription -> showManageSubscriptionDialog = false
 				}
 
 				this.onBackPressedDispatcher.addCallback(
@@ -148,8 +151,8 @@ class SettingsActivity : ComponentActivity() {
 							if (authenticatorScreen == AuthenticatorScreen.None) {
 								when (settingsScreen) {
 									SettingsScreen.Settings -> finish()
-									SettingsScreen.BackupAndRestore -> settingsScreen = SettingsScreen.Settings
-									SettingsScreen.LocalBackup -> settingsScreen = SettingsScreen.BackupAndRestore
+									SettingsScreen.BackupAndSync -> settingsScreen = SettingsScreen.Settings
+									SettingsScreen.LocalBackup -> settingsScreen = SettingsScreen.BackupAndSync
 									SettingsScreen.ImportData -> settingsScreen = SettingsScreen.Settings
 								}
 							} else {
@@ -161,7 +164,14 @@ class SettingsActivity : ComponentActivity() {
 
 				GenericScaffold(
 					topBar = {
-						TopBar(settingsScreen = settingsScreen)
+						GenericTopBar(
+							title = when (settingsScreen) {
+								Companion.SettingsScreen.Settings -> "Settings"
+								Companion.SettingsScreen.BackupAndSync -> "Backup & Sync"
+								Companion.SettingsScreen.LocalBackup -> "Local Backup"
+								Companion.SettingsScreen.ImportData -> "Import Data"
+							}
+						)
 					},
 					modalBottomSheetState = modalBottomSheetState,
 					sheetContent = {
@@ -183,6 +193,7 @@ class SettingsActivity : ComponentActivity() {
 							},
 							showNotificationPermissionDialog = showNotificationPermissionDialog,
 							showDeleteAccountDialog = showDeleteAccountDialog,
+							showManageSubscriptionDialog = showManageSubscriptionDialog,
 							onNotificationPermissionAvailable = {
 								if (BaseApplication.isPro.value) WriteNoteNotification.showSimpleNotification(applicationContext)
 								else Toast.makeText(applicationContext, "Join Graphite Pro to access this feature", Toast.LENGTH_SHORT).show()
@@ -200,7 +211,8 @@ class SettingsActivity : ComponentActivity() {
 						transitionSpec = {
 							scaleIn(tween(300), initialScale = 0.71f) + fadeIn(tween(300)) with
 									scaleOut(tween(300), targetScale = 0.71f) + fadeOut(tween(300))
-						}
+						},
+						label = "settings_screen_transition"
 					) {
 						when (it) {
 							SettingsScreen.Settings -> SettingsScreen(
@@ -212,7 +224,7 @@ class SettingsActivity : ComponentActivity() {
 								openDialog = ::openDialog,
 							)
 
-							SettingsScreen.BackupAndRestore -> BackupAndRestoreScreen { settingsScreen = it }
+							SettingsScreen.BackupAndSync -> BackupAndSyncScreen { settingsScreen = it }
 							SettingsScreen.LocalBackup -> LocalBackupScreen(
 								openDialog = ::openDialog,
 								closeDialog = ::closeDialog,
@@ -336,7 +348,7 @@ class SettingsActivity : ComponentActivity() {
 	companion object {
 		enum class SettingsScreen {
 			Settings,
-			BackupAndRestore,
+			BackupAndSync,
 			LocalBackup,
 			ImportData,
 		}

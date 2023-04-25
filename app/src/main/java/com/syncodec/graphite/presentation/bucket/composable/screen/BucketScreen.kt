@@ -3,6 +3,8 @@ package com.syncodec.graphite.presentation.bucket.composable.screen
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
@@ -15,8 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
@@ -46,7 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(
 	ExperimentalMaterialApi::class,
-	ExperimentalPagerApi::class
+	ExperimentalFoundationApi::class
 )
 @Composable
 fun BucketScreen(

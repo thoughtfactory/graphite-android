@@ -1,5 +1,7 @@
 package com.syncodec.graphite.di.network
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -7,6 +9,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.syncodec.graphite.di.model.BucketItemObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -62,7 +65,7 @@ object OpenLibraryApi {
 		}
 	}
 
-	fun retrieveBookCover(coverI : String?, onResponse : (Response?) -> Unit) {
+	fun retrieveBookCover(coverI : String?, onResponse : (Bitmap?) -> Unit) {
 		try {
 			if (coverI == null) onResponse(null)
 			else {
@@ -72,10 +75,42 @@ object OpenLibraryApi {
 					.url(url)
 					.build()
 
-				onResponse(client.newCall(request).execute())
+				try {
+					client.newCall(request).execute().body.byteStream().let { inputStream ->
+						onResponse(BitmapFactory.decodeStream(inputStream))
+						inputStream.close()
+					}
+				} catch (e : Exception) {
+					onResponse(null)
+				}
 			}
 		} catch (e : Exception) {
 			onResponse(null)
+		}
+	}
+
+	fun retrieveBookCover(coverI : String?) : Bitmap? {
+		try {
+			if (coverI == null) return null
+			else {
+				val url = "https://covers.openlibrary.org/b/id/${coverI}-M.jpg"
+
+				val request = Request.Builder()
+					.url(url)
+					.build()
+
+				try {
+					client.newCall(request).execute().body.byteStream().let { inputStream ->
+						val bitmap = BitmapFactory.decodeStream(inputStream)
+						inputStream.close()
+						return bitmap
+					}
+				} catch (e : Exception) {
+					return null
+				}
+			}
+		} catch (e : Exception) {
+			return null
 		}
 	}
 
@@ -109,78 +144,5 @@ data class OpenLibraryTitleSearchResult(
 	@JsonProperty("start")
 	val start : Int?,
 	@JsonProperty("docs")
-	val docs : List<BookData?>?
+	val docs : List<BucketItemObject.Companion.BucketItemData.BookData?>?
 )
-
-@Keep
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class BookData(
-	@JsonProperty("key")
-	var key : String?,
-	@JsonProperty("title")
-	var title : String?,
-	@JsonProperty("cover_i")
-	var coverI : String?,    // Url for cover
-	@JsonProperty("author_name")
-	var authorList : List<String?>?,
-	@JsonProperty("first_publish_year")
-	var firstPublishYear : String?,
-	@JsonProperty("number_of_pages_median")
-	var numberOfPages : Int?,
-	@JsonProperty("description")
-	var description : String?
-) : Serializable {
-	constructor(jsonString : String?) : this(null, null, null, null, null, null, null) {
-		if (jsonString != null) {
-			try {
-				val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-				val bookData = objectMapper.readValue(jsonString, BookData::class.java)
-				this.key = bookData.key
-				this.title = bookData.title
-				this.coverI = bookData.coverI
-				this.authorList = bookData.authorList
-				this.firstPublishYear = bookData.firstPublishYear
-				this.numberOfPages = bookData.numberOfPages
-				this.description = bookData.description
-			} catch (e : Exception) {
-
-			}
-		}
-	}
-
-	fun toJsonString() : String {
-		return try {
-			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			objectMapper.writeValueAsString(this)
-		} catch (e : Exception) {
-//			e.printStackTrace()
-			"null"
-		}
-	}
-
-	override fun equals(other : Any?) : Boolean {
-		if (this === other) return true
-		if (other !is BookData) return false
-
-		if (key != other.key) return false
-		if (title != other.title) return false
-		if (coverI != other.coverI) return false
-		if (authorList != other.authorList) return false
-		if (firstPublishYear != other.firstPublishYear) return false
-		if (numberOfPages != other.numberOfPages) return false
-		if (description != other.description) return false
-
-		return true
-	}
-
-	override fun hashCode() : Int {
-		var result = key?.hashCode() ?: 0
-		result = 31 * result + (title?.hashCode() ?: 0)
-		result = 31 * result + (coverI?.hashCode() ?: 0)
-		result = 31 * result + (authorList?.hashCode() ?: 0)
-		result = 31 * result + (firstPublishYear?.hashCode() ?: 0)
-		result = 31 * result + (numberOfPages ?: 0)
-		result = 31 * result + (description?.hashCode() ?: 0)
-		return result
-	}
-}

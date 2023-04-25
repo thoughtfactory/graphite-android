@@ -184,7 +184,7 @@ fun NotebookScreen() {
 				onClickBack = { onBackPressedDispatcher?.onBackPressed() },
 				onClickCancelSelect = { isSelecting = false; selectedIdList = listOf() },
 				onClickLock = {
-					if (chapterId == defaultChapterId) Toast.makeText(context, "Cannot lock default chapter", Toast.LENGTH_SHORT).show()
+					if (chapterId == defaultChapterId)
 					else chapterId?.let {
 						if (isAuthenticated) viewModel.toggleLock(it) else onAuthenticationAction(AuthenticatorScreen.Authenticate)
 					}

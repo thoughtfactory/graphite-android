@@ -36,6 +36,7 @@ fun TopBar(
 	selectedSize : Int = 0,
 	onClickBack : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
+	onClickLocalOnly : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickFilter : () -> Unit = {},
@@ -53,6 +54,7 @@ fun TopBar(
 			selectedSize = selectedSize,
 			onClickBack = onClickBack,
 			onClickCancelSelect = onClickCancelSelect,
+			onClickLocalOnly = onClickLocalOnly,
 			onClickLock = onClickLock,
 			onClickFavourite = onClickFavourite,
 			onClickFilter = onClickFilter,
@@ -79,6 +81,7 @@ private fun Bar(
 	selectedSize : Int = 0,
 	onClickBack : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
+	onClickLocalOnly : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickFilter : () -> Unit = {},
@@ -88,7 +91,8 @@ private fun Bar(
 
 	Crossfade(
 		targetState = isSelecting,
-		animationSpec = tween(300)
+		animationSpec = tween(300),
+		label = "isSelecting_animation"
 	) {
 		if (it) {
 			TopAppBar(

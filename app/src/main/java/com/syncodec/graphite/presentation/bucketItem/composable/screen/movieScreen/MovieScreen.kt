@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -56,6 +57,7 @@ import com.valentinilk.shimmer.shimmer
 
 
 @OptIn(ExperimentalAnimationApi::class)
+@Preview
 @Composable
 fun MovieScreen(
 	currentState : Int = 0,
@@ -225,7 +227,8 @@ fun MovieScreen(
 
 				AnimatedContent(
 					targetState = movieOverview,
-					transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) }
+					transitionSpec = { expandVertically(tween(300)) with shrinkVertically(tween(300)) },
+					label = "movieOverview_animation"
 				) {
 					if (it.isNullOrEmpty()) {
 						Text(
@@ -324,6 +327,7 @@ fun MovieScreen(
 		Spacer(modifier = Modifier.height(6.dp))
 
 		InfoSurface(
+			containerColor = MaterialTheme.colorScheme.background,
 			onClick = {
 				try {
 					context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.themoviedb.org/")))
@@ -337,20 +341,28 @@ fun MovieScreen(
 			) {
 				Text(
 					text = "Source: The Movie Database",
-					style = MaterialTheme.typography.titleMedium,
-					color = MaterialTheme.colorScheme.onSurface,
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onBackground,
 					fontWeight = FontWeight.Bold,
 					overflow = TextOverflow.Ellipsis,
 					modifier = Modifier.fillMaxWidth()
 				)
 
-				Spacer(modifier = Modifier.height(12.dp))
+				Spacer(modifier = Modifier.height(8.dp))
 
 				Image(
 					painter = painterResource(id = R.drawable.il_tmdb),
 					contentDescription = "TMDB Logo",
 					contentScale = ContentScale.Fit,
-					modifier = Modifier.padding(0.dp)
+					modifier = Modifier.height(16.dp)
+				)
+
+				Spacer(modifier = Modifier.height(8.dp))
+
+				Text(
+					text = "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onBackground,
 				)
 			}
 		}

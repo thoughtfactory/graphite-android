@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.common.richText
 import android.content.Context
 import android.print.PrintAttributes
 import android.print.PrintManager
+import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -24,6 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
@@ -32,6 +35,7 @@ import com.google.accompanist.web.AccompanistWebViewClient
 import com.google.accompanist.web.WebView
 import com.google.accompanist.web.WebViewNavigator
 import com.google.accompanist.web.rememberWebViewState
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.toHexString
@@ -123,8 +127,10 @@ class RichTextEditor(
 			}
 		}
 
-		setBackgroundColor(0)
+		if (!BuildConfig.DEBUG) setBackgroundColor(0)
 		setLayerType(LAYER_TYPE_HARDWARE, null)
+
+		setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
 		addJavascriptInterface(this, "bridge")
 	}
@@ -150,6 +156,10 @@ class RichTextEditor(
 				}
 			}
 		}
+	}
+
+	fun loadExternalEditor(htmlContent: String) {
+		loadDataWithBaseURL("file:///android_asset/orbit", htmlContent, "text/html", "UTF-8", null)
 	}
 
 	private fun load(trigger : String) {
@@ -263,6 +273,7 @@ class RichTextEditor(
 	@FilePrivate
 	@JavascriptInterface
 	fun getData(requestData : String?, data : String?) {
+		Log.d("npr71", "getData: $requestData")
 		try {
 			val dataObject = JSONObject(data ?: "{}")
 			val dataJson = dataObject.optJSONObject("dataJson")
@@ -289,16 +300,15 @@ class RichTextEditor(
 			val strike : Boolean = false,
 			val superscript : Boolean = false,
 			val subscript : Boolean = false,
+			val link : String? = null,
+			val code : Boolean = false,
 
 			val alignLeft : Boolean = false,
 			val alignCenter : Boolean = false,
 			val alignRight : Boolean = false,
 			val alignJustify : Boolean = false,
 
-			val link : String? = null,
-
 			val blockquote : Boolean = false,
-			val code : Boolean = false,
 			val codeBlock : Boolean = false,
 
 			val paragraph : Boolean = false,

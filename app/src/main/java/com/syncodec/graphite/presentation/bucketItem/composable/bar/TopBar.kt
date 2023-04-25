@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -30,6 +31,7 @@ fun TopBar(
 	isFavourite : Boolean = false,
 	isLocked : Boolean = false,
 	onClickSave : () -> Unit = {},
+	onClickLocalOnly : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onClickBack : () -> Unit = {}
@@ -46,7 +48,8 @@ fun TopBar(
 		actions = {
 			AnimatedContent(
 				targetState = isSaved,
-				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + fadeOut(tween(300), 0.71f) }
+				transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + fadeOut(tween(300), 0.71f) }, 
+				label = "isSaved_animation"
 			) {
 				when (it) {
 					true -> {

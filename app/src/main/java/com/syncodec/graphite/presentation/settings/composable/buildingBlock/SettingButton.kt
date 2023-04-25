@@ -3,8 +3,11 @@ package com.syncodec.graphite.presentation.settings.composable.buildingBlock
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
@@ -33,12 +36,16 @@ import com.syncodec.graphite.presentation.ui.IconButtonSize
 fun SettingButton(
 	text : String = "Button",
 	subText : String? = null,
+	infoText : String? = null,
 	icon : Int = R.drawable.ic_setting,
+	subIcon : Int? = null,
 	tint : Color = MaterialTheme.colorScheme.onBackground,
+	subIconTint : Color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+	enabled : Boolean = true,
 	onClick : () -> Unit = {},
 ) {
 	Box(
-		modifier = Modifier.clickable { onClick() }
+		modifier = Modifier.clickable(enabled = enabled) { onClick() }
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
@@ -52,20 +59,41 @@ fun SettingButton(
 				modifier = Modifier.requiredSize(IconButtonSize)
 			)
 			Spacer(modifier = Modifier.width(24.dp))
-			Text(
-				text = text,
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onBackground,
-				fontWeight = FontWeight.Bold,
+			Column(
 				modifier = Modifier.weight(1f),
-			)
-			Spacer(modifier = Modifier.width(8.dp))
+			) {
+				Text(
+					text = text,
+					style = MaterialTheme.typography.bodyMedium,
+					color = if (enabled) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+					fontWeight = FontWeight.Bold,
+					modifier = Modifier.fillMaxWidth(),
+				)
+				infoText?.let {
+					Spacer(modifier = Modifier.height(4.dp))
+					AnimatedText(
+						text = it,
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+					)
+				}
+			}
+			Spacer(modifier = Modifier.width(24.dp))
 			AnimatedText(
 				text = subText ?: "",
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
 			)
 			Spacer(modifier = Modifier.width(8.dp))
+			subIcon?.let {
+				Icon(
+					painter = painterResource(id = it),
+					contentDescription = text,
+					tint = subIconTint,
+					modifier = Modifier.requiredSize(IconButtonSize)
+				)
+				Spacer(modifier = Modifier.width(8.dp))
+			}
 			Icon(
 				painter = painterResource(id = R.drawable.ic_caret),
 				contentDescription = text,

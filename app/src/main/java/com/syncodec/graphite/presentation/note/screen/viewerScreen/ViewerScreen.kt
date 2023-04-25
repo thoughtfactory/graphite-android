@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note.screen.viewerScreen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -23,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.syncodec.graphite.di.model.Content
+import com.syncodec.graphite.di.model.TipTapContent
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDir
 import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -43,6 +46,8 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
@@ -52,6 +57,7 @@ import java.io.File
 @Preview
 @Composable
 fun ViewerScreen(
+	editor : RichTextEditor,
 	onClickEditNote : () -> Unit = {},
 	onNoteDeleted : () -> Unit = {},
 	onClickBack : () -> Unit = {},
@@ -143,19 +149,17 @@ fun ViewerScreen(
 		}
 	}
 
-	val richTextEditor = remember {
-		RichTextEditor.headlessInstance(context).apply {
-			setGetTextListener(getTextListener)
-		}
-	}
-
 	//	TODO: Observe changes in attachment directory
 	fun getAttachments(noteId : RealmUUID) {
 		scope.launch(Dispatchers.IO) {
 			withContext(Dispatchers.Main) {
-				attachmentList = context.attachmentDir(noteId = noteId).listFiles()?.toList() ?: listOf()
+				attachmentList = context.attachmentDir(parentId = noteId).listFiles()?.toList() ?: listOf()
 			}
 		}
+	}
+
+	LaunchedEffect(key1 = null) {
+		editor.setGetTextListener(getTextListener)
 	}
 
 	LaunchedEffect(key1 = noteId) { noteId?.let { getAttachments(it) } }
@@ -225,12 +229,22 @@ fun ViewerScreen(
 		},
 		bottomBar = {
 			BottomBar(
-				onClickExportAsTxt = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportText.name) },
-				onClickExportAsPdf = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportPdf.name) },
-				onClickExportAsHtml = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportHtml.name) },
-				onClickExportAsJson = { richTextEditor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportJson.name) },
+				onClickExportAsTxt = {
+					val json = Json { ignoreUnknownKeys = true }
+					val tipTapContent = json.decodeFromString<TipTapContent>(content ?: "")
+					File(File(context.cacheDir, "export"), "$noteId.txt").let {
+						it.mkdirs()
+						it.delete()
+						it.createNewFile()
+						it.writeText(tipTapContent.toTxt())
+						it.share(context = context)
+					}
+				},
+				onClickExportAsPdf = { editor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportPdf.name) },
+				onClickExportAsHtml = { editor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportHtml.name) },
+				onClickExportAsJson = { editor.setAndGetData(title ?: "", content ?: "", RichTextEditor.Companion.RequestData.ExportJson.name) },
 				onClickExportAsMarkdown = {
-					richTextEditor.setAndGetData(
+					editor.setAndGetData(
 						title ?: "",
 						content ?: "",
 						RichTextEditor.Companion.RequestData.ExportMarkdown.name
@@ -295,7 +309,8 @@ fun ViewerScreen(
 	) {
 		Crossfade(
 			targetState = noteId,
-			animationSpec = tween(300)
+			animationSpec = tween(300),
+			label = "noteId_animation",
 		) {
 			it?.let {
 				ViewerComponent(

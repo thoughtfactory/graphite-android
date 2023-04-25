@@ -10,7 +10,8 @@
 .DS_Store
 /build
 /import
-/app/src/test/java/com/syncodec/graphite/test
+/tmp
+/db
 /captures
 .externalNativeBuild
 .cxx

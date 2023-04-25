@@ -10,11 +10,10 @@ import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.AttachmentRepository
 import com.syncodec.graphite.di.repository.RealmListConverter
 import com.syncodec.graphite.di.repository.RealmUUIDDeserializer
 import com.syncodec.graphite.di.repository.RealmUUIDSerializer
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmUUID
@@ -23,7 +22,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ExportDataViewModel(private val repository : KoinRepository, val attachmentRepository : AttachmentRepository) : ViewModel() {
+class ExportDataViewModel(val repository : Repository) : ViewModel() {
 
 	val objectMapper = jsonMapper {
 		addModule(

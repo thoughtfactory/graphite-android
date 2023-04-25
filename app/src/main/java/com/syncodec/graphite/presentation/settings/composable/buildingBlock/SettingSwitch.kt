@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.settings.composable.buildingBlock
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -26,19 +27,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
+@OptIn(ExperimentalAnimationApi::class)
 @Preview
 @Composable
 fun SettingSwitch(
 	text : String = "Switch",
+	subText : String? = null,
 	icon : Int = R.drawable.ic_setting,
 	isChecked : Boolean = false,
+	enabled : Boolean = true,
 	onCheckedChange : (Boolean) -> Unit = {},
 ) {
 	Box(
-		modifier = Modifier.clickable { onCheckedChange(! isChecked) }
+		modifier = Modifier.clickable(enabled = enabled) { onCheckedChange(! isChecked) }
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
@@ -54,23 +59,41 @@ fun SettingSwitch(
 			Text(
 				text = text,
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onBackground,
+				color = if (enabled) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
 				fontWeight = FontWeight.Bold,
 				modifier = Modifier.weight(1f)
 			)
 			Spacer(modifier = Modifier.width(8.dp))
 
+			subText?.let {
+				AnimatedText(
+					text = subText,
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+				)
+				Spacer(modifier = Modifier.width(8.dp))
+			}
+
 			Switch(
-				checked = isChecked,
+				checked = isChecked && enabled,
 				colors = SwitchDefaults.colors(
 					checkedThumbColor = MaterialTheme.colorScheme.primary,
 					checkedTrackColor = MaterialTheme.colorScheme.surface,
 					checkedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.71f),
 					uncheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.31f),
 					uncheckedTrackColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
-					uncheckedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.31f)
+					uncheckedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.31f),
+					disabledCheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.47f),
+					disabledCheckedTrackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
+					disabledCheckedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.71f).copy(alpha = 0.47f),
+					disabledUncheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.31f).copy(alpha = 0.47f),
+					disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f).copy(alpha = 0.47f),
+					disabledUncheckedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.31f).copy(alpha = 0.47f),
 				),
-				onCheckedChange = onCheckedChange,
+				onCheckedChange = {
+					if (enabled) onCheckedChange(it)
+				},
+				enabled = enabled,
 				modifier = Modifier
 					.height(0.dp)
 					.padding(0.dp)

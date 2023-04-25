@@ -3,8 +3,7 @@ package com.syncodec.graphite.presentation.main.composable.screen.notebookScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +19,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class NotebookScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class NotebookScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -36,7 +35,7 @@ class NotebookScreenViewModel(private val repository : KoinRepository) : ViewMod
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> observeNotebooks()
+					Repository.Companion.RepositoryState.Success -> observeNotebooks()
 					else -> null
 				}
 			}

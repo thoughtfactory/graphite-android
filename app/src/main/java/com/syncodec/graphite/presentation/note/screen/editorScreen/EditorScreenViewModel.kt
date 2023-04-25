@@ -9,9 +9,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.AttachmentRepository
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
@@ -27,7 +25,7 @@ import java.io.File
 
 
 @KoinViewModel
-class EditorScreenViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
+class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -54,7 +52,6 @@ class EditorScreenViewModel(private val repository : KoinRepository, private val
 	val contentThumbnail : MutableStateFlow<String?> = MutableStateFlow(null)
 	val content : MutableStateFlow<String?> = MutableStateFlow(null)
 	val thumbnail : MutableStateFlow<Bitmap?> = MutableStateFlow(null)
-	val thumbnailType : MutableStateFlow<String?> = MutableStateFlow(null)
 	val isFavourite : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val isLocked : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val parentChapter : MutableStateFlow<ChapterObject?> = MutableStateFlow(null)
@@ -76,13 +73,13 @@ class EditorScreenViewModel(private val repository : KoinRepository, private val
 		loadTags()
 	}
 
-	/** Observes [repositoryState] and [noteId] and calls [getNote] when [repositoryState] is [RepositoryState.SUCCESS] and [noteId] is not null.*/
+	/** Observes [repositoryState] and [noteId] and calls [getNote] when [repositoryState] is [RepositoryState.Success] and [noteId] is not null.*/
 	private fun initObserver() {
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(repositoryState, noteId) { repositoryState, noteId ->
 				repositoryState to noteId
 			}.collect { (repositoryState, noteId) ->
-				if (repositoryState == RepositoryState.SUCCESS) noteId?.let { getNote(it) }
+				if (repositoryState == Repository.Companion.RepositoryState.Success) noteId?.let { getNote(it) }
 			}
 		}
 
@@ -129,7 +126,6 @@ class EditorScreenViewModel(private val repository : KoinRepository, private val
 					this@EditorScreenViewModel.contentThumbnail.tryEmit(noteObject.contentThumbnail)
 					this@EditorScreenViewModel.content.tryEmit(noteObject.content)
 					this@EditorScreenViewModel.thumbnail.tryEmit(noteObject.thumbnail?.decodeBase64ToBitmap())
-					this@EditorScreenViewModel.thumbnailType.tryEmit(noteObject.thumbnailType)
 					this@EditorScreenViewModel.isFavourite.tryEmit(noteObject.isFavourite)
 					this@EditorScreenViewModel.isLocked.tryEmit(noteObject.isLocked)
 					this@EditorScreenViewModel.parentChapter.tryEmit(parentChapter)
@@ -159,7 +155,6 @@ class EditorScreenViewModel(private val repository : KoinRepository, private val
 					this@EditorScreenViewModel.contentThumbnail.tryEmit(it.contentThumbnail)
 					this@EditorScreenViewModel.content.tryEmit(it.content)
 					this@EditorScreenViewModel.thumbnail.tryEmit(it.thumbnail?.decodeBase64ToBitmap())
-					this@EditorScreenViewModel.thumbnailType.tryEmit(it.thumbnailType)
 					this@EditorScreenViewModel.isFavourite.tryEmit(it.isFavourite)
 					this@EditorScreenViewModel.isLocked.tryEmit(it.isLocked)
 					it.parentId?.let { repository.getChapterFromId(id = it).let { parentChapter.tryEmit(it) } }
@@ -186,7 +181,6 @@ class EditorScreenViewModel(private val repository : KoinRepository, private val
 				this@EditorScreenViewModel.address.value?.let { this.address = it }
 				this@EditorScreenViewModel.contentThumbnail.value?.let { this.contentThumbnail = it }
 				this@EditorScreenViewModel.content.value?.let { this.content = it }
-				this@EditorScreenViewModel.thumbnailType.value?.let { this.thumbnailType = it }
 				this@EditorScreenViewModel.isFavourite.value?.let { this.isFavourite = it }
 				this@EditorScreenViewModel.isLocked.value?.let { this.isLocked = it }
 				this@EditorScreenViewModel.parentChapter.value?.id?.let { this.parentId = it }
@@ -274,8 +268,8 @@ class EditorScreenViewModel(private val repository : KoinRepository, private val
 	}
 
 	fun putAttachment(noteId : RealmUUID, attachmentListToAdd : List<Uri>, attachmentListToRemove : List<File>) {
-		attachmentRepository.delete(attachmentListToRemove)
-		attachmentRepository.putAttachment(noteId, attachmentListToAdd)
+		repository.deleteAttachment(attachmentListToRemove)
+		repository.attachmentRepository.putAttachment(noteId, attachmentListToAdd)
 	}
 
 	fun saveNote() = this.putNote()

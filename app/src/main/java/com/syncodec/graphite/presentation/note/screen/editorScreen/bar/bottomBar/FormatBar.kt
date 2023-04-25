@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.bottomBar.buildingBlock.ToolbarButton
@@ -43,6 +44,7 @@ fun FormatBar(
 	onClickAttachment : () -> Unit = {},
 	onClickTag : () -> Unit = {},
 	onClickHeading : () -> Unit = {},
+	onClickSwapEditor : () -> Unit = {},
 	onEditorAction: (RichTextEditor.Companion.EditorAction) -> Unit = {},
 ) {
 	val isPro = LocalIsPro.current
@@ -59,7 +61,11 @@ fun FormatBar(
 			contentAlignment = Alignment.Center,
 			modifier = Modifier
 				.height(48.dp)
-				.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f), MaterialTheme.shapes.small)
+				.background(
+					MaterialTheme.colorScheme
+						.surfaceColorAtElevation(8.dp)
+						.copy(alpha = 0.31f), MaterialTheme.shapes.small
+				)
 				.clip(MaterialTheme.shapes.small)
 				.clickable { onClickTimePicker() }
 		) {
@@ -104,7 +110,11 @@ fun FormatBar(
 		Box(
 			contentAlignment = Alignment.Center,
 			modifier = Modifier
-				.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f), MaterialTheme.shapes.small)
+				.background(
+					MaterialTheme.colorScheme
+						.surfaceColorAtElevation(8.dp)
+						.copy(alpha = 0.31f), MaterialTheme.shapes.small
+				)
 				.clip(MaterialTheme.shapes.small),
 		) {
 			Row(
@@ -144,6 +154,16 @@ fun FormatBar(
 					padding = 0,
 					onClick = onClickTag
 				)
+
+				if (BuildConfig.DEBUG) {
+					ToolbarButton(
+						icon = R.drawable.ic_setting,
+						contentDescription = "Swap editor",
+						isChecked = false,
+						padding = 0,
+						onClick = onClickSwapEditor
+					)
+				}
 
 				Spacer(modifier = Modifier.width(2.dp))
 			}

@@ -1,23 +1,17 @@
 package com.syncodec.graphite.presentation.bucketItem.composable.screen.movieScreen
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.network.Genre
 import com.syncodec.graphite.di.network.MovieData
-import com.syncodec.graphite.di.network.ShowData
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TMDbApi.objectMapper
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.AbstractBucketScreenViewModel
 import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Quadruple
-import com.syncodec.graphite.utils.Status
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.encodeBase64
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -159,7 +153,7 @@ class MovieScreenViewModel : AbstractBucketScreenViewModel() {
 			title = movieTitle.value,
 		)
 		return Quadruple(
-			ShowData(
+			BucketItemObject.Companion.BucketItemData.ShowData(
 				type = ShowType.MOVIE,
 				tvData = null,
 				movieData = movieData,
@@ -173,14 +167,7 @@ class MovieScreenViewModel : AbstractBucketScreenViewModel() {
 	override fun retrieveThumbnail(data : String?, onSuccess : (Bitmap) -> Unit) {
 		try {
 			viewModelScope.launch(Dispatchers.IO) {
-				TMDbApi.retrieveShowPoster(posterPath = data) {
-					it?.body?.byteStream()?.let { inputStream ->
-						val bitmap = BitmapFactory.decodeStream(inputStream)
-						this.launch(Dispatchers.Main) { onSuccess(bitmap) }
-					} ?: run {
-//	        			TODO Show error
-					}
-				}
+				TMDbApi.retrieveShowPoster(posterPath = data) { it?.let(onSuccess) }
 			}
 		} catch (e : Exception) {
 //			TODO Show error

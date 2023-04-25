@@ -6,8 +6,7 @@ import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.ShowType
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +17,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
+class BucketViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -43,15 +42,15 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 			this@BucketViewModel.refreshCoroutine = this
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.INIT -> null
-					RepositoryState.LOCKED -> null
-					RepositoryState.LOADING -> null
-					RepositoryState.SUCCESS -> {
-						if (repositoryState.value != RepositoryState.SUCCESS) this.cancel()
+					Repository.Companion.RepositoryState.Init -> null
+					Repository.Companion.RepositoryState.Locked -> null
+					Repository.Companion.RepositoryState.Loading -> null
+					Repository.Companion.RepositoryState.Success -> {
+						if (repositoryState.value != Repository.Companion.RepositoryState.Success) this.cancel()
 						getBucket(realmUUID = realmUUID)
 					}
 
-					RepositoryState.ERROR -> null
+					Repository.Companion.RepositoryState.Error -> null
 				}
 			}
 		}
@@ -118,12 +117,15 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 
 						var shareText = ""
 						it.forEach {
-							val connector = when (it.getShowData()?.type) {
-								ShowType.TV -> "tv/"
-								ShowType.MOVIE -> "movie/"
-								else -> ""
+							val data = it.getData()
+							if (data is BucketItemObject.Companion.BucketItemData.ShowData?) {
+								val connector = when (data?.type) {
+									ShowType.TV -> "tv/"
+									ShowType.MOVIE -> "movie/"
+									else -> ""
+								}
+								shareText += "${it.title} $baseUrl$connector${if (bucketType.value == BucketType.TODO.name) "" else it.key}\n"
 							}
-							shareText += "${it.title} $baseUrl$connector${if (bucketType.value == BucketType.TODO.name) "" else it.key}\n"
 						}
 
 						callback(shareText)
@@ -139,6 +141,6 @@ class BucketViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	fun deleteBucket(id : RealmUUID, callback : suspend () -> Unit) {
 		this@BucketViewModel.isOperationPending.tryEmit(true)
-		repository.deleteSuspended(id, callback)
+		repository.deleteSuspended(id = id, callback = callback)
 	}
 }

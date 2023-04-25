@@ -10,28 +10,33 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class MainViewModel(private val repository : KoinRepository) : ViewModel() {
+class MainViewModel(private val repository : Repository, private val dBox : DBox) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
 	val defaultChapterId = MutableStateFlow(null as RealmUUID?)
 
+//	private val _testConnectionResponse = MutableStateFlow(null as DBox.Companion.TestConnectionResponse?)
+	private val _testConnectionResponse = MutableStateFlow<DBox.Companion.TestConnectionResponse?>(DBox.Companion.TestConnectionResponse.Error(Exception("Test Connection Error"), ""))
+	val testConnectionResponse : StateFlow<DBox.Companion.TestConnectionResponse?> = _testConnectionResponse
+
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect { repositoryState1 ->
 				when (repositoryState1) {
-					RepositoryState.SUCCESS -> {
+					Repository.Companion.RepositoryState.Success -> {
 						repository.getDefaultChapterIdAsFlow().collect {
 //							TODO : Remove null check after after realm update #1289
 							it?.let { it1 -> defaultChapterId.tryEmit(it1) }
@@ -42,6 +47,8 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 				}
 			}
 		}
+
+//		testDropboxConnection()
 	}
 
 	fun putNotebook(
@@ -61,7 +68,7 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 		if (BaseApplication.isPro.value) repository.putChapterSuspended(chapterObject)
 		else viewModelScope.launch(Dispatchers.Default) {
 			repository.getChapterWithParentId(parentChapterId = null).let {
-				if (it.second.size < 4) repository.putChapterSuspended(chapterObject) else callback("Join Graphite Pro to create more notebooks")
+				if (it.size < 4) repository.putChapterSuspended(chapterObject) else callback("Join Graphite Pro to create more notebooks")
 			}
 		}
 	}
@@ -90,7 +97,7 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 		repository.deleteSuspended(idList)
 	}
 
-	fun setRepositoryState(repositoryState : RepositoryState) {
+	fun setRepositoryState(repositoryState : Repository.Companion.RepositoryState) {
 		repository.repositoryState.tryEmit(repositoryState)
 	}
 
@@ -105,5 +112,11 @@ class MainViewModel(private val repository : KoinRepository) : ViewModel() {
 
 	fun onDeauthenticate() {
 		repository.isAuthenticated.tryEmit(false)
+	}
+
+	fun testDropboxConnection() {
+		viewModelScope.launch(Dispatchers.IO) {
+			dBox.testConnection { _testConnectionResponse.tryEmit(it) }
+		}
 	}
 }

@@ -2,7 +2,11 @@ package com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,10 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.rememberPagerState
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -28,8 +28,8 @@ import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.compose.koinViewModel
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun BucketTodoScreen(
 	pagerState : PagerState = rememberPagerState(),
@@ -57,11 +57,12 @@ fun BucketTodoScreen(
 	Crossfade(
 		targetState = isLoadedFirstTime,
 		animationSpec = tween(300),
-		modifier = Modifier.fillMaxSize()
+		modifier = Modifier.fillMaxSize(),
+		label = "bucketTodoScreen_animation"
 	) { isLoaded ->
 		if (isLoaded) {
 			HorizontalPager(
-				count = 4,
+				pageCount = 4,
 				state = pagerState,
 				userScrollEnabled = ! isSelecting,
 			) { pageIndex ->

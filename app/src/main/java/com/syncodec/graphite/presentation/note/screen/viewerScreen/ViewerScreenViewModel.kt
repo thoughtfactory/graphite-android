@@ -8,8 +8,7 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +21,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class ViewerScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 	val noteId = MutableStateFlow<RealmUUID?>(null)
@@ -48,7 +47,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 	val contentThumbnail : MutableStateFlow<String?> = MutableStateFlow(null)
 	val content : MutableStateFlow<String?> = MutableStateFlow(null)
 	val thumbnail : MutableStateFlow<Bitmap?> = MutableStateFlow(null)
-	val thumbnailType : MutableStateFlow<String?> = MutableStateFlow(null)
 	val isFavourite : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val isLocked : MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val parentId : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
@@ -60,13 +58,13 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 		initObserver()
 	}
 
-	/** Observes [repositoryState] and [noteId] and calls [setupViewer] when [repositoryState] is [RepositoryState.SUCCESS] are [noteId] is not null.*/
+	/** Observes [repositoryState] and [noteId] and calls [setupViewer] when [repositoryState] is [RepositoryState.Success] are [noteId] is not null.*/
 	private fun initObserver() {
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(repositoryState, noteId) { repositoryState, noteId ->
 				repositoryState to noteId
 			}.collect { (repositoryState, noteId) ->
-				if (repositoryState == RepositoryState.SUCCESS) noteId?.let {
+				if (repositoryState == Repository.Companion.RepositoryState.Success) noteId?.let {
 					setupViewer(it)
 					loadTags(it)
 				}
@@ -110,7 +108,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 					this@ViewerScreenViewModel.contentThumbnail.tryEmit(it.contentThumbnail)
 					this@ViewerScreenViewModel.content.tryEmit(it.content)
 					this@ViewerScreenViewModel.thumbnail.tryEmit(it.thumbnail?.decodeBase64ToBitmap())
-					this@ViewerScreenViewModel.thumbnailType.tryEmit(it.thumbnailType)
 					this@ViewerScreenViewModel.isFavourite.tryEmit(it.isFavourite)
 					this@ViewerScreenViewModel.isLocked.tryEmit(it.isLocked)
 					this@ViewerScreenViewModel.parentId.tryEmit(it.parentId)
@@ -137,7 +134,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 				this@ViewerScreenViewModel.contentThumbnail.value?.let { this.contentThumbnail = it }
 				this@ViewerScreenViewModel.content.value?.let { this.content = it }
 //				this@EditorScreenViewModel.thumbnail.value?.let { this.thumbnail = it }
-				this@ViewerScreenViewModel.thumbnailType.value?.let { this.thumbnailType = it }
 				this@ViewerScreenViewModel.isFavourite.value?.let { this.isFavourite = it }
 				this@ViewerScreenViewModel.isLocked.value?.let { this.isLocked = it }
 				this@ViewerScreenViewModel.parentChapter.value?.id?.let { this.parentId = it }
@@ -159,12 +155,12 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 	}
 
 	fun toggleFavourite() {
-		this.isFavourite.tryEmit(this.isFavourite.value?.not())
+		this.isFavourite.tryEmit(this.isFavourite.value?.not() ?: true)
 		putNote()
 	}
 
 	fun toggleLock() {
-		this.isLocked.tryEmit(this.isLocked.value?.not())
+		this.isLocked.tryEmit(this.isLocked.value?.not() ?: true)
 		putNote()
 	}
 
@@ -184,6 +180,6 @@ class ViewerScreenViewModel(private val repository : KoinRepository) : ViewModel
 
 	fun deleteNote(id : RealmUUID, callback : suspend () -> Unit) {
 		isOperationPending.tryEmit(true)
-		repository.deleteSuspended(id, callback)
+		repository.deleteSuspended(id = id, callback = callback)
 	}
 }

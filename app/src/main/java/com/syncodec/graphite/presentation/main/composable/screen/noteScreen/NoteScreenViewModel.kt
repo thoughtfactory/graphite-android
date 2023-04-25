@@ -2,11 +2,13 @@ package com.syncodec.graphite.presentation.main.composable.screen.noteScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.BucketObject
+import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +22,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel() {
+class NoteScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
@@ -40,7 +42,7 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
 				when (it) {
-					RepositoryState.SUCCESS -> refresh()
+					Repository.Companion.RepositoryState.Success -> refresh()
 
 					else -> null
 				}
@@ -103,15 +105,60 @@ class NoteScreenViewModel(private val repository : KoinRepository) : ViewModel()
 
 	fun addDebugData() {
 		CoroutineScope(Dispatchers.Default).launch {
-			for (i in 0 .. 10) {
-				NoteObject.getRandomInstance().apply {
-					this.title = "Note $i"
-					this.content =
-						"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-							"Content $i".repeat(2)
-						}\"}]}]}"
-					this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
-					repository.putNote(this)
+			NoteObject().apply {
+				this.title = "alpha"
+				this.content =
+					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+						"alpha"
+					}\"}]}]}"
+				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
+				repository.putNote(this)
+			}
+
+			NoteObject().apply {
+				this.title = "beta"
+				this.content =
+					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+						"beta"
+					}\"}]}]}"
+				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
+				repository.putNote(this)
+			}
+
+			NoteObject().apply {
+				this.title = "gamma"
+				this.content =
+					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+						"gamma"
+					}\"}]}]}"
+				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
+				repository.putNote(this)
+			}
+
+			BucketObject().apply bucketObject@{
+				this.title = "todo"
+				this.bucketType = BucketType.TODO.name
+				repository.putBucket(this)
+
+				BucketItemObject().apply {
+					this.title = "alpha"
+					this.bucketType = BucketType.TODO.name
+					this.parentId = this@bucketObject.id
+					repository.putBucketItem(this)
+				}
+
+				BucketItemObject().apply {
+					this.title = "beta"
+					this.bucketType = BucketType.TODO.name
+					this.parentId = this@bucketObject.id
+					repository.putBucketItem(this)
+				}
+
+				BucketItemObject().apply {
+					this.title = "gamma"
+					this.bucketType = BucketType.TODO.name
+					this.parentId = this@bucketObject.id
+					repository.putBucketItem(this)
 				}
 			}
 		}

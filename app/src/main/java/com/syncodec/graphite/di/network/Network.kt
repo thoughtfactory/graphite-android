@@ -22,7 +22,7 @@ object Network {
 
 				client.newCall(request).execute().use { response ->
 					if (response.isSuccessful) {
-						onResponse(response.body?.byteStream()?.use { BitmapFactory.decodeStream(it) })
+						onResponse(response.body.byteStream().use { BitmapFactory.decodeStream(it) })
 					} else {
 						onResponse(null)
 					}

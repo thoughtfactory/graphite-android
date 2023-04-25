@@ -6,6 +6,8 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -47,7 +49,6 @@ import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attach
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
-import com.syncodec.graphite.presentation.common.richText.rememberRichTextEditor
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.TopBar
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.bottomBar.BottomBar
@@ -193,7 +194,7 @@ fun EditorScreen(
 
 	fun saveAttachments(noteId : RealmUUID, attachmentListToAdd : List<Uri>, attachmentListToRemove : List<File>) {
 		scope.launch(Dispatchers.IO) {
-			val attachmentDir = context.attachmentDir(noteId = noteId, true)
+			val attachmentDir = context.attachmentDir(parentId = noteId, true)
 			viewModel.putAttachment(noteId, attachmentListToAdd, attachmentListToRemove)
 			attachmentDir.listFiles()?.forEach { file ->
 				val previewBitmap = file.preview(context = context).first
@@ -207,7 +208,7 @@ fun EditorScreen(
 
 	LaunchedEffect(key1 = noteId) {
 		noteId?.let { noteId ->
-			val attachmentDir = context.attachmentDir(noteId = noteId)
+			val attachmentDir = context.attachmentDir(parentId = noteId)
 			if (attachmentDir.exists()) attachmentDir.listFiles().let { attachmentListSaved = it?.toList() ?: listOf() }
 		}
 	}
@@ -262,6 +263,17 @@ fun EditorScreen(
 	BackHandler(enabled = true) {
 		if (isOperationPending) Toast.makeText(context, "Operation pending", Toast.LENGTH_SHORT).show()
 		else openDialog(EditorDialogType.DiscardChanges)
+	}
+
+	val openEditorPicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
+		if (uri != null) {
+			context.contentResolver.openInputStream(uri)?.let { inputStream ->
+				inputStream.readBytes().let { byteArray ->
+					editor.loadExternalEditor(String(byteArray))
+				}
+				inputStream.close()
+			}
+		}
 	}
 
 	GenericScaffold(
@@ -411,6 +423,7 @@ fun EditorScreen(
 				onClickLocation = { openSheet(EditorBottomSheetType.Location) },
 				onClickAttachment = { openSheet(EditorBottomSheetType.Attachment) },
 				onClickTag = { openSheet(EditorBottomSheetType.Tag) },
+				onClickSwapEditor = { openEditorPicker.launch(arrayOf("text/html")) },
 			) { editorAction -> editor.onEditorAction(editorAction = editorAction) }
 		}
 	}

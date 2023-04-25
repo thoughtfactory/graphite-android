@@ -7,9 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.AttachmentRepository
-import com.syncodec.graphite.di.repository.RepositoryState
-import com.syncodec.graphite.di.repository.koinRepository.KoinRepository
+import com.syncodec.graphite.di.repository.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +20,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ImportDataGoogleKeepViewModel(private val repository : KoinRepository, private val attachmentRepository : AttachmentRepository) : ViewModel() {
+class ImportDataGoogleKeepViewModel(private val repository : Repository) : ViewModel() {
 
 	val objectMapper : ObjectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -35,14 +33,14 @@ class ImportDataGoogleKeepViewModel(private val repository : KoinRepository, pri
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			repositoryState.collect {
-				if (it == RepositoryState.SUCCESS) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
+				if (it == Repository.Companion.RepositoryState.Success) repository.getDefaultChapterId().let { chapterId -> defaultChapterId.tryEmit(chapterId) }
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {
 			concurrentQueue.receiveAsFlow().collect { (noteObject, zipFile, attachmentList) ->
 				noteObject.parentId = defaultChapterId.value
 				repository.putNote(noteObject)
-				attachmentRepository.putAttachment(noteId = noteObject.id, zipFile, attachmentList)
+				repository.attachmentRepository.putAttachment(parentId = noteObject.id, zipFile, attachmentList)
 			}
 		}
 	}

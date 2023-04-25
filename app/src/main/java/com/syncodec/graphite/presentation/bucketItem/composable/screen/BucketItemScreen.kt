@@ -62,7 +62,10 @@ fun BucketItemScreen(
 		BucketItemDialogType.DELETE -> showDeleteDialog = false
 	}
 
-	Crossfade(targetState = isSaved) {
+	Crossfade(
+		targetState = isSaved,
+		label = "isSaved_animation"
+	) {
 		if (it == null) {
 			LoadingView()
 		} else {

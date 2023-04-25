@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import android.graphics.Color
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -10,7 +11,11 @@ import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
+import kotlin.random.Random
 
 
 @Keep
@@ -21,7 +26,7 @@ class NoteObject() : RealmObject {
 		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
 		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
 		this.userTimestamp = jsonObject.optLong("userTimestamp", System.currentTimeMillis())
-		this.title = jsonObject.optString("title")
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.color = jsonObject.optInt("color", getRandomColor().toArgb())
 		val latLngObject = jsonObject.optJSONObject("latLng")
 		if (latLngObject != null) {
@@ -29,11 +34,10 @@ class NoteObject() : RealmObject {
 			val lng = latLngObject.optDouble("longitude")
 			this.setLatLng(LatLng(lat, lng))
 		}
-		this.address = jsonObject.optString("address")
-		this.contentThumbnail = jsonObject.optString("contentThumbnail")
-		this.content = jsonObject.optString("content")
-		this.thumbnail = jsonObject.optString("thumbnail")
-		this.thumbnailType = jsonObject.optString("thumbnailType")
+		this.address = jsonObject.optString("address").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.contentThumbnail = jsonObject.optString("contentThumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.content = jsonObject.optString("content").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.thumbnail = jsonObject.optString("thumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
@@ -52,13 +56,10 @@ class NoteObject() : RealmObject {
 	var contentThumbnail : String? = null
 	var content : String? = null
 	var thumbnail : String? = null
-	var thumbnailType : String? = null
 	var isFavourite : Boolean = false
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
-
-	var lastSyncedTimestamp : Long = 0
 
 	fun setLatLng(latLng : LatLng?) {
 		try {
@@ -66,7 +67,7 @@ class NoteObject() : RealmObject {
 				val latitude = it.latitude
 				val longitude = it.longitude
 				if (latitude == null || longitude == null) this.latLng = null
-				else if (latitude >= - 90 && latitude <= 90 && longitude >= - 180 && longitude <= 180) {
+				else if ((latitude >= - 90) && (latitude <= 90) && (longitude >= - 180) && (longitude <= 180)) {
 					val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 					this.latLng = objectMapper.writeValueAsString(it)
 				} else this.latLng = null
@@ -85,6 +86,10 @@ class NoteObject() : RealmObject {
 //			e.printStackTrace()
 			return null
 		}
+	}
+
+	fun toDbxHash() {
+
 	}
 
 	override fun toString() : String = this.id.toString()
@@ -106,9 +111,8 @@ class NoteObject() : RealmObject {
 			address = this.address,
 			contentThumbnail = this.contentThumbnail,
 			thumbnail = this.thumbnail,
-			thumbnailType = this.thumbnailType,
 			isFavourite = this.isFavourite,
-			isLocked = this.isLocked
+			isLocked = this.isLocked,
 		)
 	}
 
@@ -124,7 +128,6 @@ class NoteObject() : RealmObject {
 		this.contentThumbnail = this@NoteObject.contentThumbnail
 		this.content = this@NoteObject.content
 		this.thumbnail = this@NoteObject.thumbnail
-		this.thumbnailType = this@NoteObject.thumbnailType
 		this.isFavourite = this@NoteObject.isFavourite
 		this.isLocked = this@NoteObject.isLocked
 		this.parentId = this@NoteObject.parentId
@@ -137,13 +140,9 @@ class NoteObject() : RealmObject {
 		jsonObject.put("modifiedTimestamp", this.modifiedTimestamp)
 		jsonObject.put("userTimestamp", this.userTimestamp)
 		jsonObject.put("title", this.title)
-		jsonObject.put("color", this.color)
 		jsonObject.put("latLng", this.latLng)
 		jsonObject.put("address", this.address)
-		jsonObject.put("contentThumbnail", this.contentThumbnail)
 		jsonObject.put("content", this.content)
-		jsonObject.put("thumbnail", this.thumbnail)
-		jsonObject.put("thumbnailType", this.thumbnailType)
 		jsonObject.put("isFavourite", this.isFavourite)
 		jsonObject.put("isLocked", this.isLocked)
 		jsonObject.put("parentId", this.parentId?.toString())
@@ -163,7 +162,6 @@ class NoteObject() : RealmObject {
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (content?.hashCode() ?: 0)
 		result = 31 * result + (thumbnail?.hashCode() ?: 0)
-		result = 31 * result + (thumbnailType?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + parentId.hashCode()
@@ -185,7 +183,6 @@ class NoteObject() : RealmObject {
 		if (contentThumbnail != other.contentThumbnail) return false
 		if (content != other.content) return false
 		if (thumbnail != other.thumbnail) return false
-		if (thumbnailType != other.thumbnailType) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 		if (parentId != other.parentId) return false
@@ -195,20 +192,31 @@ class NoteObject() : RealmObject {
 
 
 	companion object {
+		fun fromCloudSnapshot(snapshot : ByteArray) : NoteObject? {
+			return try {
+				val json = Json { ignoreUnknownKeys = true }
+				val jsonObject = JSONObject(String(snapshot))
+				val tipTapContent = json.decodeFromString<TipTapContent>(jsonObject.getString("content")).toString()
+				jsonObject.put("contentThumbnail" , tipTapContent.substring(0, minOf(256, tipTapContent.length)))
+				NoteObject(jsonObject)
+			} catch (e : Exception) {
+				null
+			}
+		}
+
 		fun getRandomInstance() : NoteObject {
 			return NoteObject().apply {
 				this.createdTimestamp = System.currentTimeMillis()
 				this.modifiedTimestamp = System.currentTimeMillis()
 				this.userTimestamp = System.currentTimeMillis()
 
-				this.title = "New Note"
-				this.color = 0
+				this.title = "Random Title ${Random.nextInt()}"
+				this.color = Color.argb(255, Random.nextInt(256), Random.nextInt(256), Random.nextInt(256))
 				setLatLng(LatLng(0.0, 0.0))
-				this.address = "New Address"
-				this.contentThumbnail = "New Content Thumbnail"
-				this.thumbnailType = "New Thumbnail Type"
-				this.isFavourite = false
-				this.isLocked = false
+				this.address = "Random Address ${Random.nextInt()}"
+				this.contentThumbnail = "Random Content Thumbnail ${Random.nextInt()}"
+				this.isFavourite = Random.nextBoolean()
+				this.isLocked = Random.nextBoolean()
 				this.parentId = RealmUUID.random()
 			}
 		}
@@ -228,9 +236,11 @@ data class NoteObjectLite(
 	val address : String?,
 	val contentThumbnail : String?,
 	val thumbnail : String? = null,
-	val thumbnailType : String? = null,
 	val isFavourite : Boolean,
-	val isLocked : Boolean
+	val isLocked : Boolean,
+	val overWritable : Boolean = true,
+	val deletable : Boolean = true,
+	val localOnly : Boolean = false
 ) {
 	override fun equals(other : Any?) : Boolean {
 		if (this === other) return true
@@ -247,9 +257,11 @@ data class NoteObjectLite(
 		if (address != other.address) return false
 		if (contentThumbnail != other.contentThumbnail) return false
 		if (thumbnail != other.thumbnail) return false
-		if (thumbnailType != other.thumbnailType) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
+		if (overWritable != other.overWritable) return false
+		if (deletable != other.deletable) return false
+		if (localOnly != other.localOnly) return false
 
 		return true
 	}
@@ -266,14 +278,17 @@ data class NoteObjectLite(
 		result = 31 * result + (address?.hashCode() ?: 0)
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (thumbnail?.hashCode() ?: 0)
-		result = 31 * result + (thumbnailType?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
+		result = 31 * result + overWritable.hashCode()
+		result = 31 * result + deletable.hashCode()
+		result = 31 * result + localOnly.hashCode()
 		return result
 	}
 }
 
 @Keep
+@Serializable
 data class LatLng(
 	var latitude : Double? = null,
 	var longitude : Double? = null

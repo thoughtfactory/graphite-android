@@ -27,11 +27,18 @@ class BucketObject() : RealmObject {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
 		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
-		this.title = jsonObject.optString("title")
-		this.description = jsonObject.optString("description")
-		this.bucketType = jsonObject.optString("bucketType")
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.bucketType = jsonObject.optString("bucketType").let { if (it.isNullOrEmpty() || it == "null") BucketType.UNKNOWN.name else it }
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
+		this.bucketItemOrderList = jsonObject.optJSONArray("bucketItemOrderList")?.let { jsonArray ->
+			val realmList = realmListOf<RealmUUID>()
+			for (i in 0 until jsonArray.length()) {
+				realmList.add(RealmUUID.from(jsonArray.getString(i)))
+			}
+			realmList
+		} ?: realmListOf()
 	}
 
 	@PrimaryKey
@@ -69,6 +76,7 @@ class BucketObject() : RealmObject {
 		jsonObject.put("bucketType", this.bucketType)
 		jsonObject.put("isFavourite", this.isFavourite)
 		jsonObject.put("isLocked", this.isLocked)
+		jsonObject.put("bucketItemOrderList", this.bucketItemOrderList.map { it.toString() })
 
 		return jsonObject.toString()
 	}
@@ -101,5 +109,15 @@ class BucketObject() : RealmObject {
 		if (bucketItemOrderList != other.bucketItemOrderList) return false
 
 		return true
+	}
+
+	companion object {
+		fun fromCloudSnapshot(snapshot : ByteArray) : BucketObject? {
+			return try {
+				BucketObject(JSONObject(String(snapshot, Charsets.UTF_8)))
+			} catch (e : Exception) {
+				null
+			}
+		}
 	}
 }

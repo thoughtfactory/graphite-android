@@ -28,6 +28,7 @@ fun TopBar(
 	isOperationPending : Boolean = false,
 	isFavourite : Boolean = false,
 	isLocked : Boolean = false,
+	onClickLocalOnly : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickLock : () -> Unit = {},
 	onClickPin : () -> Unit = {},
