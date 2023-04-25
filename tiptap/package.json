@@ -12,7 +12,7 @@
     "@tiptap/core": "^2.0.0-beta.171",
     "@tiptap/extension-blockquote": "^2.0.0-beta.26",
     "@tiptap/extension-bullet-list": "^2.0.0-beta.26",
-    "@tiptap/extension-character-count": "^2.0.0-beta.24",
+    "@tiptap/extension-character-count": "^2.0.2",
     "@tiptap/extension-code": "^2.0.0-beta.26",
     "@tiptap/extension-code-block": "^2.0.0-beta.37",
     "@tiptap/extension-code-block-lowlight": "^2.0.0-beta.68",
