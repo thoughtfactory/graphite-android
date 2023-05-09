@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dropbox.core.v2.files.Metadata
 import com.syncodec.graphite.di.repository.repository.Repository
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

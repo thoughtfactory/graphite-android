@@ -22,7 +22,7 @@ import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.ui.SyncState
-import com.syncodec.graphite.service.syncService.SyncerService
+import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -35,7 +35,7 @@ fun TopBar(
 	componentType : ComponentType = ComponentType.Note,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
-	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
+	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	onComponentChange : (Int) -> Unit = {},
 	onClickFilter : () -> Unit = {},
 	onClickMenu : () -> Unit = {},
@@ -81,7 +81,7 @@ private fun Bar(
 	currentRoute : String? = null,
 	isSelecting : Boolean = false,
 	selectedSize : Int = 0,
-	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
+	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	onClickMenu : () -> Unit = {},
 	onClickCancelSelect : () -> Unit = {},
 	onClickCloud : () -> Unit = {},
@@ -218,7 +218,7 @@ private fun ComponentTypeView(
 
 @Composable
 private fun CloudButton(
-	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
+	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	onClickSync : () -> Unit
 ) {
 	MenuButton(

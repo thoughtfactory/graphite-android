@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.sync.dropbox
 
 import android.os.Bundle
 import android.os.NetworkOnMainThreadException
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,7 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.sync.dropbox.composable.screen.DropboxSyncScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.share

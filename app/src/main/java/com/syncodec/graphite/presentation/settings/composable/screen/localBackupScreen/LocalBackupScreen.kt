@@ -31,7 +31,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
-import com.jakewharton.processphoenix.ProcessPhoenix
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.info.PlainTextWarning
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
@@ -39,14 +38,11 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Sett
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.dialog.RestoreSnapshotDialog
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.dialog.RestoringSnapshotDialog
-import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.extract7z
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.share
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import java.text.SimpleDateFormat

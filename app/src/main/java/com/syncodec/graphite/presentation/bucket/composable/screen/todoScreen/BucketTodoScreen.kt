@@ -18,7 +18,7 @@ import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.SortBy

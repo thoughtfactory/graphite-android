@@ -19,7 +19,7 @@ import androidx.core.app.RemoteInput
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.repository.repository.Repository
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

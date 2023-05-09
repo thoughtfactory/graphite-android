@@ -130,13 +130,16 @@ fun AttachmentView(
 						AttachmentNamePlate(file = file)
 					}
 				}
-				AttachmentActionButtons(
-					pagerState = pagerState,
-					height = previewHeight,
-				) {
-					Intent(context, AttachmentActivity::class.java).apply {
-						putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
-						context.startActivity(this)
+
+				if (attachmentList.size > 1 ) {
+					AttachmentActionButtons(
+						pagerState = pagerState,
+						height = previewHeight,
+					) {
+						Intent(context, AttachmentActivity::class.java).apply {
+							putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
+							context.startActivity(this)
+						}
 					}
 				}
 			}
@@ -386,7 +389,7 @@ private fun AttachmentNamePlate(
 	}
 }
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 private fun AttachmentActionButtons(

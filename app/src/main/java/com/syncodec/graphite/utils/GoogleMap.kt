@@ -12,6 +12,8 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.annotation.WorkerThread
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
 import androidx.core.content.res.ResourcesCompat
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -24,6 +26,7 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import java.io.IOException
 import java.util.Locale
 
@@ -146,5 +149,11 @@ fun Context.reverseGeocode(
 		onIoException()
 	} catch (exception : Exception) {
 		onException()
+	}
+}
+
+class GoogleMapUtil {
+	companion object {
+		fun getMapStyle(isDarkTheme : Boolean) : Int = if (isDarkTheme) R.raw.map_style_dark else R.raw.map_style_light
 	}
 }

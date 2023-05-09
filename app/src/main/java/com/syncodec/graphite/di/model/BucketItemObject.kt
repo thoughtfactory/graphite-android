@@ -22,6 +22,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import java.io.Serializable
+import java.time.Instant
 
 
 enum class BucketItemState {
@@ -51,8 +52,8 @@ class BucketItemObject() : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
-	var createdTimestamp : Long = System.currentTimeMillis()
-	var modifiedTimestamp : Long = System.currentTimeMillis()
+	var createdTimestamp : Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
 	var bucketType : String = BucketType.UNKNOWN.name
 	var title : String? = null
 	var state : String = BucketItemState.ALPHA.name
@@ -64,12 +65,12 @@ class BucketItemObject() : RealmObject {
 	var key : String? = null
 	var data : String? = null
 
-	private val json = Json { ignoreUnknownKeys = true }
+	var googleDriveId : String? = null
+
 
 	fun getData() : BucketItemData? {
+		val json = Json { ignoreUnknownKeys = true }
 		return try {
-//			val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-//			objectMapper.readValue(data, BucketItemData::class.java)
 			this.data?.let { json.decodeFromString<BucketItemData.ShowData?>(it) }
 		} catch (e : Exception) {
 			e.printStackTrace()

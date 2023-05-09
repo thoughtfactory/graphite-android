@@ -19,6 +19,7 @@ import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import java.io.*
+import java.time.Instant
 import java.util.zip.ZipFile
 
 
@@ -232,7 +233,7 @@ fun copyInputStreamToOutputStream(inputStream : InputStream, outputStream : Outp
 
 fun Context.getFileFromUri(uri : Uri?) : File? {
 	if (uri == null) return null
-	val tempFile = File.createTempFile("${System.currentTimeMillis()}", null)
+	val tempFile = File.createTempFile("${Instant.now().toEpochMilli()}", null)
 	val inputStream = contentResolver.openInputStream(uri) ?: return null
 	val outputStream = tempFile.outputStream()
 

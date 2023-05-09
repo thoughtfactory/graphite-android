@@ -36,7 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dropbox.core.v2.files.Metadata
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.common.info.InfoCard
@@ -51,7 +51,7 @@ import com.syncodec.graphite.presentation.sync.dropbox.composable.buildingBlock.
 import com.syncodec.graphite.presentation.sync.dropbox.composable.buildingBlock.DropboxEmptySnapshot
 import com.syncodec.graphite.presentation.sync.dropbox.composable.dialog.DropboxDialog
 import com.syncodec.graphite.presentation.sync.dropbox.composable.dialog.DropboxDialogType
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
 
 

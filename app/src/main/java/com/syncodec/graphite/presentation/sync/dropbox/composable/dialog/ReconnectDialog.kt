@@ -2,7 +2,7 @@ package com.syncodec.graphite.presentation.sync.dropbox.composable.dialog
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 
@@ -15,7 +15,7 @@ fun ReconnectDialog(
 	onReconnect : () -> Unit = {},
 	onDismiss : () -> Unit = {},
 ) {
-	val email = if (testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) testConnectionResponse.fullAccount.email else ""
+	val email = if (testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) testConnectionResponse.email else ""
 	GenericDialog(
 		showDialog = showDialog,
 		title = "Reconnect Dropbox",

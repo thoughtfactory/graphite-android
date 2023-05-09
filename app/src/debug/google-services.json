@@ -67,6 +67,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "948547440986-grdndo5efnjea2vc9rcult3ktqfd69c5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.syncodec.graphite.debug",
+            "certificate_hash": "7dddaaa56c84dff70e7f679132f7fc0611e13ec9"
+          }
+        },
+        {
           "client_id": "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.sync.googleDrive.screen
+package com.syncodec.graphite.presentation.sync.googleDrive.composable.screen
 
 import android.content.Intent
 import androidx.compose.animation.core.LinearEasing
@@ -34,10 +34,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.api.services.drive.model.About
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
+import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
+import com.syncodec.graphite.presentation.sync.googleDrive.composable.buildingBlobk.ConnectionCard
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 
@@ -46,10 +50,11 @@ import com.syncodec.graphite.presentation.ui.DeleteContent
 @Preview
 @Composable
 fun GoogleDriveSyncScreen(
+	aboutState : GoogleDriveSyncActivity.Companion.AboutState = GoogleDriveSyncActivity.Companion.AboutState.Init,
 	onClickConnect : () -> Unit = {},
 ) {
 	GenericScaffold(
-//		topBar = { TopBar() },
+		topBar = { GenericTopBar(title = "Google Drive") },
 		dialogContent = {
 		},
 	) {
@@ -57,6 +62,9 @@ fun GoogleDriveSyncScreen(
 			modifier = Modifier.fillMaxSize()
 		) {
 			ExperimentalCard()
+			ConnectionCard(
+				aboutState = aboutState,
+			)
 			SettingButton(
 				text = "Connect with Google Drive",
 				icon = R.drawable.ic_logo_google_drive,

@@ -34,7 +34,7 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFl
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.buildingBlock.BucketCard
 import com.syncodec.graphite.utils.ContentStatus
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.SortBy
@@ -131,7 +131,8 @@ fun BucketScreen(
 		) {
 			Crossfade(
 				targetState = bucketListStatus,
-				animationSpec = tween(300)
+				animationSpec = tween(300),
+				label = "bucketListStatus_crossfade"
 			) { contentStatus ->
 				when (contentStatus) {
 					is ContentStatus.Init -> LoadingView()

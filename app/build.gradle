@@ -20,7 +20,7 @@ android {
 		targetSdk 33
 		versionCode 41
 
-		versionName '2.3.0'
+		versionName '2.4.0'
 
 		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 		vectorDrawables {
@@ -51,12 +51,14 @@ android {
 
 	buildTypes {
 		release {
+			manifestPlaceholders.providerAuthorities = 'com.syncodec.graphite.fileprovider'
 			minifyEnabled true
 			shrinkResources true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 		}
 		debug {
 			applicationIdSuffix '.debug'
+			manifestPlaceholders.providerAuthorities = 'com.syncodec.graphite.debug.fileprovider'
 		}
 	}
 
@@ -64,6 +66,7 @@ android {
 		sourceCompatibility JavaVersion.VERSION_19
 		targetCompatibility JavaVersion.VERSION_19
 	}
+
 
 	kotlinOptions {
 		jvmTarget = '19'
@@ -98,11 +101,14 @@ android {
 	namespace 'com.syncodec.graphite'
 }
 
+kotlin {
+	jvmToolchain(19)
+}
+
 dependencies {
 
 	implementation 'com.jakewharton:process-phoenix:2.1.2'
 
-	implementation 'androidx.work:work-runtime-ktx:2.8.0'
 	implementation 'androidx.core:core-ktx:1.9.0'
 
 	implementation 'androidx.core:core-ktx:1.9.0'
@@ -117,7 +123,7 @@ dependencies {
 	implementation 'androidx.compose.ui:ui-tooling-preview:1.4.0-rc01'
 	implementation 'androidx.compose.ui:ui-util:1.4.0-rc01'
 
-	implementation 'androidx.work:work-runtime-ktx:2.8.0'
+	implementation 'androidx.work:work-runtime-ktx:2.8.1'
 	implementation "androidx.glance:glance-appwidget:1.0.0-alpha05"
 
 	implementation 'androidx.navigation:navigation-compose:2.6.0-alpha07'
@@ -133,20 +139,21 @@ dependencies {
 	implementation 'com.google.accompanist:accompanist-navigation-animation:0.29.2-rc'
 
 	implementation 'org.burnoutcrew.composereorderable:reorderable:0.9.6'
-	implementation 'com.kizitonwose.calendar:compose:2.2.0'
+	implementation 'com.kizitonwose.calendar:compose:2.3.0'
 
-	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.0'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.0'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0'
-	implementation 'androidx.lifecycle:lifecycle-service:2.6.0'
+	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1'
+	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
+	implementation 'androidx.lifecycle:lifecycle-service:2.6.1'
 
 	implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
 
 	implementation 'androidx.compose.runtime:runtime:1.4.0-rc01'
 
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
-	implementation 'io.realm.kotlin:library-base:1.6.1'
+
+	implementation 'io.realm.kotlin:library-base:1.7.0'
 
 	implementation 'io.insert-koin:koin-android:3.3.3'
 	implementation 'io.insert-koin:koin-android-compat:3.3.3'
@@ -158,7 +165,7 @@ dependencies {
 	ksp 'io.insert-koin:koin-ksp-compiler:1.1.1'
 
 //	Serialization
-	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+	implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0'
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.14.2'
 	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.2'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
@@ -184,7 +191,7 @@ dependencies {
 	implementation 'com.revenuecat.purchases:purchases:5.6.4'
 
 	implementation platform('com.google.firebase:firebase-bom:31.2.3')
-	implementation 'com.google.android.gms:play-services-auth:20.4.1'
+	implementation 'com.google.android.gms:play-services-auth:20.5.0'
 	implementation 'com.google.firebase:firebase-analytics'
 	implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
 	implementation 'com.google.firebase:firebase-auth-ktx'
@@ -192,10 +199,17 @@ dependencies {
 	implementation 'com.google.firebase:firebase-firestore-ktx'
 	implementation 'com.google.firebase:firebase-functions-ktx'
 
-//	Google drive
-//	implementation 'com.google.oauth-client:google-oauth-client-jetty:1.34.1'
-//	implementation 'com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0'
-//	implementation 'com.google.api-client:google-api-client-android:1.20.0'
+//	Google mcbc drive
+	implementation 'com.google.api-client:google-api-client:2.0.0'
+	implementation('com.google.api-client:google-api-client-android:2.2.0') {
+		exclude group: 'org.apache.httpcomponents'
+		exclude module: 'guava-jdk5'
+	}
+	implementation 'com.google.oauth-client:google-oauth-client-jetty:1.34.1'
+	implementation 'com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.3.0'
+	implementation 'com.google.http-client:google-http-client:1.42.2'
+	implementation 'com.google.http-client:google-http-client-gson:1.42.2'
 
 	implementation "androidx.javascriptengine:javascriptengine:1.0.0-alpha05"
 
@@ -226,7 +240,7 @@ dependencies {
 
 	implementation 'com.google.android.gms:play-services-location:21.0.1'
 	implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
-	implementation 'com.google.maps.android:maps-compose:2.11.1'
+	implementation 'com.google.maps.android:maps-compose:2.11.4'
 	implementation 'com.google.maps.android:maps-compose-utils:2.11.2'
 	implementation 'com.google.android.gms:play-services-maps:18.1.0'
 
@@ -247,7 +261,7 @@ dependencies {
 
 	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.5'
 
-	implementation "com.google.android.gms:play-services-oss-licenses:17.0.0"
+	implementation "com.google.android.gms:play-services-oss-licenses:17.0.1"
 
 //	For PackagePrivate modifier
 	implementation 'io.github.esentsov:kotlin-visibility:1.1.0'
@@ -263,15 +277,15 @@ dependencies {
 	androidTestImplementation "androidx.test:runner:1.5.2"
 	androidTestImplementation "androidx.test:rules:1.5.0"
 
-	androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-	androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+	androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
 
 	// Assertions
 	androidTestImplementation "androidx.test.ext:junit-ktx:1.1.5"
 	androidTestImplementation "androidx.test.ext:truth:1.5.0"
 
 	// Mock
-	androidTestImplementation "org.mockito:mockito-core:4.5.1"
+	androidTestImplementation 'org.mockito:mockito-core:5.3.1'
 	androidTestImplementation "org.mockito.kotlin:mockito-kotlin:4.1.0"
 
 	// Mockk
@@ -288,13 +302,13 @@ dependencies {
 	androidTestImplementation "androidx.test.espresso.idling:idling-concurrent:3.5.1"
 
 	// Compose dependencies
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha02'
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha02'
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha03'
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha03'
 
-	debugImplementation 'androidx.compose.ui:ui-tooling:1.5.0-alpha02'
-	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.5.0-alpha02'
+	debugImplementation 'androidx.compose.ui:ui-tooling:1.5.0-alpha03'
+	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.5.0-alpha03'
 	debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
-	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.5.0-alpha02'
+	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.5.0-alpha03'
 
 	// The following Espresso dependency can be either "implementation",
 	// or "androidTestImplementation", depending on whether you want the

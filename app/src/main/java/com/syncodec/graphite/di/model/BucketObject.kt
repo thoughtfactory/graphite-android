@@ -9,6 +9,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
+import java.time.Instant
 
 
 enum class BucketType {
@@ -44,8 +45,8 @@ class BucketObject() : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
-	var createdTimestamp : Long = System.currentTimeMillis()
-	var modifiedTimestamp : Long = System.currentTimeMillis()
+	var createdTimestamp : Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
 	var title : String? = null
 	var description : String? = null
 	var bucketType : String = BucketType.UNKNOWN.name
@@ -53,6 +54,8 @@ class BucketObject() : RealmObject {
 	var isLocked : Boolean = false
 
 	var bucketItemOrderList : RealmList<RealmUUID> = realmListOf()
+
+	var googleDriveId : String? = null
 
 	fun clone() : BucketObject = BucketObject().apply {
 		this.id = this@BucketObject.id

@@ -45,6 +45,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
+import java.time.Instant
 
 
 @Preview
@@ -84,8 +85,8 @@ fun ImportDataJourneyDialog(
 						}
 						NoteObject().apply {
 							this.id = noteId
-							this.createdTimestamp = journeyData.optLong("date_journal").let { if (it == 0L) System.currentTimeMillis() else it }
-							this.modifiedTimestamp = journeyData.optLong("date_modified").let { if (it == 0L) System.currentTimeMillis() else it }
+							this.createdTimestamp = journeyData.optLong("date_journal").let { if (it == 0L) Instant.now().toEpochMilli() else it }
+							this.modifiedTimestamp = journeyData.optLong("date_modified").let { if (it == 0L) Instant.now().toEpochMilli() else it }
 							this.userTimestamp = this.createdTimestamp
 							val lat = journeyData.optDouble("lat")
 							val lng = journeyData.optDouble("lon")

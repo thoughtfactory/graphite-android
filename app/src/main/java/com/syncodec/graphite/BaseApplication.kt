@@ -12,7 +12,8 @@ import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.di.repository.repository.Repository
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
+import com.syncodec.graphite.di.cloud.googleDrive.GDrive
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
@@ -36,7 +37,7 @@ import com.syncodec.graphite.presentation.settings.composable.screen.importDataS
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +49,7 @@ import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import java.io.File
+import java.time.Instant
 import com.syncodec.graphite.presentation.notebook.screen.NotebookScreenViewModel as NotebookScreenViewModel2
 
 
@@ -70,6 +72,7 @@ class BaseApplication : Application() {
 				module {
 					single { Repository() }
 					single { DBox(this@BaseApplication) }
+					single {GDrive(this@BaseApplication)}
 
 					viewModelOf(::MainViewModel)
 					viewModelOf(::NoteScreenViewModel)
@@ -113,7 +116,7 @@ class BaseApplication : Application() {
 			CoroutineScope(Dispatchers.Default).launch {
 				dataStore.getSuperExpiryTime.collect { superExpiryTimeString ->
 					try {
-						val currentTimestamp = System.currentTimeMillis()
+						val currentTimestamp = Instant.now().toEpochMilli()
 						when {
 							superExpiryTimeString == "" -> getRevenueCatInfo(auth)
 							superExpiryTimeString.toLong() > currentTimestamp -> isPro.tryEmit(true)

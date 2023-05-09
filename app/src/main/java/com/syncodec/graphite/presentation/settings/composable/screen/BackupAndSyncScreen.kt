@@ -14,6 +14,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
+import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
 
 
 @Preview
@@ -36,7 +37,9 @@ fun BackupAndSyncScreen(
 		SettingButton(text = "Dropbox", icon = R.drawable.ic_logo_dropbox, subText = "Manage", tint = Color.Unspecified){
 			context.startActivity(Intent(context, DropboxSyncActivity::class.java))
 		}
-		SettingButton(text = "Google Drive", icon = R.drawable.ic_logo_google_drive, subText = "Coming soon", tint = Color.Unspecified)
+		SettingButton(text = "Google Drive", icon = R.drawable.ic_logo_google_drive, subText = "Manage", tint = Color.Unspecified) {
+			context.startActivity(Intent(context, GoogleDriveSyncActivity::class.java))
+		}
 		SettingButton(text = "One Drive", icon = R.drawable.ic_logo_onedrive, subText = "Coming soon",tint = Color.Unspecified)
 	}
 }

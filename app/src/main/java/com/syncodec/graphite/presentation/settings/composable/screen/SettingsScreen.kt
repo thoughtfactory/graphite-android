@@ -67,7 +67,7 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Sett
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialogType
 import com.syncodec.graphite.presentation.ui.LocalIsPro
 import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 
 
@@ -185,12 +185,12 @@ fun SettingsScreen(
 		) { isTypographyDropdownMenuVisible = it }
 
 		SettingButtonWithDropdown(
-			text = "Dark mode",
+			text = "Which side are you on?",
 			icon = R.drawable.ic_bulb,
 			subText = when (darkTheme) {
 				SettingsActivity.Companion.DarkTheme.SyncWithSystem -> "Same as system"
-				SettingsActivity.Companion.DarkTheme.AlwaysOn -> "Always on"
-				SettingsActivity.Companion.DarkTheme.AlwaysOff -> "Always off"
+				SettingsActivity.Companion.DarkTheme.AlwaysOn -> "Dark side"
+				SettingsActivity.Companion.DarkTheme.AlwaysOff -> "Light side"
 				null -> "Same as system"
 			},
 			isDropdownMenuVisible = isDarkThemeDropdownMenuVisible,
@@ -200,12 +200,14 @@ fun SettingsScreen(
 					icon = R.drawable.ic_r2d2
 				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.SyncWithSystem); isDarkThemeDropdownMenuVisible = false },
 				DropdownMenuItem(
-					title = "Always on",
-					icon = R.drawable.ic_switch_on
+					title = "Dark side",
+					icon = R.drawable.ic_dark_side,
+					iconColor = Color.Unspecified,
 				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.AlwaysOn); isDarkThemeDropdownMenuVisible = false },
 				DropdownMenuItem(
-					title = "Always off",
-					icon = R.drawable.ic_switch_off
+					title = "Light side",
+					icon = R.drawable.ic_light_side,
+					iconColor = Color.Unspecified,
 				) { dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.AlwaysOff); isDarkThemeDropdownMenuVisible = false },
 			)
 		) { isDarkThemeDropdownMenuVisible = it }
@@ -374,45 +376,58 @@ private fun ProfileCard(
 @Preview
 @Composable
 private fun MadeWithLove() {
-	Row(
+	Column(
 		modifier = Modifier.fillMaxWidth(),
-		horizontalArrangement = Arrangement.Center,
-		verticalAlignment = Alignment.CenterVertically
+		horizontalAlignment = Alignment.CenterHorizontally,
 	) {
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.Center,
+			verticalAlignment = Alignment.CenterVertically
+		) {
+			Text(
+				text = "made with",
+				style = MaterialTheme.typography.bodyLarge,
+				fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
+				fontWeight = FontWeight.Bold,
+				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
+			)
+
+			Spacer(modifier = Modifier.width(6.dp))
+
+			Icon(
+				painter = painterResource(id = R.drawable.ic_heart_c),
+				contentDescription = "Love",
+				tint = Color.Unspecified,
+				modifier = Modifier.requiredSize(24.dp)
+			)
+
+			Spacer(modifier = Modifier.width(6.dp))
+
+			Text(
+				text = "on",
+				style = MaterialTheme.typography.bodyLarge,
+				fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
+				fontWeight = FontWeight.Bold,
+				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
+			)
+
+			Spacer(modifier = Modifier.width(10.dp))
+
+			Icon(
+				painter = painterResource(id = R.drawable.ic_earth_c),
+				contentDescription = "Earth",
+				tint = Color.Unspecified,
+				modifier = Modifier.requiredSize(20.dp)
+			)
+		}
+
+		Spacer(modifier = Modifier.height(4.dp))
+
 		Text(
-			text = "made with",
-			style = MaterialTheme.typography.bodyLarge,
-			fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-			fontWeight = FontWeight.Bold,
+			text = "${BuildConfig.VERSION_CODE} / ${BuildConfig.VERSION_NAME}",
+			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
-		)
-
-		Spacer(modifier = Modifier.width(6.dp))
-
-		Icon(
-			painter = painterResource(id = R.drawable.ic_heart_c),
-			contentDescription = "Love",
-			tint = Color.Unspecified,
-			modifier = Modifier.requiredSize(24.dp)
-		)
-
-		Spacer(modifier = Modifier.width(6.dp))
-
-		Text(
-			text = "on",
-			style = MaterialTheme.typography.bodyLarge,
-			fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-			fontWeight = FontWeight.Bold,
-			color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
-		)
-
-		Spacer(modifier = Modifier.width(10.dp))
-
-		Icon(
-			painter = painterResource(id = R.drawable.ic_earth_c),
-			contentDescription = "Earth",
-			tint = Color.Unspecified,
-			modifier = Modifier.requiredSize(20.dp)
 		)
 	}
 }

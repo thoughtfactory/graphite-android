@@ -52,7 +52,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.info.PlainTextWarning
 import com.syncodec.graphite.presentation.common.text.marqueeText.MarqueeText
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.composable.AttachmentPreview
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.createTempAttachmentFileToExpose
 import com.syncodec.graphite.utils.getFileName
 import io.github.esentsov.PackagePrivate

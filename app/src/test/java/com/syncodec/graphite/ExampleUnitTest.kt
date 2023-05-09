@@ -47,4 +47,24 @@ class ExampleUnitTest {
 			}
 		}
 	}
+
+	@Test
+	fun nullFlowTest() {
+		var a : String? = "a"
+		var b : String? = "b"
+		var c : String? = null
+
+		a?.let {
+			b?.let {
+				c?.let {
+					println("a: $a, b: $b, c: $c")
+				}
+				println()
+			} ?: run {
+				println("b is null")
+			}
+		} ?: run {
+			println("a is null")
+		}
+	}
 }

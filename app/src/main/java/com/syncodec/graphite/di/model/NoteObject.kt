@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
+import java.time.Instant
 import kotlin.random.Random
 
 
@@ -23,9 +24,9 @@ import kotlin.random.Random
 class NoteObject() : RealmObject {
 	constructor(jsonObject : JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
-		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
-		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
-		this.userTimestamp = jsonObject.optLong("userTimestamp", System.currentTimeMillis())
+		this.createdTimestamp = jsonObject.optLong("createdTimestamp", Instant.now().toEpochMilli())
+		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", Instant.now().toEpochMilli())
+		this.userTimestamp = jsonObject.optLong("userTimestamp", Instant.now().toEpochMilli())
 		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.color = jsonObject.optInt("color", getRandomColor().toArgb())
 		val latLngObject = jsonObject.optJSONObject("latLng")
@@ -46,9 +47,9 @@ class NoteObject() : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
-	var createdTimestamp : Long = System.currentTimeMillis()
-	var modifiedTimestamp : Long = System.currentTimeMillis()
-	var userTimestamp : Long = System.currentTimeMillis()
+	var createdTimestamp : Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
+	var userTimestamp : Long = Instant.now().toEpochMilli()
 	var title : String? = null
 	var color : Int? = null
 	var latLng : String? = null
@@ -60,6 +61,8 @@ class NoteObject() : RealmObject {
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
+
+	var googleDriveId : String? = null
 
 	fun setLatLng(latLng : LatLng?) {
 		try {
@@ -206,9 +209,9 @@ class NoteObject() : RealmObject {
 
 		fun getRandomInstance() : NoteObject {
 			return NoteObject().apply {
-				this.createdTimestamp = System.currentTimeMillis()
-				this.modifiedTimestamp = System.currentTimeMillis()
-				this.userTimestamp = System.currentTimeMillis()
+				this.createdTimestamp = Instant.now().toEpochMilli()
+				this.modifiedTimestamp = Instant.now().toEpochMilli()
+				this.userTimestamp = Instant.now().toEpochMilli()
 
 				this.title = "Random Title ${Random.nextInt()}"
 				this.color = Color.argb(255, Random.nextInt(256), Random.nextInt(256), Random.nextInt(256))

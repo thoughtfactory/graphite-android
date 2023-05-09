@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildi
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapEffect
@@ -44,7 +46,9 @@ import com.google.maps.android.compose.clustering.Clustering
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
 import com.syncodec.graphite.utils.AtlasNoteClusterItem
+import com.syncodec.graphite.utils.GoogleMapUtil
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.isMarkerVisible
 import com.syncodec.graphite.utils.share
@@ -63,6 +67,8 @@ fun AtlasView(
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val isDarkTheme = LocalIsDarkTheme.current
+
 	val mapUiSettings by remember {
 		mutableStateOf(
 			MapUiSettings(
@@ -87,7 +93,7 @@ fun AtlasView(
 				isMyLocationEnabled = false,
 				isTrafficEnabled = false,
 				latLngBoundsForCameraTarget = null,
-				mapStyleOptions = null,
+				mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, GoogleMapUtil.getMapStyle(isDarkTheme)),
 				mapType = MapType.NORMAL,
 				maxZoomPreference = 17f,
 				minZoomPreference = 1f,

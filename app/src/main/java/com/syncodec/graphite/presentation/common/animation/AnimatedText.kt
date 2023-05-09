@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -86,11 +85,12 @@ fun AnimatedText(
 	textAlign: TextAlign? = null,
 	maxLines : Int = Int.MAX_VALUE,
 	overflow : TextOverflow = TextOverflow.Clip,
-	transitionSpec : AnimatedContentScope<String?>.() -> ContentTransform = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+	transitionSpec : AnimatedContentTransitionScope<String?>.() -> ContentTransform = { fadeIn(tween(300)) with fadeOut(tween(300)) }
 ) {
 	AnimatedContent(
 		targetState = text,
-		transitionSpec = transitionSpec
+		transitionSpec = transitionSpec,
+		label = "AnimatedText_animation"
 	) {
 		Text(
 			text = it ?: "",

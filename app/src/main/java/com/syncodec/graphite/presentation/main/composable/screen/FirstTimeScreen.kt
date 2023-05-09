@@ -61,7 +61,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.res.ResourcesCompat
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.text.revealTextView.RevealText
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

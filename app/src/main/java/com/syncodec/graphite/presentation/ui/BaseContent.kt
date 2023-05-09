@@ -31,7 +31,7 @@ import com.syncodec.graphite.presentation.ui.authentication.AddPasscodeScreen
 import com.syncodec.graphite.presentation.ui.authentication.AuthenticatorScreen
 import com.syncodec.graphite.presentation.ui.authentication.ChangePasscode
 import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.alice.AliceRequestResult
@@ -40,6 +40,7 @@ import com.syncodec.graphite.utils.alice.putSecretData
 
 
 val LocalIsPro = compositionLocalOf { false }
+val LocalIsDarkTheme = compositionLocalOf { false }
 
 @OptIn(ExperimentalAnimationApi::class)
 @SuppressLint("NewApi")
@@ -101,6 +102,11 @@ fun BaseContent(
 				LocalIndication provides rippleIndication,
 				LocalIsPro provides isPro,
 				LocalIsAuthenticated provides isAuthenticated,
+				LocalIsDarkTheme provides when (colorScheme) {
+					darkColorScheme0 -> true
+					lightColorScheme0 -> false
+					else -> true
+				},
 				LocalAuthenticatorAction provides { newAuthenticatorState ->
 					if (isAuthenticated) {
 						BaseApplication.isAuthenticated.tryEmit(false)

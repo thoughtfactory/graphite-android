@@ -168,13 +168,14 @@ private fun BucketButton(
 	bucketButtonData : BucketButtonData
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
-			.copy(alpha = 0.31f),
-		animationSpec = tween(600)
+		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
+		animationSpec = tween(600),
+		label = "containerColor_animation"
 	)
 	val contentColor by animateColorAsState(
 		targetValue = if (bucketButtonData.highlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-		animationSpec = tween(600)
+		animationSpec = tween(600),
+		label = "contentColor_animation"
 	)
 
 	Column(

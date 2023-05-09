@@ -57,6 +57,8 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFiel
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
+import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +67,7 @@ import org.koin.androidx.compose.koinViewModel
 
 
 @Preview
-@OptIn(ExperimentalAnimationApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Preview
 @Composable
 fun AddBookBottomSheet() {

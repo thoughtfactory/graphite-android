@@ -3,7 +3,7 @@ package com.syncodec.graphite.presentation.sync.dropbox.composable.dialog
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.dropbox.core.v2.files.Metadata
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.dialog.RestoringSnapshotDialog
 
 

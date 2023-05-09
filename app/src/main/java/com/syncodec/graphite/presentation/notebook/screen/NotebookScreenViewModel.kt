@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import java.time.Instant
 
 
 @KoinViewModel
@@ -192,7 +193,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 	fun updateChapter(chapterId : RealmUUID, title : String?, description : String?, color : Color?, thumbnail : Bitmap?) {
 		ChapterObject().apply {
 			this.id = chapterId
-			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: System.currentTimeMillis()
+			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: Instant.now().toEpochMilli()
 			this.title = title
 			this.description = description
 			this.color = color?.toArgb()
@@ -210,7 +211,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 	fun toggleFavourite(chapterId : RealmUUID) {
 		ChapterObject().apply {
 			this.id = chapterId
-			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: System.currentTimeMillis()
+			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: Instant.now().toEpochMilli()
 			this.title = this@NotebookScreenViewModel.title.value
 			this.description = this@NotebookScreenViewModel.description.value
 			this.color = this@NotebookScreenViewModel.color.value
@@ -226,7 +227,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 	fun toggleLock(chapterId : RealmUUID) {
 		ChapterObject().apply {
 			this.id = chapterId
-			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: System.currentTimeMillis()
+			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: Instant.now().toEpochMilli()
 			this.title = this@NotebookScreenViewModel.title.value
 			this.description = this@NotebookScreenViewModel.description.value
 			this.color = this@NotebookScreenViewModel.color.value
@@ -242,7 +243,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 	fun toggleLocalOnly(chapterId : RealmUUID) {
 		ChapterObject().apply {
 			this.id = chapterId
-			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: System.currentTimeMillis()
+			this.createdTimestamp = this@NotebookScreenViewModel.createdTimestamp.value ?: Instant.now().toEpochMilli()
 			this.title = this@NotebookScreenViewModel.title.value
 			this.description = this@NotebookScreenViewModel.description.value
 			this.color = this@NotebookScreenViewModel.color.value

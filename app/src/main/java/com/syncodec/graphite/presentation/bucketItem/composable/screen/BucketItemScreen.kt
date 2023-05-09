@@ -10,6 +10,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
@@ -27,24 +31,26 @@ import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.worker.bucketItemNotification.TodoNotificationWorker
+import kotlin.random.Random
 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun BucketItemScreen(
-	bucketItemObject : BucketItemObject? = null,
-	bucketType : BucketType? = null,
-	showType : ShowType? = null,
-	isSaved : Boolean? = false,
-	isFavourite : Boolean = false,
-	isLocked : Boolean = false,
-	onClickSave : () -> Unit = {},
-	onClickFavourite : () -> Unit = {},
-	onClickLock : () -> Unit = {},
-	onChangeState : (Int) -> Unit = {},
-	onShare : () -> Unit = {},
-	onDelete : () -> Unit = {},
-	onClickBack : () -> Unit = {},
+	bucketItemObject: BucketItemObject? = null,
+	bucketType: BucketType? = null,
+	showType: ShowType? = null,
+	isSaved: Boolean? = false,
+	isFavourite: Boolean = false,
+	isLocked: Boolean = false,
+	onClickSave: () -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+	onChangeState: (Int) -> Unit = {},
+	onShare: () -> Unit = {},
+	onDelete: () -> Unit = {},
+	onClickBack: () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val isAuthenticated = LocalIsAuthenticated.current
@@ -54,11 +60,11 @@ fun BucketItemScreen(
 
 	var showDeleteDialog by remember { mutableStateOf(false) }
 
-	fun openDialog(dialogType : BucketItemDialogType) = when (dialogType) {
+	fun openDialog(dialogType: BucketItemDialogType) = when (dialogType) {
 		BucketItemDialogType.DELETE -> showDeleteDialog = true
 	}
 
-	fun closeDialog(dialogType : BucketItemDialogType) = when (dialogType) {
+	fun closeDialog(dialogType: BucketItemDialogType) = when (dialogType) {
 		BucketItemDialogType.DELETE -> showDeleteDialog = false
 	}
 
@@ -88,6 +94,21 @@ fun BucketItemScreen(
 						onClickDelete = { openDialog(BucketItemDialogType.DELETE) },
 						onClickAddReminder = {
 							Toast.makeText(context, "Add reminder and due dates are under development. Stay tuned...", Toast.LENGTH_SHORT).show()
+
+//							for (i in 0 .. 100) {
+//								val data = Data.Builder()
+//									.putString("title", "Title $i")
+//									.build()
+//
+//								val workRequest = OneTimeWorkRequest.Builder(TodoNotificationWorker::class.java)
+//									.setInitialDelay(10, java.util.concurrent.TimeUnit.SECONDS)
+//									.setInputData(data)
+//									.build()
+//
+//								WorkManager.getInstance(context)
+//									.beginUniqueWork("todo_notification$i", ExistingWorkPolicy.APPEND, workRequest)
+//									.enqueue()
+//							}
 						}
 					)
 				},

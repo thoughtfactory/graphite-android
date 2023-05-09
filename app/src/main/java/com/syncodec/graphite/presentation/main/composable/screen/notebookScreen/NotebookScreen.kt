@@ -37,7 +37,7 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.Notebook
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.utils.ContentStatus
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.SortBy

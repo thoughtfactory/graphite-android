@@ -50,7 +50,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.syncodec.graphite.fileprovider"
+            android:authorities="${providerAuthorities}"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -178,9 +178,21 @@
 
         <activity
             android:name=".presentation.sync.googleDrive.GoogleDriveSyncActivity"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="graphite.syncodec.com"
+                    android:pathPrefix="/googleDriveCallback"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".presentation.sync.oneDrive.OneDriveSyncActivity"
@@ -203,7 +215,13 @@
         </receiver>
 
         <service
-            android:name=".service.syncService.DropboxService"
+            android:name=".service.syncInator.DropboxSyncInatorService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".service.syncInator.GDriveSyncInatorService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

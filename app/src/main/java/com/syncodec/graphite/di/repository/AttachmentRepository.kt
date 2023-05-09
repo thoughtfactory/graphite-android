@@ -2,7 +2,8 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import android.net.Uri
-import com.syncodec.graphite.service.syncService.DropboxService
+import com.syncodec.graphite.service.syncInator.DropboxSyncInatorService
+import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.getFileName
 import io.realm.kotlin.types.RealmUUID
@@ -161,8 +162,8 @@ class AttachmentRepository {
 		}
 	}
 
-	fun getAttachmentMetadataMap() : Map<RealmUUID, List<DropboxService.Companion.AttachmentMetadata>> {
-		val attachmentMetadataMap = mutableMapOf<RealmUUID, List<DropboxService.Companion.AttachmentMetadata>>()
+	fun getAttachmentMetadataMap() : Map<RealmUUID, List<SyncInatorService.Companion.AttachmentMetadata>> {
+		val attachmentMetadataMap = mutableMapOf<RealmUUID, List<SyncInatorService.Companion.AttachmentMetadata>>()
 		attachmentDir.listFiles()?.forEach { noteAttachmentDir ->
 			val noteId = try {
 				RealmUUID.from(noteAttachmentDir.name)
@@ -170,7 +171,7 @@ class AttachmentRepository {
 				return@forEach
 			}
 			val attachmentMetadataList = noteAttachmentDir.listFiles()?.map { attachmentFile ->
-				DropboxService.Companion.AttachmentMetadata(
+				SyncInatorService.Companion.AttachmentMetadata(
 					fileName = attachmentFile.name,
 					parentId = noteId,
 					isDeleted = false
@@ -179,6 +180,27 @@ class AttachmentRepository {
 			attachmentMetadataMap[noteId] = attachmentMetadataList
 		}
 		return attachmentMetadataMap
+	}
+
+	fun getAttachmentMetadataSet() : Set<SyncInatorService.Companion.AttachmentMetadata> {
+		val attachmentMetadataSet = mutableSetOf<SyncInatorService.Companion.AttachmentMetadata>()
+		attachmentDir.listFiles()?.forEach { noteAttachmentDir ->
+			val noteId = try {
+				RealmUUID.from(noteAttachmentDir.name)
+			} catch (e : Exception) {
+				return@forEach
+			}
+			noteAttachmentDir.listFiles()?.forEach { attachmentFile ->
+				attachmentMetadataSet.add(
+					SyncInatorService.Companion.AttachmentMetadata(
+						fileName = attachmentFile.name,
+						parentId = noteId,
+						isDeleted = false
+					)
+				)
+			}
+		}
+		return attachmentMetadataSet
 	}
 
 	companion object {

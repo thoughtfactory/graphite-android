@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.annotation.KoinViewModel
+import java.time.Instant
 
 
 @KoinViewModel
@@ -46,8 +47,8 @@ class BucketItemViewModel(private val repository : Repository) : ViewModel() {
 
 	fun initData(bucketId : RealmUUID, bucketType : BucketType, showType : ShowType? = null) {
 		this.isNew.value = true
-		this.createdTimestamp.value = System.currentTimeMillis()
-		this.modifiedTimestamp.value = System.currentTimeMillis()
+		this.createdTimestamp.value = Instant.now().toEpochMilli()
+		this.modifiedTimestamp.value = Instant.now().toEpochMilli()
 		this.bucketType.value = bucketType
 		this.isFavourite.value = false
 		this.isLocked.value = false
@@ -87,8 +88,8 @@ class BucketItemViewModel(private val repository : Repository) : ViewModel() {
 		viewModelScope.launch(Dispatchers.Default) {
 			BucketItemObject().apply {
 				this@BucketItemViewModel.id.value?.let { this.id = it }
-				this.createdTimestamp = this@BucketItemViewModel.createdTimestamp.value ?: System.currentTimeMillis()
-				this.modifiedTimestamp = System.currentTimeMillis()
+				this.createdTimestamp = this@BucketItemViewModel.createdTimestamp.value ?: Instant.now().toEpochMilli()
+				this.modifiedTimestamp = Instant.now().toEpochMilli()
 				this.bucketType = this@BucketItemViewModel.bucketType.value?.name ?: BucketType.UNKNOWN.name
 				this.title = this@BucketItemViewModel.title.value
 				this.state = this@BucketItemViewModel.state.value?.name ?: BucketItemState.ALPHA.name

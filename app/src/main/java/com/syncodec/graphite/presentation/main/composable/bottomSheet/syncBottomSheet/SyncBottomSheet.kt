@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.button.MenuButton
@@ -34,14 +34,14 @@ import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ConnectedView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
-import com.syncodec.graphite.service.syncService.SyncerService
+import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
 
 
 @Preview
 @Composable
 fun SyncBottomSheet(
-	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
+	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
 	onClickTestConnection : () -> Unit = {},
 	onClickSyncNow : () -> Unit = {},
@@ -64,10 +64,10 @@ fun SyncBottomSheet(
 			)
 
 			is DBox.Companion.TestConnectionResponse.Success -> ConnectedView(
-				email = testConnectionResponse.fullAccount.email,
-				name = testConnectionResponse.fullAccount.name?.displayName,
-				spaceTotal = testConnectionResponse.spaceUsage.allocation?.individualValue?.allocated,
-				spaceUsed = testConnectionResponse.spaceUsage.used,
+				email = testConnectionResponse.email,
+				name = testConnectionResponse.name,
+				spaceTotal = testConnectionResponse.spaceTotal,
+				spaceUsed = testConnectionResponse.spaceUsed,
 				syncStatus = syncStatus,
 				onForceSync = onClickForceSync,
 				onSync = onClickSyncNow,

@@ -4,6 +4,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObjectLite
 import io.realm.kotlin.types.RealmUUID
+import java.time.Instant
 
 
 class FunctionPreviewParameter: PreviewParameterProvider<() -> Unit> {
@@ -17,13 +18,13 @@ class FunctionPreviewParameter: PreviewParameterProvider<() -> Unit> {
 class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteObjectLite>>> {
 	override val values: Sequence<Map<Long, List<NoteObjectLite>>> = sequenceOf(
 		mapOf(
-			System.currentTimeMillis() to listOf(
+			Instant.now().toEpochMilli() to listOf(
 				NoteObjectLite(
 					id = RealmUUID.random(),
 					parentId = RealmUUID.random(),
-					createdTimestamp = System.currentTimeMillis(),
-					modifiedTimestamp = System.currentTimeMillis(),
-					userTimestamp = System.currentTimeMillis(),
+					createdTimestamp = Instant.now().toEpochMilli(),
+					modifiedTimestamp = Instant.now().toEpochMilli(),
+					userTimestamp = Instant.now().toEpochMilli(),
 					title = "npr_71",
 					color = null,
 					latLng = LatLng(),

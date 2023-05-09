@@ -2,12 +2,14 @@
 package com.syncodec.graphite
 
 import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
-import com.syncodec.graphite.service.syncService.DropboxService
+import com.syncodec.graphite.service.syncInator.DropboxSyncInatorService
+import com.syncodec.graphite.service.syncInator.SyncInatorService
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Test
+import java.time.Instant
 
 
 class DropboxSyncTest {
@@ -17,17 +19,17 @@ class DropboxSyncTest {
 
 	@Test
 	fun test_metadataSerialization() {
-		val objectMetadata = DropboxService.Companion.ObjectMetadata(
-			modifiedTimestamp = System.currentTimeMillis(),
+		val objectMetadata = SyncInatorService.Companion.ObjectMetadata(
+			modifiedTimestamp = Instant.now().toEpochMilli(),
 			hash = "hash",
 			isDeleted = false
 		)
 
-		val objectMetadataList : Map<RealmUUID, DropboxService.Companion.ObjectMetadata> = mapOf(
+		val objectMetadataList : Map<RealmUUID, SyncInatorService.Companion.ObjectMetadata> = mapOf(
 			RealmUUID.random() to objectMetadata,
 		)
 
-		MapSerializer(RealmUUIDSerializer, DropboxService.Companion.ObjectMetadata.serializer()).let {
+		MapSerializer(RealmUUIDSerializer, SyncInatorService.Companion.ObjectMetadata.serializer()).let {
 			json.encodeToString(it, objectMetadataList).let {
 				println(it)
 			}

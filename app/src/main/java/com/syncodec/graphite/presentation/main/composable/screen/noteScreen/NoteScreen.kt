@@ -49,7 +49,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buil
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList.NoteList
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.ContentStatus
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.SortBy

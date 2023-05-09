@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.note.screen.editorScreen
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.koin.android.annotation.KoinViewModel
 import java.io.File
+import java.time.Instant
 
 
 @KoinViewModel
@@ -172,7 +174,7 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 		viewModelScope.launch(Dispatchers.Default) {
 			NoteObject().apply {
 				this@EditorScreenViewModel.noteId.value?.let { this.id = it } ?: run { this@EditorScreenViewModel.noteId.tryEmit(this.id) }
-				this.modifiedTimestamp = System.currentTimeMillis()
+				this.modifiedTimestamp = Instant.now().toEpochMilli()
 				this@EditorScreenViewModel.createdTimestamp.value?.let { this.createdTimestamp = it }
 				this@EditorScreenViewModel.userTimestamp.value?.let { this.userTimestamp = it }
 				this@EditorScreenViewModel.title.value?.let { this.title = it }

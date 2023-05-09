@@ -57,7 +57,7 @@ import com.syncodec.graphite.presentation.settings.composable.screen.importDataS
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

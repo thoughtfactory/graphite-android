@@ -8,6 +8,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
+import java.time.Instant
 import kotlin.random.Random
 
 
@@ -16,8 +17,8 @@ import kotlin.random.Random
 class ChapterObject() : RealmObject {
 	constructor(jsonObject : JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
-		this.createdTimestamp = jsonObject.optLong("createdTimestamp", System.currentTimeMillis())
-		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", System.currentTimeMillis())
+		this.createdTimestamp = jsonObject.optLong("createdTimestamp", Instant.now().toEpochMilli())
+		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", Instant.now().toEpochMilli())
 		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.color = jsonObject.optInt("color")
@@ -34,8 +35,8 @@ class ChapterObject() : RealmObject {
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
-	var createdTimestamp : Long = System.currentTimeMillis()
-	var modifiedTimestamp : Long = System.currentTimeMillis()
+	var createdTimestamp : Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
 	var title : String? = null
 	var description : String? = null
 	var color : Int? = getRandomColor().toArgb()
@@ -44,6 +45,8 @@ class ChapterObject() : RealmObject {
 	var isLocked : Boolean = false
 
 	var parentId : RealmUUID? = null
+
+	var googleDriveId : String? = null
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
@@ -176,8 +179,8 @@ data class ChapterObjectLite(
 		fun getRandomInstance() : ChapterObjectLite {
 			return ChapterObjectLite(
 				id = RealmUUID.random(),
-				createdTimestamp = System.currentTimeMillis() + Random.nextLong(),
-				modifiedTimestamp = System.currentTimeMillis() + Random.nextLong(),
+				createdTimestamp = Instant.now().toEpochMilli() + Random.nextLong(),
+				modifiedTimestamp = Instant.now().toEpochMilli() + Random.nextLong(),
 				title = RealmUUID.random().toString(),
 				description = RealmUUID.random().toString(),
 				color = getRandomColor().toArgb(),

@@ -19,7 +19,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import com.syncodec.graphite.di.sync.dropbox.DBox
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.explorer.ExplorerActivity
 import com.syncodec.graphite.presentation.main.MainViewModel
@@ -31,7 +31,7 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottom
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialog
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
-import com.syncodec.graphite.service.syncService.SyncerService
+import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +52,7 @@ enum class ComponentType {
 )
 @Composable
 fun MainScreen(
-	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
+	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
 	testDropboxConnection : () -> Unit = {},
 	onClickSyncNow : () -> Unit = {},
@@ -126,12 +126,12 @@ fun MainScreen(
 					selectedIdList = listOf()
 				},
 				onClickCloud = {
-					if (syncStatus is SyncerService.Companion.SyncStatus.Init
-						|| syncStatus is SyncerService.Companion.SyncStatus.AutoSyncDisabled
-						|| syncStatus is SyncerService.Companion.SyncStatus.Locked
-						|| syncStatus is SyncerService.Companion.SyncStatus.CredentialError
-						|| syncStatus is SyncerService.Companion.SyncStatus.Idle
-						|| syncStatus is SyncerService.Companion.SyncStatus.Failed
+					if (syncStatus is SyncInatorService.Companion.SyncStatus.Init
+						|| syncStatus is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
+						|| syncStatus is SyncInatorService.Companion.SyncStatus.Locked
+						|| syncStatus is SyncInatorService.Companion.SyncStatus.CredentialError
+						|| syncStatus is SyncInatorService.Companion.SyncStatus.Idle
+						|| syncStatus is SyncInatorService.Companion.SyncStatus.Failed
 					) {
 						testDropboxConnection()
 					}

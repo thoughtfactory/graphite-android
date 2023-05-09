@@ -23,10 +23,11 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.ContentStatus
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 
 class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
@@ -177,7 +178,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 				.get()
 				.addOnSuccessListener { documentSnapshot ->
 					val expiryTimestamp = documentSnapshot.getTimestamp("override")?.seconds?.times(1000)
-					val currentTimestamp = System.currentTimeMillis()
+					val currentTimestamp = Instant.now().toEpochMilli()
 
 					expiryTimestamp?.minus(currentTimestamp)?.let {
 						if (it > 0) {

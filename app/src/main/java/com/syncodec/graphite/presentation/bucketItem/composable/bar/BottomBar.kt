@@ -22,7 +22,6 @@ import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun BottomBar(
 	isSaved : Boolean = false,

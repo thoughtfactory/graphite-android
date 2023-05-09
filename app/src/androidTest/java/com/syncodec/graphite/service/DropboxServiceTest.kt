@@ -6,8 +6,8 @@ import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ServiceTestRule
-import com.syncodec.graphite.service.syncService.DropboxService
-import com.syncodec.graphite.service.syncService.SyncerService
+import com.syncodec.graphite.service.syncInator.DropboxSyncInatorService
+import com.syncodec.graphite.service.syncInator.SyncInatorService
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Assert
 import org.junit.Rule
@@ -30,26 +30,26 @@ class DropboxServiceTest {
 	@JvmField
 	@Rule
 	val serviceTestRule : ServiceTestRule = ServiceTestRule()
-	private var service : DropboxService? = null
+	private var service : DropboxSyncInatorService? = null
 
 	@Test
 	@Throws(TimeoutException::class)
 	fun testWithBoundService() {
 		// Create the service Intent.
-		val serviceIntent = Intent(getApplicationContext(), DropboxService::class.java)
+		val serviceIntent = Intent(getApplicationContext(), DropboxSyncInatorService::class.java)
 
 		val binder : IBinder = serviceTestRule.bindService(serviceIntent)
-		service = (binder as DropboxService.DropboxServiceBinder).service
+		service = (binder as DropboxSyncInatorService.DropboxServiceBinder).service
 
 		assert(service != null)
-		assert(service!!.syncStatus.value == SyncerService.Companion.SyncStatus.Init)
+		assert(service!!.syncStatus.value == SyncInatorService.Companion.SyncStatus.Init)
 	}
 
 	@Test
 	fun test_dropboxConnection() {
 		assert(service != null)
 		service!!.let { service ->
-			assert(service.syncStatus.value == SyncerService.Companion.SyncStatus.Init)
+			assert(service.syncStatus.value == SyncInatorService.Companion.SyncStatus.Init)
 
 			val syncCoroutine = service.getPrivateProperty("syncCoroutine") as CoroutineScope?
 			val reSyncCoroutine = service.getPrivateProperty("reSyncCoroutine") as CoroutineScope?

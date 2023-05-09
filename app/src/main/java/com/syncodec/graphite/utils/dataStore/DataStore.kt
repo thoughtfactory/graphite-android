@@ -1,4 +1,4 @@
-package com.syncodec.graphite.utils
+package com.syncodec.graphite.utils.dataStore
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -10,6 +10,9 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.presentation.settings.SettingsActivity
+import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

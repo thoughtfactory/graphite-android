@@ -6,20 +6,10 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.dropbox.core.v2.users.FullAccount
-import com.dropbox.core.v2.users.SpaceUsage
-import com.syncodec.graphite.di.sync.dropbox.DBox
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 
 @Preview
 @Composable
@@ -34,11 +24,11 @@ fun DropboxConnection(
 		when (testConnectionResponse) {
 			is DBox.Companion.TestConnectionResponse.Success -> {
 				DropboxProfile(
-					email = testConnectionResponse.fullAccount.email,
-					name = testConnectionResponse.fullAccount.name.displayName,
-					profilePhotoUrl = testConnectionResponse.fullAccount.profilePhotoUrl,
-					spaceTotal = testConnectionResponse.spaceUsage.allocation?.individualValue?.allocated,
-					spaceUsed = testConnectionResponse.spaceUsage.used,
+					email = testConnectionResponse.email,
+					name = testConnectionResponse.name,
+					profilePhotoUrl = testConnectionResponse.profilePictureUrl,
+					spaceTotal = testConnectionResponse.spaceTotal,
+					spaceUsed = testConnectionResponse.spaceUsed,
 					modifier = Modifier.padding(12.dp, 4.dp),
 				)
 			}

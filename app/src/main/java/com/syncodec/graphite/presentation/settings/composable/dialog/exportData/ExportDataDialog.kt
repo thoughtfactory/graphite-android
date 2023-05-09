@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
+import java.time.Instant
 
 
 @Preview
@@ -78,7 +79,7 @@ fun ExportDataDialog(
 					exportDir.deleteRecursively()
 					exportDir.mkdirs()
 
-					val exportDirName = "graphite_export_${System.currentTimeMillis()}"
+					val exportDirName = "graphite_export_${Instant.now().toEpochMilli()}"
 					val exportFileDir = File(exportDir, exportDirName).also { exportFileDir ->
 						exportFileDir.mkdirs()
 

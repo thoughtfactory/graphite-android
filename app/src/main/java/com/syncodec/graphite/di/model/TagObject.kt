@@ -11,6 +11,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
+import java.time.Instant
 
 
 @Keep
@@ -20,7 +21,7 @@ class TagObject() : RealmObject {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.tag = jsonObject.optString("tag").let { if (it.isNullOrEmpty() || it == "null") this.id.toString() else it }
 		this.color = jsonObject.optInt("color").let { if (it == 0) getRandomColor().toArgb() else it }
-		this.modifiedTimestamp = jsonObject.optLong("userTimestamp", System.currentTimeMillis())
+		this.modifiedTimestamp = jsonObject.optLong("userTimestamp", Instant.now().toEpochMilli())
 		jsonObject.optJSONArray("objectIdList")?.let { jsonArray ->
 			for (i in 0 until jsonArray.length()) {
 				try {
@@ -40,9 +41,11 @@ class TagObject() : RealmObject {
 	var tag : String = ""
 	var color : Int = getRandomColor().toArgb()
 
-	var modifiedTimestamp : Long = System.currentTimeMillis()
+	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
 
 	var objectIdList : RealmList<RealmUUID> = realmListOf()
+
+	var googleDriveId : String? = null
 
 	fun toLite() : TagObjectLite {
 		return TagObjectLite(
@@ -100,7 +103,7 @@ class TagObject() : RealmObject {
 			}
 		}
 		fun getRandomInstance() = TagObject().apply {
-			tag = "Tag ${System.currentTimeMillis()}"
+			tag = "Tag ${Instant.now().toEpochMilli()}"
 			color = getRandomColor().toArgb()
 		}
 	}

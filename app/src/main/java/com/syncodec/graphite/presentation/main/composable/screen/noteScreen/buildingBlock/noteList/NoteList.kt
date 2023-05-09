@@ -19,11 +19,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.WhatsNewCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookTimelineSpacer
-import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import com.syncodec.graphite.utils.timeStampToTime

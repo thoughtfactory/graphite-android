@@ -1,105 +1,112 @@
 package com.syncodec.graphite.presentation.sync.googleDrive
 
-import android.R.attr.data
-import android.app.Activity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.Scopes
-import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
-import com.syncodec.graphite.presentation.sync.googleDrive.screen.GoogleDriveSyncScreen
+import com.google.api.services.drive.model.About
+import com.syncodec.graphite.di.cloud.googleDrive.GDrive
+import com.syncodec.graphite.presentation.sync.googleDrive.composable.screen.GoogleDriveSyncScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 
 class GoogleDriveSyncActivity : ComponentActivity() {
 
-//	private val JSON_FACTORY : JsonFactory = GsonFactory.getDefaultInstance()
-//	private val SCOPES = listOf(DriveScopes.DRIVE_METADATA_READONLY, DriveScopes.DRIVE_APPDATA)
-//	private val CREDENTIALS_FILE_PATH = "/credentials.json"
+	val gDrive : GDrive by inject()
 
+	private val aboutStateFlow : MutableStateFlow<AboutState> = MutableStateFlow(AboutState.Init)
+	private lateinit var syncDataStoreInstance : SyncDataStoreInstance
 
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
 
+		syncDataStoreInstance = SyncDataStoreInstance(this)
+
+		connectWithDrive()
+
 		setContent {
 			BaseContent {
+				val aboutState by aboutStateFlow.collectAsState()
 				GoogleDriveSyncScreen(
-					onClickConnect = { signIn() }
+					aboutState = aboutState,
+					onClickConnect = { signInWithDrivePermission() },
 				)
 			}
 		}
 	}
 
-	val signInActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-		if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-
+	private val signInActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+		val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+		try {
+			task.result.serverAuthCode?.let {
+				Log.d("GoogleDriveSyncActivity", "serverAuthCode: $it")
+			}
+			task.result.account?.let {
+				Toast.makeText(this, "Connection successful.", Toast.LENGTH_SHORT).show()
+				connectWithDrive()
+			}
+		} catch (exception : Exception) {
+			exception.printStackTrace()
+			Toast.makeText(this, "Connection unsuccessful.", Toast.LENGTH_SHORT).show()
 		}
 	}
-//	val signInActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//		if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-//			GoogleSignIn.getSignedInAccountFromIntent(result.data)
-//				.addOnSuccessListener { googleAccount : GoogleSignInAccount ->
-//					Log.d("npr71", "Signed in as " + googleAccount.email)
-//
-//					// Use the authenticated account to sign in to the Drive service.
-//					val credential : GoogleAccountCredential = GoogleAccountCredential.usingOAuth2(this, setOf(DriveScopes.DRIVE_FILE))
-//					credential.selectedAccount = googleAccount.account
-//					val HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport()
-//					val googleDriveService : Drive = Drive.Builder(
-//						HTTP_TRANSPORT,
-//						GsonFactory(),
-//						credential
-//					)
-//						.setApplicationName("Graphene")
-//						.build()
-//
-//				}
-//				.addOnFailureListener { exception : Exception? -> Log.e("npr71", "Unable to sign in.", exception) }
-//		}
-//	}
 
-	fun signIn() {
-		val serverClientId = "CLIENT_ID_OF_WEB_BROWSER_API"
-		val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-			.requestScopes(Scope(Scopes.DRIVE_APPFOLDER))
+	private fun signInWithDrivePermission() {
+		val serverClientId = "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com"
+		val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
 			.requestServerAuthCode(serverClientId)
 			.requestEmail()
+			.requestScopes(Scope(Scopes.DRIVE_APPFOLDER))
 			.build()
 
-		val mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-		signInActivity.launch(mGoogleSignInClient.signInIntent)
+		val googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions)
+		signInActivityLauncher.launch(googleSignInClient.signInIntent)
 	}
 
-//	fun signIn() {
-//		val signInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-//			.requestEmail()
-//			.requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
-//			.build()
-//		val client = GoogleSignIn.getClient(this, signInOptions)
-//		signInActivity.launch(client.signInIntent)
-//	}
+	private fun connectWithDrive() {
+		lifecycleScope.launch(Dispatchers.IO) {
+			val googleAccount = GoogleSignIn.getLastSignedInAccount(this@GoogleDriveSyncActivity)
+			if (googleAccount == null) {
+				aboutStateFlow.tryEmit(AboutState.NotLoggedIn)
+			} else {
+				aboutStateFlow.tryEmit(AboutState.Loading)
+				gDrive.getDrive()?.let {
+					try {
+						it.about().get().setFields("user, storageQuota").execute().let {
+							aboutStateFlow.tryEmit(AboutState.Success(it))
+							syncDataStoreInstance.setSyncProvider(SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive)
+							Log.d("npr71", "connectWithDrive: ${it.user.displayName}")
+						}
+					} catch (exception : Exception) {
+						exception.printStackTrace()
+						aboutStateFlow.tryEmit(AboutState.Error(exception.message ?: "Unknown error"))
+					}
+				}
+			}
+		}
+	}
 
-//	@Throws(IOException::class)
-//	private fun getCredentials(HTTP_TRANSPORT : NetHttpTransport) : Credential? {
-////		// Load client secrets.
-////		val clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, InputStreamReader(`in`))
-////		GoogleClientSecrets.load()
-////
-////		// Build flow and trigger user authorization request.
-////		val flow = GoogleAuthorizationCodeFlow.Builder(
-////			HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES
-////		)
-////			.setDataStoreFactory(FileDataStoreFactory(File(TOKENS_DIRECTORY_PATH)))
-////			.setAccessType("offline")
-////			.build()
-////		val receiver = LocalServerReceiver.Builder().setPort(8888).build()
-////		//returns an authorized Credential object.
-////		return AuthorizationCodeInstalledApp(flow, receiver).authorize("user")
-//	}
+	companion object {
+		sealed class AboutState {
+			object Init : AboutState()
+			object Loading : AboutState()
+			data class Success(val about : About) : AboutState()
+			data class Error(val message : String) : AboutState()
+			object NotLoggedIn : AboutState()
+		}
+	}
 }

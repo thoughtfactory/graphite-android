@@ -40,17 +40,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.service.syncService.SyncerService
+import com.syncodec.graphite.service.syncInator.SyncInatorService
 
 
 @Preview
 @Composable
 fun ConnectedView(
-	email : String = if (BuildConfig.DEBUG) "" else "",
+	email : String? = if (BuildConfig.DEBUG) "" else "",
 	name : String? = null,
 	spaceTotal : Long? = null,
 	spaceUsed : Long? = null,
-	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
+	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	onForceSync : () -> Unit = {},
 	onSync : () -> Unit = {},
 	onClickManage : () -> Unit = {},
@@ -243,35 +243,35 @@ private fun ColumnScope.SyncButton(
 @Preview
 @Composable
 private fun SyncStatusCard(
-	syncStatus : SyncerService.Companion.SyncStatus = SyncerService.Companion.SyncStatus.Init,
+	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 ) {
 	when (syncStatus) {
-		is SyncerService.Companion.SyncStatus.Init -> SyncStatusCardMessage(message = "Initializing... Try to connect with Dropbox.")
-		is SyncerService.Companion.SyncStatus.Idle -> SyncStatusCardMessage(message = if (syncStatus.isAutoSyncDisabled) "Idle. Auto sync is disabled." else "Idle")
-		is SyncerService.Companion.SyncStatus.Locked -> SyncStatusCardMessage(
+		is SyncInatorService.Companion.SyncStatus.Init -> SyncStatusCardMessage(message = "Initializing... Try to connect with Dropbox.")
+		is SyncInatorService.Companion.SyncStatus.Idle -> SyncStatusCardMessage(message = if (syncStatus.isAutoSyncDisabled) "Idle. Auto sync is disabled." else "Idle")
+		is SyncInatorService.Companion.SyncStatus.Locked -> SyncStatusCardMessage(
 			message = "It seems that another device is syncing. Trying again in few moments...\nIf you believe no other device is syncing or problem persists, try to force sync.",
 			containerColor = MaterialTheme.colorScheme.errorContainer,
 			contentColor = MaterialTheme.colorScheme.onErrorContainer,
 		)
 
-		is SyncerService.Companion.SyncStatus.Connected -> SyncStatusCardMessage(message = "Connected to Dropbox. Syncing...")
-		is SyncerService.Companion.SyncStatus.Syncing -> SyncStatusSyncingCardMessage(
+		is SyncInatorService.Companion.SyncStatus.Connected -> SyncStatusCardMessage(message = "Connected to Dropbox. Syncing...")
+		is SyncInatorService.Companion.SyncStatus.Syncing -> SyncStatusSyncingCardMessage(
 			message = "Syncing...",
 			syncStatus = syncStatus,
 			containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
 			contentColor = MaterialTheme.colorScheme.onSurface,
 		)
-		is SyncerService.Companion.SyncStatus.AutoSyncDisabled -> SyncStatusCardMessage(
+		is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled -> SyncStatusCardMessage(
 			message = "Auto sync is disabled. You can enable it from settings or sync manually.",
 			containerColor = Color(0x71FFD93D),
 			contentColor = MaterialTheme.colorScheme.onSurface,
 		)
-		is SyncerService.Companion.SyncStatus.Failed -> SyncStatusCardMessage(
+		is SyncInatorService.Companion.SyncStatus.Failed -> SyncStatusCardMessage(
 			message = "Failed. Try to sync again or force sync if problem persists.",
 			containerColor = MaterialTheme.colorScheme.errorContainer,
 			contentColor = MaterialTheme.colorScheme.onErrorContainer,
 		)
-		is SyncerService.Companion.SyncStatus.CredentialError -> SyncStatusCardMessage(
+		is SyncInatorService.Companion.SyncStatus.CredentialError -> SyncStatusCardMessage(
 			message = "It seems like your credentials are expired. Try to reconnect with Dropbox from settings.",
 			containerColor = MaterialTheme.colorScheme.errorContainer,
 			contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -303,7 +303,7 @@ private fun SyncStatusCardMessage(
 @Composable
 private fun SyncStatusSyncingCardMessage(
 	message : String = "Syncing",
-	syncStatus : SyncerService.Companion.SyncStatus.Syncing,
+	syncStatus : SyncInatorService.Companion.SyncStatus.Syncing,
 	containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
 	contentColor : Color = MaterialTheme.colorScheme.onSurface,
 ) {

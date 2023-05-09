@@ -2,6 +2,7 @@ package com.syncodec.graphite.utils
 
 import android.text.format.DateFormat
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util.Calendar
 
 fun Long.timeStampToPrettyDay() : String = DateFormat.format("dd MMM, yyyy EEE", this).toString()
@@ -39,7 +40,7 @@ fun timestampToCalendarDay(timestamp : Long) : Long {
 	return calendar.timeInMillis
 }
 
-fun getToday() : Long = timestampToCalendarDay(System.currentTimeMillis())
+fun getToday() : Long = timestampToCalendarDay(Instant.now().toEpochMilli())
 
 fun quoteTimestampToKey(timestamp : Long) = SimpleDateFormat("yyyy_MM_dd").format(timestamp)
 

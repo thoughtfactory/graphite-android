@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import java.time.Instant
 
 
 @KoinViewModel
@@ -125,7 +126,7 @@ class ViewerScreenViewModel(private val repository : Repository) : ViewModel() {
 			NoteObject().apply {
 				this@ViewerScreenViewModel.noteId.value?.let { this.id = it } ?: run { this@ViewerScreenViewModel.noteId.tryEmit(this.id) }
 				this@ViewerScreenViewModel.createdTimestamp.value?.let { this.createdTimestamp = it }
-				this.modifiedTimestamp = System.currentTimeMillis()
+				this.modifiedTimestamp = Instant.now().toEpochMilli()
 				this@ViewerScreenViewModel.userTimestamp.value?.let { this.userTimestamp = it }
 				this@ViewerScreenViewModel.title.value?.let { this.title = it }
 				this@ViewerScreenViewModel.color.value?.let { this.color = it }

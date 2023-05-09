@@ -1,4 +1,4 @@
-package com.syncodec.graphite.di.sync.dropbox
+package com.syncodec.graphite.di.cloud.dropbox
 
 import android.content.Context
 import androidx.annotation.WorkerThread
@@ -8,9 +8,6 @@ import com.dropbox.core.InvalidAccessTokenException
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.ListFolderErrorException
 import com.dropbox.core.v2.files.Metadata
-import com.dropbox.core.v2.users.DbxUserUsersRequests
-import com.dropbox.core.v2.users.FullAccount
-import com.dropbox.core.v2.users.SpaceUsage
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.utils.alice.AliceRequestResult
@@ -24,6 +21,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
+import java.time.Instant
 
 
 class DBox(private val context : Context) {
@@ -67,7 +65,7 @@ class DBox(private val context : Context) {
 
 	@WorkerThread
 	fun getAccessToken(callback : (AccessTokenResponseResponse) -> Unit) {
-		if (dbxAccessToken != null && dbxAccessToken !!.second > System.currentTimeMillis()) {
+		if (dbxAccessToken != null && dbxAccessToken !!.second > Instant.now().toEpochMilli()) {
 			try {
 				DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
 					callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
@@ -84,7 +82,7 @@ class DBox(private val context : Context) {
 					val expiresAt = jsonObject?.getLong("expiresAt")
 					if (accessToken != null && expiresAt != null) {
 						dbxAccessToken = Pair(accessToken, expiresAt)
-						if (expiresAt > System.currentTimeMillis()) {
+						if (expiresAt > Instant.now().toEpochMilli()) {
 							try {
 								DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
 									callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
@@ -119,10 +117,10 @@ class DBox(private val context : Context) {
 									val result = JSONObject(data["result"] as String)
 									val accessToken = result.getString("access_token")
 									val expiresIn = result.getLong("expires_in")
-									dbxAccessToken = Pair(accessToken, System.currentTimeMillis() + (expiresIn * 1000))
+									dbxAccessToken = Pair(accessToken, Instant.now().toEpochMilli() + (expiresIn * 1000))
 									val jsonObject = JSONObject()
 									jsonObject.put("accessToken", accessToken)
-									jsonObject.put("expiresAt", System.currentTimeMillis() + (expiresIn * 1000))
+									jsonObject.put("expiresAt", Instant.now().toEpochMilli() + (expiresIn * 1000))
 									context.putSecretData("dropbox_access_token", jsonObject.toString())
 									callback(AccessTokenResponseResponse.Success(accessToken))
 								}
@@ -152,7 +150,13 @@ class DBox(private val context : Context) {
 					try {
 						DbxClientV2(DbxRequestConfig("Graphite"), accessTokenResponseResponse.accessToken)
 							.users()
-							.let { callback(TestConnectionResponse.Success(it.currentAccount, it.spaceUsage)) }
+							.let { callback(TestConnectionResponse.Success(
+								it.getCurrentAccount().name.displayName,
+								it.getCurrentAccount().email,
+								it.getCurrentAccount().profilePhotoUrl,
+								it.spaceUsage.used,
+								it.spaceUsage.allocation.individualValue.allocated
+							)) }
 					} catch (e : Exception) {
 						callback(TestConnectionResponse.Error(e, "Something went wrong. Please try again."))
 					}
@@ -346,7 +350,13 @@ class DBox(private val context : Context) {
 
 		sealed class TestConnectionResponse {
 			object Loading : TestConnectionResponse()
-			class Success(val fullAccount : FullAccount, val spaceUsage : SpaceUsage) : TestConnectionResponse()
+			class Success(
+				val name : String?,
+				val email : String?,
+				val profilePictureUrl : String?,
+				val spaceUsed : Long?,
+				val spaceTotal : Long?,
+			) : TestConnectionResponse()
 			object NotLoggedIn : TestConnectionResponse()
 			class Error(val exception : Exception, val message : String) : TestConnectionResponse()
 		}
