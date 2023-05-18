@@ -29,7 +29,7 @@ class TagObject() : RealmObject {
 						this.objectIdList.add(realmUUID)
 					}
 				} catch (e : Exception) {
-					e.printStackTrace()
+//					e.printStackTrace()
 				}
 			}
 		}

@@ -52,15 +52,15 @@ enum class ComponentType {
 )
 @Composable
 fun MainScreen(
-	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
-	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
-	testDropboxConnection : () -> Unit = {},
-	onClickSyncNow : () -> Unit = {},
-	onClickForceSync : () -> Unit = {},
+	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
+	testConnectionResponse: DBox.Companion.TestConnectionResponse? = null,
+	testDropboxConnection: () -> Unit = {},
+	onClickSyncNow: () -> Unit = {},
+	onClickForceSync: () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
-	val viewModel : MainViewModel = koinViewModel()
+	val viewModel: MainViewModel = koinViewModel()
 
 	val defaultChapterId by viewModel.defaultChapterId.collectAsState()
 
@@ -69,8 +69,8 @@ fun MainScreen(
 	val keyboardController = LocalSoftwareKeyboardController.current
 	val focusManager = LocalFocusManager.current
 
-	var currentComponentType : ComponentType by remember { mutableStateOf(ComponentType.Note) }
-	var bottomSheetType : MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.Menu) }
+	var currentComponentType: ComponentType by remember { mutableStateOf(ComponentType.Note) }
+	var bottomSheetType: MainBottomSheetType by remember { mutableStateOf(MainBottomSheetType.Menu) }
 	val modalBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
 	LaunchedEffect(key1 = modalBottomSheetState.currentValue) {
@@ -78,27 +78,27 @@ fun MainScreen(
 			try {
 				keyboardController?.hide()
 				focusManager.clearFocus()
-			} catch (e : Exception) {
+			} catch (e: Exception) {
 			}
 		}
 	}
 
-	fun openSheet(sheetType : MainBottomSheetType) = scope.launch { bottomSheetType = sheetType; modalBottomSheetState.show() }
+	fun openSheet(sheetType: MainBottomSheetType) = scope.launch { bottomSheetType = sheetType; modalBottomSheetState.show() }
 
 	fun closeSheet() = scope.launch { modalBottomSheetState.hide() }
 
-	var isSelecting : Boolean by remember { mutableStateOf(false) }
-	var selectedIdList : List<RealmUUID> by remember { mutableStateOf(listOf()) }
+	var isSelecting: Boolean by remember { mutableStateOf(false) }
+	var selectedIdList: List<RealmUUID> by remember { mutableStateOf(listOf()) }
 
-	var showNotificationPermissionDialog : Boolean by remember { mutableStateOf(false) }
-	var showDeleteDialog : Boolean by remember { mutableStateOf(false) }
+	var showNotificationPermissionDialog: Boolean by remember { mutableStateOf(false) }
+	var showDeleteDialog: Boolean by remember { mutableStateOf(false) }
 
-	fun openDialog(dialogType : MainDialogType) = when (dialogType) {
+	fun openDialog(dialogType: MainDialogType) = when (dialogType) {
 		MainDialogType.NotificationPermission -> showNotificationPermissionDialog = true
 		MainDialogType.Delete -> showDeleteDialog = true
 	}
 
-	fun closeDialog(dialogType : MainDialogType) = when (dialogType) {
+	fun closeDialog(dialogType: MainDialogType) = when (dialogType) {
 		MainDialogType.NotificationPermission -> showNotificationPermissionDialog = false
 		MainDialogType.Delete -> showDeleteDialog = false
 	}
@@ -151,16 +151,13 @@ fun MainScreen(
 				currentRoute = currentRoute.route,
 				onNavigation = {
 					when {
-						currentRoute == BottomNavigationItem.Home && it == BottomNavigationItem.Home -> currentComponentType =
-							ComponentType.values()[(currentComponentType.ordinal + 1) % 3]
-
+						currentRoute == BottomNavigationItem.Home && it == BottomNavigationItem.Home -> currentComponentType = ComponentType.values()[(currentComponentType.ordinal + 1) % 3]
 						currentRoute != it -> currentRoute = it
-
 					}
 				}
 			)
 		},
-		isBottomBarVisible = ! isSelecting,
+		isBottomBarVisible = !isSelecting,
 		modalBottomSheetState = modalBottomSheetState,
 		sheetContent = {
 			SheetLayout(
@@ -169,12 +166,16 @@ fun MainScreen(
 				testConnectionResponse = testConnectionResponse,
 				putBucket = { title, description, bucketType ->
 					viewModel.putBucket(title, description, bucketType) {
-						withContext(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+						withContext(Dispatchers.Main) {
+							Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+						}
 					}
 				},
 				putNotebook = { title, description, color, bitmap ->
 					viewModel.putNotebook(title, description, color, bitmap) {
-						withContext(Dispatchers.Main) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+						withContext(Dispatchers.Main) {
+							Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+						}
 					}
 				},
 				onClickTestConnection = testDropboxConnection,
@@ -191,10 +192,11 @@ fun MainScreen(
 					if (defaultChapterId in selectedIdList) {
 						Toast.makeText(context, "Cannot delete default chapter", Toast.LENGTH_SHORT).show()
 					}
-					selectedIdList.toMutableList().let {
-						it.remove(defaultChapterId)
-						viewModel.delete(idList = it.toList())
-					}
+					selectedIdList.toMutableList()
+						.let {
+							it.remove(defaultChapterId)
+							viewModel.delete(idList = it.toList())
+						}
 					isSelecting = false
 					selectedIdList = listOf()
 				},
@@ -208,10 +210,11 @@ fun MainScreen(
 			isSelecting = isSelecting,
 			onSelect = {
 				isSelecting = true
-				selectedIdList.toMutableList().apply {
-					if (it in this) remove(it) else add(it)
-					selectedIdList = this
-				}
+				selectedIdList.toMutableList()
+					.apply {
+						if (it in this) remove(it) else add(it)
+						selectedIdList = this
+					}
 			},
 			selectedIdList = selectedIdList,
 			openSheet = ::openSheet,

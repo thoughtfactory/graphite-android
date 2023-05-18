@@ -216,7 +216,7 @@ fun ImportDataJourneyDialog(
 				}
 				try {
 				} catch (e : Exception) {
-					e.printStackTrace()
+//					e.printStackTrace()
 				}
 			}
 		} ?: Toast.makeText(context, "No file selected", Toast.LENGTH_SHORT).show()

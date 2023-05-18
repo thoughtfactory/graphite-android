@@ -19,6 +19,7 @@ import androidx.compose.animation.with
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -99,6 +100,14 @@ class SettingsActivity : ComponentActivity() {
 			.setAutoSelectEnabled(false)
 			.build()
 
+		val hasExtrasScreen = intent.hasExtra(Extras.SettingsScreen.name)
+		var extrasScreen : SettingsScreen? = null
+		if (hasExtrasScreen) {
+			val extrasScreenString = intent.getStringExtra(Extras.SettingsScreen.name)
+			if (extrasScreenString.isNullOrBlank()) Toast.makeText(this, "Error navigating to screen", Toast.LENGTH_SHORT).show()
+			else extrasScreen = SettingsScreen.values().find { it.name == extrasScreenString }
+		}
+
 		var authenticatorScreen by mutableStateOf(AuthenticatorScreen.None)
 
 		setContent {
@@ -126,6 +135,8 @@ class SettingsActivity : ComponentActivity() {
 				var showManageSubscriptionDialog by remember { mutableStateOf(false) }
 
 				var settingsScreen by remember { mutableStateOf(SettingsScreen.Settings) }
+
+				LaunchedEffect(key1 = null) { extrasScreen?.let { settingsScreen = it } }
 
 				fun openDialog(dialogType : SettingsDialogType) = when (dialogType) {
 					SettingsDialogType.Biometric -> showBiometricDialog = true
@@ -346,6 +357,10 @@ class SettingsActivity : ComponentActivity() {
 	}
 
 	companion object {
+
+		enum class Extras {
+			SettingsScreen,
+		}
 		enum class SettingsScreen {
 			Settings,
 			BackupAndSync,

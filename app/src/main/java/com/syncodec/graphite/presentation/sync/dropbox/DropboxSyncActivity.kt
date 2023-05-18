@@ -76,8 +76,8 @@ class DropboxSyncActivity : ComponentActivity() {
 							}
 						}
 					},
-					onReconnect = {},
-					onDisconnect = { viewModel.disconnect { viewModel.testConnection { testConnectionResponse.tryEmit(it) } } },
+					onClickReconnect = {},
+					onClickDisconnect = { viewModel.disconnect { viewModel.testConnection { testConnectionResponse.tryEmit(it) } } },
 					onClickTakeSnapshot = { viewModel.generateSnapshot() { isGeneratingSnapshot = it } },
 					onClickShareSnapshot = { metadata ->
 						viewModel.downloadSnapshot(metadata) { downloadSnapshotResponse ->

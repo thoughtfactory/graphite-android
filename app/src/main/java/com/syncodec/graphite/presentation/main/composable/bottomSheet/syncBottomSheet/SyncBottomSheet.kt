@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,9 +37,16 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ConnectedView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
+import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
+import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
+import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.android.awaitFrame
+import kotlinx.coroutines.async
 
 
 @Preview
@@ -49,6 +60,19 @@ fun SyncBottomSheet(
 	closeSheet : () -> Unit = {},
 ) {
 	val context = LocalContext.current
+	val syncDataStoreInstance = remember { SyncDataStoreInstance(context) }
+	val syncProvider by syncDataStoreInstance.syncProvider.collectAsState(initial = null)
+
+	fun onClickManage() {
+		Log.d("npr71", "SyncBottomSheet: onClickManage: syncProvider: $syncProvider")
+		val activity = when (syncProvider) {
+			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> DropboxSyncActivity::class.java
+			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> GoogleDriveSyncActivity::class.java
+			else -> null
+		}
+		activity?.let { context.startActivity(Intent(context, activity)) }
+		closeSheet()
+	}
 
 	GenericBottomSheet(
 		title = "Sync",
@@ -57,10 +81,7 @@ fun SyncBottomSheet(
 		when (testConnectionResponse) {
 			is DBox.Companion.TestConnectionResponse.Loading -> LoadingCard(
 				onClickTestConnection = onClickTestConnection,
-				onClickManage = {
-					context.startActivity(Intent(context, DropboxSyncActivity::class.java))
-					closeSheet()
-				}
+				onClickManage = ::onClickManage
 			)
 
 			is DBox.Companion.TestConnectionResponse.Success -> ConnectedView(
@@ -71,23 +92,23 @@ fun SyncBottomSheet(
 				syncStatus = syncStatus,
 				onForceSync = onClickForceSync,
 				onSync = onClickSyncNow,
-				onClickManage = {
-					context.startActivity(Intent(context, DropboxSyncActivity::class.java))
-					closeSheet()
-				},
+				onClickManage = ::onClickManage,
 			)
 
-			is DBox.Companion.TestConnectionResponse.NotLoggedIn -> NotLoggedInView()
-			is DBox.Companion.TestConnectionResponse.Error -> ErrorCard(onClickTestConnection = onClickTestConnection) {
+			is DBox.Companion.TestConnectionResponse.NotLoggedIn -> NotLoggedInView {
+				Intent(context, SettingsActivity::class.java).apply {
+					putExtra(SettingsActivity.Companion.Extras.SettingsScreen.name, SettingsActivity.Companion.SettingsScreen.BackupAndSync.name)
+					context.startActivity(this)
+				}
 				closeSheet()
-				context.startActivity(Intent(context, DropboxSyncActivity::class.java))
 			}
+			is DBox.Companion.TestConnectionResponse.Error -> ErrorCard(
+				onClickTestConnection = onClickTestConnection,
+				onClickManage = ::onClickManage,
+			)
 			else -> LoadingCard(
 				onClickTestConnection = onClickTestConnection,
-				onClickManage = {
-					closeSheet()
-					context.startActivity(Intent(context, DropboxSyncActivity::class.java))
-				}
+				onClickManage = ::onClickManage,
 			)
 		}
 	}
@@ -102,7 +123,7 @@ private fun ErrorCard(
 	val context = LocalContext.current
 	val isInternetAvailable = context.isInternetAvailable()
 
-	val title = if (isInternetAvailable) "Error connecting with Dropbox" else "No internet connection"
+	val title = if (isInternetAvailable) "Error connecting with cloud" else "No internet connection"
 	val description = if (isInternetAvailable) "Ensure you have a working internet connection and try again." else "It seems you are not connected to internet. Please connect to internet and try again."
 
 	Card(

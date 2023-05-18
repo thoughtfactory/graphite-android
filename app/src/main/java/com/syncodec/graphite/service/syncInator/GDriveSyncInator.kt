@@ -16,10 +16,13 @@ import com.google.api.services.drive.model.File
 import com.google.common.collect.Maps
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.cloud.googleDrive.GDrive
+import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.DeletedAttachment
 import com.syncodec.graphite.di.model.DeletedObject
 import com.syncodec.graphite.di.model.NoteObject
+import com.syncodec.graphite.di.model.TagObject
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,6 +88,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 	}
 
 	private fun startSelfDestructSequence() {
+		Log.d("npr71", "GDriveSyncInatorService.startSelfDestructSequence")
 		lifecycleScope.launch(Dispatchers.Default) {
 			while (true) {
 				delay(1000)
@@ -107,6 +111,16 @@ class GDriveSyncInatorService : SyncInatorService() {
 	override fun onBind(intent: Intent): IBinder? {
 		super.onBind(intent)
 		return gDriveSyncInatorBinder
+	}
+
+	fun hardCutOff() {
+		Log.d("npr71", "GDriveSyncInatorService.hardCutOff")
+		reSyncCoroutine?.cancel()
+		reSyncCoroutine = null
+		syncCoroutine?.cancel()
+		syncCoroutine = null
+		gDriveSyncInatorBinder = null
+		stopSelf()
 	}
 
 	fun onClickSyncNow() {
@@ -136,7 +150,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 		sync(forced = true)
 	}
 
-	private fun getGetDriveClient(callback: (Drive?) -> Unit) {
+	private suspend fun getGetDriveClient(callback: suspend (Drive?) -> Unit) {
 		callback(gDrive.getDrive())
 	}
 
@@ -154,20 +168,33 @@ class GDriveSyncInatorService : SyncInatorService() {
 		}
 	}
 
-	private fun Drive.tryHoldLockAndContinue(forced: Boolean = false) {
+	private suspend fun Drive.tryHoldLockAndContinue(forced: Boolean = false) {
 		syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.Connected)
-		gatherData(rectify = false)
-		syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.Idle(0, false))
-		return
-		val lockStatus = checkLockFileStatus()
-		if (forced) {
-			breakLockAndContinue()
-		} else {
-			when (lockStatus) {
-				is LockStatus.Available -> lockAndContinue(rectify = false)
-				is LockStatus.LockExpired -> breakLockAndContinue()
-				is LockStatus.Locked -> waitToUnlock()
-				is LockStatus.Error -> unknownError(lockStatus.exception)
+		val googleDriveState = gDrive.getGoogleDriveState(drive = this)
+		if (googleDriveState is GDrive.Companion.GoogleDriveState.Success) {
+			if (forced) {
+				breakLockAndContinue(googleDriveState = googleDriveState)
+			}
+			else {
+//				*	Normal flow
+				if (googleDriveState.lockFileId == null) lockAndContinue(rectify = false, googleDriveState = googleDriveState)
+				else {
+					val downloadResult = gDrive.downloadData(drive = this, googleDriveState.lockFileId)
+					if (downloadResult is DownloadResult.Success) {
+						val jsonObject = JSONObject(downloadResult.fileContent.toString(Charsets.UTF_8))
+						val timestamp = jsonObject.getLong("timestamp")
+						val sessionId = jsonObject.getString("sessionId")
+
+						when {
+							sessionId in previousSyncSessionIdList -> lockAndContinue(rectify = false, googleDriveState = googleDriveState)
+							(Instant.now().toEpochMilli() - timestamp) > 60000 -> breakLockAndContinue(googleDriveState = googleDriveState)
+							else -> waitToUnlock()
+						}
+					}
+					else {
+						unknownError()
+					}
+				}
 			}
 		}
 	}
@@ -181,38 +208,38 @@ class GDriveSyncInatorService : SyncInatorService() {
 	}
 
 	private fun Drive.unknownError(exception: Exception? = null) {
-		syncStatus.tryEmit(
-			SyncInatorService.Companion.SyncStatus.Failed(
-				exception?.message ?: "unknown error"
-			)
-		)
+		syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.Failed(exception?.message ?: "unknown error"))
 		syncCoroutine?.cancel()
 		syncCoroutine = null
 		reSyncCoroutine?.cancel()
 		reSyncCoroutine = null
 	}
 
-	private fun Drive.waitToUnlock() {
+	private suspend fun Drive.waitToUnlock() {
 		syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.Locked)
-		syncCoroutine?.launch(Dispatchers.IO) {
-			delay(30000)
-			tryHoldLockAndContinue()
-		}
+		delay(30000)
+		tryHoldLockAndContinue()
 	}
 
-	private fun Drive.lockAndContinue(rectify: Boolean) {
+	private fun Drive.lockAndContinue(
+		rectify: Boolean,
+		googleDriveState: GDrive.Companion.GoogleDriveState.Success,
+	) {
+		Log.d("npr71", "GDriveSyncInatorService.lockAndContinue : rectify = $rectify")
 		val sessionId = RealmUUID.random().toString()
 		previousSyncSessionIdList.add(sessionId)
 		syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.Syncing(sessionId))
-		keepLockAlive(sessionId)
-		gatherData(rectify = rectify)
+		keepLockAlive(sessionId = sessionId, googleDriveState = googleDriveState)
+		gatherData(googleDriveState = googleDriveState, rectify = rectify)
 		unlock(sessionId = sessionId)
 		reSync()
 	}
 
-	private fun Drive.breakLockAndContinue() {
+	private suspend fun Drive.breakLockAndContinue(
+		googleDriveState: GDrive.Companion.GoogleDriveState.Success,
+	) {
 		unlock(sessionId = null)
-		lockAndContinue(rectify = true)
+		lockAndContinue(rectify = true, googleDriveState = googleDriveState)
 	}
 
 	private var reSyncCoroutine: CoroutineScope? = null
@@ -227,130 +254,98 @@ class GDriveSyncInatorService : SyncInatorService() {
 				reSyncCoroutine = this
 				delay(30000)
 				sync()
-			} else {
+			}
+			else {
 				syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.Idle(syncedTimestamp = Instant.now().toEpochMilli(), isAutoSyncDisabled = true))
 			}
 		}
 	}
 
 	private var keepLockAliveCoroutine: CoroutineScope? = null
-	private fun Drive.keepLockAlive(sessionId: String) {
-//		lifecycleScope.launch(Dispatchers.IO) {
-//			keepLockAliveCoroutine?.cancel()
-//			keepLockAliveCoroutine = this
-//			while (true) {
-//				val jsonObject = JSONObject()
-//				jsonObject.put("timestamp", Instant.now().toEpochMilli())
-//				jsonObject.put("sessionId", sessionId)
-//
-//				try {
-//					when (val downloadResult = downloadData(DropboxInatorService.Companion.Path.Lock.path)) {
-//						is DropboxInatorService.Companion.DownloadResult.Success.ByteArray -> {
-//							val remoteJsonObject = JSONObject(String(downloadResult.data, Charsets.UTF_8))
-//							val remoteSessionId = remoteJsonObject.getString("sessionId")
-//							if (remoteSessionId !in previousSyncSessionIdList) {
-//								keepLockAliveCoroutine?.cancel()
-//								keepLockAliveCoroutine = null
-//								syncCoroutine?.cancel()
-//								syncCoroutine = null
-//							}
-//						}
-//
-//						is DropboxInatorService.Companion.DownloadResult.Success.MetadataMap<*> -> {} // Won't happen
-//						is DropboxInatorService.Companion.DownloadResult.NotFound -> null
-//						is DropboxInatorService.Companion.DownloadResult.DownloadErrorException -> null
-//						is DropboxInatorService.Companion.DownloadResult.NetworkError -> networkError()
-//						is DropboxInatorService.Companion.DownloadResult.UnknownError -> unknownError()
-//					}
-//
-//					files()
-//						.uploadBuilder(DropboxInatorService.Companion.Path.Lock.path)
-//						.withMode(WriteMode.OVERWRITE)
-//						.uploadAndFinish(jsonObject.toString().byteInputStream())
-//				} catch (e : NetworkIOException) {
-//					networkError()
-//					break
-//				} catch (e : Exception) {
-//					unknownError()
-//					break
-//				}
-//				delay(30000)
-//			}
-//		}
-	}
+	private fun Drive.keepLockAlive(
+		sessionId: String,
+		googleDriveState: GDrive.Companion.GoogleDriveState.Success,
+	) {
+		lifecycleScope.launch(Dispatchers.IO) {
+			keepLockAliveCoroutine?.cancel()
+			keepLockAliveCoroutine = this
 
-	private fun Drive.unlock(sessionId: String?) {
-//		keepLockAliveCoroutine?.cancel()
-//		when (val lockDownloadResult = downloadData(DropboxInatorService.Companion.Path.Lock.path)) {
-//			is DropboxInatorService.Companion.DownloadResult.Success.ByteArray -> {
-//				val jsonObject = JSONObject(String(lockDownloadResult.data, Charsets.UTF_8))
-//				val remoteSessionId = jsonObject.getString("sessionId")
-//				if (remoteSessionId == sessionId || sessionId == null) {
-//					try {
-//						files().deleteV2(DropboxInatorService.Companion.Path.Lock.path)
-//					} catch (e : Exception) {
-//						unknownError()
-//					}
-//				}
-//			}
-//
-//			is DropboxInatorService.Companion.DownloadResult.Success.MetadataMap -> null // Won't happen
-//			is DropboxInatorService.Companion.DownloadResult.NotFound -> null
-//			is DropboxInatorService.Companion.DownloadResult.DownloadErrorException -> null
-//			is DropboxInatorService.Companion.DownloadResult.NetworkError -> null
-//			is DropboxInatorService.Companion.DownloadResult.UnknownError -> null
-//		}
-	}
+			var lockFileId = googleDriveState.lockFileId
 
+			while (true) {
+				val jsonObject = JSONObject()
+				val modifiedTime = Instant.now().toEpochMilli()
+				jsonObject.put("timestamp", modifiedTime)
+				jsonObject.put("sessionId", sessionId)
 
-	/**
-	 * Searches for lock file and returns
-	 */
-	private fun Drive.checkLockFileStatus(): LockStatus {
-		return LockStatus.Available
-		try {
-			val lockFileList: MutableList<File> = mutableListOf()
+				lockFileId?.let {
+					gDrive.downloadData(drive = this@keepLockAlive, it)
+					updateFile(
+						fileId = it,
+						fileName = GDrive.LockFileName,
+						mimeType = GDrive.JsonFileMimeType,
+						modifiedTime = modifiedTime,
+						byteArray = jsonObject.toString().toByteArray(Charsets.UTF_8),
+					)
+				} ?: run {
+					val retrieveFile = gDrive
+						.createFile(
+							drive = this@keepLockAlive,
+							fileName = GDrive.LockFileName,
+							mimeType = GDrive.JsonFileMimeType,
+							modifiedTime = modifiedTime,
+							parentId = GDrive.RootFolderId,
+							byteArray = jsonObject.toString().toByteArray(Charsets.UTF_8),
+						)
+					when (retrieveFile) {
+						is RetrieveFile.Success -> {
+							Log.d("npr71", "lock file created")
+							lockFileId = retrieveFile.fileId
+						}
 
-			var pageToken: String? = null
-			do {
-				files()
-					.list()
-					.setQ("name = '$LockFileName'")
-					.setSpaces("appDataFolder")
-					.setFields("nextPageToken, items(id, title)")
-					.setPageToken(pageToken)
-					.execute()
-					.let { fileList ->
-						lockFileList.addAll(fileList.files)
-						pageToken = fileList.nextPageToken
-					}
-			} while (pageToken != null)
-
-			var lockStatus: LockStatus = LockStatus.Available
-			lockFileList.forEach { file ->
-				val lockFileInputStream = files().get(file.id).executeMediaAsInputStream()
-				val jsonObject = JSONObject(String(lockFileInputStream.readBytes(), Charsets.UTF_8))
-				lockFileInputStream.close()
-				val timestamp = jsonObject.getLong("timestamp")
-				val sessionId = jsonObject.getString("sessionId")
-
-				if (sessionId !in previousSyncSessionIdList) {
-					if ((Instant.now().toEpochMilli() - timestamp) < 60000) {
-						lockStatus = LockStatus.Locked
-						return@forEach
-					} else {
-						lockStatus = LockStatus.LockExpired(lockFileList.map { it.id })
+						is RetrieveFile.TooManyRetries -> unknownError()
+						is RetrieveFile.ParentNotFound -> unknownError()
+						is RetrieveFile.UnknownError -> unknownError()
 					}
 				}
-			}
 
-			return lockStatus
-		} catch (e: Exception) {
-			return LockStatus.Error(e)
+				delay(30000)
+			}
 		}
 	}
 
-	private fun Drive.gatherData(rectify: Boolean) {
+	private fun Drive.unlock(sessionId: String?) {
+		Log.d("npr71", "unlock")
+		keepLockAliveCoroutine?.cancel()
+		val googleDriveState = gDrive.getGoogleDriveState(drive = this)
+		if (googleDriveState is GDrive.Companion.GoogleDriveState.Success) {
+			googleDriveState.lockFileId?.let {
+				val lockFileDownloadResult = gDrive.downloadData(drive = this, it)
+				if (lockFileDownloadResult is DownloadResult.Success) {
+					val jsonObject = JSONObject(String(lockFileDownloadResult.fileContent, Charsets.UTF_8))
+					val remoteSessionId = jsonObject.getString("sessionId")
+					if (remoteSessionId == sessionId || sessionId == null) {
+						try {
+							gDrive.deleteFile(drive = this, fileId = it).let {
+								if (it is DeleteResult.Success) Log.d("npr71", "unlock success")
+								else Log.d("npr71", "unlock failed")
+							}
+						} catch (e: Exception) {
+							unknownError()
+						}
+					}
+				}
+			}
+		}
+		else {
+
+		}
+	}
+
+	private fun Drive.gatherData(
+		googleDriveState: GDrive.Companion.GoogleDriveState.Success,
+		rectify: Boolean,
+	) {
 		val baseObject = repository.getBaseObject()
 		val noteObjectList = repository.getAllNote()
 		val chapterObjectList = repository.getAllChapter()
@@ -360,117 +355,158 @@ class GDriveSyncInatorService : SyncInatorService() {
 
 		val localDeletedObjectIdList = baseObject?.deletedObjectSet ?: setOf()
 
-		val googleDriveState = getGoogleDriveState()
-		if (googleDriveState is GoogleDriveState.Success) {
-			val deletedObjectDownloadResult = getDeletedObjectMap(fileId = googleDriveState.deletedObjectFileId)
-			if (deletedObjectDownloadResult !is DownloadResult.Success) return
+		val deletedObjectDownloadResult = getDeletedObjectMap(fileId = googleDriveState.deletedObjectFileId)
+		if (deletedObjectDownloadResult !is DownloadResult.Success) return
 
-			val remoteDeletedObjectSet: Set<DeletedObject> = if (compress) {
-				try {
-					deletedObjectDownloadResult.fileContent.decompress<String>()?.let {
-						if (it.isNotBlank()) json.decodeFromString(it)
-						else json.decodeFromString("{}")
-					} ?: setOf()
-				} catch (e: Exception) {
-					setOf()
-				}
-			} else {
-				try {
-					if (deletedObjectDownloadResult.fileContent.isEmpty()) setOf()
-					else json.decodeFromString(String(deletedObjectDownloadResult.fileContent)) ?: setOf()
-				} catch (e: Exception) {
-					setOf()
+		val remoteDeletedObjectSet: Set<DeletedObject> = if (compress) {
+			try {
+				deletedObjectDownloadResult.fileContent.decompress<String>()?.let {
+					if (it.isNotBlank()) json.decodeFromString(it)
+					else json.decodeFromString("{}")
+				} ?: setOf()
+			} catch (e: Exception) {
+				setOf()
+			}
+		}
+		else {
+			try {
+				if (deletedObjectDownloadResult.fileContent.isEmpty()) setOf()
+				else json.decodeFromString(String(deletedObjectDownloadResult.fileContent)) ?: setOf()
+			} catch (e: Exception) {
+				setOf()
+			}
+		}
+
+		Log.d("npr71", "remoteDeletedObjectSet: ${remoteDeletedObjectSet.size}")
+
+		val deletedObjectList: MutableSet<DeletedObject> = mutableSetOf()
+
+		if (syncChapter) syncObjects(
+			localObjectMap = chapterObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
+			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
+			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == ChapterObject::class.simpleName }.associateBy { it.id },
+			folderId = googleDriveState.chapterFolderId,
+		) { content, fileId ->
+			(if (compress) content.decompress<String>()?.toByteArray() ?: content
+			else content).let {
+				ChapterObject.fromCloudSnapshot(it)?.let { chapterObject ->
+					repository.putChapterSuspended(chapterObject = chapterObject, modifyTimestampAuto = false, googleDriveId = fileId)
 				}
 			}
+		}.let { deletedObjectList.addAll(it) }
 
-			Log.d("npr71", "remoteDeletedObjectSet: ${remoteDeletedObjectSet.size}")
-
-			val deletedObjectList: MutableSet<DeletedObject> = mutableSetOf()
-
-			if (syncChapter) syncObjects(
-				localObjectMap = chapterObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
-				remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
-				localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == ChapterObject::class.simpleName }.associateBy { it.id },
-				folderId = googleDriveState.chapterFolderId,
-			) { content, fileId ->
-				(if (compress) content.decompress<String>()?.toByteArray() ?: content
-				else content).let {
-					ChapterObject.fromCloudSnapshot(it)?.let { chapterObject ->
-						repository.putChapterSuspended(chapterObject = chapterObject, modifyTimestampAuto = false, googleDriveId = fileId)
-					}
+		if (syncNote) syncObjects(
+			localObjectMap = noteObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
+			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
+			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == NoteObject::class.simpleName }.associateBy { it.id },
+			folderId = googleDriveState.noteFolderId,
+		) { content, fileId ->
+			(if (compress) content.decompress<String>()?.toByteArray() ?: content
+			else content).let {
+				NoteObject.fromCloudSnapshot(it)?.let { noteObject ->
+					repository.putNoteSuspended(noteObject = noteObject, modifyTimestampAuto = false, googleDriveId = fileId)
 				}
-			}.let { deletedObjectList.addAll(it) }
+			}
+		}.let { deletedObjectList.addAll(it) }
 
-			if (syncNote) syncObjects(
-				localObjectMap = noteObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
-				remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
-				localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == NoteObject::class.simpleName }.associateBy { it.id },
-				folderId = googleDriveState.noteFolderId,
-			) { content, fileId ->
-				(if (compress) content.decompress<String>()?.toByteArray() ?: content
-				else content).let {
-					NoteObject.fromCloudSnapshot(it)?.let { noteObject ->
-						repository.putNoteSuspended(noteObject = noteObject, modifyTimestampAuto = false, googleDriveId = fileId)
-					}
+		if (syncBucket) syncObjects(
+			localObjectMap = bucketObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
+			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
+			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == BucketObject::class.simpleName }.associateBy { it.id },
+			folderId = googleDriveState.bucketFolderId,
+		) { content, fileId ->
+			(if (compress) content.decompress<String>()?.toByteArray() ?: content
+			else content).let {
+				BucketObject.fromCloudSnapshot(it)?.let { bucketObject ->
+					repository.putBucketSuspended(bucketObject = bucketObject, modifyTimestampAuto = false, googleDriveId = fileId)
 				}
-			}.let { deletedObjectList.addAll(it) }
+			}
+		}.let { deletedObjectList.addAll(it) }
 
-			if (deletedObjectList != remoteDeletedObjectSet) {
+		if (syncBucketItem) syncObjects(
+			localObjectMap = bucketItemObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
+			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
+			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == BucketItemObject::class.simpleName }.associateBy { it.id },
+			folderId = googleDriveState.bucketItemFolderId,
+		) { content, fileId ->
+			(if (compress) content.decompress<String>()?.toByteArray() ?: content
+			else content).let {
+				BucketItemObject.fromCloudSnapshot(it)?.let { bucketItemObject ->
+					repository.putBucketItemSuspended(bucketItemObject = bucketItemObject, modifyTimestampAuto = false, googleDriveId = fileId)
+				}
+			}
+		}.let { deletedObjectList.addAll(it) }
+
+		if (syncTag) syncObjects(
+			localObjectMap = tagObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
+			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
+			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == TagObject::class.simpleName }.associateBy { it.id },
+			folderId = googleDriveState.tagFolderId,
+		) { content, fileId ->
+			(if (compress) content.decompress<String>()?.toByteArray() ?: content
+			else content).let {
+				TagObject.fromCloudSnapshot(it)?.let { tagObject ->
+					repository.putTagSuspended(tagObject = tagObject, modifyTimestampAuto = false, googleDriveId = fileId)
+				}
+			}
+		}.let { deletedObjectList.addAll(it) }
+
+		if (deletedObjectList != remoteDeletedObjectSet) {
+			updateFile(
+				fileId = googleDriveState.deletedObjectFileId,
+				fileName = GDrive.DeletedObjectFileName,
+				mimeType = GDrive.JsonFileMimeType,
+				modifiedTime = Instant.now().toEpochMilli(),
+				byteArray = json.encodeToString(deletedObjectList).toByteArray(),
+			)
+		}
+
+		val deletedAttachmentDownloadResult = getDeletedObjectMap(fileId = googleDriveState.deletedAttachmentFileId)
+		val remoteDeletedAttachmentSet: Set<DeletedAttachment> = if (compress) {
+			try {
+				if (deletedAttachmentDownloadResult is DownloadResult.Success) {
+					deletedAttachmentDownloadResult.fileContent.decompress<String>()
+						?.let { if (it.isNotBlank()) json.decodeFromString(it) else json.decodeFromString("{}") }
+						?: setOf()
+				}
+				else setOf()
+			} catch (e: Exception) {
+				setOf()
+			}
+		}
+		else {
+			try {
+				if (deletedAttachmentDownloadResult is DownloadResult.Success) {
+					if (deletedAttachmentDownloadResult.fileContent.isEmpty()) setOf()
+					else json.decodeFromString(String(deletedAttachmentDownloadResult.fileContent)) ?: setOf()
+				}
+				else setOf()
+			} catch (e: Exception) {
+				setOf()
+			}
+		}
+
+		val remoteAttachmentMap =
+			scanAttachments(folderId = googleDriveState.attachmentFolderId).let { scanAttachmentsResult ->
+				if (scanAttachmentsResult is ScanAttachmentsResult.Success) scanAttachmentsResult.attachmentMap else mapOf()
+			}
+		syncAttachments(
+			remoteAttachmentMap = remoteAttachmentMap,
+			remoteDeletedAttachmentSet = remoteDeletedAttachmentSet,
+			localDeletedAttachmentSet = baseObject?.deletedAttachmentSet ?: setOf(),
+			deletedObjectIdList = deletedObjectList.map { it.id },
+			attachmentFolderId = googleDriveState.attachmentFolderId,
+		).let {
+			val deletedAttachmentSet = remoteDeletedAttachmentSet + it
+			if (deletedAttachmentSet != remoteDeletedAttachmentSet) {
 				updateFile(
-					fileId = googleDriveState.deletedObjectFileId,
-					fileName = DeletedObjectFileName,
-					mimeType = JsonFileMimeType,
+					fileId = googleDriveState.deletedAttachmentFileId,
+					fileName = GDrive.DeletedAttachmentFileName,
+					mimeType = GDrive.JsonFileMimeType,
 					modifiedTime = Instant.now().toEpochMilli(),
-					byteArray = json.encodeToString(deletedObjectList).toByteArray(),
+					byteArray = json.encodeToString(remoteDeletedAttachmentSet + it).toByteArray(),
 				)
 			}
-
-			val deletedAttachmentDownloadResult = getDeletedObjectMap(fileId = googleDriveState.deletedAttachmentFileId)
-			val remoteDeletedAttachmentSet: Set<DeletedAttachment> = if (compress) {
-				try {
-					if (deletedAttachmentDownloadResult is DownloadResult.Success) {
-						deletedAttachmentDownloadResult.fileContent.decompress<String>()
-							?.let { if (it.isNotBlank()) json.decodeFromString(it) else json.decodeFromString("{}") }
-							?: setOf()
-					} else setOf()
-				} catch (e: Exception) {
-					setOf()
-				}
-			} else {
-				try {
-					if (deletedAttachmentDownloadResult is DownloadResult.Success) {
-						if (deletedAttachmentDownloadResult.fileContent.isEmpty()) setOf()
-						else json.decodeFromString(String(deletedAttachmentDownloadResult.fileContent)) ?: setOf()
-					} else setOf()
-				} catch (e: Exception) {
-					setOf()
-				}
-			}
-
-			val remoteAttachmentMap =
-				scanAttachments(folderId = googleDriveState.attachmentFolderId).let { scanAttachmentsResult ->
-					if (scanAttachmentsResult is ScanAttachmentsResult.Success) scanAttachmentsResult.attachmentMap else mapOf()
-				}
-			syncAttachments(
-				remoteAttachmentMap = remoteAttachmentMap,
-				remoteDeletedAttachmentSet = remoteDeletedAttachmentSet,
-				localDeletedAttachmentSet = baseObject?.deletedAttachmentSet ?: setOf(),
-				deletedObjectIdList = deletedObjectList.map { it.id },
-				attachmentFolderId = googleDriveState.attachmentFolderId,
-			).let {
-				val deletedAttachmentSet = remoteDeletedAttachmentSet + it
-				if (deletedAttachmentSet != remoteDeletedAttachmentSet) {
-					updateFile(
-						fileId = googleDriveState.deletedAttachmentFileId,
-						fileName = DeletedAttachmentFileName,
-						mimeType = JsonFileMimeType,
-						modifiedTime = Instant.now().toEpochMilli(),
-						byteArray = json.encodeToString(remoteDeletedAttachmentSet + it).toByteArray(),
-					)
-				}
-			}
-		} else {
-
 		}
 	}
 
@@ -510,7 +546,8 @@ class GDriveSyncInatorService : SyncInatorService() {
 				val remoteTimestamp = remoteDeletedObjectMap[id]?.deletedTimestamp
 				if (remoteTimestamp == null) {  // remote object does not exist
 					if (!isLocalDeleted) toUpSyncList[id] = SyncInatorService.Companion.Operation.Upsert
-				} else {
+				}
+				else {
 					when {  // remote object exists
 						(localTimestamp > remoteTimestamp) && isLocalDeleted -> toUpSyncList[id] = SyncInatorService.Companion.Operation.Delete()
 						(localTimestamp > remoteTimestamp) && !isLocalDeleted -> toUpSyncList[id] = SyncInatorService.Companion.Operation.Upsert
@@ -525,7 +562,8 @@ class GDriveSyncInatorService : SyncInatorService() {
 				val localTimestamp = localDeletedObjectMap[id]?.deletedTimestamp
 				if (localTimestamp == null) {   //  local object does not exist
 					if (!isRemoteDeleted) toDownSyncList[id] = SyncInatorService.Companion.Operation.Upsert
-				} else {   //  local object exists
+				}
+				else {   //  local object exists
 					when {
 						(localTimestamp > remoteTimestamp) && isRemoteDeleted -> toUpSyncList[id] = SyncInatorService.Companion.Operation.Upsert
 						(localTimestamp > remoteTimestamp) && !isRemoteDeleted -> toUpSyncList[id] = SyncInatorService.Companion.Operation.Upsert
@@ -558,7 +596,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 				when (operation) {
 					is SyncInatorService.Companion.Operation.Upsert -> {
 						metadataMap[id]?.fileId?.let { fileId ->
-							val downloadResult = downloadData(fileId = fileId)
+							val downloadResult = gDrive.downloadData(drive = this, fileId = fileId)
 							if (downloadResult is DownloadResult.Success) putObject(downloadResult.fileContent, fileId)
 						}
 					}
@@ -586,7 +624,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 
 					is SyncInatorService.Companion.Operation.Delete -> {
 						metadataMap[id]?.fileId?.let {
-							val deleteResult = deleteFile(it)
+							val deleteResult = gDrive.deleteFile(drive = this, fileId = it)
 							if (deleteResult is DeleteResult.Success) localDeletedObjectMap[id]?.let { deletedObjectList.add(it) }
 						}
 					}
@@ -594,9 +632,10 @@ class GDriveSyncInatorService : SyncInatorService() {
 			}
 
 			return deletedObjectList
-		} else {
+		}
+		else {
 			metadataResult as MetadataResult.UnknownError
-			metadataResult.exception.printStackTrace()
+//			metadataResult.exception.printStackTrace()
 			return listOf()
 		}
 	}
@@ -618,7 +657,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 		fileMetadata.modifiedTime = DateTime(modifiedTime)
 
 		val data = if (compress) objectData.compress() ?: objectData.toByteArray(Charsets.UTF_8) else objectData.toByteArray(Charsets.UTF_8)
-		val fileContent = ByteArrayContent(JsonFileMimeType, data)
+		val fileContent = ByteArrayContent(GDrive.JsonFileMimeType, data)
 
 		try {
 			fileId?.let {
@@ -641,43 +680,30 @@ class GDriveSyncInatorService : SyncInatorService() {
 		} catch (e: GoogleJsonResponseException) {
 			if (e.statusCode == 404) {
 				Log.d("npr71", "GDriveInatorService.uploadFile : e = ${e.message}")
-				e.printStackTrace()
+//				e.printStackTrace()
 				return UploadResult.ParentNotFound
-			} else {
+			}
+			else {
 				Log.d("npr71", "GDriveInatorService.uploadFile : e = ${e.message}")
-				e.printStackTrace()
+//				e.printStackTrace()
 				return UploadResult.UnknownError(e)
 			}
 		} catch (e: IOException) {
 			Log.d("npr71", "GDriveInatorService.uploadFile : e = ${e.message}")
-			e.printStackTrace()
+//			e.printStackTrace()
 			return UploadResult.UnknownError(e)
 		} catch (e: Exception) {
 			Log.d("npr71", "GDriveInatorService.uploadFile : e = ${e.message}")
-			e.printStackTrace()
+//			e.printStackTrace()
 			return UploadResult.UnknownError(e)
 		}
 	}
-
-	private fun Drive.downloadData(fileId: String): DownloadResult {
-		try {
-			files()
-				.get(fileId)
-				.executeMediaAsInputStream()
-				.readBytes()
-				.let {
-					return DownloadResult.Success(fileId = fileId, fileContent = it)
-				}
-		} catch (e: Exception) {
-			return DownloadResult.UnknownError(e)
-		}
-	}
-
 
 	private fun Drive.downloadMetadata(
 		folderId: String,
 	): MetadataResult {
-		val currentListFiles = listFiles(
+		val currentListFiles = gDrive.listFiles(
+			drive = this,
 			query = "'${folderId}' in parents and trashed = false",
 			fields = "nextPageToken, files(id, modifiedTime, appProperties)"
 		)
@@ -724,22 +750,24 @@ class GDriveSyncInatorService : SyncInatorService() {
 				return DownloadResult.UnknownError(e)
 			}
 		} ?: try {
-			createFile(
-				fileName = DeletedObjectFileName,
-				mimeType = JsonFileMimeType,
-				parentId = RootFolderId,
-			).let {
-				return when (it) {
-					is RetrieveFile.Success -> DownloadResult.Success(
-						fileId = it.fileId,
-						fileContent = "{}".toByteArray()
-					)
+			gDrive
+				.createFile(
+					drive = this,
+					fileName = GDrive.DeletedObjectFileName,
+					mimeType = GDrive.JsonFileMimeType,
+					parentId = GDrive.RootFolderId,
+				).let {
+					return when (it) {
+						is RetrieveFile.Success -> DownloadResult.Success(
+							fileId = it.fileId,
+							fileContent = "{}".toByteArray()
+						)
 
-					is RetrieveFile.TooManyRetries -> DownloadResult.TooManyRetries
-					is RetrieveFile.ParentNotFound -> DownloadResult.ParentNotFound
-					is RetrieveFile.UnknownError -> DownloadResult.UnknownError(it.exception)
+						is RetrieveFile.TooManyRetries -> DownloadResult.TooManyRetries
+						is RetrieveFile.ParentNotFound -> DownloadResult.ParentNotFound
+						is RetrieveFile.UnknownError -> DownloadResult.UnknownError(it.exception)
+					}
 				}
-			}
 		} catch (e: Exception) {
 			return DownloadResult.UnknownError(e)
 		}
@@ -817,7 +845,8 @@ class GDriveSyncInatorService : SyncInatorService() {
 			if (isParentDeleted) {
 				localAttachmentMetadataMap[attachmentIdentity] = it.asDeleted()
 				deleteLocalAttachmentListNoQAsked.add(it.asDeleted())
-			} else localAttachmentMetadataMap[attachmentIdentity] = it
+			}
+			else localAttachmentMetadataMap[attachmentIdentity] = it
 		}
 		localDeletedAttachmentSet.forEach {
 			val attachmentIdentity = it.toAttachmentIdentity()
@@ -881,10 +910,11 @@ class GDriveSyncInatorService : SyncInatorService() {
 
 			if (attachmentMetadata.isDeleted) {
 				fileId?.let {
-					val deleteResult = deleteFile(it)
+					val deleteResult = gDrive.deleteFile(drive = this, fileId = it)
 					if (deleteResult is DeleteResult.Success) deletedAttachmentSet.add(attachmentMetadata.toDeletedAttachment())
 				} ?: deletedAttachmentSet.add(attachmentMetadata.toDeletedAttachment())
-			} else {
+			}
+			else {
 				repository.attachmentRepository.getAttachment(attachmentMetadata.parentId, attachmentMetadata.fileName)?.let { file ->
 					val uploadAttachmentResult = upSyncAttachment(
 						fileName = attachmentMetadata.fileName,
@@ -913,7 +943,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 		toDeleteAttachmentFileIdList.forEach { deleteFile(it) }
 	}
 
-	private fun Drive.deleteRemoteAttachmentFolder(toDeleteAttachmentFolderList : List<String>) {
+	private fun Drive.deleteRemoteAttachmentFolder(toDeleteAttachmentFolderList: List<String>) {
 		Log.d("npr71", "deleteRemoteAttachmentFolder : toDeleteAttachmentFolderList = ${toDeleteAttachmentFolderList.size}")
 		toDeleteAttachmentFolderList.forEach { deleteFile(it) }
 	}
@@ -931,9 +961,10 @@ class GDriveSyncInatorService : SyncInatorService() {
 			"upSyncAttachment: fileName = $fileName, parentObjectId = $parentObjectId, parentFileId = $parentFileId, attachmentFolderId = $attachmentFolderId"
 		)
 
-		val pFileId = parentFileId ?: createFile(
+		val pFileId = parentFileId ?: gDrive.createFile(
+			drive = this,
 			fileName = parentObjectId.toString(),
-			mimeType = FolderMimeType,
+			mimeType = GDrive.FolderMimeType,
 			parentId = attachmentFolderId,
 			appProperties = mapOf("graphite.uuid" to parentObjectId.toString()),
 		).let { retrieveFile ->
@@ -941,9 +972,10 @@ class GDriveSyncInatorService : SyncInatorService() {
 			else return UploadAttachmentResult.UnknownError()
 		}
 
-		val retrieveFile = createFile(
+		val retrieveFile = gDrive.createFile(
+			drive = this,
 			fileName = fileName,
-			mimeType = OctetStreamtFileMimeType,
+			mimeType = GDrive.OctetStreamFileMimeType,
 			parentId = pFileId,
 			appProperties = mapOf("graphite.uuid" to parentObjectId.toString()),
 			byteArray = byteArray,
@@ -957,7 +989,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 		fileId: String,
 		attachmentMetadata: SyncInatorService.Companion.AttachmentMetadata,
 	) {
-		val downloadResult = downloadData(fileId = fileId)
+		val downloadResult = gDrive.downloadData(drive = this, fileId = fileId)
 		if (downloadResult is DownloadResult.Success) {
 			val data = if (compress) downloadResult.fileContent.decompress<ByteArray>() else downloadResult.fileContent
 			data?.let {
@@ -967,54 +999,6 @@ class GDriveSyncInatorService : SyncInatorService() {
 					byteArray = it,
 				)
 			}
-		}
-	}
-
-	private fun Drive.createFile(
-		fileName: String,
-		mimeType: String,
-		parentId: String,
-		modifiedTime: Long = Instant.now().toEpochMilli(),
-		appProperties: Map<String, String> = mapOf(),
-		byteArray: ByteArray? = null,
-	): RetrieveFile {
-//		Log.d("npr71", "GDriveInatorService.createFile : fileName = $fileName : parentId = $parentId")
-
-		val fileMetadata = File()
-		fileMetadata.name = fileName
-		fileMetadata.mimeType = mimeType
-		fileMetadata.parents = listOf(parentId)
-		fileMetadata.modifiedTime = DateTime(modifiedTime)
-		fileMetadata.appProperties = appProperties
-
-		val data = if (compress) byteArray?.compress()?.let { ByteArrayContent(mimeType, it) }
-		else byteArray?.let { ByteArrayContent(mimeType, it) }
-
-		try {
-			val file = data?.let {
-				files()
-					.create(fileMetadata, it)
-					.setFields("id")
-					.execute()
-					.let {
-						Log.d("npr71", "GDriveInatorService.createFile : new file with data file.id = ${it.id}")
-						it
-					}
-			} ?: files()
-				.create(fileMetadata)
-				.setFields("id")
-				.execute()
-				.let {
-					Log.d("npr71", "GDriveInatorService.createFile : new file file.id = ${it.id}")
-					it
-				}
-			return RetrieveFile.Success(file.id)
-		} catch (e: GoogleJsonResponseException) {
-			e.printStackTrace()
-			return if (e.details.code == 404) RetrieveFile.ParentNotFound else RetrieveFile.UnknownError(e)
-		} catch (e: Exception) {
-			e.printStackTrace()
-			return RetrieveFile.UnknownError(e)
 		}
 	}
 
@@ -1046,131 +1030,18 @@ class GDriveSyncInatorService : SyncInatorService() {
 				}
 			return UploadResult.Success(file.id)
 		} catch (e: GoogleJsonResponseException) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			return if (e.details.code == 404) UploadResult.ParentNotFound else UploadResult.UnknownError(e)
 		} catch (e: Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			return UploadResult.UnknownError(e)
 		}
 	}
 
-	private fun Drive.deleteFile(fileId: String): DeleteResult {
-//		Log.d("npr71", "GDriveInatorService.deleteFile : fileId = $fileId")
-		try {
-			files()
-				.delete(fileId)
-				.execute()
-				.let {
-					return DeleteResult.Success
-				}
-		} catch (e: GoogleJsonResponseException) {
-			e.printStackTrace()
-			return if (e.details.code == 404) DeleteResult.Success else DeleteResult.UnknownError(e)
-		} catch (e: IOException) {
-			e.printStackTrace()
-			return DeleteResult.NetworkError
-		} catch (e: Exception) {
-			e.printStackTrace()
-			return DeleteResult.UnknownError(e)
-		}
-	}
-
-	private fun Drive.listFiles(
-		query: String,
-		fields: String,
-	): ListFiles {
-		val fileList: MutableList<File> = mutableListOf()
-		var pageToken: String? = null
-		do {
-			try {
-				files()
-					.list()
-					.setQ(query)
-					.setSpaces("appDataFolder")
-					.setFields(fields)
-					.execute()
-					.let {
-						fileList.addAll(it.files)
-						pageToken = it.nextPageToken
-					}
-			} catch (e: GoogleJsonResponseException) {
-				e.printStackTrace()
-				return if (e.details.code == 404) ListFiles.ParentNotFound else ListFiles.UnknownError(e)
-			} catch (e: Exception) {
-				e.printStackTrace()
-				return ListFiles.UnknownError(e)
-			}
-		} while (pageToken != null)
-		return ListFiles.Success(fileList)
-	}
-
-	private fun Drive.getGoogleDriveState(): GoogleDriveState {
-		val rootChildrenQuery = "'appDataFolder' in parents "
-		val fileList: MutableMap<String, File> = mutableMapOf()
-		val listFiles = listFiles(query = rootChildrenQuery, fields = "nextPageToken, files(id, name)")
-		if (listFiles is ListFiles.Success) fileList.putAll(listFiles.fileList.associateBy { it.name })
-		else return GoogleDriveState.Error
-
-		val chapterFolderId = fileList[ChapterFolderName]?.id ?: kotlin.run {
-			when (val getFileResult = createFile(ChapterFolderName, FolderMimeType, RootFolderId)) {
-				is RetrieveFile.Success -> getFileResult.fileId
-				is RetrieveFile.TooManyRetries -> return GoogleDriveState.Error
-				is RetrieveFile.ParentNotFound -> return GoogleDriveState.Error //  WTF ?? Thats not possible
-				is RetrieveFile.UnknownError -> return GoogleDriveState.Error
-			}
-		}
-
-		val noteFolderId = fileList[NoteFolderName]?.id ?: kotlin.run {
-			when (val getFileResult = createFile(NoteFolderName, FolderMimeType, RootFolderId)) {
-				is RetrieveFile.Success -> getFileResult.fileId
-				is RetrieveFile.TooManyRetries -> return GoogleDriveState.Error
-				is RetrieveFile.ParentNotFound -> return GoogleDriveState.Error //  WTF ?? Thats not possible
-				is RetrieveFile.UnknownError -> return GoogleDriveState.Error
-			}
-		}
-
-		val attachmentFolderId = fileList[AttachmentFolderName]?.id ?: kotlin.run {
-			when (val getFileResult =
-				createFile(AttachmentFolderName, FolderMimeType, RootFolderId)) {
-				is RetrieveFile.Success -> getFileResult.fileId
-				is RetrieveFile.TooManyRetries -> return GoogleDriveState.Error
-				is RetrieveFile.ParentNotFound -> return GoogleDriveState.Error //  WTF ?? Thats not possible
-				is RetrieveFile.UnknownError -> return GoogleDriveState.Error
-			}
-		}
-
-		val deletedObjectFileId = fileList[DeletedObjectFileName]?.id ?: kotlin.run {
-			when (val getFileResult =
-				createFile(DeletedObjectFileName, JsonFileMimeType, RootFolderId)) {
-				is RetrieveFile.Success -> getFileResult.fileId
-				is RetrieveFile.TooManyRetries -> return GoogleDriveState.Error
-				is RetrieveFile.ParentNotFound -> return GoogleDriveState.Error //  WTF ?? Thats not possible
-				is RetrieveFile.UnknownError -> return GoogleDriveState.Error
-			}
-		}
-
-		val deletedAttachmentFileId = fileList[DeletedAttachmentFileName]?.id ?: kotlin.run {
-			when (val getFileResult =
-				createFile(DeletedAttachmentFileName, JsonFileMimeType, RootFolderId)) {
-				is RetrieveFile.Success -> getFileResult.fileId
-				is RetrieveFile.TooManyRetries -> return GoogleDriveState.Error
-				is RetrieveFile.ParentNotFound -> return GoogleDriveState.Error //  WTF ?? Thats not possible
-				is RetrieveFile.UnknownError -> return GoogleDriveState.Error
-			}
-		}
-
-		return GoogleDriveState.Success(
-			noteFolderId = noteFolderId,
-			chapterFolderId = chapterFolderId,
-			attachmentFolderId = attachmentFolderId,
-			deletedObjectFileId = deletedObjectFileId,
-			deletedAttachmentFileId = deletedAttachmentFileId,
-		)
-	}
-
 	private fun Drive.scanAttachments(folderId: String): ScanAttachmentsResult {
 		val folderList: MutableList<File> = mutableListOf()
-		listFiles(
+		gDrive.listFiles(
+			drive = this,
 			query = "'$folderId' in parents and mimeType = 'application/vnd.google-apps.folder'",
 			fields = "nextPageToken, files(id, name, mimeType, parents, appProperties)",
 		).let {
@@ -1185,7 +1056,8 @@ class GDriveSyncInatorService : SyncInatorService() {
 		val attachmentList: MutableMap<File, List<File>> = mutableMapOf()
 
 		for (folder in folderList) {
-			listFiles(
+			gDrive.listFiles(
+				drive = this,
 				query = "'${folder.id}' in parents",
 				fields = "nextPageToken, files(id, name, mimeType, parents,  modifiedTime)",
 			).let {
@@ -1210,7 +1082,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 			objectOut.close()
 			return baos.toByteArray()
 		} catch (e: Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			return null
 		}
 	}
@@ -1224,7 +1096,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 			objectIn.close()
 			return myObj1
 		} catch (e: Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			return null
 		}
 	}
@@ -1235,40 +1107,12 @@ class GDriveSyncInatorService : SyncInatorService() {
 	}
 
 	companion object {
-		const val LockFileName: String = "a08d3e39-f9af-4023-9c9f-14b19dc16f5c"
-
-		const val DeletedObjectFileName: String = "deletedObjectList.json"
-		const val DeletedAttachmentFileName: String = "deletedAttachmentList.json"
-		const val AttachmentFolderName: String = "AttachmentObject"
-		const val NoteFolderName: String = "NoteObject"
-		const val ChapterFolderName: String = "ChapterObject"
-
-		const val NoteMetadataFileName: String = "2c85ab9e-a9e3-4929-a1ec-6d21a0a80abf.json"
-
-		const val RootFolderId: String = "appDataFolder"
-
-		const val FolderMimeType = "application/vnd.google-apps.folder"
-		const val JsonFileMimeType = "application/json"
-		const val OctetStreamtFileMimeType = "application/octet-stream"
-
-		sealed class GoogleDriveState(
-		) {
-			data class Success(
-				val chapterFolderId: String,
-				val noteFolderId: String,
-				val attachmentFolderId: String,
-				val deletedObjectFileId: String,
-				val deletedAttachmentFileId: String,
-			) : GoogleDriveState()
-
-			object Error : GoogleDriveState()
-		}
 
 		sealed class LockStatus() {
 			object Available : LockStatus()
 			data class LockExpired(val fileIdList: List<String>) : LockStatus()
 			object Locked : LockStatus()
-			data class Error(val exception: Exception) : LockStatus()
+			data class Error(val exception: Exception? = null) : LockStatus()
 		}
 
 		sealed class UploadResult {
@@ -1289,7 +1133,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 			data class Success(val fileId: String, val fileContent: ByteArray) : DownloadResult()
 			object TooManyRetries : DownloadResult()
 			object ParentNotFound : DownloadResult()
-			data class UnknownError(val exception: Exception) : DownloadResult()
+			data class UnknownError(val exception: Exception? = null) : DownloadResult()
 		}
 
 		sealed class DeleteResult {
@@ -1303,14 +1147,21 @@ class GDriveSyncInatorService : SyncInatorService() {
 			data class Success(val fileId: String) : RetrieveFile()
 			object TooManyRetries : RetrieveFile()
 			object ParentNotFound : RetrieveFile()
-			data class UnknownError(val exception: Exception) : RetrieveFile()
+			data class UnknownError(val exception: Exception? = null) : RetrieveFile()
 		}
 
+		/**
+		 * Possible values
+		 * 	*	[Success]
+		 * 	*	[TooManyRetries]
+		 * 	*	[ParentNotFound]
+		 * 	*	[UnknownError]
+		 */
 		sealed class ListFiles {
 			data class Success(val fileList: List<File>) : ListFiles()
 			object TooManyRetries : ListFiles()
 			object ParentNotFound : ListFiles()
-			data class UnknownError(val exception: Exception) : ListFiles()
+			data class UnknownError(val exception: Exception? = null) : ListFiles()
 		}
 
 		sealed class ScanAttachmentsResult {
@@ -1347,6 +1198,7 @@ class GDriveSyncServiceConnectionManager(
 		if (!attemptingToBind) {
 			attemptingToBind = true
 			Intent(context, GDriveSyncInatorService::class.java).let { intent ->
+				intent.putExtra("syncProvider", "Google Drive")
 				context.startService(intent)
 				context.bindService(intent, this, Context.BIND_AUTO_CREATE)
 			}

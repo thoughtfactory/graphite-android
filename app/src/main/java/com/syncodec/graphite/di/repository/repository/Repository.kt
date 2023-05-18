@@ -509,7 +509,7 @@ class Repository {
 		}
 	}
 
-	fun putBucket(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true) {
+	fun putBucket(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
 		realm?.writeBlocking {
 			val storedBucketObject = getBucketFromId(bucketObject.id)
 			storedBucketObject?.let {
@@ -521,13 +521,14 @@ class Repository {
 					latestBucketItemObject.bucketType = bucketObject.bucketType
 					latestBucketItemObject.isFavourite = bucketObject.isFavourite
 					latestBucketItemObject.isLocked = bucketObject.isLocked
+					latestBucketItemObject.googleDriveId = googleDriveId ?: latestBucketItemObject.googleDriveId
 				} ?: copyToRealm(bucketObject)
 			} ?: copyToRealm(bucketObject)
 		}
 	}
 
-	fun putBucketSuspended(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true) {
-		CoroutineScope(Dispatchers.Default).launch { putBucket(bucketObject, modifyTimestampAuto) }
+	fun putBucketSuspended(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
+		CoroutineScope(Dispatchers.Default).launch { putBucket(bucketObject, modifyTimestampAuto, googleDriveId,) }
 	}
 
 	fun reorderBucketList(idOrderList: List<RealmUUID>) {
@@ -545,7 +546,7 @@ class Repository {
 		CoroutineScope(Dispatchers.Default).launch { reorderBucketList(idOrderList) }
 	}
 
-	fun putBucketItem(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true) {
+	fun putBucketItem(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
 		realm?.writeBlocking {
 			val storedBucketItemObject = getBucketItemFromId(bucketItemObject.id)
 			storedBucketItemObject?.let {
@@ -561,12 +562,13 @@ class Repository {
 					latestBucketItemObject.parentId = bucketItemObject.parentId
 					latestBucketItemObject.key = bucketItemObject.key
 					latestBucketItemObject.data = bucketItemObject.data
+					latestBucketItemObject.googleDriveId = googleDriveId ?: latestBucketItemObject.googleDriveId
 				} ?: copyToRealm(bucketItemObject)
 			} ?: copyToRealm(bucketItemObject)
 		}
 	}
 
-	fun putBucketItemSuspended(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true) {
+	fun putBucketItemSuspended(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
 		CoroutineScope(Dispatchers.Default).launch { putBucketItem(bucketItemObject, modifyTimestampAuto) }
 	}
 
@@ -685,21 +687,22 @@ class Repository {
 		}
 	}
 
-	fun putTag(tagObject: TagObject, modifyTimestampAuto: Boolean = true) {
+	fun putTag(tagObject: TagObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
 		realm?.writeBlocking {
 			val storedTagObject = getTagFromId(tagObject.id)
 			storedTagObject?.let {
-				findLatest(it)?.let { latestChapterObject ->
-					latestChapterObject.modifiedTimestamp = if (modifyTimestampAuto) Instant.now().toEpochMilli() else latestChapterObject.modifiedTimestamp
-					latestChapterObject.tag = tagObject.tag
-					latestChapterObject.color = tagObject.color
+				findLatest(it)?.let { latestTagObject ->
+					latestTagObject.modifiedTimestamp = if (modifyTimestampAuto) Instant.now().toEpochMilli() else latestTagObject.modifiedTimestamp
+					latestTagObject.tag = tagObject.tag
+					latestTagObject.color = tagObject.color
+					latestTagObject.googleDriveId = googleDriveId ?: latestTagObject.googleDriveId
 				} ?: copyToRealm(tagObject)
 			} ?: copyToRealm(tagObject)
 		}
 	}
 
-	fun putTagSuspended(tagObject: TagObject, modifyTimestampAuto: Boolean = true) {
-		CoroutineScope(Dispatchers.Default).launch { putTag(tagObject, modifyTimestampAuto) }
+	fun putTagSuspended(tagObject: TagObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
+		CoroutineScope(Dispatchers.Default).launch { putTag(tagObject, modifyTimestampAuto, googleDriveId) }
 	}
 
 	fun getTagFromId(id: RealmUUID?): TagObject? {

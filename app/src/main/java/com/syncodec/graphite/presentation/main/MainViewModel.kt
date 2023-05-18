@@ -25,14 +25,14 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class MainViewModel(private val repository : Repository, private val dBox : DBox, private val gDrive : GDrive) : ViewModel() {
+class MainViewModel(private val repository: Repository, private val dBox: DBox, private val gDrive: GDrive) : ViewModel() {
 
 	val repositoryState = repository.repositoryState
 
 	val defaultChapterId = MutableStateFlow(null as RealmUUID?)
 
 	private val _testConnectionResponse = MutableStateFlow<DBox.Companion.TestConnectionResponse?>(DBox.Companion.TestConnectionResponse.Error(Exception("Test Connection Error"), ""))
-	val testConnectionResponse : StateFlow<DBox.Companion.TestConnectionResponse?> = _testConnectionResponse
+	val testConnectionResponse: StateFlow<DBox.Companion.TestConnectionResponse?> = _testConnectionResponse
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -52,11 +52,11 @@ class MainViewModel(private val repository : Repository, private val dBox : DBox
 	}
 
 	fun putNotebook(
-		title : String,
-		description : String,
-		color : Color?,
-		bitmap : Bitmap?,
-		callback : suspend (String) -> Unit,
+		title: String,
+		description: String,
+		color: Color?,
+		bitmap: Bitmap?,
+		callback: suspend (String) -> Unit,
 	) {
 		val chapterObject = ChapterObject().apply {
 			this.title = title
@@ -74,10 +74,10 @@ class MainViewModel(private val repository : Repository, private val dBox : DBox
 	}
 
 	fun putBucket(
-		title : String?,
-		description : String?,
-		bucketType : BucketType,
-		callback : suspend (String) -> Unit,
+		title: String?,
+		description: String?,
+		bucketType: BucketType,
+		callback: suspend (String) -> Unit,
 	) {
 		val bucketObject = BucketObject().apply {
 			this.title = title
@@ -93,15 +93,15 @@ class MainViewModel(private val repository : Repository, private val dBox : DBox
 		}
 	}
 
-	fun delete(idList : List<RealmUUID>) {
+	fun delete(idList: List<RealmUUID>) {
 		repository.deleteSuspended(idList)
 	}
 
-	fun setRepositoryState(repositoryState : Repository.Companion.RepositoryState) {
+	fun setRepositoryState(repositoryState: Repository.Companion.RepositoryState) {
 		repository.repositoryState.tryEmit(repositoryState)
 	}
 
-	fun onAuthenticate(context : Context) {
+	fun onAuthenticate(context: Context) {
 		repository.initRepository(context)
 		repository.isAuthenticated.tryEmit(true)
 	}
@@ -114,17 +114,15 @@ class MainViewModel(private val repository : Repository, private val dBox : DBox
 		repository.isAuthenticated.tryEmit(false)
 	}
 
-	fun testRemoteConnection(syncProvider : SyncDataStoreInstance.Companion.SyncProvider?) {
+	fun testRemoteConnection(syncProvider: SyncDataStoreInstance.Companion.SyncProvider?) {
 		Log.d("npr71", "testRemoteConnection: $syncProvider")
 		viewModelScope.launch(Dispatchers.IO) {
-			when(syncProvider) {
+			when (syncProvider) {
 				SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> dBox.testConnection { _testConnectionResponse.tryEmit(it) }
-				SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDrive.testConnection {
-					_testConnectionResponse.tryEmit(it)
-					Log.d("npr71", "testRemoteConnection: $it")
-				}
-				SyncDataStoreInstance.Companion.SyncProvider.NotConfigured -> null
-				SyncDataStoreInstance.Companion.SyncProvider.Unknown -> null
+				SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDrive.testConnection { _testConnectionResponse.tryEmit(it) }
+
+				SyncDataStoreInstance.Companion.SyncProvider.NotConfigured -> _testConnectionResponse.tryEmit(DBox.Companion.TestConnectionResponse.NotLoggedIn)
+				SyncDataStoreInstance.Companion.SyncProvider.Unknown -> _testConnectionResponse.tryEmit(DBox.Companion.TestConnectionResponse.NotLoggedIn)
 				else -> null
 			}
 		}

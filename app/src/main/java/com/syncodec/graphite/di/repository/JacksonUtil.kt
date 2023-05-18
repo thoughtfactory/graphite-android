@@ -25,7 +25,7 @@ class RealmUUIDDeserializer(vc : Class<RealmUUID>? = null) : StdDeserializer<Rea
 			val id = node.asText()
 			if (id == null || id.isEmpty()) throw Exception() else return RealmUUID.from(id)
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			node["bytes"]?.asText()?.let {
 				return RealmUUID.from(Base64.getDecoder().decode(it))
 			} ?: throw Exception()

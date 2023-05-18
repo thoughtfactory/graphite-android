@@ -63,11 +63,7 @@ fun DropboxProfile(
 		modifier = modifier
 			.fillMaxWidth()
 			.clip(MaterialTheme.shapes.medium)
-			.background(
-				MaterialTheme.colorScheme
-					.surfaceColorAtElevation(8.dp)
-					.copy(alpha = 0.17f)
-			)
+			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f))
 			.clickable {
 				try {
 					context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.dropbox.com/home/Apps/Graphite%20Data")))

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -58,6 +59,7 @@ import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -66,18 +68,18 @@ class MainActivity : ComponentActivity() {
 
 	private val viewModel by viewModel<MainViewModel>()
 
-	private lateinit var auth : FirebaseAuth
-	private lateinit var oneTapClient : SignInClient
-	private lateinit var signInRequest : BeginSignInRequest
+	private lateinit var auth: FirebaseAuth
+	private lateinit var oneTapClient: SignInClient
+	private lateinit var signInRequest: BeginSignInRequest
 
-	private var cancellationSignal : CancellationSignal? = null
+	private var cancellationSignal: CancellationSignal? = null
 
-	private var biometricErrorMessage : MutableState<String?> = mutableStateOf(null)
+	private var biometricErrorMessage: MutableState<String?> = mutableStateOf(null)
 
 	private val syncStatus = MutableStateFlow<SyncInatorService.Companion.SyncStatus>(SyncInatorService.Companion.SyncStatus.Init)
 
 	@OptIn(ExperimentalAnimationApi::class)
-	override fun onCreate(savedInstanceState : Bundle?) {
+	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		isInStack = true
 
@@ -112,11 +114,12 @@ class MainActivity : ComponentActivity() {
 				else systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
 
 				LaunchedEffect(key1 = isBiometricsEnabled) {
-					if (isBiometricsEnabled != null && ! isBiometricUsed) {
+					if (isBiometricsEnabled != null && !isBiometricUsed) {
 						if (isBiometricsEnabled == true) {
 							viewModel.setRepositoryState(Repository.Companion.RepositoryState.Locked)
 							launchBiometric()
-						} else viewModel.onAuthenticate(applicationContext)
+						}
+						else viewModel.onAuthenticate(applicationContext)
 						isBiometricUsed = true
 					}
 				}
@@ -126,24 +129,12 @@ class MainActivity : ComponentActivity() {
 				val biometricErrorMessage by this.biometricErrorMessage
 
 				val syncStatus by syncStatus.collectAsState()
-				val testConnectionResponse by viewModel.testConnectionResponse.collectAsState(
-					initial = DBox.Companion.TestConnectionResponse.Error(
-						Exception("Test Connection Error"),
-						""
-					)
-				)
-
-				LaunchedEffect(key1 = testConnectionResponse) {
-					if (testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) {
-						startSyncService()
-					}
-				}
+				val testConnectionResponse by viewModel.testConnectionResponse.collectAsState(initial = DBox.Companion.TestConnectionResponse.Loading)
 
 				val syncDataStore = remember { SyncDataStoreInstance(this@MainActivity) }
 				val syncProvider by syncDataStore.syncProvider.collectAsState(initial = null)
-				LaunchedEffect(key1 = syncProvider) {
-					syncProvider?.let { viewModel.testRemoteConnection(it) }
-				}
+				LaunchedEffect(key1 = testConnectionResponse) { startSyncService(syncProvider) }
+				LaunchedEffect(key1 = syncProvider) { syncProvider?.let { viewModel.testRemoteConnection(it) } }
 
 				AnimatedContent(
 					targetState = isFirstTime,
@@ -168,7 +159,10 @@ class MainActivity : ComponentActivity() {
 								Repository.Companion.RepositoryState.Success -> MainScreen(
 									syncStatus = syncStatus,
 									testConnectionResponse = testConnectionResponse,
-									testDropboxConnection = { viewModel.testRemoteConnection(syncProvider) },
+									testDropboxConnection = {
+										Log.d("npr71", "testDropboxConnection: ")
+										viewModel.testRemoteConnection(syncProvider)
+									},
 									onClickSyncNow = { syncProvider?.onClickSyncNow() },
 									onClickForceSync = { syncProvider?.onClickForceSync() },
 								)
@@ -189,10 +183,10 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
-	private fun checkBiometricSupport() : Boolean {
+	private fun checkBiometricSupport(): Boolean {
 		val keyGuardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 
-		if (! keyGuardManager.isDeviceSecure) {
+		if (!keyGuardManager.isDeviceSecure) {
 			return true
 		}
 
@@ -220,13 +214,13 @@ class MainActivity : ComponentActivity() {
 				getCancellationSignal(),
 				executor,
 				object : BiometricPrompt.AuthenticationCallback() {
-					override fun onAuthenticationSucceeded(result : BiometricPrompt.AuthenticationResult?) {
+					override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
 						super.onAuthenticationSucceeded(result)
 						Toast.makeText(this@MainActivity, "Authentication Succeeded", Toast.LENGTH_SHORT).show()
 						viewModel.onAuthenticate(applicationContext)
 					}
 
-					override fun onAuthenticationError(errorCode : Int, errString : CharSequence?) {
+					override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
 						super.onAuthenticationError(errorCode, errString)
 						Toast.makeText(this@MainActivity, "Authentication Error", Toast.LENGTH_SHORT).show()
 
@@ -264,7 +258,7 @@ class MainActivity : ComponentActivity() {
 						viewModel.onAuthFailure()
 					}
 
-					override fun onAuthenticationHelp(helpCode : Int, helpString : CharSequence?) {
+					override fun onAuthenticationHelp(helpCode: Int, helpString: CharSequence?) {
 						super.onAuthenticationHelp(helpCode, helpString)
 					}
 				}
@@ -272,7 +266,7 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
-	private fun getCancellationSignal() : CancellationSignal {
+	private fun getCancellationSignal(): CancellationSignal {
 		cancellationSignal = CancellationSignal()
 		cancellationSignal?.setOnCancelListener {
 			Toast.makeText(this, "Authentication Cancelled Signal", Toast.LENGTH_SHORT).show()
@@ -295,19 +289,21 @@ class MainActivity : ComponentActivity() {
 
 				if (idToken == null) {
 					Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-				} else {
+				}
+				else {
 					val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
 					auth.signInWithCredential(firebaseCredential)
 						.addOnCompleteListener(this) { task ->
 							if (task.isSuccessful) {
 								val user = auth.currentUser
 								updateUI(user)
-							} else {
+							}
+							else {
 								updateUI(null)
 							}
 						}
 				}
-			} catch (e : ApiException) {
+			} catch (e: ApiException) {
 //					e.printStackTrace()
 				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 			}
@@ -321,7 +317,7 @@ class MainActivity : ComponentActivity() {
 					IntentSenderRequest.Builder(result.pendingIntent.intentSender).build().let {
 						signInIntentResultLauncher.launch(it)
 					}
-				} catch (e : IntentSender.SendIntentException) {
+				} catch (e: IntentSender.SendIntentException) {
 				}
 			}
 			.addOnFailureListener(this) { e ->
@@ -329,34 +325,53 @@ class MainActivity : ComponentActivity() {
 			}
 	}
 
-	private fun updateUI(user : FirebaseUser?) {
+	private fun updateUI(user: FirebaseUser?) {
 		if (user != null) {
 			val dataStoreInstance = DataStoreInstance(this)
 			dataStoreInstance.putIsFirstTime(false)
 
 			Toast.makeText(this, "Hi ${user.displayName}", Toast.LENGTH_SHORT).show()
-		} else {
+		}
+		else {
 			Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 		}
 	}
 
-	private var dropboxServiceConnectionManager : DropboxSyncServiceConnectionManager? = null
-	private var gDropboxSyncServiceConnectionManager : GDriveSyncServiceConnectionManager? = null
+	private var dropboxServiceConnectionManager: DropboxSyncServiceConnectionManager? = null
+	private var gDriveSyncServiceConnectionManager: GDriveSyncServiceConnectionManager? = null
 
-	private fun startSyncService() {
-		if (gDropboxSyncServiceConnectionManager == null) {
-			gDropboxSyncServiceConnectionManager = GDriveSyncServiceConnectionManager(this) { syncInator ->
-				lifecycleScope.launch(Dispatchers.Default) {
-					syncInator.syncStatus.collect { syncStatus.tryEmit(it) }
+	private fun startSyncService(syncProvider: SyncDataStoreInstance.Companion.SyncProvider?) {
+		when (syncProvider) {
+			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> {
+				if (dropboxServiceConnectionManager == null) {
+					dropboxServiceConnectionManager = DropboxSyncServiceConnectionManager(applicationContext) { syncInator ->
+						lifecycleScope.launch(Dispatchers.Default) { syncInator.syncStatus.collect { syncStatus.tryEmit(it) } }
+					}
+					gDriveSyncServiceConnectionManager?.service?.hardCutOff()
+					gDriveSyncServiceConnectionManager?.unbindFromService()
+					gDriveSyncServiceConnectionManager = null
 				}
 			}
-		}
-		return
-		if (dropboxServiceConnectionManager == null) {
-			dropboxServiceConnectionManager = DropboxSyncServiceConnectionManager(this) { syncInator ->
-				lifecycleScope.launch(Dispatchers.Default) {
-					syncInator.syncStatus.collect { syncStatus.tryEmit(it) }
+
+			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> {
+				if (gDriveSyncServiceConnectionManager == null) {
+					gDriveSyncServiceConnectionManager = GDriveSyncServiceConnectionManager(applicationContext) { syncInator ->
+						lifecycleScope.launch(Dispatchers.Default) { syncInator.syncStatus.collect { syncStatus.tryEmit(it) } }
+					}
+					dropboxServiceConnectionManager?.service?.hardCutOff()
+					dropboxServiceConnectionManager?.unbindFromService()
+					dropboxServiceConnectionManager = null
 				}
+			}
+
+			else -> {
+				dropboxServiceConnectionManager?.service?.hardCutOff()
+				dropboxServiceConnectionManager?.unbindFromService()
+				dropboxServiceConnectionManager = null
+
+				gDriveSyncServiceConnectionManager?.service?.hardCutOff()
+				gDriveSyncServiceConnectionManager?.unbindFromService()
+				gDriveSyncServiceConnectionManager = null
 			}
 		}
 	}
@@ -364,7 +379,7 @@ class MainActivity : ComponentActivity() {
 	private fun SyncDataStoreInstance.Companion.SyncProvider.onClickSyncNow() {
 		when (this) {
 			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> dropboxServiceConnectionManager?.service?.onClickSyncNow()
-			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDropboxSyncServiceConnectionManager?.service?.onClickSyncNow()
+			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDriveSyncServiceConnectionManager?.service?.onClickSyncNow()
 			else -> null
 		}
 	}
@@ -372,13 +387,14 @@ class MainActivity : ComponentActivity() {
 	private fun SyncDataStoreInstance.Companion.SyncProvider.onClickForceSync() {
 		when (this) {
 			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> dropboxServiceConnectionManager?.service?.onClickForceSync()
-			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDropboxSyncServiceConnectionManager?.service?.onClickForceSync()
+			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDriveSyncServiceConnectionManager?.service?.onClickForceSync()
 			else -> null
 		}
 	}
 
 	override fun onDestroy() {
 		dropboxServiceConnectionManager?.unbindFromService()
+		gDriveSyncServiceConnectionManager?.unbindFromService()
 		super.onDestroy()
 	}
 

@@ -65,8 +65,8 @@ fun DropboxSyncScreen(
 	isRestoringSnapshot : Boolean = false,
 	onTestConnection : () -> Unit = {},
 	onAuthorize : (String) -> Unit = {},
-	onReconnect : () -> Unit = {},
-	onDisconnect : () -> Unit = {},
+	onClickReconnect : () -> Unit = {},
+	onClickDisconnect : () -> Unit = {},
 	onClickTakeSnapshot : () -> Unit = {},
 	onClickShareSnapshot : (Metadata) -> Unit = {},
 	onClickRestoreSnapshot : (Metadata) -> Unit = {},
@@ -122,9 +122,9 @@ fun DropboxSyncScreen(
 				snapshot = selectedSnapshot,
 				testConnectionResponse = testConnectionResponse,
 				onAuthorize = onAuthorize,
-				onReconnect = onReconnect,
+				onReconnect = onClickReconnect,
 				onDisconnect = {
-					onDisconnect()
+					onClickDisconnect()
 					closeDialog(DropboxDialogType.Disconnect)
 				},
 				onShare = {
@@ -188,7 +188,7 @@ fun DropboxSyncScreen(
 					icon = R.drawable.ic_logo_dropbox,
 					subIcon = if (testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) R.drawable.ic_checkmark else null,
 					tint = Color.Unspecified,
-					subIconTint = Color.Unspecified
+					subIconTint = Color.Unspecified,
 				) {
 					if (isInternetAvailable) {
 						if (testConnectionResponse is DBox.Companion.TestConnectionResponse.Success) openDialog(DropboxDialogType.Reconnect)

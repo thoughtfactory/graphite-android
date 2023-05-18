@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.service.syncInator.SyncInatorService
+import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 
 
 @Preview
@@ -55,8 +57,6 @@ fun ConnectedView(
 	onSync : () -> Unit = {},
 	onClickManage : () -> Unit = {},
 ) {
-	val context = LocalContext.current
-
 	Column(
 		modifier = Modifier
 	) {
@@ -87,7 +87,7 @@ fun ConnectedView(
 				)
 				Spacer(modifier = Modifier.height(8.dp))
 
-				DropboxSpaceUsage(
+				SpaceUsage(
 					spaceTotal = spaceTotal,
 					spaceUsed = spaceUsed,
 				)
@@ -112,7 +112,7 @@ fun ConnectedView(
 
 @Preview
 @Composable
-private fun ColumnScope.DropboxSpaceUsage(
+private fun ColumnScope.SpaceUsage(
 	spaceTotal : Long? = null,
 	spaceUsed : Long? = null,
 ) {
@@ -246,7 +246,7 @@ private fun SyncStatusCard(
 	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 ) {
 	when (syncStatus) {
-		is SyncInatorService.Companion.SyncStatus.Init -> SyncStatusCardMessage(message = "Initializing... Try to connect with Dropbox.")
+		is SyncInatorService.Companion.SyncStatus.Init -> SyncStatusCardMessage(message = "Initializing... Trying to connect with cloud.")
 		is SyncInatorService.Companion.SyncStatus.Idle -> SyncStatusCardMessage(message = if (syncStatus.isAutoSyncDisabled) "Idle. Auto sync is disabled." else "Idle")
 		is SyncInatorService.Companion.SyncStatus.Locked -> SyncStatusCardMessage(
 			message = "It seems that another device is syncing. Trying again in few moments...\nIf you believe no other device is syncing or problem persists, try to force sync.",
@@ -254,7 +254,7 @@ private fun SyncStatusCard(
 			contentColor = MaterialTheme.colorScheme.onErrorContainer,
 		)
 
-		is SyncInatorService.Companion.SyncStatus.Connected -> SyncStatusCardMessage(message = "Connected to Dropbox. Syncing...")
+		is SyncInatorService.Companion.SyncStatus.Connected -> SyncStatusCardMessage(message = "Connected to cloud. Syncing...")
 		is SyncInatorService.Companion.SyncStatus.Syncing -> SyncStatusSyncingCardMessage(
 			message = "Syncing...",
 			syncStatus = syncStatus,
@@ -272,7 +272,7 @@ private fun SyncStatusCard(
 			contentColor = MaterialTheme.colorScheme.onErrorContainer,
 		)
 		is SyncInatorService.Companion.SyncStatus.CredentialError -> SyncStatusCardMessage(
-			message = "It seems like your credentials are expired. Try to reconnect with Dropbox from settings.",
+			message = "It seems like your credentials are expired. Try to reconnect with cloud from settings.",
 			containerColor = MaterialTheme.colorScheme.errorContainer,
 			contentColor = MaterialTheme.colorScheme.onErrorContainer,
 		)

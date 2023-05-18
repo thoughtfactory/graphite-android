@@ -27,14 +27,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
 
 
 @Preview
 @Composable
-fun NotLoggedInView() {
+fun NotLoggedInView(
+	onClickManage : () -> Unit = {},
+) {
 	val context = LocalContext.current
-
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
@@ -45,14 +47,13 @@ fun NotLoggedInView() {
 				.background(
 					MaterialTheme.colorScheme
 						.surfaceColorAtElevation(8.dp)
-						.copy(alpha = 0.13f),
-					MaterialTheme.shapes.medium,
+						.copy(alpha = 0.13f), MaterialTheme.shapes.medium
 				)
 				.padding(12.dp, 8.dp),
 		) {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_logo_dropbox),
-				contentDescription = "Dropbox Logo",
+				painter = painterResource(id = R.drawable.im_cloud_storage),
+				contentDescription = "Cloud Storage",
 				tint = Color.Unspecified,
 				modifier = Modifier.requiredSize(48.dp)
 			)
@@ -61,7 +62,7 @@ fun NotLoggedInView() {
 				modifier = Modifier.weight(1f)
 			) {
 				Text(
-					text = "Connect with Dropbox",
+					text = "Keep your data safe in the cloud",
 					style = MaterialTheme.typography.titleMedium,
 					color = MaterialTheme.colorScheme.onSurface,
 					fontWeight = FontWeight.Bold,
@@ -83,7 +84,7 @@ fun NotLoggedInView() {
 			),
 			shape = MaterialTheme.shapes.medium,
 			modifier = Modifier.fillMaxWidth(),
-			onClick = { context.startActivity(Intent(context, DropboxSyncActivity::class.java)) },
+			onClick = onClickManage,
 		) {
 			Text(text = "Manage")
 		}

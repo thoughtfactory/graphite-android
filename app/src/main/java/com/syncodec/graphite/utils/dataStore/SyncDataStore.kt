@@ -21,6 +21,7 @@ class SyncDataStoreInstance(private val context : Context) {
 		enum class SyncProvider {
 			Dropbox,
 			GoogleDrive,
+			OneDrive,
 			Unknown,
 			NotConfigured,
 		}

@@ -114,6 +114,15 @@ class DropboxSyncInatorService : SyncInatorService() {
 
 	val dBox : DBox by inject()
 
+	fun hardCutOff() {
+		reSyncCoroutine?.cancel()
+		reSyncCoroutine = null
+		syncCoroutine?.cancel()
+		syncCoroutine = null
+		dropboxServiceBinder = null
+		stopSelf()
+	}
+
 	fun onClickSyncNow() {
 		if (syncStatus.value is SyncInatorService.Companion.SyncStatus.Init
 			|| syncStatus.value is SyncInatorService.Companion.SyncStatus.Idle
@@ -148,6 +157,7 @@ class DropboxSyncInatorService : SyncInatorService() {
 
 	private var syncCoroutine : CoroutineScope? = null
 	private val previousSyncSessionIdList = mutableSetOf<String>()
+
 	private fun sync(forced : Boolean = false) {
 		if (syncCoroutine == null) {
 			lifecycleScope.launch(Dispatchers.IO) {
@@ -599,6 +609,7 @@ class DropboxSyncInatorService : SyncInatorService() {
 								downSyncResultList[realmUUId] = SyncResult.Success(pair.first)
 							} ?: kotlin.run { downSyncResultList[realmUUId] = SyncResult.Failed }
 
+//							This need some more processing as thumbnails are not stored in the cloud [GRAPHITE-96] [GRAPHITE-97]
 							BucketItemObject::class -> BucketItemObject.fromCloudSnapshot(downloadResult.data)?.let {
 								repository.putBucketItemSuspended(bucketItemObject = it, modifyTimestampAuto = false)
 								downSyncResultList[realmUUId] = SyncResult.Success(pair.first)
@@ -815,7 +826,7 @@ class DropboxSyncInatorService : SyncInatorService() {
 			val attachmentMetadataSerialized =json.encodeToString(SetSerializer(SyncInatorService.Companion.AttachmentMetadata.serializer()), attachmentMetadataList)
 			uploadData(path = path, inputStream = attachmentMetadataSerialized.byteInputStream())
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 
@@ -872,7 +883,7 @@ class DropboxSyncInatorService : SyncInatorService() {
 				inputStream = inputStream,
 			)
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 
@@ -1201,6 +1212,7 @@ class DropboxSyncServiceConnectionManager(private val context : Context, private
 		if (! attemptingToBind) {
 			attemptingToBind = true
 			Intent(context, DropboxSyncInatorService::class.java).let { intent ->
+				intent.putExtra("syncProvider", "Dropbox")
 				context.startService(intent)
 				context.bindService(intent, this, Context.BIND_AUTO_CREATE)
 			}

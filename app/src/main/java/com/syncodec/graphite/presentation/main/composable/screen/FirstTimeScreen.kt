@@ -55,6 +55,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -66,9 +67,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
+@Preview
 @Composable
 fun FirstTimeScreen(
-	onClickLogin : () -> Unit
+	onClickLogin: () -> Unit = { },
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
@@ -107,10 +109,7 @@ fun FirstTimeScreen(
 						this.setTextColor(textColor.toArgb())
 						this.setBackgroundColor(0)
 						this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 47f)
-						this.setTypeface(
-							ResourcesCompat.getFont(context, R.font.graduate_regular),
-							Typeface.BOLD
-						)
+						this.setTypeface(ResourcesCompat.getFont(context, R.font.graduate_regular), Typeface.BOLD)
 						this.letterSpacing = 0.1f
 						this.setDuration(2400)
 					}
@@ -164,7 +163,7 @@ fun FirstTimeScreen(
 
 @Composable
 private fun ContentCard(
-	showContent : Boolean
+	showContent: Boolean
 ) {
 	val scope = rememberCoroutineScope()
 	var showJournal by remember { mutableStateOf(false) }
@@ -281,9 +280,9 @@ private fun ContentCard(
 
 @Composable
 private fun LoginCard(
-	modifier : Modifier,
-	onClickLogin : () -> Unit,
-	onClickTryFirst : () -> Unit
+	modifier: Modifier,
+	onClickLogin: () -> Unit,
+	onClickTryFirst: () -> Unit
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
@@ -351,14 +350,14 @@ private fun LoginCard(
 				) {
 					Checkbox(
 						checked = isAgreedToTerms,
-						onCheckedChange = { isAgreedToTerms = ! isAgreedToTerms },
+						onCheckedChange = { isAgreedToTerms = !isAgreedToTerms },
 						colors = CheckboxDefaults.colors(
 							checkedColor = MaterialTheme.colorScheme.primary,
 							uncheckedColor = MaterialTheme.colorScheme.primary,
 						)
 					)
 
-					val annotatedLinkString : AnnotatedString = buildAnnotatedString {
+					val annotatedLinkString: AnnotatedString = buildAnnotatedString {
 						val str = "I agree to the Terms of Service and Privacy Policy"
 						append(str)
 //						** I agree to the

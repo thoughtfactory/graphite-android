@@ -79,12 +79,6 @@ fun SettingButton(
 				}
 			}
 			Spacer(modifier = Modifier.width(24.dp))
-			AnimatedText(
-				text = subText ?: "",
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
-			)
-			Spacer(modifier = Modifier.width(8.dp))
 			subIcon?.let {
 				Icon(
 					painter = painterResource(id = it),
@@ -94,6 +88,12 @@ fun SettingButton(
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 			}
+			Spacer(modifier = Modifier.width(8.dp))
+			AnimatedText(
+				text = subText ?: "",
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+			)
 			Icon(
 				painter = painterResource(id = R.drawable.ic_caret),
 				contentDescription = text,

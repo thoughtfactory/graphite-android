@@ -35,6 +35,7 @@ import com.syncodec.graphite.presentation.settings.composable.screen.importDataS
 import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.graphite.ImportDataGraphiteViewModel
 import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.journey.ImportDataJourneyViewModel
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupViewModel
+import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
@@ -98,6 +99,7 @@ class BaseApplication : Application() {
 					viewModelOf(::WhereDialogViewModel)
 					viewModelOf(::ExplorerScreenViewModel)
 					viewModelOf(::DropboxSyncViewModel)
+					viewModelOf(::GoogleDriveSyncViewModel)
 				}
 			)
 		}

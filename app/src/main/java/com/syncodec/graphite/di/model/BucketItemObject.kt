@@ -73,7 +73,7 @@ class BucketItemObject() : RealmObject {
 		return try {
 			this.data?.let { json.decodeFromString<BucketItemData.ShowData?>(it) }
 		} catch (e : Exception) {
-			e.printStackTrace()
+//			e.printStackTrace()
 			null
 		}
 	}
@@ -214,7 +214,7 @@ class BucketItemObject() : RealmObject {
 							this.numberOfPages = bookData.numberOfPages
 							this.description = bookData.description
 						} catch (e : Exception) {
-							e.printStackTrace()
+//							e.printStackTrace()
 						}
 					}
 				}

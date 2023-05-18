@@ -19,7 +19,10 @@ import kotlinx.serialization.Serializable
 import org.koin.android.ext.android.inject
 
 abstract class SyncInatorService : LifecycleService() {
+
+	var syncProvider: String? = null
 	private fun moveToForeground() {
+
 		val channelId = "SyncService"
 		val channelName = "Sync"
 		val chan = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW)
@@ -28,8 +31,8 @@ abstract class SyncInatorService : LifecycleService() {
 
 		val notification: Notification = Notification.Builder(this, channelId)
 			.setContentTitle("Graphite")
-			.setContentText("Synchronizing with Dropbox. Process will stop automatically when completed.")
-			.setSmallIcon(R.drawable.ic_ring)
+			.setContentText("Synchronizing with ${syncProvider}. Process will stop automatically when completed.")
+			.setSmallIcon(R.drawable.ic_noti_cloud_sync)
 			.setOngoing(true)
 			.build()
 
@@ -39,22 +42,21 @@ abstract class SyncInatorService : LifecycleService() {
 	override fun onCreate() {
 		super.onCreate()
 		syncDataStoreInstance = SyncDataStoreInstance(this)
-		moveToForeground()
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		super.onStartCommand(intent, flags, startId)
+		syncProvider = intent?.getStringExtra("syncProvider")
+		moveToForeground()
 		return START_STICKY
 	}
 
 	override fun onUnbind(intent: Intent?): Boolean {
-		Toast.makeText(this, "service unbind", Toast.LENGTH_SHORT).show()
 		return super.onUnbind(intent)
 	}
 
 	override fun onDestroy() {
 		super.onDestroy()
-		Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
 	}
 
 	//	Don't make these private or lateinit

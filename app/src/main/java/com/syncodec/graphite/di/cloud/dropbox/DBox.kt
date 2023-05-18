@@ -10,10 +10,19 @@ import com.dropbox.core.v2.files.ListFolderErrorException
 import com.dropbox.core.v2.files.Metadata
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Connected
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.CredentialError
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Failed
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Idle
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Init
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Locked
+import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Syncing
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.deleteSecretData
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
+import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,10 +51,13 @@ class DBox(private val context : Context) {
 					try {
 						((it.data as HashMap<*, *>)["data"] as HashMap<*, *>)
 							.let { data ->
+//								!!!	Is this the right way to do this?	!!!
 								val refreshToken = data["refresh_token"] as String
 								val accessToken = data["access_token"] as String
 
 								context.putSecretData("dropbox_refresh_token", refreshToken)
+								val syncDataStoreInstance = SyncDataStoreInstance(context)
+								syncDataStoreInstance.setSyncProvider(SyncDataStoreInstance.Companion.SyncProvider.Dropbox)
 								callback(ExchangeCodeForTokenResponse.Success)
 							}
 					} catch (e : Exception) {
@@ -59,7 +71,7 @@ class DBox(private val context : Context) {
 			callback(ExchangeCodeForTokenResponse.Error(e, "Code has expired. Please try again."))
 		} catch (e : Exception) {
 			callback(ExchangeCodeForTokenResponse.Error(e, "Something went wrong. Please try again."))
-			e.printStackTrace()
+//			e.printStackTrace()
 		}
 	}
 
@@ -72,7 +84,7 @@ class DBox(private val context : Context) {
 					return
 				}
 			} catch (e : Exception) {
-				e.printStackTrace()
+//				e.printStackTrace()
 			}
 		} else {
 			context.getSecretData("dropbox_access_token").let {
@@ -89,7 +101,7 @@ class DBox(private val context : Context) {
 									return
 								}
 							} catch (e : Exception) {
-								e.printStackTrace()
+//								e.printStackTrace()
 							}
 						}
 					}
@@ -167,7 +179,7 @@ class DBox(private val context : Context) {
 				}
 
 				is AccessTokenResponseResponse.Error -> {
-					accessTokenResponseResponse.exception.printStackTrace()
+//					accessTokenResponseResponse.exception.printStackTrace()
 					when (accessTokenResponseResponse.exception) {
 						is JSONException -> {
 							if (accessTokenResponseResponse.exception.message == "No value for access_token") {
@@ -262,6 +274,9 @@ class DBox(private val context : Context) {
 					callback()
 				}
 			}
+
+			val syncDataStoreInstance = SyncDataStoreInstance(context)
+			syncDataStoreInstance.setSyncProvider(SyncDataStoreInstance.Companion.SyncProvider.NotConfigured)
 		}
 	}
 
@@ -348,6 +363,13 @@ class DBox(private val context : Context) {
 			class Error(val exception : Exception, val message : String) : ExchangeCodeForTokenResponse()
 		}
 
+		/**
+		 * Ping remote server to check if user is logged in and get user info
+		 *   *   [Loading]: Loading.
+		 *   *   [Success]: User is logged in. [name], [email], [profilePictureUrl], [spaceUsed], [spaceTotal] are available.
+		 *   *   [NotLoggedIn]: User is not logged in.
+		 *   *   [Error]: Something went wrong. [exception] and [message] are available.
+		 */
 		sealed class TestConnectionResponse {
 			object Loading : TestConnectionResponse()
 			class Success(
