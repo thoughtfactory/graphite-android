@@ -105,35 +105,48 @@ class NoteScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	fun addDebugData() {
 		CoroutineScope(Dispatchers.Default).launch {
-			NoteObject().apply {
-				this.title = "alpha"
-				this.content =
-					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-						"alpha"
-					}\"}]}]}"
-				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
-				repository.putNote(this)
+//			NoteObject().apply {
+//				this.title = "alpha"
+//				this.content =
+//					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+//						"alpha"
+//					}\"}]}]}"
+//				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
+//				repository.putNote(this)
+//			}
+//
+//			NoteObject().apply {
+//				this.title = "beta"
+//				this.content =
+//					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+//						"beta"
+//					}\"}]}]}"
+//				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
+//				repository.putNote(this)
+//			}
+//
+//			NoteObject().apply {
+//				this.title = "gamma"
+//				this.content =
+//					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+//						"gamma"
+//					}\"}]}]}"
+//				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
+//				repository.putNote(this)
+//			}
+
+			for(i in 0..100) {
+				NoteObject().apply {
+					this.title = "note $i"
+					this.content =
+						"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
+							"alpha $i"
+						}\"}]}]}"
+					this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
+					repository.putNote(this)
+				}
 			}
 
-			NoteObject().apply {
-				this.title = "beta"
-				this.content =
-					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-						"beta"
-					}\"}]}]}"
-				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
-				repository.putNote(this)
-			}
-
-			NoteObject().apply {
-				this.title = "gamma"
-				this.content =
-					"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"${
-						"gamma"
-					}\"}]}]}"
-				this.parentId = defaultChapterId.value?.let { RealmUUID.from(it) }
-				repository.putNote(this)
-			}
 
 			BucketObject().apply bucketObject@{
 				this.title = "todo"

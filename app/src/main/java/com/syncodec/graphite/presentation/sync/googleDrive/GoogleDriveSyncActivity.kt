@@ -19,12 +19,15 @@ import com.google.android.gms.common.Scopes
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.RuntimeExecutionException
+import com.google.api.client.googleapis.json.GoogleJsonError.ErrorInfo
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.About
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.sync.googleDrive.composable.screen.GoogleDriveSyncScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.service.syncInator.GDriveSyncInatorService
+import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,9 +103,6 @@ class GoogleDriveSyncActivity : ComponentActivity() {
 	private val signInActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
 		val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
 		try {
-			task.result.serverAuthCode?.let {
-				Log.d("GoogleDriveSyncActivity", "serverAuthCode: $it")
-			}
 			task.result.account?.let {
 				Toast.makeText(this, "Connection successful.", Toast.LENGTH_SHORT).show()
 				connectWithDrive()
@@ -122,7 +122,10 @@ class GoogleDriveSyncActivity : ComponentActivity() {
 	}
 
 	private fun signInWithDrivePermission() {
-		val serverClientId = "948547440986-h3ckomagfcehf7mj7e2uelt7jltca9km.apps.googleusercontent.com"
+		val serverClientId = Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: run{
+			Toast.makeText(this, "Connection unsuccessful.", Toast.LENGTH_SHORT).show()
+			return
+		}
 		val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
 			.requestServerAuthCode(serverClientId)
 			.requestEmail()
@@ -136,7 +139,10 @@ class GoogleDriveSyncActivity : ComponentActivity() {
 	private fun connectWithDrive() {
 		lifecycleScope.launch(Dispatchers.IO) {
 			val googleAccount = GoogleSignIn.getLastSignedInAccount(this@GoogleDriveSyncActivity)
-			if (googleAccount == null) aboutStateFlow.tryEmit(AboutState.NotLoggedIn)
+			if (googleAccount == null) {
+				aboutStateFlow.tryEmit(AboutState.NotLoggedIn)
+				Log.d("npr71", "connectWithDrive: NotLoggedIn")
+			}
 			else {
 				aboutStateFlow.tryEmit(AboutState.Loading)
 				drive = viewModel.gDrive.getDrive()
@@ -148,7 +154,7 @@ class GoogleDriveSyncActivity : ComponentActivity() {
 							Log.d("npr71", "connectWithDrive: ${it.user.displayName}")
 						}
 					} catch (exception: Exception) {
-//						exception.printStackTrace()
+						exception.printStackTrace()
 						aboutStateFlow.tryEmit(AboutState.Error(exception.message ?: "Unknown error"))
 					}
 					viewModel.refreshSnapshot(it)

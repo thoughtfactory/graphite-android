@@ -54,7 +54,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 	private val syncBucketItem = true
 	private val syncTag = true
 	private val syncAttachment = true
-	private val compress = false
+//	private val compress = false
 
 	private val json = Json { ignoreUnknownKeys = true }
 
@@ -81,9 +81,8 @@ class GDriveSyncInatorService : SyncInatorService() {
 
 		lifecycleScope.launch(Dispatchers.IO) {
 			val isAutoSyncEnabled = syncDataStoreInstance.isAutoSyncEnabledFlow.first()
+			Log.d("npr71", "GDriveSyncInatorService.onCreate : isAutoSyncEnabled = $isAutoSyncEnabled")
 			if (isAutoSyncEnabled) onClickSyncNow() else syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.AutoSyncDisabled)
-
-			lastSyncTime = syncDataStoreInstance.lastSyncTimeFlow.first() ?: 0L
 		}
 	}
 
@@ -125,20 +124,18 @@ class GDriveSyncInatorService : SyncInatorService() {
 
 	fun onClickSyncNow() {
 		Log.d("npr71", "GDriveSyncInatorService.onClickSyncNow : ${syncStatus.value::class.simpleName}")
-		if (lastSyncTime != null) {
-			if (syncStatus.value is SyncInatorService.Companion.SyncStatus.Init
-				|| syncStatus.value is SyncInatorService.Companion.SyncStatus.Idle
-				|| syncStatus.value is SyncInatorService.Companion.SyncStatus.Locked
-				|| syncStatus.value is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
-				|| syncStatus.value is SyncInatorService.Companion.SyncStatus.Failed
-				|| syncStatus.value is SyncInatorService.Companion.SyncStatus.CredentialError
-			) {
-				reSyncCoroutine?.cancel()
-				reSyncCoroutine = null
-				syncCoroutine?.cancel()
-				syncCoroutine = null
-				sync()
-			}
+		if (syncStatus.value is SyncInatorService.Companion.SyncStatus.Init
+			|| syncStatus.value is SyncInatorService.Companion.SyncStatus.Idle
+			|| syncStatus.value is SyncInatorService.Companion.SyncStatus.Locked
+			|| syncStatus.value is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
+			|| syncStatus.value is SyncInatorService.Companion.SyncStatus.Failed
+			|| syncStatus.value is SyncInatorService.Companion.SyncStatus.CredentialError
+		) {
+			reSyncCoroutine?.cancel()
+			reSyncCoroutine = null
+			syncCoroutine?.cancel()
+			syncCoroutine = null
+			sync()
 		}
 	}
 
@@ -158,6 +155,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 	private val previousSyncSessionIdList = mutableSetOf<String>()
 
 	private fun sync(forced: Boolean = false) {
+		Log.d("npr71", "GDriveSyncInatorService.sync : forced = $forced")
 		if (syncCoroutine == null) {
 			lifecycleScope.launch(Dispatchers.IO) {
 				syncCoroutine = this
@@ -180,19 +178,20 @@ class GDriveSyncInatorService : SyncInatorService() {
 				if (googleDriveState.lockFileId == null) lockAndContinue(rectify = false, googleDriveState = googleDriveState)
 				else {
 					val downloadResult = gDrive.downloadData(drive = this, googleDriveState.lockFileId)
-					if (downloadResult is DownloadResult.Success) {
-						val jsonObject = JSONObject(downloadResult.fileContent.toString(Charsets.UTF_8))
-						val timestamp = jsonObject.getLong("timestamp")
-						val sessionId = jsonObject.getString("sessionId")
+					when(downloadResult) {
+						is DownloadResult.FileNotFound -> lockAndContinue(rectify = false, googleDriveState = googleDriveState)
+						is DownloadResult.Success -> {
+							val jsonObject = JSONObject(downloadResult.fileContent.toString(Charsets.UTF_8))
+							val timestamp = jsonObject.getLong("timestamp")
+							val sessionId = jsonObject.getString("sessionId")
 
-						when {
-							sessionId in previousSyncSessionIdList -> lockAndContinue(rectify = false, googleDriveState = googleDriveState)
-							(Instant.now().toEpochMilli() - timestamp) > 60000 -> breakLockAndContinue(googleDriveState = googleDriveState)
-							else -> waitToUnlock()
+							when {
+								sessionId in previousSyncSessionIdList -> lockAndContinue(rectify = false, googleDriveState = googleDriveState)
+								(Instant.now().toEpochMilli() - timestamp) > 60000 -> breakLockAndContinue(googleDriveState = googleDriveState)
+								else -> waitToUnlock()
+							}
 						}
-					}
-					else {
-						unknownError()
+						else -> unknownError()
 					}
 				}
 			}
@@ -208,6 +207,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 	}
 
 	private fun Drive.unknownError(exception: Exception? = null) {
+		exception?.printStackTrace()
 		syncStatus.tryEmit(SyncInatorService.Companion.SyncStatus.Failed(exception?.message ?: "unknown error"))
 		syncCoroutine?.cancel()
 		syncCoroutine = null
@@ -303,9 +303,9 @@ class GDriveSyncInatorService : SyncInatorService() {
 							lockFileId = retrieveFile.fileId
 						}
 
-						is RetrieveFile.TooManyRetries -> unknownError()
-						is RetrieveFile.ParentNotFound -> unknownError()
-						is RetrieveFile.UnknownError -> unknownError()
+						is RetrieveFile.TooManyRetries -> unknownError(java.lang.Exception("too many retries"))
+						is RetrieveFile.ParentNotFound -> unknownError(java.lang.Exception("parent not found"))
+						is RetrieveFile.UnknownError -> unknownError(java.lang.Exception("unknown error"))
 					}
 				}
 
@@ -331,7 +331,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 								else Log.d("npr71", "unlock failed")
 							}
 						} catch (e: Exception) {
-							unknownError()
+							unknownError(e)
 						}
 					}
 				}
@@ -358,23 +358,11 @@ class GDriveSyncInatorService : SyncInatorService() {
 		val deletedObjectDownloadResult = getDeletedObjectMap(fileId = googleDriveState.deletedObjectFileId)
 		if (deletedObjectDownloadResult !is DownloadResult.Success) return
 
-		val remoteDeletedObjectSet: Set<DeletedObject> = if (compress) {
-			try {
-				deletedObjectDownloadResult.fileContent.decompress<String>()?.let {
-					if (it.isNotBlank()) json.decodeFromString(it)
-					else json.decodeFromString("{}")
-				} ?: setOf()
-			} catch (e: Exception) {
-				setOf()
-			}
-		}
-		else {
-			try {
-				if (deletedObjectDownloadResult.fileContent.isEmpty()) setOf()
-				else json.decodeFromString(String(deletedObjectDownloadResult.fileContent)) ?: setOf()
-			} catch (e: Exception) {
-				setOf()
-			}
+		val remoteDeletedObjectSet: Set<DeletedObject> = 			try {
+			if (deletedObjectDownloadResult.fileContent.isEmpty()) setOf()
+			else json.decodeFromString(String(deletedObjectDownloadResult.fileContent)) ?: setOf()
+		} catch (e: Exception) {
+			setOf()
 		}
 
 		Log.d("npr71", "remoteDeletedObjectSet: ${remoteDeletedObjectSet.size}")
@@ -382,72 +370,62 @@ class GDriveSyncInatorService : SyncInatorService() {
 		val deletedObjectList: MutableSet<DeletedObject> = mutableSetOf()
 
 		if (syncChapter) syncObjects(
+			objectType = ChapterObject::class.simpleName!!,
 			localObjectMap = chapterObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
 			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
 			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == ChapterObject::class.simpleName }.associateBy { it.id },
 			folderId = googleDriveState.chapterFolderId,
 		) { content, fileId ->
-			(if (compress) content.decompress<String>()?.toByteArray() ?: content
-			else content).let {
-				ChapterObject.fromCloudSnapshot(it)?.let { chapterObject ->
-					repository.putChapterSuspended(chapterObject = chapterObject, modifyTimestampAuto = false, googleDriveId = fileId)
-				}
+			ChapterObject.fromCloudSnapshot(content)?.let { chapterObject ->
+				repository.putChapterSuspended(chapterObject = chapterObject, modifyTimestampAuto = false, googleDriveId = fileId)
 			}
 		}.let { deletedObjectList.addAll(it) }
 
 		if (syncNote) syncObjects(
+			objectType = NoteObject::class.simpleName!!,
 			localObjectMap = noteObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
 			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
 			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == NoteObject::class.simpleName }.associateBy { it.id },
 			folderId = googleDriveState.noteFolderId,
 		) { content, fileId ->
-			(if (compress) content.decompress<String>()?.toByteArray() ?: content
-			else content).let {
-				NoteObject.fromCloudSnapshot(it)?.let { noteObject ->
-					repository.putNoteSuspended(noteObject = noteObject, modifyTimestampAuto = false, googleDriveId = fileId)
-				}
+			NoteObject.fromCloudSnapshot(content)?.let { noteObject ->
+				repository.putNoteSuspended(noteObject = noteObject, modifyTimestampAuto = false, googleDriveId = fileId)
 			}
 		}.let { deletedObjectList.addAll(it) }
 
 		if (syncBucket) syncObjects(
+			objectType = BucketObject::class.simpleName!!,
 			localObjectMap = bucketObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
 			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
 			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == BucketObject::class.simpleName }.associateBy { it.id },
 			folderId = googleDriveState.bucketFolderId,
 		) { content, fileId ->
-			(if (compress) content.decompress<String>()?.toByteArray() ?: content
-			else content).let {
-				BucketObject.fromCloudSnapshot(it)?.let { bucketObject ->
-					repository.putBucketSuspended(bucketObject = bucketObject, modifyTimestampAuto = false, googleDriveId = fileId)
-				}
+			BucketObject.fromCloudSnapshot(content)?.let { bucketObject ->
+				repository.putBucketSuspended(bucketObject = bucketObject, modifyTimestampAuto = false, googleDriveId = fileId)
 			}
 		}.let { deletedObjectList.addAll(it) }
 
 		if (syncBucketItem) syncObjects(
+			objectType = BucketItemObject::class.simpleName!!,
 			localObjectMap = bucketItemObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
 			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
 			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == BucketItemObject::class.simpleName }.associateBy { it.id },
 			folderId = googleDriveState.bucketItemFolderId,
 		) { content, fileId ->
-			(if (compress) content.decompress<String>()?.toByteArray() ?: content
-			else content).let {
-				BucketItemObject.fromCloudSnapshot(it)?.let { bucketItemObject ->
-					repository.putBucketItemSuspended(bucketItemObject = bucketItemObject, modifyTimestampAuto = false, googleDriveId = fileId)
-				}
+			BucketItemObject.fromCloudSnapshot(content)?.let { bucketItemObject ->
+				repository.putBucketItemSuspended(bucketItemObject = bucketItemObject, modifyTimestampAuto = false, googleDriveId = fileId)
 			}
 		}.let { deletedObjectList.addAll(it) }
 
 		if (syncTag) syncObjects(
+			objectType = TagObject::class.simpleName!!,
 			localObjectMap = tagObjectList.associate { it.id to Pair(it.toCloudSnapshot(), it.modifiedTimestamp) },
 			remoteDeletedObjectMap = remoteDeletedObjectSet.associateBy { it.id },
 			localDeletedObjectMap = localDeletedObjectIdList.filter { it.objectType == TagObject::class.simpleName }.associateBy { it.id },
 			folderId = googleDriveState.tagFolderId,
 		) { content, fileId ->
-			(if (compress) content.decompress<String>()?.toByteArray() ?: content
-			else content).let {
-				TagObject.fromCloudSnapshot(it)?.let { tagObject ->
-					repository.putTagSuspended(tagObject = tagObject, modifyTimestampAuto = false, googleDriveId = fileId)
-				}
+			TagObject.fromCloudSnapshot(content)?.let { tagObject ->
+				repository.putTagSuspended(tagObject = tagObject, modifyTimestampAuto = false, googleDriveId = fileId)
 			}
 		}.let { deletedObjectList.addAll(it) }
 
@@ -462,28 +440,14 @@ class GDriveSyncInatorService : SyncInatorService() {
 		}
 
 		val deletedAttachmentDownloadResult = getDeletedObjectMap(fileId = googleDriveState.deletedAttachmentFileId)
-		val remoteDeletedAttachmentSet: Set<DeletedAttachment> = if (compress) {
-			try {
-				if (deletedAttachmentDownloadResult is DownloadResult.Success) {
-					deletedAttachmentDownloadResult.fileContent.decompress<String>()
-						?.let { if (it.isNotBlank()) json.decodeFromString(it) else json.decodeFromString("{}") }
-						?: setOf()
-				}
-				else setOf()
-			} catch (e: Exception) {
-				setOf()
+		val remoteDeletedAttachmentSet: Set<DeletedAttachment> = 			try {
+			if (deletedAttachmentDownloadResult is DownloadResult.Success) {
+				if (deletedAttachmentDownloadResult.fileContent.isEmpty()) setOf()
+				else json.decodeFromString(String(deletedAttachmentDownloadResult.fileContent)) ?: setOf()
 			}
-		}
-		else {
-			try {
-				if (deletedAttachmentDownloadResult is DownloadResult.Success) {
-					if (deletedAttachmentDownloadResult.fileContent.isEmpty()) setOf()
-					else json.decodeFromString(String(deletedAttachmentDownloadResult.fileContent)) ?: setOf()
-				}
-				else setOf()
-			} catch (e: Exception) {
-				setOf()
-			}
+			else setOf()
+		} catch (e: Exception) {
+			setOf()
 		}
 
 		val remoteAttachmentMap =
@@ -511,12 +475,15 @@ class GDriveSyncInatorService : SyncInatorService() {
 	}
 
 	private fun Drive.syncObjects(
+		objectType : String,
 		localObjectMap: Map<RealmUUID, Pair<String, Long>>,
 		remoteDeletedObjectMap: Map<RealmUUID, DeletedObject>,
 		localDeletedObjectMap: Map<RealmUUID, DeletedObject>,
 		folderId: String,
 		putObject: (ByteArray, String) -> Unit,
 	): List<DeletedObject> {
+		Log.d("npr71", "syncObjects: objectType=$objectType, localObjectMap=${localObjectMap.size}, remoteDeletedObjectMap=${remoteDeletedObjectMap.size}, localDeletedObjectMap=${localDeletedObjectMap.size}, folderId=$folderId")
+
 		val metadataResult = downloadMetadata(folderId = folderId)
 		if (metadataResult is MetadataResult.Success) {
 
@@ -589,9 +556,10 @@ class GDriveSyncInatorService : SyncInatorService() {
 				}
 			}
 
-			Log.d("npr71", "GDriveInatorService.syncObjects : toDownSyncList.size = ${toDownSyncList.size}")
-			Log.d("npr71", "GDriveInatorService.syncObjects : toUpSyncList.size = ${toUpSyncList.size}")
+			Log.d("npr71", "GDriveInatorService.syncObjects : $objectType : toDownSyncList.size = ${toDownSyncList.size}")
+			Log.d("npr71", "GDriveInatorService.syncObjects : $objectType : toUpSyncList.size = ${toUpSyncList.size}")
 
+			var downSyncedCount = 0
 			toDownSyncList.forEach { (id, operation) ->
 				when (operation) {
 					is SyncInatorService.Companion.Operation.Upsert -> {
@@ -606,8 +574,12 @@ class GDriveSyncInatorService : SyncInatorService() {
 						remoteDeletedObjectMap[id]?.let { deletedObjectList.add(it) }
 					}
 				}
+
+				downSyncedCount++
+				Log.d("npr71", "GDriveInatorService.syncObjects : $objectType : toDownSyncList : $downSyncedCount / ${toDownSyncList.size}")
 			}
 
+			var upSyncedCount = 0
 			toUpSyncList.forEach { (id, operation) ->
 				when (operation) {
 					is SyncInatorService.Companion.Operation.Upsert -> {
@@ -629,6 +601,8 @@ class GDriveSyncInatorService : SyncInatorService() {
 						}
 					}
 				}
+				upSyncedCount++
+				Log.d("npr71", "GDriveInatorService.syncObjects : $objectType : toUpSyncList : $upSyncedCount / ${toUpSyncList.size}")
 			}
 
 			return deletedObjectList
@@ -656,7 +630,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 		}
 		fileMetadata.modifiedTime = DateTime(modifiedTime)
 
-		val data = if (compress) objectData.compress() ?: objectData.toByteArray(Charsets.UTF_8) else objectData.toByteArray(Charsets.UTF_8)
+		val data = objectData.toByteArray(Charsets.UTF_8)
 		val fileContent = ByteArrayContent(GDrive.JsonFileMimeType, data)
 
 		try {
@@ -702,6 +676,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 	private fun Drive.downloadMetadata(
 		folderId: String,
 	): MetadataResult {
+		Log.d("npr71", "GDriveInatorService.downloadMetadata : folderId = $folderId")
 		val currentListFiles = gDrive.listFiles(
 			drive = this,
 			query = "'${folderId}' in parents and trashed = false",
@@ -764,7 +739,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 						)
 
 						is RetrieveFile.TooManyRetries -> DownloadResult.TooManyRetries
-						is RetrieveFile.ParentNotFound -> DownloadResult.ParentNotFound
+						is RetrieveFile.ParentNotFound -> DownloadResult.FileNotFound
 						is RetrieveFile.UnknownError -> DownloadResult.UnknownError(it.exception)
 					}
 				}
@@ -991,14 +966,12 @@ class GDriveSyncInatorService : SyncInatorService() {
 	) {
 		val downloadResult = gDrive.downloadData(drive = this, fileId = fileId)
 		if (downloadResult is DownloadResult.Success) {
-			val data = if (compress) downloadResult.fileContent.decompress<ByteArray>() else downloadResult.fileContent
-			data?.let {
-				repository.attachmentRepository.putAttachment(
-					parentId = attachmentMetadata.parentId,
-					fileName = attachmentMetadata.fileName,
-					byteArray = it,
-				)
-			}
+			val data = downloadResult.fileContent
+			repository.attachmentRepository.putAttachment(
+				parentId = attachmentMetadata.parentId,
+				fileName = attachmentMetadata.fileName,
+				byteArray = data,
+			)
 		}
 	}
 
@@ -1016,9 +989,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 		folderMetadata.mimeType = mimeType
 		folderMetadata.modifiedTime = DateTime(modifiedTime)
 
-		val data = if (compress) byteArray.compress()?.let { ByteArrayContent(mimeType, it) }
-		else ByteArrayContent(mimeType, byteArray)
-
+		val data = ByteArrayContent(mimeType, byteArray)
 		try {
 			val file = files()
 				.update(fileId, folderMetadata, data)
@@ -1073,33 +1044,33 @@ class GDriveSyncInatorService : SyncInatorService() {
 		return ScanAttachmentsResult.Success(attachmentList)
 	}
 
-	private fun <T> T.compress(): ByteArray? {
-		try {
-			val baos = ByteArrayOutputStream()
-			val gzipOut = GZIPOutputStream(baos)
-			val objectOut = ObjectOutputStream(gzipOut)
-			objectOut.writeObject(this)
-			objectOut.close()
-			return baos.toByteArray()
-		} catch (e: Exception) {
-//			e.printStackTrace()
-			return null
-		}
-	}
+//	private fun <T> T.compress(): ByteArray? {
+//		try {
+//			val baos = ByteArrayOutputStream()
+//			val gzipOut = GZIPOutputStream(baos)
+//			val objectOut = ObjectOutputStream(gzipOut)
+//			objectOut.writeObject(this)
+//			objectOut.close()
+//			return baos.toByteArray()
+//		} catch (e: Exception) {
+////			e.printStackTrace()
+//			return null
+//		}
+//	}
 
-	private fun <T> ByteArray.decompress(): T? {
-		try {
-			val bais = ByteArrayInputStream(this)
-			val gzipIn = GZIPInputStream(bais)
-			val objectIn = ObjectInputStream(gzipIn)
-			val myObj1: T = objectIn.readObject() as T
-			objectIn.close()
-			return myObj1
-		} catch (e: Exception) {
-//			e.printStackTrace()
-			return null
-		}
-	}
+//	private fun <T> ByteArray.decompress(): T? {
+//		try {
+//			val bais = ByteArrayInputStream(this)
+//			val gzipIn = GZIPInputStream(bais)
+//			val objectIn = ObjectInputStream(gzipIn)
+//			val myObj1: T = objectIn.readObject() as T
+//			objectIn.close()
+//			return myObj1
+//		} catch (e: Exception) {
+////			e.printStackTrace()
+//			return null
+//		}
+//	}
 
 	inner class GDriveSyncInatorBinder : Binder() {
 		val service: GDriveSyncInatorService
@@ -1131,8 +1102,8 @@ class GDriveSyncInatorService : SyncInatorService() {
 
 		sealed class DownloadResult {
 			data class Success(val fileId: String, val fileContent: ByteArray) : DownloadResult()
+			object FileNotFound : DownloadResult()
 			object TooManyRetries : DownloadResult()
-			object ParentNotFound : DownloadResult()
 			data class UnknownError(val exception: Exception? = null) : DownloadResult()
 		}
 

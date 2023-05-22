@@ -31,7 +31,7 @@ abstract class SyncInatorService : LifecycleService() {
 
 		val notification: Notification = Notification.Builder(this, channelId)
 			.setContentTitle("Graphite")
-			.setContentText("Synchronizing with ${syncProvider}. Process will stop automatically when completed.")
+			.setContentText("Synchronizing with ${syncProvider ?: "cloud"}. Process will stop automatically when completed.")
 			.setSmallIcon(R.drawable.ic_noti_cloud_sync)
 			.setOngoing(true)
 			.build()

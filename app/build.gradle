@@ -18,7 +18,7 @@ android {
 		applicationId 'com.syncodec.graphite'
 		minSdk 29
 		targetSdk 33
-		versionCode 41
+		versionCode 42
 
 		versionName '2.4.0'
 
@@ -59,6 +59,9 @@ android {
 		debug {
 			applicationIdSuffix '.debug'
 			manifestPlaceholders.providerAuthorities = 'com.syncodec.graphite.debug.fileprovider'
+//			minifyEnabled true
+//			shrinkResources true
+//			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 		}
 	}
 
@@ -131,12 +134,12 @@ dependencies {
 
 	implementation 'androidx.core:core-animation:1.0.0-beta01'
 
-	implementation 'com.google.accompanist:accompanist-insets:0.29.2-rc'
-	implementation 'com.google.accompanist:accompanist-flowlayout:0.29.2-rc'
-	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.29.2-rc'
-	implementation 'com.google.accompanist:accompanist-permissions:0.29.2-rc'
+	implementation 'com.google.accompanist:accompanist-insets:0.31.2-alpha'
+	implementation 'com.google.accompanist:accompanist-flowlayout:0.31.2-alpha'
+	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.31.2-alpha'
+	implementation 'com.google.accompanist:accompanist-permissions:0.31.2-alpha'
 	implementation 'com.google.accompanist:accompanist-webview:0.29.2-rc'
-	implementation 'com.google.accompanist:accompanist-navigation-animation:0.29.2-rc'
+	implementation 'com.google.accompanist:accompanist-navigation-animation:0.30.0'
 
 	implementation 'org.burnoutcrew.composereorderable:reorderable:0.9.6'
 	implementation 'com.kizitonwose.calendar:compose:2.3.0'
@@ -151,31 +154,31 @@ dependencies {
 
 	implementation 'androidx.compose.runtime:runtime:1.4.0-rc01'
 
-	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
+	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1'
 
-	implementation 'io.realm.kotlin:library-base:1.7.0'
+	implementation 'io.realm.kotlin:library-base:1.8.0'
 
-	implementation 'io.insert-koin:koin-android:3.3.3'
-	implementation 'io.insert-koin:koin-android-compat:3.3.3'
-	implementation 'io.insert-koin:koin-androidx-workmanager:3.3.3'
-	implementation 'io.insert-koin:koin-androidx-navigation:3.3.3'
-	implementation 'io.insert-koin:koin-androidx-compose:3.4.2'
-	implementation 'io.insert-koin:koin-android:3.3.3'
-	implementation 'io.insert-koin:koin-annotations:1.1.1'
-	ksp 'io.insert-koin:koin-ksp-compiler:1.1.1'
+	implementation 'io.insert-koin:koin-android:3.4.0'
+	implementation 'io.insert-koin:koin-android-compat:3.4.0'
+	implementation 'io.insert-koin:koin-androidx-workmanager:3.4.0'
+	implementation 'io.insert-koin:koin-androidx-navigation:3.4.0'
+	implementation 'io.insert-koin:koin-androidx-compose:3.4.4'
+	implementation 'io.insert-koin:koin-android:3.4.0'
+	implementation 'io.insert-koin:koin-annotations:1.2.0'
+	ksp 'io.insert-koin:koin-ksp-compiler:1.2.0'
 
 //	Serialization
-	implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0'
+	implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1'
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.14.2'
 	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.2'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
 	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2'
 //	implementation 'com.google.api-client:google-api-client-jackson2:2.1.1'
 
-	implementation 'io.coil-kt:coil:2.2.2'
-	implementation 'io.coil-kt:coil-compose:2.2.2'
-	implementation 'io.coil-kt:coil-gif:2.2.2'
-	implementation 'io.coil-kt:coil-video:2.2.2'
+	implementation 'io.coil-kt:coil:2.3.0'
+	implementation 'io.coil-kt:coil-compose:2.3.0'
+	implementation 'io.coil-kt:coil-gif:2.3.0'
+	implementation 'io.coil-kt:coil-video:2.3.0'
 
 //	Google drive
 //	implementation 'com.google.api-client:google-api-client:2.0.0'
@@ -200,7 +203,7 @@ dependencies {
 	implementation 'com.google.firebase:firebase-functions-ktx'
 
 //	Google mcbc drive
-	implementation 'com.google.api-client:google-api-client:2.0.0'
+	implementation 'com.google.api-client:google-api-client:2.2.0'
 	implementation('com.google.api-client:google-api-client-android:2.2.0') {
 		exclude group: 'org.apache.httpcomponents'
 		exclude module: 'guava-jdk5'
@@ -214,9 +217,9 @@ dependencies {
 	implementation "androidx.javascriptengine:javascriptengine:1.0.0-alpha05"
 
 //	Dropbox
-	implementation 'com.dropbox.core:dropbox-core-sdk:5.4.4'
+	implementation 'com.dropbox.core:dropbox-core-sdk:5.4.4'	// Dont update to 5.4.5. Some issue w
 
-	implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.10'
+	implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
 
 	implementation 'joda-time:joda-time:2.12.2'
 
@@ -253,7 +256,7 @@ dependencies {
 //	androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
 //	implementation 'com.google.crypto.tink:tink-android:1.6.1'
 
-	implementation 'com.valentinilk.shimmer:compose-shimmer:1.0.4'
+	implementation 'com.valentinilk.shimmer:compose-shimmer:1.0.5'
 	implementation 'io.github.vanpra.compose-material-dialogs:datetime:0.9.0'
 
 	implementation 'com.github.skydoves:colorpicker-compose:1.0.1'
@@ -302,13 +305,13 @@ dependencies {
 	androidTestImplementation "androidx.test.espresso.idling:idling-concurrent:3.5.1"
 
 	// Compose dependencies
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha03'
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha03'
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha04'
+	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.5.0-alpha04'
 
 	debugImplementation 'androidx.compose.ui:ui-tooling:1.5.0-alpha03'
 	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.5.0-alpha03'
 	debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
-	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.5.0-alpha03'
+	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.5.0-alpha04'
 
 	// The following Espresso dependency can be either "implementation",
 	// or "androidTestImplementation", depending on whether you want the

@@ -145,17 +145,19 @@ class GDrive(val context: Context) {
 					.list()
 					.setQ(query)
 					.setSpaces("appDataFolder")
+					.setPageToken(pageToken)
 					.setFields(fields)
 					.execute()
 					.let {
 						fileList.addAll(it.files)
 						pageToken = it.nextPageToken
+						Log.d("npr71", "GDriveInatorService.listFiles : size = ${it.files.size} : pageToken = $pageToken")
 					}
 			} catch (e: GoogleJsonResponseException) {
-//				e.printStackTrace()
+				e.printStackTrace()
 				return if (e.details.code == 404) GDriveSyncInatorService.Companion.ListFiles.ParentNotFound else GDriveSyncInatorService.Companion.ListFiles.UnknownError(e)
 			} catch (e: Exception) {
-//				e.printStackTrace()
+				e.printStackTrace()
 				return GDriveSyncInatorService.Companion.ListFiles.UnknownError(e)
 			}
 		} while (pageToken != null)
@@ -175,7 +177,10 @@ class GDrive(val context: Context) {
 				.let {
 					return GDriveSyncInatorService.Companion.DownloadResult.Success(fileId = fileId, fileContent = it)
 				}
-		} catch (e: Exception) {
+		} catch (e: GoogleJsonResponseException) {
+			return if (e.details.code == 404) GDriveSyncInatorService.Companion.DownloadResult.FileNotFound else GDriveSyncInatorService.Companion.DownloadResult.UnknownError(e)
+		}
+		catch (e: Exception) {
 			return GDriveSyncInatorService.Companion.DownloadResult.UnknownError(e)
 		}
 	}
