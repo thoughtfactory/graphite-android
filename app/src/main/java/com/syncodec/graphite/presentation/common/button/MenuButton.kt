@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.PlainTooltipState
+import androidx.compose.material3.TooltipState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -43,7 +44,7 @@ import kotlinx.coroutines.launch
 
 
 @Immutable
-class MenuButtonColors constructor(
+class MenuButtonColors(
 	val containerColor : Color,
 	val iconColor : Color,
 	val checkedContainerColor : Color = containerColor,
@@ -150,7 +151,6 @@ fun MenuButton(
 	val rippleColor = if (checked == true) colors.containerColor else colors.checkedContainerColor
 	val rippleIndication = rememberRipple(color = rippleColor)
 
-	val tooltipState = remember { PlainTooltipState() }
 
 	CompositionLocalProvider(
 		LocalIndication provides rippleIndication,
@@ -170,11 +170,7 @@ fun MenuButton(
 					.clip(shape)
 					.combinedClickable(
 						enabled = enabled,
-						onClick = {
-							onClick()
-							if (showTooltipOnClick) scope.launch { tooltipState.show() }
-						},
-						onLongClick = { scope.launch { tooltipState.show() } },
+						onClick = { onClick() },
 					)
 			) {
 				AnimatedContent(

@@ -1,8 +1,6 @@
-@file:UseSerializers(RealmUUIDSerializer::class)
 package com.syncodec.graphite
 
-import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
-import com.syncodec.graphite.service.syncInator.DropboxSyncInatorService
+import com.syncodec.graphite.di.model.serializer.RealmUUIDNullableSerializer
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.UseSerializers
@@ -29,7 +27,7 @@ class DropboxSyncTest {
 			RealmUUID.random() to objectMetadata,
 		)
 
-		MapSerializer(RealmUUIDSerializer, SyncInatorService.Companion.ObjectMetadata.serializer()).let {
+		MapSerializer(RealmUUIDNullableSerializer, SyncInatorService.Companion.ObjectMetadata.serializer()).let {
 			json.encodeToString(it, objectMetadataList).let {
 				println(it)
 			}

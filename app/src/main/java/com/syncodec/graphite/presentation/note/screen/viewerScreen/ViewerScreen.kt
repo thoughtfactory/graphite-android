@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.note.screen.viewerScreen
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -24,8 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.syncodec.graphite.di.model.Content
-import com.syncodec.graphite.di.model.TipTapContent
+import com.syncodec.graphite.di.model.KitKatContent
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDir
 import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -46,7 +44,6 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
@@ -231,12 +228,12 @@ fun ViewerScreen(
 			BottomBar(
 				onClickExportAsTxt = {
 					val json = Json { ignoreUnknownKeys = true }
-					val tipTapContent = json.decodeFromString<TipTapContent>(content ?: "")
+					val kitKatContent = json.decodeFromString<KitKatContent>(content ?: "")
 					File(File(context.cacheDir, "export"), "$noteId.txt").let {
 						it.mkdirs()
 						it.delete()
 						it.createNewFile()
-						it.writeText(tipTapContent.toTxt())
+						it.writeText(kitKatContent.toTxt())
 						it.share(context = context)
 					}
 				},

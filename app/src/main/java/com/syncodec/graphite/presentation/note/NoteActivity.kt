@@ -1,6 +1,12 @@
 package com.syncodec.graphite.presentation.note
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -16,8 +22,8 @@ import com.syncodec.graphite.presentation.note.screen.NoteScreen
 import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
 import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -32,6 +38,7 @@ class NoteActivity : ComponentActivity() {
 	private val isEditing : MutableStateFlow<Boolean> = MutableStateFlow(false)
 	private val editorScreenViewModel : EditorScreenViewModel by viewModel()
 	private val viewerScreenViewModel : ViewerScreenViewModel by viewModel()
+	private var editor : RichTextEditor? = null
 
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -53,70 +60,72 @@ class NoteActivity : ComponentActivity() {
 			finish()
 		}
 
-		val editor = RichTextEditor(this).apply {
+		editor = RichTextEditor(this).apply {
 			lifecycleScope.launch(Dispatchers.IO) { loadEditor() }
 		}
 		val dataStoreInstance = DataStoreInstance(this)
 
-		setContent {
-			BaseContent {
+		editor?.let { editor ->
+			setContent {
+				BaseContent {
 
-				val containerColor = MaterialTheme.colorScheme.background
-				val contentColor = MaterialTheme.colorScheme.onBackground
-				val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
+					val containerColor = MaterialTheme.colorScheme.background
+					val contentColor = MaterialTheme.colorScheme.onBackground
+					val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
 
-				val isEditorReady by editor.isReady.collectAsState(initial = false)
+					val isEditorReady by editor.isReady.collectAsState(initial = false)
 
-				LaunchedEffect(key1 = containerColor, key2 = contentColor, key3 = isEditorReady) {
-					editor.setColor(containerColor, contentColor)
-				}
-
-				LaunchedEffect(key1 = typography) {
-					editor.setTypography(typography ?: "PT Mono")
-				}
-
-				this.onBackPressedDispatcher.addCallback {
-					try {
-						(window.decorView.rootView as ViewGroup).removeAllViews()
-					} catch (e : Exception) {
+					LaunchedEffect(key1 = contentColor, key2 = typography, key3 = isEditorReady) {
+						if (isEditorReady) {
+							editor.setContentColor(contentColor)
+							editor.setTypography(typography ?: "PT Mono")
+							editorScreenViewModel.kitKatContent?.toJsonString()?.let {  editor.setContent(it) }
+						}
 					}
-					finish()
-				}
 
-				val isEditing by isEditing.collectAsState()
+					this.onBackPressedDispatcher.addCallback {
+						try {
+							(window.decorView.rootView as ViewGroup).removeAllViews()
+						} catch (e : Exception) {
+						}
+						finish()
+					}
 
-				NoteScreen(
-					editor = editor,
-					isEditing = isEditing,
-					onClickEditNote = { this.isEditing.tryEmit(true) },
-					afterNoteSaved = { noteId ->
-						viewerScreenViewModel.loadNote(noteId = noteId)
-						lifecycleScope.launch {
-							viewerScreenViewModel.isReady.collect { isReady ->
-								if (isReady) {
+					val isEditing by isEditing.collectAsState()
+
+					NoteScreen(
+						editor = editor,
+						isEditing = isEditing,
+						onClickEditNote = { this.isEditing.tryEmit(true) },
+						afterNoteSaved = { noteId ->
+							viewerScreenViewModel.loadNote(noteId = noteId)
+							lifecycleScope.launch {
+								viewerScreenViewModel.isReady.collect { isReady ->
+									if (isReady) {
 //									editorScreenViewModel.loadNote(noteId = noteId)
-									this@NoteActivity.isEditing.tryEmit(false)
-									cancel()
+										this@NoteActivity.isEditing.tryEmit(false)
+										cancel()
+									}
 								}
 							}
-						}
-					},
-					discardChanges = { this.isEditing.tryEmit(false) },
-					onNoteDeleted = {
-						try {
-							(window.decorView.rootView as ViewGroup).removeAllViews()
-						} catch (e : Exception) {
-						}
-						finish()
-					},
-					onClickBack = {
-						try {
-							(window.decorView.rootView as ViewGroup).removeAllViews()
-						} catch (e : Exception) {
-						}
-						finish()
-					},
-				)
+						},
+						discardChanges = { this.isEditing.tryEmit(false) },
+						onNoteDeleted = {
+							try {
+								(window.decorView.rootView as ViewGroup).removeAllViews()
+							} catch (e : Exception) {
+							}
+							finish()
+						},
+						onClickBack = {
+							try {
+								(window.decorView.rootView as ViewGroup).removeAllViews()
+							} catch (e : Exception) {
+							}
+							finish()
+						},
+					)
+				}
 			}
 		}
 	}
@@ -174,6 +183,23 @@ class NoteActivity : ComponentActivity() {
 		} else {
 			Toast.makeText(this, "Error opening note", Toast.LENGTH_SHORT).show()
 			finish()
+		}
+	}
+
+	override fun onRestoreInstanceState(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+		super.onRestoreInstanceState(savedInstanceState, persistentState)
+		Log.d("npr71", "onRestoreInstanceState")
+	}
+
+	override fun onDestroy() {
+		super.onDestroy()
+		try {
+			editor?.destroy()
+		} catch (e : Exception) {
+		}
+		try {
+			(window.decorView.rootView as ViewGroup).removeAllViews()
+		} catch (e : Exception) {
 		}
 	}
 }

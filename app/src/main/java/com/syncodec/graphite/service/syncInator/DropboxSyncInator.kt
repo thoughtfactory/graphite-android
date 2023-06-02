@@ -22,6 +22,7 @@ import com.dropbox.core.v2.files.WriteMode
 import com.google.common.collect.MapDifference
 import com.google.common.collect.Maps
 import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
@@ -31,7 +32,6 @@ import com.syncodec.graphite.di.model.DeletedObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
-import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.utils.toDbxHashString
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope

@@ -19,7 +19,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 @Composable
 fun GenericTopBar(
 	title : String = "Generic Top Bar",
-	navigationIcon : Int = R.drawable.ic_back,
+	navigationIcon : Int = R.drawable.ic_flat_back,
 	onNavigationIconClick : (() -> Unit)? = null,
 ) {
 	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current

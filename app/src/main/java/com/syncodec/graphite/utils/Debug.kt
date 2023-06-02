@@ -27,7 +27,7 @@ class NoteDayMapPreviewParameter: PreviewParameterProvider<Map<Long, List<NoteOb
 					userTimestamp = Instant.now().toEpochMilli(),
 					title = "npr_71",
 					color = null,
-					latLng = LatLng(),
+					latLng = LatLng(23.0225, 72.5714),
 					address = "Nirma University",
 					contentThumbnail = "Looking down the misty path to uncertain destinations",
 					thumbnail = null,

@@ -5,7 +5,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.dropbox.core.v2.files.Metadata
 import com.google.api.services.drive.model.File
 import com.syncodec.graphite.di.cloud.dropbox.DBox
-import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.dialog.RestoringSnapshotDialog
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
 
 
@@ -41,7 +40,7 @@ fun GoogleDriveDialog(
 		onDismiss = { closeDialog(GoogleDriveDialogType.RestoreSnapshot) }
 	)
 
-	RestoringSnapshotDialog(
-		showDialog = showRestoringSnapshotDialog,
-	)
+//	RestoringSnapshotDialog(
+//		showDialog = showRestoringSnapshotDialog,
+//	)
 }

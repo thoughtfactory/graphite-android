@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -29,28 +30,28 @@ import com.syncodec.graphite.R
 
 
 data class DropdownMenuItem(
-	val title : String,
-	val icon : Int? = null,
-	val iconColor : Color? = null,
-	val isPro : Boolean = false,
-	val onClick : () -> Unit = {},
+	val title: String,
+	val icon: Int? = null,
+	val iconColor: Color? = null,
+	val isPro: Boolean = false,
+	val onClick: () -> Unit = {},
 )
 
 @Composable
 fun DropdownMenu(
-	title : String? = null,
-	itemList : List<DropdownMenuItem>,
-	containerColor : Color = Color(
+	title: String? = null,
+	itemList: List<DropdownMenuItem>,
+	containerColor: Color = Color(
 		ColorUtils.blendARGB(
 			MaterialTheme.colorScheme.background.toArgb(),
 			MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(),
 			0.17f
 		)
 	),
-	contentColor : Color = MaterialTheme.colorScheme.onSurface,
-	isVisible : Boolean,
-	offset : DpOffset? = null,
-	onDismissRequest : () -> Unit,
+	contentColor: Color = MaterialTheme.colorScheme.onSurface,
+	isVisible: Boolean,
+	offset: DpOffset? = null,
+	onDismissRequest: () -> Unit,
 ) {
 	val context = LocalContext.current
 	val isPro by BaseApplication.isPro.collectAsState()
@@ -76,7 +77,7 @@ fun DropdownMenu(
 		itemList.forEach { dropdownMenuItem ->
 			DropdownMenuItem(
 				onClick = {
-					if (! dropdownMenuItem.isPro || isPro) dropdownMenuItem.onClick()
+					if (!dropdownMenuItem.isPro || isPro) dropdownMenuItem.onClick()
 					else Toast.makeText(context, "Join Graphite Pro to unlock this feature", Toast.LENGTH_SHORT).show()
 				},
 				leadingIcon = dropdownMenuItem.icon?.let {
@@ -96,7 +97,7 @@ fun DropdownMenu(
 						color = contentColor,
 					)
 				},
-				trailingIcon = if (dropdownMenuItem.isPro && ! isPro) {
+				trailingIcon = if (dropdownMenuItem.isPro && !isPro) {
 					{
 						Icon(
 							painter = painterResource(id = R.drawable.ic_lock_close),
@@ -105,8 +106,44 @@ fun DropdownMenu(
 							modifier = Modifier.requiredSize(20.dp),
 						)
 					}
-				} else null,
+				}
+				else null,
 			)
 		}
 	}
+}
+
+@Preview
+@Composable
+fun DropdownMenuItemView(
+	title: String = "Title",
+	icon: Int? = null,
+	iconColor: Color? = null,
+	isPro: Boolean = false,
+	onClick: () -> Unit = {},
+) {
+	DropdownMenuItem(
+		text = { Text(text = title) },
+		leadingIcon = {
+			icon?.let {
+				Icon(
+					painter = painterResource(id = it),
+					contentDescription = "Dark side",
+					tint = iconColor ?: MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier.requiredSize(24.dp),
+				)
+			}
+		},
+		trailingIcon = {
+			if (isPro) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_flat_pro),
+					contentDescription = "Pro",
+					tint = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier.requiredSize(20.dp),
+				)
+			}
+		},
+		onClick = 	onClick
+	)
 }

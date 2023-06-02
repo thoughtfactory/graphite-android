@@ -46,7 +46,7 @@
 
 -keep class com.syncodec.graphite.database.** { *; }
 -keep class com.kedia.ogparser.OpenGraphResult
--keep class com.syncodec.graphite.di.model.TipTapFormatKt
+-keep class com.syncodec.graphite.di.model.KitKatFormatKt
 # Change here com.yourcompany.yourpackage
 -keep,includedescriptorclasses class com.syncodec.graphite.**$$serializer { *; }
 -keepclassmembers class com.syncodec.graphite.** {

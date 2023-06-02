@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
 import com.syncodec.graphite.presentation.ui.DeleteContainer
 import com.syncodec.graphite.presentation.ui.DeleteContent
 
@@ -56,21 +55,21 @@ fun OneDriveSyncScreen(
 		Column(
 			modifier = Modifier.fillMaxSize()
 		) {
-			ExperimentalCard()
-			SettingButton(
-				text = "Connect with Google Drive",
-				icon = R.drawable.ic_logo_google_drive,
-				tint = Color.Unspecified,
-				onClick = onClickConnect,
-			)
-			SettingButton(
-				text = "Test connection",
-				icon = R.drawable.ic_test_connection,
-			) { }
-			SettingButton(
-				text = "Disconnect",
-				icon = R.drawable.ic_cloud_x,
-			)
+//			ExperimentalCard()
+//			SettingButton(
+//				text = "Connect with Google Drive",
+//				icon = R.drawable.ic_logo_google_drive,
+//				tint = Color.Unspecified,
+//				onClick = onClickConnect,
+//			)
+//			SettingButton(
+//				text = "Test connection",
+//				icon = R.drawable.ic_test_connection,
+//			) { }
+//			SettingButton(
+//				text = "Disconnect",
+//				icon = R.drawable.ic_cloud_x,
+//			)
 		}
 	}
 }

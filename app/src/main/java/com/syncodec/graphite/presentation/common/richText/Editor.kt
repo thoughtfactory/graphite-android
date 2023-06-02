@@ -25,6 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
@@ -34,8 +36,9 @@ import com.google.accompanist.web.WebView
 import com.google.accompanist.web.WebViewNavigator
 import com.google.accompanist.web.rememberWebViewState
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
+import com.syncodec.graphite.di.model.KitKatContent
 import com.syncodec.graphite.utils.alice.Alice
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.toHexString
 import io.github.esentsov.FilePrivate
 import io.realm.kotlin.types.RealmUUID
@@ -51,8 +54,8 @@ import org.json.JSONObject
 
 class RichTextEditor(
 	context : Context,
-	val containerColor : Color = Color.Unspecified,
-	val contentColor : Color = Color.Unspecified,
+	val containerColor : Color = Color.Transparent,
+	val contentColor : Color = Color.Transparent,
 	val typography : String? = null,
 	val screenHeightPx : Int = 0
 ) : WebView(context) {
@@ -102,6 +105,11 @@ class RichTextEditor(
 		getTextListener = listener
 	}
 
+	fun getTextCall(listener : GetTextListener) {
+		getTextListener = listener
+	}
+
+
 	/** Set by [onReady] when TipTap is ready to use. Observe this and update UI accordingly.*/
 	private var _isReady : MutableStateFlow<Boolean> = MutableStateFlow(false)
 	val isReady : StateFlow<Boolean> = _isReady
@@ -125,32 +133,49 @@ class RichTextEditor(
 			}
 		}
 
-		if (!BuildConfig.DEBUG) setBackgroundColor(0)
+		settings.domStorageEnabled = true
+		settings.databaseEnabled = true
+
 		setLayerType(LAYER_TYPE_HARDWARE, null)
+		setBackgroundColor(0)
 
 		setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
 		addJavascriptInterface(this, "bridge")
 	}
 
-	suspend fun loadEditor() {
-		context.assets.open("orbit/orbital").let {
-			val buffer = ByteArray(it.available())
-			it.read(buffer)
-			it.close()
-			val encHtml = String(buffer)
-			val passcode = "d5Y3f8*hN8%c%Q3%Jb9vU^8R4MV@z^9*"
+	suspend fun loadEditor(isPlain : Boolean = true) {
+		if (isPlain) {
+			context.assets.open("orbit/oneindex.html").let {
+				val html = String(it.readBytes())
+				it.close()
 
-			try {
-				Alice.decrypt(encHtml, passcode).let { html ->
-					withContext(Dispatchers.Main) {
-						if (html == null) Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
-						else loadDataWithBaseURL("file:///android_asset/orbit", html, "text/html", "UTF-8", null)
+				withContext(Dispatchers.Main) {
+					try {
+						loadDataWithBaseURL("file:///android_asset/orbit", html, "text/html", "UTF-8", null)
+					} catch (e : Exception) {
+						Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
 					}
 				}
-			} catch (e : Exception) {
-				withContext(Dispatchers.Main) {
-					Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
+
+			}
+		} else {
+			context.assets.open("orbit/orbital").let {
+				val encHtml = String(it.readBytes())
+				it.close()
+				val passcode = "d5Y3f8*hN8%c%Q3%Jb9vU^8R4MV@z^9*"
+
+				try {
+					Alice.decrypt(encHtml, passcode).let { html ->
+						withContext(Dispatchers.Main) {
+							if (html == null) Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
+							else loadDataWithBaseURL("file:///android_asset/orbit", html, "text/html", "UTF-8", null)
+						}
+					}
+				} catch (e : Exception) {
+					withContext(Dispatchers.Main) {
+						Toast.makeText(context, "Error loading editor", Toast.LENGTH_LONG).show()
+					}
 				}
 			}
 		}
@@ -160,9 +185,8 @@ class RichTextEditor(
 		loadDataWithBaseURL("file:///android_asset/orbit", htmlContent, "text/html", "UTF-8", null)
 	}
 
-	private fun load(trigger : String) {
-		evaluateJavascript(trigger) { result ->
-		}
+	private fun load(trigger : String, callback : (String) -> Unit = {}) {
+		evaluateJavascript(trigger, callback)
 	}
 
 	fun importData(importFrom : ImportFrom, noteId : String, data : String, extra : String? = null) {
@@ -171,21 +195,17 @@ class RichTextEditor(
 		}
 	}
 
-	private fun exec(trigger : String) {
-		CoroutineScope(Dispatchers.Default).launch {
+	private fun exec(trigger : String, callback : (String) -> Unit = {}) {
+		findViewTreeLifecycleOwner()?.lifecycleScope?.launch(Dispatchers.Main) {
 			while (true) {
-				try {
-					if (isReady.value) break
-				} catch (e : Exception) {
-//					e.printStackTrace()
-				}
+				if (isReady.value) break
 				delay(400)
 			}
-			withContext(Dispatchers.Main) {
-				load(trigger)
-			}
+			withContext(Dispatchers.Main) { load(trigger, callback) }
 		}
 	}
+
+	fun setContent(content : String) = exec("editor.setData(${content});")
 
 	/**
 	 * Set content in TipTap. Do not call this method before the editor [isReady].
@@ -196,11 +216,13 @@ class RichTextEditor(
 	fun setData(title : String?, content : String?) = exec("editor.setData(\"${title ?: ""}\", ${content});")
 
 	fun setAndGetData(title : String?, content : String?, extra : String?) = exec("editor.setAndGetData(\"${title ?: ""}\", ${content}, \"$extra\");")
+
 	fun onEditorAction(editorAction : EditorAction) = editorActionExecMap[editorAction]?.let { exec(it) }
+
 	fun save() = exec("editor.getData(\"${RequestData.Save.name}\");")
 
-	fun setColor(containerColor : Color, contentColor : Color) =
-		exec("editor.setBaseColor('${containerColor.toHexString()}', '${contentColor.toHexString()}');")
+	fun setContentColor(contentColor : Color) =
+		exec("editor.setBaseColor('${contentColor.toHexString()}');")
 
 	fun setTypography(typography : String?) = typography?.let { exec("editor.setBaseFontFamily(\"$it\");") }
 
@@ -211,7 +233,7 @@ class RichTextEditor(
 				val id = RealmUUID.random().toString()
 				dataStoreInstance.getTypography.collect { typography ->
 					setTypography(typography)
-					setColor(Color.White, Color.Black)
+					setContentColor(Color.Black)
 
 					val printManager = context.getSystemService(PrintManager::class.java)
 					val printAdapter = createPrintDocumentAdapter(id)
@@ -245,13 +267,15 @@ class RichTextEditor(
 		try {
 			val newTextFormat : TextFormat = objectMapper.readValue(textFormatJsonString)
 			textFormat.tryEmit(newTextFormat)
+			Log.d("npr71", "format: ${newTextFormat.kitKatContent}")
 			currentSelection = newTextFormat.currentSelection
-		} catch (_ : Exception) {
+		} catch (e : Exception) {
+			e.printStackTrace()
 		}
 	}
 
 	/**
-	 * Exposed to JS for TipTap to callback when [save] is called. This is deeply coupled to the JS code as well as how [exec] is called.
+	 * Exposed to JS for KitKat to callback when [save] is called. This is deeply coupled to the JS code as well as how [exec] is called.
 	 *
 	 * This method is not supposed to be called from anywhere except JS.
 	 * @author pushpull
@@ -285,6 +309,11 @@ class RichTextEditor(
 				?.let { getTextListener?.onGetData(it, dataObject, dataJson, dataText, dataHtml, dataMarkdown, dataTitle) }
 		} catch (_ : Exception) {
 		}
+	}
+
+	@JavascriptInterface
+	fun restoreContent(content : String) {
+		Log.d("npr71", "restoreContent: $content")
 	}
 
 	companion object {
@@ -329,7 +358,9 @@ class RichTextEditor(
 			val fontSize : String = "12px",
 			val fontFamily : String = "Open Sans",
 
-			val currentSelection : Int = 0
+			val currentSelection : Int = 0,
+
+			val kitKatContent : KitKatContent = KitKatContent(),
 		)
 
 		enum class EditorAction {

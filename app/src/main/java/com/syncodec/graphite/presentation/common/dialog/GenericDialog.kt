@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -76,9 +77,11 @@ fun GenericDialog(
 								painter = painterResource(id = it),
 								contentDescription = null,
 								tint = iconTint,
-								modifier = Modifier.align(Alignment.CenterHorizontally)
+								modifier = Modifier
+									.requiredSize(24.dp)
+									.align(Alignment.CenterHorizontally)
 							)
-							Spacer(modifier = Modifier.height(16.dp))
+							Spacer(modifier = Modifier.height(24.dp))
 						}
 
 						Text(

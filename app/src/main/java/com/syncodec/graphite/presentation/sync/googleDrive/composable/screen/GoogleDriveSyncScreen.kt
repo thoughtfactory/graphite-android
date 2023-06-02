@@ -62,10 +62,6 @@ import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
 import com.syncodec.graphite.presentation.common.info.PlainTextWarning
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingButton
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingSwitch
-import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsContentTitle
-import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.SnapshotButton
 import com.syncodec.graphite.presentation.sync.dropbox.composable.buildingBlock.DropboxEmptySnapshot
 import com.syncodec.graphite.presentation.sync.dropbox.composable.dialog.DropboxDialogType
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
@@ -96,193 +92,193 @@ fun GoogleDriveSyncScreen(
 	onClickDeleteSnapshot: (File) -> Unit = {},
 	refreshSnapshot: () -> Unit = {},
 ) {
-	val context = LocalContext.current
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-	val uriHandler = LocalUriHandler.current
-
-	val isAutoSyncEnabled by dataStoreInstance.isAutoSyncEnabled.collectAsState(initial = null)
-	val showPlainTextWarning by dataStoreInstance.showPlainTextWarningDropbox.collectAsState(initial = false)
-
-	var isReconnectDialogVisible by remember { mutableStateOf(false) }
-	var isDisconnectDialogVisible by remember { mutableStateOf(false) }
-	var selectedSnapshot by remember { mutableStateOf<File?>(null) }
-	fun openDialog(dialogType: GoogleDriveDialogType) = when (dialogType) {
-		GoogleDriveDialogType.Disconnect -> isDisconnectDialogVisible = true
-		GoogleDriveDialogType.RestoreSnapshot -> null
-		GoogleDriveDialogType.RestoringSnapshot -> null
-	}
-
-	fun closeDialog(dialogType: GoogleDriveDialogType) = when (dialogType) {
-		GoogleDriveDialogType.Disconnect -> isDisconnectDialogVisible = false
-		GoogleDriveDialogType.RestoreSnapshot -> selectedSnapshot = null
-		GoogleDriveDialogType.RestoringSnapshot -> null
-	}
-
-	var refreshing by remember { mutableStateOf(false) }
-	val pullRefreshState = rememberPullRefreshState(
-		refreshing = refreshing,
-		onRefresh = {
-			refreshing = true
-			refreshSnapshot()
-			refreshing = false
-		}
-	)
-
-	val isInternetAvailable = context.isInternetAvailable()
-
-	GenericScaffold(
-		topBar = { GenericTopBar(title = "Google Drive") },
-		dialogContent = {
-			GoogleDriveDialog(
-				showDisconnectDialog = isDisconnectDialogVisible,
-				snapshot = selectedSnapshot,
-				showRestoringSnapshotDialog = isRestoringSnapshot,
-				aboutState = aboutState,
-				onDisconnect = onClickDisconnect,
-				onShare = onClickShareSnapshot,
-				onRestore = onClickRestoreSnapshot,
-				onClickDelete = onClickDeleteSnapshot,
-				closeDialog = ::closeDialog,
-			)
-		},
-	) {
-		Box(
-			modifier = Modifier.pullRefresh(state = pullRefreshState)
-		) {
-			Column(
-				modifier = Modifier
-					.fillMaxSize()
-					.verticalScroll(rememberScrollState())
-			) {
-				AnimatedVisibility(
-					visible = !isInternetAvailable,
-					enter = expandVertically(tween(300)),
-					exit = shrinkVertically(tween(300)),
-				) {
-					InfoCard(
-						title = "No internet connection",
-						description = "It seems you are not connected to internet. Please connect to internet and try again.",
-						icon = R.drawable.ic_no_internet,
-						colors = InfoCardDefaults.warningCardColors(),
-						buttonText = "Retry",
-						modifier = Modifier.padding(horizontal = 12.dp),
-					) { onTestConnection() }
-				}
-				InfoCard(
-					title = "Experimental",
-					description = "This feature is still in development and may not work as expected. Please report any bugs you encounter.",
-					icon = R.drawable.ic_warning,
-					colors = InfoCardDefaults.warningCardColors(),
-					buttonText = "Report Bug",
-					modifier = Modifier.padding(horizontal = 12.dp)
-				) { context.startActivity(Intent(context, ReportActivity::class.java)) }
-				InfoCard(
-					title = "Backup vs Sync",
-					description = "Backup is a one time process that saves your data to the cloud at a regular interval (not available yet) or manually. Sync is a continuous process that keeps your data in sync with the cloud to be available on other devices.",
-					icon = R.drawable.ic_warning,
-					colors = InfoCardDefaults.infoCardColors(),
-					buttonText = "Learn More",
-					modifier = Modifier.padding(horizontal = 12.dp)
-				) { uriHandler.openUri("https://graphite.syncodec.com/#/backup_and_sync") }
-				PlainTextWarning(
-					isVisible = showPlainTextWarning,
-					modifier = Modifier.padding(horizontal = 12.dp),
-				) {
-					dataStoreInstance.putShowPlainTextWarningDropbox(false)
-				}
-				ConnectionCard(
-					aboutState = aboutState,
-				)
-				SettingButton(
-					text = "Connect with Google Drive",
-					icon = R.drawable.ic_logo_google_drive,
-					subIcon = if (aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success) R.drawable.ic_checkmark else null,
-					tint = Color.Unspecified,
-					subIconTint = Color.Unspecified,
-					onClick = onClickConnect,
-				)
-				SettingButton(
-					text = "Test connection",
-					icon = R.drawable.ic_test_connection,
-					onClick = onTestConnection,
-				)
-				SettingButton(
-					text = "Disconnect",
-					icon = R.drawable.ic_cloud_x,
-					enabled = aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success,
-					onClick = onClickDisconnect,
-				)
-				SettingSwitch(
-					text = "Auto Sync",
-					subText = if (isAutoSyncEnabled == true) "Auto sync is enabled" else "Auto sync is disabled",
-					icon = R.drawable.ic_sync,
-					isChecked = isAutoSyncEnabled != false,
-					enabled = aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success,
-				) {
-					dataStoreInstance.setIsAutoSyncEnabled(it)
-					if (it) Toast.makeText(context, "Auto sync is enabled", Toast.LENGTH_SHORT).show()
-					else Toast.makeText(context, "Auto sync is disabled", Toast.LENGTH_SHORT).show()
-				}
-				SettingButton(
-					text = "Take Snapshot",
-					icon = R.drawable.ic_easy,
-					subText = "Save everything from database",
-					enabled = aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success,
-				) {
-					if (isGeneratingSnapshot) Toast.makeText(context, "Please wait for the current snapshot to finish", Toast.LENGTH_SHORT).show()
-					else onClickGenerateSnapshot()
-				}
-				SettingButton(
-					text = "Learn more about backup and sync",
-					icon = R.drawable.ic_info,
-				) { uriHandler.openUri("https://graphite.syncodec.com/#/backup_and_sync") }
-				SettingsContentTitle(
-					title = "SNAPSHOT WAREHOUSE"
-				) {
-					AnimatedVisibility(visible = isGeneratingSnapshot) {
-						CircularProgressIndicator(
-							color = MaterialTheme.colorScheme.onSurface,
-							strokeWidth = 2.dp,
-							modifier = Modifier.size(16.dp),
-						)
-					}
-				}
-				if (snapshotList == null) {
-					DropboxEmptySnapshot()
-				}
-				else {
-					if (snapshotList is GDriveSyncInatorService.Companion.ListFiles.Success) {
-						snapshotList.fileList.map {
-							Pair(
-								it, try {
-									it.name.split("_").last().split(".").first().toLong()
-								} catch (e: Exception) {
-									-1
-								}
-							)
-						}
-							.sortedByDescending { it.second }
-							.forEachIndexed { index, pair ->
-								SnapshotButton(
-									fileName = pair.first.name,
-									createdTimestamp = pair.second,
-									isLatest = index == 0,
-								) { selectedSnapshot = pair.first }
-							}
-						Spacer(modifier = Modifier.height(128.dp))
-					}
-				}
-			}
-
-			PullRefreshIndicator(
-				refreshing = refreshing || isGeneratingSnapshot,
-				state = pullRefreshState,
-				backgroundColor = MaterialTheme.colorScheme.surface,
-				contentColor = MaterialTheme.colorScheme.onSurface,
-				modifier = Modifier.align(Alignment.TopCenter)
-			)
-		}
-	}
+//	val context = LocalContext.current
+//	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+//	val uriHandler = LocalUriHandler.current
+//
+//	val isAutoSyncEnabled by dataStoreInstance.isAutoSyncEnabled.collectAsState(initial = null)
+//	val showPlainTextWarning by dataStoreInstance.showPlainTextWarningDropbox.collectAsState(initial = false)
+//
+//	var isReconnectDialogVisible by remember { mutableStateOf(false) }
+//	var isDisconnectDialogVisible by remember { mutableStateOf(false) }
+//	var selectedSnapshot by remember { mutableStateOf<File?>(null) }
+//	fun openDialog(dialogType: GoogleDriveDialogType) = when (dialogType) {
+//		GoogleDriveDialogType.Disconnect -> isDisconnectDialogVisible = true
+//		GoogleDriveDialogType.RestoreSnapshot -> null
+//		GoogleDriveDialogType.RestoringSnapshot -> null
+//	}
+//
+//	fun closeDialog(dialogType: GoogleDriveDialogType) = when (dialogType) {
+//		GoogleDriveDialogType.Disconnect -> isDisconnectDialogVisible = false
+//		GoogleDriveDialogType.RestoreSnapshot -> selectedSnapshot = null
+//		GoogleDriveDialogType.RestoringSnapshot -> null
+//	}
+//
+//	var refreshing by remember { mutableStateOf(false) }
+//	val pullRefreshState = rememberPullRefreshState(
+//		refreshing = refreshing,
+//		onRefresh = {
+//			refreshing = true
+//			refreshSnapshot()
+//			refreshing = false
+//		}
+//	)
+//
+//	val isInternetAvailable = context.isInternetAvailable()
+//
+//	GenericScaffold(
+//		topBar = { GenericTopBar(title = "Google Drive") },
+//		dialogContent = {
+//			GoogleDriveDialog(
+//				showDisconnectDialog = isDisconnectDialogVisible,
+//				snapshot = selectedSnapshot,
+//				showRestoringSnapshotDialog = isRestoringSnapshot,
+//				aboutState = aboutState,
+//				onDisconnect = onClickDisconnect,
+//				onShare = onClickShareSnapshot,
+//				onRestore = onClickRestoreSnapshot,
+//				onClickDelete = onClickDeleteSnapshot,
+//				closeDialog = ::closeDialog,
+//			)
+//		},
+//	) {
+//		Box(
+//			modifier = Modifier.pullRefresh(state = pullRefreshState)
+//		) {
+//			Column(
+//				modifier = Modifier
+//					.fillMaxSize()
+//					.verticalScroll(rememberScrollState())
+//			) {
+//				AnimatedVisibility(
+//					visible = !isInternetAvailable,
+//					enter = expandVertically(tween(300)),
+//					exit = shrinkVertically(tween(300)),
+//				) {
+//					InfoCard(
+//						title = "No internet connection",
+//						description = "It seems you are not connected to internet. Please connect to internet and try again.",
+//						icon = R.drawable.ic_no_internet,
+//						colors = InfoCardDefaults.warningCardColors(),
+//						buttonText = "Retry",
+//						modifier = Modifier.padding(horizontal = 12.dp),
+//					) { onTestConnection() }
+//				}
+//				InfoCard(
+//					title = "Experimental",
+//					description = "This feature is still in development and may not work as expected. Please report any bugs you encounter.",
+//					icon = R.drawable.ic_warning,
+//					colors = InfoCardDefaults.warningCardColors(),
+//					buttonText = "Report Bug",
+//					modifier = Modifier.padding(horizontal = 12.dp)
+//				) { context.startActivity(Intent(context, ReportActivity::class.java)) }
+//				InfoCard(
+//					title = "Backup vs Sync",
+//					description = "Backup is a one time process that saves your data to the cloud at a regular interval (not available yet) or manually. Sync is a continuous process that keeps your data in sync with the cloud to be available on other devices.",
+//					icon = R.drawable.ic_warning,
+//					colors = InfoCardDefaults.infoCardColors(),
+//					buttonText = "Learn More",
+//					modifier = Modifier.padding(horizontal = 12.dp)
+//				) { uriHandler.openUri("https://graphite.syncodec.com/#/backup_and_sync") }
+//				PlainTextWarning(
+//					isVisible = showPlainTextWarning,
+//					modifier = Modifier.padding(horizontal = 12.dp),
+//				) {
+//					dataStoreInstance.putShowPlainTextWarningDropbox(false)
+//				}
+//				ConnectionCard(
+//					aboutState = aboutState,
+//				)
+//				SettingButton(
+//					text = "Connect with Google Drive",
+//					icon = R.drawable.ic_logo_google_drive,
+//					subIcon = if (aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success) R.drawable.ic_checkmark else null,
+//					tint = Color.Unspecified,
+//					subIconTint = Color.Unspecified,
+//					onClick = onClickConnect,
+//				)
+//				SettingButton(
+//					text = "Test connection",
+//					icon = R.drawable.ic_test_connection,
+//					onClick = onTestConnection,
+//				)
+//				SettingButton(
+//					text = "Disconnect",
+//					icon = R.drawable.ic_cloud_x,
+//					enabled = aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success,
+//					onClick = onClickDisconnect,
+//				)
+//				SettingSwitch(
+//					text = "Auto Sync",
+//					subText = if (isAutoSyncEnabled == true) "Auto sync is enabled" else "Auto sync is disabled",
+//					icon = R.drawable.ic_sync,
+//					isChecked = isAutoSyncEnabled != false,
+//					enabled = aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success,
+//				) {
+//					dataStoreInstance.setIsAutoSyncEnabled(it)
+//					if (it) Toast.makeText(context, "Auto sync is enabled", Toast.LENGTH_SHORT).show()
+//					else Toast.makeText(context, "Auto sync is disabled", Toast.LENGTH_SHORT).show()
+//				}
+//				SettingButton(
+//					text = "Take Snapshot",
+//					icon = R.drawable.ic_easy,
+//					subText = "Save everything from database",
+//					enabled = aboutState is GoogleDriveSyncActivity.Companion.AboutState.Success,
+//				) {
+//					if (isGeneratingSnapshot) Toast.makeText(context, "Please wait for the current snapshot to finish", Toast.LENGTH_SHORT).show()
+//					else onClickGenerateSnapshot()
+//				}
+//				SettingButton(
+//					text = "Learn more about backup and sync",
+//					icon = R.drawable.ic_info,
+//				) { uriHandler.openUri("https://graphite.syncodec.com/#/backup_and_sync") }
+//				SettingsContentTitle(
+//					title = "SNAPSHOT WAREHOUSE"
+//				) {
+//					AnimatedVisibility(visible = isGeneratingSnapshot) {
+//						CircularProgressIndicator(
+//							color = MaterialTheme.colorScheme.onSurface,
+//							strokeWidth = 2.dp,
+//							modifier = Modifier.size(16.dp),
+//						)
+//					}
+//				}
+//				if (snapshotList == null) {
+//					DropboxEmptySnapshot()
+//				}
+//				else {
+//					if (snapshotList is GDriveSyncInatorService.Companion.ListFiles.Success) {
+//						snapshotList.fileList.map {
+//							Pair(
+//								it, try {
+//									it.name.split("_").last().split(".").first().toLong()
+//								} catch (e: Exception) {
+//									-1
+//								}
+//							)
+//						}
+//							.sortedByDescending { it.second }
+//							.forEachIndexed { index, pair ->
+//								SnapshotButton(
+//									fileName = pair.first.name,
+//									createdTimestamp = pair.second,
+//									isLatest = index == 0,
+//								) { selectedSnapshot = pair.first }
+//							}
+//						Spacer(modifier = Modifier.height(128.dp))
+//					}
+//				}
+//			}
+//
+//			PullRefreshIndicator(
+//				refreshing = refreshing || isGeneratingSnapshot,
+//				state = pullRefreshState,
+//				backgroundColor = MaterialTheme.colorScheme.surface,
+//				contentColor = MaterialTheme.colorScheme.onSurface,
+//				modifier = Modifier.align(Alignment.TopCenter)
+//			)
+//		}
+//	}
 }
 
 @Preview

@@ -2,10 +2,11 @@ package com.syncodec.graphite.presentation.note.screen.editorScreen
 
 import android.graphics.Bitmap
 import android.net.Uri
-import androidx.lifecycle.MutableLiveData
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.KitKatContent
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
@@ -70,9 +71,12 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 	/** Used for bottom sheet to show the correct view and data.*/
 	val locationDataState = MutableStateFlow<LocationData>(LocationData.Init)
 
+	var kitKatContent : KitKatContent? = null
+
 	init {
 		initObserver()
 		loadTags()
+		Log.d("npr71", "EditorScreenViewModel init")
 	}
 
 	/** Observes [repositoryState] and [noteId] and calls [getNote] when [repositoryState] is [RepositoryState.Success] and [noteId] is not null.*/

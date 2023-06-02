@@ -3,10 +3,13 @@ package com.syncodec.graphite.di.model
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.syncodec.graphite.di.model.serializer.RealmUUIDNullableSerializer
+import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.serialization.Serializable
 import org.json.JSONObject
 import java.time.Instant
 import kotlin.random.Random
@@ -14,6 +17,7 @@ import kotlin.random.Random
 
 @Keep
 @JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
+@Serializable
 class ChapterObject() : RealmObject {
 	constructor(jsonObject : JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
@@ -32,6 +36,7 @@ class ChapterObject() : RealmObject {
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
 	}
 
+	@Serializable(with = RealmUUIDSerializer::class)
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
@@ -44,9 +49,9 @@ class ChapterObject() : RealmObject {
 	var isFavourite : Boolean = false
 	var isLocked : Boolean = false
 
+	@Serializable(with = RealmUUIDNullableSerializer::class)
 	var parentId : RealmUUID? = null
 
-	var googleDriveId : String? = null
 
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(

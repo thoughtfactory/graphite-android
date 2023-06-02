@@ -91,6 +91,9 @@ fun EditorScreen(
     val isOperationPending by viewModel.isOperationPending.collectAsState()
 
     val textFormat by editor.textFormat.collectAsState()
+    LaunchedEffect(key1 = textFormat.kitKatContent) {
+        viewModel.kitKatContent = textFormat.kitKatContent
+    }
 
     val isNewNote by viewModel.isNewNote.collectAsState()
 
@@ -291,7 +294,7 @@ fun EditorScreen(
 
     LaunchedEffect(key1 = title, key2 = content) {
         editor.setGetTextListener(getTextListener)
-        editor.setData(title, content)
+//        editor. setData(title, content)
     }
 
     LaunchedEffect(key1 = isNewNote, key2 = isGeolocationEnabled) {

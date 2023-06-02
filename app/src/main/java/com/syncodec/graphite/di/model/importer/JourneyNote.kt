@@ -1,9 +1,11 @@
 package com.syncodec.graphite.di.model.importer
 
 import androidx.annotation.Keep
+import kotlinx.serialization.Serializable
 
 
 @Keep
+@Serializable
 data class JourneyNote(
 	val text: String? = null,
 	val dateModified: Long? = null,

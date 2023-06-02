@@ -1,6 +1,7 @@
 package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
+import com.syncodec.graphite.di.model.serializer.RealmUUIDNullableSerializer
 import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import io.realm.kotlin.ext.realmListOf
@@ -19,23 +20,25 @@ import java.time.Instant
 
 @Keep
 class BaseObject : RealmObject {
+	@Serializable(with = RealmUUIDSerializer::class)
 	@PrimaryKey
 	var id: RealmUUID = RealmUUID.random()
 
 	/**
 	 * The [RealmUUID] of the default chapter. Should never be null.
 	 */
+	@Serializable(with = RealmUUIDNullableSerializer::class)
 	var defaultChapterId: RealmUUID? = null
 
 	/**
 	 * Stores the order of the [ChapterObject]s to render in NotebookScreen.
 	 */
-	var notebookIdOrderList: RealmList<RealmUUID> = realmListOf()
+	var notebookIdOrderList: RealmList<@Serializable(with = RealmUUIDSerializer::class)RealmUUID> = realmListOf()
 
 	/**
 	 * Stores the order of the [BucketObject]s to render in ListScreen.
 	 */
-	var bucketIdOrderList: RealmList<RealmUUID> = realmListOf()
+	var bucketIdOrderList: RealmList<@Serializable(with = RealmUUIDSerializer::class)RealmUUID> = realmListOf()
 
 	/**
 	 * It keeps track of deleted objects so that they can be deleted from the cloud.

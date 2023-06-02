@@ -240,7 +240,7 @@ class Repository {
 		CoroutineScope(Dispatchers.Default).launch { downSyncBaseObject(baseObject, modifyTimestampAuto) }
 	}
 
-	fun putChapter(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
+	fun putChapter(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true) {
 		realm?.writeBlocking {
 			val storedChapterObject = getChapterFromId(chapterObject.id)
 			storedChapterObject?.let {
@@ -253,14 +253,13 @@ class Repository {
 					latestChapterObject.isFavourite = chapterObject.isFavourite
 					latestChapterObject.isLocked = chapterObject.isLocked
 					latestChapterObject.parentId = chapterObject.parentId
-					latestChapterObject.googleDriveId = googleDriveId ?: latestChapterObject.googleDriveId
 				} ?: copyToRealm(chapterObject)
 			} ?: copyToRealm(chapterObject)
 		}
 	}
 
-	fun putChapterSuspended(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
-		CoroutineScope(Dispatchers.Default).launch { putChapter(chapterObject, modifyTimestampAuto, googleDriveId) }
+	fun putChapterSuspended(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true) {
+		CoroutineScope(Dispatchers.Default).launch { putChapter(chapterObject, modifyTimestampAuto) }
 	}
 
 	fun reorderNotebookList(idOrderList: List<RealmUUID>) {
@@ -384,7 +383,7 @@ class Repository {
 	 * @author pushpull
 	 * @since 2.2.0
 	 */
-	fun putNote(noteObject: NoteObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
+	fun putNote(noteObject: NoteObject, modifyTimestampAuto: Boolean = true) {
 		realm?.writeBlocking {
 			val storedNoteObject = getNoteFromId(noteObject.id)
 			storedNoteObject?.let {
@@ -402,27 +401,13 @@ class Repository {
 					latestNoteObject.isFavourite = noteObject.isFavourite
 					latestNoteObject.isLocked = noteObject.isLocked
 					latestNoteObject.parentId = noteObject.parentId
-					latestNoteObject.googleDriveId = googleDriveId ?: latestNoteObject.googleDriveId
 				} ?: copyToRealm(noteObject)
 			} ?: copyToRealm(noteObject)
 		}
 	}
 
-	fun putNoteSuspended(noteObject: NoteObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
-		CoroutineScope(Dispatchers.Default).launch { putNote(noteObject, modifyTimestampAuto, googleDriveId) }
-	}
-
-	fun putNoteGoogleDriveIdSuspended(noteId: RealmUUID, googleDriveId: String) {
-		CoroutineScope(Dispatchers.Default).launch {
-			realm?.write {
-				val storedNoteObject = getNoteFromId(noteId)
-				storedNoteObject?.let {
-					findLatest(it)?.let { storedNoteObject ->
-						storedNoteObject.googleDriveId = googleDriveId
-					}
-				}
-			}
-		}
+	fun putNoteSuspended(noteObject: NoteObject, modifyTimestampAuto: Boolean = true) {
+		CoroutineScope(Dispatchers.Default).launch { putNote(noteObject, modifyTimestampAuto) }
 	}
 
 	fun putThumbnailInNote(noteId: RealmUUID, thumbnail: Bitmap) {

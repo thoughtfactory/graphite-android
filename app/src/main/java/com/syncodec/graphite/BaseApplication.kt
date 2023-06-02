@@ -29,12 +29,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.Note
 import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
-import com.syncodec.graphite.presentation.settings.composable.dialog.clearData.ClearDataViewModel
-import com.syncodec.graphite.presentation.settings.composable.dialog.exportData.ExportDataViewModel
-import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.googleKeep.ImportDataGoogleKeepViewModel
-import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.graphite.ImportDataGraphiteViewModel
-import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.journey.ImportDataJourneyViewModel
-import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupViewModel
+import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataViewModel
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.utils.AuthenticatorScreen
@@ -89,13 +84,14 @@ class BaseApplication : Application() {
 					viewModelOf(::SearchScreenViewModel)
 					viewModelOf(::TagsViewModel)
 					viewModelOf(::AttachmentScreenViewModel)
-					viewModelOf(::ExportDataViewModel)
-					viewModelOf(::ImportDataGraphiteViewModel)
-					viewModelOf(::ImportDataJourneyViewModel)
-					viewModelOf(::ImportDataGoogleKeepViewModel)
-					viewModelOf(::ClearDataViewModel)
-					viewModelOf(::LocalBackupViewModel)
-					viewModelOf(::LocalBackupViewModel)
+					viewModelOf(::ImportDataViewModel)
+//					viewModelOf(::ExportDataViewModel)
+//					viewModelOf(::ImportDataGraphiteViewModel)
+//					viewModelOf(::ImportDataJourneyViewModel)
+//					viewModelOf(::ImportDataGoogleKeepViewModel)
+//					viewModelOf(::ClearDataViewModel)
+//					viewModelOf(::LocalBackupViewModel)
+//					viewModelOf(::LocalBackupViewModel)
 					viewModelOf(::WhereDialogViewModel)
 					viewModelOf(::ExplorerScreenViewModel)
 					viewModelOf(::DropboxSyncViewModel)

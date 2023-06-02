@@ -43,10 +43,6 @@ import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivi
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.android.awaitFrame
-import kotlinx.coroutines.async
 
 
 @Preview
@@ -97,7 +93,7 @@ fun SyncBottomSheet(
 
 			is DBox.Companion.TestConnectionResponse.NotLoggedIn -> NotLoggedInView {
 				Intent(context, SettingsActivity::class.java).apply {
-					putExtra(SettingsActivity.Companion.Extras.SettingsScreen.name, SettingsActivity.Companion.SettingsScreen.BackupAndSync.name)
+//					putExtra(SettingsActivity.Companion.Extras.SettingsScreen.name, SettingsActivity.Companion.SettingsScreen.BackupAndSync.name)
 					context.startActivity(this)
 				}
 				closeSheet()

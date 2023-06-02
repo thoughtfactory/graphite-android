@@ -31,19 +31,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.koin.android.ext.android.inject
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.time.Instant
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 
 class GDriveSyncInatorService : SyncInatorService() {
@@ -377,7 +370,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 			folderId = googleDriveState.chapterFolderId,
 		) { content, fileId ->
 			ChapterObject.fromCloudSnapshot(content)?.let { chapterObject ->
-				repository.putChapterSuspended(chapterObject = chapterObject, modifyTimestampAuto = false, googleDriveId = fileId)
+				repository.putChapterSuspended(chapterObject = chapterObject, modifyTimestampAuto = false)
 			}
 		}.let { deletedObjectList.addAll(it) }
 
@@ -389,7 +382,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 			folderId = googleDriveState.noteFolderId,
 		) { content, fileId ->
 			NoteObject.fromCloudSnapshot(content)?.let { noteObject ->
-				repository.putNoteSuspended(noteObject = noteObject, modifyTimestampAuto = false, googleDriveId = fileId)
+				repository.putNoteSuspended(noteObject = noteObject, modifyTimestampAuto = false)
 			}
 		}.let { deletedObjectList.addAll(it) }
 

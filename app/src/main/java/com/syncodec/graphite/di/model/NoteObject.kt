@@ -7,12 +7,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.syncodec.graphite.di.model.serializer.LatLngSerializer
+import com.syncodec.graphite.di.model.serializer.RealmUUIDNullableSerializer
+import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import java.time.Instant
@@ -21,6 +23,7 @@ import kotlin.random.Random
 
 @Keep
 @JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
+@Serializable
 class NoteObject() : RealmObject {
 	constructor(jsonObject : JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
@@ -44,6 +47,7 @@ class NoteObject() : RealmObject {
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
 	}
 
+	@Serializable(with = RealmUUIDSerializer::class)
 	@PrimaryKey
 	var id : RealmUUID = RealmUUID.random()
 
@@ -60,17 +64,15 @@ class NoteObject() : RealmObject {
 	var isFavourite : Boolean = false
 	var isLocked : Boolean = false
 
+	@Serializable(with = RealmUUIDNullableSerializer::class)
 	var parentId : RealmUUID? = null
-
-	var googleDriveId : String? = null
 
 	fun setLatLng(latLng : LatLng?) {
 		try {
 			latLng?.let {
 				val latitude = it.latitude
 				val longitude = it.longitude
-				if (latitude == null || longitude == null) this.latLng = null
-				else if ((latitude >= - 90) && (latitude <= 90) && (longitude >= - 180) && (longitude <= 180)) {
+				if ((latitude >= - 90) && (latitude <= 90) && (longitude >= - 180) && (longitude <= 180)) {
 					val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 					this.latLng = objectMapper.writeValueAsString(it)
 				} else this.latLng = null
@@ -91,8 +93,10 @@ class NoteObject() : RealmObject {
 		}
 	}
 
-	fun toDbxHash() {
-
+	fun getContentString() : String {
+		val json = Json { ignoreUnknownKeys = true }
+		val kitKatContent = json.decodeFromString<KitKatContent>(content ?: "")
+		return kitKatContent.toTxt()
 	}
 
 	override fun toString() : String = this.id.toString()
@@ -199,8 +203,8 @@ class NoteObject() : RealmObject {
 			return try {
 				val json = Json { ignoreUnknownKeys = true }
 				val jsonObject = JSONObject(String(snapshot))
-				val tipTapContent = json.decodeFromString<TipTapContent>(jsonObject.getString("content")).toString()
-				jsonObject.put("contentThumbnail" , tipTapContent.substring(0, minOf(256, tipTapContent.length)))
+				val kitKatContent = json.decodeFromString<KitKatContent>(jsonObject.getString("content")).toString()
+				jsonObject.put("contentThumbnail", kitKatContent.substring(0, minOf(256, kitKatContent.length)))
 				NoteObject(jsonObject)
 			} catch (e : Exception) {
 				null
@@ -291,14 +295,13 @@ data class NoteObjectLite(
 }
 
 @Keep
-@Serializable
+@Serializable(with = LatLngSerializer::class)
 data class LatLng(
-	var latitude : Double? = null,
-	var longitude : Double? = null
+	var latitude : Double,
+	var longitude : Double
 ) {
-	fun toGLatLng() : com.google.android.gms.maps.model.LatLng? {
-		return if (latitude == null || longitude == null) null
-		else com.google.android.gms.maps.model.LatLng(latitude !!, longitude !!)
+	fun toGLatLng() : com.google.android.gms.maps.model.LatLng {
+		return com.google.android.gms.maps.model.LatLng(latitude, longitude)
 	}
 
 	override fun toString() : String = "Lat : $latitude, Lng : $longitude"

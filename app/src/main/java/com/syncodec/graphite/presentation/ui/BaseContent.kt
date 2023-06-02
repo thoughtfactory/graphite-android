@@ -70,7 +70,7 @@ fun BaseContent(
 		"Montserrat" -> MontserratTypography
 		"Roboto" -> RobotoTypography
 		"Tilt Neon" -> TiltNeonTypography
-		else -> PTMonoTypography
+		else -> Defaults.DefaultTypagrophy
 	}
 
 	val isAuthenticated by BaseApplication.isAuthenticated.collectAsState(initial = false)

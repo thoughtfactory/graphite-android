@@ -3,8 +3,10 @@ package com.syncodec.graphite.di.model.importer
 import androidx.annotation.Keep
 import com.syncodec.graphite.di.model.Attrs
 import com.syncodec.graphite.di.model.Content
+import kotlinx.serialization.Serializable
 
 @Keep
+@Serializable
 data class GoogleKeepNote(
 	val color : String? = null,
 	val isTrashed : Boolean? = null,
@@ -59,6 +61,7 @@ data class GoogleKeepNote(
 }
 
 @Keep
+@Serializable
 data class GoogleKeepAnnotation(
 	val description : String? = null,
 	val source : String? = null,
@@ -67,12 +70,14 @@ data class GoogleKeepAnnotation(
 )
 
 @Keep
+@Serializable
 data class GoogleKeepAttachment(
 	val filePath : String? = null,
 	val mimeType : String? = null,
 )
 
 @Keep
+@Serializable
 data class GoogleKeepListContent(
 	val text : String? = null,
 	val isChecked : Boolean? = null,
