@@ -45,7 +45,7 @@
     "@tiptap/extension-underline": "^2.0.0-beta.22",
     "@tiptap/starter-kit": "^2.0.0-beta.180",
     "browserify": "^17.0.0",
-    "node-sass": "^7.0.1",
+    "node-sass": "^9.0.0",
     "tippy.js": "^6.3.7",
     "turndown": "^7.1.1",
     "uniq": "^1.0.1"
