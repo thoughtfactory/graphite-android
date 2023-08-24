@@ -22,12 +22,15 @@ import androidx.compose.animation.with
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -44,7 +47,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
@@ -57,9 +60,11 @@ import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -118,8 +123,7 @@ class MainActivity : ComponentActivity() {
 						if (isBiometricsEnabled == true) {
 							viewModel.setRepositoryState(Repository.Companion.RepositoryState.Locked)
 							launchBiometric()
-						}
-						else viewModel.onAuthenticate(applicationContext)
+						} else viewModel.onAuthenticate(applicationContext)
 						isBiometricUsed = true
 					}
 				}
@@ -148,7 +152,7 @@ class MainActivity : ComponentActivity() {
 							targetState = repositoryState,
 							transitionSpec = { fadeIn(tween(300)) with fadeOut(animationSpec = tween(300)) },
 							modifier = Modifier.fillMaxSize(),
-							label = "repositoryState"
+							label = "repositoryState_animation"
 						) {
 							when (it) {
 								Repository.Companion.RepositoryState.Locked -> RepositoryLockedScreen(
@@ -160,7 +164,6 @@ class MainActivity : ComponentActivity() {
 									syncStatus = syncStatus,
 									testConnectionResponse = testConnectionResponse,
 									testDropboxConnection = {
-										Log.d("npr71", "testDropboxConnection: ")
 										viewModel.testRemoteConnection(syncProvider)
 									},
 									onClickSyncNow = { syncProvider?.onClickSyncNow() },
@@ -289,16 +292,14 @@ class MainActivity : ComponentActivity() {
 
 				if (idToken == null) {
 					Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-				}
-				else {
+				} else {
 					val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
 					auth.signInWithCredential(firebaseCredential)
 						.addOnCompleteListener(this) { task ->
 							if (task.isSuccessful) {
 								val user = auth.currentUser
 								updateUI(user)
-							}
-							else {
+							} else {
 								updateUI(null)
 							}
 						}
@@ -331,8 +332,7 @@ class MainActivity : ComponentActivity() {
 			dataStoreInstance.putIsFirstTime(false)
 
 			Toast.makeText(this, "Hi ${user.displayName}", Toast.LENGTH_SHORT).show()
-		}
-		else {
+		} else {
 			Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 		}
 	}

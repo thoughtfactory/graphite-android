@@ -59,8 +59,6 @@ fun AnimatedScrollText(
 			)
 		}
 
-		Spacer(modifier = Modifier.width(0.dp))
-
 		Text(
 			text = staticText,
 			fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),

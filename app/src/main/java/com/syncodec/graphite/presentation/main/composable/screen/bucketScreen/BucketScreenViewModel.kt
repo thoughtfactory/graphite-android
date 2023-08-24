@@ -2,8 +2,10 @@ package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.ContentStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
@@ -88,6 +90,26 @@ class BucketScreenViewModel(private val repository : Repository) : ViewModel() {
 	}
 
 	fun refresh() = observeBuckets()
+
+	fun putBucket(
+		title: String?,
+		description: String?,
+		bucketType: BucketType,
+		callback: suspend (String) -> Unit,
+	) {
+		val bucketObject = BucketObject().apply {
+			this.title = title
+			this.description = description
+			this.bucketType = bucketType.name
+		}
+
+		if (BaseApplication.isPro.value || bucketType == BucketType.TODO) repository.putBucketSuspended(bucketObject)
+		else viewModelScope.launch(Dispatchers.Default) {
+			repository.getAllBucket().let {
+				if (it.count { it.bucketType == bucketType.name } < 1) repository.putBucketSuspended(bucketObject) else callback("Join Graphite Pro to create more ${bucketType.name} buckets")
+			}
+		}
+	}
 
 	fun delete(idList : List<RealmUUID>) {
 		repository.deleteSuspended(idList)

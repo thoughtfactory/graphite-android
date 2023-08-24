@@ -52,10 +52,10 @@ import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.bucketTypeToIcon
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BucketCard(
-	handleModifier : Modifier = Modifier,
 	title : String? = null,
 	bucketSize : Int = 0,
 	bucketType : BucketType = BucketType.BOOK,
@@ -64,6 +64,7 @@ fun BucketCard(
 	isSelecting : Boolean = false,
 	isSelected : Boolean = false,
 	isDragging : Boolean = false,
+	handle : @Composable () -> Unit = {},
 	onClick : () -> Unit = {},
 	onLongClick : () -> Unit = {},
 ) {
@@ -158,12 +159,7 @@ fun BucketCard(
 							enter = fadeIn(tween(300)) + scaleIn(tween(300)),
 							exit = fadeOut(tween(300)) + scaleOut(tween(300)),
 						) {
-							Icon(
-								painter = painterResource(id = R.drawable.ic_reorder),
-								contentDescription = "Reorder",
-								tint = MaterialTheme.colorScheme.onSurface,
-								modifier = handleModifier.size(16.dp)
-							)
+							handle()
 						}
 					}
 				}

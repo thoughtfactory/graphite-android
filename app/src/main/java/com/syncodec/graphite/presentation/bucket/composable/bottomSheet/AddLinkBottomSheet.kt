@@ -1,50 +1,37 @@
 package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
-import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.with
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,187 +41,126 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.network.ApiStatus
-import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
-import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.common.text.KeyValueText
-import com.syncodec.graphite.utils.Status
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
+import com.syncodec.graphite.di.network.OpenGraphApi
+import com.syncodec.graphite.di.network.OpenGraphResponse
+import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.button.ClearButton
+import com.syncodec.graphite.presentation.common.button.PasteButton
+import com.syncodec.graphite.presentation.common.info.InfoCard
+import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
+import com.syncodec.graphite.utils.ContentStatus
 
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun AddLinkBottomSheet(
-	closeSheet : () -> Unit = {}
+	bottomSheetState: SheetState = rememberModalBottomSheetState(),
+	isBottomSheetVisible: Boolean = false,
+	onDismissRequest: () -> Unit = { },
+	onAddLink: (String, Int) -> Unit = { _, _ -> },
 ) {
-	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-	val viewModel : BucketBottomSheetViewModel = koinViewModel()
+	var urlText by rememberSaveable { mutableStateOf("") }
+	var contentStatus by remember { mutableStateOf<ContentStatus<Pair<OpenGraphResult, Bitmap?>>>(ContentStatus.Init) }
 
-	val keyboardController = LocalSoftwareKeyboardController.current
-	val clipboardManager = LocalClipboardManager.current
-
-	var urlText by remember { mutableStateOf("") }
-
-	var status : Status by remember { mutableStateOf(Status.INIT) }
-
-	var openGraphResult by remember { mutableStateOf<OpenGraphResult?>(null) }
-	var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-
-	fun getLinkPreview(url : String) {
-		status = Status.LOADING
-		openGraphResult = null
-		bitmap = null
-		viewModel.getLinkPreview(url) { apiResult ->
-			scope.launch(Dispatchers.Main) {
-				when (apiResult.status) {
-					ApiStatus.LOADING -> status = Status.LOADING
-					ApiStatus.SUCCESS -> {
-						openGraphResult = apiResult.data?.first
-						bitmap = apiResult.data?.second
-						status = Status.LOADED
-					}
-
-					ApiStatus.ERROR -> {
-						status = Status.ERROR
-						openGraphResult = null
-						bitmap = null
-					}
-				}
+	fun getLinkPreview(url: String) {
+		OpenGraphApi.getData(url = url) { openGraphResponse ->
+			contentStatus = when (openGraphResponse) {
+				is OpenGraphResponse.Loading -> ContentStatus.Loading
+				is OpenGraphResponse.Success -> ContentStatus.Loaded(Pair(openGraphResponse.openGraphResult, openGraphResponse.bitmap))
+				is OpenGraphResponse.InvalidUrl -> ContentStatus.Error(message = "Invalid url")
+				is OpenGraphResponse.Error -> ContentStatus.Error(message = "Unknown error")
 			}
 		}
 	}
 
-	fun putLink(url : String) {
-		closeSheet()
-		viewModel.putLink(url = url)
-	}
-
-	GenericBottomSheet(
-		title = "Add Link",
-		icon = R.drawable.ic_link,
+	GenericBottomSheet2(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isBottomSheetVisible,
+		onDismissRequest = onDismissRequest,
 	) {
-		BottomSheetTextField(
-			value = urlText,
-			placeholder = "http:// or https://",
-			actionButtons = {
-				MenuButton(
-					icon = R.drawable.ic_paste,
-					colors = MenuButtonDefaults.menuButtonColorsOnSurface()
-				) {
-					try {
-						if (clipboardManager.hasText()) clipboardManager.getText()?.let { clipboardText -> urlText = clipboardText.text }
-						else Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
-					} catch (e : Exception) {
-						Toast.makeText(context, "Error copying text from clipboard", Toast.LENGTH_SHORT).show()
-					}
-				}
-			},
-			keyboardOptions = KeyboardOptions.Default.copy(
-				capitalization = KeyboardCapitalization.None,
-				autoCorrect = true,
-				keyboardType = KeyboardType.Text,
-				imeAction = ImeAction.Search
-			),
-			keyboardActions = KeyboardActions(
-				onSearch = {
-					putLink(urlText)
-					urlText = ""
-				},
-				onDone = {
-					putLink(urlText)
-					urlText = ""
-				}
-			),
-			colors = BottomSheetTextFieldDefaults.textFieldColors(),
-			onValueChange = { urlText = it },
-		)
-
-		Spacer(modifier = Modifier.height(2.dp))
-
-		Row(
-			modifier = Modifier.fillMaxWidth()
+		GenericBottomSheetSkeleton2(
+			title = stringResource(id = R.string.add_link),
 		) {
-			Button(
-				colors = ButtonDefaults.buttonColors(
-					containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
-					contentColor = MaterialTheme.colorScheme.onSurface
-				),
+			OutlinedTextField(
+				value = urlText,
 				shape = MaterialTheme.shapes.medium,
+				onValueChange = { urlText = it },
+				label = { Text(text = stringResource(id = R.string.link)) },
+				placeholder = { Text(text = stringResource(id = R.string.link_example)) },
+				trailingIcon = {
+					Row {
+						ClearButton { urlText = "" }
+						PasteButton { urlText = it }
+					}
+				},
+				maxLines = 1,
+				singleLine = true,
+				keyboardOptions = KeyboardOptions(
+					capitalization = KeyboardCapitalization.None,
+					autoCorrect = true,
+					keyboardType = KeyboardType.Text,
+					imeAction = ImeAction.Done,
+				),
+				keyboardActions = KeyboardActions {
+
+				},
+				modifier = Modifier.fillMaxWidth()
+			)
+
+			AnimatedContent(
+				targetState = contentStatus,
+				label = "linkPreview_animation",
+				modifier = Modifier.fillMaxWidth()
+			) {
+				Column {
+					Spacer(modifier = Modifier.height(8.dp))
+					when (it) {
+						is ContentStatus.Init -> Unit
+						is ContentStatus.Loading -> LoadingView(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(vertical = 12.dp)
+						)
+
+						is ContentStatus.LoadedEmpty -> Unit
+						is ContentStatus.Loaded -> LinkPreview(openGraphResult = it.data.first, bitmap = it.data.second)
+						is ContentStatus.Error -> InfoCard(
+							title = stringResource(id = R.string.link_preview_error_title),
+							description = stringResource(id = R.string.link_preview_error_description),
+							icon = R.drawable.ic_fa_warning,
+							colors = InfoCardDefaults.errorCardColors()
+						)
+					}
+					Spacer(modifier = Modifier.height(4.dp))
+				}
+			}
+
+			OutlinedButton(
+				modifier = Modifier.fillMaxWidth(),
+				shape = MaterialTheme.shapes.medium,
+				enabled = urlText.isNotEmpty(),
 				onClick = {
 					getLinkPreview(urlText)
-					keyboardController?.hide()
-				},
-				modifier = Modifier.weight(1f),
+				}
 			) {
-				Text(text = "Preview")
+				Text(text = stringResource(id = R.string.preview))
 			}
-
-			Spacer(modifier = Modifier.width(8.dp))
 
 			Button(
+				modifier = Modifier.fillMaxWidth(),
 				shape = MaterialTheme.shapes.medium,
+				enabled = urlText.isNotEmpty(),
 				onClick = {
-					putLink(urlText)
+					onAddLink(urlText, 0)
 					urlText = ""
-					closeSheet()
-				},
-				modifier = Modifier.weight(1f)
+					contentStatus = ContentStatus.Init
+				}
 			) {
-				Text(text = "Save")
-			}
-		}
-
-		Spacer(modifier = Modifier.height(2.dp))
-
-		AnimatedContent(
-			targetState = status,
-			transitionSpec = { scaleIn(tween(300)) + fadeIn(tween(300)) with scaleOut(tween(300)) + fadeOut(tween(300)) }
-		) { status1 ->
-			when (status1) {
-				Status.INIT -> SearchResultStatusView(
-					imageId = R.drawable.il_bucket_link_search,
-					text = "Spotify, YouTube, Netflix anything you want to save!",
-					contentDescription = "Add Link",
-				)
-
-				Status.LOADING -> Box(
-					contentAlignment = Alignment.Center,
-					modifier = Modifier
-						.fillMaxWidth()
-						.heightIn(256.dp)
-				) {
-					CircularProgressIndicator(
-						color = MaterialTheme.colorScheme.primary,
-						strokeWidth = 4.dp
-					)
-				}
-
-				Status.LOADED -> {
-					openGraphResult?.let {
-						LinkPreview(
-							openGraphResult = it,
-							bitmap = bitmap,
-						)
-					} ?: SearchResultStatusView(
-						imageId = R.drawable.il_bucket_link_search,
-						text = "No preview available",
-						contentDescription = "No preview available",
-					)
-				}
-
-				Status.ERROR -> SearchResultStatusView(
-					imageId = R.drawable.il_bucket_link_search,
-					text = "Something went wrong",
-					contentDescription = "Something went wrong",
-				)
+				Text(text = stringResource(id = R.string.add_link))
 			}
 		}
 	}
@@ -243,70 +169,77 @@ fun AddLinkBottomSheet(
 @Preview
 @Composable
 private fun LinkPreview(
-	openGraphResult : OpenGraphResult = OpenGraphResult(
+	openGraphResult: OpenGraphResult = OpenGraphResult(
 		title = "Title",
 		description = "Description",
 		url = "https://www.google.com",
 	),
-	bitmap : Bitmap? = null,
+	bitmap: Bitmap? = null
 ) {
 	val context = LocalContext.current
 
 	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.verticalScroll(rememberScrollState())
+		modifier = Modifier.fillMaxWidth()
 	) {
-		Thumbnail(thumbnail = bitmap)
-
-		KeyValueText(
-			key = "Title",
-			value = openGraphResult.title,
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		KeyValueText(
-			key = "Description",
-			value = openGraphResult.description,
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		KeyValueText(
-			key = "URL",
-			value = openGraphResult.url,
-			maxLines = 8,
-			modifier = Modifier.fillMaxWidth()
+		AnimatedVisibility(
+			visible = bitmap != null,
+			label = "thumbnail_visibility"
 		) {
-			try {
-				context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(openGraphResult.url)))
-			} catch (e : Exception) {
-				Toast.makeText(context, "Unable to open link", Toast.LENGTH_SHORT).show()
+			Column {
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(192.dp)
+						.padding(horizontal = 2.dp)
+						.clip(MaterialTheme.shapes.medium)
+				) {
+//					if (Build.VERSION.SDK_INT >= 31) {
+//						AsyncImage(
+//							model = ImageRequest.Builder(context)
+//								.data(bitmap)
+//								.build(),
+//							placeholder = null,
+//							contentDescription = null,
+//							contentScale = ContentScale.Crop,
+//							modifier = Modifier
+//								.fillMaxSize()
+//								.blur(24.dp)
+//						)
+//					} else {
+//						Box(
+//							modifier = Modifier
+//								.fillMaxSize()
+//								.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f))
+//						)
+//					}
+					AsyncImage(
+						model = ImageRequest.Builder(context)
+							.data(bitmap)
+							.build(),
+						placeholder = null,
+						contentDescription = null,
+						contentScale = ContentScale.Crop,
+						modifier = Modifier.fillMaxSize()
+					)
+				}
+				Spacer(modifier = Modifier.height(4.dp))
 			}
 		}
-	}
-}
-
-@Composable
-private fun ColumnScope.Thumbnail(
-	thumbnail : Bitmap?
-) {
-	val context = LocalContext.current
-
-	this.apply {
-		thumbnail?.let {
-			AsyncImage(
-				model = ImageRequest.Builder(context)
-					.data(it)
-					.build(),
-				placeholder = null,
-				contentDescription = null,
-				contentScale = ContentScale.Crop,
-				modifier = Modifier
-					.fillMaxWidth()
-					.heightIn(0.dp, 128.dp)
-					.clip(MaterialTheme.shapes.medium)
+		GenericBottomSheetInfo2(
+			key = stringResource(id = R.string.url),
+			value = openGraphResult.url ?: stringResource(id = R.string.unavailable)
+		)
+		openGraphResult.title?.let {
+			GenericBottomSheetInfo2(
+				key = stringResource(id = R.string.title),
+				value = it
 			)
-			Spacer(modifier = Modifier.height(6.dp))
+		}
+		openGraphResult.description?.let {
+			GenericBottomSheetInfo2(
+				key = stringResource(id = R.string.description),
+				value = it
+			)
 		}
 	}
 }

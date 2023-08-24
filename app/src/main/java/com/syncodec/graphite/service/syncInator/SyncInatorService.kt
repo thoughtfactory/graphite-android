@@ -8,7 +8,7 @@ import androidx.lifecycle.LifecycleService
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.DeletedAttachment
 import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
 import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Connected
 import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.CredentialError

@@ -2,6 +2,7 @@ package com.syncodec.graphite.di.model
 
 import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.syncodec.graphite.R
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmList
@@ -20,6 +21,13 @@ enum class BucketType {
 	UNKNOWN
 }
 
+val bucketTypeIconMap = mapOf(
+	BucketType.TODO to R.drawable.ic_fa_bucket_todo,
+	BucketType.BOOK to R.drawable.ic_fa_bucket_book,
+	BucketType.SHOW to R.drawable.ic_fa_bucket_show,
+	BucketType.LINK to R.drawable.ic_fa_bucket_link,
+	BucketType.UNKNOWN to R.drawable.ic_fa_question,
+)
 
 @Keep
 @JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)

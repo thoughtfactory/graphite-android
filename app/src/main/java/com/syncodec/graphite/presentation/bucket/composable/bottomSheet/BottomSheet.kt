@@ -27,33 +27,4 @@ fun SheetLayout(
 	onClickDelete : () -> Unit = {},
 	closeSheet : () -> Unit = {},
 ) {
-	when (sheetType) {
-		BucketBottomSheetType.MENU -> MenuBottomSheet(
-			id = id,
-			description = description,
-			createdTimestamp = createdTimestamp,
-			modifiedTimestamp = modifiedTimestamp,
-			onClickEdit = onClickEdit,
-			onClickShare = onClickShare,
-			onClickDelete = onClickDelete,
-			closeSheet = closeSheet
-		)
-
-		BucketBottomSheetType.AddTodo -> AddTodoBottomSheet(
-			closeSheet = closeSheet
-		)
-		BucketBottomSheetType.AddBook -> AddBookBottomSheet()
-		BucketBottomSheetType.AddShow -> AddShowBottomSheet()
-		BucketBottomSheetType.AddLink -> AddLinkBottomSheet(
-			closeSheet = closeSheet
-		)
-		BucketBottomSheetType.PreviewTodo -> TodoPreviewBottomSheet(
-			previewBucketItemObjectId = previewBucketItemObjectId,
-			closeSheet = closeSheet,
-		)
-		BucketBottomSheetType.PreviewLink -> LinkPreviewBottomSheet(
-			previewBucketItemObjectId = previewBucketItemObjectId,
-			closeSheet = closeSheet,
-		)
-	}
 }

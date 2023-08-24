@@ -1,91 +1,124 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TriStateCheckbox
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
+import com.syncodec.graphite.presentation.ui.FavouriteContainer
+import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.ReorderableItem
+import org.burnoutcrew.reorderable.SpringDragCancelledAnimation
+import org.burnoutcrew.reorderable.detectReorder
+import org.burnoutcrew.reorderable.rememberReorderableLazyListState
+import org.burnoutcrew.reorderable.reorderable
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun BucketTodoListScreen(
-	bucketItemList : List<BucketItemObject> = listOf(),
-	isSelecting : Boolean = false,
-	selectedIdList : List<RealmUUID> = listOf(),
-	onSelect : (RealmUUID) -> Unit = {},
-	onClickBucketItem : (RealmUUID) -> Unit = {},
-	onClickFavourite : (BucketItemObject) -> Unit = {},
-	onClickLock : (BucketItemObject) -> Unit = {},
-	onCheckedChange : (BucketItemObject) -> Unit = {},
+	bucketItemList: List<BucketItemObject> = listOf(),
+	isSelecting: Boolean = false,
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onSelect: (RealmUUID) -> Unit = {},
+	onClickBucketItem: (BucketItemObject) -> Unit = {},
+	onClickFavourite: (BucketItemObject) -> Unit = {},
+	onClickLock: (BucketItemObject) -> Unit = {},
+	onCheckedChange: (BucketItemObject) -> Unit = {},
+	onReorderBucketItemList: (List<RealmUUID>) -> Unit = {},
 ) {
-	val hapticFeedback = LocalHapticFeedback.current
+	val scope = rememberCoroutineScope()
+
+	var bucketItemListOrdered by remember { mutableStateOf<List<BucketItemObject>>(listOf()) }
+	LaunchedEffect(bucketItemList) { bucketItemListOrdered = bucketItemList.toList() }
+	val state = rememberReorderableLazyListState(
+		dragCancelledAnimation = SpringDragCancelledAnimation(),
+		onMove = { from, to ->
+			bucketItemListOrdered.toMutableList().apply {
+				add(to.index, removeAt(from.index))
+				bucketItemListOrdered = toList()
+			}
+		},
+		onDragEnd = { from, to ->
+			scope.launch(Dispatchers.Default) { onReorderBucketItemList(bucketItemListOrdered.map { it.id }) }
+		}
+	)
 
 	if (bucketItemList.isEmpty()) {
 		EmptyView(bucketType = BucketType.TODO)
 	} else {
 		LazyColumn(
-			modifier = Modifier.fillMaxSize()
+			state = state.listState,
+			modifier = Modifier
+				.fillMaxSize()
+				.reorderable(state)
 		) {
-			bucketItemList.sortedBy { it.state }.forEach { bucketItemObject ->
+			bucketItemListOrdered.forEach { bucketItemObject ->
 				item(
-					key = bucketItemObject.id.toString(),
+					key = bucketItemObject.id.toString()
 				) {
-					Box(
-						modifier = Modifier.animateItemPlacement()
-					) {
+					ReorderableItem(
+						reorderableState = state,
+						key = bucketItemObject.id.toString()
+					) { isDragging ->
 						TodoItem(
 							title = bucketItemObject.title,
-							state = ((BucketItemState.values().find { it.name == bucketItemObject.state }?.ordinal ?: 0) + 1) % 3,
+							state = bucketItemObject.getState(),
+							dragHandle = {
+								Icon(
+									painter = painterResource(id = R.drawable.ic_fa_grip),
+									contentDescription = "Reorder",
+									tint = MaterialTheme.colorScheme.onSurface,
+									modifier = Modifier
+										.size(16.dp)
+										.detectReorder(state)
+								)
+							},
 							isLocked = bucketItemObject.isLocked,
 							isFavourite = bucketItemObject.isFavourite,
-							isSelected = bucketItemObject.id in selectedIdList,
-							onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject.id) },
-							onLongClick = {
-								hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-								onSelect(bucketItemObject.id)
-							},
+							isSelected = isDragging or (bucketItemObject.id in selectedIdList),
+							onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject) },
+							onLongClick = { onSelect(bucketItemObject.id) },
 							onCheckedChange = { onCheckedChange(bucketItemObject) },
-							onToggleLock = { onClickLock(bucketItemObject) },
-							onToggleFavourite = { onClickFavourite(bucketItemObject) },
 						)
 					}
 				}
@@ -94,47 +127,33 @@ fun BucketTodoListScreen(
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Preview
 @Composable
 private fun TodoItem(
-	title : String? = "title",
-	state : Int = 0,
-	isLocked : Boolean = false,
-	isFavourite : Boolean = false,
-	isSelected : Boolean = false,
-	onClick : () -> Unit = {},
-	onLongClick : () -> Unit = {},
-	onCheckedChange : () -> Unit = {},
-	onToggleLock : () -> Unit = {},
-	onToggleFavourite : () -> Unit = {},
+	title: String? = null,
+	state: Int = 0,
+	dragHandle: @Composable () -> Unit = {},
+	isLocked: Boolean = false,
+	isFavourite: Boolean = false,
+	isSelected: Boolean = false,
+	onClick: () -> Unit = {},
+	onLongClick: () -> Unit = {},
+	onCheckedChange: () -> Unit = {},
 ) {
-
-	val containerColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f) else Color.Transparent,
-		animationSpec = tween(300)
-	)
-	val contentColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onBackground,
-		animationSpec = tween(300)
-	)
-
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(containerColor)
-			.combinedClickable(
-				enabled = true,
-				onClick = onClick,
-				onLongClick = onLongClick
-			)
+	SelectableContainer(
+		isSelected = isSelected,
+		onClick = onClick,
+		onLongClick = onLongClick,
 	) {
 		Row(
+			verticalAlignment = Alignment.CenterVertically,
 			modifier = Modifier
-				.fillMaxSize()
-				.padding(16.dp, 4.dp),
-			verticalAlignment = Alignment.CenterVertically
+				.fillMaxWidth()
+				.padding(horizontal = 24.dp)
 		) {
+			dragHandle()
+
+			Spacer(modifier = Modifier.width(12.dp))
 
 			TriStateCheckbox(
 				state = ToggleableState.values().getOrElse(state) { ToggleableState.Off },
@@ -145,14 +164,14 @@ private fun TodoItem(
 
 			AnimatedContent(
 				targetState = state,
-				transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) },
-				modifier = Modifier.weight(1f)
+				transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
+				modifier = Modifier.weight(1f),
+				label = ""
 			) {
-				if (state == 0) {
+				if (it == 0) {
 					Text(
 						text = if (title.isNullOrEmpty()) "Untitled" else title,
-						color = contentColor,
-						style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.LineThrough),
+						style = MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough),
 						maxLines = 1,
 						fontStyle = if (title.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
 						modifier = Modifier.weight(1f)
@@ -160,8 +179,7 @@ private fun TodoItem(
 				} else {
 					Text(
 						text = if (title.isNullOrEmpty()) "Untitled" else title,
-						color = contentColor,
-						style = MaterialTheme.typography.bodyMedium,
+						style = MaterialTheme.typography.bodyLarge,
 						maxLines = 1,
 						fontStyle = if (title.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
 						modifier = Modifier.weight(1f)
@@ -169,32 +187,42 @@ private fun TodoItem(
 				}
 			}
 
-			MenuButton(
-				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
-				tooltip = if (isLocked) "Locked" else "Not locked",
-				checked = isLocked,
-				colors = MenuButtonDefaults.menuButtonColors(
-					containerColor = Color.Transparent,
-					iconColor = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onBackground,
-					checkedContainerColor = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp),
-					checkedIconColor = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface,
-				),
-				onClick = onToggleLock,
-			)
+			Spacer(modifier = Modifier.width(12.dp))
 
-			MenuButton(
-				icon = R.drawable.ic_favourite,
-				tooltip = "Favourite",
-				checked = isFavourite,
-				shape = MaterialTheme.shapes.medium,
-				colors = MenuButtonDefaults.menuButtonColors(
-					containerColor = Color.Transparent,
-					iconColor = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onBackground,
-					checkedContainerColor = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp),
-					checkedIconColor = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface,
-				),
-				onClick = onToggleFavourite,
-			)
+			if (isFavourite or isLocked) {
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier
+						.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), MaterialTheme.shapes.small)
+						.padding(8.dp, 4.dp)
+				) {
+					if (isLocked) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
+							contentDescription = "locked",
+							tint = Color.LockClosedContainer,
+							modifier = Modifier.requiredSize(12.dp)
+						)
+					}
+					if (isFavourite and isLocked) {
+						Text(
+							text = "·",
+							style = MaterialTheme.typography.bodySmall,
+							fontWeight = FontWeight.Bold,
+							maxLines = 1,
+							modifier = Modifier.padding(horizontal = 2.dp)
+						)
+					}
+					if (isFavourite) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_fa_heart_solid),
+							contentDescription = "favourite",
+							tint = Color.FavouriteContainer,
+							modifier = Modifier.requiredSize(12.dp)
+						)
+					}
+				}
+			}
 		}
 	}
 }

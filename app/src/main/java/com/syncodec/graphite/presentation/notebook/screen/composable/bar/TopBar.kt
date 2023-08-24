@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.notebook.screen.composable.bar
 
-import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -18,9 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import io.realm.kotlin.types.RealmUUID
 
 
@@ -97,7 +95,7 @@ private fun Bar(
 		if (it) {
 			TopAppBar(
 				navigationIcon = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_close,
 						onClick = onClickCancelSelect
 					)
@@ -109,9 +107,9 @@ private fun Bar(
 					)
 				},
 				actions = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_delete,
-						colors = MenuButtonDefaults.deleteButtonColors(),
+						colors = GenericButtonDefaults.deleteButtonColors(),
 						onClick = onClickDelete
 					)
 				},
@@ -120,7 +118,7 @@ private fun Bar(
 		} else {
 			TopAppBar(
 				navigationIcon = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_back,
 						onClick = onClickBack
 					)
@@ -132,18 +130,18 @@ private fun Bar(
 					)
 				},
 				actions = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_filter,
 						onClick = onClickFilter
 					)
 
-					MenuButton(
+					GenericButton(
 						icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
 						checked = isLocked,
 						onClick = onClickLock
 					)
 
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_favourite,
 						checked = isFavourite,
 						onClick = onClickFavourite,

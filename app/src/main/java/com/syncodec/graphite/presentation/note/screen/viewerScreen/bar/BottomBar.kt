@@ -14,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenu
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
 import com.syncodec.graphite.utils.AuthenticatorScreen
@@ -46,18 +46,18 @@ fun BottomBar(
 		tonalElevation = 8.dp,
 	) {
 		Spacer(modifier = Modifier.width(12.dp))
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_info,
 			tooltip = "Info",
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 			onClick = onClickMetadata
 		)
 
 		Box {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_export,
 				tooltip = "Export Note",
-				colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+				colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 				onClick = { isExportDropdownVisible = true }
 			)
 
@@ -77,17 +77,17 @@ fun BottomBar(
 
 		Spacer(modifier = Modifier.weight(1f))
 
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_vault,
 			tooltip = "Vault",
 			checked = isAuthenticated,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_pencil,
 			tooltip = "Edit Note",
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 			onClick = onClickEditNote
 		)
 		Spacer(modifier = Modifier.width(12.dp))

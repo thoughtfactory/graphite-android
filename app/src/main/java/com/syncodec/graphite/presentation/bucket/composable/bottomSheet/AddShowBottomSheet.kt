@@ -62,8 +62,8 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
 import com.syncodec.graphite.utils.Extra
@@ -153,9 +153,9 @@ fun AddShowBottomSheet() {
 			value = queryText,
 			placeholder = if (currentState == 0) "Search for a movie" else "Search for a tv show",
 			actionButtons = {
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_search,
-					colors = MenuButtonDefaults.menuButtonColorsOnSurface()
+					colors = GenericButtonDefaults.genericButtonColorsOnSurface()
 				) { onSearch() }
 			},
 			keyboardOptions = KeyboardOptions.Default.copy(

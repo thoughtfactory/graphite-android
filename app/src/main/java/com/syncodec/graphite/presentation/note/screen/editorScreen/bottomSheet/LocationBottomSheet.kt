@@ -89,66 +89,66 @@ private fun LocationCard(
 		onPermissionAvailable = onReloadLocation
 	)
 
-	AnimatedContent(
-		targetState = locationData,
-		modifier = Modifier.fillMaxWidth()
-	) {
-		when (it) {
-			is LocationData.Init -> LocationViewGeneric(
-				message = "Initializing...",
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually
-			)
-
-			is LocationData.Loading -> LocationViewGeneric(
-				message = "Getting location... Reload or set location manually.",
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually
-			)
-
-			is LocationData.SuccessOnlyLatLng -> LocationViewSuccess(
-				latLng = it.latLng,
-				address = null,
-				onRemoveLocation = onRemoveLocation,
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually,
-			)
-
-			is LocationData.SuccessOnlyAddress -> LocationViewSuccess(
-				latLng = null,
-				address = it.address,
-				onRemoveLocation = onRemoveLocation,
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually,
-			)
-
-			is LocationData.Success -> LocationViewSuccess(
-				latLng = it.latLng,
-				address = it.address,
-				onRemoveLocation = onRemoveLocation,
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually,
-			)
-
-			is LocationData.SuccessNoData -> LocationViewGeneric(
-				message = "No location data. Reload or set location manually.",
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually
-			)
-
-			is LocationData.NoPermission -> LocationViewNoPermission(
-				onRequestPermission = { showLocationPermissionDialog = true },
-				onSetLocationManually = onSetLocationManually
-			)
-
-
-			is LocationData.Error -> LocationViewGeneric(
-				message = it.message,
-				onReloadLocation = onReloadLocation,
-				onSetLocationManually = onSetLocationManually
-			)
-		}
-	}
+//	AnimatedContent(
+//		targetState = locationData,
+//		modifier = Modifier.fillMaxWidth()
+//	) {
+//		when (it) {
+//			is LocationData.Init -> LocationViewGeneric(
+//				message = "Initializing...",
+//				onReloadLocation = onReloadLocation,
+//				onSetLocationManually = onSetLocationManually
+//			)
+//
+//			is LocationData.Loading -> LocationViewGeneric(
+//				message = "Getting location... Reload or set location manually.",
+//				onReloadLocation = onReloadLocation,
+//				onSetLocationManually = onSetLocationManually
+//			)
+//
+//			is LocationData.SuccessOnlyLatLng -> LocationViewSuccess(
+//				latLng = it.latLng,
+//				address = null,
+//				onRemoveLocation = onRemoveLocation,
+//				onReloadLocation = onReloadLocation,
+//				onSetLocationManually = onSetLocationManually,
+//			)
+//
+//			is LocationData.SuccessOnlyAddress -> LocationViewSuccess(
+//				latLng = null,
+//				address = it.address,
+//				onRemoveLocation = onRemoveLocation,
+//				onReloadLocation = onReloadLocation,
+//				onSetLocationManually = onSetLocationManually,
+//			)
+//
+//			is LocationData.Success -> LocationViewSuccess(
+//				latLng = it.latLng,
+//				address = it.address,
+//				onRemoveLocation = onRemoveLocation,
+//				onReloadLocation = onReloadLocation,
+//				onSetLocationManually = onSetLocationManually,
+//			)
+//
+////			is LocationData.SuccessNoData -> LocationViewGeneric(
+////				message = "No location data. Reload or set location manually.",
+////				onReloadLocation = onReloadLocation,
+////				onSetLocationManually = onSetLocationManually
+////			)
+//
+//			is LocationData.NoPermission -> LocationViewNoPermission(
+//				onRequestPermission = { showLocationPermissionDialog = true },
+//				onSetLocationManually = onSetLocationManually
+//			)
+//
+//
+//			is LocationData.Error -> LocationViewGeneric(
+//				message = it.message,
+//				onReloadLocation = onReloadLocation,
+//				onSetLocationManually = onSetLocationManually
+//			)
+//		}
+//	}
 }
 
 @Preview

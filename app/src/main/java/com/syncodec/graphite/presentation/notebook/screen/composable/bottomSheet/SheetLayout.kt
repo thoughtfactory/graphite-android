@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.FilterBottomSheet
 import io.realm.kotlin.types.RealmUUID
 
 
@@ -55,7 +54,7 @@ fun SheetLayout(
 			putChapter = putChapter,
 			onCloseSheet = onCloseSheet,
 		)
-		NotebookBottomSheetType.Filter -> FilterBottomSheet(showViewTypeOption = false)
+		NotebookBottomSheetType.Filter -> TODO()
 	}
 
 }

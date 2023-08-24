@@ -18,7 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,9 +60,9 @@ class NotificationReceiver : BroadcastReceiver() {
 	}
 
 	private fun putNote(
-		context : Context,
-		repository2 : Repository,
-		content : String,
+        context : Context,
+        repository2 : Repository,
+        content : String,
 	) {
 		CoroutineScope(Dispatchers.Default).launch {
 			repository2.repositoryState.collect {

@@ -3,13 +3,9 @@ package com.syncodec.graphite.di.model
 import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.kedia.ogparser.OpenGraphResult
-import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.network.MovieData
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TvData
@@ -17,7 +13,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.SerialName
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
@@ -34,7 +29,7 @@ enum class BucketItemState {
 @Keep
 @JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
 class BucketItemObject() : RealmObject {
-	constructor(jsonObject : JSONObject) : this() {
+	constructor(jsonObject: JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
 		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
@@ -50,49 +45,54 @@ class BucketItemObject() : RealmObject {
 	}
 
 	@PrimaryKey
-	var id : RealmUUID = RealmUUID.random()
+	var id: RealmUUID = RealmUUID.random()
 
-	var createdTimestamp : Long = Instant.now().toEpochMilli()
-	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
-	var bucketType : String = BucketType.UNKNOWN.name
-	var title : String? = null
-	var state : String = BucketItemState.ALPHA.name
-	var thumbnail : String? = null
-	var isFavourite : Boolean = false
-	var isLocked : Boolean = false
-	var parentId : RealmUUID? = null
+	var createdTimestamp: Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp: Long = Instant.now().toEpochMilli()
+	var bucketType: String = BucketType.UNKNOWN.name
+	var title: String? = null
+	var state: String = BucketItemState.ALPHA.name
+	var thumbnail: String? = null
+	var isFavourite: Boolean = false
+	var isLocked: Boolean = false
+	var parentId: RealmUUID? = null
 
-	var key : String? = null
-	var data : String? = null
+	var key: String? = null
+	var data: String? = null
 
-	var googleDriveId : String? = null
+	var googleDriveId: String? = null
 
 
-	fun getData() : BucketItemData? {
+	fun getData(): BucketItemData? {
 		val json = Json { ignoreUnknownKeys = true }
 		return try {
 			this.data?.let { json.decodeFromString<BucketItemData.ShowData?>(it) }
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 //			e.printStackTrace()
 			null
 		}
 	}
 
-	fun getOpenGraphResult() : OpenGraphResult? {
+	fun getOpenGraphResult(): OpenGraphResult? {
 		return try {
 			val objectMapper = jsonMapper { addModule(kotlinModule()) }
 			objectMapper.readValue(data, OpenGraphResult::class.java)
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 //			e.printStackTrace()
 			null
 		}
 	}
 
-	fun putOpenGraphResult(openGraphResult : OpenGraphResult) {
+	fun putOpenGraphResult(openGraphResult: OpenGraphResult) {
 		this.data = jsonMapper { addModule(kotlinModule()) }.writeValueAsString(openGraphResult)
 	}
 
-	fun clone() : BucketItemObject {
+	fun getState(): Int = BucketItemState.values().find { it.name == this.state }?.ordinal ?: 0
+	fun setState(stateInt : Int) {
+		this.state = BucketItemState.values().getOrNull(stateInt)?.name ?: BucketItemState.ALPHA.name
+	}
+
+	fun clone(): BucketItemObject {
 		return BucketItemObject().apply {
 			this.id = this@BucketItemObject.id
 			this.createdTimestamp = this@BucketItemObject.createdTimestamp
@@ -109,7 +109,7 @@ class BucketItemObject() : RealmObject {
 		}
 	}
 
-	fun toCloudSnapshot() : String {
+	fun toCloudSnapshot(): String {
 		val jsonObject = JSONObject()
 		jsonObject.put("id", this.id.toString())
 		jsonObject.put("createdTimestamp", this.createdTimestamp)
@@ -126,7 +126,7 @@ class BucketItemObject() : RealmObject {
 		return jsonObject.toString()
 	}
 
-	override fun hashCode() : Int {
+	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
@@ -142,7 +142,7 @@ class BucketItemObject() : RealmObject {
 		return result
 	}
 
-	override fun equals(other : Any?) : Boolean {
+	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (other !is BucketItemObject) return false
 
@@ -163,10 +163,10 @@ class BucketItemObject() : RealmObject {
 	}
 
 	companion object {
-		fun fromCloudSnapshot(snapshot : ByteArray) : BucketItemObject? {
+		fun fromCloudSnapshot(snapshot: ByteArray): BucketItemObject? {
 			return try {
 				BucketItemObject(JSONObject(String(snapshot, Charsets.UTF_8)))
-			} catch (e : Exception) {
+			} catch (e: Exception) {
 				null
 			}
 		}
@@ -182,30 +182,30 @@ class BucketItemObject() : RealmObject {
 			data class BookData(
 				@JsonProperty("key")
 				@SerialName("key")
-				var key : String? = null,
+				var key: String? = null,
 				@JsonProperty("title")
 				@SerialName("title")
-				var title : String? = null,
+				var title: String? = null,
 				@JsonProperty("cover_i")
 				@SerialName("cover_i")
-				var coverI : String? = null,    // Url for cover
+				var coverI: String? = null,    // Url for cover
 				@JsonProperty("author_name")
 				@SerialName("author_name")
-				var authorList : List<String?>? = null,
+				var authorList: List<String?>? = null,
 				@JsonProperty("first_publish_year")
 				@SerialName("first_publish_year")
-				var firstPublishYear : String? = null,
+				var firstPublishYear: String? = null,
 				@JsonProperty("number_of_pages_median")
 				@SerialName("number_of_pages_median")
-				var numberOfPages : Int? = null,
+				var numberOfPages: Int? = null,
 				@JsonProperty("description")
 				@SerialName("description")
-				var description : String? = null,
+				var description: String? = null,
 			) : BucketItemData() {
-				constructor(jsonString : String?) : this(null, null, null, null, null, null, null) {
+				constructor(jsonString: String?) : this(null, null, null, null, null, null, null) {
 					if (jsonString != null) {
 						try {
-							val bookData : BookData = Json.decodeFromString(jsonString)
+							val bookData: BookData = Json.decodeFromString(jsonString)
 							this.key = bookData.key
 							this.title = bookData.title
 							this.coverI = bookData.coverI
@@ -213,24 +213,24 @@ class BucketItemObject() : RealmObject {
 							this.firstPublishYear = bookData.firstPublishYear
 							this.numberOfPages = bookData.numberOfPages
 							this.description = bookData.description
-						} catch (e : Exception) {
+						} catch (e: Exception) {
 //							e.printStackTrace()
 						}
 					}
 				}
 
-				fun toJsonString() : String {
+				fun toJsonString(): String {
 					return try {
 //						val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 //						objectMapper.writeValueAsString(this)
 						Json.encodeToString(this)
-					} catch (e : Exception) {
+					} catch (e: Exception) {
 //			            e.printStackTrace()
 						"null"
 					}
 				}
 
-				override fun equals(other : Any?) : Boolean {
+				override fun equals(other: Any?): Boolean {
 					if (this === other) return true
 					if (other !is BookData) return false
 
@@ -245,7 +245,7 @@ class BucketItemObject() : RealmObject {
 					return true
 				}
 
-				override fun hashCode() : Int {
+				override fun hashCode(): Int {
 					var result = key?.hashCode() ?: 0
 					result = 31 * result + (title?.hashCode() ?: 0)
 					result = 31 * result + (coverI?.hashCode() ?: 0)
@@ -262,28 +262,28 @@ class BucketItemObject() : RealmObject {
 			data class ShowData(
 				@JsonProperty("type")
 				@SerialName("type")
-				var type : ShowType? = null,
+				var type: ShowType? = null,
 				@JsonProperty("tvData")
 				@SerialName("tvData")
-				var tvData : TvData? = null,
+				var tvData: TvData? = null,
 				@JsonProperty("movieData")
 				@SerialName("movieData")
-				var movieData : MovieData? = null,
+				var movieData: MovieData? = null,
 			) : BucketItemData() {
-				constructor(data : String?) : this(null, null, null) {
+				constructor(data: String?) : this(null, null, null) {
 					if (data != null) {
 						try {
-							val showData : ShowData= Json.decodeFromString(data)
+							val showData: ShowData = Json.decodeFromString(data)
 							this.type = showData.type
 							this.tvData = showData.tvData
 							this.movieData = showData.movieData
-						} catch (e : Exception) {
+						} catch (e: Exception) {
 
 						}
 					}
 				}
 
-				fun posterPath() : String? {
+				fun posterPath(): String? {
 					return when (type) {
 						ShowType.TV -> tvData?.posterPath
 						ShowType.MOVIE -> movieData?.posterPath
@@ -291,23 +291,23 @@ class BucketItemObject() : RealmObject {
 					}
 				}
 
-				fun toJsonString() : String {
+				fun toJsonString(): String {
 					return try {
 						Json.encodeToString(this)
-					} catch (e : Exception) {
+					} catch (e: Exception) {
 //			            e.printStackTrace()
 						"null"
 					}
 				}
 
-				override fun hashCode() : Int {
+				override fun hashCode(): Int {
 					var result = type?.hashCode() ?: 0
 					result = 31 * result + (tvData?.hashCode() ?: 0)
 					result = 31 * result + (movieData?.hashCode() ?: 0)
 					return result
 				}
 
-				override fun equals(other : Any?) : Boolean {
+				override fun equals(other: Any?): Boolean {
 					if (this === other) return true
 					if (other !is ShowData) return false
 
@@ -321,12 +321,12 @@ class BucketItemObject() : RealmObject {
 
 			@Keep
 			data class OpenGraphResult(
-				var title : String? = null,
-				var description : String? = null,
-				var url : String? = null,
-				var image : String? = null,
-				var siteName : String? = null,
-				var type : String? = null
+				var title: String? = null,
+				var description: String? = null,
+				var url: String? = null,
+				var image: String? = null,
+				var siteName: String? = null,
+				var type: String? = null
 			) : BucketItemData()
 		}
 	}

@@ -30,8 +30,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.buildingBlock.SearchBar
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.ui.IconButtonSize
@@ -61,7 +61,7 @@ fun TopBar(
 			if (it) {
 				TopAppBar(
 					navigationIcon = {
-						MenuButton(
+						GenericButton(
 							icon = R.drawable.ic_close,
 							onClick = onClickCancelSelect
 						)
@@ -73,9 +73,9 @@ fun TopBar(
 						)
 					},
 					actions = {
-						MenuButton(
+						GenericButton(
 							icon = R.drawable.ic_delete,
-							colors = MenuButtonDefaults.deleteButtonColors(),
+							colors = GenericButtonDefaults.deleteButtonColors(),
 							onClick = onClickDelete
 						)
 					},
@@ -146,7 +146,7 @@ fun TopBar(
 
 					Spacer(modifier = Modifier.weight(1f))
 
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_info,
 						tooltip = "Searching with words is experimental and may not work as expected.",
 						showTooltipOnClick = true,

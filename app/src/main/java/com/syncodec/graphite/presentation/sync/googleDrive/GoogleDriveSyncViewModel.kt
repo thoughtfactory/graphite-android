@@ -3,12 +3,10 @@ package com.syncodec.graphite.presentation.sync.googleDrive
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dropbox.core.v2.files.Metadata
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
-import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.cloud.googleDrive.GDrive
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.service.syncInator.GDriveSyncInatorService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

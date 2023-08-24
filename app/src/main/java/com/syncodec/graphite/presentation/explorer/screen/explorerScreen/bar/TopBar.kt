@@ -14,9 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.explorer.screen.searchScreen.buildingBlock.SearchBar
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -39,7 +38,7 @@ fun TopBar(
 		if (it) {
 			TopAppBar(
 				navigationIcon = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_close,
 						onClick = onClickCancelSelect
 					)
@@ -51,9 +50,9 @@ fun TopBar(
 					)
 				},
 				actions = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_delete,
-						colors = MenuButtonDefaults.deleteButtonColors(),
+						colors = GenericButtonDefaults.deleteButtonColors(),
 						onClick = onClickDelete
 					)
 				},
@@ -67,7 +66,7 @@ fun TopBar(
 		} else {
 			TopAppBar(
 				navigationIcon = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_back,
 						onClick = { backPressedDispatcher?.onBackPressed() }
 					)

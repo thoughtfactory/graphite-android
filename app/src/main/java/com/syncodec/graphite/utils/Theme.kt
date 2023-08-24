@@ -7,7 +7,7 @@ import dev.jorgecastillo.androidcolorx.library.tints
 import kotlin.random.Random
 
 
-fun Color.tone(isDarkTheme: Boolean, hue: Int) = if(hue > 0) {
+fun Color.tone(isDarkTheme: Boolean, hue: Int) = if (hue > 0) {
 	if (isDarkTheme) Color(this.toArgb().tints()[hue]) else Color(this.toArgb().shades()[hue])
 } else {
 	if (!isDarkTheme) Color(this.toArgb().tints()[-hue]) else Color(this.toArgb().shades()[-hue])
@@ -17,12 +17,12 @@ fun Color.toHexString(): String {
 	return String.format("#%06X", (0xFFFFFF and this.toArgb()))
 }
 
-fun String.toColor(color: Color): Color {
+fun String.toColor(fallbackColor: Color? = null): Color? {
 	return try {
 		Color(android.graphics.Color.parseColor("#${this}"))
 	} catch (e: Exception) {
 //		e.printStackTrace()
-		color
+		fallbackColor
 	}
 }
 

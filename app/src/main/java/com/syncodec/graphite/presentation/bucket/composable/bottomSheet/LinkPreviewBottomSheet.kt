@@ -39,8 +39,8 @@ import coil.request.ImageRequest
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.text.KeyValueText
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.AuthenticatorScreen
@@ -205,9 +205,9 @@ fun LinkPreviewBottomSheet(
 				)
 			}
 			Spacer(modifier = Modifier.width(2.dp))
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_share,
-				colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+				colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 			) {
 				Intent(Intent.ACTION_SEND).apply {
 					type = "text/html"

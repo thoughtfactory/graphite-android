@@ -43,7 +43,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.common.text.KeyValueText
 import com.syncodec.graphite.utils.ContentStatus
@@ -206,7 +206,7 @@ fun LocationPickerDialog(
 
 				TopAppBar(
 					navigationIcon = {
-						MenuButton(
+						GenericButton(
 							icon = R.drawable.ic_close,
 							onClick = onDismiss
 						)

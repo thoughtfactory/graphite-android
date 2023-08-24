@@ -1,23 +1,18 @@
 package com.syncodec.graphite.presentation.note.screen.viewerScreen.composable
 
-import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,9 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,7 +40,6 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -56,11 +48,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.text.marqueeText.MarqueeText
-import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.FilePreview.Companion.preview
 import com.syncodec.graphite.utils.UriPreview.Companion.preview
 import com.syncodec.graphite.utils.share
@@ -69,11 +59,8 @@ import io.github.esentsov.PackagePrivate
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-import kotlin.math.max
-import kotlin.math.min
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -83,70 +70,70 @@ fun AttachmentView(
 	noteId : RealmUUID,
 	attachmentList : List<File>,
 ) {
-	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
-
-	var isVisible by remember { mutableStateOf(false) }
-	LaunchedEffect(key1 = attachmentList) {
-		if (attachmentList.isNotEmpty()) scope.launch { delay(300); isVisible = true }
-	}
-
-	AnimatedVisibility(
-		visible = isVisible,
-		enter = expandVertically(tween(300)),
-		exit = shrinkVertically(tween(300)),
-	) {
-		val pagerState = rememberPagerState()
-
-		Column(
-			modifier = Modifier
-		) {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(screenHeight * 0.37f)
-			) {
-
-				var previewHeight by remember { mutableStateOf(null as Int?) }
-
-				HorizontalPager(
-					pageCount = attachmentList.size,
-					state = pagerState,
-					pageSpacing = 4.dp,
-					modifier = Modifier.fillMaxSize()
-				) { page ->
-					val file = attachmentList.getOrNull(page) ?: return@HorizontalPager
-					Column(
-						modifier = Modifier.fillMaxSize()
-					) {
-						Box(
-							modifier = Modifier.weight(1f)
-						) {
-							AttachmentPreview(file = file) { height -> previewHeight = height }
-						}
-
-						AttachmentNamePlate(file = file)
-					}
-				}
-
-				if (attachmentList.size > 1 ) {
-					AttachmentActionButtons(
-						pagerState = pagerState,
-						height = previewHeight,
-					) {
-						Intent(context, AttachmentActivity::class.java).apply {
-							putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
-							context.startActivity(this)
-						}
-					}
-				}
-			}
-
-			Spacer(modifier = Modifier.height(8.dp))
-		}
-	}
+//	val context = LocalContext.current
+//	val scope = rememberCoroutineScope()
+//	val configuration = LocalConfiguration.current
+//	val screenHeight = configuration.screenHeightDp.dp
+//
+//	var isVisible by remember { mutableStateOf(false) }
+//	LaunchedEffect(key1 = attachmentList) {
+//		if (attachmentList.isNotEmpty()) scope.launch { delay(300); isVisible = true }
+//	}
+//
+//	AnimatedVisibility(
+//		visible = isVisible,
+//		enter = expandVertically(tween(300)),
+//		exit = shrinkVertically(tween(300)),
+//	) {
+//		val pagerState = rememberPagerState()
+//
+//		Column(
+//			modifier = Modifier
+//		) {
+//			Box(
+//				modifier = Modifier
+//					.fillMaxWidth()
+//					.height(screenHeight * 0.37f)
+//			) {
+//
+//				var previewHeight by remember { mutableStateOf(null as Int?) }
+//
+//				HorizontalPager(
+//					pageCount = attachmentList.size,
+//					state = pagerState,
+//					pageSpacing = 4.dp,
+//					modifier = Modifier.fillMaxSize()
+//				) { page ->
+//					val file = attachmentList.getOrNull(page) ?: return@HorizontalPager
+//					Column(
+//						modifier = Modifier.fillMaxSize()
+//					) {
+//						Box(
+//							modifier = Modifier.weight(1f)
+//						) {
+//							AttachmentPreview(file = file) { height -> previewHeight = height }
+//						}
+//
+//						AttachmentNamePlate(file = file)
+//					}
+//				}
+//
+//				if (attachmentList.size > 1 ) {
+//					AttachmentActionButtons(
+//						pagerState = pagerState,
+//						height = previewHeight,
+//					) {
+//						Intent(context, AttachmentActivity::class.java).apply {
+//							putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
+//							context.startActivity(this)
+//						}
+//					}
+//				}
+//			}
+//
+//			Spacer(modifier = Modifier.height(8.dp))
+//		}
+//	}
 }
 
 @Composable
@@ -382,7 +369,7 @@ private fun AttachmentNamePlate(
 				modifier = Modifier.weight(1f)
 			)
 			Spacer(modifier = Modifier.width(8.dp))
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_share,
 			) { file.share(context = context) }
 		}
@@ -393,7 +380,7 @@ private fun AttachmentNamePlate(
 @Preview
 @Composable
 private fun AttachmentActionButtons(
-	pagerState : PagerState = rememberPagerState(),
+	pagerState : PagerState,
 	height : Int? = null,
 	onClickAttachmentButton : () -> Unit = {},
 ) {
@@ -406,7 +393,7 @@ private fun AttachmentActionButtons(
 				.height(with(LocalDensity.current) { it.toDp() })
 				.padding(10.dp)
 		) {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_file,
 				onClick = onClickAttachmentButton,
 			)
@@ -420,7 +407,7 @@ private fun AttachmentActionButtons(
 					enter = scaleIn(tween(300), 0.71f) + fadeIn(tween(300)),
 					exit = scaleOut(tween(300), 0.71f) + fadeOut(tween(300)),
 				) {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_caret,
 						onClick = { if (pagerState.canScrollBackward) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
 						modifier = Modifier.graphicsLayer { rotationZ = - 90f }
@@ -432,7 +419,7 @@ private fun AttachmentActionButtons(
 					enter = scaleIn(tween(300), 0.71f) + fadeIn(tween(300)),
 					exit = scaleOut(tween(300), 0.71f) + fadeOut(tween(300)),
 				) {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_caret,
 						onClick = { if (pagerState.canScrollForward) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
 						modifier = Modifier.graphicsLayer { rotationZ = 90f }

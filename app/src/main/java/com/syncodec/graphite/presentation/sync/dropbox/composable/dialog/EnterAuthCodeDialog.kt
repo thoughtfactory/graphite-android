@@ -8,8 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DialogTextField
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DialogTextFieldDefaults
@@ -50,9 +50,9 @@ fun EnterAuthCodeDialog(
 			supportingText = "Get the OAuth2 code by clicking \"Connect with Dropbox\"",
 			onValueChange = { authCode = it ?: "" },
 			actionButtons = {
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_paste,
-					colors = MenuButtonDefaults.menuButtonColors(
+					colors = GenericButtonDefaults.genericButtonColors(
 						containerColor = DialogTextFieldDefaults.textFieldColors().containerColor,
 						iconColor = DialogTextFieldDefaults.textFieldColors().textColor,
 					)

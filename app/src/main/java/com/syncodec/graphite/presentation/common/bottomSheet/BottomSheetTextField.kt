@@ -28,9 +28,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonColors
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
@@ -84,9 +83,9 @@ fun BottomSheetTextField(
 		}
 
 		Spacer(modifier = Modifier.width(2.dp))
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_close,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface()
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface()
 		) { onValueChange("") }
 		actionButtons()
 	}

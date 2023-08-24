@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.notebook.screen.composable.bar.Navigator
 import io.realm.kotlin.types.RealmUUID
 
@@ -33,7 +33,7 @@ fun TopBar(
 	) {
 		TopAppBar(
 			navigationIcon = {
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_close,
 					onClick = onDismiss
 				)

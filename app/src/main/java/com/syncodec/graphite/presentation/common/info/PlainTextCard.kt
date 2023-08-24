@@ -12,10 +12,13 @@ import com.syncodec.graphite.R
 
 @Preview
 @Composable
-fun PlainTextWarning(
+fun Warning(
 	modifier : Modifier = Modifier,
+	title : String = "Unencrypted Data",
+	description : String = "Snapshot files are not encrypted and can be accessed by anyone with authorization.\n" +
+			"Encrypted snapshots are coming soon.",
 	isVisible : Boolean = true,
-	onClickButton : () -> Unit = {},
+	onClickDismiss : () -> Unit = {},
 ) {
 	AnimatedVisibility(
 		visible = isVisible,
@@ -23,13 +26,12 @@ fun PlainTextWarning(
 		exit = shrinkVertically(tween(300)),
 	){
 		InfoCard(
-			title = "Unencrypted Data",
-			description = "Snapshot files are not encrypted and can be accessed by anyone with authorization.\n" +
-					"Encrypted snapshots are coming soon.",
+			title = title,
+			description = description,
 			icon = R.drawable.ic_warning,
 			colors = InfoCardDefaults.errorCardColors(),
 			buttonText = "Dismiss",
-			onClickButton = onClickButton,
+			onClickButton = onClickDismiss,
 			modifier = modifier,
 		)
 	}

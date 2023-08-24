@@ -29,24 +29,24 @@ fun SheetLayout(
 	onClickForceSync : () -> Unit = {},
 	closeSheet : () -> Unit = {},
 ) {
-	when (bottomSheetType) {
-		MainBottomSheetType.Menu -> MenuBottomSheet(closeSheet = closeSheet)
-		MainBottomSheetType.Filter -> FilterBottomSheet()
-		MainBottomSheetType.Bucket -> BucketBottomSheet(
-			putBucket = putBucket,
-			closeSheet = closeSheet,
-		)
-		MainBottomSheetType.Notebook -> NotebookBottomSheet(
-			putNotebook = putNotebook,
-			closeSheet = closeSheet,
-		)
-		MainBottomSheetType.Sync -> SyncBottomSheet(
-			syncStatus = syncStatus,
-			testConnectionResponse = testConnectionResponse,
-			onClickTestConnection = onClickTestConnection,
-			onClickSyncNow = onClickSyncNow,
-			onClickForceSync = onClickForceSync,
-			closeSheet = closeSheet,
-		)
-	}
+//	when (bottomSheetType) {
+////		MainBottomSheetType.Menu -> MenuBottomSheet(closeSheet = closeSheet)
+//		MainBottomSheetType.Filter -> FilterBottomSheet()
+//		MainBottomSheetType.Bucket -> BucketBottomSheet(
+//			putBucket = putBucket,
+//			closeSheet = closeSheet,
+//		)
+//		MainBottomSheetType.Notebook -> NotebookBottomSheet(
+//			putNotebook = putNotebook,
+//			closeSheet = closeSheet,
+//		)
+//		MainBottomSheetType.Sync -> SyncBottomSheet(
+//			syncStatus = syncStatus,
+//			testConnectionResponse = testConnectionResponse,
+//			onClickTestConnection = onClickTestConnection,
+//			onClickSyncNow = onClickSyncNow,
+//			onClickForceSync = onClickForceSync,
+//			closeSheet = closeSheet,
+//		)
+//	}
 }

@@ -3,7 +3,6 @@ package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -55,10 +54,8 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
-import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.Status
 import kotlinx.coroutines.Dispatchers
@@ -118,9 +115,9 @@ fun AddBookBottomSheet() {
 			value = queryText,
 			placeholder = "Search for books",
 			actionButtons = {
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_search,
-					colors = MenuButtonDefaults.menuButtonColorsOnSurface()
+					colors = GenericButtonDefaults.genericButtonColorsOnSurface()
 				) { onSearch() }
 			},
 			keyboardOptions = KeyboardOptions.Default.copy(

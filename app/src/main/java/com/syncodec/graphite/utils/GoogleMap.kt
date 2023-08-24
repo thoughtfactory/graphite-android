@@ -34,15 +34,6 @@ import java.util.Locale
 fun GoogleMap.isMarkerVisible(markerPosition : LatLng?) = markerPosition?.let { projection.visibleRegion.latLngBounds.contains(it) } ?: false
 
 
-class AtlasClusterItem(
-	val latLng : LatLng,
-	val itemTitle : String?,
-) : ClusterItem {
-	override fun getPosition() : LatLng = latLng
-	override fun getTitle() : String? = itemTitle
-	override fun getSnippet() : String? = null
-}
-
 class AtlasNoteClusterItem(
 	val note : NoteObjectLite,
 	val latLng : LatLng,
@@ -53,40 +44,6 @@ class AtlasNoteClusterItem(
 	override fun getSnippet() : String? = null
 }
 
-
-class ClusterRenderer<T : ClusterItem>(
-	val context : Context,
-	map : GoogleMap,
-	clusterManager : ClusterManager<T>
-) : DefaultClusterRenderer<T>(context, map, clusterManager) {
-	override fun onBeforeClusterRendered(cluster : Cluster<T>, markerOptions : MarkerOptions) {
-		val atlasItem = AtlasItem(context = context, itemSize = cluster.size)
-		val bitmap = createBitmapFromView(atlasItem, 144, 144)
-		markerOptions.title("").icon(BitmapDescriptorFactory.fromBitmap(bitmap))
-	}
-
-	override fun onBeforeClusterItemRendered(item : T, markerOptions : MarkerOptions) {
-		val atlasItem = AtlasItem(context = context, itemSize = 1)
-		val bitmap = createBitmapFromView(atlasItem, 144, 144)
-		markerOptions.title("").icon(BitmapDescriptorFactory.fromBitmap(bitmap))
-	}
-
-	override fun onClusterUpdated(cluster : Cluster<T>, marker : Marker) {
-		val atlasItem = AtlasItem(context = context, itemSize = cluster.size)
-		val bitmap = createBitmapFromView(atlasItem, 144, 144)
-		marker.setIcon(BitmapDescriptorFactory.fromBitmap(bitmap))
-	}
-
-//	override fun onClusterItemUpdated(item: T, marker: Marker) {
-//		super.onClusterItemUpdated(item, marker)
-//
-//		val atlasItem = AtlasItem(context = context, itemSize = 1)
-//		val bitmap = createBitmapFromView(atlasItem, 128, 128)
-//		marker.setIcon(BitmapDescriptorFactory.fromBitmap(bitmap))
-//	}
-
-	override fun shouldRenderAsCluster(cluster : Cluster<T>) : Boolean = cluster.size > 1
-}
 
 class AtlasItem(context : Context, val itemSize : Int) : FrameLayout(context) {
 	init {

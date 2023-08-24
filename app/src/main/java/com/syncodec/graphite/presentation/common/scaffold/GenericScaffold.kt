@@ -67,7 +67,7 @@ fun GenericScaffold(
 	isBottomBarVisible : Boolean = true,
 	floatingActionButton : @Composable () -> Unit = { },
 	isFloatingActionButtonVisible : Boolean = true,
-	modalBottomSheetState : ModalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden),
+	modalBottomSheetState : ModalBottomSheetState? = null ,
 	sheetContent : @Composable() (ColumnScope.() -> Unit) = { },
 	dialogContent : @Composable () -> Unit = { },
 	primaryButton : GenericButton? = null,
@@ -81,97 +81,69 @@ fun GenericScaffold(
 
 	val keyboardController = LocalSoftwareKeyboardController.current
 
-	BackHandler(enabled = modalBottomSheetState.isVisible) { scope.launch { modalBottomSheetState.hide() } }
-
-	LaunchedEffect(key1 = modalBottomSheetState.targetValue) {
-		if (modalBottomSheetState.isVisible && modalBottomSheetState.targetValue == ModalBottomSheetValue.Hidden) keyboardController?.hide()
-	}
 
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
-		ModalBottomSheetLayout(
-			sheetState = modalBottomSheetState,
-			sheetElevation = 0.dp,
-			sheetBackgroundColor = Color.Transparent,
-			scrimColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f),
-			sheetContent = {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(16.dp)
-						.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.extraLarge)
-				) {
-					Column(
-						horizontalAlignment = Alignment.CenterHorizontally,
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(24.dp, 12.dp, 24.dp, 20.dp),
-						content = sheetContent
-					)
-				}
-			},
-			modifier = modifier.fillMaxSize()
+		Scaffold(
+			topBar = topBar,
+			modifier = Modifier.fillMaxSize(),
 		) {
-			Scaffold(
-				topBar = topBar,
-				modifier = Modifier.fillMaxSize(),
+			Box(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(it)
 			) {
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(it)
+				Column(
+					modifier = Modifier.fillMaxSize()
 				) {
-					Column(
-						modifier = Modifier.fillMaxSize()
+					Box(
+						modifier = Modifier.weight(1f)
 					) {
-						Box(
-							modifier = Modifier.weight(1f)
+						content()
+						androidx.compose.animation.AnimatedVisibility(
+							visible = isFloatingActionButtonVisible,
+							enter = fadeIn(tween(300)) + scaleIn(tween(300)),
+							exit = fadeOut(tween(300)) + scaleOut(tween(300)),
+							modifier = Modifier
+								.align(Alignment.BottomEnd)
+								.padding(16.dp)
 						) {
-							content()
-							androidx.compose.animation.AnimatedVisibility(
-								visible = isFloatingActionButtonVisible,
-								enter = fadeIn(tween(300)) + scaleIn(tween(300)),
-								exit = fadeOut(tween(300)) + scaleOut(tween(300)),
-								modifier = Modifier
-									.align(Alignment.BottomEnd)
-									.padding(16.dp)
-							) {
-								floatingActionButton()
-							}
-						}
-						bottomBar?.let {
-							androidx.compose.animation.AnimatedVisibility(
-								visible = isBottomBarVisible,
-								enter = expandVertically(tween(300)),
-								exit = shrinkVertically(tween(300)),
-								modifier = Modifier
-									.onGloballyPositioned { coordinates ->
-										bottomBarHeight = coordinates.size.height.toFloat()
-									},
-							) { it() }
+							floatingActionButton()
 						}
 					}
-					primaryButton?.let { genericButton ->
-						bottomBarHeight?.let {
-							Box(
-								modifier = Modifier
-									.align(Alignment.BottomCenter)
-									.graphicsLayer { translationY = - it + 20.dp.toPx() }
-							) {
-								PrimaryButton(
-									primaryIcon = genericButton.icon,
-									primaryText = genericButton.text ?: "",
-									isVisible = isButtonVisible ?: true,
-									onClickPrimary = genericButton.onClick,
-									secondaryButton = secondaryButton
-								)
-							}
+					bottomBar?.let {
+						androidx.compose.animation.AnimatedVisibility(
+							visible = isBottomBarVisible,
+							enter = expandVertically(tween(300)),
+							exit = shrinkVertically(tween(300)),
+							modifier = Modifier
+								.onGloballyPositioned { coordinates ->
+									bottomBarHeight = coordinates.size.height.toFloat()
+								},
+						) { it() }
+					}
+				}
+				primaryButton?.let { genericButton ->
+					bottomBarHeight?.let {
+						Box(
+							modifier = Modifier
+								.align(Alignment.BottomCenter)
+								.graphicsLayer { translationY = - it + 20.dp.toPx() }
+						) {
+							PrimaryButton(
+								primaryIcon = genericButton.icon,
+								primaryText = genericButton.text ?: "",
+								isVisible = isButtonVisible ?: true,
+								onClickPrimary = genericButton.onClick,
+								secondaryButton = secondaryButton
+							)
 						}
 					}
 				}
 			}
 		}
+
 		dialogContent()
 		overlayContent()
 	}

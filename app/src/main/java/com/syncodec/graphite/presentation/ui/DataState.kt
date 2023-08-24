@@ -10,7 +10,7 @@ import com.syncodec.graphite.service.syncInator.SyncInatorService
 class SyncState {
 	companion object {
 		val syncStatusIcon = mapOf(
-			SyncInatorService.Companion.SyncStatus.Init::class to R.drawable.ic_cloud,
+			SyncInatorService.Companion.SyncStatus.Init::class to R.drawable.ic_fa_cloud,
 			SyncInatorService.Companion.SyncStatus.Idle::class to R.drawable.ic_cloud_done,
 			SyncInatorService.Companion.SyncStatus.Locked::class to R.drawable.ic_cloud_x,
 			SyncInatorService.Companion.SyncStatus.Connected::class to R.drawable.ic_cloud_syncing,

@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
@@ -70,11 +70,11 @@ fun BottomBar(
 
 		Spacer(modifier = Modifier.weight(1f))
 
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_vault,
 			tooltip = "Vault",
 			checked = isAuthenticated,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 
 		Spacer(modifier = Modifier.width(12.dp))

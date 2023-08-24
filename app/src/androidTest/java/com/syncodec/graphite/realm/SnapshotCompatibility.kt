@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.alice.putSecretData
 import io.realm.kotlin.Realm
 import org.junit.Assert

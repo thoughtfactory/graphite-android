@@ -28,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.ExpandableBox
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -46,7 +46,7 @@ fun RawScreen(
 	) {
 		TopAppBar(
 			navigationIcon = {
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_back,
 					onClick = onClickBack
 				)

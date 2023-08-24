@@ -20,11 +20,13 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
 @Immutable
@@ -86,11 +88,12 @@ fun InfoCard(
 	description : String = "This is an info card. It can be used to display information to the user.",
 	icon : Int = R.drawable.ic_info,
 	colors : InfoCardColors = InfoCardDefaults.infoCardColors(),
+	shape : Shape = MaterialTheme.shapes.medium,
 	buttonText : String = "Learn more",
 	onClickButton : (() -> Unit)? = null,
 ) {
 	Card(
-		shape = MaterialTheme.shapes.medium,
+		shape = shape,
 		colors = CardDefaults.cardColors(
 			containerColor = colors.containerColor,
 			contentColor = colors.contentColor,
@@ -111,7 +114,7 @@ fun InfoCard(
 				Icon(
 					painter = painterResource(id = icon),
 					contentDescription = title,
-					modifier = Modifier.requiredSize(32.dp)
+					modifier = Modifier.requiredSize(IconButtonSize)
 				)
 				Spacer(modifier = Modifier.width(12.dp))
 				Text(

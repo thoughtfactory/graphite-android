@@ -11,30 +11,30 @@ import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
-import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.cloud.googleDrive.GDrive
+import com.syncodec.graphite.di.locator.Locator
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
-import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
-import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
-import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
+import com.syncodec.graphite.presentation.note2.NoteViewModel2
 import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataViewModel
+import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +51,7 @@ import com.syncodec.graphite.presentation.notebook.screen.NotebookScreenViewMode
 
 class BaseApplication : Application() {
 
-	private lateinit var dataStore : DataStoreInstance
+	private lateinit var dataStore: DataStoreInstance
 
 	override fun onCreate() {
 		super.onCreate()
@@ -61,21 +61,33 @@ class BaseApplication : Application() {
 
 		initDirectory()
 
+		val repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
+
+		val repository = Repository()
+		repository.initRepository(this)
+		repositoryStatusStateFlow.tryEmit(Repository.Companion.RepositoryStatus.Success(repository = repository))
+
+		val locator = Locator(this)
+
 		startKoin {
 			androidLogger()
 			androidContext(this@BaseApplication)
 			modules(
 				module {
-					single { Repository() }
+					single { repository }
+					single { repositoryStatusStateFlow }
+					single { locator }
 					single { DBox(this@BaseApplication) }
-					single {GDrive(this@BaseApplication)}
+					single { GDrive(this@BaseApplication) }
 
 					viewModelOf(::MainViewModel)
 					viewModelOf(::NoteScreenViewModel)
 					viewModelOf(::BucketScreenViewModel)
 					viewModelOf(::NotebookScreenViewModel)
-					viewModelOf(::EditorScreenViewModel)
-					viewModelOf(::ViewerScreenViewModel)
+
+					viewModelOf(::NoteViewModel2)
+//					viewModelOf(::ViewerScreenViewModel)
+
 					viewModelOf(::BucketViewModel)
 					viewModelOf(::BucketScreenCommonViewModel)
 					viewModelOf(::BucketBottomSheetViewModel)
@@ -105,7 +117,11 @@ class BaseApplication : Application() {
 		val auth = Firebase.auth
 
 		val purchasesConfiguration = PurchasesConfiguration
-			.Builder(this, Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+			.Builder(
+				this,
+				Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@")
+					?: ""
+			)
 			.appUserID(auth.currentUser?.uid)
 			.build()
 		Purchases.configure(purchasesConfiguration)
@@ -120,7 +136,7 @@ class BaseApplication : Application() {
 							superExpiryTimeString.toLong() > currentTimestamp -> isPro.tryEmit(true)
 							else -> getRevenueCatInfo(auth)
 						}
-					} catch (e : Exception) {
+					} catch (e: Exception) {
 						getRevenueCatInfo(auth)
 					}
 				}
@@ -134,7 +150,7 @@ class BaseApplication : Application() {
 		val attachmentDir = File(dataDir, "attachment").also { it.mkdirs() }
 	}
 
-	private fun getRevenueCatInfo(auth : FirebaseAuth) {
+	private fun getRevenueCatInfo(auth: FirebaseAuth) {
 		Purchases
 			.sharedInstance
 			.apply {
@@ -142,10 +158,10 @@ class BaseApplication : Application() {
 				getCustomerInfo(
 					fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
 					callback = object : ReceiveCustomerInfoCallback {
-						override fun onError(error : PurchasesError) {
+						override fun onError(error: PurchasesError) {
 						}
 
-						override fun onReceived(customerInfo : CustomerInfo) {
+						override fun onReceived(customerInfo: CustomerInfo) {
 							isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
 						}
 					}
@@ -154,9 +170,10 @@ class BaseApplication : Application() {
 	}
 
 	companion object {
-		val isPro : MutableStateFlow<Boolean> = MutableStateFlow(false)
+		val isPro: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-		val isAuthenticated : MutableStateFlow<Boolean> = MutableStateFlow(false)
-		val authenticatorScreen : MutableStateFlow<AuthenticatorScreen> = MutableStateFlow(AuthenticatorScreen.None)
+		val isAuthenticated: MutableStateFlow<Boolean> = MutableStateFlow(false)
+		val authenticatorScreen: MutableStateFlow<AuthenticatorScreen> =
+			MutableStateFlow(AuthenticatorScreen.None)
 	}
 }

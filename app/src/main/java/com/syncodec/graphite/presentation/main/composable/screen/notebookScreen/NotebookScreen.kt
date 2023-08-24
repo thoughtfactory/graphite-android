@@ -61,7 +61,7 @@ fun NotebookScreen(
 	isSelecting : Boolean,
 	onSelect : (RealmUUID) -> Unit,
 	selectedIdList : List<RealmUUID>,
-	onClickFab : () -> Unit,
+	onClickFab : () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val viewModel : NotebookScreenViewModel = koinViewModel()

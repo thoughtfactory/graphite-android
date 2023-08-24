@@ -18,7 +18,7 @@ import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.network.TMDbMovieSearchResult
 import com.syncodec.graphite.di.network.TMDbTvSearchResult
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope

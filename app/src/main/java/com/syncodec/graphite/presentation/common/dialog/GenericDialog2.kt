@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,18 +39,19 @@ import com.syncodec.graphite.R
 @Preview
 @Composable
 fun GenericDialog2(
-	showDialog: Boolean = false,
+	isDialogVisible: Boolean = false,
 	icon: GenericDialogIcon? = null,
-	title: String = "Title",
+	title: String? = null,
 	contentText: String? = null,
 	primaryButton: GenericDialogButton? = null,
 	secondaryButton: GenericDialogButton? = null,
 	isPrimaryButtonEnabled: Boolean = true,
 	isSecondaryButtonEnabled: Boolean = true,
+	innerPadding: PaddingValues = PaddingValues(24.dp),
 	onDismissRequest: () -> Unit = {},
 	content: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
-	if (showDialog) {
+	if (isDialogVisible) {
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
@@ -70,7 +72,7 @@ fun GenericDialog2(
 					Column(
 						modifier = Modifier
 							.fillMaxWidth()
-							.padding(24.dp)
+							.padding(innerPadding)
 					) {
 						icon?.let {
 							Icon(
@@ -81,17 +83,19 @@ fun GenericDialog2(
 									.requiredSize(24.dp)
 									.align(Alignment.CenterHorizontally)
 							)
+							Spacer(modifier = Modifier.height(24.dp))
 						}
-						Spacer(modifier = Modifier.height(24.dp))
-						Text(
-							text = title,
-							style = MaterialTheme.typography.titleLarge,
-							color = MaterialTheme.colorScheme.onBackground,
-							fontWeight = FontWeight.Bold,
-							textAlign = if (icon == null) TextAlign.Start else TextAlign.Center,
-							modifier = Modifier.fillMaxWidth()
-						)
-						Spacer(modifier = Modifier.height(24.dp))
+						title?.let {
+							Text(
+								text = it,
+								style = MaterialTheme.typography.titleLarge,
+								color = MaterialTheme.colorScheme.onBackground,
+								fontWeight = FontWeight.Bold,
+								textAlign = if (icon == null) TextAlign.Start else TextAlign.Center,
+								modifier = Modifier.fillMaxWidth()
+							)
+							Spacer(modifier = Modifier.height(24.dp))
+						}
 
 						contentText?.let {
 							Text(
@@ -107,37 +111,52 @@ fun GenericDialog2(
 							Spacer(modifier = Modifier.height(24.dp))
 						}
 
-						if (primaryButton != null || secondaryButton != null) {
-							Row(
-								modifier = Modifier.fillMaxWidth()
-							) {
-								secondaryButton?.let {
-									TextButton(
-										onClick = it.onClick,
-										shape = MaterialTheme.shapes.medium,
-										colors = it.colors,
-										enabled = isSecondaryButtonEnabled,
-										modifier = Modifier.weight(1f),
-									) {
-										Text(text = it.text)
-									}
-								}
-								if (primaryButton != null && secondaryButton != null) Spacer(modifier = Modifier.width(8.dp))
-								primaryButton?.let {
-									Button(
-										onClick = it.onClick,
-										shape = MaterialTheme.shapes.medium,
-										colors = it.colors,
-										enabled = isPrimaryButtonEnabled,
-										modifier = Modifier.weight(1f),
-									) {
-										Text(text = it.text)
-									}
-								}
-							}
-						}
-
+						GenericDialogButtonView(
+							primaryButton = primaryButton,
+							secondaryButton = secondaryButton,
+							isPrimaryButtonEnabled = isPrimaryButtonEnabled,
+							isSecondaryButtonEnabled = isSecondaryButtonEnabled,
+						)
 					}
+				}
+			}
+		}
+	}
+}
+
+@Preview
+@Composable
+fun GenericDialogButtonView(
+	primaryButton: GenericDialogButton? = GenericDialogDefaults.genericDialogButtonPrimary(text = "Primary", onClick = {}),
+	secondaryButton: GenericDialogButton? = GenericDialogDefaults.genericDialogButtonSecondary(text = "Secondary", onClick = {}),
+	isPrimaryButtonEnabled: Boolean = true,
+	isSecondaryButtonEnabled: Boolean = true,
+) {
+	if (primaryButton != null || secondaryButton != null) {
+		Row(
+			modifier = Modifier.fillMaxWidth()
+		) {
+			secondaryButton?.let {
+				TextButton(
+					onClick = it.onClick,
+					shape = MaterialTheme.shapes.medium,
+					colors = it.colors,
+					enabled = isSecondaryButtonEnabled,
+					modifier = Modifier.weight(1f),
+				) {
+					Text(text = it.text)
+				}
+			}
+			if (primaryButton != null && secondaryButton != null) Spacer(modifier = Modifier.width(8.dp))
+			primaryButton?.let {
+				Button(
+					onClick = it.onClick,
+					shape = MaterialTheme.shapes.medium,
+					colors = it.colors,
+					enabled = isPrimaryButtonEnabled,
+					modifier = Modifier.weight(1f),
+				) {
+					Text(text = it.text)
 				}
 			}
 		}

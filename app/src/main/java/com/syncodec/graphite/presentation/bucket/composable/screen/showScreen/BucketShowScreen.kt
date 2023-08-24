@@ -25,7 +25,11 @@ import org.koin.androidx.compose.koinViewModel
 @Preview
 @Composable
 fun BucketShowScreen(
-	pagerState : PagerState = rememberPagerState(),
+	pagerState : PagerState = rememberPagerState(
+		initialPage = 0,
+		initialPageOffsetFraction = 0f,
+		pageCount = {0}
+	),
 	isSelecting : Boolean = false,
 	onSelect : (RealmUUID) -> Unit = {},
 	selectedIdList : List<RealmUUID> = listOf(),
@@ -42,14 +46,14 @@ fun BucketShowScreen(
 	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
 
 	val bucketId by viewModel.id.collectAsState()
-	val bucketItemList by viewModel.bucketItemList.collectAsState()
+	val bucketItemList by viewModel.orderedBucketItemList.collectAsState()
 
 	HorizontalPager(
-		pageCount = 4,
 		state = pagerState,
 		userScrollEnabled = ! isSelecting,
-	) { pageIndex ->
-		val filteredBucketItemList = when (pageIndex) {
+		reverseLayout = false,
+	) {
+		val filteredBucketItemList = when (it) {
 			0 -> bucketItemList
 			1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
 			2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }

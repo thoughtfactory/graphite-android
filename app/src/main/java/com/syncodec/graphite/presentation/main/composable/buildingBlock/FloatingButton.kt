@@ -1,19 +1,15 @@
 package com.syncodec.graphite.presentation.main.composable.buildingBlock
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
 @Preview
@@ -28,9 +24,9 @@ fun NoteFloatingActionButton(
 		},
 		icon = {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_pencil),
+				painter = painterResource(id = R.drawable.ic_fa_pen),
 				contentDescription = "New note",
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(16.dp)
 			)
 		},
 		expanded = isExpanded,
@@ -50,9 +46,9 @@ fun BucketFloatingActionButton(
 		},
 		icon = {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_bucket),
+				painter = painterResource(id = R.drawable.ic_fa_bucket_list),
 				contentDescription = "New bucket",
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(16.dp)
 			)
 		},
 		expanded = isExpanded,
@@ -72,9 +68,9 @@ fun NotebookFloatingActionButton(
 		},
 		icon = {
 			Icon(
-				painter = painterResource(id = R.drawable.ic_notebook),
+				painter = painterResource(id = R.drawable.ic_fa_notebook),
 				contentDescription = "New notebook",
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(16.dp)
 			)
 		},
 		expanded = isExpanded,

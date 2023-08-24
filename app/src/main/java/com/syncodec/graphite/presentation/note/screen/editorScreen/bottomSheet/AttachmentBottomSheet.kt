@@ -47,9 +47,9 @@ import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.common.info.PlainTextWarning
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
+import com.syncodec.graphite.presentation.common.info.Warning
 import com.syncodec.graphite.presentation.common.text.marqueeText.MarqueeText
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.composable.AttachmentPreview
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
@@ -138,7 +138,7 @@ fun AttachmentBottomSheet(
 
 		if (attachmentListSaved.isNotEmpty() || attachmentListToAdd.isNotEmpty()) {
 			Spacer(modifier = Modifier.height(6.dp))
-			PlainTextWarning(isVisible = showPlainTextWarning) { dataStoreInstance.putShowPlainTextWarningAttachment(false) }
+			Warning(isVisible = showPlainTextWarning) { dataStoreInstance.putShowPlainTextWarningAttachment(false) }
 			Spacer(modifier = Modifier.height(4.dp))
 
 			LazyVerticalGrid(
@@ -215,9 +215,9 @@ private fun AttachmentOverlay(
 					.graphicsLayer { rotationZ = - 45f }
 			)
 			Spacer(modifier = Modifier.weight(1f))
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_close,
-				colors = MenuButtonDefaults.menuButtonColors(
+				colors = GenericButtonDefaults.genericButtonColors(
 					containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.71f),
 					iconColor = MaterialTheme.colorScheme.onBackground,
 					checkedContainerColor = MaterialTheme.colorScheme.error,

@@ -21,12 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
-import com.dropbox.core.v2.files.Metadata
 import com.google.api.services.drive.model.File
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -119,9 +118,9 @@ fun RestoreSnapshotDialog(
 					)
 				}
 
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_delete,
-					colors = MenuButtonDefaults.deleteButtonColors(),
+					colors = GenericButtonDefaults.deleteButtonColors(),
 					onClick = {
 						snapshot?.let {
 							onClickDelete(it)

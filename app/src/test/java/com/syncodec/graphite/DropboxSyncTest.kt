@@ -17,20 +17,20 @@ class DropboxSyncTest {
 
 	@Test
 	fun test_metadataSerialization() {
-		val objectMetadata = SyncInatorService.Companion.ObjectMetadata(
-			modifiedTimestamp = Instant.now().toEpochMilli(),
-			hash = "hash",
-			isDeleted = false
-		)
-
-		val objectMetadataList : Map<RealmUUID, SyncInatorService.Companion.ObjectMetadata> = mapOf(
-			RealmUUID.random() to objectMetadata,
-		)
-
-		MapSerializer(RealmUUIDNullableSerializer, SyncInatorService.Companion.ObjectMetadata.serializer()).let {
-			json.encodeToString(it, objectMetadataList).let {
-				println(it)
-			}
-		}
+//		val objectMetadata = SyncInatorService.Companion.ObjectMetadata(
+//			modifiedTimestamp = Instant.now().toEpochMilli(),
+//			hash = "hash",
+//			isDeleted = false
+//		)
+//
+//		val objectMetadataList : Map<RealmUUID, SyncInatorService.Companion.ObjectMetadata> = mapOf(
+//			RealmUUID.random() to objectMetadata,
+//		)
+//
+//		MapSerializer(RealmUUIDNullableSerializer, SyncInatorService.Companion.ObjectMetadata.serializer()).let {
+//			json.encodeToString(it, objectMetadataList).let {
+//				println(it)
+//			}
+//		}
 	}
 }

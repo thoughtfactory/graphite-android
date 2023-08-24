@@ -20,7 +20,7 @@ fun ImportDataDialog(
 	onDismiss: () -> Unit = {},
 ) {
 	GenericDialog2(
-		showDialog = importDataDialogState != null,
+		isDialogVisible = importDataDialogState != null,
 		icon = GenericDialogDefaults.genericDialogIcon(icon = R.drawable.ic_flat_import),
 		title = "Import from ${importDataDialogState?.importFrom ?: ""}",
 		contentText = importDataDialogState?.dialogContent ?: "",

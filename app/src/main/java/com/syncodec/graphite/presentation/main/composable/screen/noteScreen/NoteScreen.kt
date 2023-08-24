@@ -10,8 +10,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.with
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -43,18 +43,19 @@ import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteGrid.NoteGrid
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList.NoteList
-import com.syncodec.graphite.presentation.note.NoteActivity
+import com.syncodec.graphite.presentation.note2.NoteActivity2
 import com.syncodec.graphite.utils.ContentStatus
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.timeStampToPrettyDay
 import com.syncodec.graphite.utils.timestampToCalendarDay
 import io.realm.kotlin.types.RealmUUID
@@ -62,7 +63,7 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun NoteScreen(
 	isSelecting : Boolean,
@@ -119,7 +120,7 @@ fun NoteScreen(
 		if (isSelecting) {
 			onSelect(id)
 		} else {
-			Intent(context, NoteActivity::class.java).apply {
+			Intent(context, NoteActivity2::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -130,7 +131,7 @@ fun NoteScreen(
 
 	fun onLongClickNote(id : RealmUUID) = onSelect(id)
 
-	GenericScaffold(
+	GenericScaffold2(
 		floatingActionButton = {
 			AnimatedVisibility(
 				visible = ! isSelecting,
@@ -155,7 +156,7 @@ fun NoteScreen(
 						Spacer(modifier = Modifier.height(16.dp))
 
 						NoteFloatingActionButton(isExpanded = true) {
-							Intent(context, NoteActivity::class.java).apply {
+							Intent(context, NoteActivity2::class.java).apply {
 								putExtra(Extra.Companion.Extra.IsNew.name, true)
 								putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId)
 								putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -165,7 +166,7 @@ fun NoteScreen(
 					}
 				} else {
 					NoteFloatingActionButton(isExpanded = true) {
-						Intent(context, NoteActivity::class.java).apply {
+						Intent(context, NoteActivity2::class.java).apply {
 							putExtra(Extra.Companion.Extra.IsNew.name, true)
 							putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId)
 							putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -190,7 +191,7 @@ fun NoteScreen(
 
 			Crossfade(
 				targetState = contentStatus,
-				animationSpec = tween(300)
+				animationSpec = tween(300), label = ""
 			) { contentStatus1 ->
 				when (contentStatus1) {
 					is ContentStatus.Init -> LoadingView()
@@ -205,8 +206,8 @@ fun NoteScreen(
 					is ContentStatus.Loaded -> {
 						AnimatedContent(
 							targetState = viewType,
-							transitionSpec = { fadeIn(tween(300)) + scaleIn(tween(300), 0.71f) with fadeOut(tween(300)) + scaleOut(tween(300), 0.71f) },
-							modifier = Modifier.fillMaxSize()
+							transitionSpec = { (fadeIn(tween(300)) + scaleIn(tween(300), 0.71f)).togetherWith(fadeOut(tween(300)) + scaleOut(tween(300), 0.71f)) },
+							modifier = Modifier.fillMaxSize(), label = ""
 						) {
 							when (it) {
 								ViewType.List -> NoteList(

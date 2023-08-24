@@ -8,7 +8,7 @@ import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.importer.GoogleKeepNote
 import com.syncodec.graphite.di.model.importer.JourneyNote
 import com.syncodec.graphite.di.model.serializer.NoteObjectSerializer
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

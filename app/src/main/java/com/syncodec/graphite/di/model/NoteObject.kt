@@ -1,6 +1,7 @@
 package com.syncodec.graphite.di.model
 
 import android.graphics.Color
+import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.syncodec.graphite.di.model.serializer.LatLngSerializer
 import com.syncodec.graphite.di.model.serializer.RealmUUIDNullableSerializer
 import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
+import com.syncodec.graphite.di.repository.cache.NoteCache
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -25,7 +27,7 @@ import kotlin.random.Random
 @JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
 @Serializable
 class NoteObject() : RealmObject {
-	constructor(jsonObject : JSONObject) : this() {
+	constructor(jsonObject: JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.optLong("createdTimestamp", Instant.now().toEpochMilli())
 		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", Instant.now().toEpochMilli())
@@ -49,59 +51,59 @@ class NoteObject() : RealmObject {
 
 	@Serializable(with = RealmUUIDSerializer::class)
 	@PrimaryKey
-	var id : RealmUUID = RealmUUID.random()
+	var id: RealmUUID = RealmUUID.random()
 
-	var createdTimestamp : Long = Instant.now().toEpochMilli()
-	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
-	var userTimestamp : Long = Instant.now().toEpochMilli()
-	var title : String? = null
-	var color : Int? = null
-	var latLng : String? = null
-	var address : String? = null
-	var contentThumbnail : String? = null
-	var content : String? = null
-	var thumbnail : String? = null
-	var isFavourite : Boolean = false
-	var isLocked : Boolean = false
+	var createdTimestamp: Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp: Long = Instant.now().toEpochMilli()
+	var userTimestamp: Long = Instant.now().toEpochMilli()
+	var title: String? = null
+	var color: Int? = null
+	var latLng: String? = null
+	var address: String? = null
+	var contentThumbnail: String? = null
+	var content: String? = null
+	var thumbnail: String? = null
+	var isFavourite: Boolean = false
+	var isLocked: Boolean = false
 
 	@Serializable(with = RealmUUIDNullableSerializer::class)
-	var parentId : RealmUUID? = null
+	var parentId: RealmUUID? = null
 
-	fun setLatLng(latLng : LatLng?) {
+	fun setLatLng(latLng: LatLng?) {
 		try {
 			latLng?.let {
 				val latitude = it.latitude
 				val longitude = it.longitude
-				if ((latitude >= - 90) && (latitude <= 90) && (longitude >= - 180) && (longitude <= 180)) {
+				if ((latitude >= -90) && (latitude <= 90) && (longitude >= -180) && (longitude <= 180)) {
 					val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 					this.latLng = objectMapper.writeValueAsString(it)
 				} else this.latLng = null
 			}
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 			this.latLng = null
 		}
 	}
 
-	fun getLatLng() : LatLng? {
+	fun getLatLng(): LatLng? {
 		try {
 			if (latLng == null) return null
 			val objectMapper = jsonMapper { addModule(kotlinModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) }
 			return objectMapper.readValue(latLng, LatLng::class.java)
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 //			e.printStackTrace()
 			return null
 		}
 	}
 
-	fun getContentString() : String {
+	fun getContentString(): String {
 		val json = Json { ignoreUnknownKeys = true }
 		val kitKatContent = json.decodeFromString<KitKatContent>(content ?: "")
 		return kitKatContent.toTxt()
 	}
 
-	override fun toString() : String = this.id.toString()
+	override fun toString(): String = this.id.toString()
 
-	fun toLite() : NoteObjectLite {
+	fun toLite(): NoteObjectLite {
 		return NoteObjectLite(
 			id = this.id,
 			parentId = this.parentId,
@@ -112,18 +114,22 @@ class NoteObject() : RealmObject {
 			color = this.color,
 			latLng = try {
 				this.getLatLng()
-			} catch (e : Exception) {
+			} catch (e: Exception) {
 				null
 			},
 			address = this.address,
-			contentThumbnail = this.contentThumbnail,
+			contentThumbnail = if (NoteCache.noteContentThumbnailMap[id]?.first == this.hashCode()) NoteCache.noteContentThumbnailMap[id]?.second else {
+				val cacheContentThumbnail = this.content?.let { Json.decodeFromString<KitKatContent>(it) }?.toTxt()?.take(256)
+				NoteCache.noteContentThumbnailMap[id] = Pair(this.hashCode(), cacheContentThumbnail)
+				cacheContentThumbnail
+			},
 			thumbnail = this.thumbnail,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked,
 		)
 	}
 
-	fun clone() : NoteObject = NoteObject().apply {
+	fun clone(): NoteObject = NoteObject().apply {
 		this.id = this@NoteObject.id
 		this.createdTimestamp = this@NoteObject.createdTimestamp
 		this.modifiedTimestamp = this@NoteObject.modifiedTimestamp
@@ -140,7 +146,7 @@ class NoteObject() : RealmObject {
 		this.parentId = this@NoteObject.parentId
 	}
 
-	fun toCloudSnapshot() : String {
+	fun toCloudSnapshot(): String {
 		val jsonObject = JSONObject()
 		jsonObject.put("id", this.id.toString())
 		jsonObject.put("createdTimestamp", this.createdTimestamp)
@@ -157,7 +163,7 @@ class NoteObject() : RealmObject {
 		return jsonObject.toString()
 	}
 
-	override fun hashCode() : Int {
+	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
@@ -175,7 +181,7 @@ class NoteObject() : RealmObject {
 		return result
 	}
 
-	override fun equals(other : Any?) : Boolean {
+	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (other !is NoteObject) return false
 
@@ -199,19 +205,19 @@ class NoteObject() : RealmObject {
 
 
 	companion object {
-		fun fromCloudSnapshot(snapshot : ByteArray) : NoteObject? {
+		fun fromCloudSnapshot(snapshot: ByteArray): NoteObject? {
 			return try {
 				val json = Json { ignoreUnknownKeys = true }
 				val jsonObject = JSONObject(String(snapshot))
 				val kitKatContent = json.decodeFromString<KitKatContent>(jsonObject.getString("content")).toString()
 				jsonObject.put("contentThumbnail", kitKatContent.substring(0, minOf(256, kitKatContent.length)))
 				NoteObject(jsonObject)
-			} catch (e : Exception) {
+			} catch (e: Exception) {
 				null
 			}
 		}
 
-		fun getRandomInstance() : NoteObject {
+		fun getRandomInstance(): NoteObject {
 			return NoteObject().apply {
 				this.createdTimestamp = Instant.now().toEpochMilli()
 				this.modifiedTimestamp = Instant.now().toEpochMilli()
@@ -232,24 +238,24 @@ class NoteObject() : RealmObject {
 
 @Keep
 data class NoteObjectLite(
-	val id : RealmUUID,
-	val parentId : RealmUUID?,
-	val createdTimestamp : Long,
-	val modifiedTimestamp : Long,
-	val userTimestamp : Long,
-	val title : String?,
-	val color : Int?,
-	val latLng : LatLng?,
-	val address : String?,
-	val contentThumbnail : String?,
-	val thumbnail : String? = null,
-	val isFavourite : Boolean,
-	val isLocked : Boolean,
-	val overWritable : Boolean = true,
-	val deletable : Boolean = true,
-	val localOnly : Boolean = false
+	val id: RealmUUID,
+	val parentId: RealmUUID?,
+	val createdTimestamp: Long,
+	val modifiedTimestamp: Long,
+	val userTimestamp: Long,
+	val title: String?,
+	val color: Int?,
+	val latLng: LatLng?,
+	val address: String?,
+	val contentThumbnail: String?,
+	val thumbnail: String? = null,
+	val isFavourite: Boolean,
+	val isLocked: Boolean,
+	val overWritable: Boolean = true,
+	val deletable: Boolean = true,
+	val localOnly: Boolean = false
 ) {
-	override fun equals(other : Any?) : Boolean {
+	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (other !is NoteObjectLite) return false
 
@@ -273,7 +279,7 @@ data class NoteObjectLite(
 		return true
 	}
 
-	override fun hashCode() : Int {
+	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + (parentId?.hashCode() ?: 0)
 		result = 31 * result + createdTimestamp.hashCode()
@@ -297,12 +303,12 @@ data class NoteObjectLite(
 @Keep
 @Serializable(with = LatLngSerializer::class)
 data class LatLng(
-	var latitude : Double,
-	var longitude : Double
+	var latitude: Double,
+	var longitude: Double
 ) {
-	fun toGLatLng() : com.google.android.gms.maps.model.LatLng {
+	fun toGLatLng(): com.google.android.gms.maps.model.LatLng {
 		return com.google.android.gms.maps.model.LatLng(latitude, longitude)
 	}
 
-	override fun toString() : String = "Lat : $latitude, Lng : $longitude"
+	override fun toString(): String = "Lat : $latitude, Lng : $longitude"
 }

@@ -28,7 +28,7 @@ fun ImportingDialog(
 	totalSize: Int = 0,
 ) {
 	GenericDialog2(
-		showDialog = showDialog,
+		isDialogVisible = showDialog,
 		icon = GenericDialogDefaults.genericDialogIcon(icon = R.drawable.ic_flat_import),
 		title = "Importing",
 		content = {

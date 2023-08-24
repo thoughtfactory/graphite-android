@@ -16,7 +16,7 @@ fun ClearDataDialog(
 	onDismiss: () -> Unit = {},
 ) {
 	GenericDialog2(
-		showDialog = showDialog,
+		isDialogVisible = showDialog,
 		icon = GenericDialogDefaults.genericDialogIcon(icon = R.drawable.ic_flat_warning, tint = MaterialTheme.colorScheme.error),
 		title = "Clear data",
 		contentText = "Are you sure you want to clear all local data from this device? This will not affect snapshots or data on cloud providers.",

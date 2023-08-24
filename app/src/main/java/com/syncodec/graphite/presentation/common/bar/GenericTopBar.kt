@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -26,7 +26,7 @@ fun GenericTopBar(
 
 	TopAppBar(
 		navigationIcon = {
-			MenuButton(
+			GenericButton(
 				icon = navigationIcon,
 			) { onNavigationIconClick?.invoke() ?: onBackPressedDispatcher?.onBackPressedDispatcher?.onBackPressed() }
 		},

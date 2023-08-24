@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -42,7 +42,7 @@ fun TopBar(
 		if (it) {
 			TopAppBar(
 				navigationIcon = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_close,
 						onClick = onClickCancelSelect,
 					)
@@ -54,9 +54,9 @@ fun TopBar(
 					)
 				},
 				actions = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_delete,
-						colors = MenuButtonDefaults.deleteButtonColors(),
+						colors = GenericButtonDefaults.deleteButtonColors(),
 						onClick = onClickDelete
 					)
 				},
@@ -69,7 +69,7 @@ fun TopBar(
 		} else {
 			TopAppBar(
 				navigationIcon = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_back,
 						onClick = { onBackPressedDispatcher?.onBackPressed() },
 					)
@@ -82,11 +82,11 @@ fun TopBar(
 					)
 				},
 				actions = {
-					MenuButton(
+					GenericButton(
 						icon = R.drawable.ic_vault,
 						tooltip = "Vault",
 						checked = isAuthenticated,
-						colors = MenuButtonDefaults.menuButtonColors(),
+						colors = GenericButtonDefaults.genericButtonColors(),
 					) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 				},
 				modifier = Modifier.fillMaxWidth(),

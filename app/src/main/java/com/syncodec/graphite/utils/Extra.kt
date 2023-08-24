@@ -1,5 +1,8 @@
 package com.syncodec.graphite.utils
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.LatLng
@@ -81,9 +84,63 @@ sealed class LocationData {
 	data class SuccessOnlyLatLng(val latLng : LatLng) : LocationData()
 	data class SuccessOnlyAddress(val address : String) : LocationData()
 	data class Success(val latLng : LatLng, val address : String) : LocationData()
-	object SuccessNoData : LocationData()
+	object Removed : LocationData()
 	object NoPermission : LocationData()
+	object AutoFetchDisabled : LocationData()
 	data class Error(val message : String) : LocationData()
+
+	fun getIcon() : Int = when (this) {
+		is Init -> R.drawable.ic_fa_map_marker_dot
+		is Loading -> R.drawable.ic_fa_map_marker_slash
+		is SuccessOnlyLatLng -> R.drawable.ic_fa_map_marker_check
+		is SuccessOnlyAddress -> R.drawable.ic_fa_map_marker_check
+		is Success -> R.drawable.ic_fa_map_marker_check
+		is Removed -> R.drawable.ic_fa_map_marker_dot
+		is NoPermission -> R.drawable.ic_fa_map_marker_slash
+		is AutoFetchDisabled -> R.drawable.ic_fa_map_marker_slash
+		is Error -> R.drawable.ic_fa_map_marker_error
+	}
+
+	@Composable
+	fun getIconColor() = when (this) {
+		is Init -> MaterialTheme.colorScheme.onSurface
+		is Loading -> Color(0xFF5A96E3)
+		is SuccessOnlyLatLng -> Color(0xFF8EAC50)
+		is SuccessOnlyAddress -> Color(0xFF8EAC50)
+		is Success -> Color(0xFF8EAC50)
+		is Removed -> MaterialTheme.colorScheme.onSurface
+		is NoPermission -> Color(0xFFEF6262)
+		is AutoFetchDisabled -> Color(0xFFFBD85D)
+		is Error -> Color(0xFFEF6262)
+	}
+
+	fun getLatLngOrNull() : LatLng? {
+		return when(this) {
+			is Init -> null
+			is Loading -> null
+			is SuccessOnlyLatLng -> latLng
+			is SuccessOnlyAddress -> null
+			is Success -> latLng
+			is Removed -> null
+			is NoPermission -> null
+			is AutoFetchDisabled -> null
+			is Error -> null
+		}
+	}
+
+	fun getAddressOrNull() : String? {
+		return when(this) {
+			is Init -> null
+			is Loading -> null
+			is SuccessOnlyLatLng -> null
+			is SuccessOnlyAddress -> address
+			is Success -> address
+			is Removed -> null
+			is NoPermission -> null
+			is AutoFetchDisabled -> null
+			is Error -> null
+		}
+	}
 }
 
 val genreIdMap : Map<Int, String> = mapOf(

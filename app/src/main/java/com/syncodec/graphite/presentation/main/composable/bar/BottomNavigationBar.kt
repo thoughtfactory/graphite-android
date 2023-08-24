@@ -3,8 +3,8 @@ package com.syncodec.graphite.presentation.main.composable.bar
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.Icon
@@ -16,33 +16,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.ExplorerScreen
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
-import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.main.composable.screen.HomeScreen
-import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.RealmUUID
 
 
-open class BottomNavigationItem(val route : String, val icon : Int, val title : String) {
-	object Home : BottomNavigationItem("home", R.drawable.ic_home, "Home")
-	object Calendar : BottomNavigationItem("calendar", R.drawable.ic_calendar, "Calendar")
-	object Atlas : BottomNavigationItem("atlas", R.drawable.ic_atlas, "Atlas")
+sealed class BottomNavigationItem(val route: String, val icon: Int, val iconFilled: Int, val title: String) {
+	object Home : BottomNavigationItem(route = "home", icon = R.drawable.ic_fa_home, iconFilled = R.drawable.ic_fa_home_solid, title = "Home")
+	object Calendar : BottomNavigationItem(route = "calendar", icon = R.drawable.ic_fa_calendar, iconFilled = R.drawable.ic_fa_calendar_solid, title = "Calendar")
+	object Atlas : BottomNavigationItem(route = "atlas", icon = R.drawable.ic_fa_atlas, iconFilled = R.drawable.ic_fa_atlas_solid, title = "Atlas")
 }
 
 @Composable
 fun BottomNavigationBar(
-	currentRoute : String?,
-	onNavigation : (BottomNavigationItem) -> Unit
+	currentRoute: String?,
+	onNavigation: (BottomNavigationItem) -> Unit
 ) {
 	val screens = listOf(
 		BottomNavigationItem.Home,
@@ -51,7 +47,8 @@ fun BottomNavigationBar(
 	)
 
 	NavigationBar(
-		tonalElevation = 8.dp,
+		tonalElevation = 0.dp,
+		containerColor = Color.Black,
 		modifier = Modifier.fillMaxWidth()
 	) {
 		screens.forEach { screen ->
@@ -59,9 +56,11 @@ fun BottomNavigationBar(
 				onClick = { onNavigation(screen) },
 				icon = {
 					Icon(
-						painter = painterResource(id = screen.icon),
+						painter = painterResource(id = if (screen.route == currentRoute) screen.iconFilled else screen.icon),
 						contentDescription = screen.title,
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier
+							.requiredSize(22.dp)
+							.padding(2.dp)
 					)
 				},
 				label = {
@@ -75,11 +74,11 @@ fun BottomNavigationBar(
 					)
 				},
 				colors = NavigationBarItemDefaults.colors(
-					selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-					unselectedIconColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
-					selectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
-					unselectedTextColor = MaterialTheme.colorScheme.onSurface.tone(isSystemInDarkTheme(), 1),
-					indicatorColor = MaterialTheme.colorScheme.primary
+					selectedIconColor = Color.Black,
+					selectedTextColor = Color.White,
+					indicatorColor = Color.White,
+					unselectedIconColor = Color.White,
+					unselectedTextColor = Color.White,
 				),
 				selected = currentRoute == screen.route,
 				interactionSource = remember { MutableInteractionSource() },
@@ -93,12 +92,10 @@ fun BottomNavigationBar(
 @ExperimentalMaterialApi
 @Composable
 fun MainNavigation(
-	currentRoute : BottomNavigationItem = BottomNavigationItem.Home,
-	componentType : ComponentType = ComponentType.Note,
-	isSelecting : Boolean = false,
-	onSelect : (RealmUUID) -> Unit = {},
-	selectedIdList : List<RealmUUID> = listOf(),
-	openSheet : (MainBottomSheetType) -> Unit = {},
+	currentRoute: BottomNavigationItem = BottomNavigationItem.Home,
+	isSelecting: Boolean = false,
+	onSelect: (RealmUUID) -> Unit = {},
+	selectedIdList: List<RealmUUID> = listOf(),
 ) {
 	Crossfade(
 		targetState = currentRoute,
@@ -106,12 +103,9 @@ fun MainNavigation(
 	) {
 		when (it) {
 			BottomNavigationItem.Home -> HomeScreen(
-				componentType = componentType,
 				isSelecting = isSelecting,
 				onSelect = onSelect,
 				selectedIdList = selectedIdList,
-				onClickNewList = { openSheet(MainBottomSheetType.Bucket) },
-				onClickNewNotebook = { openSheet(MainBottomSheetType.Notebook) },
 			)
 
 			BottomNavigationItem.Calendar -> ExplorerScreen(
@@ -131,8 +125,6 @@ fun MainNavigation(
 				onSelect = onSelect,
 				selectedIdList = selectedIdList,
 			)
-
-			null -> LoadingView()
 		}
 	}
 }

@@ -11,7 +11,7 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.cloud.googleDrive.GDrive
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
@@ -69,26 +69,6 @@ class MainViewModel(private val repository: Repository, private val dBox: DBox, 
 		else viewModelScope.launch(Dispatchers.Default) {
 			repository.getChapterWithParentId(parentChapterId = null).let {
 				if (it.size < 4) repository.putChapterSuspended(chapterObject) else callback("Join Graphite Pro to create more notebooks")
-			}
-		}
-	}
-
-	fun putBucket(
-		title: String?,
-		description: String?,
-		bucketType: BucketType,
-		callback: suspend (String) -> Unit,
-	) {
-		val bucketObject = BucketObject().apply {
-			this.title = title
-			this.description = description
-			this.bucketType = bucketType.name
-		}
-
-		if (BaseApplication.isPro.value || bucketType == BucketType.TODO) repository.putBucketSuspended(bucketObject)
-		else viewModelScope.launch(Dispatchers.Default) {
-			repository.getAllBucket().let {
-				if (it.count { it.bucketType == bucketType.name } < 1) repository.putBucketSuspended(bucketObject) else callback("Join Graphite Pro to create more ${bucketType.name} buckets")
 			}
 		}
 	}

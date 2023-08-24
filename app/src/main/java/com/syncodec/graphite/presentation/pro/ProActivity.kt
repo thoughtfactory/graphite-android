@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.pro
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -61,6 +62,8 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 				onError = { error ->
 					productPackage.tryEmit(ContentStatus.Error("Error retrieving data. Please try again later."))
 					Toast.makeText(this, "Error retrieving data. Please try again later.", Toast.LENGTH_SHORT).show()
+					Log.d("npr71", "error : ${error.code}")
+					Log.d("npr71", "error : ${error.message}")
 				}
 			) { offerings ->
 				val monthlyPackage = offerings.current?.monthly

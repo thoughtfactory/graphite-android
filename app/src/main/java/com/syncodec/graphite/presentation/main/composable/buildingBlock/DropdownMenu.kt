@@ -100,7 +100,7 @@ fun DropdownMenu(
 				trailingIcon = if (dropdownMenuItem.isPro && !isPro) {
 					{
 						Icon(
-							painter = painterResource(id = R.drawable.ic_lock_close),
+							painter = painterResource(id = R.drawable.ic_fa_pro),
 							contentDescription = null,
 							tint = contentColor,
 							modifier = Modifier.requiredSize(20.dp),

@@ -20,7 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.ui.authentication.buildingBlock.PasscodeNumPad
 
 
@@ -39,7 +39,7 @@ fun RemovePasscode(
 		TopAppBar(
 			modifier = Modifier.fillMaxWidth(),
 			navigationIcon = {
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_close,
 					onClick = onClose
 				)

@@ -87,6 +87,14 @@
         </activity>
 
         <activity
+            android:name=".presentation.note2.NoteActivity2"
+            android:exported="false"
+            android:parentActivityName=".presentation.main.MainActivity"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+
+        <activity
             android:name=".presentation.note.NoteActivity"
             android:exported="false"
             android:parentActivityName=".presentation.main.MainActivity"

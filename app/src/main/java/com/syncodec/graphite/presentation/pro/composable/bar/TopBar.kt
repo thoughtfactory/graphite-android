@@ -7,7 +7,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -16,7 +16,7 @@ fun TopBar() {
 	val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
 	TopAppBar(
-		navigationIcon = { MenuButton(icon = R.drawable.ic_close) { backPressedDispatcher?.onBackPressed() } },
+		navigationIcon = { GenericButton(icon = R.drawable.ic_close) { backPressedDispatcher?.onBackPressed() } },
 		title = {},
 		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = MaterialTheme.colorScheme.background,

@@ -28,8 +28,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.utils.getInverseBWColor
 
@@ -98,15 +98,15 @@ fun TagItem(
 
 		Spacer(modifier = Modifier.width(2.dp))
 
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_delete,
-			colors = MenuButtonDefaults.deleteButtonColors(),
+			colors = GenericButtonDefaults.deleteButtonColors(),
 			onClick = onDelete
 		)
 
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_pencil,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 			onClick = onEdit,
 		)
 	}

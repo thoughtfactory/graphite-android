@@ -16,11 +16,15 @@ val lightColorScheme0 = lightColorScheme(
 	onSecondary = Color(0xFFA2A9AE),
 	secondaryContainer = Color(0xFF1C3648),
 	onSecondaryContainer = Color(0xFFCED8DF),
-	surface = Color(0xFFC9D6DF),
+	surface = Color(0xFFE4E4E4),
 	onSurface = Color(0xFF1E2A34),
 //	background = Color(0xFFECF1F4),
 	background = Color(0xFFFFFFFF),
-	onBackground = Color(0xFF02060A)
+	onBackground = Color(0xFF02060A),
+	error = Color(0xFFFF6D60),
+	onError = Color.White,
+	errorContainer = Color(0xFFFAD4D4),
+	onErrorContainer = Color.Black,
 )
 
 val darkColorScheme0 = darkColorScheme(
@@ -36,38 +40,6 @@ val darkColorScheme0 = darkColorScheme(
 	onSurface = Color(0xFFC9D6DF),
 	background = Color(0xFF000000),
 	onBackground = Color(0xFFCEDBE6)
-)
-
-val lightColorScheme1 = lightColorScheme(
-	primary = Color(0xFF003A70),
-	onPrimary = Color(0xFFFFFFFF),
-	primaryContainer = Color(0xFF64A4CE),
-	onPrimaryContainer = Color(0xFFFFFFFF),
-//	inversePrimary = ,
-	secondary = Color(0xFF0F558F),
-	onSecondary = Color(0xFFFFFFFF),
-	secondaryContainer = Color(0xFF2476B1),
-	onSecondaryContainer = Color(0xFFFFFFFF),
-//	tertiary = Color(0xFFE6DDC4),
-//	onTertiary = Color(0xFF6B5827),
-//	tertiaryContainer = ,
-//	onTertiaryContainer = ,
-	background = Color(0xFFE2EFF6),
-	onBackground = Color(0xFF000000),
-	surface = Color(0xFFB7D7EA),
-	onSurface = Color(0xFF000000),
-//	surfaceVariant = ,
-//	onSurfaceVariant = ,
-//	surfaceTint = ,
-//	inverseSurface = ,
-//	inverseOnSurface = ,
-//	error = ,
-//	onError = ,
-//	errorContainer = ,
-//	onErrorContainer = ,
-//	outline = ,
-//	outlineVariant = ,
-//	scrim = ,
 )
 
 

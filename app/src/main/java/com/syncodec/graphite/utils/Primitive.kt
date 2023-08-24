@@ -55,6 +55,11 @@ data class Quadruple<out A, out B, out C, out D>(
 	override fun toString() : String = "($first, $second, $third)"
 }
 
+fun <T> MutableCollection<T>.xor(element: T) {
+	if (element in this) remove(element) else add(element)
+}
+
+
 @Deprecated("Remove in next version")
 fun String.encrypt(key : String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm") : String? {
 	try {

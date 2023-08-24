@@ -3,43 +3,62 @@ package com.syncodec.graphite.presentation.bucket.composable.bar
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.bucketTypeIconMap
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
-import com.syncodec.graphite.presentation.common.button.stateButton.StateData
+import com.syncodec.graphite.presentation.common.button.BackButton
+import com.syncodec.graphite.presentation.common.button.FavouriteButton
+import com.syncodec.graphite.presentation.common.button.FilterButton
+import com.syncodec.graphite.presentation.common.button.LockButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
+import com.syncodec.graphite.presentation.common.tab.GenericTabRow
+import com.syncodec.graphite.presentation.common.tab.TabItem
+import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun TopBar(
-	title : String? = null,
-	isLocked : Boolean = false,
-	isFavourite : Boolean = false,
-	bucketType : BucketType = BucketType.UNKNOWN,
-	viewState : Int = 0,
-	isSelecting : Boolean = false,
-	selectedItemSize : Int = 0,
-	onCancelSelection : () -> Unit = {},
-	onClickFavourite : () -> Unit = {},
-	onClickLock : () -> Unit = {},
-	onStateChange : (Int) -> Unit = {},
-	onShare : () -> Unit = {},
-	onDelete : () -> Unit = {},
+	title: String? = null,
+	isLocked: Boolean = false,
+	isFavourite: Boolean = false,
+	bucketType: BucketType = BucketType.UNKNOWN,
+	pagerState: PagerState = rememberPagerState { 4 },
+	isSearching: Boolean = false,
+	isSelecting: Boolean = false,
+	searchQueryList: Set<String> = setOf(),
+	selectedItemSize: Int = 0,
+	onCancelSelection: () -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+	onClickSearch : () -> Unit = {},
+	onShare: () -> Unit = {},
+	onDelete: () -> Unit = {},
+	onClickBack: () -> Unit = {},
+	addSearchQuery: (String) -> Unit = {},
+	removeSearchQuery: (String) -> Unit = {},
 ) {
-
-	val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
 	Column(
 		modifier = Modifier
@@ -48,7 +67,8 @@ fun TopBar(
 	) {
 		Crossfade(
 			targetState = isSelecting,
-			animationSpec = tween(durationMillis = 300)
+			animationSpec = tween(durationMillis = 470),
+			label = ""
 		) {
 			if (it) {
 				SelectionBar(
@@ -62,22 +82,26 @@ fun TopBar(
 					title = title,
 					isLocked = isLocked,
 					isFavourite = isFavourite,
+					isSearching = isSearching,
+					searchQueryList = searchQueryList,
 					onClickFavourite = onClickFavourite,
 					onClickLock = onClickLock,
-					onClickBack = { backPressedDispatcher?.onBackPressed() }
+					onClickSearch = onClickSearch,
+					onClickBack = onClickBack,
+					addSearchQuery = addSearchQuery,
+					removeSearchQuery = removeSearchQuery,
 				)
 			}
 		}
 
 		AnimatedVisibility(
-			visible = ! isSelecting && bucketType != BucketType.LINK,
-			enter = expandVertically(tween(300)),
-			exit = shrinkVertically(tween(300))
+			visible = !isSelecting && bucketType != BucketType.LINK,
+			enter = expandVertically(tween(470)),
+			exit = shrinkVertically(tween(470))
 		) {
 			StateView(
 				bucketType = bucketType,
-				currentState = viewState,
-				onStateChange = onStateChange
+				pagerState = pagerState
 			)
 		}
 	}
@@ -86,68 +110,137 @@ fun TopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Bar(
-	title : String?,
-	isFavourite : Boolean = false,
-	isLocked : Boolean = false,
-	onClickFavourite : () -> Unit = {},
-	onClickLock : () -> Unit = {},
-	onClickBack : () -> Unit = {},
+	title: String?,
+	isFavourite: Boolean = false,
+	isLocked: Boolean = false,
+	isSearching: Boolean = false,
+	searchQueryList: Set<String> = setOf(),
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+	onClickSearch : () -> Unit = {},
+	onClickBack: () -> Unit = {},
+	addSearchQuery: (String) -> Unit = {},
+	removeSearchQuery: (String) -> Unit = {},
 ) {
-	TopAppBar(
-		navigationIcon = {
-			MenuButton(
-				icon = R.drawable.ic_back,
-				tooltip = "Back",
-				onClick = onClickBack
-			)
-		},
-		title = {
-			Crossfade(
-				targetState = title,
-				animationSpec = tween(300)
-			) {
-				Text(
-					text = it ?: "Untitled",
-					color = MaterialTheme.colorScheme.onBackground,
-					fontStyle = if (it == null) FontStyle.Italic else FontStyle.Normal
-				)
-			}
-		},
-		actions = {
-			MenuButton(
-				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
-				tooltip = if (isLocked) "Locked" else "Not locked",
-				checked = isLocked,
-				onClick = onClickLock
-			)
+	var searchQuery by remember { mutableStateOf("") }
 
-			MenuButton(
-				icon = R.drawable.ic_favourite,
-				tooltip = "Favourite",
-				checked = isFavourite,
-				onClick = onClickFavourite,
+	AnimatedContent(
+		targetState = isSearching,
+		label = "bar_animation"
+	) {
+		if (it) {
+			Column(
+				modifier = Modifier.fillMaxWidth()
+			) {
+				SearchBar(
+					query = searchQuery,
+					onQueryChange = { searchQuery = it },
+					onSearch = { addSearchQuery(it); searchQuery = "" },
+					active = false,
+					onActiveChange = {},
+					placeholder = { Text(text = "Search within \"$title\"") },
+					leadingIcon = {
+						GenericButton(
+							icon = R.drawable.ic_close,
+							colors = GenericButtonDefaults.bottomBarColorWhite(),
+							onClick = onClickBack
+						)
+					},
+					trailingIcon = {
+						GenericButton(
+							icon = R.drawable.ic_fa_search,
+							colors = GenericButtonDefaults.bottomBarColorWhite(),
+							onClick = { addSearchQuery(searchQuery); searchQuery = "" }
+						)
+					},
+					tonalElevation = 0.dp,
+					colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
+					modifier = Modifier.fillMaxWidth(),
+					content = {}
+				)
+				AnimatedVisibility(
+					visible = searchQueryList.isNotEmpty(),
+					enter = expandVertically(tween(470)),
+					exit = shrinkVertically(tween(470)),
+					label = "searchQueryList_animation"
+				) {
+					Column {
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.horizontalScroll(rememberScrollState())
+						) {
+							Spacer(modifier = Modifier.width(16.dp))
+							searchQueryList.forEach {
+								SuggestionChip(
+									label = { Text(text = it) },
+									onClick = { removeSearchQuery(it) }
+								)
+								Spacer(modifier = Modifier.width(12.dp))
+							}
+							Spacer(modifier = Modifier.width(4.dp))
+						}
+						Spacer(modifier = Modifier.height(8.dp))
+					}
+				}
+			}
+		} else {
+			TopAppBar(
+				navigationIcon = { BackButton(onClick = onClickBack) },
+				title = {
+					Crossfade(
+						targetState = title,
+						animationSpec = tween(470),
+						label = ""
+					) {
+						Text(
+							text = it ?: "Untitled",
+							color = MaterialTheme.colorScheme.onBackground,
+							fontStyle = if (it == null) FontStyle.Italic else FontStyle.Normal
+						)
+					}
+				},
+				actions = {
+					FilterButton()
+
+					LockButton(
+						isLocked = isLocked,
+						onClick = onClickLock,
+					)
+
+					FavouriteButton(
+						isFavourite = isFavourite,
+						onClick = onClickFavourite,
+					)
+
+					GenericButton(
+						icon = R.drawable.ic_fa_search,
+						colors = GenericButtonDefaults.bottomBarColorWhite(),
+						onClick = onClickSearch
+					)
+				},
+				colors = TopAppBarDefaults.topAppBarColors(
+					containerColor = MaterialTheme.colorScheme.background,
+					navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+					titleContentColor = MaterialTheme.colorScheme.onSurface,
+					actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+				)
 			)
-		},
-		colors = TopAppBarDefaults.topAppBarColors(
-			containerColor = MaterialTheme.colorScheme.background,
-			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-			titleContentColor = MaterialTheme.colorScheme.onSurface,
-			actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-		)
-	)
+		}
+	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SelectionBar(
-	selectedItemSize : Int = 0,
-	onCancelSelection : () -> Unit = {},
-	onShare : () -> Unit = {},
-	onDelete : () -> Unit = {},
+	selectedItemSize: Int = 0,
+	onCancelSelection: () -> Unit = {},
+	onShare: () -> Unit = {},
+	onDelete: () -> Unit = {},
 ) {
 	TopAppBar(
 		navigationIcon = {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_close,
 				tooltip = "Cancel selection",
 				onClick = onCancelSelection,
@@ -157,20 +250,20 @@ private fun SelectionBar(
 			AnimatedText(
 				text = if (selectedItemSize == 0) "No items selected" else if (selectedItemSize == 1) "1 item selected" else "${selectedItemSize} items selected",
 				color = MaterialTheme.colorScheme.onBackground,
-				transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+				transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) }
 			)
 		},
 		actions = {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_share,
 				tooltip = "Share items",
 				onClick = onShare
 			)
 
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_delete,
 				tooltip = "Delete items",
-				colors = MenuButtonDefaults.deleteButtonColors(),
+				colors = GenericButtonDefaults.deleteButtonColors(),
 				onClick = onDelete
 			)
 		},
@@ -178,87 +271,52 @@ private fun SelectionBar(
 	)
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StateView(
-	bucketType : BucketType,
-	currentState : Int,
-	onStateChange : (Int) -> Unit
+	bucketType: BucketType,
+	pagerState: PagerState = rememberPagerState { 4 }
 ) {
-	val stateNameList : List<String> = when (bucketType) {
-		BucketType.TODO -> listOf("All", "To Do", "Doing", "Done")
-		BucketType.BOOK -> listOf("All", "To Read", "Reading", "Read")
-		BucketType.SHOW -> listOf("All", "To Watch", "Watching", "Watched")
-		BucketType.LINK -> listOf("All", "To Visit", "Opened", "Done")
-		BucketType.UNKNOWN -> listOf("All", "To Do", "Doing", "Done")
+	val scope = rememberCoroutineScope()
+
+	val stateTodo = when (bucketType) {
+		BucketType.TODO -> "To do"
+		BucketType.BOOK -> "To read"
+		BucketType.SHOW -> "To watch"
+		BucketType.LINK -> "To visit"
+		BucketType.UNKNOWN -> "To do"
 	}
-	val stateIconList : List<Int> = when (bucketType) {
-		BucketType.TODO -> listOf(
-			R.drawable.ic_state,
-			R.drawable.ic_clock,
-			R.drawable.ic_todo,
-			R.drawable.ic_done
-		)
 
-		BucketType.BOOK -> listOf(
-			R.drawable.ic_state,
-			R.drawable.ic_clock,
-			R.drawable.ic_book,
-			R.drawable.ic_done
-		)
+	val stateDoing = when (bucketType) {
+		BucketType.TODO -> "Doing"
+		BucketType.BOOK -> "Reading"
+		BucketType.SHOW -> "Watching"
+		BucketType.LINK -> "Opened"
+		BucketType.UNKNOWN -> "To do"
+	}
 
-		BucketType.SHOW -> listOf(
-			R.drawable.ic_state,
-			R.drawable.ic_clock,
-			R.drawable.ic_show,
-			R.drawable.ic_done
-		)
-
-		BucketType.LINK -> listOf(
-			R.drawable.ic_state,
-			R.drawable.ic_clock,
-			R.drawable.ic_show,
-			R.drawable.ic_done
-		)
-
-		BucketType.UNKNOWN -> listOf(
-			R.drawable.ic_state,
-			R.drawable.ic_clock,
-			R.drawable.ic_todo,
-			R.drawable.ic_done
-		)
+	val stateDone = when (bucketType) {
+		BucketType.TODO -> "Done"
+		BucketType.BOOK -> "Read"
+		BucketType.SHOW -> "Watched"
+		BucketType.LINK -> "Done"
+		BucketType.UNKNOWN -> "Done"
 	}
 
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		StateButton(
-			stateList = listOf(
-				StateData(
-					title = stateNameList[0],
-					icon = stateIconList[0],
-					stateTint = MaterialTheme.colorScheme.primary
-				),
-				StateData(
-					title = stateNameList[1],
-					icon = stateIconList[1],
-					stateTint = MaterialTheme.colorScheme.primary
-				),
-				StateData(
-					title = stateNameList[2],
-					icon = stateIconList[2],
-					stateTint = MaterialTheme.colorScheme.primary
-				),
-				StateData(
-					title = stateNameList[3],
-					icon = stateIconList[3],
-					stateTint = MaterialTheme.colorScheme.primary
-				)
+		GenericTabRow(
+			tabItemList = listOf(
+				TabItem(text = "All", icon = R.drawable.ic_fa_circle_dot_duotone) { scope.launch { pagerState.animateScrollToPage(0) } },
+				TabItem(text = stateTodo, icon = R.drawable.ic_fa_clock) { scope.launch { pagerState.animateScrollToPage(1) } },
+				TabItem(text = stateDoing, icon = bucketTypeIconMap[bucketType] ?: R.drawable.ic_fa_question) { scope.launch { pagerState.animateScrollToPage(2) } },
+				TabItem(text = stateDone, icon = R.drawable.ic_fa_circle_check) { scope.launch { pagerState.animateScrollToPage(3) } },
 			),
-			currentState = currentState,
+			selectedTabIndex = pagerState.currentPage,
 			modifier = Modifier
-				.height(36.dp)
-				.padding(12.dp, 0.dp),
-			onChangeState = onStateChange
+				.fillMaxWidth()
+				.padding(horizontal = 12.dp)
 		)
 		Spacer(modifier = Modifier.height(8.dp))
 	}

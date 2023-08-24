@@ -33,8 +33,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ConnectedView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
 import com.syncodec.graphite.presentation.settings.SettingsActivity
@@ -175,9 +175,9 @@ private fun ErrorCard(
 					Text(text = "Manage")
 				}
 				Spacer(modifier = Modifier.width(2.dp))
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_refresh,
-					colors = MenuButtonDefaults.deleteButtonColors(
+					colors = GenericButtonDefaults.deleteButtonColors(
 						containerColor = MaterialTheme.colorScheme.error,
 						iconColor = MaterialTheme.colorScheme.onError,
 					),
@@ -220,9 +220,9 @@ private fun LoadingCard(
 				Text(text = "Manage")
 			}
 			Spacer(modifier = Modifier.width(2.dp))
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_refresh,
-				colors = MenuButtonDefaults.deleteButtonColors(
+				colors = GenericButtonDefaults.deleteButtonColors(
 					containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
 					iconColor = MaterialTheme.colorScheme.onSurface,
 				),

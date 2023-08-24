@@ -9,8 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -33,15 +33,15 @@ fun BottomBar(
 
 		Spacer(modifier = Modifier.weight(1f))
 
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_vault,
 			checked = isAuthenticated,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
 
-		MenuButton(
+		GenericButton(
 			icon = R.drawable.ic_menu,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
+			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 			onClick = onClickMenu
 		)
 

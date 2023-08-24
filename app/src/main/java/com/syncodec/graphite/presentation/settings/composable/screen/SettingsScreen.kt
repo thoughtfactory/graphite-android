@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.firebase.auth.FirebaseUser
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.AccountBottomSheet
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScaffold
@@ -58,6 +60,7 @@ fun SettingsScreen(
 	onClickDeleteAccount: () -> Unit = { },
 	onNavigate: (SettingsActivity.Companion.SettingsScreen) -> Unit = {}
 ) {
+	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 	val accountBottomSheetState = rememberModalBottomSheetState()
 	var showAccountBottomSheet by remember { mutableStateOf(false) }
@@ -89,7 +92,9 @@ fun SettingsScreen(
 					title = "Graphite Pro",
 					subTitle = "Unleash the full power of Graphite",
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_pro),
-					onClick = { },
+					onClick = {
+							  context.startActivity(Intent(context, ProActivity::class.java))
+					},
 				)
 			}
 			item {

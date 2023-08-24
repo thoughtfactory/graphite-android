@@ -475,24 +475,24 @@ fun EditorScreen(
                             .copy(alpha = 0.47f)
                     )
             ) {
-                AnimatedText(
-//					text = if (isGeolocationEnabled != false) address ?: latLng?.toString() ?: "No location" else "Location disabled",
-                    text = locationData.let {
-                        when (it) {
-                            is LocationData.Init -> "Initiating location"
-                            is LocationData.Loading -> "Loading location"
-                            is LocationData.SuccessOnlyLatLng -> it.latLng.toString()
-                            is LocationData.SuccessOnlyAddress -> it.address
-                            is LocationData.Success -> it.address
-                            is LocationData.SuccessNoData -> "No location"
-                            is LocationData.NoPermission -> "Location permission not granted"
-                            is LocationData.Error -> "Error loading location"
-                        }
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(12.dp, 8.dp),
-                )
+//                AnimatedText(
+////					text = if (isGeolocationEnabled != false) address ?: latLng?.toString() ?: "No location" else "Location disabled",
+//                    text = locationData.let {
+//                        when (it) {
+//                            is LocationData.Init -> "Initiating location"
+//                            is LocationData.Loading -> "Loading location"
+//                            is LocationData.SuccessOnlyLatLng -> it.latLng.toString()
+//                            is LocationData.SuccessOnlyAddress -> it.address
+//                            is LocationData.Success -> it.address
+////                            is LocationData.SuccessNoData -> "No location"
+//                            is LocationData.NoPermission -> "Location permission not granted"
+//                            is LocationData.Error -> "Error loading location"
+//                        }
+//                    },
+//                    style = MaterialTheme.typography.bodySmall,
+//                    color = MaterialTheme.colorScheme.onSurface,
+//                    modifier = Modifier.padding(12.dp, 8.dp),
+//                )
             }
             BottomBar(
                 textFormat = textFormat,
@@ -503,7 +503,7 @@ fun EditorScreen(
                 onClickAttachment = { openSheet(EditorBottomSheetType.Attachment) },
                 onClickTag = { openSheet(EditorBottomSheetType.Tag) },
                 onClickSwapEditor = { openEditorPicker.launch(arrayOf("text/html")) },
-            ) { editorAction -> editor.onEditorAction(editorAction = editorAction) }
+            ) { editorAction ->  }
         }
     }
 }

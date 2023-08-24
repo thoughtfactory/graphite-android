@@ -20,8 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -38,7 +37,7 @@ fun TopBar(
 ) {
 	TopAppBar(
 		navigationIcon = {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_back,
 				tooltip = "Back",
 				onClick = onClickBack
@@ -56,14 +55,14 @@ fun TopBar(
 						Row(
 							modifier = Modifier
 						) {
-							MenuButton(
+							GenericButton(
 								icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
 								tooltip = if (isLocked) "Locked" else "Not locked",
 								checked = isLocked,
 								shape = MaterialTheme.shapes.medium,
 								onClick = onClickLock
 							)
-							MenuButton(
+							GenericButton(
 								icon = R.drawable.ic_favourite,
 								tooltip = if (isFavourite) "Favourite" else "Not favourite",
 								checked = isFavourite,

@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.GenericButton
 
 
 @Preview
@@ -38,14 +38,14 @@ fun SearchBar(
 		onValueChange = { query = it },
 		placeholder = { Text(text = "Search within notes") },
 		leadingIcon = {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_back,
 				tooltip = "Back",
 				onClick = onClickBack,
 			)
 		},
 		trailingIcon = {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_search,
 				tooltip = "Search",
 			) {

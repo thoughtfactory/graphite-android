@@ -24,8 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.dropbox.core.v2.files.Metadata
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.dialog.GenericDialog
 import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -117,9 +117,9 @@ fun RestoreSnapshotDialog(
 					)
 				}
 
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_launch,
-					colors = MenuButtonDefaults.menuButtonColorsOnSurface()
+					colors = GenericButtonDefaults.genericButtonColorsOnSurface()
 				) {
 					try {
 						uriHandler.openUri("https://www.dropbox.com/home/Apps/Graphite%20Data${snapshot?.pathDisplay}")

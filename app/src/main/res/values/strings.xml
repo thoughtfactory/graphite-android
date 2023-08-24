@@ -1,4 +1,66 @@
 <resources>
     <string name="app_name">Graphite Debug</string>
     <string name="app_description">Graphite</string>
+
+    <!--    Location-->
+    <string name="get_location_permission_message">Grant location permission to automatically fetch location on new note.\nOr you can set location manually.</string>
+    <string name="set_location_manually">Set</string>
+    <string name="remove_location">Remove</string>
+    <string name="reload_location">Reload</string>
+    <string name="request_permission">Request</string>
+    <string name="location_initializing">Initializing</string>
+    <string name="location_removed">Reload or set location manually</string>
+    <string name="location_loading">Loading</string>
+    <string name="location_auto_fetch_disabled">Auto fetching location is disabled. You can reload or set location manually</string>
+    <string name="error_fetching_location_content_description">Error fetching location</string>
+    <string name="error_fetching_location">Error fetching location. Try reloading or set location manually. Check if GPS is enabled.</string>
+
+    <!--    Bucket-->
+    <string name="todo">Todo</string>
+    <string name="doing">Doing</string>
+    <string name="done">Done</string>
+    <string name="to_read">To read</string>
+    <string name="to_watch">To watch</string>
+    <string name="add_todo">Add todo</string>
+    <string name="add_link">Add link</string>
+    <string name="link">Link</string>
+    <string name="link_example">https://www.example.com</string>
+    <string name="preview">Preview</string>
+    <string name="link_preview_error_title">Error fetching data</string>
+    <string name="link_preview_error_description">Check if the url is valid. Also check if network connection is available. Or maybe it\'s a server error, you can click add link to save current url</string>
+
+    <!--    Bucket description-->
+    <string name="bucket_new_list">New List</string>
+    <string name="bucket_title_placeholder">Name your list</string>
+    <string name="bucket_description_placeholder">What is it about?</string>
+
+    <!--    Bucket type-->
+    <string name="bucket_type_todo">Todo</string>
+    <string name="bucket_type_book">Book</string>
+    <string name="bucket_type_show">Movies &amp; Shows</string>
+    <string name="bucket_type_link">Link</string>
+
+    <!--    Bucket description-->
+    <string name="bucket_description_todo">Have any pending tasks?</string>
+    <string name="bucket_description_book">A little fiction here, and a little fantasy there</string>
+    <string name="bucket_description_show">Aren\'t those characters real!?</string>
+    <string name="bucket_description_link">Maybe I will visit this someday</string>
+    <string name="bucket_description_coming_soon">More lists coming soon… Stay tuned… Or maybe you suggest us…</string>
+
+    <!--    Generic-->
+    <string name="stay_tuned">Stay tuned</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="url">Url</string>
+    <string name="clear">Clear</string>
+    <string name="unavailable">Unavailable</string>
+    <string name="favourite">Favourite</string>
+    <string name="lock">Lock</string>
+    <string name="toggle_favourite">Toggle favourite</string>
+    <string name="toggle_lock">Toggle lock</string>
+
+    <!--    Toast-->
+    <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
+    <string name="toast_not_authenticated">Open vault to toggle lock</string>
+    <string name="toast_clipboard_is_empty">Clipboard is empty</string>
 </resources>

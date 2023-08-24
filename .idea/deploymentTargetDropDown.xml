@@ -2,13 +2,43 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="AliceTest.decrypt">
-        <State />
-      </entry>
       <entry key="Andi">
+        <State>
+          <runningDeviceTargetSelectedWithDropDown>
+            <Target>
+              <type value="RUNNING_DEVICE_TARGET" />
+              <deviceKey>
+                <Key>
+                  <type value="SERIAL_NUMBER" />
+                  <value value="29271JEGR11461" />
+                </Key>
+              </deviceKey>
+            </Target>
+          </runningDeviceTargetSelectedWithDropDown>
+          <timeTargetWasSelectedWithDropDown value="2023-08-07T00:04:27.488905395Z" />
+          <runningDeviceTargetsSelectedWithDialog>
+            <Target>
+              <type value="RUNNING_DEVICE_TARGET" />
+              <deviceKey>
+                <Key>
+                  <type value="SERIAL_NUMBER" />
+                  <value value="192.168.240.112:5555" />
+                </Key>
+              </deviceKey>
+            </Target>
+          </runningDeviceTargetsSelectedWithDialog>
+        </State>
+      </entry>
+      <entry key="BucketBottomSheet">
         <State />
       </entry>
-      <entry key="Graphite Realm Android [app:dependencies]">
+      <entry key="EditorBottomBar">
+        <State />
+      </entry>
+      <entry key="ExportBottomSheet">
+        <State />
+      </entry>
+      <entry key="LocationBottomSheet">
         <State />
       </entry>
     </value>

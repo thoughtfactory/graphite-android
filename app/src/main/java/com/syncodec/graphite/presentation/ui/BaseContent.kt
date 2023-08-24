@@ -9,23 +9,29 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.with
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.syncodec.graphite.BaseApplication
+import com.syncodec.graphite.presentation.common.shape.AbsoluteSmoothCornerShape
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.ui.authentication.AddPasscodeScreen
 import com.syncodec.graphite.presentation.ui.authentication.AuthenticatorScreen
@@ -46,6 +52,7 @@ val LocalIsDarkTheme = compositionLocalOf { false }
 @SuppressLint("NewApi")
 @Composable
 fun BaseContent(
+	vararg providerValues : ProvidedValue<*>,
 	isDarkTheme : Boolean = isSystemInDarkTheme(),
 	isDynamicColor : Boolean = false,
 	content : @Composable () -> Unit
@@ -73,12 +80,20 @@ fun BaseContent(
 		else -> Defaults.DefaultTypagrophy
 	}
 
+	val appShapes = Shapes(
+		extraSmall = AbsoluteSmoothCornerShape(4.dp, 100),
+		small = AbsoluteSmoothCornerShape(8.dp, 100),
+		medium = AbsoluteSmoothCornerShape(12.dp, 100),
+		large = AbsoluteSmoothCornerShape(16.dp, 100),
+		extraLarge = AbsoluteSmoothCornerShape(28.dp, 100)
+	)
+
 	val isAuthenticated by BaseApplication.isAuthenticated.collectAsState(initial = false)
 	val authenticatorState by BaseApplication.authenticatorScreen.collectAsState()
 
 	fun onClose() = BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 
-	var noTry by remember { mutableStateOf(0) }
+	var noTry by remember { mutableIntStateOf(0) }
 
 	val isPro by BaseApplication.isPro.collectAsState()
 
@@ -89,7 +104,8 @@ fun BaseContent(
 	appColorScheme?.let { colorScheme ->
 		MaterialTheme(
 			colorScheme = colorScheme,
-			typography = appTypography
+			shapes = appShapes,
+			typography = appTypography,
 		) {
 			val systemUiController = rememberSystemUiController()
 			systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
@@ -99,6 +115,7 @@ fun BaseContent(
 			val rippleIndication = rememberRipple()
 
 			CompositionLocalProvider(
+				*providerValues,
 				LocalIndication provides rippleIndication,
 				LocalIsPro provides isPro,
 				LocalIsAuthenticated provides isAuthenticated,
@@ -129,7 +146,8 @@ fun BaseContent(
 
 				AnimatedContent(
 					targetState = authenticatorState,
-					transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+					transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
+					label = "authenticatorState_animation"
 				) {
 					when (it) {
 						AuthenticatorScreen.Authenticate -> AuthenticatorScreen(

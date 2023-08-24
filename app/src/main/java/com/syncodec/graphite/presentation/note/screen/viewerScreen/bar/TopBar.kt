@@ -15,8 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
+import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenu
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
 
@@ -41,7 +41,7 @@ fun TopBar(
 
 	TopAppBar(
 		navigationIcon = {
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_back,
 				tooltip = "Back"
 			) {
@@ -51,22 +51,22 @@ fun TopBar(
 		},
 		title = {},
 		actions = {
-			MenuButton(
+			GenericButton(
 				icon = if (isLocked) R.drawable.ic_lock_close else R.drawable.ic_lock_open,
 				tooltip = "Lock",
 				checked = isLocked,
-				colors = MenuButtonDefaults.menuButtonColors(),
+				colors = GenericButtonDefaults.genericButtonColors(),
 				onClick = onClickLock
 			)
-			MenuButton(
+			GenericButton(
 				icon = R.drawable.ic_favourite,
 				tooltip = "Favourite",
 				checked = isFavourite,
-				colors = MenuButtonDefaults.menuButtonColors(),
+				colors = GenericButtonDefaults.genericButtonColors(),
 				onClick = onClickFavourite
 			)
 			Box {
-				MenuButton(
+				GenericButton(
 					icon = R.drawable.ic_menu,
 					tooltip = "Menu",
 					onClick = { isMenuDropdownVisible = true },

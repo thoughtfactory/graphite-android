@@ -11,7 +11,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
@@ -165,7 +165,7 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 					this@EditorScreenViewModel.isLocked.tryEmit(it.isLocked)
 					it.parentId?.let { repository.getChapterFromId(id = it).let { parentChapter.tryEmit(it) } }
 
-					loadLocationData(latLng = it.getLatLng(), address = it.address)
+//					loadLocationData(latLng = it.getLatLng(), address = it.address)
 
 					this@EditorScreenViewModel.isReady.tryEmit(true)
 				}
@@ -225,18 +225,18 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 	}
 
 	/** Used for bottom sheet to show the correct view and data.*/
-	private fun loadLocationData(latLng : LatLng?, address : String?) {
-		try {
-			when {
-				latLng == null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessNoData)
-				latLng == null && ! address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyAddress(address))
-				latLng != null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyLatLng(latLng))
-				else -> locationDataState.tryEmit(LocationData.Success(latLng !!, address !!))
-			}
-		} catch (e : Exception) {
-			locationDataState.tryEmit(LocationData.Error("Error loading location data"))
-		}
-	}
+//	private fun loadLocationData(latLng : LatLng?, address : String?) {
+//		try {
+//			when {
+//				latLng == null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessNoData)
+//				latLng == null && ! address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyAddress(address))
+//				latLng != null && address.isNullOrEmpty() -> locationDataState.tryEmit(LocationData.SuccessOnlyLatLng(latLng))
+//				else -> locationDataState.tryEmit(LocationData.Success(latLng !!, address !!))
+//			}
+//		} catch (e : Exception) {
+//			locationDataState.tryEmit(LocationData.Error("Error loading location data"))
+//		}
+//	}
 
 	fun setUserTimestamp(timestamp : Long) = this.userTimestamp.tryEmit(timestamp)
 
@@ -251,13 +251,13 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 	fun removeLocation() {
 		this.latLng.tryEmit(null)
 		this.address.tryEmit(null)
-		loadLocationData(latLng = null, address = null)
+//		loadLocationData(latLng = null, address = null)
 	}
 
 	fun setLocation(latLng : LatLng?, address : String?) {
 		this.latLng.tryEmit(latLng)
 		this.address.tryEmit(address)
-		loadLocationData(latLng = latLng, address = address)
+//		loadLocationData(latLng = latLng, address = address)
 	}
 
 	fun setLocationPermissionUnavailable() = this.locationDataState.tryEmit(LocationData.NoPermission)

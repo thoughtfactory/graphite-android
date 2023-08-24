@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerScope
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +32,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProFeaturesView() {
 
-	val pagerState = androidx.compose.foundation.pager.rememberPagerState(initialPage = 3132)
+	val pagerState = rememberPagerState(initialPage = 3132, pageCount = {7171})
 
 	LaunchedEffect(key1 = null) {
 		launch {
@@ -46,7 +48,6 @@ fun ProFeaturesView() {
 		modifier = Modifier.fillMaxWidth()
 	) {
 		HorizontalPager(
-			pageCount = 7171,
 			state = pagerState,
 		) {
 			when (it % 7) {

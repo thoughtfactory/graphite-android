@@ -1,50 +1,51 @@
 package com.syncodec.graphite.presentation.bucket.composable.bar
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.common.button.MetadataButton
+import com.syncodec.graphite.presentation.common.button.VaultButton
 
 
 @Preview
 @Composable
 fun BottomBar(
-	onClickMenu : () -> Unit = {}
+	onClickMetadata: () -> Unit = {},
 ) {
-	val isAuthenticated = LocalIsAuthenticated.current
-	val onAuthenticationAction = LocalAuthenticatorAction.current
-
-	BottomAppBar(
-		modifier = Modifier.fillMaxWidth(),
-		tonalElevation = 8.dp,
+	Column(
+		modifier = Modifier.fillMaxWidth()
 	) {
-		Spacer(modifier = Modifier.width(12.dp))
-
-
-		Spacer(modifier = Modifier.weight(1f))
-
-		MenuButton(
-			icon = R.drawable.ic_vault,
-			checked = isAuthenticated,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
-		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
-
-		MenuButton(
-			icon = R.drawable.ic_menu,
-			colors = MenuButtonDefaults.menuButtonColorsOnSurface(),
-			onClick = onClickMenu
+		Spacer(
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(1.dp)
+				.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f))
 		)
+		BottomAppBar(
+			modifier = Modifier.fillMaxWidth(),
+			tonalElevation = 0.dp,
+			containerColor = Color.White,
+			contentColor = Color.Black,
+		) {
+			Spacer(modifier = Modifier.width(12.dp))
 
-		Spacer(modifier = Modifier.width(12.dp))
+			MetadataButton(onClick = onClickMetadata)
+
+			Spacer(modifier = Modifier.weight(1f))
+
+			VaultButton()
+
+			Spacer(modifier = Modifier.width(12.dp))
+		}
 	}
 }

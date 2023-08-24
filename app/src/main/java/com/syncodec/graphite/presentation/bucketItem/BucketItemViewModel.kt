@@ -8,7 +8,7 @@ import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.ShowType
-import com.syncodec.graphite.di.repository.repository.Repository
+import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.Status
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
