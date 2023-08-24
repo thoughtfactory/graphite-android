@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -18,7 +17,6 @@ class BucketActivity : ComponentActivity() {
 
 	private val viewModel by viewModel<BucketViewModel>()
 	private val bucketScreenCommonViewModel by viewModel<BucketScreenCommonViewModel>()
-	private val bucketBottomSheetViewModel by viewModel<BucketBottomSheetViewModel>()
 
 	override fun onCreate(savedInstanceState : Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -29,7 +27,6 @@ class BucketActivity : ComponentActivity() {
 			bucketId?.let { realmUUID ->
 				viewModel.loadAndViewData(realmUUID)
 				bucketScreenCommonViewModel.initBucket(realmUUID)
-				bucketBottomSheetViewModel.initBucket(realmUUID)
 			} ?: run {
 				Toast.makeText(this, "Error loading bucket. No id specified.", Toast.LENGTH_SHORT).show()
 				finish()

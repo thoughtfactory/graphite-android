@@ -141,7 +141,13 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.bucketItem.BucketItemActivity"
+            android:name=".presentation.bucketItem.activity.BookBucketItemActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".presentation.bucketItem.activity.ShowBucketItemActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
@@ -239,22 +245,13 @@
             android:foregroundServiceType="dataSync" />
 
         <service
-            android:name=".service.QuickNoteTile"
-            android:exported="true"
-            android:icon="@drawable/ic_add"
-            android:label="Quick note"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
-
-        <service
             android:name=".notification.NotePinNotificationService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:foregroundServiceType="dataSync"/>
 
         <service
             android:name=".notification.WriteNoteNotificationService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:foregroundServiceType="dataSync"/>
     </application>
 </manifest>

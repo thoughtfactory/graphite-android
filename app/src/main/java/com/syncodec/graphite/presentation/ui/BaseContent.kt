@@ -47,6 +47,7 @@ import com.syncodec.graphite.utils.alice.putSecretData
 
 val LocalIsPro = compositionLocalOf { false }
 val LocalIsDarkTheme = compositionLocalOf { false }
+val LocalAppDataStore = compositionLocalOf<DataStoreInstance> { error("no instance provided") }
 
 @OptIn(ExperimentalAnimationApi::class)
 @SuppressLint("NewApi")
@@ -118,6 +119,7 @@ fun BaseContent(
 				*providerValues,
 				LocalIndication provides rippleIndication,
 				LocalIsPro provides isPro,
+				LocalAppDataStore provides dataStoreInstance,
 				LocalIsAuthenticated provides isAuthenticated,
 				LocalIsDarkTheme provides when (colorScheme) {
 					darkColorScheme0 -> true

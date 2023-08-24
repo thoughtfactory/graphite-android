@@ -8,3 +8,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Graphite"
 include ':app'
+include ':reorderable'

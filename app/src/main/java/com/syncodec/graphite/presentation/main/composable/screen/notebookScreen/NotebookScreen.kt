@@ -46,11 +46,11 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.SpringDragCancelledAnimation
-import org.burnoutcrew.reorderable.detectReorder
-import org.burnoutcrew.reorderable.rememberReorderableLazyGridState
-import org.burnoutcrew.reorderable.reorderable
+import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
+import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
+import com.syncodec.graphite.presentation.common.reorderable.detectReorder
+import com.syncodec.graphite.presentation.common.reorderable.lazyState.rememberReorderableLazyGridState
+import com.syncodec.graphite.presentation.common.reorderable.reorderable
 import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
 

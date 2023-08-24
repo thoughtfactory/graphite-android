@@ -377,19 +377,19 @@ class MainActivity : ComponentActivity() {
 	}
 
 	private fun SyncDataStoreInstance.Companion.SyncProvider.onClickSyncNow() {
-		when (this) {
-			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> dropboxServiceConnectionManager?.service?.onClickSyncNow()
-			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDriveSyncServiceConnectionManager?.service?.onClickSyncNow()
-			else -> null
-		}
+//		when (this) {
+//			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> dropboxServiceConnectionManager?.service?.onClickSyncNow()
+//			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDriveSyncServiceConnectionManager?.service?.onClickSyncNow()
+//			else -> null
+//		}
 	}
 
 	private fun SyncDataStoreInstance.Companion.SyncProvider.onClickForceSync() {
-		when (this) {
-			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> dropboxServiceConnectionManager?.service?.onClickForceSync()
-			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDriveSyncServiceConnectionManager?.service?.onClickForceSync()
-			else -> null
-		}
+//		when (this) {
+//			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> dropboxServiceConnectionManager?.service?.onClickForceSync()
+//			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> gDriveSyncServiceConnectionManager?.service?.onClickForceSync()
+//			else -> null
+//		}
 	}
 
 	override fun onDestroy() {

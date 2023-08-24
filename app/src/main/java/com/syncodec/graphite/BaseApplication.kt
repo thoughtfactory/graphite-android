@@ -17,9 +17,9 @@ import com.syncodec.graphite.di.locator.Locator
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
-import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
-import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
+import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemViewModel
+import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
@@ -90,13 +90,15 @@ class BaseApplication : Application() {
 
 					viewModelOf(::BucketViewModel)
 					viewModelOf(::BucketScreenCommonViewModel)
-					viewModelOf(::BucketBottomSheetViewModel)
-					viewModelOf(::BucketItemViewModel)
 					viewModelOf(::NotebookScreenViewModel2)
 					viewModelOf(::SearchScreenViewModel)
 					viewModelOf(::TagsViewModel)
 					viewModelOf(::AttachmentScreenViewModel)
 					viewModelOf(::ImportDataViewModel)
+
+					viewModelOf(::BookBucketItemViewModel)
+					viewModelOf(::ShowBucketItemViewModel)
+
 //					viewModelOf(::ExportDataViewModel)
 //					viewModelOf(::ImportDataGraphiteViewModel)
 //					viewModelOf(::ImportDataJourneyViewModel)

@@ -225,9 +225,13 @@ class BucketItemObject() : RealmObject {
 //						objectMapper.writeValueAsString(this)
 						Json.encodeToString(this)
 					} catch (e: Exception) {
-//			            e.printStackTrace()
+			            e.printStackTrace()
 						"null"
 					}
+				}
+
+				override fun toString(): String {
+					return "title : $title\nkey : $key\ndesc : $description"
 				}
 
 				override fun equals(other: Any?): Boolean {
@@ -270,10 +274,10 @@ class BucketItemObject() : RealmObject {
 				@SerialName("movieData")
 				var movieData: MovieData? = null,
 			) : BucketItemData() {
-				constructor(data: String?) : this(null, null, null) {
-					if (data != null) {
+				constructor(jsonString: String?) : this(null, null, null) {
+					if (jsonString != null) {
 						try {
-							val showData: ShowData = Json.decodeFromString(data)
+							val showData: ShowData = Json.decodeFromString(jsonString)
 							this.type = showData.type
 							this.tvData = showData.tvData
 							this.movieData = showData.movieData

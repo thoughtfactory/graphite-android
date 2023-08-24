@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -30,8 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -95,6 +98,7 @@ fun AddLinkBottomSheet(
 					Row {
 						ClearButton { urlText = "" }
 						PasteButton { urlText = it }
+						Spacer(modifier = Modifier.width(4.dp))
 					}
 				},
 				maxLines = 1,
@@ -106,7 +110,9 @@ fun AddLinkBottomSheet(
 					imeAction = ImeAction.Done,
 				),
 				keyboardActions = KeyboardActions {
-
+					onAddLink(urlText, 0)
+					urlText = ""
+					contentStatus = ContentStatus.Init
 				},
 				modifier = Modifier.fillMaxWidth()
 			)
@@ -143,9 +149,7 @@ fun AddLinkBottomSheet(
 				modifier = Modifier.fillMaxWidth(),
 				shape = MaterialTheme.shapes.medium,
 				enabled = urlText.isNotEmpty(),
-				onClick = {
-					getLinkPreview(urlText)
-				}
+				onClick = { getLinkPreview(urlText) }
 			) {
 				Text(text = stringResource(id = R.string.preview))
 			}
@@ -177,6 +181,8 @@ private fun LinkPreview(
 	bitmap: Bitmap? = null
 ) {
 	val context = LocalContext.current
+
+	val clipboardManager = LocalClipboardManager.current
 
 	Column(
 		modifier = Modifier.fillMaxWidth()
@@ -225,20 +231,26 @@ private fun LinkPreview(
 				Spacer(modifier = Modifier.height(4.dp))
 			}
 		}
+
 		GenericBottomSheetInfo2(
 			key = stringResource(id = R.string.url),
-			value = openGraphResult.url ?: stringResource(id = R.string.unavailable)
+			value = openGraphResult.url ?: stringResource(id = R.string.unavailable),
+			onLongClick = { openGraphResult.url?.let { clipboardManager.setText(AnnotatedString(it)) } }
 		)
+
 		openGraphResult.title?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.title),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(AnnotatedString(it)) }
 			)
 		}
+
 		openGraphResult.description?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.description),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(AnnotatedString(it)) }
 			)
 		}
 	}

@@ -49,6 +49,7 @@ import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.LocalIsAuthenticated
+import kotlinx.coroutines.delay
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,6 +76,9 @@ fun EditTodoBottomSheet(
 	val isLocked by remember(bucketItemObject) { derivedStateOf { bucketItemObject?.isLocked == true } }
 
 	LaunchedEffect(key1 = bucketItemObject) {
+//		https://issuetracker.google.com/issues/296211805
+//		Temporary delay bug is not fixed
+		delay(310)
 		todoText = bucketItemObject?.title ?: ""
 		currentState = bucketItemObject?.getState() ?: 0
 	}
@@ -178,4 +182,3 @@ fun EditTodoBottomSheet(
 		}
 	}
 }
-

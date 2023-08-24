@@ -9,17 +9,20 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.OpenGraphApi
 import com.syncodec.graphite.di.network.OpenGraphResponse
 import com.syncodec.graphite.di.repository.Repository
-import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.android.annotation.KoinViewModel
+import kotlin.concurrent.thread
 
 
 @KoinViewModel
@@ -41,10 +44,10 @@ class BucketScreenCommonViewModel(repositoryStateFlow: MutableStateFlow<Reposito
 	private val _searchQueryList: MutableStateFlow<Set<String>> = MutableStateFlow(setOf())
 	val searchQueryList: StateFlow<Set<String>> = _searchQueryList
 
-	private val _previewBucketItemObject: MutableStateFlow<BucketItemObject?> = MutableStateFlow(null)
-	val previewBucketItemObject: StateFlow<BucketItemObject?> = _previewBucketItemObject
-
-	private var previewBucketItemObjectCoroutine: CoroutineScope? = null
+	private val _previewBucketItemObjectId : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
+	val previewBucketItemObject: Flow<BucketItemObject?> = combine(_previewBucketItemObjectId, _bucketItemList) { previewBucketItemObjectId1, bucketItemList1 ->
+		bucketItemList1.firstOrNull { it.id == previewBucketItemObjectId1 }
+	}
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -80,6 +83,11 @@ class BucketScreenCommonViewModel(repositoryStateFlow: MutableStateFlow<Reposito
 				}
 			}.collect { _orderedBucketItemList.tryEmit(it) }
 		}
+		viewModelScope.launch(Dispatchers.Default) {
+			combine(_previewBucketItemObjectId, _bucketItemList) { previewBucketItemObjectId1, bucketItemList1 ->
+				bucketItemList1.first { it.id == previewBucketItemObjectId1 }
+			}
+		}
 	}
 
 	fun initBucket(realmUUID: RealmUUID) {
@@ -91,11 +99,7 @@ class BucketScreenCommonViewModel(repositoryStateFlow: MutableStateFlow<Reposito
 	}
 
 	fun selectBucketItemObject(id: RealmUUID?) {
-		viewModelScope.launch(Dispatchers.Default) {
-			previewBucketItemObjectCoroutine?.cancel()
-			previewBucketItemObjectCoroutine = this
-			_bucketItemList.collect { bucketItemList1 -> _previewBucketItemObject.tryEmit(bucketItemList1.first { it.id == id }) }
-		}
+		_previewBucketItemObjectId.tryEmit(id)
 	}
 
 	fun putTodo(
@@ -232,4 +236,9 @@ class BucketScreenCommonViewModel(repositoryStateFlow: MutableStateFlow<Reposito
 		_searchQueryList.tryEmit(setOf())
 	}
 
+	fun deleteMultiple(idList : Set<RealmUUID>) {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.value?.deleteSuspended(idList = idList)
+		}
+	}
 }

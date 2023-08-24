@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.showScreen
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +19,7 @@ import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.GridItem
-import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
+import com.syncodec.graphite.presentation.bucketItem.activity.ShowBucketItemActivity
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 
@@ -32,14 +31,14 @@ fun BucketShowGridScreen(
 	bucketId : RealmUUID? = null,
 	bucketItemList : List<BucketItemObject> = listOf(),
 	isSelecting : Boolean = false,
+	selectedIdList : Set<RealmUUID> = setOf(),
 	onSelect : (RealmUUID) -> Unit = {},
-	selectedIdList : List<RealmUUID> = listOf(),
 ) {
 	val context = LocalContext.current
 	val hapticFeedback = LocalHapticFeedback.current
 
 	if (bucketItemList.isEmpty()) {
-		EmptyView(bucketType = BucketType.SHOW)
+		EmptyView(bucketType = BucketType.BOOK)
 	} else {
 		LazyVerticalGrid(
 			columns = GridCells.Adaptive(96.dp),
@@ -64,7 +63,7 @@ fun BucketShowGridScreen(
 							}
 						) {
 							if (isSelecting) onSelect(bucketItemObject.id)
-							else Intent(context, BucketItemActivity::class.java).apply {
+							else Intent(context, ShowBucketItemActivity::class.java).apply {
 								putExtra(Extra.Companion.Extra.IsNew.name, false)
 								putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketId?.bytes)
 								putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)

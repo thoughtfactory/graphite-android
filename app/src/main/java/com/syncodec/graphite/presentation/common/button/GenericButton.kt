@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -110,7 +111,7 @@ object GenericButtonDefaults {
 		containerColor: Color = Color.Transparent,
 		iconColor: Color,
 		checkedContainerColor: Color = Color.Transparent,
-		checkedIconColor: Color,
+		checkedIconColor: Color = iconColor,
 	): GenericButtonColors = GenericButtonColors(
 		containerColor = containerColor,
 		iconColor = iconColor,
@@ -281,6 +282,31 @@ fun MenuButton(
 	)
 }
 
+@Preview
+@Composable
+fun ShareButton(
+	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_share,
+		onClick = onClick
+	)
+}
+
+@Preview
+@Composable
+fun DeleteButton(
+	colors: GenericButtonColors = GenericButtonDefaults.deleteButtonColors(),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_delete,
+		colors = colors,
+		onClick = onClick
+	)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
@@ -310,6 +336,7 @@ fun MetadataButton(
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_info,
+		tooltip = stringResource(id = R.string.info),
 		onClick = onClick
 	)
 }
@@ -326,7 +353,7 @@ fun FavouriteButton(
 ) {
 	GenericButton(
 		icon = if (isFavourite) R.drawable.ic_fa_heart_solid else R.drawable.ic_fa_heart,
-		tooltip = "Favourite",
+		tooltip = stringResource(id = R.string.favourite),
 		checked = isFavourite,
 		colors = colors,
 		onClick = onClick
@@ -348,7 +375,7 @@ fun LockButton(
 
 	GenericButton(
 		icon = if (isLocked) R.drawable.ic_fa_lock_close_solid else R.drawable.ic_fa_lock_open,
-		tooltip = "Lock",
+		tooltip = stringResource(id = R.string.lock),
 		checked = isLocked,
 		colors = colors,
 		onClick = {
@@ -368,7 +395,7 @@ fun VaultButton(
 
 	GenericButton(
 		icon = R.drawable.ic_fa_vault_duotone,
-		tooltip = "Vault",
+		tooltip = stringResource(id = R.string.vault),
 		checked = isAuthenticate,
 		colors = colors,
 		onClick = { onAuthenticationAction(AuthenticatorScreen.Authenticate) },
@@ -383,7 +410,8 @@ fun CheckButton(
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_check,
-		onClick = onClick
+		tooltip = stringResource(id = R.string.done),
+		onClick = onClick,
 	)
 }
 
@@ -398,10 +426,24 @@ fun PasteButton(
 
 	GenericButton(
 		icon = R.drawable.ic_fa_paste,
+		tooltip = stringResource(id = R.string.paste),
 		onClick = {
 			if (clipboardManager.hasText()) clipboardManager.getText()?.let { onClick(it.text) }
 			else Toast.makeText(context, context.getText(R.string.toast_clipboard_is_empty), Toast.LENGTH_SHORT).show()
 		}
+	)
+}
+
+@Preview
+@Composable
+fun SearchButton(
+	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_search,
+		tooltip = stringResource(id = R.string.search),
+		onClick = onClick
 	)
 }
 
@@ -413,6 +455,22 @@ fun ClearButton(
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_x,
+		tooltip = stringResource(id = R.string.clear),
+		colors = colors,
+		onClick = onClick
+	)
+}
+
+@Preview
+@Composable
+fun OpenExternallyButton(
+	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_open_externally,
+		tooltip = stringResource(id = R.string.open_externally),
+		colors = colors,
 		onClick = onClick
 	)
 }

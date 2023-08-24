@@ -40,17 +40,17 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
+import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
+import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
+import com.syncodec.graphite.presentation.common.reorderable.detectReorder
+import com.syncodec.graphite.presentation.common.reorderable.lazyState.rememberReorderableLazyListState
+import com.syncodec.graphite.presentation.common.reorderable.reorderable
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.SpringDragCancelledAnimation
-import org.burnoutcrew.reorderable.detectReorder
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
 
 
 @Preview
@@ -90,7 +90,7 @@ fun BucketTodoListScreen(
 			state = state.listState,
 			modifier = Modifier
 				.fillMaxSize()
-				.reorderable(state)
+//				.reorderable(state)
 		) {
 			bucketItemListOrdered.forEach { bucketItemObject ->
 				item(
@@ -149,26 +149,26 @@ private fun TodoItem(
 			verticalAlignment = Alignment.CenterVertically,
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(horizontal = 24.dp)
+				.padding(horizontal = 16.dp)
 		) {
 			dragHandle()
 
-			Spacer(modifier = Modifier.width(12.dp))
+			Spacer(modifier = Modifier.width(4.dp))
 
 			TriStateCheckbox(
-				state = ToggleableState.values().getOrElse(state) { ToggleableState.Off },
+				state = ToggleableState.values().getOrElse((state + 1) % 3) { ToggleableState.Off },
 				onClick = onCheckedChange
 			)
 
 			Spacer(modifier = Modifier.width(12.dp))
 
-			AnimatedContent(
-				targetState = state,
-				transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
-				modifier = Modifier.weight(1f),
-				label = ""
-			) {
-				if (it == 0) {
+//			AnimatedContent(
+//				targetState = state,
+//				transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
+//				modifier = Modifier.weight(1f),
+//				label = ""
+//			) {
+				if (state == 2) {
 					Text(
 						text = if (title.isNullOrEmpty()) "Untitled" else title,
 						style = MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough),
@@ -185,7 +185,7 @@ private fun TodoItem(
 						modifier = Modifier.weight(1f)
 					)
 				}
-			}
+//			}
 
 			Spacer(modifier = Modifier.width(12.dp))
 

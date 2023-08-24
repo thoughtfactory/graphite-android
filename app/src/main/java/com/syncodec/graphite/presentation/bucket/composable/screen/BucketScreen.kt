@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -34,6 +35,7 @@ import com.syncodec.graphite.presentation.bucket.composable.screen.linkScreen.Bu
 import com.syncodec.graphite.presentation.bucket.composable.screen.showScreen.BucketShowScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen.BucketTodoScreen
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.BucketSelectionActionView
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -106,6 +108,8 @@ fun BucketScreen(
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
 	var isMetadataBottomSheetVisible by remember { mutableStateOf(false) }
+
+	var isDeleteDialogVisible by remember { mutableStateOf(false) }
 
 	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = setOf() }
 	BackHandler(enabled = isSearching) { isSearching = false; bucketScreenCommonViewModel.clearSearchFilter() }
@@ -183,7 +187,6 @@ fun BucketScreen(
 		) {
 			when (bucketObject1.bucketType) {
 				BucketType.TODO.name -> BucketTodoScreen(
-					viewModel = bucketScreenCommonViewModel,
 					pagerState = pagerState,
 					isSelecting = isSelecting,
 					selectedIdList = selectedIdList,
@@ -193,18 +196,22 @@ fun BucketScreen(
 				BucketType.BOOK.name -> BucketBookScreen(
 					pagerState = pagerState,
 					isSelecting = isSelecting,
-//					selectedIdList = selectedIdList,
+					selectedIdList = selectedIdList,
+					onSelect = ::onSelect
 				)
 
 				BucketType.SHOW.name -> BucketShowScreen(
 					pagerState = pagerState,
 					isSelecting = isSelecting,
-//					selectedIdList = selectedIdList,
+					selectedIdList = selectedIdList,
+					onSelect = ::onSelect
 				)
 
 				BucketType.LINK.name -> BucketLinkScreen(
+					viewModel = bucketScreenCommonViewModel,
 					isSelecting = isSelecting,
-//					selectedIdList = selectedIdList,
+					selectedIdList = selectedIdList,
+					onSelect = ::onSelect
 				)
 
 				BucketType.UNKNOWN.name -> null
@@ -219,7 +226,7 @@ fun BucketScreen(
 					.align(Alignment.BottomCenter),
 				onClickShare = {},
 				onClickSelectAll = { selectedIdList.toMutableSet().apply { addAll(toSelectIdList); selectedIdList = toSet() } },
-				onClickDelete = {},
+				onClickDelete = { isDeleteDialogVisible = true },
 				onClickCancel = { backPressedDispatcher?.onBackPressed() },
 				onClickMove = {},
 				onClickFavourite = { bucketScreenCommonViewModel.toggleFavourite(selectedIdList) },
@@ -239,5 +246,17 @@ fun BucketScreen(
 		id = bucketObject?.id,
 		createdTimestamp = bucketObject?.createdTimestamp,
 		modifiedTimestamp = bucketObject?.modifiedTimestamp,
+	)
+
+	DeleteDialog(
+		isDialogVisible = isDeleteDialogVisible,
+		onDismissRequest = { isDeleteDialogVisible = false },
+		title = stringResource(id = R.string.delete_items_multiple),
+		contentText = stringResource(id = R.string.are_you_sure_delete_multiple),
+		onConfirmDelete = {
+			bucketScreenCommonViewModel.deleteMultiple(idList = selectedIdList.toSet())
+			isSelecting = false; selectedIdList = setOf()
+			isDeleteDialogVisible = false
+		},
 	)
 }

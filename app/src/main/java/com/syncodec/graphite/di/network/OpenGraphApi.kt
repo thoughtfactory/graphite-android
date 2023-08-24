@@ -2,7 +2,6 @@ package com.syncodec.graphite.di.network
 
 import android.graphics.Bitmap
 import android.webkit.URLUtil
-import androidx.lifecycle.viewModelScope
 import com.kedia.ogparser.CacheProvider
 import com.kedia.ogparser.OpenGraphCallback
 import com.kedia.ogparser.OpenGraphParser
@@ -62,15 +61,15 @@ object OpenGraphApi {
 					}
 
 					override fun onPostResponse(openGraphResult: OpenGraphResult) {
-						onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult))
+						onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult.copy(url = url)))
 						CoroutineScope(Dispatchers.IO).launch {
 							getBitmapCoroutineScopeMap[url]?.cancel()
 							getBitmapCoroutineScopeMap[url] = this
 							urlBitmapMap[url]?.let {
-								onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult, bitmap = it))
+								onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult.copy(url = url), bitmap = it))
 							} ?: Network.retrieveImage(openGraphResult.image) { bitmap ->
 								bitmap?.let { urlBitmapMap[url] = it }
-								onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult, bitmap = bitmap))
+								onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult.copy(url = url), bitmap = bitmap))
 							}
 						}
 					}

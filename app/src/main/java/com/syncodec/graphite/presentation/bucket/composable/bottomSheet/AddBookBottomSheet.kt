@@ -1,271 +1,237 @@
 package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
 import android.content.Intent
-import android.widget.Toast
+import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.network.ApiStatus
+import com.syncodec.graphite.di.network.OpenLibraryApi
+import com.syncodec.graphite.di.network.OpenLibraryResponse
 import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
-import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.SearchResultStatusView
-import com.syncodec.graphite.presentation.bucketItem.BucketItemActivity
+import com.syncodec.graphite.presentation.bucketItem.activity.BookBucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextFieldDefaults
-import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.common.button.GenericButton
-import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.button.ClearButton
+import com.syncodec.graphite.presentation.common.button.SearchButton
+import com.syncodec.graphite.presentation.common.info.InfoCard
+import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
+import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.Status
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.withContext
 
 
-@Preview
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun AddBookBottomSheet() {
+fun AddBookBottomSheet(
+	bottomSheetState: SheetState = rememberModalBottomSheetState(),
+	isBottomSheetVisible: Boolean = false,
+	onDismissRequest: () -> Unit = { },
+	parentId : RealmUUID? = null,
+) {
 	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-	val viewModel : BucketBottomSheetViewModel = koinViewModel()
-
-	val bucketObject by viewModel.bucketObject.collectAsState()
-
-	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var queryText by rememberSaveable { mutableStateOf("") }
-	var isTextFocused by remember { mutableStateOf(false) }
 
-	var status : Status by remember { mutableStateOf(Status.INIT) }
-	var openLibraryTitleSearchResult : OpenLibraryTitleSearchResult? by remember { mutableStateOf(null) }
-
-	val onSearch = {
-		status = Status.LOADING
-		keyboardController?.hide()
-		openLibraryTitleSearchResult = null
-		viewModel.searchForBook(query = queryText) { apiResult ->
-			scope.launch(Dispatchers.Main) {
-				when (apiResult.status) {
-					ApiStatus.LOADING -> {
-						status = Status.LOADING
-					}
-
-					ApiStatus.SUCCESS -> {
-						status = Status.LOADED
-						openLibraryTitleSearchResult = apiResult.data
-					}
-
-					ApiStatus.ERROR -> {
-						status = Status.ERROR
-						openLibraryTitleSearchResult = null
-					}
-				}
+	var contentStatus by remember { mutableStateOf<ContentStatus<OpenLibraryTitleSearchResult>>(ContentStatus.Init) }
+	fun searchForBook(title: String) {
+		OpenLibraryApi.searchForBook(query = title) { openLibraryResponse ->
+			contentStatus = when (openLibraryResponse) {
+				is OpenLibraryResponse.Loading -> ContentStatus.Loading
+				is OpenLibraryResponse.Success -> ContentStatus.Loaded(openLibraryResponse.data)
+				is OpenLibraryResponse.Error -> ContentStatus.Error(openLibraryResponse.message)
 			}
 		}
 	}
 
-	GenericBottomSheet(
-		title = "Umm... What was that book",
-		icon = R.drawable.ic_book,
+	GenericBottomSheet2(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isBottomSheetVisible,
+		onDismissRequest = onDismissRequest,
 	) {
-		BottomSheetTextField(
-			value = queryText,
-			placeholder = "Search for books",
-			actionButtons = {
-				GenericButton(
-					icon = R.drawable.ic_search,
-					colors = GenericButtonDefaults.genericButtonColorsOnSurface()
-				) { onSearch() }
-			},
-			keyboardOptions = KeyboardOptions.Default.copy(
-				capitalization = KeyboardCapitalization.None,
-				autoCorrect = true,
-				keyboardType = KeyboardType.Text,
-				imeAction = ImeAction.Search
-			),
-			keyboardActions = KeyboardActions(
-				onSearch = { onSearch() },
-				onDone = { onSearch() }
-			),
-			colors = BottomSheetTextFieldDefaults.textFieldColors(),
-			onValueChange = { queryText = it },
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		AnimatedContent(
-			targetState = status,
-			label = "status_animation"
+		GenericBottomSheetSkeleton2(
+			title = stringResource(id = R.string.add_book),
 		) {
-			when (it) {
-				Status.INIT -> {
-					SearchResultStatusView(
-						imageId = R.drawable.il_bucket_book_search,
-						text = "A fiction, a biography maybe?",
-						contentDescription = "Search for books"
-					)
-				}
-
-				Status.LOADING -> {
-					Box(
-						contentAlignment = Alignment.Center,
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(256.dp),
-					) { LoadingView() }
-				}
-
-				Status.LOADED -> LoadedView(openLibraryTitleSearchResult = openLibraryTitleSearchResult) { bookData ->
-					keyboardController?.hide()
-
-					if (bucketObject == null || bookData.key == null) {
-						Toast.makeText(context, "Error adding book to bucket", Toast.LENGTH_SHORT).show()
-					} else {
-						Intent(context, BucketItemActivity::class.java).apply {
-							putExtra(Extra.Companion.Extra.IsNew.name, true)
-							putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketObject?.id?.bytes)
-							putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.BOOK.name)
-							putExtra(Extra.Companion.Extra.BOOK_ID.name, bookData.key)
-							putExtra(Extra.Companion.Extra.BUCKET_EXTRA_DATA.name, bookData)
-
-							context.startActivity(this)
-						}
+			OutlinedTextField(
+				value = queryText,
+				shape = MaterialTheme.shapes.medium,
+				onValueChange = { queryText = it },
+				label = { Text(text = stringResource(id = R.string.title)) },
+				placeholder = { Text(text = stringResource(id = R.string.search_for_book)) },
+				trailingIcon = {
+					Row {
+						ClearButton { queryText = "" }
+						SearchButton { searchForBook(queryText) }
+						Spacer(modifier = Modifier.width(4.dp))
 					}
-				}
+				},
+				maxLines = 1,
+				singleLine = true,
+				keyboardOptions = KeyboardOptions(
+					capitalization = KeyboardCapitalization.None,
+					autoCorrect = true,
+					keyboardType = KeyboardType.Text,
+					imeAction = ImeAction.Search,
+				),
+				keyboardActions = KeyboardActions { searchForBook(queryText) },
+				modifier = Modifier.fillMaxWidth()
+			)
 
-				Status.ERROR -> {
-					SearchResultStatusView(
-						imageId = R.drawable.il_bucket_search_error,
-						text = "Oops, something went wrong. Try again?",
-						contentDescription = "Error getting search results"
-					)
+			AnimatedContent(
+				targetState = contentStatus,
+				label = "bookSearchPreview_animation",
+				modifier = Modifier.fillMaxWidth()
+			) {
+				Column {
+					Spacer(modifier = Modifier.height(8.dp))
+					when (it) {
+						is ContentStatus.Init -> Unit
+						is ContentStatus.Loading -> LoadingView(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(vertical = 12.dp)
+						)
+
+						is ContentStatus.LoadedEmpty -> Unit
+						is ContentStatus.Loaded -> it.data.docs?.filterNotNull()?.let {
+							BookGrid(
+								bookDataList = it
+							) {
+								Intent(context, BookBucketItemActivity::class.java).apply {
+									putExtra(Extra.Companion.Extra.IsNew.name, true)
+									putExtra(Extra.Companion.Extra.BUCKET_ID.name, parentId?.bytes)
+									putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.BOOK.name)
+									putExtra(Extra.Companion.Extra.BOOK_ID.name, it.key)
+
+									context.startActivity(this)
+								}
+							}
+						} ?: Unit
+
+						is ContentStatus.Error -> InfoCard(
+							title = stringResource(id = R.string.link_preview_error_title),
+							description = stringResource(id = R.string.link_preview_error_description),
+							icon = R.drawable.ic_fa_warning,
+							colors = InfoCardDefaults.errorCardColors()
+						)
+					}
+					Spacer(modifier = Modifier.height(4.dp))
 				}
 			}
+
 		}
 	}
 }
 
+@Preview
 @Composable
-private fun LoadedView(
-	openLibraryTitleSearchResult : OpenLibraryTitleSearchResult? = null,
-	onClickBook : (BucketItemObject.Companion.BucketItemData.BookData) -> Unit = {}
+private fun BookGrid(
+	bookDataList: List<BucketItemObject.Companion.BucketItemData.BookData> = listOf(),
+	onClick: (BucketItemObject.Companion.BucketItemData.BookData) -> Unit = {}
 ) {
-	if (openLibraryTitleSearchResult?.docs?.isEmpty() == true) {
-		SearchResultStatusView(
-			imageId = R.drawable.il_bucket_search_not_found,
-			text = "Uh oh, we couldn't find anything. Try again?",
-			contentDescription = "Book not found"
-		)
-	} else {
-		LazyVerticalGrid(
-			columns = GridCells.Fixed(3),
-			modifier = Modifier
-		) {
-			openLibraryTitleSearchResult?.docs?.forEach { bookData ->
-				if (bookData != null) {
-					item {
-						BookCard(
-							bookData = bookData,
-							onClick = { onClickBook(bookData) }
-						)
-					}
-				}
-			}
+	LazyVerticalGrid(
+		columns = GridCells.Fixed(3),
+		modifier = Modifier
+	) {
+		items(bookDataList) { bookData ->
+			BookCard(
+				bookData = bookData,
+				onClick = { onClick(bookData) }
+			)
 		}
 	}
 }
 
 @Composable
 private fun BookCard(
-	bookData : BucketItemObject.Companion.BucketItemData.BookData,
-	onClick : () -> Unit
+	bookData: BucketItemObject.Companion.BucketItemData.BookData,
+	onClick: () -> Unit
 ) {
 	val context = LocalContext.current
+
+	var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
+	LaunchedEffect(key1 = bookData) {
+		withContext(Dispatchers.IO) {
+			thumbnail = null
+			thumbnail = OpenLibraryApi.retrieveBookCover(bookData.coverI)
+		}
+	}
 
 	Column(
 		horizontalAlignment = Alignment.Start,
 		modifier = Modifier.padding(8.dp),
 	) {
-		Box(
-			contentAlignment = Alignment.Center,
-			modifier = Modifier
-				.aspectRatio(0.6666f)
-				.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.71f), MaterialTheme.shapes.medium)
-				.clip(MaterialTheme.shapes.medium)
-				.clickable { onClick() }
-		) {
-			var isError by remember { mutableStateOf(false) }
-			bookData.coverI?.let {
-				AsyncImage(
-					model = ImageRequest.Builder(context)
-						.data("https://covers.openlibrary.org/b/id/${bookData.coverI}-M.jpg")
-						.crossfade(300)
-						.build(),
-					placeholder = null,
-					onError = { isError = true },
-					contentDescription = bookData.title,
-					contentScale = ContentScale.Crop,
-					modifier = Modifier.fillMaxSize(),
-				)
-			} ?: Text(
-				text = "No cover",
-				modifier = Modifier.padding(8.dp),
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f)
-			)
-
-			if (isError) {
+		SubcomposeAsyncImage(
+			model = ImageRequest.Builder(context)
+				.data(thumbnail)
+				.crossfade(470)
+				.build(),
+			loading = { CircularProgressIndicator(modifier = Modifier.requiredSize(32.dp)) },
+			error = {
 				Text(
-					text = "No cover",
+					text = "No image found",
 					modifier = Modifier.padding(8.dp),
 					style = MaterialTheme.typography.bodySmall,
 					color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f)
 				)
-			}
-		}
+			},
+			contentDescription = bookData.title,
+			contentScale = ContentScale.Crop,
+			modifier = Modifier
+				.fillMaxWidth()
+				.aspectRatio(0.6666f)
+				.background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.large)
+				.clip(MaterialTheme.shapes.large)
+				.clickable { onClick() }
+		)
 
 		Spacer(modifier = Modifier.height(4.dp))
 

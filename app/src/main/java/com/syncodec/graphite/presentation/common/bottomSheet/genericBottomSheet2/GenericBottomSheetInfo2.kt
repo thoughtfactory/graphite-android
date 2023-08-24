@@ -39,6 +39,7 @@ fun GenericBottomSheetInfo2(
 	key: String = "Key",
 	value: String = "Value",
 	icon: Int? = null,
+	suffix : (@Composable () -> Unit)? = null,
 	colors: GenericBottomSheetInfo2Colors = GenericBottomSheetInfo2Defaults.infoColors(),
 	enabled: Boolean = true,
 	onClick: (() -> Unit)? = null,
@@ -81,6 +82,11 @@ fun GenericBottomSheetInfo2(
 				tint = iconColor ?: contentColor,
 				modifier = Modifier.requiredSize(24.dp)
 			)
+		}
+
+		suffix?.let {
+			Spacer(modifier = Modifier.width(8.dp))
+			it()
 		}
 	}
 }

@@ -1,9 +1,13 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.linkScreen
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -26,8 +30,11 @@ import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.AddLinkBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.PreviewLinkBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
+import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
+import com.syncodec.graphite.presentation.ui.LocalAppDataStore
 import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.utils.ViewType
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -38,16 +45,18 @@ import org.koin.androidx.compose.koinViewModel
 fun BucketLinkScreen(
 	viewModel: BucketScreenCommonViewModel = koinViewModel(),
 	isSelecting: Boolean = false,
-	selectedIdList: List<RealmUUID> = listOf(),
-	onSelect: (RealmUUID) -> Unit = {},
-	onClickBucketItem: (RealmUUID) -> Unit = {},
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onSelect: (RealmUUID, Set<RealmUUID>) -> Unit = { _, _ -> },
 ) {
 	val scope = rememberCoroutineScope()
 
 	val isAuthenticated = LocalIsAuthenticated.current
 
+	val appDataStore = LocalAppDataStore.current
+	val viewType by appDataStore.getViewType.collectAsState(initial = null)
+
 	val bucketItemList by viewModel.orderedBucketItemList.collectAsState()
-	val previewBucketItemObject by viewModel.previewBucketItemObject.collectAsState()
+	val previewBucketItemObject by viewModel.previewBucketItemObject.collectAsState(initial = null)
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isAddLinkBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
@@ -75,17 +84,40 @@ fun BucketLinkScreen(
 			}
 		}
 	) {
-		BucketLinkListScreen(
-			bucketItemList = bucketItemList.filter { !it.isLocked || isAuthenticated },
-			isSelecting = isSelecting,
-			selectedIdList = selectedIdList,
-			onSelect = onSelect,
-			onReorderBucketItemList = viewModel::onReorderBucketItem,
-			onClickBucketItem = {
-				viewModel.selectBucketItemObject(it)
-				isPreviewLinkBottomSheetVisible = true
-			},
-		)
+		bucketItemList.filter { !it.isLocked || isAuthenticated }.let { filteredBucketItemList ->
+			AnimatedContent(
+				targetState = viewType,
+				transitionSpec = { fadeIn(tween(470)) + scaleIn(tween(470), 0.71f) togetherWith fadeOut(tween(470)) + scaleOut(tween(470), 0.71f) },
+				label = "viewType_animation"
+			) {
+				when (it) {
+					ViewType.List -> BucketLinkListScreen(
+						bucketItemList = filteredBucketItemList,
+						isSelecting = isSelecting,
+						selectedIdList = selectedIdList,
+						onSelect = { onSelect(it, filteredBucketItemList.map { it.id }.toSet()) },
+						onClickBucketItem = {
+							viewModel.selectBucketItemObject(it)
+							isPreviewLinkBottomSheetVisible = true
+						},
+						onReorderBucketItemList = viewModel::onReorderBucketItem,
+					)
+
+					ViewType.Grid -> BucketLinkGridScreen(
+						bucketItemList = filteredBucketItemList,
+						isSelecting = isSelecting,
+						selectedIdList = selectedIdList,
+						onSelect = { onSelect(it, filteredBucketItemList.map { it.id }.toSet()) },
+						onClickBucketItem = {
+							viewModel.selectBucketItemObject(it)
+							isPreviewLinkBottomSheetVisible = true
+						},
+						onReorderBucketItemList = viewModel::onReorderBucketItem,
+					)
+					null -> LoadingView()
+				}
+			}
+		}
 	}
 
 	AddLinkBottomSheet(

@@ -96,4 +96,17 @@ object SelectableContainerDefaults {
 		selectedContainerColor = selectedContainerColor,
 		selectedContentColor = selectedContentColor,
 	)
+
+	@Composable
+	fun surfaceColors(
+		containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
+		contentColor: Color = MaterialTheme.colorScheme.onSurface,
+		selectedContainerColor: Color = MaterialTheme.colorScheme.surface,
+		selectedContentColor: Color = MaterialTheme.colorScheme.onSurface,
+	): SelectableContainerColors = SelectableContainerColors(
+		containerColor = containerColor,
+		contentColor = contentColor,
+		selectedContainerColor = selectedContainerColor,
+		selectedContentColor = selectedContentColor,
+	)
 }

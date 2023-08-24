@@ -65,34 +65,54 @@ fun TopBar(
 			.fillMaxWidth()
 			.background(MaterialTheme.colorScheme.background)
 	) {
-		Crossfade(
-			targetState = isSelecting,
-			animationSpec = tween(durationMillis = 470),
-			label = ""
+		AnimatedVisibility(
+			visible = !isSelecting,
+			enter = expandVertically(tween(470)),
+			exit = shrinkVertically(tween(470)),
+			label = "isSelecting_animation"
 		) {
-			if (it) {
-				SelectionBar(
-					selectedItemSize = selectedItemSize,
-					onCancelSelection = onCancelSelection,
-					onShare = onShare,
-					onDelete = onDelete,
-				)
-			} else {
-				Bar(
-					title = title,
-					isLocked = isLocked,
-					isFavourite = isFavourite,
-					isSearching = isSearching,
-					searchQueryList = searchQueryList,
-					onClickFavourite = onClickFavourite,
-					onClickLock = onClickLock,
-					onClickSearch = onClickSearch,
-					onClickBack = onClickBack,
-					addSearchQuery = addSearchQuery,
-					removeSearchQuery = removeSearchQuery,
-				)
-			}
+			Bar(
+				title = title,
+				isLocked = isLocked,
+				isFavourite = isFavourite,
+				isSearching = isSearching,
+				searchQueryList = searchQueryList,
+				onClickFavourite = onClickFavourite,
+				onClickLock = onClickLock,
+				onClickSearch = onClickSearch,
+				onClickBack = onClickBack,
+				addSearchQuery = addSearchQuery,
+				removeSearchQuery = removeSearchQuery,
+			)
 		}
+//		Crossfade(
+//			targetState = isSelecting,
+//			animationSpec = tween(durationMillis = 470),
+//			label = ""
+//		) {
+//			if (it) {
+//				SelectionBar(
+//					selectedItemSize = selectedItemSize,
+//					onCancelSelection = onCancelSelection,
+//					onShare = onShare,
+//					onDelete = onDelete,
+//				)
+//			} else {
+//				Bar(
+//					title = title,
+//					isLocked = isLocked,
+//					isFavourite = isFavourite,
+//					isSearching = isSearching,
+//					searchQueryList = searchQueryList,
+//					onClickFavourite = onClickFavourite,
+//					onClickLock = onClickLock,
+//					onClickSearch = onClickSearch,
+//					onClickBack = onClickBack,
+//					addSearchQuery = addSearchQuery,
+//					removeSearchQuery = removeSearchQuery,
+//				)
+//			}
+//		}
 
 		AnimatedVisibility(
 			visible = !isSelecting && bucketType != BucketType.LINK,
