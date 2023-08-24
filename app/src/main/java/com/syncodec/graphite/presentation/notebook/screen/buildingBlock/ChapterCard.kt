@@ -38,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,21 +65,23 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun ChapterCard(
-	id : RealmUUID = RealmUUID.random(),
-	createdTimestamp : Long? = null,
-	modifiedTimestamp : Long? = null,
-	title : String? = null,
-	description : String? = null,
-	isFavourite : Boolean = false,
-	isLocked : Boolean = false,
-	color : Color? = null,
-	thumbnail : String? = null,
-	noteCount : Int = 0,
-	chapterCount : Int = 0,
-	isSelected : Boolean = false,
-	onClick : () -> Unit = {},
-	onLongClick : () -> Unit = {}
+	id: RealmUUID = RealmUUID.random(),
+	createdTimestamp: Long? = null,
+	modifiedTimestamp: Long? = null,
+	title: String? = null,
+	description: String? = null,
+	isFavourite: Boolean = false,
+	isLocked: Boolean = false,
+	color: Color? = null,
+	thumbnail: String? = null,
+	noteCount: Int = 0,
+	chapterCount: Int = 0,
+	isSelected: Boolean = false,
+	onClick: () -> Unit = {},
+	onLongClick: () -> Unit = {}
 ) {
+	val hapticFeedback = LocalHapticFeedback.current
+
 	var boxHeight by remember { mutableStateOf<Int?>(null) }
 
 	var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -108,11 +112,14 @@ fun ChapterCard(
 					.clip(MaterialTheme.shapes.large)
 					.combinedClickable(
 						onClick = onClick,
-						onLongClick = onLongClick
+						onLongClick = {
+							hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+							onLongClick()
+						}
 					)
 					.onGloballyPositioned { coordinates -> boxHeight = coordinates.size.height },
 			) {
-				if (! isSelected) boxHeight?.let { height ->
+				if (!isSelected) boxHeight?.let { height ->
 					bitmap?.let {
 						Image(
 							bitmap = it.asImageBitmap(),
@@ -180,11 +187,11 @@ fun ChapterCard(
 @Preview
 @Composable
 private fun Header(
-	title : String? = "Untitled",
-	noteCount : Int = 0,
-	chapterCount : Int = 0,
-	isFavourite : Boolean = true,
-	isLocked : Boolean = true,
+	title: String? = "Untitled",
+	noteCount: Int = 0,
+	chapterCount: Int = 0,
+	isFavourite: Boolean = true,
+	isLocked: Boolean = true,
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
@@ -252,9 +259,9 @@ private fun Header(
 @Preview
 @Composable
 private fun ColumnScope.Content(
-	description : String? = null,
-	createdTimestamp : Long? = null,
-	modifiedTimestamp : Long? = null,
+	description: String? = null,
+	createdTimestamp: Long? = null,
+	modifiedTimestamp: Long? = null,
 ) {
 	this.apply {
 		Text(
@@ -282,8 +289,8 @@ private fun ColumnScope.Content(
 @Preview
 @Composable
 private fun Footer(
-	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
-	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
+	address: String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
+	latLng: LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
 ) {
 	if (address != null || latLng != null) {
 		Row(
@@ -321,8 +328,8 @@ private fun Footer(
 @Preview
 @Composable
 private fun HeaderText(
-	modifier : Modifier = Modifier,
-	text : String = "Header",
+	modifier: Modifier = Modifier,
+	text: String = "Header",
 ) {
 	Text(
 		text = text,

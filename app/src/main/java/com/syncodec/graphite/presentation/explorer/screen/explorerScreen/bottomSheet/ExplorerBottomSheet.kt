@@ -49,7 +49,7 @@ fun ExplorerBottomSheet(
 			noteList(
 				noteList = noteList,
 				tagList = tagList,
-				selectedIdList = selectedIdList,
+//				selectedIdList = selectedIdList,
 				headerTitle = title,
 				headerMinHeight = 48.dp,
 				headerBackgroundColor = headerBackgroundColor,

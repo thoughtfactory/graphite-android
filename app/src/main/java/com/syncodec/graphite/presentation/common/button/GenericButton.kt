@@ -261,11 +261,12 @@ fun GenericButton(
 @Preview
 @Composable
 fun BackButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_back,
+		colors = colors,
 		onClick = onClick
 	)
 }
@@ -273,11 +274,12 @@ fun BackButton(
 @Preview
 @Composable
 fun MenuButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_menu,
+		colors = colors,
 		onClick = onClick
 	)
 }
@@ -285,11 +287,12 @@ fun MenuButton(
 @Preview
 @Composable
 fun ShareButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_share,
+		colors = colors,
 		onClick = onClick
 	)
 }
@@ -311,13 +314,14 @@ fun DeleteButton(
 @Preview
 @Composable
 fun FilterButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 ) {
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isFilterAndViewBottomSheetVisible by remember { mutableStateOf(false) }
 
 	GenericButton(
 		icon = R.drawable.ic_fa_filter,
+		colors = colors,
 		onClick = { isFilterAndViewBottomSheetVisible = true }
 	)
 
@@ -331,12 +335,13 @@ fun FilterButton(
 @Preview
 @Composable
 fun MetadataButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_info,
 		tooltip = stringResource(id = R.string.info),
+		colors = colors,
 		onClick = onClick
 	)
 }
@@ -388,7 +393,7 @@ fun LockButton(
 @Preview
 @Composable
 fun VaultButton(
-	colors: GenericButtonColors = GenericButtonDefaults.bottomBarColorWhite(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 ) {
 	val isAuthenticate = LocalIsAuthenticated.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current
@@ -405,12 +410,13 @@ fun VaultButton(
 @Preview
 @Composable
 fun CheckButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_check,
 		tooltip = stringResource(id = R.string.done),
+		colors = colors,
 		onClick = onClick,
 	)
 }
@@ -418,7 +424,7 @@ fun CheckButton(
 @Preview
 @Composable
 fun PasteButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: (String) -> Unit = {},
 ) {
 	val context = LocalContext.current
@@ -427,6 +433,7 @@ fun PasteButton(
 	GenericButton(
 		icon = R.drawable.ic_fa_paste,
 		tooltip = stringResource(id = R.string.paste),
+		colors = colors,
 		onClick = {
 			if (clipboardManager.hasText()) clipboardManager.getText()?.let { onClick(it.text) }
 			else Toast.makeText(context, context.getText(R.string.toast_clipboard_is_empty), Toast.LENGTH_SHORT).show()
@@ -437,12 +444,13 @@ fun PasteButton(
 @Preview
 @Composable
 fun SearchButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_search,
 		tooltip = stringResource(id = R.string.search),
+		colors = colors,
 		onClick = onClick
 	)
 }
@@ -450,7 +458,7 @@ fun SearchButton(
 @Preview
 @Composable
 fun ClearButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(
@@ -464,7 +472,7 @@ fun ClearButton(
 @Preview
 @Composable
 fun OpenExternallyButton(
-	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
 	GenericButton(

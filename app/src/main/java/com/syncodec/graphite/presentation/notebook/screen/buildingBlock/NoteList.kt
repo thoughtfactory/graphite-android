@@ -21,7 +21,7 @@ import io.realm.kotlin.types.RealmUUID
 fun LazyListScope.noteList(
 	noteList : List<NoteObjectLite> = listOf(),
 	tagList : List<TagObject> = listOf(),
-	selectedIdList : List<RealmUUID> = listOf(),
+	selectedIdList : Set<RealmUUID> = setOf(),
 	headerTitle : String = "Notes",
 	headerSubTitle : String = "${noteList.size} notes",
 	headerMinHeight : Dp = Dp.Hairline,

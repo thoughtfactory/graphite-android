@@ -10,11 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,68 +24,55 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
-import com.syncodec.graphite.presentation.notebook.NotebookActivity
-import com.syncodec.graphite.utils.ContentStatus
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
-import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.LocalIsAuthenticated
-import com.syncodec.graphite.utils.SortBy
-import com.syncodec.graphite.utils.SortOn
-import io.realm.kotlin.types.RealmUUID
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
 import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
 import com.syncodec.graphite.presentation.common.reorderable.detectReorder
 import com.syncodec.graphite.presentation.common.reorderable.lazyState.rememberReorderableLazyGridState
 import com.syncodec.graphite.presentation.common.reorderable.reorderable
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
+import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
+import com.syncodec.graphite.presentation.notebook.NotebookActivity
+import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
+import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotebookScreen(
-	isSelecting : Boolean,
-	onSelect : (RealmUUID) -> Unit,
-	selectedIdList : List<RealmUUID>,
-	onClickFab : () -> Unit = {},
+	isSelecting: Boolean,
+	onSelect: (RealmUUID) -> Unit,
+	selectedIdList: List<RealmUUID>,
 ) {
 	val context = LocalContext.current
-	val viewModel : NotebookScreenViewModel = koinViewModel()
+	val viewModel: NotebookScreenViewModel = koinViewModel()
 	val scope = rememberCoroutineScope()
 
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 	val isAuthenticated = LocalIsAuthenticated.current
 
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(null)
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(null)
-
-	val notebookListStatus by viewModel.notebookListStatus.collectAsState()
-	var notebookList by remember { mutableStateOf(listOf<ChapterObject>()) }
-
-	LaunchedEffect(notebookListStatus, sortBy, sortOn, isAuthenticated) {
-		scope.launch(Dispatchers.Default) {
-			(when (sortOn) {
-				SortOn.Title -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.title } else notebookListStatus.dataOrNull?.sortedByDescending { it.title }
-				SortOn.Timestamp -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.createdTimestamp } else notebookListStatus.dataOrNull?.sortedByDescending { it.createdTimestamp }
-				SortOn.Modified -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.modifiedTimestamp } else notebookListStatus.dataOrNull?.sortedByDescending { it.modifiedTimestamp }
-				SortOn.Custom -> notebookListStatus.dataOrNull
-				else -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.title } else notebookListStatus.dataOrNull?.sortedByDescending { it.title }
-			} ?: listOf()).filter { if (it.isLocked) isAuthenticated else true }.let { withContext(Dispatchers.Main) { notebookList = it } }
+	val notebookList by viewModel.notebookList.collectAsState()
+	var orderedNotebookList by remember { mutableStateOf<List<ChapterObject>>(listOf()) }
+	LaunchedEffect(notebookList, isAuthenticated) {
+		scope.launch {
+			notebookList.filter { if (it.isLocked) isAuthenticated else true }.let { orderedNotebookList = it }
 		}
 	}
 
-	fun onClickNotebook(id : RealmUUID) {
+	fun onClickNotebook(id: RealmUUID) {
 		if (isSelecting) onSelect(id)
 		else Intent(context, NotebookActivity::class.java).apply {
 			putExtra(Extra.Companion.Extra.ChapterId.name, id.bytes)
@@ -97,55 +81,50 @@ fun NotebookScreen(
 		}
 	}
 
-	fun onLongClickNotebook(id : RealmUUID) = onSelect(id)
+	fun onLongClickNotebook(id: RealmUUID) = onSelect(id)
 
 	val state = rememberReorderableLazyGridState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
 		onMove = { from, to ->
-			notebookList.toMutableList().apply {
+			orderedNotebookList.toMutableList().apply {
 				add(to.index, removeAt(from.index))
-				notebookList = this
+				orderedNotebookList = this
 			}
 		},
 		onDragEnd = { from, to ->
 			scope.launch(Dispatchers.Default) {
-				viewModel.onReorderBucketList(notebookList.map { it.id })
+				viewModel.onReorderBucketList2(orderedNotebookList.map { it.id })
 				dataStoreInstance.putSortOn(SortOn.Custom)
 			}
 		}
 	)
 
-	GenericScaffold(
-		floatingActionButton = {
-			NotebookFloatingActionButton(isExpanded = true, onClick = onClickFab)
-		},
-		isFloatingActionButtonVisible = ! isSelecting,
-	) {
-		val pullRefreshState = rememberPullRefreshState(
-			refreshing = notebookListStatus is ContentStatus.Loading,
-			onRefresh = viewModel::refresh
-		)
+	val bottomSheetState = rememberModalBottomSheetState()
+	var isNotebookBottomSheetVisible by remember { mutableStateOf(false) }
 
+	GenericScaffold2(
+		floatingActionButton = {
+			NotebookFloatingActionButton(isExpanded = true) { isNotebookBottomSheetVisible = true }
+		},
+		isFloatingActionButtonVisible = !isSelecting,
+	) {
 		Box(
 			contentAlignment = Alignment.TopCenter,
 			modifier = Modifier
 				.fillMaxSize()
-				.pullRefresh(pullRefreshState),
 		) {
 			Crossfade(
-				targetState = notebookListStatus,
-				animationSpec = tween(300)
-			) { contentStatus ->
-				when (contentStatus) {
-					is ContentStatus.Init -> LoadingView()
-					is ContentStatus.Loading -> LoadingView()
-					is ContentStatus.LoadedEmpty -> EmptyView(
+				targetState = orderedNotebookList.isEmpty(),
+				animationSpec = tween(300), label = ""
+			) { isEmpty ->
+				if (isEmpty) {
+					EmptyView(
 						image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
 						title = "I think, therefore, I am",
 						subTitle = "― René Descartes",
 					)
-
-					is ContentStatus.Loaded -> LazyVerticalGrid(
+				} else {
+					LazyVerticalGrid(
 						columns = GridCells.Adaptive(144.dp),
 						state = state.gridState,
 						contentPadding = PaddingValues(horizontal = 8.dp),
@@ -156,7 +135,7 @@ fun NotebookScreen(
 							.reorderable(state)
 					) {
 						items(
-							items = notebookList,
+							items = orderedNotebookList,
 							key = { it.id.toString() }
 						) { chapterObject ->
 							ReorderableItem(
@@ -176,18 +155,16 @@ fun NotebookScreen(
 							}
 						}
 					}
-
-					is ContentStatus.Error -> LoadingView()
 				}
 			}
-
-			PullRefreshIndicator(
-				refreshing = notebookListStatus is ContentStatus.Loading,
-				state = pullRefreshState,
-				backgroundColor = MaterialTheme.colorScheme.background,
-				contentColor = MaterialTheme.colorScheme.onBackground,
-				scale = true,
-			)
 		}
 	}
+
+	ChapterBottomSheet(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isNotebookBottomSheetVisible,
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isNotebookBottomSheetVisible = false } },
+		title = stringResource(id = R.string.new_notebook),
+		putNotebook = { title, description, color, bitmap -> viewModel.putNotebook(title = title, description = description, color = color, bitmap = bitmap) },
+	)
 }

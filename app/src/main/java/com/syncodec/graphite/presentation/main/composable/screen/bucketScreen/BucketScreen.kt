@@ -11,9 +11,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,22 +31,18 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketActivity
-import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.BucketBottomSheet
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.buildingBlock.BucketCard
-import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
-import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
 import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
 import com.syncodec.graphite.presentation.common.reorderable.detectReorder
@@ -74,23 +67,15 @@ fun BucketScreen(
 	val isAuthenticated = LocalIsAuthenticated.current
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = null)
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = null)
 	var bucketFilter by rememberSaveable { mutableStateOf(setOf(BucketType.TODO, BucketType.BOOK, BucketType.SHOW, BucketType.LINK)) }
 
-	val bucketListStatus by viewModel.bucketListStatus.collectAsState()
-	var bucketList by remember { mutableStateOf(listOf<BucketObject>()) }
+	val bucketList by viewModel.bucketList.collectAsState()
+	var orderedBucketList by remember { mutableStateOf(listOf<BucketObject>()) }
 	val bucketItemCount by viewModel.bucketItemCount.collectAsState()
 
-	LaunchedEffect(bucketListStatus, sortBy, sortOn, isAuthenticated) {
-		scope.launch(Dispatchers.Default) {
-			(when (sortOn) {
-				SortOn.Title -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.title } else bucketListStatus.dataOrNull?.sortedByDescending { it.title }
-				SortOn.Timestamp -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.createdTimestamp } else bucketListStatus.dataOrNull?.sortedByDescending { it.createdTimestamp }
-				SortOn.Modified -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.modifiedTimestamp } else bucketListStatus.dataOrNull?.sortedByDescending { it.modifiedTimestamp }
-				SortOn.Custom -> bucketListStatus.dataOrNull
-				else -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.title } else bucketListStatus.dataOrNull?.sortedByDescending { it.title }
-			} ?: listOf()).filter { if (it.isLocked) isAuthenticated else true }.let { withContext(Dispatchers.Main) { bucketList = it } }
+	LaunchedEffect(bucketList, isAuthenticated) {
+		scope.launch {
+			bucketList.filter { if (it.isLocked) isAuthenticated else true }.let { orderedBucketList = it }
 		}
 	}
 
@@ -107,14 +92,14 @@ fun BucketScreen(
 	val state = rememberReorderableLazyGridState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
 		onMove = { from, to ->
-			bucketList.toMutableList().apply {
+			orderedBucketList.toMutableList().apply {
 				add(to.index, removeAt(from.index))
-				bucketList = this
+				orderedBucketList = this
 			}
 		},
 		onDragEnd = { from, to ->
 			scope.launch(Dispatchers.Default) {
-				viewModel.onReorderBucketList(bucketList.map { it.id })
+				viewModel.onReorderBucketList(orderedBucketList.map { it.id })
 				dataStoreInstance.putSortOn(SortOn.Custom)
 			}
 		}
@@ -125,41 +110,33 @@ fun BucketScreen(
 
 	GenericScaffold2(
 		floatingActionButton = {
-			BucketFloatingActionButton(isExpanded = true, onClick = { isBucketBottomSheetVisible = true })
+			BucketFloatingActionButton(isExpanded = true) { isBucketBottomSheetVisible = true }
 		},
 		isFloatingActionButtonVisible = !isSelecting,
 	) {
-		val pullRefreshState = rememberPullRefreshState(
-			refreshing = bucketListStatus is ContentStatus.Loading,
-			onRefresh = viewModel::refresh
-		)
 
 		Box(
 			contentAlignment = Alignment.TopCenter,
-			modifier = Modifier
-				.fillMaxSize()
-				.pullRefresh(pullRefreshState)
+			modifier = Modifier.fillMaxSize()
 		) {
 			Crossfade(
-				targetState = bucketListStatus,
+				targetState = orderedBucketList.isEmpty(),
 				animationSpec = tween(300),
 				label = "bucketListStatus_crossfade"
-			) { contentStatus ->
-				when (contentStatus) {
-					is ContentStatus.Init -> LoadingView()
-					is ContentStatus.Loading -> LoadingView()
-					is ContentStatus.LoadedEmpty -> EmptyView(
+			) { isEmpty ->
+				if (isEmpty) {
+					EmptyView(
 						image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
 						title = "I think, therefore, I am",
 						subTitle = "― René Descartes",
 					)
-
-					is ContentStatus.Loaded -> Column(
+				} else {
+					Column(
 						modifier = Modifier.fillMaxSize()
 					) {
 						BucketListFilter(
 							bucketFilter = bucketFilter,
-							bucketList = bucketList,
+							bucketList = orderedBucketList,
 							onClickFilterChip = {
 								bucketFilter.toMutableSet().apply {
 									if (it in this) remove(it) else add(it)
@@ -179,7 +156,7 @@ fun BucketScreen(
 								.reorderable(state)
 						) {
 							items(
-								items = bucketList.filter { it.bucketType in bucketFilter.map { it.name } },
+								items = orderedBucketList.filter { it.bucketType in bucketFilter.map { it.name } },
 								key = { it.id.toString() }
 							) { bucketObject ->
 								ReorderableItem(
@@ -212,18 +189,8 @@ fun BucketScreen(
 							}
 						}
 					}
-
-					is ContentStatus.Error -> LoadingView()
 				}
 			}
-
-			PullRefreshIndicator(
-				refreshing = bucketListStatus is ContentStatus.Loading,
-				state = pullRefreshState,
-				backgroundColor = MaterialTheme.colorScheme.background,
-				contentColor = MaterialTheme.colorScheme.onBackground,
-				scale = true,
-			)
 		}
 	}
 

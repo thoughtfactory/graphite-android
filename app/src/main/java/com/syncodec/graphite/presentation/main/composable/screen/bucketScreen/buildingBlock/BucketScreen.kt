@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.buildingBlock
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -47,13 +45,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.bucketTypeIconMap
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.utils.bucketTypeToIcon
 
 
 @OptIn(ExperimentalFoundationApi::class)
+@Preview
 @Composable
 fun BucketCard(
 	title : String? = null,
@@ -74,7 +73,7 @@ fun BucketCard(
 			isDragging -> 1.17f
 			isSelected -> 0.91f
 			else -> 1f
-		}
+		}, label = ""
 	)
 
 	val containerColor by animateColorAsState(
@@ -88,7 +87,7 @@ fun BucketCard(
 					0.17f
 				)
 			)
-		}
+		}, label = ""
 	)
 
 	Box(
@@ -126,7 +125,7 @@ fun BucketCard(
 						modifier = Modifier.fillMaxWidth()
 					) {
 						Icon(
-							painter = painterResource(id = bucketTypeToIcon.getOrElse(bucketType) { R.drawable.ic_bucket }),
+							painter = painterResource(id = bucketTypeIconMap.getOrElse(bucketType) { R.drawable.ic_bucket }),
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onSurface,
 							modifier = Modifier.requiredSize(IconButtonSize)

@@ -37,7 +37,6 @@ import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.AddShowBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
-import com.syncodec.graphite.presentation.bucket.composable.screen.bookScreen.BucketBookListScreen
 import com.syncodec.graphite.presentation.bucketItem.activity.ShowBucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2

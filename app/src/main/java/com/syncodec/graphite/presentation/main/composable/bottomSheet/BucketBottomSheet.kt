@@ -22,7 +22,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
@@ -62,7 +61,6 @@ fun BucketBottomSheet(
 	isBottomSheetVisible: Boolean = true,
 	onDismissRequest: () -> Unit = { },
 	putBucket: (String?, String?, BucketType) -> Unit = { _, _, _ -> },  //  Title, description, bucketType
-	closeSheet: () -> Unit = {},
 ) {
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -75,84 +73,80 @@ fun BucketBottomSheet(
 		isBottomSheetVisible = isBottomSheetVisible,
 		onDismissRequest = onDismissRequest,
 	) {
+		Text(
+			text = stringResource(id = R.string.bucket_new_list),
+			style = MaterialTheme.typography.headlineSmall,
+			fontWeight = FontWeight.Bold,
+			modifier = Modifier.padding(start = 24.dp)
+		)
+
+		Spacer(modifier = Modifier.height(12.dp))
+
+		BucketSelector(
+			selectedBucketType = selectedBucketType,
+			onClickBucketSelector = { selectedBucketType = it }
+		)
+
+		Spacer(modifier = Modifier.height(12.dp))
+
 		Column(
-			modifier = Modifier.fillMaxWidth()
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(horizontal = 24.dp)
 		) {
-			Text(
-				text = stringResource(id = R.string.bucket_new_list),
-				style = MaterialTheme.typography.headlineSmall,
-				fontWeight = FontWeight.Bold,
-				modifier = Modifier.padding(start = 24.dp)
+			OutlinedTextField(
+				value = bucketTitleText,
+				shape = MaterialTheme.shapes.medium,
+				onValueChange = { bucketTitleText = it },
+				label = { Text(text = stringResource(id = R.string.title)) },
+				placeholder = { Text(text = stringResource(id = R.string.bucket_title_placeholder)) },
+				trailingIcon = { ClearButton { bucketTitleText = "" } },
+				maxLines = 1,
+				singleLine = true,
+				modifier = Modifier.fillMaxWidth()
 			)
 
-			Spacer(modifier = Modifier.height(12.dp))
+			Spacer(modifier = Modifier.height(4.dp))
 
-			BucketSelector(
-				selectedBucketType = selectedBucketType,
-				onClickBucketSelector = { selectedBucketType = it }
+			OutlinedTextField(
+				value = bucketDescriptionText,
+				shape = MaterialTheme.shapes.medium,
+				onValueChange = { bucketDescriptionText = it },
+				label = { Text(text = stringResource(id = R.string.description)) },
+				placeholder = { Text(text = stringResource(id = R.string.bucket_description_placeholder)) },
+				trailingIcon = { ClearButton { bucketDescriptionText = "" } },
+				maxLines = 1,
+				singleLine = true,
+				modifier = Modifier.fillMaxWidth()
 			)
 
-			Spacer(modifier = Modifier.height(12.dp))
+			Spacer(modifier = Modifier.height(8.dp))
 
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(horizontal = 24.dp)
+			Button(
+				shape = MaterialTheme.shapes.medium,
+				colors = ButtonDefaults.buttonColors(
+					containerColor = MaterialTheme.colorScheme.primary,
+					contentColor = MaterialTheme.colorScheme.onPrimary,
+					disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
+					disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+				),
+				enabled = selectedBucketType != null && bucketTitleText.isNotBlank(),
+				modifier = Modifier.fillMaxWidth(),
+				onClick = {
+					if (selectedBucketType != null) putBucket(bucketTitleText, bucketDescriptionText, selectedBucketType!!)
+
+					bucketTitleText = ""
+					bucketDescriptionText = ""
+					selectedBucketType = null
+					keyboardController?.hide()
+					onDismissRequest()
+				},
 			) {
-				OutlinedTextField(
-					value = bucketTitleText,
-					shape = MaterialTheme.shapes.medium,
-					onValueChange = { bucketTitleText = it },
-					label = { Text(text = stringResource(id = R.string.title)) },
-					placeholder = { Text(text = stringResource(id = R.string.bucket_title_placeholder)) },
-					trailingIcon = { ClearButton { bucketTitleText = "" } },
-					maxLines = 1,
-					singleLine = true,
-					modifier = Modifier.fillMaxWidth()
-				)
-
-				Spacer(modifier = Modifier.height(4.dp))
-
-				OutlinedTextField(
-					value = bucketDescriptionText,
-					shape = MaterialTheme.shapes.medium,
-					onValueChange = { bucketDescriptionText = it },
-					label = { Text(text = stringResource(id = R.string.description)) },
-					placeholder = { Text(text = stringResource(id = R.string.bucket_description_placeholder)) },
-					trailingIcon = { ClearButton { bucketDescriptionText = "" } },
-					maxLines = 1,
-					singleLine = true,
-					modifier = Modifier.fillMaxWidth()
-				)
-
-				Spacer(modifier = Modifier.height(8.dp))
-
-				Button(
-					shape = MaterialTheme.shapes.medium,
-					colors = ButtonDefaults.buttonColors(
-						containerColor = MaterialTheme.colorScheme.primary,
-						contentColor = MaterialTheme.colorScheme.onPrimary,
-						disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
-						disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
-					),
-					enabled = selectedBucketType != null && bucketTitleText.isNotBlank(),
-					modifier = Modifier.fillMaxWidth(),
-					onClick = {
-						if (selectedBucketType != null) putBucket(bucketTitleText, bucketDescriptionText, selectedBucketType!!)
-
-						bucketTitleText = ""
-						bucketDescriptionText = ""
-						selectedBucketType = null
-						keyboardController?.hide()
-						closeSheet()
-					},
-				) {
-					Text(text = "Create")
-				}
+				Text(text = stringResource(id = R.string.create))
 			}
-
-			Spacer(modifier = Modifier.height(24.dp))
 		}
+
+		Spacer(modifier = Modifier.height(24.dp))
 	}
 }
 

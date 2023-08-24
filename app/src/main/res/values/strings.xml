@@ -82,6 +82,11 @@
     <string name="season">Season</string>
     <string name="episode">Episode</string>
 
+    <!--    Notebook-->
+    <string name="new_notebook">New notebook</string>
+    <string name="new_chapter">New chapter</string>
+    <string name="new_note">New note</string>
+
     <!--    Generic-->
     <string name="stay_tuned">Stay tuned</string>
     <string name="title">Title</string>
@@ -95,12 +100,31 @@
     <string name="toggle_lock">Toggle lock</string>
     <string name="thumbnail">Thumbnail</string>
     <string name="save">Save</string>
+    <string name="create">Create</string>
     <string name="search">Search</string>
     <string name="copy">Copy</string>
     <string name="paste">Paste</string>
     <string name="vault">Vault</string>
     <string name="info">Info</string>
+    <string name="restore_default">Default</string>
     <string name="open_externally">Open externally</string>
+    <string name="color">Color</string>
+    <string name="image">Image</string>
+    <string name="select_from_gallery">Select from gallery</string>
+    <string name="modified">Modified</string>
+    <string name="custom">Custom</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort_on">Sort on</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
+    <string name="timestamp">Timestamp</string>
+    <string name="filter_and_view">Filter &amp; View</string>
+    <string name="view_type">View type</string>
+    <string name="list">List</string>
+    <string name="grid">Grid</string>
+    <string name="share">Share</string>
+    <string name="select_all">Select all</string>
+    <string name="move">Move</string>
 
     <!--   Delete -->
     <string name="delete">Delete</string>
@@ -115,6 +139,7 @@
 
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
+    <string name="toast_chapter_cover_pro">"Join Graphite Pro to add custom cover in notebooks and chapters"</string>
     <string name="toast_not_authenticated">Open vault to toggle lock</string>
     <string name="toast_clipboard_is_empty">Clipboard is empty</string>
     <string name="toast_error_loading_data">Error loading data</string>

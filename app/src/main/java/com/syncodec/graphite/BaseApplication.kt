@@ -13,7 +13,7 @@ import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.cloud.googleDrive.GDrive
-import com.syncodec.graphite.di.locator.Locator
+import com.syncodec.graphite.di.locator.GeoLocator
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
@@ -28,6 +28,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.Bu
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
+import com.syncodec.graphite.presentation.notebook.composable.NotebookScreenViewModel2
 import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataViewModel
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
@@ -46,7 +47,6 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import java.io.File
 import java.time.Instant
-import com.syncodec.graphite.presentation.notebook.screen.NotebookScreenViewModel as NotebookScreenViewModel2
 
 
 class BaseApplication : Application() {
@@ -61,13 +61,17 @@ class BaseApplication : Application() {
 
 		initDirectory()
 
+		val dataStoreInstance = DataStoreInstance(context = this)
+		val sortByFlow = dataStoreInstance.getSortBy
+		val sortOnFlow = dataStoreInstance.getSortOn
+
 		val repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
 
 		val repository = Repository()
 		repository.initRepository(this)
 		repositoryStatusStateFlow.tryEmit(Repository.Companion.RepositoryStatus.Success(repository = repository))
 
-		val locator = Locator(this)
+		val geoLocator = GeoLocator(this)
 
 		startKoin {
 			androidLogger()
@@ -76,7 +80,10 @@ class BaseApplication : Application() {
 				module {
 					single { repository }
 					single { repositoryStatusStateFlow }
-					single { locator }
+					single { dataStoreInstance }
+					single { sortByFlow }
+					single { sortOnFlow }
+					single { geoLocator }
 					single { DBox(this@BaseApplication) }
 					single { GDrive(this@BaseApplication) }
 

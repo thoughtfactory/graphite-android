@@ -117,7 +117,7 @@ fun NotebookCard(
 							modifier = handleModifier.requiredSize(24.dp)
 						) {
 							Icon(
-								painter = painterResource(id = R.drawable.ic_reorder),
+								painter = painterResource(id = R.drawable.ic_fa_grip),
 								contentDescription = "Reorder",
 								tint = color?.getInverseBWColor() ?: Color.White,
 								modifier = Modifier.size(16.dp)

@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.selectionAction.SelectionActionView
 import com.syncodec.graphite.utils.AttachmentUtil
 import com.syncodec.graphite.utils.share
 import java.io.File
@@ -106,19 +105,6 @@ fun AttachmentViewerBottomSheet(
 				}
 			}
 		}
-
-		SelectionActionView(
-			isSelecting = isSelecting,
-			selectedItemCount = selectedFileSet.size,
-			modifier = Modifier.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp),
-			onClickShare = { selectedFileSet.share(context = context) },
-			onClickSelectAll = { selectedFileSet = savedFileList.toSet() },
-			onClickDelete = {},
-			onClickCancel = {
-				isSelecting = false
-				selectedFileSet = setOf()
-			},
-		)
 	}
 }
 

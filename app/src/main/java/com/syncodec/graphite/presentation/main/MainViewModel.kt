@@ -51,28 +51,6 @@ class MainViewModel(private val repository: Repository, private val dBox: DBox, 
 		}
 	}
 
-	fun putNotebook(
-		title: String,
-		description: String,
-		color: Color?,
-		bitmap: Bitmap?,
-		callback: suspend (String) -> Unit,
-	) {
-		val chapterObject = ChapterObject().apply {
-			this.title = title
-			this.description = description
-			this.color = color?.toArgb()
-			this.thumbnail = bitmap?.encodeBase64()
-		}
-
-		if (BaseApplication.isPro.value) repository.putChapterSuspended(chapterObject)
-		else viewModelScope.launch(Dispatchers.Default) {
-			repository.getChapterWithParentId(parentChapterId = null).let {
-				if (it.size < 4) repository.putChapterSuspended(chapterObject) else callback("Join Graphite Pro to create more notebooks")
-			}
-		}
-	}
-
 	fun delete(idList: List<RealmUUID>) {
 		repository.deleteSuspended(idList)
 	}

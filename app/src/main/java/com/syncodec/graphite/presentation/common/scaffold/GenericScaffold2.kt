@@ -13,10 +13,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
@@ -45,18 +47,19 @@ import com.syncodec.graphite.presentation.ui.IconButtonSize
 @Preview
 @Composable
 fun GenericScaffold2(
-	modifier : Modifier = Modifier,
-	topBar : @Composable () -> Unit = { },
-	bottomBar : @Composable (() -> Unit)? = null,
-	isBottomBarVisible : Boolean = true,
-	floatingActionButton : @Composable () -> Unit = { },
-	isFloatingActionButtonVisible : Boolean = true,
-	dialogContent : @Composable () -> Unit = { },
-	primaryButton : GenericButton? = null,
-	secondaryButton : GenericButton? = null,
-	isButtonVisible : Boolean? = null,
-	overlayContent : @Composable () -> Unit = { },
-	content : @Composable BoxScope.() -> Unit = { },
+	modifier: Modifier = Modifier,
+	topBar: @Composable () -> Unit = { },
+	bottomBar: @Composable (() -> Unit)? = null,
+	isTopBarVisible: Boolean = true,
+	isBottomBarVisible: Boolean = true,
+	floatingActionButton: @Composable (ColumnScope.() -> Unit) = { },
+	isFloatingActionButtonVisible: Boolean = true,
+	dialogContent: @Composable () -> Unit = { },
+	primaryButton: GenericButton? = null,
+	secondaryButton: GenericButton? = null,
+	isButtonVisible: Boolean? = null,
+	overlayContent: @Composable () -> Unit = { },
+	content: @Composable (BoxScope.() -> Unit) = { },
 ) {
 	var bottomBarHeight by remember { mutableStateOf<Float?>(null) }
 
@@ -64,8 +67,17 @@ fun GenericScaffold2(
 		modifier = Modifier.fillMaxSize()
 	) {
 		Scaffold(
-			topBar = topBar,
-			modifier = Modifier.fillMaxSize(),
+			topBar = {
+				AnimatedVisibility(
+					visible = isTopBarVisible,
+					enter = expandVertically(tween(470)),
+					exit = shrinkVertically(tween(470)),
+					label = "topBar_visibility_animation"
+				) {
+					topBar()
+				}
+			},
+			modifier = modifier.fillMaxSize(),
 		) {
 			Box(
 				modifier = Modifier
@@ -76,25 +88,31 @@ fun GenericScaffold2(
 					modifier = Modifier.fillMaxSize()
 				) {
 					Box(
-						modifier = Modifier.weight(1f)
+						modifier = Modifier
+							.fillMaxWidth()
+							.weight(1f)
 					) {
 						content()
 						androidx.compose.animation.AnimatedVisibility(
 							visible = isFloatingActionButtonVisible,
-							enter = fadeIn(tween(300)) + scaleIn(tween(300)),
-							exit = fadeOut(tween(300)) + scaleOut(tween(300)),
+							enter = fadeIn(tween(470)) + scaleIn(tween(470)),
+							exit = fadeOut(tween(470)) + scaleOut(tween(470)),
 							modifier = Modifier
-								.align(Alignment.BottomEnd)
 								.padding(16.dp)
+								.align(Alignment.BottomEnd)
 						) {
-							floatingActionButton()
+							Column(
+								horizontalAlignment = Alignment.End
+							) {
+								floatingActionButton()
+							}
 						}
 					}
 					bottomBar?.let {
 						androidx.compose.animation.AnimatedVisibility(
 							visible = isBottomBarVisible,
-							enter = expandVertically(tween(300)),
-							exit = shrinkVertically(tween(300)),
+							enter = expandVertically(tween(470)),
+							exit = shrinkVertically(tween(470)),
 							modifier = Modifier
 								.onGloballyPositioned { coordinates ->
 									bottomBarHeight = coordinates.size.height.toFloat()
@@ -107,7 +125,7 @@ fun GenericScaffold2(
 						Box(
 							modifier = Modifier
 								.align(Alignment.BottomCenter)
-								.graphicsLayer { translationY = - it + 20.dp.toPx() }
+								.graphicsLayer { translationY = -it + 20.dp.toPx() }
 						) {
 							PrimaryButton(
 								primaryIcon = genericButton.icon,
@@ -128,11 +146,11 @@ fun GenericScaffold2(
 
 @Composable
 private fun PrimaryButton(
-	primaryIcon : Int,
-	primaryText : String,
-	isVisible : Boolean = true,
-	onClickPrimary : () -> Unit,
-	secondaryButton : GenericButton? = null,
+	primaryIcon: Int,
+	primaryText: String,
+	isVisible: Boolean = true,
+	onClickPrimary: () -> Unit,
+	secondaryButton: GenericButton? = null,
 ) {
 	AnimatedVisibility(
 		visible = isVisible,

@@ -7,14 +7,15 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.Icon
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,14 +40,11 @@ import com.syncodec.graphite.presentation.ui.LockClosedContainer
 
 @Preview
 @Composable
-fun SelectionActionView(
+fun SelectionActionViewSkeleton(
 	modifier: Modifier = Modifier,
 	isSelecting: Boolean = true,
 	selectedItemCount: Int = 0,
-	onClickShare: () -> Unit = {},
-	onClickSelectAll: () -> Unit = {},
-	onClickDelete: () -> Unit = {},
-	onClickCancel: () -> Unit = {},
+	content: @Composable ColumnScope.() -> Unit = {}
 ) {
 	AnimatedVisibility(
 		visible = isSelecting,
@@ -79,38 +78,7 @@ fun SelectionActionView(
 					.height(1.dp)
 					.background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.071f))
 			)
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(72.dp)
-			) {
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_share,
-					text = "Share",
-					onClick = onClickShare,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_select_all,
-					text = "Select all",
-					onClick = onClickSelectAll,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_delete,
-					text = "Delete",
-					contentColor = MaterialTheme.colorScheme.error,
-					onClick = onClickDelete,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_x,
-					text = "Cancel",
-					onClick = onClickCancel,
-				)
-			}
+			content()
 		}
 	}
 }
@@ -123,7 +91,7 @@ fun ExtendedSelectionActionView(
 	isAllItemFavourite: Boolean = false,
 	isAllItemLocked: Boolean = false,
 	selectedItemCount: Int = 0,
-	extraAction: (@Composable RowScope.() -> Unit)? = null,
+	extraAction: @Composable (RowScope.() -> Unit)? = null,
 	onClickShare: () -> Unit = {},
 	onClickSelectAll: () -> Unit = {},
 	onClickDelete: () -> Unit = {},
@@ -132,142 +100,40 @@ fun ExtendedSelectionActionView(
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
 ) {
-	AnimatedVisibility(
-		visible = isSelecting,
-		enter = expandVertically(tween(170)),
-		exit = shrinkVertically(tween(170)),
-		label = "selectionActionView_animation",
-		modifier = modifier
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.shadow(
-					elevation = 4.dp,
-					shape = MaterialTheme.shapes.extraLarge,
-				)
-				.background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.extraLarge)
-				.padding(horizontal = 12.dp)
-		) {
-			Spacer(modifier = Modifier.height(16.dp))
-			AnimatedText(
-				text = if (selectedItemCount == 0) "No items selected" else "$selectedItemCount items selected",
-				style = MaterialTheme.typography.titleMedium,
-				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.onPrimaryContainer,
-				modifier = Modifier.padding(start = 8.dp)
-			)
-			Spacer(modifier = Modifier.height(16.dp))
-			Spacer(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(1.dp)
-					.background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.071f))
-			)
-
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(72.dp)
-			) {
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_share,
-					text = "Share",
-					onClick = onClickShare,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_select_all,
-					text = "Select all",
-					onClick = onClickSelectAll,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_delete,
-					text = "Delete",
-					contentColor = MaterialTheme.colorScheme.error,
-					onClick = onClickDelete,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_x,
-					text = "Cancel",
-					onClick = onClickCancel,
-				)
-			}
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(72.dp)
-			) {
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = R.drawable.ic_fa_export,
-					text = "Move",
-					onClick = onClickMove,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = if (isAllItemFavourite) R.drawable.ic_fa_heart_solid else R.drawable.ic_fa_heart,
-					text = "Favourite",
-					iconColor = if (isAllItemFavourite) Color.FavouriteContainer else MaterialTheme.colorScheme.onPrimaryContainer,
-					onClick = onClickFavourite,
-				)
-				SelectionActionButton(
-					modifier = Modifier.weight(1f),
-					icon = if (isAllItemLocked) R.drawable.ic_fa_lock_close_solid else R.drawable.ic_fa_lock_open,
-					text = "Lock",
-					iconColor = if (isAllItemLocked) Color.LockClosedContainer else MaterialTheme.colorScheme.onPrimaryContainer,
-					onClick = onClickLock,
-				)
-				extraAction?.let { it() } ?: Spacer(modifier = Modifier.weight(1f))
-			}
-		}
-	}
-}
-
-@Preview
-@Composable
-fun BucketSelectionActionView(
-	modifier: Modifier = Modifier,
-	isSelecting: Boolean = true,
-	isAllItemFavourite: Boolean = false,
-	isAllItemLocked: Boolean = false,
-	selectedItemCount: Int = 0,
-	onClickShare: () -> Unit = {},
-	onClickSelectAll: () -> Unit = {},
-	onClickDelete: () -> Unit = {},
-	onClickCancel: () -> Unit = {},
-	onClickMove: () -> Unit = {},
-	onClickFavourite: () -> Unit = {},
-	onClickLock: () -> Unit = {},
-	onClickSetAs : () -> Unit = {},
-) {
-	ExtendedSelectionActionView(
+	SelectionActionViewSkeleton(
 		modifier = modifier,
 		isSelecting = isSelecting,
-		isAllItemFavourite = isAllItemFavourite,
-		isAllItemLocked = isAllItemLocked,
-		selectedItemCount = selectedItemCount,
-		extraAction = {
-			SelectionActionButton(
-				modifier = Modifier.weight(1f),
-				icon = R.drawable.ic_fa_circle_dot_duotone,
-				text = "Set as",
-				onClick = onClickSetAs,
+		selectedItemCount = selectedItemCount
+	) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(72.dp)
+		) {
+			ShareButton(onClick = onClickShare)
+			SelectAllButton(onClick = onClickSelectAll)
+			DeleteButton(onClick = onClickDelete)
+			CancelButton(onClick = onClickCancel)
+		}
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(72.dp)
+		) {
+			MoveButton()
+			FavouriteButton(
+				isChecked = isAllItemFavourite,
+				onClick = onClickFavourite,
 			)
-		},
-		onClickShare = onClickShare,
-		onClickSelectAll = onClickSelectAll,
-		onClickDelete = onClickDelete,
-		onClickCancel = onClickCancel,
-		onClickMove = onClickMove,
-		onClickFavourite = onClickFavourite,
-		onClickLock = onClickLock,
-	)
+			LockButton(
+				isChecked = isAllItemLocked,
+				onClick = onClickLock,
+			)
+			extraAction?.let { it() } ?: Spacer(modifier = Modifier.weight(1f))
+		}
+	}
 }
 
 @Preview
@@ -299,5 +165,178 @@ private fun SelectionActionButton(
 			style = MaterialTheme.typography.bodySmall,
 			color = contentColor
 		)
+	}
+}
+
+@Preview
+@Composable
+fun BucketSelectionActionView(
+	modifier: Modifier = Modifier,
+	isSelecting: Boolean = true,
+	isAllItemFavourite: Boolean = false,
+	isAllItemLocked: Boolean = false,
+	selectedItemCount: Int = 0,
+	onClickShare: () -> Unit = {},
+	onClickSelectAll: () -> Unit = {},
+	onClickDelete: () -> Unit = {},
+	onClickCancel: () -> Unit = {},
+	onClickMove: () -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+	onClickSetAs: () -> Unit = {},
+) {
+	ExtendedSelectionActionView(
+		modifier = modifier,
+		isSelecting = isSelecting,
+		isAllItemFavourite = isAllItemFavourite,
+		isAllItemLocked = isAllItemLocked,
+		selectedItemCount = selectedItemCount,
+		extraAction = {
+			SelectionActionButton(
+				modifier = Modifier.weight(1f),
+				icon = R.drawable.ic_fa_circle_dot_duotone,
+				text = "Set as",
+				onClick = onClickSetAs,
+			)
+		},
+		onClickShare = onClickShare,
+		onClickSelectAll = onClickSelectAll,
+		onClickDelete = onClickDelete,
+		onClickCancel = onClickCancel,
+		onClickMove = onClickMove,
+		onClickFavourite = onClickFavourite,
+		onClickLock = onClickLock,
+	)
+}
+
+@Preview
+@Composable
+fun NotebookSelectionActionView(
+	modifier: Modifier = Modifier,
+	isSelecting: Boolean = true,
+	isAllItemFavourite: Boolean = false,
+	isAllItemLocked: Boolean = false,
+	selectedItemCount: Int = 0,
+	onClickDelete: () -> Unit = {},
+	onClickCancel: () -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+) {
+	SelectionActionViewSkeleton(
+		modifier = modifier,
+				isSelecting = isSelecting,
+				selectedItemCount = selectedItemCount,
+	) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(72.dp)
+		) {
+			FavouriteButton(
+				isChecked = isAllItemFavourite,
+				onClick = onClickFavourite,
+			)
+			LockButton(
+				isChecked = isAllItemLocked,
+				onClick = onClickLock,
+			)
+			DeleteButton(onClick = onClickDelete)
+			CancelButton(onClick = onClickCancel)
+		}
+	}
+}
+
+@Preview
+@Composable
+private fun RowScope.DeleteButton(onClick: () -> Unit = {}) {
+	SelectionActionButton(
+		modifier = Modifier.weight(1f),
+		icon = R.drawable.ic_fa_delete,
+		text = stringResource(id = R.string.delete),
+		contentColor = MaterialTheme.colorScheme.error,
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+private fun RowScope.ShareButton(onClick: () -> Unit = {}) {
+	SelectionActionButton(
+		modifier = Modifier.weight(1f),
+		icon = R.drawable.ic_fa_share,
+		text = stringResource(id = R.string.share),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+private fun RowScope.SelectAllButton(onClick: () -> Unit = {}) {
+	SelectionActionButton(
+		modifier = Modifier.weight(1f),
+		icon = R.drawable.ic_fa_select_all,
+		text = stringResource(id = R.string.select_all),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+private fun RowScope.CancelButton(onClick: () -> Unit = {}) {
+	SelectionActionButton(
+		modifier = Modifier.weight(1f),
+		icon = R.drawable.ic_fa_x,
+		text = stringResource(id = R.string.cancel),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+private fun RowScope.MoveButton(onClick: () -> Unit = {}) {
+	SelectionActionButton(
+		modifier = Modifier.weight(1f),
+		icon = R.drawable.ic_fa_export,
+		text = stringResource(id = R.string.move),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+private fun RowScope.FavouriteButton(
+	isChecked: Boolean = false,
+	onClick: () -> Unit = {}
+) {
+	SelectionActionButton(
+		modifier = Modifier.weight(1f),
+		icon = if (isChecked) R.drawable.ic_fa_heart_solid else R.drawable.ic_fa_heart,
+		text = stringResource(id = R.string.favourite),
+		iconColor = if (isChecked) Color.FavouriteContainer else MaterialTheme.colorScheme.onPrimaryContainer,
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+private fun RowScope.LockButton(
+	isChecked: Boolean = false,
+	onClick: () -> Unit = {}
+) {
+	SelectionActionButton(
+		modifier = Modifier.weight(1f),
+		icon = if (isChecked) R.drawable.ic_fa_lock_close_solid else R.drawable.ic_fa_lock_open,
+		text = stringResource(id = R.string.lock),
+		iconColor = if (isChecked) Color.LockClosedContainer else MaterialTheme.colorScheme.onPrimaryContainer,
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+private fun SelectionActionViewPreview() {
+	Box {
+		ExtendedSelectionActionView()
 	}
 }

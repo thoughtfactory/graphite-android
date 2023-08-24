@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
@@ -21,7 +20,6 @@ import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationBa
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.main.composable.bar.MainNavigation
 import com.syncodec.graphite.presentation.main.composable.bar.TopBar
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MenuBottomSheet
 import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
 import com.syncodec.graphite.service.syncInator.SyncInatorService
@@ -53,8 +51,6 @@ fun MainScreen(
 
 	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
 	var currentComponentType: ComponentType by remember { mutableStateOf(ComponentType.Note) }
-
-	fun openSheet(sheetType: MainBottomSheetType) = scope.launch { }
 
 	var isSelecting: Boolean by remember { mutableStateOf(false) }
 	var selectedIdList: List<RealmUUID> by remember { mutableStateOf(listOf()) }
@@ -99,7 +95,6 @@ fun MainScreen(
 					) {
 						testDropboxConnection()
 					}
-					openSheet(MainBottomSheetType.Sync)
 				},
 				onClickSearch = {
 					Intent(context, ExplorerActivity::class.java).apply {

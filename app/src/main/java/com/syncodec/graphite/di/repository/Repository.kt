@@ -464,7 +464,7 @@ class Repository {
 	 * Get all notes with [parentId] as flow.
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getNoteWithParentIdAsFlow(parentId: RealmUUID): Flow<ResultsChange<NoteObject>> {
+	fun getNoteWithParentIdAsFlow(parentId: RealmUUID?): Flow<ResultsChange<NoteObject>> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
 			else realm.query(NoteObject::class, "parentId = $0", parentId).asFlow()

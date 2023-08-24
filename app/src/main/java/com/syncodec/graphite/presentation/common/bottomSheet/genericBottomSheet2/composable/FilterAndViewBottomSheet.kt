@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -66,7 +67,7 @@ fun FilterAndViewBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Filter and View",
+			title = stringResource(id = R.string.filter_and_view),
 		) {
 			SortOnView(sortOn = sortOn) { dataStoreInstance.putSortOn(it) }
 
@@ -94,7 +95,7 @@ fun FilterAndViewBottomSheet(
 					dataStoreInstance.putSortBy(SortBy.Descending)
 				}
 			) {
-				Text(text = "Default")
+				Text(text = stringResource(id = R.string.restore_default))
 			}
 		}
 	}
@@ -107,20 +108,20 @@ private fun ColumnScope.SortOnView(
 	onClick : (SortOn) -> Unit = {},
 ) {
 	apply {
-		BottomSheetKeyText(text = "Sort On")
+		BottomSheetKeyText(text = stringResource(id = R.string.sort_on))
 		Spacer(modifier = Modifier.height(8.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth()
 		) {
 			FilterButton(
-				text = "Title",
+				text = stringResource(id = R.string.title),
 				icon = R.drawable.ic_fa_title,
 				highlight = sortOn == SortOn.Title,
 				modifier = Modifier.weight(1f),
 			) { onClick(SortOn.Title) }
 			Spacer(modifier = Modifier.width(8.dp))
 			FilterButton(
-				text = "Timestamp",
+				text = stringResource(id = R.string.timestamp),
 				icon = R.drawable.ic_fa_clock,
 				highlight = sortOn == SortOn.Timestamp,
 				modifier = Modifier.weight(1f),
@@ -131,14 +132,14 @@ private fun ColumnScope.SortOnView(
 			modifier = Modifier.fillMaxWidth()
 		) {
 			FilterButton(
-				text = "Modified",
+				text = stringResource(id = R.string.modified),
 				icon = R.drawable.ic_fa_clock_duotone,
 				highlight = sortOn == SortOn.Modified,
 				modifier = Modifier.weight(1f),
 			) { onClick(SortOn.Modified) }
 			Spacer(modifier = Modifier.width(8.dp))
 			FilterButton(
-				text = "Custom",
+				text = stringResource(id = R.string.custom),
 				icon = R.drawable.ic_fa_grip,
 				highlight = sortOn == SortOn.Custom,
 				modifier = Modifier.weight(1f),
@@ -154,7 +155,7 @@ private fun ColumnScope.SortByView(
 	onClick : (SortBy) -> Unit = {},
 ) {
 	apply {
-		BottomSheetKeyText(text = "Sort By")
+		BottomSheetKeyText(text = stringResource(id = R.string.sort_by))
 		Spacer(modifier = Modifier.height(8.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth()
@@ -185,7 +186,7 @@ private fun ColumnScope.SortByView(
 				) {
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_sort_bars),
-						contentDescription = "Ascending",
+						contentDescription = stringResource(id = R.string.ascending),
 						tint = ascendingContentColor,
 						modifier = Modifier
 							.size(16.dp)
@@ -193,7 +194,7 @@ private fun ColumnScope.SortByView(
 					)
 					Spacer(modifier = Modifier.width(12.dp))
 					Text(
-						text = "Ascending",
+						text = stringResource(id = R.string.ascending),
 						color = ascendingContentColor,
 						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier,
@@ -202,7 +203,7 @@ private fun ColumnScope.SortByView(
 			}
 			Spacer(modifier = Modifier.width(8.dp))
 			FilterButton(
-				text = "Descending",
+				text = stringResource(id = R.string.descending),
 				icon = R.drawable.ic_fa_sort_bars,
 				highlight = sortBy == SortBy.Descending,
 				modifier = Modifier.weight(1f),
@@ -218,20 +219,20 @@ private fun ColumnScope.ViewTypeView(
 	onClick : (ViewType) -> Unit = {},
 ) {
 	apply {
-		BottomSheetKeyText(text = "View Type")
+		BottomSheetKeyText(text = stringResource(id = R.string.view_type))
 		Spacer(modifier = Modifier.height(8.dp))
 		Row(
 			modifier = Modifier.fillMaxWidth()
 		) {
 			FilterButton(
-				text = "List",
+				text = stringResource(id = R.string.list),
 				icon = R.drawable.ic_fa_view_list,
 				highlight = viewType == ViewType.List,
 				modifier = Modifier.weight(1f),
 			) { onClick(ViewType.List) }
 			Spacer(modifier = Modifier.width(8.dp))
 			FilterButton(
-				text = "Grid",
+				text = stringResource(id = R.string.grid),
 				icon = R.drawable.ic_fa_view_grid,
 				highlight = viewType == ViewType.Grid,
 				modifier = Modifier.weight(1f),

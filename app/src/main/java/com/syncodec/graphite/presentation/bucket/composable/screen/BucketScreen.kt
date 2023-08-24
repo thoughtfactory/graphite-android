@@ -28,8 +28,6 @@ import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucket.composable.bar.TopBar
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.MetadataBottomSheet
-import com.syncodec.graphite.presentation.bucket.composable.dialog.BucketDialog
-import com.syncodec.graphite.presentation.bucket.composable.dialog.BucketDialogType
 import com.syncodec.graphite.presentation.bucket.composable.screen.bookScreen.BucketBookScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.linkScreen.BucketLinkScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.showScreen.BucketShowScreen
@@ -89,17 +87,6 @@ fun BucketScreen(
 	var showEditBucketDialog by remember { mutableStateOf(false) }
 	var showDeleteBucketItemsDialog by remember { mutableStateOf(false) }
 	var showDeleteBucketDialog by remember { mutableStateOf(false) }
-	fun openDialog(dialogType: BucketDialogType) = when (dialogType) {
-		BucketDialogType.Edit -> showEditBucketDialog = true
-		BucketDialogType.DeleteBucketItems -> showDeleteBucketItemsDialog = true
-		BucketDialogType.DeleteBucket -> showDeleteBucketDialog = true
-	}
-
-	fun closeDialog(dialogType: BucketDialogType) = when (dialogType) {
-		BucketDialogType.Edit -> showEditBucketDialog = false
-		BucketDialogType.DeleteBucketItems -> showDeleteBucketItemsDialog = false
-		BucketDialogType.DeleteBucket -> showDeleteBucketDialog = false
-	}
 
 	val bucketObject by viewModel.bucketObject.collectAsState()
 	val title by viewModel.title.collectAsState()
@@ -162,26 +149,26 @@ fun BucketScreen(
 			},
 			isBottomBarVisible = !isSelecting,
 			dialogContent = {
-				BucketDialog(
-					bucketObject = bucketObject1,
-					showEditBucketDialog = showEditBucketDialog,
-					showDeleteBucketItemsDialog = showDeleteBucketItemsDialog,
-					showDeleteBucketDialog = showDeleteBucketDialog,
-					onUpdateBucket = viewModel::updateBucket,
-					onDelete = {
-						viewModel.deleteBucketItem(selectedIdList.toList())
-						isSelecting = false
-						selectedIdList = setOf()
-					},
-					onDeleteBucket = {
-						viewModel.deleteBucket(bucketObject1.id) {
-							closeDialog(BucketDialogType.DeleteBucket)
-							withContext(Dispatchers.Main) { Toast.makeText(context, "Bucket Deleted", Toast.LENGTH_SHORT).show() }
-							afterDeleteBucket()
-						}
-					},
-					closeDialog = ::closeDialog,
-				)
+//				BucketDialog(
+//					bucketObject = bucketObject1,
+//					showEditBucketDialog = showEditBucketDialog,
+//					showDeleteBucketItemsDialog = showDeleteBucketItemsDialog,
+//					showDeleteBucketDialog = showDeleteBucketDialog,
+//					onUpdateBucket = viewModel::updateBucket,
+//					onDelete = {
+//						viewModel.deleteBucketItem(selectedIdList.toList())
+//						isSelecting = false
+//						selectedIdList = setOf()
+//					},
+//					onDeleteBucket = {
+//						viewModel.deleteBucket(bucketObject1.id) {
+//							closeDialog(BucketDialogType.DeleteBucket)
+//							withContext(Dispatchers.Main) { Toast.makeText(context, "Bucket Deleted", Toast.LENGTH_SHORT).show() }
+//							afterDeleteBucket()
+//						}
+//					},
+//					closeDialog = ::closeDialog,
+//				)
 			},
 			isButtonVisible = !isSelecting
 		) {
@@ -219,11 +206,11 @@ fun BucketScreen(
 			}
 
 			BucketSelectionActionView(
-				isSelecting = isSelecting,
-				selectedItemCount = selectedIdList.size,
 				modifier = Modifier
 					.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)
 					.align(Alignment.BottomCenter),
+				isSelecting = isSelecting,
+				selectedItemCount = selectedIdList.size,
 				onClickShare = {},
 				onClickSelectAll = { selectedIdList.toMutableSet().apply { addAll(toSelectIdList); selectedIdList = toSet() } },
 				onClickDelete = { isDeleteDialogVisible = true },
@@ -234,8 +221,7 @@ fun BucketScreen(
 					if (isAuthenticated) bucketScreenCommonViewModel.toggleLock(selectedIdList)
 					else Toast.makeText(context, context.getText(R.string.toast_not_authenticated), Toast.LENGTH_SHORT).show()
 				},
-				onClickSetAs = {},
-			)
+			) {}
 		}
 	} ?: LoadingView()
 

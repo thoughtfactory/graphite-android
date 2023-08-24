@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.notebook.screen.composable.bar
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Icon
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
@@ -36,11 +34,11 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun Navigator(
-	chapterPath : List<ChapterObjectLite> = listOf(),
-	defaultChapterId : RealmUUID? = null,
-	showRoot : Boolean = false,
-	isVisible : Boolean = true,
-	onClickNavigatorChapter : (RealmUUID?) -> Unit = {},
+	chapterPath: List<ChapterObjectLite> = listOf(),
+	defaultChapterId: RealmUUID? = null,
+	showRoot: Boolean = false,
+	isVisible: Boolean = true,
+	onClickNavigatorChapter: (RealmUUID?) -> Unit = {},
 ) = AnimatedVisibility(
 	visible = isVisible, enter = expandVertically(tween(300)), exit = shrinkVertically(tween(300))
 ) {
@@ -86,15 +84,14 @@ fun Navigator(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Preview
 @Composable
 private fun NavigatorItem(
-	id : RealmUUID? = RealmUUID.random(),
-	title : String? = null,
-	color : Color? = null,
-	isDefault : Boolean = false,
-	onClick : () -> Unit = {},
+	id: RealmUUID? = RealmUUID.random(),
+	title: String? = null,
+	color: Color? = null,
+	isDefault: Boolean = false,
+	onClick: () -> Unit = {},
 ) {
 	val containerColor = color ?: MaterialTheme.colorScheme.surface
 	val contentColor = color?.getInverseBWColor() ?: MaterialTheme.colorScheme.onSurface
@@ -109,7 +106,13 @@ private fun NavigatorItem(
 			)
 		},
 		icon = if (isDefault) {
-			{ Icon(painter = painterResource(id = R.drawable.ic_sparkle), tint = contentColor, contentDescription = "Default Chapter") }
+			{
+				Icon(
+					painter = painterResource(id = R.drawable.ic_fa_sparkles),
+					tint = contentColor, contentDescription = "Default Chapter",
+					modifier = Modifier.requiredSize(16.dp)
+				)
+			}
 		} else null,
 		colors = SuggestionChipDefaults.suggestionChipColors(
 			containerColor = containerColor,

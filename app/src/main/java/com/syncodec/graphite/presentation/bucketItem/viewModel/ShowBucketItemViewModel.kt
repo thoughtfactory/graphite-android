@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.repository.Repository

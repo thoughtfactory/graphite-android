@@ -13,7 +13,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 
 
-class Locator(private val context: Context) {
+class GeoLocator(private val context: Context) {
 
 	private val fusedLocationClient: FusedLocationProviderClient by lazy { LocationServices.getFusedLocationProviderClient(context) }
 	private var locationCancellationSource: CancellationTokenSource? = null

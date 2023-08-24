@@ -30,9 +30,9 @@ import io.realm.kotlin.types.RealmUUID
 
 
 sealed class BottomNavigationItem(val route: String, val icon: Int, val iconFilled: Int, val title: String) {
-	object Home : BottomNavigationItem(route = "home", icon = R.drawable.ic_fa_home, iconFilled = R.drawable.ic_fa_home_solid, title = "Home")
-	object Calendar : BottomNavigationItem(route = "calendar", icon = R.drawable.ic_fa_calendar, iconFilled = R.drawable.ic_fa_calendar_solid, title = "Calendar")
-	object Atlas : BottomNavigationItem(route = "atlas", icon = R.drawable.ic_fa_atlas, iconFilled = R.drawable.ic_fa_atlas_solid, title = "Atlas")
+	data object Home : BottomNavigationItem(route = "home", icon = R.drawable.ic_fa_home, iconFilled = R.drawable.ic_fa_home_solid, title = "Home")
+	data object Calendar : BottomNavigationItem(route = "calendar", icon = R.drawable.ic_fa_calendar, iconFilled = R.drawable.ic_fa_calendar_solid, title = "Calendar")
+	data object Atlas : BottomNavigationItem(route = "atlas", icon = R.drawable.ic_fa_atlas, iconFilled = R.drawable.ic_fa_atlas_solid, title = "Atlas")
 }
 
 @Composable

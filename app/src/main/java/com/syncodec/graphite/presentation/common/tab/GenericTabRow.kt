@@ -71,13 +71,15 @@ fun GenericTabRow(
 					.height(40.dp)
 					.clickable { tabItem.onClick() }
 			) {
-				Icon(
-					painter = painterResource(id = tabItem.icon),
-					contentDescription = tabItem.text,
-					tint = colors.contentColor,
-					modifier = Modifier.requiredSize(16.dp),
-				)
-				Spacer(modifier = Modifier.width(8.dp))
+				tabItem.icon?.let {
+					Icon(
+						painter = painterResource(id = it),
+						contentDescription = tabItem.text,
+						tint = colors.contentColor,
+						modifier = Modifier.requiredSize(16.dp),
+					)
+					Spacer(modifier = Modifier.width(8.dp))
+				}
 				Text(
 					text = tabItem.text,
 					style = MaterialTheme.typography.bodySmall,
@@ -108,20 +110,22 @@ fun TabIndicator(
 			targetState = tabItem,
 			transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) },
 			label = "text_animation",
-		) {
+		) { tabItem1 ->
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.Center,
 			) {
-				Icon(
-					painter = painterResource(id = it.icon),
-					contentDescription = it.text,
-					tint = contentColor,
-					modifier = Modifier.requiredSize(16.dp),
-				)
-				Spacer(modifier = Modifier.width(8.dp))
+				tabItem1.icon?.let {
+					Icon(
+						painter = painterResource(id = it),
+						contentDescription = tabItem1.text,
+						tint = contentColor,
+						modifier = Modifier.requiredSize(16.dp),
+					)
+					Spacer(modifier = Modifier.width(8.dp))
+				}
 				Text(
-					text = it.text,
+					text = tabItem1.text,
 					style = MaterialTheme.typography.bodySmall,
 					color = contentColor,
 					fontWeight = FontWeight.Bold,
@@ -133,7 +137,7 @@ fun TabIndicator(
 
 data class TabItem(
 	val text: String,
-	val icon: Int,
+	val icon: Int? = null,
 	val onClick: () -> Unit = {},
 )
 

@@ -84,10 +84,11 @@ import kotlinx.coroutines.launch
 @Preview
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun NotebookBottomSheet(
+fun ChapterBottomSheet(
 	bottomSheetState: SheetState = rememberModalBottomSheetState(),
 	isBottomSheetVisible: Boolean = true,
 	onDismissRequest: () -> Unit = { },
+	title : String = "New notebook",
 	putNotebook: (String, String, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
 ) {
 	val keyboardController = LocalSoftwareKeyboardController.current
@@ -133,7 +134,7 @@ fun NotebookBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = stringResource(id = R.string.new_notebook)
+			title = title
 		) {
 			OutlinedTextField(
 				value = bucketTitleText,

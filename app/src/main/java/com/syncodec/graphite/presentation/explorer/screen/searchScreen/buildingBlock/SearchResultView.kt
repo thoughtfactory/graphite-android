@@ -44,7 +44,7 @@ fun SearchResultView(
 			noteList(
 				noteList = it.filter { if (it.isLocked) isAuthenticated else true },
 				tagList = tagList,
-				selectedIdList = selectedIdList,
+//				selectedIdList = selectedIdList,
 				onClick = { onClickNote(it.id) },
 				onLongClick = { onLongClickNote(it.id) },
 			)

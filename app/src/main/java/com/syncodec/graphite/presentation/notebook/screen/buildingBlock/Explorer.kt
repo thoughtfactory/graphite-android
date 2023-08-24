@@ -63,7 +63,7 @@ fun Explorer(
 					}
 				),
 			tagList = tagList,
-			selectedIdList = selectedIdList,
+//			selectedIdList = selectedIdList,
 			isVisible = isNoteListVisible,
 			toggleVisibility = onToggleNoteVisibility,
 			onClick = { onClickNote(it.id) },
@@ -83,7 +83,7 @@ fun Explorer(
 			chapterNoteItemCount = chapterNoteItemCount,
 			chapterChapterItemCount = chapterChapterItemCount,
 			tagList = tagList,
-			selectedIdList = selectedIdList,
+//			selectedIdList = selectedIdList,
 			isVisible = isChapterListVisible,
 			toggleVisibility = onToggleChapterVisibility,
 			onClick = { onClickChapter(it.id) }

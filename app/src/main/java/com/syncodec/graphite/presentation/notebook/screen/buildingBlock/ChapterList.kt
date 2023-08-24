@@ -18,20 +18,20 @@ import io.realm.kotlin.types.RealmUUID
 
 @OptIn(ExperimentalFoundationApi::class)
 fun LazyListScope.chapterList(
-	chapterList : List<ChapterObject> = listOf(),
-	chapterNoteItemCount : Map<RealmUUID?, Int> = mapOf(),
-	chapterChapterItemCount : Map<RealmUUID?, Int> = mapOf(),
-	tagList : List<TagObject> = listOf(),
-	selectedIdList : List<RealmUUID> = listOf(),
-	headerTitle : String = "Chapters",
-	headerSubTitle : String = "${chapterList.size} chapters",
-	headerMinHeight : Dp = Dp.Hairline,
-	headerBackgroundColor : Color? = null,
-	isVisible : Boolean = true,
-	toggleVisibility : () -> Unit = {},
-	headerEnabled : Boolean = true,
-	onClick : (ChapterObject) -> Unit = {},
-	onLongClick : (ChapterObject) -> Unit = {},
+	chapterList: List<ChapterObject> = listOf(),
+	chapterNoteItemCount: Map<RealmUUID?, Int> = mapOf(),
+	chapterChapterItemCount: Map<RealmUUID?, Int> = mapOf(),
+	tagList: List<TagObject> = listOf(),
+	selectedIdList: Set<RealmUUID> = setOf(),
+	headerTitle: String = "Chapters",
+	headerSubTitle: String = "${chapterList.size} chapters",
+	headerMinHeight: Dp = Dp.Hairline,
+	headerBackgroundColor: Color? = null,
+	isVisible: Boolean = true,
+	toggleVisibility: () -> Unit = {},
+	headerEnabled: Boolean = true,
+	onClick: (ChapterObject) -> Unit = {},
+	onLongClick: (ChapterObject) -> Unit = {},
 ) {
 	item { Spacer(modifier = Modifier.height(8.dp)) }
 
