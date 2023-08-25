@@ -130,14 +130,9 @@ fun BucketScreen(
 					isSearching = isSearching,
 					isSelecting = isSelecting,
 					searchQueryList = searchQueryList,
-					selectedItemSize = selectedIdList.size,
-					onCancelSelection = { isSelecting = false; selectedIdList = setOf() },
 					onClickFavourite = viewModel::toggleFavourite,
 					onClickLock = { viewModel.toggleLock() },
 					onClickSearch = { isSearching = true },
-					onShare = { share(false) },
-					onDelete = {},
-					onClickBack = { backPressedDispatcher?.onBackPressed() },
 					addSearchQuery = { bucketScreenCommonViewModel.filterBySearchAdd(it) },
 					removeSearchQuery = { bucketScreenCommonViewModel.filterBySearchRemove(it) },
 				)
@@ -214,7 +209,6 @@ fun BucketScreen(
 				onClickShare = {},
 				onClickSelectAll = { selectedIdList.toMutableSet().apply { addAll(toSelectIdList); selectedIdList = toSet() } },
 				onClickDelete = { isDeleteDialogVisible = true },
-				onClickCancel = { backPressedDispatcher?.onBackPressed() },
 				onClickMove = {},
 				onClickFavourite = { bucketScreenCommonViewModel.toggleFavourite(selectedIdList) },
 				onClickLock = {

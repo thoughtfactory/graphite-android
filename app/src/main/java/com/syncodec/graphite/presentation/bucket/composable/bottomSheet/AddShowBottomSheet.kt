@@ -60,7 +60,7 @@ import com.syncodec.graphite.presentation.bucketItem.activity.ShowBucketItemActi
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.button.ClearButton
+import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.button.SearchButton
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
@@ -130,7 +130,7 @@ fun AddShowBottomSheet(
 				placeholder = { Text(text = stringResource(id = if (showSearchType == 0) R.string.search_for_movie else R.string.search_for_tv_show)) },
 				trailingIcon = {
 					Row {
-						ClearButton { queryText = "" }
+						CancelButton { queryText = "" }
 						SearchButton { searchForShow(queryText) }
 						Spacer(modifier = Modifier.width(4.dp))
 					}

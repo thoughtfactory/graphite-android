@@ -5,19 +5,20 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.presentation.attachment.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.attachment.composable.bar.TopBar
 import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.AttachmentCard
 import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.AttachmentHeader
@@ -33,22 +35,24 @@ import com.syncodec.graphite.presentation.attachment.composable.dialog.Attachmen
 import com.syncodec.graphite.presentation.attachment.composable.dialog.AttachmentDialogType
 import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
+import com.syncodec.graphite.presentation.common.selectionAction.AttachmentSelectionActionView
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LoaderStatus
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.viewExternally
+import com.syncodec.graphite.utils.xor
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
 
 @Preview
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AttachmentScreen() {
 	val context = LocalContext.current
-	val viewModel : AttachmentScreenViewModel = koinViewModel()
+	val viewModel: AttachmentScreenViewModel = koinViewModel()
 	val haptic = LocalHapticFeedback.current
 
 	val isAuthenticated = LocalIsAuthenticated.current
@@ -58,21 +62,21 @@ fun AttachmentScreen() {
 	val noteAttachmentListMap by viewModel.noteAttachmentListMap.collectAsState()
 
 	var isSelecting by remember { mutableStateOf(false) }
-	var selectedFileList : List<File> by remember { mutableStateOf(listOf()) }
+	var selectedFileList: Set<File> by remember { mutableStateOf(setOf()) }
 
 	var isDeleteDialogVisible by remember { mutableStateOf(false) }
 
-	fun openDialog(editorDialogType : AttachmentDialogType) = when (editorDialogType) {
+	fun openDialog(editorDialogType: AttachmentDialogType) = when (editorDialogType) {
 		AttachmentDialogType.Delete -> isDeleteDialogVisible = true
 	}
 
-	fun closeDialog(editorDialogType : AttachmentDialogType) = when (editorDialogType) {
+	fun closeDialog(editorDialogType: AttachmentDialogType) = when (editorDialogType) {
 		AttachmentDialogType.Delete -> isDeleteDialogVisible = false
 	}
 
 	BackHandler(enabled = isSelecting) {
 		isSelecting = false
-		selectedFileList = listOf()
+		selectedFileList = setOf()
 	}
 
 	val activityLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -88,7 +92,7 @@ fun AttachmentScreen() {
 						if (hasObjectId) intent.getByteArrayExtra(Extra.Companion.Extra.OBJECT_ID.name)?.let { bytes ->
 							try {
 
-							} catch (e : Exception) {
+							} catch (e: Exception) {
 								null
 							}
 						}
@@ -97,31 +101,31 @@ fun AttachmentScreen() {
 				Extra.Companion.Extra.INTENT_ACTION.name
 				Extra.Companion.Extra.OBJECT_ID.name
 			}
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 			Toast.makeText(context, "Error performing action", Toast.LENGTH_SHORT).show()
 		}
 	}
 
-	fun onClickAttachment(file : File) {
-		if (isSelecting) selectedFileList.toMutableList().apply {
-			if (contains(file)) remove(file) else add(file)
+	fun onClickAttachment(file: File) {
+		if (isSelecting) selectedFileList.toMutableSet().apply {
+			xor(file)
 			selectedFileList = this
 		}
 		else file.viewExternally(context = context)
 	}
 
-	fun onLongClickAttachment(file : File) {
+	fun onLongClickAttachment(file: File) {
 		isSelecting = true
-		selectedFileList.toMutableList().apply {
-			if (contains(file)) remove(file) else add(file)
+		selectedFileList.toMutableSet().apply {
+			xor(file)
 			selectedFileList = this
 		}
 		haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 	}
 
-	fun onClickHeader(note : NoteObjectLite, attachmentList : List<File>) {
+	fun onClickHeader(note: NoteObjectLite, attachmentList: Set<File>) {
 		if (isSelecting) {
-			selectedFileList.toMutableList().apply {
+			selectedFileList.toMutableSet().apply {
 				if (containsAll(attachmentList)) removeAll(attachmentList) else addAll(attachmentList)
 				selectedFileList = this
 			}
@@ -137,32 +141,27 @@ fun AttachmentScreen() {
 		}
 	}
 
-	fun onLongClickHeader(attachmentList : List<File>) {
+	fun onLongClickHeader(attachmentList: Set<File>) {
 		isSelecting = true
-		selectedFileList.toMutableList().apply {
+		selectedFileList.toMutableSet().apply {
 			if (containsAll(attachmentList)) removeAll(attachmentList) else addAll(attachmentList)
 			selectedFileList = this
 		}
 		haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 	}
 
-	GenericScaffold(
-		topBar = {
-			TopBar(
-				isSelecting = isSelecting,
-				selectedSize = selectedFileList.size,
-				onClickCancelSelect = { isSelecting = false; selectedFileList = listOf() },
-				onClickDelete = { openDialog(AttachmentDialogType.Delete) },
-			)
-		},
-		bottomBar = {},
+	GenericScaffold2(
+		topBar = { TopBar() },
+		bottomBar = { BottomBar() },
+		isTopBarVisible = !isSelecting,
+		isBottomBarVisible = !isSelecting,
 		dialogContent = {
 			AttachmentDialog(
 				isDeleteDialogVisible = isDeleteDialogVisible,
 				onDelete = {
 					selectedFileList.toList().let {
 						viewModel.deleteAttachment(it)
-						selectedFileList = listOf()
+						selectedFileList = setOf()
 						isSelecting = false
 					}
 				},
@@ -170,50 +169,52 @@ fun AttachmentScreen() {
 			)
 		}
 	) {
-		Crossfade(
-			targetState = contentStatus,
-			animationSpec = tween(300)
-		) {
-			when (it) {
-				LoaderStatus.Init -> LoadingView()
-				LoaderStatus.Error -> ErrorView()
-				LoaderStatus.Loading -> LoadingView()
-				LoaderStatus.LoadedEmpty -> EmptyView()
-				LoaderStatus.Loaded -> LazyVerticalGrid(
-					columns = GridCells.Adaptive(144.dp),
-				) {
-					noteAttachmentListMap
-						.filter { if (it.key.isLocked) isAuthenticated else true }
-						.forEach { (note, attachmentList) ->
-							item(
-								span = { GridItemSpan(maxCurrentLineSpan) }
-							) {
-								AttachmentHeader(
-									noteId = note.id,
-									title = note.title,
-									isFavourite = note.isFavourite,
-									isLocked = note.isLocked,
-									attachmentCount = attachmentList.size,
-									onClick = { onClickHeader(note = note, attachmentList = attachmentList) },
-									onLongClick = { onLongClickHeader(attachmentList = attachmentList) },
-								)
-							}
-							attachmentList.forEach { file ->
-								item {
-									AttachmentCard(
-										file = file,
-										isSelected = file in selectedFileList,
-										openNote = {},
-										onShare = {},
-										onClick = { onClickAttachment(file) },
-										onLongClick = { onLongClickAttachment(file) },
-									)
-								}
-							}
-							item(span = { GridItemSpan(maxCurrentLineSpan) }) { Box(modifier = Modifier) }
+		when (contentStatus) {
+			LoaderStatus.Init -> LoadingView()
+			LoaderStatus.Error -> ErrorView()
+			LoaderStatus.Loading -> LoadingView()
+			LoaderStatus.LoadedEmpty -> EmptyView()
+			LoaderStatus.Loaded -> LazyVerticalGrid(
+				columns = GridCells.Adaptive(144.dp),
+			) {
+				noteAttachmentListMap
+					.filter { if (it.key.isLocked) isAuthenticated else true }
+					.forEach { (note, attachmentList) ->
+						item(
+							span = { GridItemSpan(maxCurrentLineSpan) }
+						) {
+							AttachmentHeader(
+								noteId = note.id,
+								title = note.title,
+								isFavourite = note.isFavourite,
+								isLocked = note.isLocked,
+								attachmentCount = attachmentList.size,
+								onClick = { onClickHeader(note = note, attachmentList = attachmentList.toSet()) },
+								onLongClick = { onLongClickHeader(attachmentList = attachmentList.toSet()) },
+							)
 						}
-				}
+						attachmentList.forEach { file ->
+							item {
+								AttachmentCard(
+									file = file,
+									isSelected = file in selectedFileList,
+									onClick = { onClickAttachment(file) },
+								) { onLongClickAttachment(file) }
+							}
+						}
+						item(span = { GridItemSpan(maxCurrentLineSpan) }) { Box(modifier = Modifier) }
+					}
 			}
 		}
+
+		AttachmentSelectionActionView(
+			modifier = Modifier
+				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)
+				.align(Alignment.BottomCenter),
+			isSelecting = isSelecting,
+			selectedItemCount = selectedFileList.size,
+			onClickShare = {},
+			onClickDelete = {},
+		)
 	}
 }

@@ -18,14 +18,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.model.bucketTypeIconMap
-import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.button.BackButton
+import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.button.FavouriteButton
 import com.syncodec.graphite.presentation.common.button.FilterButton
 import com.syncodec.graphite.presentation.common.button.LockButton
@@ -41,21 +42,16 @@ import kotlinx.coroutines.launch
 @Composable
 fun TopBar(
 	title: String? = null,
-	isLocked: Boolean = false,
 	isFavourite: Boolean = false,
-	bucketType: BucketType = BucketType.UNKNOWN,
-	pagerState: PagerState = rememberPagerState { 4 },
+	isLocked: Boolean = false,
 	isSearching: Boolean = false,
 	isSelecting: Boolean = false,
+	bucketType: BucketType = BucketType.UNKNOWN,
+	pagerState: PagerState = rememberPagerState { 4 },
 	searchQueryList: Set<String> = setOf(),
-	selectedItemSize: Int = 0,
-	onCancelSelection: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
-	onClickSearch : () -> Unit = {},
-	onShare: () -> Unit = {},
-	onDelete: () -> Unit = {},
-	onClickBack: () -> Unit = {},
+	onClickSearch: () -> Unit = {},
 	addSearchQuery: (String) -> Unit = {},
 	removeSearchQuery: (String) -> Unit = {},
 ) {
@@ -71,48 +67,29 @@ fun TopBar(
 			exit = shrinkVertically(tween(470)),
 			label = "isSelecting_animation"
 		) {
-			Bar(
-				title = title,
-				isLocked = isLocked,
-				isFavourite = isFavourite,
-				isSearching = isSearching,
-				searchQueryList = searchQueryList,
-				onClickFavourite = onClickFavourite,
-				onClickLock = onClickLock,
-				onClickSearch = onClickSearch,
-				onClickBack = onClickBack,
-				addSearchQuery = addSearchQuery,
-				removeSearchQuery = removeSearchQuery,
-			)
+			AnimatedContent(
+				targetState = isSearching,
+				label = "bar_animation"
+			) {
+				if (it) {
+					BucketSearchBar(
+						title = title,
+						searchQueryList = searchQueryList,
+						addSearchQuery = addSearchQuery,
+						removeSearchQuery = removeSearchQuery,
+					)
+				} else {
+					NormalTopBar(
+						title = title,
+						isFavourite = isFavourite,
+						isLocked = isLocked,
+						onClickFavourite = onClickFavourite,
+						onClickLock = onClickLock,
+						onClickSearch = onClickSearch,
+					)
+				}
+			}
 		}
-//		Crossfade(
-//			targetState = isSelecting,
-//			animationSpec = tween(durationMillis = 470),
-//			label = ""
-//		) {
-//			if (it) {
-//				SelectionBar(
-//					selectedItemSize = selectedItemSize,
-//					onCancelSelection = onCancelSelection,
-//					onShare = onShare,
-//					onDelete = onDelete,
-//				)
-//			} else {
-//				Bar(
-//					title = title,
-//					isLocked = isLocked,
-//					isFavourite = isFavourite,
-//					isSearching = isSearching,
-//					searchQueryList = searchQueryList,
-//					onClickFavourite = onClickFavourite,
-//					onClickLock = onClickLock,
-//					onClickSearch = onClickSearch,
-//					onClickBack = onClickBack,
-//					addSearchQuery = addSearchQuery,
-//					removeSearchQuery = removeSearchQuery,
-//				)
-//			}
-//		}
 
 		AnimatedVisibility(
 			visible = !isSelecting && bucketType != BucketType.LINK,
@@ -128,167 +105,113 @@ fun TopBar(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Preview
 @Composable
-private fun Bar(
-	title: String?,
+private fun NormalTopBar(
+	title: String? = null,
 	isFavourite: Boolean = false,
 	isLocked: Boolean = false,
-	isSearching: Boolean = false,
-	searchQueryList: Set<String> = setOf(),
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
-	onClickSearch : () -> Unit = {},
-	onClickBack: () -> Unit = {},
+	onClickSearch: () -> Unit = {},
+) {
+	TopAppBar(
+		navigationIcon = { BackButton() },
+		title = {
+			Text(
+				text = title ?: stringResource(id = R.string.untitled),
+				fontStyle = if (title == null) FontStyle.Italic else FontStyle.Normal
+			)
+		},
+		actions = {
+			FilterButton()
+
+			LockButton(
+				isLocked = isLocked,
+				onClick = onClickLock,
+			)
+
+			FavouriteButton(
+				isFavourite = isFavourite,
+				onClick = onClickFavourite,
+			)
+
+			GenericButton(
+				icon = R.drawable.ic_fa_search,
+				colors = GenericButtonDefaults.bottomBarColorWhite(),
+				onClick = onClickSearch
+			)
+		},
+		colors = TopAppBarDefaults.topAppBarColors(
+			containerColor = MaterialTheme.colorScheme.background,
+			navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+			titleContentColor = MaterialTheme.colorScheme.onSurface,
+			actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+		)
+	)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun BucketSearchBar(
+	title: String? = null,
+	searchQueryList: Set<String> = setOf(),
 	addSearchQuery: (String) -> Unit = {},
 	removeSearchQuery: (String) -> Unit = {},
 ) {
 	var searchQuery by remember { mutableStateOf("") }
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-	AnimatedContent(
-		targetState = isSearching,
-		label = "bar_animation"
+	Column(
+		modifier = Modifier.fillMaxWidth()
 	) {
-		if (it) {
-			Column(
-				modifier = Modifier.fillMaxWidth()
-			) {
-				SearchBar(
-					query = searchQuery,
-					onQueryChange = { searchQuery = it },
-					onSearch = { addSearchQuery(it); searchQuery = "" },
-					active = false,
-					onActiveChange = {},
-					placeholder = { Text(text = "Search within \"$title\"") },
-					leadingIcon = {
-						GenericButton(
-							icon = R.drawable.ic_close,
-							colors = GenericButtonDefaults.bottomBarColorWhite(),
-							onClick = onClickBack
-						)
-					},
-					trailingIcon = {
-						GenericButton(
-							icon = R.drawable.ic_fa_search,
-							colors = GenericButtonDefaults.bottomBarColorWhite(),
-							onClick = { addSearchQuery(searchQuery); searchQuery = "" }
-						)
-					},
-					tonalElevation = 0.dp,
-					colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
-					modifier = Modifier.fillMaxWidth(),
-					content = {}
+		SearchBar(
+			query = searchQuery,
+			onQueryChange = { searchQuery = it },
+			onSearch = { addSearchQuery(it); searchQuery = "" },
+			active = false,
+			onActiveChange = {},
+			placeholder = { Text(text = "Search within \"$title\"") },
+			leadingIcon = { CancelButton { onBackPressedDispatcher?.onBackPressed() } },
+			trailingIcon = {
+				GenericButton(
+					icon = R.drawable.ic_fa_search,
+					colors = GenericButtonDefaults.bottomBarColorWhite(),
+					onClick = { addSearchQuery(searchQuery); searchQuery = "" }
 				)
-				AnimatedVisibility(
-					visible = searchQueryList.isNotEmpty(),
-					enter = expandVertically(tween(470)),
-					exit = shrinkVertically(tween(470)),
-					label = "searchQueryList_animation"
+			},
+			tonalElevation = 0.dp,
+			colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
+			modifier = Modifier.fillMaxWidth(),
+			content = {}
+		)
+		AnimatedVisibility(
+			visible = searchQueryList.isNotEmpty(),
+			enter = expandVertically(tween(470)),
+			exit = shrinkVertically(tween(470)),
+			label = "searchQueryList_animation"
+		) {
+			Column {
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.horizontalScroll(rememberScrollState())
 				) {
-					Column {
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.horizontalScroll(rememberScrollState())
-						) {
-							Spacer(modifier = Modifier.width(16.dp))
-							searchQueryList.forEach {
-								SuggestionChip(
-									label = { Text(text = it) },
-									onClick = { removeSearchQuery(it) }
-								)
-								Spacer(modifier = Modifier.width(12.dp))
-							}
-							Spacer(modifier = Modifier.width(4.dp))
-						}
-						Spacer(modifier = Modifier.height(8.dp))
-					}
-				}
-			}
-		} else {
-			TopAppBar(
-				navigationIcon = { BackButton(onClick = onClickBack) },
-				title = {
-					Crossfade(
-						targetState = title,
-						animationSpec = tween(470),
-						label = ""
-					) {
-						Text(
-							text = it ?: "Untitled",
-							color = MaterialTheme.colorScheme.onBackground,
-							fontStyle = if (it == null) FontStyle.Italic else FontStyle.Normal
+					Spacer(modifier = Modifier.width(16.dp))
+					searchQueryList.forEach {
+						SuggestionChip(
+							label = { Text(text = it) },
+							onClick = { removeSearchQuery(it) }
 						)
+						Spacer(modifier = Modifier.width(12.dp))
 					}
-				},
-				actions = {
-					FilterButton()
-
-					LockButton(
-						isLocked = isLocked,
-						onClick = onClickLock,
-					)
-
-					FavouriteButton(
-						isFavourite = isFavourite,
-						onClick = onClickFavourite,
-					)
-
-					GenericButton(
-						icon = R.drawable.ic_fa_search,
-						colors = GenericButtonDefaults.bottomBarColorWhite(),
-						onClick = onClickSearch
-					)
-				},
-				colors = TopAppBarDefaults.topAppBarColors(
-					containerColor = MaterialTheme.colorScheme.background,
-					navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-					titleContentColor = MaterialTheme.colorScheme.onSurface,
-					actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-				)
-			)
+					Spacer(modifier = Modifier.width(4.dp))
+				}
+				Spacer(modifier = Modifier.height(8.dp))
+			}
 		}
 	}
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SelectionBar(
-	selectedItemSize: Int = 0,
-	onCancelSelection: () -> Unit = {},
-	onShare: () -> Unit = {},
-	onDelete: () -> Unit = {},
-) {
-	TopAppBar(
-		navigationIcon = {
-			GenericButton(
-				icon = R.drawable.ic_close,
-				tooltip = "Cancel selection",
-				onClick = onCancelSelection,
-			)
-		},
-		title = {
-			AnimatedText(
-				text = if (selectedItemSize == 0) "No items selected" else if (selectedItemSize == 1) "1 item selected" else "${selectedItemSize} items selected",
-				color = MaterialTheme.colorScheme.onBackground,
-				transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) }
-			)
-		},
-		actions = {
-			GenericButton(
-				icon = R.drawable.ic_share,
-				tooltip = "Share items",
-				onClick = onShare
-			)
-
-			GenericButton(
-				icon = R.drawable.ic_delete,
-				tooltip = "Delete items",
-				colors = GenericButtonDefaults.deleteButtonColors(),
-				onClick = onDelete
-			)
-		},
-		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-	)
 }
 
 @OptIn(ExperimentalFoundationApi::class)

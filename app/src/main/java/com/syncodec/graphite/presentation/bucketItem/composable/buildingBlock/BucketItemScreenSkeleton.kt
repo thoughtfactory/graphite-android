@@ -61,7 +61,6 @@ fun BucketItemScreenSkeleton(
 				onClickDelete = { isDeleteDialogVisible = true },
 				onClickFavourite = onClickFavourite,
 				onClickLock = onClickLock,
-				onClickBack = {},
 			)
 		},
 		bottomBar = {

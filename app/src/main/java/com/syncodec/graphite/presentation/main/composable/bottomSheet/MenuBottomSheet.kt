@@ -39,7 +39,7 @@ fun MenuBottomSheet(
 		) {
 			SameHeightRowGrid {
 				GenericBottomSheetButton2(
-					icon = R.drawable.ic_file,
+					icon = R.drawable.ic_fa_gallery,
 					text = stringResource(id = R.string.attachments),
 					contentDescription = stringResource(id = R.string.attachments),
 				) {
@@ -50,7 +50,7 @@ fun MenuBottomSheet(
 					}
 				}
 				GenericBottomSheetButton2(
-					icon = R.drawable.ic_tag,
+					icon = R.drawable.ic_fa_tag,
 					text = stringResource(id = R.string.tags),
 					contentDescription = stringResource(id = R.string.tags),
 				) {
@@ -60,7 +60,7 @@ fun MenuBottomSheet(
 					}
 				}
 				GenericBottomSheetButton2(
-					icon = R.drawable.ic_setting,
+					icon = R.drawable.ic_fa_settings,
 					text = stringResource(id = R.string.settings),
 					contentDescription = stringResource(id = R.string.settings),
 				) {

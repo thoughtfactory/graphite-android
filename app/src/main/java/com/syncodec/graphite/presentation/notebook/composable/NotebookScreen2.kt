@@ -38,10 +38,12 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
+import com.syncodec.graphite.presentation.explorer.ExplorerActivity
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.note2.NoteActivity2
@@ -71,10 +73,16 @@ fun NotebookScreen2(
 	chapterPath: List<ChapterObjectLite> = listOf(),
 	defaultChapterId: RealmUUID? = null,
 	onLoadChapter: (RealmUUID) -> Unit = {},
+	onClickFavourite: (ChapterObject) -> Unit = {},
+	onClickMultiFavourite: (Set<RealmUUID>) -> Unit = {},
+	onClickLock: (ChapterObject) -> Unit = {},
+	onClickMultiLock: (Set<RealmUUID>) -> Unit = {},
 	putNotebook: (String, String, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+
+	val density = LocalDensity.current
 
 	val bitmap by remember(chapterObject) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
 
@@ -117,22 +125,12 @@ fun NotebookScreen2(
 		}
 	}
 
-	BackHandler(enabled = chapterPath.size > 1) {
-		onLoadChapter(chapterPath[1].id)
-	}
+	BackHandler(enabled = chapterPath.size > 1) { onLoadChapter(chapterPath[1].id) }
 	BackHandler(enabled = selectionType != null) { selectionType = null; selectedIdList = setOf() }
 
 	val listState = rememberLazyListState()
-	val overlapHeightPx = with(LocalDensity.current) {
-		EXPANDED_TOP_BAR_HEIGHT.toPx() - COLLAPSED_TOP_BAR_HEIGHT.toPx()
-	}
-	val isCollapsed: Boolean by remember {
-		derivedStateOf {
-			val isFirstItemHidden =
-				listState.firstVisibleItemScrollOffset > overlapHeightPx
-			isFirstItemHidden || listState.firstVisibleItemIndex > 0
-		}
-	}
+	val overlapHeightPx = remember { with(density) { EXPANDED_TOP_BAR_HEIGHT.toPx() - COLLAPSED_TOP_BAR_HEIGHT.toPx() } }
+	val isCollapsed: Boolean by remember { derivedStateOf { (listState.firstVisibleItemScrollOffset > overlapHeightPx) || listState.firstVisibleItemIndex > 0 } }
 
 //	val firstVisibleItemScrollOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
 
@@ -183,9 +181,8 @@ fun NotebookScreen2(
 			defaultChapterId = defaultChapterId,
 			isCollapsed = isCollapsed,
 			onContainerColor = bitmap?.let { Color.White } ?: chapterObject?.color?.let { Color(it) }?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
-			onClickBack = {},
-			onClickFavourite = {},
-			onClickLock = {},
+			onClickFavourite = { chapterObject?.let(onClickFavourite) },
+			onClickLock = { chapterObject?.let(onClickLock) },
 			onClickMenuButton = { isMenuBottomSheetVisible = true },
 		)
 		LazyColumn(
@@ -230,13 +227,12 @@ fun NotebookScreen2(
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)
 				.align(Alignment.BottomCenter),
 			isSelecting = selectionType != null,
-			isAllItemFavourite = false,
-			isAllItemLocked = false,
+			isAllItemFavourite = noteList.filter { it.id in selectedIdList }.all { it.isFavourite } && chapterList.filter { it.id in selectedIdList }.all { it.isFavourite },
+			isAllItemLocked = noteList.filter { it.id in selectedIdList }.all { it.isLocked } && chapterList.filter { it.id in selectedIdList }.all { it.isLocked },
 			selectedItemCount = selectedIdList.size,
 			onClickDelete = {},
-			onClickCancel = { selectionType = null; selectedIdList = setOf() },
-			onClickFavourite = {},
-			onClickLock = {}
+			onClickFavourite = { onClickMultiFavourite(selectedIdList) },
+			onClickLock = { onClickMultiLock(selectedIdList) }
 		)
 	}
 
@@ -244,7 +240,30 @@ fun NotebookScreen2(
 		bottomSheetState = bottomSheetState,
 		isBottomSheetVisible = isMenuBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false } },
-		isChapterDefault = chapterObject?.id == defaultChapterId
+		isChapterDefault = chapterObject?.id == defaultChapterId,
+		onClickAttachments = {
+			Intent(context, AttachmentActivity::class.java).apply {
+				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
+				context.startActivity(this)
+			}
+		},
+		onClickAtlas = {
+			Intent(context, ExplorerActivity::class.java).apply {
+				putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Atlas.name)
+				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
+				context.startActivity(this)
+			}
+		},
+		onClickCalendar = {
+			Intent(context, ExplorerActivity::class.java).apply {
+				putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Calendar.name)
+				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
+				context.startActivity(this)
+			}
+		},
+		onClickSetAsDefault = {},
+		onClickEdit = {},
+		onClickDelete = {},
 	)
 
 	MetadataBottomSheet(

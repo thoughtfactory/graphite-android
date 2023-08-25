@@ -21,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -55,7 +54,6 @@ fun CollapsedTopBar(
 	defaultChapterId: RealmUUID? = null,
 	isCollapsed: Boolean,
 	onContainerColor: Color = MaterialTheme.colorScheme.onBackground,
-	onClickBack: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
 	onClickMenuButton: () -> Unit = {},
@@ -67,7 +65,7 @@ fun CollapsedTopBar(
 		modifier = modifier.fillMaxWidth()
 	) {
 		TopAppBar(
-			navigationIcon = { BackButton(colors = GenericButtonDefaults.transparentButtonColors(iconColor = contentColor), onClick = onClickBack) },
+			navigationIcon = { BackButton(colors = GenericButtonDefaults.transparentButtonColors(iconColor = contentColor)) },
 			title = {
 				AnimatedVisibility(
 					visible = isCollapsed

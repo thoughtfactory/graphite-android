@@ -73,7 +73,7 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.button.ClearButton
+import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
 import com.syncodec.graphite.utils.imageList
@@ -142,7 +142,7 @@ fun ChapterBottomSheet(
 				onValueChange = { bucketTitleText = it },
 				label = { Text(text = stringResource(id = R.string.title)) },
 				placeholder = { Text(text = stringResource(id = R.string.bucket_title_placeholder)) },
-				trailingIcon = { ClearButton { bucketTitleText = "" } },
+				trailingIcon = { CancelButton { bucketTitleText = "" } },
 				maxLines = 1,
 				singleLine = true,
 				modifier = Modifier.fillMaxWidth()
@@ -156,7 +156,7 @@ fun ChapterBottomSheet(
 				onValueChange = { bucketDescriptionText = it },
 				label = { Text(text = stringResource(id = R.string.description)) },
 				placeholder = { Text(text = stringResource(id = R.string.bucket_description_placeholder)) },
-				trailingIcon = { ClearButton { bucketDescriptionText = "" } },
+				trailingIcon = { CancelButton { bucketDescriptionText = "" } },
 				maxLines = 1,
 				singleLine = true,
 				modifier = Modifier.fillMaxWidth()

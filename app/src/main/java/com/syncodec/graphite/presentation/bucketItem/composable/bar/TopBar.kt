@@ -36,10 +36,9 @@ fun TopBar(
 	onClickDelete : () -> Unit = {},
 	onClickFavourite : () -> Unit = {},
 	onClickLock : () -> Unit = {},
-	onClickBack : () -> Unit = {}
 ) {
 	TopAppBar(
-		navigationIcon = { BackButton(onClick = onClickBack) },
+		navigationIcon = { BackButton() },
 		title = {},
 		actions = {
 			AnimatedVisibility(

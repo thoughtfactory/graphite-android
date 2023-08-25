@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bar.BottomBar
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bar.TopBar
@@ -44,7 +46,7 @@ import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.compose.koinViewModel
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun ExplorerScreen(
@@ -115,7 +117,7 @@ fun ExplorerScreen(
 	if (explorerType == Extra.Companion.ExplorerType.Search) {
 		SearchScreen()
 	} else if (explorerType != null) {
-		GenericScaffold(
+		GenericScaffold2(
 			topBar = {
 				if (! isStatic) TopBar(
 					title = when (explorerType) {
@@ -124,10 +126,6 @@ fun ExplorerScreen(
 						Extra.Companion.ExplorerType.Calendar -> "Calendar"
 						else -> "Explorer"
 					},
-					isSelecting = isSelecting,
-					selectedSize = selectedIdList.size,
-					onClickCancelSelect = onClickCancelSelect,
-					onClickDelete = { openDialog(ExplorerDialogType.Delete) },
 				)
 			},
 			bottomBar = { if (! isStatic) BottomBar(searchInChapter = searchInChapter) { openDialog(ExplorerDialogType.Where) } },

@@ -41,7 +41,6 @@ import com.syncodec.graphite.presentation.note2.composable.bar.editor.EditorTopB
 import com.syncodec.graphite.presentation.note2.composable.bar.viewer.ViewerBottomBar
 import com.syncodec.graphite.presentation.note2.composable.bar.viewer.ViewerTopBar
 import com.syncodec.graphite.presentation.note2.composable.bottomSheet.AttachmentBottomSheet
-import com.syncodec.graphite.presentation.note2.composable.bottomSheet.AttachmentViewerBottomSheet
 import com.syncodec.graphite.presentation.note2.composable.bottomSheet.EditorLocationBottomSheet
 import com.syncodec.graphite.presentation.note2.composable.bottomSheet.EditorMetadataBottomSheet
 import com.syncodec.graphite.presentation.note2.composable.bottomSheet.ExportBottomSheet
@@ -97,14 +96,12 @@ fun KitKatScreen(
 	val kitKatFormat by kitKat.kitKatFormat.collectAsState()
 
 	val bottomSheetState = rememberModalBottomSheetState()
-	val fullBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 	var isEditorMetadataBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isEditorLocationBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isAttachmentBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isTagsBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 
 	var isViewerMetadataBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
-	var isViewerAttachmentBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isViewerLocationBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isExportBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -144,7 +141,6 @@ fun KitKatScreen(
 			) else ViewerBottomBar(
 				attachmentCount = savedFileList.size,
 				onClickMetadata = { isViewerMetadataBottomSheetVisible = true },
-				onClickAttachment = { isViewerAttachmentBottomSheetVisible = true },
 				onClickLocation = { isViewerLocationBottomSheetVisible = true },
 				onClickExport = { isExportBottomSheetVisible = true },
 				onClickEdit = onClickEdit,
@@ -156,6 +152,7 @@ fun KitKatScreen(
 				modifier = Modifier.verticalScroll(scrollState)
 			) {
 				ViewerHeader(
+					noteId = noteId,
 					title = kitKatFormat.kitKatTitle,
 					userTimestamp = userTimestamp,
 					locationData = locationData,
@@ -244,13 +241,6 @@ fun KitKatScreen(
 		onAddNewFile = onAddNewFile,
 		onRemoveNewFile = onRemoveNewFile,
 		onRemoveSavedFile = onRemoveSavedFile,
-	)
-
-	AttachmentViewerBottomSheet(
-		bottomSheetState = fullBottomSheetState,
-		isBottomSheetVisible = isViewerAttachmentBottomSheetVisible,
-		onDismissRequest = { scope.launch { fullBottomSheetState.hide() }; isViewerAttachmentBottomSheetVisible = false },
-		savedFileList = savedFileList
 	)
 
 	ExportBottomSheet(

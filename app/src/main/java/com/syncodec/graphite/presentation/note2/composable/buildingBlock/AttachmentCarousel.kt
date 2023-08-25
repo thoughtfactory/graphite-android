@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note2.composable.buildingBlock
 
+import android.content.Intent
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -25,15 +27,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.ShareButton
+import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.share
 import com.syncodec.graphite.utils.viewExternally
+import io.realm.kotlin.types.RealmUUID
 import java.io.File
 
 
@@ -42,24 +49,59 @@ import java.io.File
 @Composable
 fun AttachmentCarousel(
 	modifier: Modifier = Modifier,
+	noteId: RealmUUID? = null,
 	fileList: List<File> = listOf()
 ) {
+	val context = LocalContext.current
+
 	val pagerState = rememberPagerState { fileList.size }
 
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		HorizontalPager(
-			state = pagerState,
-			pageSpacing = 8.dp,
-			modifier = modifier
+		Box(
+			modifier = Modifier
 		) {
-			AttachmentPreview(
-				file = fileList[it]
-			)
+			HorizontalPager(
+				state = pagerState,
+				pageSpacing = 8.dp,
+				modifier = modifier
+			) {
+				AttachmentPreview(
+					file = fileList[it]
+				)
+			}
+			Column {
+				Spacer(modifier = Modifier.height(16.dp))
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+				) {
+					Spacer(modifier = Modifier.width(16.dp))
+					AttachmentCountButton(
+						currentIndex = pagerState.currentPage + 1,
+						totalAttachment = pagerState.pageCount,
+					)
+					Spacer(modifier = Modifier.weight(1f))
+					GenericButton(
+						icon = R.drawable.ic_fa_gallery,
+					) {
+						Intent(context, AttachmentActivity::class.java).apply {
+							putExtra(Extra.Companion.Extra.NoteId.name, noteId?.bytes)
+							context.startActivity(this)
+						}
+					}
+					Spacer(modifier = Modifier.width(16.dp))
+				}
+			}
 		}
 		AttachmentName(
 			file = fileList[pagerState.currentPage]
+		)
+		Spacer(
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(1.dp)
+				.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f))
 		)
 	}
 }
@@ -117,7 +159,7 @@ private fun AttachmentName(
 		modifier = Modifier
 			.fillMaxWidth()
 			.heightIn(48.dp)
-			.background(MaterialTheme.colorScheme.surface)
+			.background(MaterialTheme.colorScheme.background)
 			.padding(horizontal = 12.dp, vertical = 8.dp)
 	) {
 		Text(
@@ -127,8 +169,27 @@ private fun AttachmentName(
 			modifier = Modifier.weight(1f)
 		)
 		Spacer(modifier = Modifier.width(8.dp))
-		GenericButton(
-			icon = R.drawable.ic_fa_share
-		) { file?.share(context = context) }
+		ShareButton { file?.share(context = context) }
+	}
+}
+
+@Preview
+@Composable
+private fun AttachmentCountButton(
+	modifier: Modifier = Modifier,
+	currentIndex: Int = 0,
+	totalAttachment: Int = 3,
+) {
+	Box(
+		modifier = modifier
+			.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.small)
+			.padding(horizontal = 12.dp, vertical = 8.dp)
+	) {
+		Text(
+			text = "$currentIndex / $totalAttachment",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onBackground,
+			fontWeight = FontWeight.Bold
+		)
 	}
 }

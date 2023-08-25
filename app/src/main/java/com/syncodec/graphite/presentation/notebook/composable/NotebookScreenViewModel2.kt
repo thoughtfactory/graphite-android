@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
@@ -168,6 +169,60 @@ class NotebookScreenViewModel2(
 		}
 		viewModelScope.launch(Dispatchers.Default) {
 			repository.value?.putChapterSuspended(chapterObject)
+		}
+	}
+
+	fun toggleFavourite(chapterObject: ChapterObject) {
+		chapterObject.clone().apply {
+			this.isFavourite = !this.isFavourite
+			repository.value?.putChapterSuspended(chapterObject = this)
+		}
+	}
+
+	fun toggleLock(chapterObject: ChapterObject) {
+		chapterObject.clone().apply {
+			this.isLocked = !this.isLocked
+			repository.value?.putChapterSuspended(chapterObject = this)
+		}
+	}
+
+	fun toggleFavourite(idList: Set<RealmUUID>) {
+		viewModelScope.launch(Dispatchers.Default) {
+			val areAllFavourite = noteList.value.filter { it.id in idList }.all { it.isFavourite } && chapterList.value.filter { it.id in idList }.all { it.isFavourite }
+			repository.value?.let { repo ->
+				idList.forEach {
+					repo.getNoteFromId(it)?.clone()?.apply {
+						this.isFavourite = !areAllFavourite
+						repo.putNoteSuspended(noteObject = this)
+					}
+				}
+				idList.forEach {
+					repo.getChapterFromId(it)?.clone()?.apply {
+						this.isFavourite = !areAllFavourite
+						repo.putChapterSuspended(chapterObject = this)
+					}
+				}
+			}
+		}
+	}
+
+	fun toggleLock(idList: Set<RealmUUID>) {
+		viewModelScope.launch(Dispatchers.Default) {
+			val areAllLocked = noteList.value.filter { it.id in idList }.all { it.isLocked } && chapterList.value.filter { it.id in idList }.all { it.isLocked }
+			repository.value?.let { repo ->
+				idList.forEach {
+					repo.getNoteFromId(it)?.clone()?.apply {
+						this.isLocked = !areAllLocked
+						repo.putNoteSuspended(noteObject = this)
+					}
+				}
+				idList.forEach {
+					repo.getChapterFromId(it)?.clone()?.apply {
+						this.isLocked = !areAllLocked
+						repo.putChapterSuspended(chapterObject = this)
+					}
+				}
+			}
 		}
 	}
 }

@@ -1,9 +1,7 @@
 package com.syncodec.graphite.presentation.attachment.composable.buildingBlock
 
 import android.graphics.Bitmap
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
@@ -11,6 +9,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +27,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,49 +41,40 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.utils.FilePreview.Companion.preview
-import com.syncodec.graphite.utils.UriPreview.Companion.preview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.io.File
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AttachmentCard(
-	file : File,
-	isSelected : Boolean = false,
-	openNote : () -> Unit = {},
-	onShare : () -> Unit = {},
-	onClick : () -> Unit = {},
-	onLongClick : () -> Unit = {},
+	file: File,
+	isSelected: Boolean = false,
+	onClick: () -> Unit = {},
+	onLongClick: () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
 	var isPreviewAvailable by remember { mutableStateOf(null as Boolean?) }
 
-	var imageBitmap by remember { mutableStateOf(null as Bitmap?) }
-	var imageOverlay by remember { mutableStateOf(null as Int?) }
-	LaunchedEffect(key1 = file) {
-		scope.launch(Dispatchers.IO) {
-			file.preview(context = context).let {
-				imageBitmap = it.first
-				imageOverlay = it.second
-			}
-			isPreviewAvailable = imageBitmap != null
-		}
-	}
+	val filePreview by remember { derivedStateOf { file.preview(context = context) } }
+	val imageBitmap by remember(filePreview) { derivedStateOf { filePreview.first } }
+	val imageOverlay by remember(filePreview) { derivedStateOf { filePreview.second } }
 
 	DisposableEffect(key1 = file) { onDispose { scope.cancel(); imageBitmap?.recycle() } }
 
 	val padding by animateDpAsState(
 		targetValue = if (isSelected) 12.dp else 0.dp,
-		animationSpec = tween(300)
+		animationSpec = tween(470),
+		label = "padding_animation"
 	)
 
 	Box(
@@ -96,61 +87,44 @@ fun AttachmentCard(
 			modifier = Modifier
 				.fillMaxSize()
 				.padding(padding)
-				.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.13f))
+				.background(
+					MaterialTheme.colorScheme
+						.surfaceColorAtElevation(8.dp)
+						.copy(alpha = 0.13f)
+				)
 				.combinedClickable(
 					enabled = true,
 					onClick = onClick,
 					onLongClick = onLongClick,
 				),
 		) {
-			when (isPreviewAvailable) {
-				true -> {
-					imageBitmap?.let {
-						AsyncImage(
-							model = ImageRequest.Builder(context)
-								.data(it)
-								.crossfade(300)
-								.build(),
-							contentDescription = null,
-							contentScale = ContentScale.Crop,
-							modifier = Modifier
-								.fillMaxSize()
-								.blur(32.dp)
-						)
-						Box(
-							modifier = Modifier
-								.fillMaxSize()
-								.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
-						)
-						AsyncImage(
-							model = ImageRequest.Builder(context)
-								.data(it)
-								.crossfade(300)
-								.build(),
-							contentDescription = null,
-							contentScale = ContentScale.Fit,
-							modifier = Modifier
-						)
-						if (imageBitmap != null) {
-							imageOverlay?.let {
-								Icon(
-									painter = painterResource(id = it),
-									contentDescription = null,
-									tint = MaterialTheme.colorScheme.background,
-									modifier = Modifier.requiredSize(64.dp)
-								)
-							}
-						}
-					}
-				}
+			SubcomposeAsyncImage(
+				model = ImageRequest.Builder(context)
+					.data(imageBitmap)
+					.crossfade(300)
+					.build(),
+				contentDescription = null,
+				contentScale = ContentScale.Crop,
+				modifier = Modifier
+					.fillMaxSize()
+					.blur(32.dp)
+			)
 
-				false -> {
+			SubcomposeAsyncImage(
+				model = ImageRequest.Builder(context)
+					.data(imageBitmap)
+					.crossfade(300)
+					.build(),
+				contentDescription = "Attachment",
+				loading = { LoadingView() },
+				error = {
 					Column(
 						horizontalAlignment = Alignment.CenterHorizontally,
-						modifier = Modifier,
+						verticalArrangement = Arrangement.Center,
+						modifier = Modifier.fillMaxSize(),
 					) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_file),
+							painter = painterResource(id = R.drawable.ic_fa_file),
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 							modifier = Modifier.requiredSize(64.dp)
@@ -162,16 +136,15 @@ fun AttachmentCard(
 							color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 						)
 					}
-				}
-
-				null -> LoadingView()
-			}
+				},
+				modifier = Modifier.fillMaxSize()
+			)
 		}
 
 		AnimatedVisibility(
 			visible = isSelected,
-			enter = scaleIn(tween(300)),
-			exit = scaleOut(tween(300)),
+			enter = scaleIn(tween(470)),
+			exit = scaleOut(tween(470)),
 			modifier = Modifier.align(Alignment.TopEnd)
 		) {
 			Box(
@@ -181,7 +154,7 @@ fun AttachmentCard(
 					.background(MaterialTheme.colorScheme.background, CircleShape)
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_check_circle),
+					painter = painterResource(id = R.drawable.ic_fa_circle_check),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier

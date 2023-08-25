@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.common.button
 
 import android.widget.Toast
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -262,12 +263,13 @@ fun GenericButton(
 @Composable
 fun BackButton(
 	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
-	onClick: () -> Unit = {},
 ) {
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
 	GenericButton(
 		icon = R.drawable.ic_fa_back,
 		colors = colors,
-		onClick = onClick
+		onClick = { onBackPressedDispatcher?.onBackPressed() }
 	)
 }
 
@@ -377,6 +379,7 @@ fun LockButton(
 ) {
 	val context = LocalContext.current
 	val isAuthenticate = LocalIsAuthenticated.current
+	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	GenericButton(
 		icon = if (isLocked) R.drawable.ic_fa_lock_close_solid else R.drawable.ic_fa_lock_open,
@@ -385,7 +388,10 @@ fun LockButton(
 		colors = colors,
 		onClick = {
 			if (isAuthenticate) onClick()
-			else Toast.makeText(context, context.getText(R.string.toast_not_authenticated), Toast.LENGTH_SHORT).show()
+			else {
+				Toast.makeText(context, context.getText(R.string.toast_not_authenticated), Toast.LENGTH_SHORT).show()
+				onAuthenticationAction(AuthenticatorScreen.Authenticate)
+			}
 		}
 	)
 }
@@ -404,6 +410,20 @@ fun VaultButton(
 		checked = isAuthenticate,
 		colors = colors,
 		onClick = { onAuthenticationAction(AuthenticatorScreen.Authenticate) },
+	)
+}
+
+@Preview
+@Composable
+fun EditButton(
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_pen,
+		tooltip = stringResource(id = R.string.edit),
+		colors = colors,
+		onClick = onClick,
 	)
 }
 
@@ -457,7 +477,7 @@ fun SearchButton(
 
 @Preview
 @Composable
-fun ClearButton(
+fun CancelButton(
 	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {

@@ -47,6 +47,7 @@ import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.toDate
 import com.syncodec.graphite.utils.toDayTime
 import com.syncodec.graphite.utils.toMonthYear
+import io.realm.kotlin.types.RealmUUID
 import java.io.File
 import java.time.Instant
 
@@ -55,6 +56,7 @@ import java.time.Instant
 @Composable
 fun ViewerHeader(
 	modifier: Modifier = Modifier,
+	noteId : RealmUUID? = null,
 	title: String? = null,
 	userTimestamp: Long? = null,
 	locationData: LocationData = LocationData.Init,
@@ -68,6 +70,7 @@ fun ViewerHeader(
 		if (fileList.isNotEmpty()) {
 			AttachmentCarousel(
 				modifier = modifier,
+				noteId = noteId,
 				fileList = fileList
 			)
 		}

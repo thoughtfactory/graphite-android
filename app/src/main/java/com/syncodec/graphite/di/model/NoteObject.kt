@@ -118,11 +118,12 @@ class NoteObject() : RealmObject {
 				null
 			},
 			address = this.address,
-			contentThumbnail = if (NoteCache.noteContentThumbnailMap[id]?.first == this.hashCode()) NoteCache.noteContentThumbnailMap[id]?.second else {
-				val cacheContentThumbnail = this.content?.let { Json.decodeFromString<KitKatContent>(it) }?.toTxt()?.take(256)
-				NoteCache.noteContentThumbnailMap[id] = Pair(this.hashCode(), cacheContentThumbnail)
-				cacheContentThumbnail
-			},
+//			contentThumbnail = if (NoteCache.noteContentThumbnailMap[id]?.first == this.hashCode()) NoteCache.noteContentThumbnailMap[id]?.second else {
+//				val cacheContentThumbnail = this.content?.let { Json.decodeFromString<KitKatContent>(it) }?.toTxt()?.take(256)
+//				NoteCache.noteContentThumbnailMap[id] = Pair(this.hashCode(), cacheContentThumbnail)
+//				cacheContentThumbnail
+//			},
+			contentThumbnail = null,
 			thumbnail = this.thumbnail,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked,

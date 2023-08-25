@@ -47,7 +47,11 @@ class NotebookActivity : ComponentActivity() {
 					chapterPath = chapterPath,
 					defaultChapterId = defaultChapterId,
 					onLoadChapter = viewModel::loadChapter,
-					putNotebook = viewModel::putNotebook
+					putNotebook = viewModel::putNotebook,
+					onClickFavourite = { viewModel.toggleFavourite(it) },
+					onClickMultiFavourite = { viewModel.toggleFavourite(it) },
+					onClickLock = { viewModel.toggleLock(it) },
+					onClickMultiLock = { viewModel.toggleLock(it) },
 				)
 			}
 		}

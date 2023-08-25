@@ -45,7 +45,7 @@ fun MenuBottomSheet(
 					icon = R.drawable.ic_fa_gallery,
 					text = stringResource(id = R.string.attachments),
 					contentDescription = stringResource(id = R.string.attachments),
-					onClick = onClickAtlas,
+					onClick = onClickAttachments,
 				)
 				GenericBottomSheetButton2(
 					icon = R.drawable.ic_fa_atlas,

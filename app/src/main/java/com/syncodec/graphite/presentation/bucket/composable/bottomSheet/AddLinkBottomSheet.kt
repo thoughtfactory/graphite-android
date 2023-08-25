@@ -50,7 +50,7 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.button.ClearButton
+import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.button.PasteButton
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
@@ -96,7 +96,7 @@ fun AddLinkBottomSheet(
 				placeholder = { Text(text = stringResource(id = R.string.link_example)) },
 				trailingIcon = {
 					Row {
-						ClearButton { urlText = "" }
+						CancelButton { urlText = "" }
 						PasteButton { urlText = it }
 						Spacer(modifier = Modifier.width(4.dp))
 					}
