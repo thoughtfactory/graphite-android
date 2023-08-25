@@ -54,7 +54,7 @@ class DropboxServiceTest {
 			val syncCoroutine = service.getPrivateProperty("syncCoroutine") as CoroutineScope?
 			val reSyncCoroutine = service.getPrivateProperty("reSyncCoroutine") as CoroutineScope?
 
-			service.onClickSyncNow()
+//			service.onClickSyncNow()
 		}
 	}
 

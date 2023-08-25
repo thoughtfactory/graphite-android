@@ -66,7 +66,7 @@ fun ExportBottomSheet(
 				item { GenericBottomSheetButton2ListButton(icon = R.drawable.ic_fa_code, text = "As html", suffixContent = { ExportButtonSuffix() }, colors = colors, onClick = onClickExportAsHtml) }
 				item { GenericBottomSheetButton2ListButton(icon = R.drawable.ic_fa_file_json, text = "As json", suffixContent = { ExportButtonSuffix() }, colors = colors, onClick = onClickExportAsJson) }
 				item { GenericBottomSheetButton2ListButton(icon = R.drawable.ic_fa_file, text = "As markdown", suffixContent = { ExportButtonSuffix() }, colors = colors, onClick = onClickExportAsMarkdown) }
-				item { GenericBottomSheetButton2ListButton(icon = R.drawable.ic_fa_gallery, text = "Attachments", colors = colors, onClick = onClickExportAttachments) }
+				item { GenericBottomSheetButton2ListButton(icon = R.drawable.ic_fa_photos, text = "Attachments", colors = colors, onClick = onClickExportAttachments) }
 			}
 			Spacer(modifier = Modifier.height(24.dp))
 		}

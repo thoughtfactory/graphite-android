@@ -38,6 +38,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
@@ -48,6 +50,7 @@ import com.syncodec.graphite.presentation.notebook.composable.bar.COLLAPSED_TOP_
 import com.syncodec.graphite.presentation.notebook.composable.bar.CollapsedTopBar
 import com.syncodec.graphite.presentation.notebook.composable.bar.EXPANDED_TOP_BAR_HEIGHT
 import com.syncodec.graphite.presentation.notebook.composable.bar.ExpandedTopBar
+import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.MenuBottomSheet
 import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.chapterList
 import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.noteList
 import com.syncodec.graphite.utils.Extra
@@ -76,6 +79,8 @@ fun NotebookScreen2(
 	val bitmap by remember(chapterObject) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
 
 	val bottomSheetState = rememberModalBottomSheetState()
+	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
+	var isMetadataBottomSheetVisibe by remember { mutableStateOf(false) }
 	var isChapterBottomSheetVisible by remember { mutableStateOf(false) }
 
 //	null : selecting nothing
@@ -129,27 +134,10 @@ fun NotebookScreen2(
 		}
 	}
 
-	val firstVisibleItemScrollOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
+//	val firstVisibleItemScrollOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
 
 	GenericScaffold2(
-		topBar = {
-//			TopBar(
-//				chapterTitle = chapterObject?.title,
-//				isFavourite = chapterObject?.isFavourite == true,
-//				isLocked = chapterObject?.isLocked == true,
-//				chapterPath = chapterPath,
-//				defaultChapterId = defaultChapterId,
-//				onClickBack = {},
-//				onClickFavourite = {},
-//				onClickLock = {},
-//				onClickMenuButton = {},
-//			)
-		},
-		bottomBar = {
-			BottomBar(
-				onClickMetadata = {}
-			)
-		},
+		bottomBar = { BottomBar(onClickMetadata = { isMetadataBottomSheetVisibe = true }) },
 		isTopBarVisible = selectionType == null,
 		isBottomBarVisible = selectionType == null,
 		floatingActionButton = {
@@ -186,7 +174,6 @@ fun NotebookScreen2(
 		modifier = Modifier.fillMaxSize()
 	) {
 		CollapsedTopBar(
-			isCollapsed = isCollapsed,
 			modifier = Modifier.zIndex(2f),
 			chapterTitle = chapterObject?.title,
 			isFavourite = chapterObject?.isFavourite == true,
@@ -194,11 +181,12 @@ fun NotebookScreen2(
 			chapterColor = chapterObject?.color?.let { Color(it) },
 			chapterPath = chapterPath,
 			defaultChapterId = defaultChapterId,
+			isCollapsed = isCollapsed,
 			onContainerColor = bitmap?.let { Color.White } ?: chapterObject?.color?.let { Color(it) }?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
 			onClickBack = {},
 			onClickFavourite = {},
 			onClickLock = {},
-			onClickMenuButton = {},
+			onClickMenuButton = { isMenuBottomSheetVisible = true },
 		)
 		LazyColumn(
 			state = listState,
@@ -209,7 +197,8 @@ fun NotebookScreen2(
 					chapterTitle = chapterObject?.title,
 					bitmap = bitmap,
 					containerColor = chapterObject?.color?.let { Color(it) },
-					firstVisibleItemScrollOffset = firstVisibleItemScrollOffset,
+					defaultChapterId = defaultChapterId,
+					chapterPath = chapterPath,
 				)
 			}
 			noteList(
@@ -250,6 +239,28 @@ fun NotebookScreen2(
 			onClickLock = {}
 		)
 	}
+
+	MenuBottomSheet(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isMenuBottomSheetVisible,
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false } },
+		isChapterDefault = chapterObject?.id == defaultChapterId
+	)
+
+	MetadataBottomSheet(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isMetadataBottomSheetVisibe,
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMetadataBottomSheetVisibe = false } },
+		id = chapterObject?.id,
+		createdTimestamp = chapterObject?.createdTimestamp,
+		modifiedTimestamp = chapterObject?.modifiedTimestamp,
+		extraContent = {
+			GenericBottomSheetInfo2(
+				key = stringResource(id = R.string.parent_id),
+				value = chapterObject?.parentId?.toString() ?: stringResource(id = R.string.root_element),
+			)
+		}
+	)
 
 	ChapterBottomSheet(
 		bottomSheetState = bottomSheetState,

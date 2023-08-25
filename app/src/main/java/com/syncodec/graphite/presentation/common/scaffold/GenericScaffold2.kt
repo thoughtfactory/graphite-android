@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.common.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -23,11 +24,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,10 +49,12 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun GenericScaffold2(
 	modifier: Modifier = Modifier,
+	bottomSheetState: SheetState = rememberModalBottomSheetState(),
 	topBar: @Composable () -> Unit = { },
 	bottomBar: @Composable (() -> Unit)? = null,
 	isTopBarVisible: Boolean = true,
@@ -77,7 +84,7 @@ fun GenericScaffold2(
 					topBar()
 				}
 			},
-			modifier = modifier.fillMaxSize(),
+			modifier = modifier.fillMaxSize()
 		) {
 			Box(
 				modifier = Modifier

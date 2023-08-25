@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -37,10 +38,10 @@ import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetButton2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetButtonGrid2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
+import com.syncodec.graphite.presentation.common.row.SameHeightRowGrid
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import java.io.File
 
@@ -81,32 +82,26 @@ fun AttachmentBottomSheet(
 		GenericBottomSheetSkeleton2(
 			title = "Attachments",
 		) {
-			GenericBottomSheetButtonGrid2 {
-				item {
-					GenericBottomSheetButton2(
-						icon = R.drawable.ic_camera,
-						text = "Camera",
-						contentDescription = "Camera",
-					) {
-					}
+			SameHeightRowGrid {
+				GenericBottomSheetButton2(
+					icon = R.drawable.ic_fa_camera,
+					text = stringResource(id = R.string.camera),
+					contentDescription = stringResource(id = R.string.camera),
+				) {
 				}
-				item {
-					GenericBottomSheetButton2(
-						icon = R.drawable.ic_gallery,
-						text = "Gallery",
-						contentDescription = "Gallery",
-					) {
-						mediaPickerRequest.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-					}
+				GenericBottomSheetButton2(
+					icon = R.drawable.ic_fa_gallery,
+					text = stringResource(id = R.string.gallery),
+					contentDescription = stringResource(id = R.string.gallery),
+				) {
+					mediaPickerRequest.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
 				}
-				item {
-					GenericBottomSheetButton2(
-						icon = R.drawable.ic_attachment_new,
-						text = "File",
-						contentDescription = "File",
-					) {
-						filePickerRequest.launch(arrayOf("*/*"))
-					}
+				GenericBottomSheetButton2(
+					icon = R.drawable.ic_fa_new_file,
+					text = stringResource(id = R.string.file),
+					contentDescription = stringResource(id = R.string.file),
+				) {
+					filePickerRequest.launch(arrayOf("*/*"))
 				}
 			}
 

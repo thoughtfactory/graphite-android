@@ -27,12 +27,12 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucket.composable.bar.TopBar
-import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.MetadataBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.screen.bookScreen.BucketBookScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.linkScreen.BucketLinkScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.showScreen.BucketShowScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen.BucketTodoScreen
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.BucketSelectionActionView

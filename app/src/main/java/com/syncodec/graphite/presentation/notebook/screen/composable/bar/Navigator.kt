@@ -34,55 +34,60 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun Navigator(
+	modifier: Modifier = Modifier,
 	chapterPath: List<ChapterObjectLite> = listOf(),
 	defaultChapterId: RealmUUID? = null,
 	showRoot: Boolean = false,
 	isVisible: Boolean = true,
 	onClickNavigatorChapter: (RealmUUID?) -> Unit = {},
-) = AnimatedVisibility(
-	visible = isVisible, enter = expandVertically(tween(300)), exit = shrinkVertically(tween(300))
 ) {
-	Row(
-		verticalAlignment = Alignment.CenterVertically,
-		modifier = Modifier
-			.fillMaxWidth()
-			.horizontalScroll(rememberScrollState()),
+	AnimatedVisibility(
+		visible = isVisible, enter = expandVertically(tween(470)),
+		exit = shrinkVertically(tween(470)),
+		label = "navigatorVisibility_animation",
+		modifier = modifier,
 	) {
-		Spacer(modifier = Modifier.width(10.dp))
-		if (showRoot) {
-			NavigatorItem(
-				id = null,
-				title = null,
-				color = null,
-				isDefault = false,
-			) { onClickNavigatorChapter(null) }
-			Icon(painter = painterResource(id = R.drawable.ic_caret),
-				contentDescription = null,
-				tint = MaterialTheme.colorScheme.onBackground,
-				modifier = Modifier
-					.requiredSize(20.dp)
-					.padding(2.dp)
-					.graphicsLayer { rotationZ = 90f })
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.horizontalScroll(rememberScrollState()),
+		) {
+			Spacer(modifier = Modifier.width(10.dp))
+			if (showRoot) {
+				NavigatorItem(
+					id = null,
+					title = null,
+					color = null,
+					isDefault = false,
+				) { onClickNavigatorChapter(null) }
+				Icon(painter = painterResource(id = R.drawable.ic_caret),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier
+						.requiredSize(20.dp)
+						.padding(2.dp)
+						.graphicsLayer { rotationZ = 90f })
+			}
+			chapterPath.forEach { chapterObjectLite ->
+				NavigatorItem(
+					id = chapterObjectLite.id,
+					title = chapterObjectLite.title,
+					color = chapterObjectLite.color?.let { Color(it) },
+					isDefault = chapterObjectLite.id == defaultChapterId,
+				) { onClickNavigatorChapter(chapterObjectLite.id) }
+				Icon(painter = painterResource(id = R.drawable.ic_caret),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier
+						.requiredSize(20.dp)
+						.padding(2.dp)
+						.graphicsLayer { rotationZ = 90f })
+			}
+			Spacer(modifier = Modifier.width(10.dp))
 		}
-		chapterPath.forEach { chapterObjectLite ->
-			NavigatorItem(
-				id = chapterObjectLite.id,
-				title = chapterObjectLite.title,
-				color = chapterObjectLite.color?.let { Color(it) },
-				isDefault = chapterObjectLite.id == defaultChapterId,
-			) { onClickNavigatorChapter(chapterObjectLite.id) }
-			Icon(painter = painterResource(id = R.drawable.ic_caret),
-				contentDescription = null,
-				tint = MaterialTheme.colorScheme.onBackground,
-				modifier = Modifier
-					.requiredSize(20.dp)
-					.padding(2.dp)
-					.graphicsLayer { rotationZ = 90f })
-		}
-		Spacer(modifier = Modifier.width(10.dp))
 	}
 }
-
 
 @Preview
 @Composable

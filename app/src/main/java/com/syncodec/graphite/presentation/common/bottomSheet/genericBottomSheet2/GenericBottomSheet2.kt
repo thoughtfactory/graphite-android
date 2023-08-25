@@ -8,6 +8,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 
 
@@ -27,6 +28,7 @@ fun GenericBottomSheet2(
 			onDismissRequest = onDismissRequest,
 			containerColor = MaterialTheme.colorScheme.background,
 			contentColor = MaterialTheme.colorScheme.onBackground,
+			scrimColor = Color.Black.copy(alpha = 0.71f),
 			modifier = modifier,
 			content = content,
 		)

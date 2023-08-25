@@ -36,6 +36,7 @@ import com.syncodec.graphite.presentation.common.button.FilterButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.button.LockButton
 import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.notebook.screen.composable.bar.Navigator
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -43,46 +44,24 @@ import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
-@Composable
-fun TopBar(
-	chapterTitle: String? = null,
-	isFavourite: Boolean = false,
-	isLocked: Boolean = false,
-	chapterPath: List<ChapterObjectLite> = listOf(),
-	defaultChapterId: RealmUUID? = null,
-	onClickBack: () -> Unit = {},
-	onClickFavourite: () -> Unit = {},
-	onClickLock: () -> Unit = {},
-	onClickMenuButton: () -> Unit = {},
-) {
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsedTopBar(
 	modifier: Modifier = Modifier,
-	isCollapsed: Boolean,
 	chapterTitle: String? = null,
 	isFavourite: Boolean = false,
 	isLocked: Boolean = false,
 	chapterColor: Color? = null,
 	chapterPath: List<ChapterObjectLite> = listOf(),
 	defaultChapterId: RealmUUID? = null,
+	isCollapsed: Boolean,
 	onContainerColor: Color = MaterialTheme.colorScheme.onBackground,
 	onClickBack: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
 	onClickMenuButton: () -> Unit = {},
 ) {
-	val containerColor by animateColorAsState(
-		targetValue = if (isCollapsed) MaterialTheme.colorScheme.background else chapterColor ?: Color.Transparent,
-		label = "containerColor_animation"
-	)
-	val contentColor by animateColorAsState(
-		targetValue = if (isCollapsed) MaterialTheme.colorScheme.onBackground else onContainerColor,
-		label = "contentColor_animation"
-	)
+	val containerColor = if (isCollapsed) MaterialTheme.colorScheme.background else chapterColor ?: Color.Transparent
+	val contentColor = if (isCollapsed) MaterialTheme.colorScheme.onBackground else onContainerColor
 
 	Column(
 		modifier = modifier.fillMaxWidth()
@@ -133,22 +112,35 @@ fun CollapsedTopBar(
 				actionIconContentColor = contentColor,
 			),
 		)
-//		Navigator(
-//			chapterPath = chapterPath.reversed(),
-//			defaultChapterId = defaultChapterId,
-//			showRoot = false,
-//			isVisible = true,
-////			onClickNavigatorChapter = onClickNavigatorChapter,
-//		)
+
+		if (isCollapsed) {
+			Navigator(
+				chapterPath = chapterPath.reversed(),
+				defaultChapterId = defaultChapterId,
+				showRoot = false,
+				isVisible = true,
+//			    onClickNavigatorChapter = onClickNavigatorChapter,
+				modifier = Modifier.background(MaterialTheme.colorScheme.background)
+			)
+
+			Spacer(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(8.dp)
+					.background(MaterialTheme.colorScheme.background)
+			)
+		}
 	}
 }
 
+@Preview
 @Composable
 fun ExpandedTopBar(
 	chapterTitle: String? = null,
 	containerColor: Color? = null,
 	bitmap: Bitmap? = null,
-	firstVisibleItemScrollOffset : Int = 0,
+	defaultChapterId: RealmUUID? = null,
+	chapterPath: List<ChapterObjectLite> = listOf(),
 ) {
 	val context = LocalContext.current
 
@@ -157,61 +149,54 @@ fun ExpandedTopBar(
 		label = "animateContainerColor"
 	)
 
-	Box(
-		modifier = Modifier
-			.background(MaterialTheme.colorScheme.background)
-			.fillMaxWidth()
-			.height(EXPANDED_TOP_BAR_HEIGHT),
-		contentAlignment = Alignment.BottomStart
-	) {
-		SubcomposeAsyncImage(
-			model = ImageRequest.Builder(context)
-				.data(bitmap)
-				.crossfade(470)
-				.build(),
-			error = {
+	Column {
+		Box(
+			modifier = Modifier
+				.background(MaterialTheme.colorScheme.background)
+				.fillMaxWidth()
+				.height(EXPANDED_TOP_BAR_HEIGHT),
+			contentAlignment = Alignment.BottomStart
+		) {
+			SubcomposeAsyncImage(
+				model = ImageRequest.Builder(context)
+					.data(bitmap)
+					.crossfade(470)
+					.build(),
+				error = {
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.background(animateContainerColor)
+					)
+				},
+				contentDescription = null,
+				contentScale = ContentScale.Crop,
+				modifier = Modifier.fillMaxSize()
+			)
+			if (bitmap != null) {
 				Box(
 					modifier = Modifier
 						.fillMaxSize()
-						.background(animateContainerColor)
+						.background(Color.Black.copy(alpha = 0.17f))
 				)
-			},
-			contentDescription = null,
-			contentScale = ContentScale.Crop,
-			modifier = Modifier.fillMaxSize()
-		)
-		if (bitmap != null) {
-			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.background(Color.Black.copy(alpha = 0.17f))
+			}
+			Text(
+				text = chapterTitle ?: "Untitled",
+				style = MaterialTheme.typography.headlineLarge,
+				fontStyle = if (chapterTitle.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
+				color = containerColor?.getInverseBWColor() ?: Color.White,
+				modifier = Modifier.padding(16.dp)
 			)
 		}
-		Text(
-			text = chapterTitle ?: "Untitled",
-			style = MaterialTheme.typography.headlineLarge,
-			fontStyle = if (chapterTitle.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
-			color = containerColor?.getInverseBWColor() ?: Color.White,
-			modifier = Modifier.padding(16.dp)
+
+		Navigator(
+			chapterPath = chapterPath.reversed(),
+			defaultChapterId = defaultChapterId,
+			showRoot = false,
+			isVisible = true,
+//			onClickNavigatorChapter = onClickNavigatorChapter,
 		)
 	}
-}
-
-
-@Preview
-@Composable
-private fun CollapsedTopBarPreview() {
-	Column {
-		CollapsedTopBar(isCollapsed = true)
-		Spacer(Modifier.height(16.dp))
-		CollapsedTopBar(isCollapsed = false)
-	}
-}
-
-@Preview
-@Composable
-private fun ExpandedTopBarPreview() {
-	ExpandedTopBar()
 }
 
 val COLLAPSED_TOP_BAR_HEIGHT = 64.dp

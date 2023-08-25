@@ -25,25 +25,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
 @Preview
 @Composable
 fun GenericBottomSheetButton2(
-	icon : Int = R.drawable.ic_flat_gallery,
+	icon : Int = R.drawable.ic_fa_gallery,
 	text : String = "Gallery",
 	contentDescription : String = "Add from gallery",
 	colors: GenericBottomSheetButton2Colors = GenericBottomSheetButton2Defaults.buttonColors(),
-	enabled: Boolean = true,
+	checked: Boolean = false,
 	onClick : () -> Unit = {}
 ) {
-	val containerColor by colors.containerColor(enabled = enabled)
-	val iconColor by colors.iconColor(enabled = enabled)
-	val contentColor by colors.contentColor(enabled = enabled)
+	val containerColor by colors.containerColor(checked = checked)
+	val iconColor by colors.iconColor(checked = checked)
+	val contentColor by colors.contentColor(checked = checked)
 
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -60,14 +62,15 @@ fun GenericBottomSheetButton2(
 			painter = painterResource(id = icon),
 			contentDescription = contentDescription,
 			tint = iconColor,
-			modifier = Modifier.requiredSize(32.dp)
+			modifier = Modifier.requiredSize(IconButtonSize)
 		)
-		Spacer(modifier = Modifier.height(4.dp))
+		Spacer(modifier = Modifier.height(8.dp))
 		Text(
 			text = text,
 			style = MaterialTheme.typography.bodySmall,
 			color = contentColor,
-			fontWeight = FontWeight.Bold
+			textAlign = TextAlign.Center,
+			fontWeight = FontWeight.Bold,
 		)
 	}
 }
@@ -77,24 +80,24 @@ data class GenericBottomSheetButton2Colors(
 	val containerColor : Color,
 	val contentColor : Color,
 	val iconColor : Color,
-	val disabledContainerColor : Color,
-	val disabledContentColor : Color,
-	val disabledIconColor : Color,
+	val checkedContainerColor : Color,
+	val checkedContentColor : Color,
+	val checkedIconColor : Color,
 ) {
 	@Composable
-	internal fun containerColor(enabled : Boolean) : State<Color> = rememberUpdatedState(if (enabled) containerColor else disabledContainerColor)
+	internal fun containerColor(checked : Boolean) : State<Color> = rememberUpdatedState(if (checked) checkedContainerColor else containerColor)
 	@Composable
-	internal fun contentColor(enabled : Boolean) : State<Color> = rememberUpdatedState(if (enabled) contentColor else disabledContentColor)
+	internal fun contentColor(checked : Boolean) : State<Color> = rememberUpdatedState(if (checked) checkedContentColor else contentColor)
 	@Composable
-	internal fun iconColor(enabled : Boolean) : State<Color> = rememberUpdatedState(if (enabled) iconColor else disabledIconColor)
+	internal fun iconColor(checked : Boolean) : State<Color> = rememberUpdatedState(if (checked) checkedIconColor else iconColor)
 
 	override fun hashCode(): Int {
 		var result = containerColor.hashCode()
 		result = 31 * result + contentColor.hashCode()
 		result = 31 * result + iconColor.hashCode()
-		result = 31 * result + disabledContainerColor.hashCode()
-		result = 31 * result + disabledContentColor.hashCode()
-		result = 31 * result + disabledIconColor.hashCode()
+		result = 31 * result + checkedContainerColor.hashCode()
+		result = 31 * result + checkedContentColor.hashCode()
+		result = 31 * result + checkedIconColor.hashCode()
 		return result
 	}
 
@@ -107,45 +110,28 @@ data class GenericBottomSheetButton2Colors(
 		if (containerColor != other.containerColor) return false
 		if (contentColor != other.contentColor) return false
 		if (iconColor != other.iconColor) return false
-		if (disabledContainerColor != other.disabledContainerColor) return false
-		if (disabledContentColor != other.disabledContentColor) return false
-		return disabledIconColor == other.disabledIconColor
+		if (checkedContainerColor != other.checkedContainerColor) return false
+		if (checkedContentColor != other.checkedContentColor) return false
+		return checkedIconColor == other.checkedIconColor
 	}
 }
 
 object GenericBottomSheetButton2Defaults {
 	@Composable
 	fun buttonColors(
-		containerColor : Color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.71f)),
+		containerColor : Color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surface.toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.71f)),
 		iconColor : Color = MaterialTheme.colorScheme.onSurface,
-		contentColor: Color = MaterialTheme.colorScheme.onSurface,
-		disabledContainerColor : Color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.88f)),
-		disabledIconColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.31f),
-		disabledContentColor : Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.31f),
+		contentColor : Color = MaterialTheme.colorScheme.onSurface,
+		checkedContainerColor : Color = MaterialTheme.colorScheme.primary,
+		checkedIconColor : Color = MaterialTheme.colorScheme.onPrimary,
+		checkedContentColor : Color = MaterialTheme.colorScheme.onPrimary,
 	) : GenericBottomSheetButton2Colors = GenericBottomSheetButton2Colors(
 		containerColor = containerColor,
 		contentColor = contentColor,
 		iconColor = iconColor,
-		disabledContainerColor = disabledContainerColor,
-		disabledContentColor = disabledContentColor,
-		disabledIconColor = disabledIconColor,
-	)
-
-	@Composable
-	fun primaryButtonColors(
-		containerColor : Color = MaterialTheme.colorScheme.primary,
-		iconColor : Color = MaterialTheme.colorScheme.onPrimary,
-		contentColor: Color = MaterialTheme.colorScheme.onPrimary,
-		disabledContainerColor : Color = MaterialTheme.colorScheme.primary,
-		disabledIconColor : Color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.31f),
-		disabledContentColor : Color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.31f),
-	) : GenericBottomSheetButton2Colors = GenericBottomSheetButton2Colors(
-		containerColor = containerColor,
-		contentColor = contentColor,
-		iconColor = iconColor,
-		disabledContainerColor = disabledContainerColor,
-		disabledContentColor = disabledContentColor,
-		disabledIconColor = disabledIconColor,
+		checkedContainerColor = checkedContainerColor,
+		checkedContentColor = checkedContentColor,
+		checkedIconColor = checkedIconColor,
 	)
 
 	@Composable
@@ -160,8 +146,8 @@ object GenericBottomSheetButton2Defaults {
 		containerColor = containerColor,
 		contentColor = contentColor,
 		iconColor = iconColor,
-		disabledContainerColor = disabledContainerColor,
-		disabledContentColor = disabledContentColor,
-		disabledIconColor = disabledIconColor,
+		checkedContainerColor = disabledContainerColor,
+		checkedContentColor = disabledContentColor,
+		checkedIconColor = disabledIconColor,
 	)
 }

@@ -1,10 +1,12 @@
-package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
+package com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
@@ -22,6 +24,7 @@ fun MetadataBottomSheet(
 	id: RealmUUID? = null,
 	createdTimestamp : Long? = null,
 	modifiedTimestamp : Long? = null,
+	extraContent : @Composable (() -> Unit)? = null
 ) {
 	GenericBottomSheet2(
 		bottomSheetState = bottomSheetState,
@@ -29,20 +32,21 @@ fun MetadataBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Metadata",
+			title = stringResource(id = R.string.metadata),
 		) {
 			GenericBottomSheetInfo2(
-				key = "ID",
-				value = id?.toString() ?: "Not saved",
+				key = stringResource(id = R.string.id),
+				value = id?.toString() ?: stringResource(id = R.string.not_saved),
 			)
 			GenericBottomSheetInfo2(
-				key = "Created on",
+				key = stringResource(id = R.string.created_on),
 				value = createdTimestamp?.timeStampToPrettyFull() ?: "",
 			)
 			GenericBottomSheetInfo2(
-				key = "Modified on",
+				key = stringResource(id = R.string.modified_on),
 				value = modifiedTimestamp?.timeStampToPrettyFull() ?: "",
 			)
+			extraContent?.invoke()
 		}
 	}
 }
