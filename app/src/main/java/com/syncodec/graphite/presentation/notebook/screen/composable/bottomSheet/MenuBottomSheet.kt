@@ -44,6 +44,8 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyValue
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
+import com.syncodec.graphite.presentation.exp.atlas.AtlasActivity
+import com.syncodec.graphite.presentation.exp.calendar.CalendarActivity
 import com.syncodec.graphite.presentation.explorer.ExplorerActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -113,7 +115,7 @@ fun MenuBottomSheet(
 				{
 					BottomSheetButton(title = "Calendar", icon = R.drawable.ic_calendar) {
 						onCloseSheet()
-						Intent(context, ExplorerActivity::class.java).apply {
+						Intent(context, CalendarActivity::class.java).apply {
 							putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Calendar.name)
 							putExtra(Extra.Companion.Extra.ChapterId.name, chapterId?.bytes)
 							context.startActivity(this)
@@ -123,8 +125,7 @@ fun MenuBottomSheet(
 				{
 					BottomSheetButton(title = "Atlas", icon = R.drawable.ic_atlas) {
 						onCloseSheet()
-						Intent(context, ExplorerActivity::class.java).apply {
-							putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Atlas.name)
+						Intent(context, AtlasActivity::class.java).apply {
 							putExtra(Extra.Companion.Extra.ChapterId.name, chapterId?.bytes)
 							context.startActivity(this)
 						}

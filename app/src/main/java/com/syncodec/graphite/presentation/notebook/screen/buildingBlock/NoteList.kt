@@ -63,7 +63,7 @@ fun LazyListScope.noteList(
 							thumbnail = note.thumbnail,
 							address = note.address,
 							latLng = note.latLng,
-							tagList = tagList.filter { note.id in it.objectIdList },
+							tagList = note.tagList,
 							isSelected = note.id in selectedIdList,
 							colors = noteCardColors ?: NoteCardDefaults.noteCardColors(),
 							onClick = { onClick(note) },

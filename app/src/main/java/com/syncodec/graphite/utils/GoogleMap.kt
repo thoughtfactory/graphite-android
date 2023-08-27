@@ -111,6 +111,6 @@ fun Context.reverseGeocode(
 
 class GoogleMapUtil {
 	companion object {
-		fun getMapStyle(isDarkTheme : Boolean) : Int = if (isDarkTheme) R.raw.map_style_dark else R.raw.map_style_light
+		fun getMapStyle(isDarkTheme : Boolean) : Int = if (isDarkTheme) R.raw.map_style_night_1 else R.raw.map_style_day_1
 	}
 }

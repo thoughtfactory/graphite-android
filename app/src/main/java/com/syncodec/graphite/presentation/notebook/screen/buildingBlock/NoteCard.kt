@@ -52,7 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
@@ -66,7 +66,7 @@ import io.realm.kotlin.types.RealmUUID
 
 
 @Immutable
-class NoteCardColors constructor(
+class NoteCardColors(
 	val containerColor : Color,
 	val contentColor : Color,
 	val selectedContainerColor : Color = containerColor,
@@ -150,7 +150,7 @@ fun NoteCard(
 	thumbnail : String? = null,
 	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
 	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
-	tagList : List<TagObject> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
 	isSelected : Boolean = false,
 	colors : NoteCardColors = NoteCardDefaults.noteCardColors(),
 	onClick : () -> Unit = {},
@@ -295,7 +295,7 @@ private fun Header(
 private fun Content(
 	contentThumbnail : String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
 	thumbnail : String? = null,
-	tagList : List<TagObject> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
 ) {
 	val contentColor = LocalContentColor.current
 	Row(
@@ -338,7 +338,7 @@ private fun Content(
 @Preview
 @Composable
 private fun ColumnScope.TagList(
-	tagList : List<TagObject> = listOf()
+	tagList : List<TagObjectLite> = listOf()
 ) {
 	this.apply {
 		if (tagList.isNotEmpty()) {

@@ -252,6 +252,7 @@ data class NoteObjectLite(
 	val thumbnail: String? = null,
 	val isFavourite: Boolean,
 	val isLocked: Boolean,
+	val tagList : List<TagObjectLite> = listOf(),
 	val overWritable: Boolean = true,
 	val deletable: Boolean = true,
 	val localOnly: Boolean = false

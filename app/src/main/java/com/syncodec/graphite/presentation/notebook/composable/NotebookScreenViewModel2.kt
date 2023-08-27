@@ -5,10 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.SortBy

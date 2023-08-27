@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildingBlock.calendarView
+package com.syncodec.graphite.presentation.exp.calendar.composable.calendarView
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween

@@ -21,7 +21,6 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class BookBucketItemViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
 
-	val repositoryState: StateFlow<Repository.Companion.RepositoryStatus> = repositoryStateFlow
 	private val repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
 	private val _isNew: MutableStateFlow<Boolean?> = MutableStateFlow(null)

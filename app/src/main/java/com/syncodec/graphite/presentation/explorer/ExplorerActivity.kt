@@ -55,36 +55,34 @@ class ExplorerActivity : ComponentActivity() {
 		val chapterId = intent.getByteArrayExtra(Extra.Companion.Extra.ChapterId.name)?.let { RealmUUID.from(it) }
 
 		setContent {
-			setContent {
-				BaseContent {
-					var isSelecting : Boolean by remember { mutableStateOf(false) }
-					var selectedIdList : List<RealmUUID> by remember { mutableStateOf(listOf()) }
+			BaseContent {
+				var isSelecting : Boolean by remember { mutableStateOf(false) }
+				var selectedIdList : List<RealmUUID> by remember { mutableStateOf(listOf()) }
 
-					BackHandler(enabled = isSelecting) {
+				BackHandler(enabled = isSelecting) {
+					isSelecting = false
+					selectedIdList = listOf()
+				}
+
+				ExplorerScreen(
+					explorerType = explorerType,
+					initSearchInChapterId = chapterId,
+					searchInDefaultChapter = false,
+					isStatic = false,
+					isSelecting = isSelecting,
+					onSelect = {
+						isSelecting = true
+						selectedIdList.toMutableList().apply {
+							if (it in this) remove(it) else add(it)
+							selectedIdList = this
+						}
+					},
+					selectedIdList = selectedIdList,
+					onClickCancelSelect = {
 						isSelecting = false
 						selectedIdList = listOf()
-					}
-
-					ExplorerScreen(
-						explorerType = explorerType,
-						initSearchInChapterId = chapterId,
-						searchInDefaultChapter = false,
-						isStatic = false,
-						isSelecting = isSelecting,
-						onSelect = {
-							isSelecting = true
-							selectedIdList.toMutableList().apply {
-								if (it in this) remove(it) else add(it)
-								selectedIdList = this
-							}
-						},
-						selectedIdList = selectedIdList,
-						onClickCancelSelect = {
-							isSelecting = false
-							selectedIdList = listOf()
-						},
-					)
-				}
+					},
+				)
 			}
 		}
 	}

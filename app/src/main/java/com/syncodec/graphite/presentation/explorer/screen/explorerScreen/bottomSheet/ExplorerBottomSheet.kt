@@ -26,7 +26,6 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun ExplorerBottomSheet(
-	scaffoldState : BottomSheetScaffoldState = rememberBottomSheetScaffoldState(),
 	title : String = "Title",
 	headerBackgroundColor : Color? = null,
 	noteList : List<NoteObjectLite> = listOf(),

@@ -43,6 +43,8 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
+import com.syncodec.graphite.presentation.exp.atlas.AtlasActivity
+import com.syncodec.graphite.presentation.exp.calendar.CalendarActivity
 import com.syncodec.graphite.presentation.explorer.ExplorerActivity
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
 import com.syncodec.graphite.presentation.note.NoteActivity
@@ -248,14 +250,13 @@ fun NotebookScreen2(
 			}
 		},
 		onClickAtlas = {
-			Intent(context, ExplorerActivity::class.java).apply {
-				putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Atlas.name)
+			Intent(context, AtlasActivity::class.java).apply {
 				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
 				context.startActivity(this)
 			}
 		},
 		onClickCalendar = {
-			Intent(context, ExplorerActivity::class.java).apply {
+			Intent(context, CalendarActivity::class.java).apply {
 				putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Calendar.name)
 				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
 				context.startActivity(this)

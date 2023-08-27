@@ -159,6 +159,18 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".presentation.exp.atlas.AtlasActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".presentation.exp.calendar.CalendarActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".presentation.pro.ProActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"

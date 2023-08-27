@@ -21,6 +21,9 @@ import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenC
 import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
+import com.syncodec.graphite.presentation.common.dialog.whereDialog2.WhereDialogViewModel2
+import com.syncodec.graphite.presentation.exp.atlas.AtlasViewModel
+import com.syncodec.graphite.presentation.exp.calendar.CalendarViewModel
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
 import com.syncodec.graphite.presentation.main.MainViewModel
@@ -114,7 +117,10 @@ class BaseApplication : Application() {
 //					viewModelOf(::LocalBackupViewModel)
 //					viewModelOf(::LocalBackupViewModel)
 					viewModelOf(::WhereDialogViewModel)
+					viewModelOf(::WhereDialogViewModel2)
 					viewModelOf(::ExplorerScreenViewModel)
+					viewModelOf(::AtlasViewModel)
+					viewModelOf(::CalendarViewModel)
 					viewModelOf(::DropboxSyncViewModel)
 					viewModelOf(::GoogleDriveSyncViewModel)
 				}

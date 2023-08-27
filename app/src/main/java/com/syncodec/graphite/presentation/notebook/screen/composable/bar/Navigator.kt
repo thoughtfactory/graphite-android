@@ -16,6 +16,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.utils.getInverseBWColor
 import io.realm.kotlin.types.RealmUUID
 
@@ -55,12 +55,7 @@ fun Navigator(
 		) {
 			Spacer(modifier = Modifier.width(10.dp))
 			if (showRoot) {
-				NavigatorItem(
-					id = null,
-					title = null,
-					color = null,
-					isDefault = false,
-				) { onClickNavigatorChapter(null) }
+				RootNavigatorItem { onClickNavigatorChapter(null) }
 				Icon(painter = painterResource(id = R.drawable.ic_caret),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onBackground,
@@ -92,7 +87,7 @@ fun Navigator(
 @Preview
 @Composable
 private fun NavigatorItem(
-	id: RealmUUID? = RealmUUID.random(),
+	id: RealmUUID = RealmUUID.random(),
 	title: String? = null,
 	color: Color? = null,
 	isDefault: Boolean = false,
@@ -103,18 +98,13 @@ private fun NavigatorItem(
 
 	SuggestionChip(
 		onClick = onClick,
-		label = {
-			(title ?: id?.toString())?.let { title -> AnimatedText(text = title) } ?: Icon(
-				painter = painterResource(id = R.drawable.ic_home),
-				tint = contentColor,
-				contentDescription = "Root Chapter"
-			)
-		},
+		label = { Text(text = title ?: id.toString()) },
 		icon = if (isDefault) {
 			{
 				Icon(
 					painter = painterResource(id = R.drawable.ic_fa_sparkles),
-					tint = contentColor, contentDescription = "Default Chapter",
+					contentDescription = "Default Chapter",
+					tint = contentColor,
 					modifier = Modifier.requiredSize(16.dp)
 				)
 			}
@@ -128,3 +118,27 @@ private fun NavigatorItem(
 		modifier = Modifier.padding(2.dp, 0.dp),
 	)
 }
+
+@Preview
+@Composable
+private fun RootNavigatorItem(
+	onClick: () -> Unit = {},
+) {
+	SuggestionChip(
+		onClick = onClick,
+		label = {
+			Icon(
+				painter = painterResource(id = R.drawable.ic_fa_home),
+				contentDescription = "Root Chapter",
+				modifier = Modifier.requiredSize(16.dp)
+			)
+		},
+		colors = SuggestionChipDefaults.suggestionChipColors(
+			containerColor = MaterialTheme.colorScheme.surface,
+			labelColor = MaterialTheme.colorScheme.onSurface,
+		),
+		border = null,
+		modifier = Modifier.padding(2.dp, 0.dp),
+	)
+}
+

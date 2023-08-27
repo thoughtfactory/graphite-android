@@ -28,7 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.common.dialog.whereDialog2.WhereDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bar.BottomBar
@@ -36,7 +36,6 @@ import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bar.Top
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.bottomSheet.ExplorerBottomSheet
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildingBlock.atlasView.AtlasView
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.buildingBlock.calendarView.CalendarView
-import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.dialog.ExplorerDialog
 import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.dialog.ExplorerDialogType
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreen
 import com.syncodec.graphite.presentation.note.NoteActivity
@@ -50,17 +49,17 @@ import org.koin.androidx.compose.koinViewModel
 @Preview
 @Composable
 fun ExplorerScreen(
-	explorerType : Extra.Companion.ExplorerType? = null,
-	initSearchInChapterId : RealmUUID? = null,
-	searchInDefaultChapter : Boolean = false,
-	isStatic : Boolean = false,
-	isSelecting : Boolean = false,
-	onSelect : (RealmUUID) -> Unit = {},
-	selectedIdList : List<RealmUUID> = listOf(),
-	onClickCancelSelect : () -> Unit = {},
+	explorerType: Extra.Companion.ExplorerType? = null,
+	initSearchInChapterId: RealmUUID? = null,
+	searchInDefaultChapter: Boolean = false,
+	isStatic: Boolean = false,
+	isSelecting: Boolean = false,
+	onSelect: (RealmUUID) -> Unit = {},
+	selectedIdList: List<RealmUUID> = listOf(),
+	onClickCancelSelect: () -> Unit = {},
 ) {
 	val context = LocalContext.current
-	val viewModel : ExplorerScreenViewModel = koinViewModel()
+	val viewModel: ExplorerScreenViewModel = koinViewModel()
 	val hapticFeedback = LocalHapticFeedback.current
 
 	val isAuthenticated = LocalIsAuthenticated.current
@@ -86,17 +85,17 @@ fun ExplorerScreen(
 
 	var isWhereDialogVisible by remember { mutableStateOf(false) }
 	var isDeleteDialogVisible by remember { mutableStateOf(false) }
-	fun openDialog(dialogType : ExplorerDialogType) = when (dialogType) {
+	fun openDialog(dialogType: ExplorerDialogType) = when (dialogType) {
 		ExplorerDialogType.Where -> isWhereDialogVisible = true
 		ExplorerDialogType.Delete -> isDeleteDialogVisible = true
 	}
 
-	fun closeDialog(dialogType : ExplorerDialogType) = when (dialogType) {
+	fun closeDialog(dialogType: ExplorerDialogType) = when (dialogType) {
 		ExplorerDialogType.Where -> isWhereDialogVisible = false
 		ExplorerDialogType.Delete -> isDeleteDialogVisible = false
 	}
 
-	fun onClickNote(id : RealmUUID) {
+	fun onClickNote(id: RealmUUID) {
 		if (isSelecting) {
 			onSelect(id)
 		} else {
@@ -109,7 +108,7 @@ fun ExplorerScreen(
 		}
 	}
 
-	fun onLongClickNote(id : RealmUUID) {
+	fun onLongClickNote(id: RealmUUID) {
 		hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 		onSelect(id)
 	}
@@ -119,7 +118,7 @@ fun ExplorerScreen(
 	} else if (explorerType != null) {
 		GenericScaffold2(
 			topBar = {
-				if (! isStatic) TopBar(
+				if (!isStatic) TopBar(
 					title = when (explorerType) {
 						Extra.Companion.ExplorerType.Atlas -> "Atlas"
 						Extra.Companion.ExplorerType.Attachment -> "Attachment"
@@ -128,15 +127,13 @@ fun ExplorerScreen(
 					},
 				)
 			},
-			bottomBar = { if (! isStatic) BottomBar(searchInChapter = searchInChapter) { openDialog(ExplorerDialogType.Where) } },
+			bottomBar = { if (!isStatic) BottomBar(searchInChapter = searchInChapter) { openDialog(ExplorerDialogType.Where) } },
 			dialogContent = {
-				ExplorerDialog(
-					isWhereDialogVisible = isWhereDialogVisible,
-					isDeleteDialogVisible = isDeleteDialogVisible,
-					searchInChapter = searchInChapter,
-					onSetSearchInChapter = { viewModel.filterOnChapter(it?.id) },
-					onDelete = { viewModel.delete(idList = selectedIdList.toList()); onClickCancelSelect() },
-					closeDialog = ::closeDialog,
+				WhereDialog2(
+					isDialogVisible = isWhereDialogVisible,
+					onDismissRequest = { isWhereDialogVisible = false },
+					currentSelectedChapter = searchInChapter?.id,
+					onSelectChapter = {},
 				)
 			}
 		) {
@@ -152,7 +149,6 @@ fun ExplorerScreen(
 			BottomSheetScaffold(
 				sheetContent = {
 					ExplorerBottomSheet(
-						scaffoldState = scaffoldState,
 						title = sheetTitle,
 						headerBackgroundColor = sheetBackgroundColor,
 						noteList = contextNoteList,
