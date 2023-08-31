@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.tags.composable.screen
 
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
@@ -28,14 +27,12 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.explorer.ExplorerActivity
 import com.syncodec.graphite.presentation.tags.composable.bar.TopBar
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.SearchView
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItem
 import com.syncodec.graphite.presentation.tags.composable.dialog.TagDialog
 import com.syncodec.graphite.presentation.tags.composable.dialog.TagDialogType
-import com.syncodec.graphite.utils.Extra
 
 
 @Preview
@@ -134,11 +131,6 @@ fun TagScreen(
 										openDialog(TagDialogType.Edit)
 									},
 								) {
-									Intent(context, ExplorerActivity::class.java).apply {
-										putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Search.name)
-										putExtra(Extra.Companion.Extra.TagId.name, it.id.bytes)
-										context.startActivity(this)
-									}
 								}
 							}
 						}

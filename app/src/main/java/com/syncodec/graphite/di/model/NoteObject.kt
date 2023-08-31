@@ -19,6 +19,7 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
+import java.io.File
 import java.time.Instant
 import kotlin.random.Random
 
@@ -253,6 +254,7 @@ data class NoteObjectLite(
 	val isFavourite: Boolean,
 	val isLocked: Boolean,
 	val tagList : List<TagObjectLite> = listOf(),
+	val attachmentList : List<File> = listOf(),
 	val overWritable: Boolean = true,
 	val deletable: Boolean = true,
 	val localOnly: Boolean = false

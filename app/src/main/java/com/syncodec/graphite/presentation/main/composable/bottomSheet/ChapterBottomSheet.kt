@@ -5,17 +5,16 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.media.ThumbnailUtils
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -71,12 +71,15 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
+import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.imageList
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -88,8 +91,9 @@ fun ChapterBottomSheet(
 	bottomSheetState: SheetState = rememberModalBottomSheetState(),
 	isBottomSheetVisible: Boolean = true,
 	onDismissRequest: () -> Unit = { },
-	title : String = "New notebook",
-	putNotebook: (String, String, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
+	title: String = "New notebook",
+	chapterObject: ChapterObject? = null,
+	putChapter: (RealmUUID?, String, String, Color?, Bitmap?) -> Unit = { _, _, _, _, _ -> },
 ) {
 	val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -103,19 +107,31 @@ fun ChapterBottomSheet(
 	var currentImage by remember { mutableStateOf<Int?>(null) }
 	var currentImageUri by remember { mutableStateOf<Uri?>(null) }
 
+	LaunchedEffect(key1 = chapterObject) {
+		bucketTitleText = chapterObject?.title ?: ""
+		bucketDescriptionText = chapterObject?.description ?: ""
+	}
+
 	fun createNotebook() {
 		scope.launch(Dispatchers.Default) {
 			val bitmap = if (currentImage != null) {
 				BitmapFactory.decodeResource(context.resources, currentImage!!)
-			} else {
+			}
+			else {
 				currentImageUri?.let { it1 -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it1)) }
 			}
 
 			val aspectRatio = if (bitmap != null) bitmap.width.toFloat() / bitmap.height.toFloat() else 1f
 
-			val thumbnail = bitmap?.let { ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192) }
+			val thumbnail = bitmap?.let {
+				try {
+					ThumbnailUtils.extractThumbnail(it, (192 * aspectRatio).toInt(), 192)
+				} catch (_: Exception) {
+					null
+				}
+			}
 
-			putNotebook(bucketTitleText, bucketDescriptionText, selectedColor, thumbnail)
+			putChapter(chapterObject?.id, bucketTitleText, bucketDescriptionText, selectedColor, thumbnail)
 
 			keyboardController?.hide()
 			onDismissRequest()
@@ -183,11 +199,11 @@ fun ChapterBottomSheet(
 					disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
 					disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
 				),
-				enabled = bucketTitleText.isNotEmpty() && (selectedColor != null || currentImage != null || currentImageUri != null),
+				enabled = bucketTitleText.isNotEmpty() && (selectedColor != null || currentImage != null || currentImageUri != null || chapterObject != null),
 				modifier = Modifier.fillMaxWidth(),
 				onClick = { createNotebook() },
 			) {
-				Text(text = stringResource(id = R.string.create))
+				Text(text = stringResource(id = R.string.save))
 			}
 		}
 	}
@@ -206,11 +222,7 @@ private fun CoverPicker(
 
 	var coverType by remember { mutableIntStateOf(0) }
 
-	Column(
-		modifier = Modifier
-			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.47f), MaterialTheme.shapes.medium)
-			.padding(16.dp)
-	) {
+	Column {
 		GenericTabRow(
 			tabItemList = listOf(
 				TabItem(text = stringResource(id = R.string.color)) { coverType = 0 },
@@ -279,19 +291,25 @@ private fun ColorPicker(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalArrangement = Arrangement.SpaceAround
 	) {
-		colorList.forEach {
-
-			val borderColor by animateColorAsState(targetValue = if (selectedColor == it) MaterialTheme.colorScheme.onBackground else Color.Transparent, label = "borderColor_animation")
-
+		colorList.forEach { color ->
 			Box(
+				contentAlignment = Alignment.Center,
 				modifier = Modifier
 					.requiredSize(40.dp)
 					.padding(4.dp)
-					.background(it, MaterialTheme.shapes.small)
+					.background(color, MaterialTheme.shapes.small)
 					.clip(MaterialTheme.shapes.small)
-					.border(2.dp, borderColor, MaterialTheme.shapes.small)
-					.clickable { onSelectColor(it) }
-			)
+					.clickable { onSelectColor(color) }
+			) {
+				if (selectedColor == color) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_check),
+						contentDescription = "Selected color",
+						tint = color.getInverseBWColor(),
+						modifier = Modifier.requiredSize(16.dp)
+					)
+				}
+			}
 		}
 	}
 }
@@ -371,7 +389,7 @@ private fun ImagePicker(
 					contentScale = ContentScale.Crop,
 					modifier = Modifier.fillMaxSize()
 				)
-				SelectedImageOverlay(isSelected = bitmap != null)
+				SelectedCoverOverlay(isSelected = bitmap != null)
 			}
 		}
 		imageList.forEach { imageInt ->
@@ -404,7 +422,7 @@ private fun ImagePicker(
 						contentScale = ContentScale.Crop,
 						modifier = Modifier.fillMaxSize()
 					)
-					SelectedImageOverlay(isSelected = currentImage == imageInt)
+					SelectedCoverOverlay(isSelected = currentImage == imageInt)
 				}
 			}
 		}
@@ -412,7 +430,7 @@ private fun ImagePicker(
 }
 
 @Composable
-private fun SelectedImageOverlay(
+private fun SelectedCoverOverlay(
 	isSelected: Boolean = true,
 ) {
 	AnimatedVisibility(

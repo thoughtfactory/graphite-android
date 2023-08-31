@@ -165,6 +165,6 @@ fun NotebookScreen(
 		isBottomSheetVisible = isNotebookBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isNotebookBottomSheetVisible = false } },
 		title = stringResource(id = R.string.new_notebook),
-		putNotebook = { title, description, color, bitmap -> viewModel.putNotebook(title = title, description = description, color = color, bitmap = bitmap) },
+		putChapter = { _, title, description, color, bitmap -> viewModel.putNotebook(title = title, description = description, color = color, bitmap = bitmap) },
 	)
 }

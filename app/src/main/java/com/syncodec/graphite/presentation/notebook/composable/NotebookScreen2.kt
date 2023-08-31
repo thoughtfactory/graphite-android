@@ -43,9 +43,8 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
-import com.syncodec.graphite.presentation.exp.atlas.AtlasActivity
-import com.syncodec.graphite.presentation.exp.calendar.CalendarActivity
-import com.syncodec.graphite.presentation.explorer.ExplorerActivity
+import com.syncodec.graphite.presentation.explorer.atlas.AtlasActivity
+import com.syncodec.graphite.presentation.explorer.calendar.CalendarActivity
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.note2.NoteActivity2
@@ -79,7 +78,8 @@ fun NotebookScreen2(
 	onClickMultiFavourite: (Set<RealmUUID>) -> Unit = {},
 	onClickLock: (ChapterObject) -> Unit = {},
 	onClickMultiLock: (Set<RealmUUID>) -> Unit = {},
-	putNotebook: (String, String, Color?, Bitmap?) -> Unit = { _, _, _, _ -> },
+	onClickSetDefault: (RealmUUID) -> Unit = {},
+	putChapter: (RealmUUID?, String, String, Color?, Bitmap?) -> Unit = { _, _, _, _, _ -> },
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
@@ -89,9 +89,11 @@ fun NotebookScreen2(
 	val bitmap by remember(chapterObject) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
 
 	val bottomSheetState = rememberModalBottomSheetState()
+	val editChapterBottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
 	var isMetadataBottomSheetVisibe by remember { mutableStateOf(false) }
-	var isChapterBottomSheetVisible by remember { mutableStateOf(false) }
+	var isNewChapterBottomSheetVisible by remember { mutableStateOf(false) }
+	var isEditChapterBottomSheetVisible by remember { mutableStateOf(false) }
 
 //	null : selecting nothing
 //	true : selecting notes
@@ -142,7 +144,7 @@ fun NotebookScreen2(
 		isBottomBarVisible = selectionType == null,
 		floatingActionButton = {
 			FloatingActionButton(
-				onClick = { isChapterBottomSheetVisible = true }
+				onClick = { isNewChapterBottomSheetVisible = true }
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_fa_notebook),
@@ -201,14 +203,12 @@ fun NotebookScreen2(
 				)
 			}
 			noteList(
-				noteList = noteList,
-				tagList = listOf(),
+				noteList = noteList.toSet(),
 				selectedIdList = selectedIdList,
 				isVisible = true,
 				toggleVisibility = {},
 				onClick = { onClickNote(it.id) },
-				onLongClick = { selectionType = true; onSelect(it.id) },
-			)
+			) { selectionType = true; onSelect(it.id) }
 			chapterList(
 				chapterList = chapterList,
 //				chapterNoteItemCount = chapterNoteItemCount,
@@ -221,7 +221,7 @@ fun NotebookScreen2(
 				onLongClick = { selectionType = false; onSelect(it.id) }
 			)
 
-			item { Spacer(modifier = Modifier.height(32.dp)) }
+			item { Spacer(modifier = Modifier.height(128.dp)) }
 		}
 
 		NotebookSelectionActionView(
@@ -262,8 +262,14 @@ fun NotebookScreen2(
 				context.startActivity(this)
 			}
 		},
-		onClickSetAsDefault = {},
-		onClickEdit = {},
+		onClickSetAsDefault = { chapterObject?.id?.let(onClickSetDefault) },
+		onClickEdit = {
+			scope.launch {
+				bottomSheetState.hide()
+				isMenuBottomSheetVisible = false
+				isEditChapterBottomSheetVisible = true
+			}
+		},
 		onClickDelete = {},
 	)
 
@@ -282,11 +288,22 @@ fun NotebookScreen2(
 		}
 	)
 
+//	New chapter
 	ChapterBottomSheet(
 		bottomSheetState = bottomSheetState,
-		isBottomSheetVisible = isChapterBottomSheetVisible,
-		onDismissRequest = { scope.launch { bottomSheetState.hide(); isChapterBottomSheetVisible = false } },
+		isBottomSheetVisible = isNewChapterBottomSheetVisible,
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isNewChapterBottomSheetVisible = false } },
 		title = stringResource(id = R.string.new_chapter),
-		putNotebook = putNotebook,
+		putChapter = putChapter,
+	)
+
+//	Edit chapter
+	ChapterBottomSheet(
+		bottomSheetState = editChapterBottomSheetState,
+		isBottomSheetVisible = isEditChapterBottomSheetVisible,
+		onDismissRequest = { scope.launch { editChapterBottomSheetState.hide(); isEditChapterBottomSheetVisible = false } },
+		title = stringResource(id = R.string.edit_chapter),
+		chapterObject = chapterObject,
+		putChapter = putChapter,
 	)
 }

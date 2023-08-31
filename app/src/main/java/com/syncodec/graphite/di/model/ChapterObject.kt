@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties

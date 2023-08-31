@@ -24,8 +24,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -63,6 +65,7 @@ import androidx.core.content.res.ResourcesCompat
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.text.revealTextView.RevealText
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
+import com.syncodec.graphite.utils.isTablet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -74,6 +77,7 @@ fun FirstTimeScreen(
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val isTablet = isTablet()
 
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
@@ -85,79 +89,82 @@ fun FirstTimeScreen(
 
 	var showContent by remember { mutableStateOf(true) }
 
-	Box(
+	Column(
+		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
+			.verticalScroll(rememberScrollState())
 	) {
-		Column(
-			modifier = Modifier.fillMaxSize(),
-			horizontalAlignment = Alignment.CenterHorizontally,
-		) {
-			Spacer(modifier = Modifier.height(screenHeight / 16))
+		Spacer(modifier = Modifier.height(48.dp))
 
-			Image(
-				painter = painterResource(id = R.drawable.il_loader_illustration),
-				contentDescription = null,
-				modifier = Modifier.requiredSize(screenWidth * 3 / 4)
-			)
+		Image(
+			painter = painterResource(id = R.drawable.il_loader_illustration),
+			contentDescription = null,
+			modifier = Modifier.requiredSize(256.dp)
+		)
 
-			AndroidView(
-				factory = {
-					RevealText(it).apply {
-						this.setText("GRAPHITE")
-						this.setTextColor(textColor.toArgb())
-						this.setBackgroundColor(0)
-						this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 47f)
-						this.setTypeface(ResourcesCompat.getFont(context, R.font.graduate_regular), Typeface.BOLD)
-						this.letterSpacing = 0.1f
-						this.setDuration(2400)
-					}
+		AndroidView(
+			factory = {
+				RevealText(it).apply {
+					this.setText("GRAPHITE")
+					this.setTextColor(textColor.toArgb())
+					this.setBackgroundColor(0)
+					this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 47f)
+					this.setTypeface(ResourcesCompat.getFont(context, R.font.graduate_regular), Typeface.BOLD)
+					this.letterSpacing = 0.1f
+					this.setDuration(2400)
 				}
-			) { it.show() }
+			}
+		) { it.show() }
 
-			Spacer(modifier = Modifier.height(12.dp))
+		Spacer(modifier = Modifier.height(12.dp))
 
-			AndroidView(
-				factory = {
-					RevealText(it).apply {
-						this.setText("A LOCAL FIRST")
-						this.setTextColor(textColor.toArgb())
-						this.setBackgroundColor(0)
-						this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23f)
-						this.setTypeface(
-							ResourcesCompat.getFont(context, R.font.graduate_regular),
-							Typeface.BOLD
-						)
-						this.letterSpacing = 0.1f
-						this.setDuration(2400)
-					}
+		AndroidView(
+			factory = {
+				RevealText(it).apply {
+					this.setText("A LOCAL FIRST")
+					this.setTextColor(textColor.toArgb())
+					this.setBackgroundColor(0)
+					this.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23f)
+					this.setTypeface(
+						ResourcesCompat.getFont(context, R.font.graduate_regular),
+						Typeface.BOLD
+					)
+					this.letterSpacing = 0.1f
+					this.setDuration(2400)
 				}
-			) { it.show() }
+			}
+		) { it.show() }
 
-			Spacer(modifier = Modifier.height(24.dp))
+		Spacer(modifier = Modifier.height(24.dp))
 
-			ContentCard(showContent = showContent)
+		ContentCard(showContent = showContent)
 
-			LoginCard(
-				modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-					.padding(32.dp, 0.dp),
-				onClickLogin = onClickLogin,
-				onClickTryFirst = {
-					scope.launch {
-						showContent = false
-						delay(1200)
-						dataStoreInstance.putIsFirstTime(false)
-					}
-				}
-			)
+		Spacer(modifier = Modifier.height(48.dp))
 
-			Spacer(modifier = Modifier.height(12.dp))
-
-			Spacer(modifier = Modifier.height(screenHeight / 8))
+		if (isTablet) {
+			Spacer(modifier = Modifier.height(128.dp))
 		}
+		else {
+			Spacer(modifier = Modifier.height(64.dp))
+		}
+
+		LoginCard(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(32.dp, 0.dp),
+			onClickLogin = onClickLogin,
+			onClickTryFirst = {
+				scope.launch {
+					showContent = false
+					delay(1200)
+					dataStoreInstance.putIsFirstTime(false)
+				}
+			}
+		)
+
+		Spacer(modifier = Modifier.height(48.dp))
 	}
 }
 

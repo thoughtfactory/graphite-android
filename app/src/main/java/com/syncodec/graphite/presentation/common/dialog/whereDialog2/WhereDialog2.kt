@@ -59,7 +59,7 @@ fun WhereDialog2(
 	LaunchedEffect(key1 = currentSelectedChapter) { viewModel.exploreChapter(currentSelectedChapter) }
 
 	BackHandler(enabled = isDialogVisible) { onDismissRequest() }
-	BackHandler(enabled = chapterPath.isNotEmpty()) { viewModel.exploreChapter(chapterPath.getOrNull(1)?.id) }
+	BackHandler(enabled = isDialogVisible && chapterPath.isNotEmpty()) { viewModel.exploreChapter(chapterPath.getOrNull(1)?.id) }
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isChapterBottomSheetVisible by remember { mutableStateOf(false) }
@@ -124,6 +124,6 @@ fun WhereDialog2(
 		isBottomSheetVisible = isChapterBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isChapterBottomSheetVisible = false } },
 		title = stringResource(id = R.string.new_chapter),
-		putNotebook = { title, description, color, bitmap -> viewModel.putNotebook(title = title, description = description, color = color, bitmap = bitmap) },
+		putChapter = { _, title, description, color, bitmap -> viewModel.putNotebook(title = title, description = description, color = color, bitmap = bitmap) },
 	)
 }

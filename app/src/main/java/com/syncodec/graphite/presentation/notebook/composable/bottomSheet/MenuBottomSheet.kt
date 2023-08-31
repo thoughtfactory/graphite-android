@@ -27,7 +27,7 @@ fun MenuBottomSheet(
 	onClickCalendar: () -> Unit = {},
 	onClickSetAsDefault: () -> Unit = {},
 	onClickEdit: () -> Unit = {},
-	onClickDelete : () -> Unit = {},
+	onClickDelete: () -> Unit = {},
 ) {
 	GenericBottomSheet2(
 		bottomSheetState = bottomSheetState,
@@ -42,19 +42,19 @@ fun MenuBottomSheet(
 					icon = R.drawable.ic_fa_gallery,
 					text = stringResource(id = R.string.attachments),
 					contentDescription = stringResource(id = R.string.attachments),
-					onClick = onClickAttachments,
+					onClick = { onClickAttachments(); onDismissRequest() },
 				)
 				GenericBottomSheetButton2(
 					icon = R.drawable.ic_fa_atlas,
 					text = stringResource(id = R.string.atlas),
 					contentDescription = stringResource(id = R.string.atlas),
-					onClick = onClickAtlas,
+					onClick = { onClickAtlas(); onDismissRequest() },
 				)
 				GenericBottomSheetButton2(
 					icon = R.drawable.ic_fa_calendar,
 					text = stringResource(id = R.string.calendar),
 					contentDescription = stringResource(id = R.string.calendar),
-					onClick = onClickCalendar,
+					onClick = { onClickCalendar(); onDismissRequest() },
 				)
 				GenericBottomSheetButton2(
 					icon = R.drawable.ic_fa_sparkles,

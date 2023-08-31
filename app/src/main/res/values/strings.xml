@@ -85,6 +85,7 @@
     <!--    Notebook-->
     <string name="new_notebook">New notebook</string>
     <string name="new_chapter">New chapter</string>
+    <string name="edit_chapter">Edit chapter</string>
     <string name="new_note">New note</string>
     <string name="attachments">Attachments</string>
     <string name="atlas">Atlas</string>
@@ -95,6 +96,12 @@
     <string name="gallery">Gallery</string>
     <string name="file">File</string>
     <string name="select_chapter">Select chapter</string>
+
+    <!--    Explorer-->
+    <string name="in_visible_region">Everywhere</string>
+    <string name="with_attachments">With attachments</string>
+    <string name="within_default_chapter">Within default chapter</string>
+    <string name="locked">Locked</string>
 
     <!--    Generic-->
     <string name="stay_tuned">Stay tuned</string>

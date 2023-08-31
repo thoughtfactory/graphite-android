@@ -2,30 +2,27 @@ package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.animation.Crossfade
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.di.cloud.dropbox.DBox
+import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
-import com.syncodec.graphite.presentation.explorer.ExplorerActivity
-import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationBar
+import com.syncodec.graphite.presentation.main.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
-import com.syncodec.graphite.presentation.main.composable.bar.MainNavigation
 import com.syncodec.graphite.presentation.main.composable.bar.TopBar
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MenuBottomSheet
-import com.syncodec.graphite.presentation.main.composable.dialog.MainDialogType
+import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.AtlasScreen
+import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.CalendarScreen
+import com.syncodec.graphite.presentation.search.SearchActivity
 import com.syncodec.graphite.service.syncInator.SyncInatorService
-import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
-import kotlinx.coroutines.launch
 
 
 enum class ComponentType {
@@ -34,34 +31,23 @@ enum class ComponentType {
 	Notebook
 }
 
-@OptIn(
-	ExperimentalMaterialApi::class,
-	ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
 	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	testConnectionResponse: DBox.Companion.TestConnectionResponse? = null,
 	testDropboxConnection: () -> Unit = {},
+	locationFilteredNoteList : List<NoteObjectLite> = listOf(),
 	onClickSyncNow: () -> Unit = {},
 	onClickForceSync: () -> Unit = {},
 ) {
 	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
 
 	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
 	var currentComponentType: ComponentType by remember { mutableStateOf(ComponentType.Note) }
 
 	var isSelecting: Boolean by remember { mutableStateOf(false) }
 	var selectedIdList: List<RealmUUID> by remember { mutableStateOf(listOf()) }
-
-	var showNotificationPermissionDialog: Boolean by remember { mutableStateOf(false) }
-	var showDeleteDialog: Boolean by remember { mutableStateOf(false) }
-
-	fun openDialog(dialogType: MainDialogType) = when (dialogType) {
-		MainDialogType.NotificationPermission -> showNotificationPermissionDialog = true
-		MainDialogType.Delete -> showDeleteDialog = true
-	}
 
 	BackHandler(enabled = currentRoute != BottomNavigationItem.Home) { currentRoute = BottomNavigationItem.Home }
 
@@ -76,15 +62,7 @@ fun MainScreen(
 	GenericScaffold2(
 		topBar = {
 			TopBar(
-				currentRoute = currentRoute.route,
-				isSelecting = isSelecting,
-				selectedSize = selectedIdList.size,
 				syncStatus = syncStatus,
-				onClickMenu = { isMenuBottomSheetVisible = true },
-				onClickCancelSelect = {
-					isSelecting = false
-					selectedIdList = listOf()
-				},
 				onClickCloud = {
 					if (syncStatus is SyncInatorService.Companion.SyncStatus.Init
 						|| syncStatus is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
@@ -97,15 +75,14 @@ fun MainScreen(
 					}
 				},
 				onClickSearch = {
-					Intent(context, ExplorerActivity::class.java).apply {
-						putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Search.name)
+					Intent(context, SearchActivity::class.java).apply {
 						context.startActivity(this)
 					}
 				}
-			) { openDialog(MainDialogType.Delete) }
+			)
 		},
 		bottomBar = {
-			BottomNavigationBar(
+			BottomBar(
 				currentRoute = currentRoute.route,
 				onNavigation = {
 					when {
@@ -115,21 +92,25 @@ fun MainScreen(
 				}
 			)
 		},
-		isBottomBarVisible = !isSelecting,
+		isTopBarVisible = !isSelecting,
+		isBottomBarVisible = !isSelecting
 	) {
-		MainNavigation(
-			currentRoute = currentRoute,
-			isSelecting = isSelecting,
-			onSelect = {
-				isSelecting = true
-				selectedIdList.toMutableList()
-					.apply {
-						if (it in this) remove(it) else add(it)
-						selectedIdList = this
-					}
-			},
-			selectedIdList = selectedIdList,
-		)
+		Crossfade(
+			targetState = currentRoute,
+			label = "currentRoute_animation",
+		) {
+			when (it) {
+				BottomNavigationItem.Home -> HomeScreen(
+					isSelecting = isSelecting,
+//					onSelect = onSelect,
+					selectedIdList = selectedIdList,
+				)
+
+				BottomNavigationItem.Calendar -> CalendarScreen()
+				BottomNavigationItem.Atlas -> AtlasScreen()
+			}
+		}
+
 	}
 
 	MenuBottomSheet(

@@ -103,7 +103,7 @@ android {
 
 	signingConfigs {
 		debug {
-			storeFile file('/home/pushpull/.android/debug2.keystore')
+			storeFile file('/home/pushpull/.android/debug.keystore')
 		}
 	}
 

@@ -142,7 +142,7 @@ fun BucketBottomSheet(
 					onDismissRequest()
 				},
 			) {
-				Text(text = stringResource(id = R.string.create))
+				Text(text = stringResource(id = R.string.save))
 			}
 		}
 

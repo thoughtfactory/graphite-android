@@ -61,14 +61,12 @@ fun Explorer(
 						SortOn.Modified -> if (sortBy == SortBy.Ascending) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
 						else -> compareBy { it.title }
 					}
-				),
-			tagList = tagList,
-//			selectedIdList = selectedIdList,
+				).toSet(),
+			//			selectedIdList = selectedIdList,
 			isVisible = isNoteListVisible,
 			toggleVisibility = onToggleNoteVisibility,
 			onClick = { onClickNote(it.id) },
-			onLongClick = { onLongClickNote(it.id) },
-		)
+		) { onLongClickNote(it.id) }
 		chapterList(
 			chapterList = chapterObjectList
 				.filter { isChapterListVisible && (if (it.isLocked) isAuthenticated else true) }

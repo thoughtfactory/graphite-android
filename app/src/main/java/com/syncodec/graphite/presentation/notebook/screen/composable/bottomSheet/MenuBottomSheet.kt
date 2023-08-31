@@ -44,9 +44,8 @@ import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyValue
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButton
 import com.syncodec.graphite.presentation.common.bottomSheet.bottomSheetButtonGrid.BottomSheetButtonGrid
-import com.syncodec.graphite.presentation.exp.atlas.AtlasActivity
-import com.syncodec.graphite.presentation.exp.calendar.CalendarActivity
-import com.syncodec.graphite.presentation.explorer.ExplorerActivity
+import com.syncodec.graphite.presentation.explorer.atlas.AtlasActivity
+import com.syncodec.graphite.presentation.explorer.calendar.CalendarActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull

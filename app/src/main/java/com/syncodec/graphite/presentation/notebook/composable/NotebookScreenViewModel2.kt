@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.notebook.composable
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
@@ -113,7 +114,7 @@ class NotebookScreenViewModel2(
 		}
 
 		viewModelScope.launch(Dispatchers.Default) {
-			repository.collectLatest {repository1  ->
+			repository.collectLatest { repository1 ->
 				repository1?.getDefaultChapterIdAsFlow()?.collectLatest {
 					this@NotebookScreenViewModel2._defaultChapterId.tryEmit(it)
 				}
@@ -151,22 +152,50 @@ class NotebookScreenViewModel2(
 		}
 	}
 
-	fun putNotebook(
+	fun putChapter(
+		chapterId: RealmUUID?,
 		title: String,
 		description: String,
 		color: Color?,
 		bitmap: Bitmap?,
 	) {
-		val chapterObject = ChapterObject().apply {
-			this.title = title
-			this.description = description
-			this.color = color?.toArgb()
-			this.thumbnail = bitmap?.encodeBase64()
-
-			this.parentId = this@NotebookScreenViewModel2.currentChapter.value?.id
-		}
 		viewModelScope.launch(Dispatchers.Default) {
-			repository.value?.putChapterSuspended(chapterObject)
+//			Save new chapter
+			if (chapterId == null) {
+				ChapterObject().apply {
+					apply {
+						this.title = title
+						this.description = description
+						this.color = color?.toArgb()
+						this.thumbnail = bitmap?.encodeBase64()
+
+						this.parentId = this@NotebookScreenViewModel2.currentChapter.value?.id
+
+						repository.value?.putChapterSuspended(this)
+					}
+				}
+			}
+			else {
+//				Edit chapter
+				repository.value?.getChapterFromId(id = chapterId)?.clone()?.apply {
+					apply {
+						this.title = title
+						this.description = description
+						if ((color != null) xor (bitmap != null)) {
+							this.color = color?.toArgb()
+							this.thumbnail = bitmap?.encodeBase64()
+						}
+
+						repository.value?.putChapterSuspended(this)
+					}
+				}
+			}
+		}
+	}
+
+	fun setDefaultChapter(id : RealmUUID) {
+		viewModelScope.launch(Dispatchers.Default) {
+			repository.value?.putDefaultChapterId(id = id)
 		}
 	}
 

@@ -153,19 +153,19 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.explorer.ExplorerActivity"
+            android:name=".presentation.search.SearchActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.exp.atlas.AtlasActivity"
+            android:name=".presentation.explorer.atlas.AtlasActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.exp.calendar.CalendarActivity"
+            android:name=".presentation.explorer.calendar.CalendarActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />

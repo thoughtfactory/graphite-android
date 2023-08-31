@@ -12,26 +12,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalFoundationApi::class)
 fun LazyListScope.noteList(
-	noteList : List<NoteObjectLite> = listOf(),
-	tagList : List<TagObject> = listOf(),
-	selectedIdList : Set<RealmUUID> = setOf(),
-	headerTitle : String = "Notes",
-	headerSubTitle : String = "${noteList.size} notes",
-	headerMinHeight : Dp = Dp.Hairline,
-	headerBackgroundColor : Color? = null,
-	isVisible : Boolean = true,
-	toggleVisibility : (() -> Unit) = {},
-	noteCardColors : NoteCardColors? = null,
-	headerEnabled : Boolean = true,
-	onClick : (NoteObjectLite) -> Unit = {},
-	onLongClick : (NoteObjectLite) -> Unit = {},
+	noteList: Set<NoteObjectLite> = setOf(),
+	selectedIdList: Set<RealmUUID> = setOf(),
+	headerTitle: String = "Notes",
+	headerSubTitle: String = "${noteList.size} notes",
+	headerMinHeight: Dp = Dp.Hairline,
+	headerBackgroundColor: Color? = null,
+	isVisible: Boolean = true,
+	toggleVisibility: () -> Unit = {},
+	noteCardColors: NoteCardColors? = null,
+	headerEnabled: Boolean = true,
+	onClick: (NoteObjectLite) -> Unit = {},
+	onLongClick: (NoteObjectLite) -> Unit = {},
 ) {
 	item { Spacer(modifier = Modifier.height(8.dp)) }
 	stickyHeader {
@@ -44,32 +42,33 @@ fun LazyListScope.noteList(
 		) { toggleVisibility() }
 	}
 
-	if (isVisible)
-		noteList
-			.forEach { note ->
-				item(
-					key = note.id.toString()
+	if (isVisible) {
+		noteList.forEach { note ->
+			item(
+				key = note.id.toString()
+			) {
+				Box(
+					modifier = Modifier.animateItemPlacement(tween(300))
 				) {
-					Box(
-						modifier = Modifier.animateItemPlacement(tween(300))
-					) {
-						NoteCard(
-							id = note.id,
-							timestamp = note.userTimestamp.timeStampToPrettyFull(),
-							title = note.title,
-							isFavourite = note.isFavourite,
-							isLocked = note.isLocked,
-							contentThumbnail = note.contentThumbnail,
-							thumbnail = note.thumbnail,
-							address = note.address,
-							latLng = note.latLng,
-							tagList = note.tagList,
-							isSelected = note.id in selectedIdList,
-							colors = noteCardColors ?: NoteCardDefaults.noteCardColors(),
-							onClick = { onClick(note) },
-							onLongClick = { onLongClick(note) },
-						)
-					}
+					NoteCard(
+						id = note.id,
+						timestamp = note.userTimestamp.timeStampToPrettyFull(),
+						title = note.title,
+						isFavourite = note.isFavourite,
+						isLocked = note.isLocked,
+						contentThumbnail = note.contentThumbnail,
+						thumbnail = note.thumbnail,
+						address = note.address,
+						latLng = note.latLng,
+						tagList = note.tagList,
+						isSelected = note.id in selectedIdList,
+						colors = noteCardColors ?: NoteCardDefaults.noteCardColors(),
+						onClick = { onClick(note) },
+						onLongClick = { onLongClick(note) },
+					)
 				}
 			}
+		}
+		item { Spacer(modifier = Modifier.height(194.dp)) }
+	}
 }

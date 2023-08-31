@@ -47,7 +47,7 @@ import com.syncodec.graphite.utils.LocalIsAuthenticated
 
 @Preview
 @Composable
-fun SelectionActionViewSkeleton(
+private fun SelectionActionViewSkeleton(
 	modifier: Modifier = Modifier,
 	isSelecting: Boolean = true,
 	selectedItemCount: Int = 0,
@@ -350,11 +350,85 @@ fun BucketSelectionActionView(
 
 @Preview
 @Composable
+fun ExplorerSelectionActionView(
+	modifier: Modifier = Modifier,
+	isSelecting: Boolean = true,
+	isAllItemFavourite: Boolean = false,
+	isAllItemLocked: Boolean = false,
+	selectedItemCount: Int = 0,
+	onClickDelete: () -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+) {
+	SelectionActionViewSkeleton(
+		modifier = modifier,
+		isSelecting = isSelecting,
+		selectedItemCount = selectedItemCount,
+	) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(72.dp)
+		) {
+			FavouriteButton(
+				isChecked = isAllItemFavourite,
+				onClick = onClickFavourite,
+			)
+			LockButton(
+				isChecked = isAllItemLocked,
+				onClick = onClickLock,
+			)
+			DeleteButton(onClick = onClickDelete)
+			CancelButton()
+		}
+	}
+}
+
+@Preview
+@Composable
+fun SearchSelectionActionView(
+	modifier: Modifier = Modifier,
+	isSelecting: Boolean = true,
+	isAllItemFavourite: Boolean = false,
+	isAllItemLocked: Boolean = false,
+	selectedItemCount: Int = 0,
+	onClickDelete: () -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+) {
+	SelectionActionViewSkeleton(
+		modifier = modifier,
+		isSelecting = isSelecting,
+		selectedItemCount = selectedItemCount,
+	) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(72.dp)
+		) {
+			FavouriteButton(
+				isChecked = isAllItemFavourite,
+				onClick = onClickFavourite,
+			)
+			LockButton(
+				isChecked = isAllItemLocked,
+				onClick = onClickLock,
+			)
+			DeleteButton(onClick = onClickDelete)
+			CancelButton()
+		}
+	}
+}
+
+@Preview
+@Composable
 fun AttachmentSelectionActionView(
 	modifier: Modifier = Modifier,
 	isSelecting: Boolean = true,
 	selectedItemCount: Int = 0,
-	onClickShare : () -> Unit = {},
+	onClickShare: () -> Unit = {},
 	onClickDelete: () -> Unit = {},
 ) {
 	SelectionActionViewSkeleton(
@@ -375,4 +449,3 @@ fun AttachmentSelectionActionView(
 		}
 	}
 }
-

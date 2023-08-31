@@ -22,16 +22,16 @@ import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemVie
 import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
 import com.syncodec.graphite.presentation.common.dialog.whereDialog2.WhereDialogViewModel2
-import com.syncodec.graphite.presentation.exp.atlas.AtlasViewModel
-import com.syncodec.graphite.presentation.exp.calendar.CalendarViewModel
-import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
-import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
+import com.syncodec.graphite.presentation.explorer.atlas.AtlasViewModel
+import com.syncodec.graphite.presentation.explorer.calendar.CalendarViewModel
 import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreenViewModel
+import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.ExplorerViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
 import com.syncodec.graphite.presentation.notebook.composable.NotebookScreenViewModel2
+import com.syncodec.graphite.presentation.search.SearchViewModel
 import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataViewModel
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
@@ -94,6 +94,7 @@ class BaseApplication : Application() {
 					viewModelOf(::NoteScreenViewModel)
 					viewModelOf(::BucketScreenViewModel)
 					viewModelOf(::NotebookScreenViewModel)
+					viewModelOf(::ExplorerViewModel)
 
 					viewModelOf(::NoteViewModel2)
 //					viewModelOf(::ViewerScreenViewModel)
@@ -101,7 +102,6 @@ class BaseApplication : Application() {
 					viewModelOf(::BucketViewModel)
 					viewModelOf(::BucketScreenCommonViewModel)
 					viewModelOf(::NotebookScreenViewModel2)
-					viewModelOf(::SearchScreenViewModel)
 					viewModelOf(::TagsViewModel)
 					viewModelOf(::AttachmentScreenViewModel)
 					viewModelOf(::ImportDataViewModel)
@@ -118,9 +118,9 @@ class BaseApplication : Application() {
 //					viewModelOf(::LocalBackupViewModel)
 					viewModelOf(::WhereDialogViewModel)
 					viewModelOf(::WhereDialogViewModel2)
-					viewModelOf(::ExplorerScreenViewModel)
 					viewModelOf(::AtlasViewModel)
 					viewModelOf(::CalendarViewModel)
+					viewModelOf(::SearchViewModel)
 					viewModelOf(::DropboxSyncViewModel)
 					viewModelOf(::GoogleDriveSyncViewModel)
 				}
