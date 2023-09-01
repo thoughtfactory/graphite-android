@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.search.composable.SearchScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.utils.Extra
+import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -19,11 +21,20 @@ class SearchActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
+		val hasTagId = intent.hasExtra(Extra.Companion.Extra.TagId.name)
+		if (hasTagId) {
+			val tagId = try {
+				intent.getByteArrayExtra(Extra.Companion.Extra.TagId.name)?.let { RealmUUID.from(it) }
+			} catch (_: Exception) {
+				null
+			}
+			tagId?.let { viewModel.searchAndAddTagFilter(id = it) }
+		}
+
 		setContent {
 			BaseContent {
 
-//				val tagList by viewModel.tagList.collectAsState()
-				val tagList = setOf(TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance())
+				val tagList by viewModel.tagList.collectAsState()
 
 				val filteredNoteList by viewModel.filteredNoteList.collectAsState(initial = setOf())
 				val currentFilterList by viewModel.noteFilterList.collectAsState()

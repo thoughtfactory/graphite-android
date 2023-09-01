@@ -62,7 +62,7 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
 
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NoteScreen(
 	isSelecting : Boolean,
@@ -176,71 +176,50 @@ fun NoteScreen(
 			}
 		},
 	) {
-		val pullRefreshState = rememberPullRefreshState(
-			refreshing = contentStatus is ContentStatus.Loading,
-			onRefresh = viewModel::refresh
-		)
+		Crossfade(
+			targetState = contentStatus,
+			animationSpec = tween(300), label = ""
+		) { contentStatus1 ->
+			when (contentStatus1) {
+				is ContentStatus.Init -> LoadingView()
+				is ContentStatus.Error -> ErrorView()
+				is ContentStatus.Loading -> LoadingView()
+				is ContentStatus.LoadedEmpty -> EmptyView(
+					image = remember { if (Random.nextBoolean()) R.drawable.il_writing_b else R.drawable.il_writing_g },
+					title = "The town was paper, but the memories were not.",
+					subTitle = "― John Green, Paper Towns",
+				)
 
-		Box(
-			contentAlignment = Alignment.TopCenter,
-			modifier = Modifier
-				.fillMaxSize()
-				.pullRefresh(pullRefreshState)
-		) {
+				is ContentStatus.Loaded -> {
+					AnimatedContent(
+						targetState = viewType,
+						transitionSpec = { (fadeIn(tween(300)) + scaleIn(tween(300), 0.71f)).togetherWith(fadeOut(tween(300)) + scaleOut(tween(300), 0.71f)) },
+						modifier = Modifier.fillMaxSize(), label = ""
+					) {
+						when (it) {
+							ViewType.List -> NoteList(
+								noteMap = noteMap,
+								isSelecting = isSelecting,
+								selectedIdList = selectedIdList,
+								tagList = tagList,
+								onClickNote = ::onClickNote,
+								onLongClickNote = ::onLongClickNote,
+							)
 
-			Crossfade(
-				targetState = contentStatus,
-				animationSpec = tween(300), label = ""
-			) { contentStatus1 ->
-				when (contentStatus1) {
-					is ContentStatus.Init -> LoadingView()
-					is ContentStatus.Error -> ErrorView()
-					is ContentStatus.Loading -> LoadingView()
-					is ContentStatus.LoadedEmpty -> EmptyView(
-						image = remember { if (Random.nextBoolean()) R.drawable.il_writing_b else R.drawable.il_writing_g },
-						title = "The town was paper, but the memories were not.",
-						subTitle = "― John Green, Paper Towns",
-					)
+							ViewType.Grid -> NoteGrid(
+								noteMap = noteMap,
+								isSelecting = isSelecting,
+								selectedIdList = selectedIdList,
+								tagList = tagList,
+								onClickNote = ::onClickNote,
+								onLongClickNote = ::onLongClickNote,
+							)
 
-					is ContentStatus.Loaded -> {
-						AnimatedContent(
-							targetState = viewType,
-							transitionSpec = { (fadeIn(tween(300)) + scaleIn(tween(300), 0.71f)).togetherWith(fadeOut(tween(300)) + scaleOut(tween(300), 0.71f)) },
-							modifier = Modifier.fillMaxSize(), label = ""
-						) {
-							when (it) {
-								ViewType.List -> NoteList(
-									noteMap = noteMap,
-									isSelecting = isSelecting,
-									selectedIdList = selectedIdList,
-									tagList = tagList,
-									onClickNote = ::onClickNote,
-									onLongClickNote = ::onLongClickNote,
-								)
-
-								ViewType.Grid -> NoteGrid(
-									noteMap = noteMap,
-									isSelecting = isSelecting,
-									selectedIdList = selectedIdList,
-									tagList = tagList,
-									onClickNote = ::onClickNote,
-									onLongClickNote = ::onLongClickNote,
-								)
-
-								else -> LoadingView()
-							}
+							else -> LoadingView()
 						}
 					}
 				}
 			}
-
-			PullRefreshIndicator(
-				refreshing = contentStatus is ContentStatus.Loading,
-				state = pullRefreshState,
-				backgroundColor = MaterialTheme.colorScheme.background,
-				contentColor = MaterialTheme.colorScheme.onBackground,
-				scale = true,
-			)
 		}
 	}
 }

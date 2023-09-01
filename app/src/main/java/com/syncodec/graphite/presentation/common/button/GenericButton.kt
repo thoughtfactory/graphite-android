@@ -491,6 +491,20 @@ fun CancelButton(
 
 @Preview
 @Composable
+fun AddButton(
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_plus,
+		tooltip = stringResource(id = R.string.add),
+		colors = colors,
+		onClick = onClick
+	)
+}
+
+@Preview
+@Composable
 fun OpenExternallyButton(
 	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},

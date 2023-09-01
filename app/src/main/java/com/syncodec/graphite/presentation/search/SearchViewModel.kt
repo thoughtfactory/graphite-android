@@ -85,8 +85,8 @@ class SearchViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion
 		}
 	}
 
-	private fun applyNoteFilter(noteObject: NoteObject, noteFilter: NoteFilter, tagList : Set<TagObject>): Boolean {
-		return when(noteFilter) {
+	private fun applyNoteFilter(noteObject: NoteObject, noteFilter: NoteFilter, tagList: Set<TagObject>): Boolean {
+		return when (noteFilter) {
 			is NoteFilter.Favourite -> noteObject.isFavourite
 			is NoteFilter.Locked -> noteObject.isLocked
 			is NoteFilter.WithAttachment -> true
@@ -127,6 +127,16 @@ class SearchViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion
 
 	fun removeAllFilter() {
 		this._noteFilterList.tryEmit(setOf())
+	}
+
+	fun searchAndAddTagFilter(id: RealmUUID) {
+		viewModelScope.launch(Dispatchers.Default) {
+			_repository.collectLatest { repository1 ->
+				repository1?.getTagFromId(id = id)?.let { tagObject ->
+					this@SearchViewModel.addFilter(noteFilter = NoteFilter.Tag(tagObject = tagObject))
+				}
+			}
+		}
 	}
 
 	companion object {

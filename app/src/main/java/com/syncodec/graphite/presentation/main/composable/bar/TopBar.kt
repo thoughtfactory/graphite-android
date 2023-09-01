@@ -36,7 +36,7 @@ fun TopBar(
 			Row(
 				modifier = Modifier
 			) {
-				MenuButton(onClick = onClickMenu,)
+				MenuButton(onClick = onClickMenu)
 				VaultButton()
 			}
 		},

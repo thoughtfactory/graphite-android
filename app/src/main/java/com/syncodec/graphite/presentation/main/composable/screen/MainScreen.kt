@@ -37,7 +37,7 @@ fun MainScreen(
 	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	testConnectionResponse: DBox.Companion.TestConnectionResponse? = null,
 	testDropboxConnection: () -> Unit = {},
-	locationFilteredNoteList : List<NoteObjectLite> = listOf(),
+	locationFilteredNoteList: List<NoteObjectLite> = listOf(),
 	onClickSyncNow: () -> Unit = {},
 	onClickForceSync: () -> Unit = {},
 ) {
@@ -49,20 +49,17 @@ fun MainScreen(
 	var isSelecting: Boolean by remember { mutableStateOf(false) }
 	var selectedIdList: List<RealmUUID> by remember { mutableStateOf(listOf()) }
 
-	BackHandler(enabled = currentRoute != BottomNavigationItem.Home) { currentRoute = BottomNavigationItem.Home }
-
-	BackHandler(enabled = isSelecting) {
-		isSelecting = false
-		selectedIdList = listOf()
-	}
-
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
+
+	BackHandler(enabled = currentRoute != BottomNavigationItem.Home) { currentRoute = BottomNavigationItem.Home }
+	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = listOf() }
 
 	GenericScaffold2(
 		topBar = {
 			TopBar(
 				syncStatus = syncStatus,
+				onClickMenu = { isMenuBottomSheetVisible = true },
 				onClickCloud = {
 					if (syncStatus is SyncInatorService.Companion.SyncStatus.Init
 						|| syncStatus is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled

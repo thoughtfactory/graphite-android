@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.search.SearchViewModel
+import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItemView
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.IconButtonSize
@@ -81,7 +82,7 @@ fun SearchWhatView(
 		}
 		tagList.forEach { tagObject ->
 			item {
-				TagView(
+				TagItemView(
 					tagObject = tagObject,
 					onClick = { onAddFilter(SearchViewModel.Companion.NoteFilter.Tag(tagObject = tagObject)) }
 				)
@@ -119,49 +120,6 @@ private fun FilterButton(
 			Text(
 				text = title,
 				style = MaterialTheme.typography.bodyMedium,
-			)
-
-			Spacer(modifier = Modifier.width(24.dp))
-		}
-		Divider()
-	}
-}
-
-@Preview
-@Composable
-private fun TagView(
-	tagObject: TagObject = TagObject.getRandomInstance(),
-	onClick: () -> Unit = {},
-) {
-	Column {
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(64.dp)
-				.clickable { onClick() }
-		) {
-			Spacer(modifier = Modifier.width(24.dp))
-			Icon(
-				painter = painterResource(id = R.drawable.ic_fa_tag),
-				contentDescription = tagObject.tag,
-				modifier = Modifier.requiredSize(IconButtonSize)
-			)
-
-			Spacer(modifier = Modifier.width(12.dp))
-
-			Text(
-				text = tagObject.tag,
-				style = MaterialTheme.typography.bodyMedium,
-				modifier = Modifier.weight(1f)
-			)
-
-			Spacer(modifier = Modifier.width(12.dp))
-
-			Box(
-				modifier = Modifier
-					.requiredSize(32.dp)
-					.background(Color(tagObject.color), MaterialTheme.shapes.small)
 			)
 
 			Spacer(modifier = Modifier.width(24.dp))

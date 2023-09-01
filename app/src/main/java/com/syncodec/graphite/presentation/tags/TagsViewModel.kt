@@ -1,81 +1,86 @@
 package com.syncodec.graphite.presentation.tags
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.Repository
-import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class TagsViewModel(private val repository : Repository) : ViewModel() {
+class TagsViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
 
-	val repositoryState = repository.repositoryState
+	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
-	private val _tagList : MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
-	private val _recalculatedTagList : MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
-	val tagList : StateFlow<List<TagObject>> = _recalculatedTagList
-	private val _noteIdList : MutableStateFlow<List<RealmUUID>> = MutableStateFlow(listOf())
+	private val _tagList: MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
+	val tagList: StateFlow<List<TagObject>> = _tagList
+
+	private val _noteList: MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
+	val noteList: StateFlow<List<NoteObjectLite>> = _noteList
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			when (repositoryState.value) {
-				Repository.Companion.RepositoryState.Init -> null
-				Repository.Companion.RepositoryState.Loading -> null
-				Repository.Companion.RepositoryState.Locked -> null
-				Repository.Companion.RepositoryState.Success -> {
-					viewModelScope.launch(Dispatchers.Default) {
-						if (repositoryState.value != Repository.Companion.RepositoryState.Success) this.cancel()
-						repository.getAllTagAsFlow().collect { _tagList.tryEmit(it) }
-					}
-					viewModelScope.launch(Dispatchers.Default) {
-						if (repositoryState.value != Repository.Companion.RepositoryState.Success) this.cancel()
-						repository.getAllNoteAsFlow().collect { _noteIdList.tryEmit(it.map { it.id }) }
-					}
-				}
-
-				Repository.Companion.RepositoryState.Error -> null
+			repositoryStateFlow.collectLatest { repositoryStatus ->
+				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
 
 		viewModelScope.launch(Dispatchers.Default) {
-			combine(
-				_tagList,
-				_noteIdList
-			) { tagList, noteIdList ->
-				tagList.map { tagObject ->
-					tagObject.clone().apply {
-						objectIdList = objectIdList.filter { it in noteIdList }.toRealmList()
+			_repository.collectLatest { repository1 ->
+				launch {
+					repository1?.getAllTagAsFlow()?.collectLatest { tagList1 ->
+						this@TagsViewModel._tagList.tryEmit(tagList1)
 					}
 				}
-			}.collect { _recalculatedTagList.tryEmit(it) }
-		}
-	}
-
-	fun putTag(tagObject : TagObject, callback : suspend (String) -> Unit) {
-		viewModelScope.launch(Dispatchers.Default) {
-			try {
-				tagList.value.find { it.tag == tagObject.tag && it.id != tagObject.id }?.let {
-					callback("Tag already exists")
-					return@launch
+				launch {
+					repository1?.getAllNoteLiteAsFlow()?.collectLatest { noteList1 ->
+						this@TagsViewModel._noteList.tryEmit(noteList1)
+					}
 				}
-
-				if (repository.getAllTag().size < 8) repository.putTag(tagObject)
-				else callback("Join Graphite Pro to add more tags")
-			} catch (_ : Exception) {
 			}
 		}
 	}
 
-	fun deleteTag(tagObject : TagObject) {
-		repository.deleteSuspended(tagObject.id)
+	fun putTag(tag: String, color: Color): Boolean {
+		return if (tagList.value.find { it.tag == tag } != null) {
+			false
+		}
+		else {
+			viewModelScope.launch(Dispatchers.Default) {
+				TagObject().apply {
+					this.tag = tag
+					this.color = color.toArgb()
+
+					_repository.value?.putTag(this)
+				}
+			}
+			true
+		}
+	}
+
+	fun updateTag(id: RealmUUID, tag: String, color: Color) {
+		viewModelScope.launch(Dispatchers.Default) {
+			_repository.value?.getTagFromId(id = id)?.clone()?.apply {
+				this.tag = tag
+				this.color = color.toArgb()
+
+				_repository.value?.putTag(this)
+			}
+		}
+	}
+
+	fun deleteTag(id: RealmUUID) {
+		viewModelScope.launch(Dispatchers.Default) {
+			_repository.value?.deleteSuspended(id = id)
+		}
 	}
 }
