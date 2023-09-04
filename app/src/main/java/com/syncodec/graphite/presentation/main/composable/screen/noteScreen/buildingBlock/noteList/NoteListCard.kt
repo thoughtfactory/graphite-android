@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
@@ -53,7 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
@@ -66,7 +65,6 @@ import com.syncodec.graphite.utils.roundTo
 import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Preview
 @Composable
 fun NoteListCard(
@@ -79,7 +77,7 @@ fun NoteListCard(
 	thumbnail : String? = null,
 	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
 	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
-	tagList : List<TagObject> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
 	isSelected : Boolean = false,
 	onClick : () -> Unit = {},
 	onLongClick : () -> Unit = {}
@@ -139,7 +137,7 @@ fun NoteListCard(
 					.background(MaterialTheme.colorScheme.background, CircleShape)
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_check_circle),
+					painter = painterResource(id = R.drawable.ic_fa_circle_check),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.primary,
 					modifier = Modifier
@@ -165,7 +163,7 @@ private fun NoteSurface(
 	thumbnail : String? = null,
 	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
 	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
-	tagList : List<TagObject> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
 	isSelected : Boolean = false,
 	onGloballyPositioned : (LayoutCoordinates) -> Unit = {},
 	onClick : () -> Unit = {},
@@ -249,7 +247,7 @@ private fun Header(
 private fun Content(
 	contentThumbnail : String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
 	thumbnail : String? = null,
-	tagList : List<TagObject> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
@@ -291,7 +289,7 @@ private fun Content(
 @Preview
 @Composable
 private fun ColumnScope.TagList(
-	tagList : List<TagObject> = listOf()
+	tagList : List<TagObjectLite> = listOf()
 ) {
 	this.apply {
 		if (tagList.isNotEmpty()) {

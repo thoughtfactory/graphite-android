@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,8 +36,9 @@ import io.realm.kotlin.types.RealmUUID
 @Composable
 fun HomeScreen(
 	isSelecting: Boolean = false,
+	selectedIdList: Set<RealmUUID> = setOf(),
 	onSelect: (RealmUUID) -> Unit = {},
-	selectedIdList: List<RealmUUID> = listOf(),
+	onUnSelectAll: () -> Unit = {},
 ) {
 	var currentScreen by remember { mutableIntStateOf(0) }
 
@@ -60,14 +60,16 @@ fun HomeScreen(
 			when (it) {
 				ComponentType.Note.ordinal -> NoteScreen(
 					isSelecting = isSelecting,
-					onSelect = onSelect,
 					selectedIdList = selectedIdList,
+					onSelect = onSelect,
+					onUnSelectAll = onUnSelectAll,
 				)
 
 				ComponentType.Bucket.ordinal -> BucketScreen(
 					isSelecting = isSelecting,
 					selectedIdList = selectedIdList,
 					onSelect = onSelect,
+					onUnSelectAll = onUnSelectAll,
 				)
 
 				ComponentType.Notebook.ordinal -> NotebookScreen(
@@ -76,7 +78,6 @@ fun HomeScreen(
 					selectedIdList = selectedIdList,
 				)
 			}
-
 		}
 	}
 }
@@ -88,8 +89,6 @@ private fun TabNavigator(
 	isSelecting: Boolean = false,
 	onChangeScreen: (Int) -> Unit = {}
 ) {
-	val scope = rememberCoroutineScope()
-
 	AnimatedVisibility(
 		visible = !isSelecting,
 		enter = expandVertically(tween(470)),

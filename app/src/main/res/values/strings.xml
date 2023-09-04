@@ -17,6 +17,8 @@
 
     <!--    Bucket-->
     <string name="todo">Todo</string>
+    <string name="book">Book</string>
+    <string name="movies_and_series">Movies &amp; Series</string>
     <string name="doing">Doing</string>
     <string name="done">Done</string>
     <string name="to_read">To read</string>
@@ -38,6 +40,9 @@
     <string name="search_for_movie">Search for movie</string>
     <string name="search_for_tv_show">Search for tv show</string>
     <string name="query">Query</string>
+    <string name="todo_list">Todo list</string>
+    <string name="show_list">Show list</string>
+    <string name="book_list">Book list</string>
     <string name="link_preview_error_title">Error fetching data</string>
     <string name="link_preview_error_description">Check if the url is valid. Also check if network connection is available. Or maybe it\'s a server error, you can click add link to save current url</string>
 
@@ -175,6 +180,7 @@
     <string name="delete_items_multiple">Delete selected items</string>
     <string name="are_you_sure_delete">Are you sure you want to delete this item?</string>
     <string name="are_you_sure_delete_multiple">Are you sure you want to delete selected items?</string>
+    <string name="are_you_sure_delete_bucket">Are you sure you want to delete selected buckets? This will also delete bucket items too</string>
 
     <!--    Time-->
     <string name="minute">Minute</string>

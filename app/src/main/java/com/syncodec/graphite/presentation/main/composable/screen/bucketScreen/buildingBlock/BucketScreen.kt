@@ -155,8 +155,8 @@ fun BucketCard(
 
 						AnimatedVisibility(
 							visible = ! isSelecting,
-							enter = fadeIn(tween(300)) + scaleIn(tween(300)),
-							exit = fadeOut(tween(300)) + scaleOut(tween(300)),
+							enter = fadeIn(tween(470)) + scaleIn(tween(470)),
+							exit = fadeOut(tween(470)) + scaleOut(tween(470)),
 						) {
 							handle()
 						}
@@ -167,8 +167,8 @@ fun BucketCard(
 
 		AnimatedVisibility(
 			visible = isSelected,
-			enter = scaleIn(tween(300)),
-			exit = scaleOut(tween(300)),
+			enter = scaleIn(tween(470)),
+			exit = scaleOut(tween(470)),
 			modifier = Modifier.align(Alignment.TopEnd)
 		) {
 			Box(
@@ -178,7 +178,7 @@ fun BucketCard(
 					.background(MaterialTheme.colorScheme.background, CircleShape)
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_check_circle),
+					painter = painterResource(id = R.drawable.ic_fa_circle_check),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.primary,
 					modifier = Modifier

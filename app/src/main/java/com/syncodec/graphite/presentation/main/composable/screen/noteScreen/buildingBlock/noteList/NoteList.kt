@@ -18,12 +18,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookTimelineSpacer
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.RealmUUID
@@ -33,13 +32,12 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun NoteList(
-	noteMap : Map<String, List<NoteObjectLite>> = mapOf(),
-	isRefreshing : Boolean = false,
-	isSelecting : Boolean = false,
-	selectedIdList : List<RealmUUID> = listOf(),
-	tagList : List<TagObject> = listOf(),
-	onClickNote : (RealmUUID) -> Unit = {},
-	onLongClickNote : (RealmUUID) -> Unit = {},
+	noteMap: Map<String, List<NoteObjectLite>> = mapOf(),
+	isRefreshing: Boolean = false,
+	isSelecting: Boolean = false,
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onClickNote: (RealmUUID) -> Unit = {},
+	onLongClickNote: (RealmUUID) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
@@ -50,7 +48,7 @@ fun NoteList(
 		modifier = Modifier.fillMaxSize()
 	) {
 		item {
-			YearProgressBar(showCard = ! isSelecting)
+			YearProgressBar(showCard = !isSelecting)
 		}
 
 //		item(
@@ -60,7 +58,7 @@ fun NoteList(
 //		}
 
 		noteMap.forEach { (header, noteList) ->
-			val sortedList = noteList.sortedBy { - it.userTimestamp }
+			val sortedList = noteList.sortedBy { -it.userTimestamp }
 
 			val entrySize = sortedList.size
 
@@ -101,7 +99,7 @@ fun NoteList(
 							thumbnail = note.thumbnail,
 							address = note.address,
 							latLng = note.latLng,
-							tagList = tagList.filter { note.id in it.objectIdList },
+							tagList = note.tagList,
 							isSelected = note.id in selectedIdList,
 							onClick = { onClickNote(note.id) },
 							onLongClick = { onLongClickNote(note.id) }

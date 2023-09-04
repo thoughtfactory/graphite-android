@@ -22,6 +22,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.
 import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.CalendarScreen
 import com.syncodec.graphite.presentation.search.SearchActivity
 import com.syncodec.graphite.service.syncInator.SyncInatorService
+import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 
 
@@ -46,14 +47,21 @@ fun MainScreen(
 	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
 	var currentComponentType: ComponentType by remember { mutableStateOf(ComponentType.Note) }
 
-	var isSelecting: Boolean by remember { mutableStateOf(false) }
-	var selectedIdList: List<RealmUUID> by remember { mutableStateOf(listOf()) }
-
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
 
+	var isSelecting: Boolean by remember { mutableStateOf(false) }
+	var selectedIdList: Set<RealmUUID> by remember { mutableStateOf(setOf()) }
+	fun onSelect(id: RealmUUID) {
+		isSelecting = true
+		selectedIdList.toMutableSet().apply {
+			xor(id)
+			selectedIdList = toSet()
+		}
+	}
+
 	BackHandler(enabled = currentRoute != BottomNavigationItem.Home) { currentRoute = BottomNavigationItem.Home }
-	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = listOf() }
+	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = setOf() }
 
 	GenericScaffold2(
 		topBar = {
@@ -99,8 +107,9 @@ fun MainScreen(
 			when (it) {
 				BottomNavigationItem.Home -> HomeScreen(
 					isSelecting = isSelecting,
-//					onSelect = onSelect,
 					selectedIdList = selectedIdList,
+					onSelect = ::onSelect,
+					onUnSelectAll = { selectedIdList = setOf() },
 				)
 
 				BottomNavigationItem.Calendar -> CalendarScreen()

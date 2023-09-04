@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
@@ -62,7 +63,7 @@ import com.syncodec.graphite.utils.roundTo
 import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun NoteGridCard(
@@ -75,7 +76,7 @@ fun NoteGridCard(
 	thumbnail : String? = null,
 	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
 	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
-	tagList : List<TagObject> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
 	isSelected : Boolean = false,
 	onClick : () -> Unit = {},
 	onLongClick : () -> Unit = {}
@@ -150,7 +151,7 @@ fun NoteGridCard(
 					.background(MaterialTheme.colorScheme.background, CircleShape)
 			) {
 				Icon(
-					painter = painterResource(id = R.drawable.ic_check_circle),
+					painter = painterResource(id = R.drawable.ic_fa_circle_check),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.primary,
 					modifier = Modifier
@@ -194,7 +195,7 @@ private fun Content(
 	title : String?,
 	contentThumbnail : String?,
 	thumbnail : String?,
-	tagList : List<TagObject> = listOf(),
+	tagList : List<TagObjectLite> = listOf(),
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
@@ -343,7 +344,7 @@ fun StateInfo(
 @Preview
 @Composable
 private fun ColumnScope.TagList(
-	tagList : List<TagObject> = listOf()
+	tagList : List<TagObjectLite> = listOf()
 ) {
 	this.apply {
 		if (tagList.isNotEmpty()) {

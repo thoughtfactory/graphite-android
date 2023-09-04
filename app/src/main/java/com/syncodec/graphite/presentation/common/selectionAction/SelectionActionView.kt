@@ -9,14 +9,12 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -275,6 +273,43 @@ fun ExtendedSelectionActionView(
 @Preview
 @Composable
 fun NotebookSelectionActionView(
+	modifier: Modifier = Modifier,
+	isSelecting: Boolean = true,
+	isAllItemFavourite: Boolean = false,
+	isAllItemLocked: Boolean = false,
+	selectedItemCount: Int = 0,
+	onClickDelete: () -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+) {
+	SelectionActionViewSkeleton(
+		modifier = modifier,
+		isSelecting = isSelecting,
+		selectedItemCount = selectedItemCount,
+	) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(72.dp)
+		) {
+			FavouriteButton(
+				isChecked = isAllItemFavourite,
+				onClick = onClickFavourite,
+			)
+			LockButton(
+				isChecked = isAllItemLocked,
+				onClick = onClickLock,
+			)
+			DeleteButton(onClick = onClickDelete)
+			CancelButton()
+		}
+	}
+}
+
+@Preview
+@Composable
+fun MainSelectionActionView(
 	modifier: Modifier = Modifier,
 	isSelecting: Boolean = true,
 	isAllItemFavourite: Boolean = false,

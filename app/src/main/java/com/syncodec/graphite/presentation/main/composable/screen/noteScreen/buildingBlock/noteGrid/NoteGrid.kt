@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteGrid
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,25 +18,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun NoteGrid(
-	noteMap : Map<String, List<NoteObjectLite>> = mapOf(),
-	isSelecting : Boolean = false,
-	selectedIdList : List<RealmUUID> = listOf(),
-	tagList : List<TagObject> = listOf(),
-	onClickNote : (RealmUUID) -> Unit = {},
-	onLongClickNote : (RealmUUID) -> Unit = {},
+	noteMap: Map<String, List<NoteObjectLite>> = mapOf(),
+	isSelecting: Boolean = false,
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onClickNote: (RealmUUID) -> Unit = {},
+	onLongClickNote: (RealmUUID) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
@@ -88,7 +84,7 @@ fun NoteGrid(
 						thumbnail = note.thumbnail,
 						address = note.address,
 						latLng = note.latLng,
-						tagList = tagList.filter { note.id in it.objectIdList },
+						tagList = note.tagList,
 						isSelected = note.id in selectedIdList,
 						onClick = { onClickNote(note.id) },
 						onLongClick = { onLongClickNote(note.id) }

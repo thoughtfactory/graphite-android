@@ -17,6 +17,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.button.MenuButton
+import com.syncodec.graphite.presentation.common.button.SearchButton
 import com.syncodec.graphite.presentation.common.button.VaultButton
 import com.syncodec.graphite.presentation.ui.SyncState
 import com.syncodec.graphite.service.syncInator.SyncInatorService
@@ -57,10 +58,7 @@ fun TopBar(
 				syncStatus = syncStatus,
 				onClickSync = onClickCloud
 			)
-			GenericButton(
-				icon = R.drawable.ic_fa_search,
-				onClick = onClickSearch
-			)
+			SearchButton(onClick = onClickSearch)
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 	)

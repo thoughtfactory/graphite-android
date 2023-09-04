@@ -155,9 +155,7 @@ class MainActivity : ComponentActivity() {
 								Repository.Companion.RepositoryState.Success -> MainScreen(
 									syncStatus = syncStatus,
 									testConnectionResponse = testConnectionResponse,
-									testDropboxConnection = {
-										viewModel.testRemoteConnection(syncProvider)
-									},
+									testDropboxConnection = { viewModel.testRemoteConnection(syncProvider) },
 									onClickSyncNow = { syncProvider?.onClickSyncNow() },
 									onClickForceSync = { syncProvider?.onClickForceSync() },
 								)

@@ -32,7 +32,7 @@ val bucketTypeIconMap = mapOf(
 @Keep
 @JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
 class BucketObject() : RealmObject {
-	constructor(jsonObject : JSONObject) : this() {
+	constructor(jsonObject: JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
 		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
@@ -51,21 +51,32 @@ class BucketObject() : RealmObject {
 	}
 
 	@PrimaryKey
-	var id : RealmUUID = RealmUUID.random()
+	var id: RealmUUID = RealmUUID.random()
 
-	var createdTimestamp : Long = Instant.now().toEpochMilli()
-	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
-	var title : String? = null
-	var description : String? = null
-	var bucketType : String = BucketType.UNKNOWN.name
-	var isFavourite : Boolean = false
-	var isLocked : Boolean = false
+	var createdTimestamp: Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp: Long = Instant.now().toEpochMilli()
+	var title: String? = null
+	var description: String? = null
+	var bucketType: String = BucketType.UNKNOWN.name
+	var isFavourite: Boolean = false
+	var isLocked: Boolean = false
 
-	var bucketItemOrderList : RealmList<RealmUUID> = realmListOf()
+	var bucketItemOrderList: RealmList<RealmUUID> = realmListOf()
 
-	var googleDriveId : String? = null
+	var googleDriveId: String? = null
 
-	fun clone() : BucketObject = BucketObject().apply {
+	fun toLite(): BucketObjectLite = BucketObjectLite(
+		id = this.id,
+		createdTimestamp = this.createdTimestamp,
+		modifiedTimestamp = this.modifiedTimestamp,
+		title = this.title,
+		bucketType = BucketType.entries.find { it.name == this.bucketType } ?: BucketType.UNKNOWN,
+		isFavourite = this.isFavourite,
+		isLocked = this.isLocked,
+		bucketItemCount = 0,
+	)
+
+	fun clone(): BucketObject = BucketObject().apply {
 		this.id = this@BucketObject.id
 		this.createdTimestamp = this@BucketObject.createdTimestamp
 		this.modifiedTimestamp = this@BucketObject.modifiedTimestamp
@@ -77,7 +88,7 @@ class BucketObject() : RealmObject {
 		this.bucketItemOrderList = this@BucketObject.bucketItemOrderList.toRealmList()
 	}
 
-	fun toCloudSnapshot() : String {
+	fun toCloudSnapshot(): String {
 		val jsonObject = JSONObject()
 		jsonObject.put("id", this.id.toString())
 		jsonObject.put("createdTimestamp", this.createdTimestamp)
@@ -92,7 +103,7 @@ class BucketObject() : RealmObject {
 		return jsonObject.toString()
 	}
 
-	override fun hashCode() : Int {
+	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + createdTimestamp.hashCode()
 		result = 31 * result + modifiedTimestamp.hashCode()
@@ -105,7 +116,7 @@ class BucketObject() : RealmObject {
 		return result
 	}
 
-	override fun equals(other : Any?) : Boolean {
+	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (other !is BucketObject) return false
 
@@ -123,12 +134,52 @@ class BucketObject() : RealmObject {
 	}
 
 	companion object {
-		fun fromCloudSnapshot(snapshot : ByteArray) : BucketObject? {
+		fun fromCloudSnapshot(snapshot: ByteArray): BucketObject? {
 			return try {
 				BucketObject(JSONObject(String(snapshot, Charsets.UTF_8)))
-			} catch (e : Exception) {
+			} catch (e: Exception) {
 				null
 			}
 		}
+	}
+}
+
+@Keep
+data class BucketObjectLite(
+	val id: RealmUUID,
+	val createdTimestamp: Long,
+	val modifiedTimestamp: Long,
+	val title: String?,
+	val bucketType: BucketType,
+	val isFavourite: Boolean,
+	val isLocked: Boolean,
+	val bucketItemCount: Int
+) {
+	override fun hashCode(): Int {
+		var result = id.hashCode()
+		result = 31 * result + createdTimestamp.hashCode()
+		result = 31 * result + modifiedTimestamp.hashCode()
+		result = 31 * result + (title?.hashCode() ?: 0)
+		result = 31 * result + bucketType.hashCode()
+		result = 31 * result + isFavourite.hashCode()
+		result = 31 * result + isLocked.hashCode()
+		result = 31 * result + bucketItemCount
+		return result
+	}
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (other !is BucketObjectLite) return false
+
+		if (id != other.id) return false
+		if (createdTimestamp != other.createdTimestamp) return false
+		if (modifiedTimestamp != other.modifiedTimestamp) return false
+		if (title != other.title) return false
+		if (bucketType != other.bucketType) return false
+		if (isFavourite != other.isFavourite) return false
+		if (isLocked != other.isLocked) return false
+		if (bucketItemCount != other.bucketItemCount) return false
+
+		return true
 	}
 }

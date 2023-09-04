@@ -53,9 +53,9 @@ import kotlin.random.Random
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotebookScreen(
-	isSelecting: Boolean,
-	onSelect: (RealmUUID) -> Unit,
-	selectedIdList: List<RealmUUID>,
+	isSelecting: Boolean = false,
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onSelect: (RealmUUID) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val viewModel: NotebookScreenViewModel = koinViewModel()

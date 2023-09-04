@@ -9,6 +9,7 @@ import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketObject
+import com.syncodec.graphite.di.model.BucketObjectLite
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.DeletedAttachment
@@ -577,6 +578,13 @@ class Repository {
 		}
 	}
 
+	fun getAllBucketLiteAsFlow(): Flow<List<BucketObjectLite>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketObject::class).asFlow().map { it.list.map { it.toLite() } }
+		}
+	}
+
 	/**
 	 * Get all buckets as a list
 	 * @author pushpull
@@ -602,6 +610,13 @@ class Repository {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
 			else realm.query(BucketObject::class, "id == $0 ", id).first().find()
+		}
+	}
+
+	fun getAllBucketSizeAsFlow() : Flow<Map<RealmUUID?, Int>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(BucketItemObject::class).asFlow().map { it.list.groupBy { it.parentId }.mapValues { it.value.size } }
 		}
 	}
 

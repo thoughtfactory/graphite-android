@@ -87,7 +87,7 @@ fun TvBucketItemScreen(
 				TabItem(text = stringResource(id = R.string.watching), icon = R.drawable.ic_fa_bucket_show, onClick = { onUpdateState(BucketItemState.BETA) }),
 				TabItem(text = stringResource(id = R.string.watched), icon = R.drawable.ic_fa_circle_check, onClick = { onUpdateState(BucketItemState.GAMMA) }),
 			),
-			selectedTabIndex = maxOf(0, BucketItemState.values().indexOfFirst { it.name == state }),
+			selectedTabIndex = maxOf(0, BucketItemState.entries.indexOfFirst { it.name == state }),
 			modifier = Modifier.fillMaxWidth(),
 			colors = TabDefaults.tabColors(containerColor = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.88f)))
 		)
@@ -155,4 +155,3 @@ fun TvBucketItemScreen(
 		Spacer(modifier = Modifier.height(12.dp))
 	}
 }
-
