@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.BaseApplication

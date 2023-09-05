@@ -76,6 +76,7 @@ fun HomeScreen(
 					isSelecting = isSelecting,
 					onSelect = onSelect,
 					selectedIdList = selectedIdList,
+					onUnSelectAll = onUnSelectAll,
 				)
 			}
 		}

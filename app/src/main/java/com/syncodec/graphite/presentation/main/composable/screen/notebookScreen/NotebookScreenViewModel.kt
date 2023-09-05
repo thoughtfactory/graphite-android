@@ -14,7 +14,6 @@ import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.cancellable
@@ -27,32 +26,30 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class NotebookScreenViewModel(
 	repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>,
-	dataStoreInstance: DataStoreInstance
+	private val dataStoreInstance: DataStoreInstance
 ) : ViewModel() {
 
-	private val repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
+	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
-	private val _unorderedObjectList: MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
+	private val _notebookList : MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
 	private val _orderedIdList: MutableStateFlow<List<RealmUUID>> = MutableStateFlow(listOf())
 
-	private val _objectList: MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
-	val notebookList: StateFlow<List<ChapterObject>> = _objectList
-
-	private var notebookObserverJob: Job? = null
-	private var notebookOrderObserverCoroutine: Job? = null
+	private val _orderedNotebookList: MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
+	val orderedNotebookList: StateFlow<List<ChapterObject>> = _orderedNotebookList
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collect { repositoryStatus ->
-				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) repository.tryEmit(repositoryStatus.repository)
+			repositoryStateFlow.collectLatest { repositoryStatus ->
+				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {
-			repository.collect {
-				if (it != null) {
-					observeNotebooks()
-					observeNotebookOrder()
-				}
+			_repository.collectLatest { repository1 ->
+				launch { observeNotebook(repository = repository1) }
+				launch { observeNotebookOrder(repository = repository1) }
+				launch { mergeBucket() }
+				launch { observeBucketOrder(repository = repository1) }
+				launch { sortAndFilterBucket() }
 			}
 		}
 
@@ -76,16 +73,13 @@ class NotebookScreenViewModel(
 		}
 	}
 
-	private fun observeNotebooks() {
-		notebookObserverJob?.cancel()
-		notebookObserverJob = viewModelScope.launch(Dispatchers.Default) {
-			repository.value?.getChapterWithParentIdAsFlow(parentId = null)?.cancellable()?.collectLatest {
-				_unorderedObjectList.tryEmit(it.list)
-			}
+	private suspend fun observeNotebook(repository: Repository?) {
+		repository?.getChapterWithParentIdAsFlow(parentId = null)?.cancellable()?.collectLatest {
+			this@NotebookScreenViewModel._notebookList.tryEmit(it.list)
 		}
 	}
 
-	private fun observeNotebookOrder() {
+	private fun observeNotebookOrder(repository: Repository?) {
 		notebookOrderObserverCoroutine?.cancel()
 		notebookOrderObserverCoroutine = viewModelScope.launch(Dispatchers.Default) {
 			repository.value?.getBaseObjectAsFlow()?.cancellable()?.collectLatest { _orderedIdList.tryEmit(it?.notebookIdOrderList ?: listOf()) }
@@ -137,9 +131,29 @@ class NotebookScreenViewModel(
 		viewModelScope.launch(Dispatchers.Default) { repository.value?.reorderNotebookList(idOrderList) }
 	}
 
-	fun refresh() = observeNotebooks()
+	fun onClickMultiFavourite(idList: Set<RealmUUID>, isAllFavourite: Boolean) {
+		viewModelScope.launch(Dispatchers.Default) {
+			idList.forEach { noteId ->
+				_repository.value?.getBucketFromId(id = noteId)?.clone()?.apply {
+					this.isFavourite = !isAllFavourite
+					_repository.value?.putBucket(this)
+				}
+			}
+		}
+	}
 
-	fun delete(idList: List<RealmUUID>) {
-		repository.value?.deleteSuspended(idList)
+	fun onClickMultiLock(idList: Set<RealmUUID>, isAllLocked: Boolean) {
+		viewModelScope.launch(Dispatchers.Default) {
+			idList.forEach { noteId ->
+				_repository.value?.getBucketFromId(id = noteId)?.clone()?.apply {
+					this.isLocked = !isAllLocked
+					_repository.value?.putBucket(this)
+				}
+			}
+		}
+	}
+
+	fun delete(idList: Set<RealmUUID>) {
+		_repository.value?.deleteSuspended(idList)
 	}
 }
