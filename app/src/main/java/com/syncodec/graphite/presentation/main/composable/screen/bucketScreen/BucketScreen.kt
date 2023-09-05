@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -65,6 +66,8 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFl
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.buildingBlock.BucketCard
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -86,11 +89,16 @@ fun BucketScreen(
 	val viewModel: BucketScreenViewModel = koinViewModel()
 	val scope = rememberCoroutineScope()
 
+	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+
 	var bucketFilter by rememberSaveable { mutableStateOf(setOf(BucketType.TODO, BucketType.BOOK, BucketType.SHOW, BucketType.LINK)) }
 	val bucketList by viewModel.orderedBucketList.collectAsState()
+	var orderedBucketList by remember { mutableStateOf<List<BucketObjectLite>?>(listOf()) }
 	val isLoading by remember(bucketList) { derivedStateOf { bucketList == null } }
 
-	var isDeleteDialogVisible by remember { mutableStateOf(false) }
+	LaunchedEffect(key1 = bucketList) {
+		orderedBucketList = bucketList
+	}
 
 	fun onClickBucket(id: RealmUUID) {
 		if (isSelecting) onSelect(id)
@@ -105,21 +113,23 @@ fun BucketScreen(
 	val state = rememberReorderableLazyGridState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
 		onMove = { from, to ->
-//			orderedBucketList.toMutableList().apply {
-//				add(to.index, removeAt(from.index))
-//				orderedBucketList = this
-//			}
+			orderedBucketList?.toMutableList()?.apply {
+				add(to.index, removeAt(from.index))
+				orderedBucketList = this
+			}
 		},
 		onDragEnd = { from, to ->
-//			scope.launch(Dispatchers.Default) {
-//				viewModel.onReorderBucketList(orderedBucketList.map { it.id })
-//				dataStoreInstance.putSortOn(SortOn.Custom)
-//			}
+			scope.launch(Dispatchers.Default) {
+				viewModel.onReorderBucketList(orderedBucketList?.map { it.id } ?: listOf())
+				dataStoreInstance.putSortOn(SortOn.Custom)
+			}
 		}
 	)
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isBucketBottomSheetVisible by remember { mutableStateOf(false) }
+
+	var isDeleteDialogVisible by remember { mutableStateOf(false) }
 
 	GenericScaffold2(
 		floatingActionButton = {
@@ -140,7 +150,7 @@ fun BucketScreen(
 					LoadingView()
 				}
 				else {
-					if (bucketList.isNullOrEmpty()) {
+					if (orderedBucketList.isNullOrEmpty()) {
 						EmptyView(
 							image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
 							title = "I think, therefore, I am",
@@ -153,7 +163,7 @@ fun BucketScreen(
 						) {
 							BucketListFilter(
 								bucketFilter = bucketFilter,
-								bucketList = bucketList ?: listOf(),
+								bucketList = orderedBucketList ?: listOf(),
 								isSelecting = isSelecting,
 								onClickFilterChip = { bucketFilter.toMutableSet().apply { xor(it); bucketFilter = toSet() } }
 							)
@@ -169,7 +179,7 @@ fun BucketScreen(
 									.reorderable(state)
 							) {
 								items(
-									items = bucketList?.filter { it.bucketType in bucketFilter } ?: listOf(),
+									items = orderedBucketList?.filter { it.bucketType in bucketFilter } ?: listOf(),
 									key = { it.id.toString() }
 								) { bucketObject ->
 									ReorderableItem(
@@ -207,8 +217,8 @@ fun BucketScreen(
 			}
 		}
 
-		val isAllFavourite by remember(bucketList, selectedIdList) { derivedStateOf { bucketList?.filter { it.id in selectedIdList }?.all { it.isFavourite } ?: false } }
-		val isAllLocked by remember(bucketList, selectedIdList) { derivedStateOf { bucketList?.filter { it.id in selectedIdList }?.all { it.isLocked } ?: false } }
+		val isAllFavourite by remember(orderedBucketList, selectedIdList) { derivedStateOf { orderedBucketList?.filter { it.id in selectedIdList }?.all { it.isFavourite } ?: false } }
+		val isAllLocked by remember(orderedBucketList, selectedIdList) { derivedStateOf { orderedBucketList?.filter { it.id in selectedIdList }?.all { it.isLocked } ?: false } }
 		MainSelectionActionView(
 			modifier = Modifier
 				.align(Alignment.BottomCenter)

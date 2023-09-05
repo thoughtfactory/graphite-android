@@ -25,7 +25,8 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class BucketScreenViewModel(
 	repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>,
-	private val dataStoreInstance: DataStoreInstance
+	private val dataStoreInstance: DataStoreInstance,
+	private val isAuthenticated : StateFlow<Boolean>,
 ) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
@@ -81,32 +82,41 @@ class BucketScreenViewModel(
 	}
 
 	private suspend fun sortAndFilterBucket() {
-		combine(_mergedBucketList, _orderedIdList, dataStoreInstance.getSortBy, dataStoreInstance.getSortOn) { mergedBucketList1, orderedIdList1, sortBy1, sortOn1 ->
+		combine(
+			_mergedBucketList,
+			_orderedIdList,
+			isAuthenticated,
+			dataStoreInstance.getSortBy,
+			dataStoreInstance.getSortOn
+		) { args ->
+			val mergedBucketList1 = args[0] as List<BucketObjectLite>
+			val orderedIdList1 = args[1] as List<RealmUUID>
+			val isAuthenticated1 = args[2] as Boolean
+			val sortBy1 = args[3] as SortBy
+			val sortOn1 = args[4] as SortOn
+
+			val lockFilteredBucketList = if (!isAuthenticated1) mergedBucketList1.filter { !it.isLocked } else mergedBucketList1
+
 			when (sortBy1) {
 				SortBy.Ascending -> when (sortOn1) {
-					SortOn.Title -> mergedBucketList1.sortedBy { it.title?.lowercase() ?: "." }
-					SortOn.Timestamp -> mergedBucketList1.sortedBy { timestampToCalendarDay(it.createdTimestamp) }
-					SortOn.Modified -> mergedBucketList1.sortedBy { timestampToCalendarDay(it.modifiedTimestamp) }
-					SortOn.Custom -> mergedBucketList1.sortedBy { orderedIdList1.indexOf(it.id) }
-					else -> mergedBucketList1.sortedBy { timestampToCalendarDay(it.createdTimestamp) }
+					SortOn.Title -> lockFilteredBucketList.sortedBy { it.title?.lowercase() ?: "." }
+					SortOn.Timestamp -> lockFilteredBucketList.sortedBy { timestampToCalendarDay(it.createdTimestamp) }
+					SortOn.Modified -> lockFilteredBucketList.sortedBy { timestampToCalendarDay(it.modifiedTimestamp) }
+					SortOn.Custom -> lockFilteredBucketList.sortedBy { orderedIdList1.indexOf(it.id) }
+					else -> lockFilteredBucketList.sortedBy { timestampToCalendarDay(it.createdTimestamp) }
 				}
 
 				SortBy.Descending -> when (sortOn1) {
-					SortOn.Title -> mergedBucketList1.sortedByDescending { it.title?.lowercase() ?: "." }
-					SortOn.Timestamp -> mergedBucketList1.sortedByDescending { timestampToCalendarDay(it.createdTimestamp) }
-					SortOn.Modified -> mergedBucketList1.sortedByDescending { timestampToCalendarDay(it.modifiedTimestamp) }
-					SortOn.Custom -> mergedBucketList1.sortedByDescending { orderedIdList1.indexOf(it.id) }
-					else -> mergedBucketList1.sortedByDescending { timestampToCalendarDay(it.createdTimestamp) }
+					SortOn.Title -> lockFilteredBucketList.sortedByDescending { it.title?.lowercase() ?: "." }
+					SortOn.Timestamp -> lockFilteredBucketList.sortedByDescending { timestampToCalendarDay(it.createdTimestamp) }
+					SortOn.Modified -> lockFilteredBucketList.sortedByDescending { timestampToCalendarDay(it.modifiedTimestamp) }
+					SortOn.Custom -> lockFilteredBucketList.sortedByDescending { orderedIdList1.indexOf(it.id) }
+					else -> lockFilteredBucketList.sortedByDescending { timestampToCalendarDay(it.createdTimestamp) }
 				}
 			}
 		}.collectLatest { orderedBucketList1 ->
 			this@BucketScreenViewModel._orderedBucketList.tryEmit(orderedBucketList1)
 		}
-	}
-
-
-	fun onReorderBucketList(idOrderList: List<RealmUUID>) {
-//		repository.value?.reorderBucketListSuspended(idOrderList)
 	}
 
 	fun putBucket(
@@ -127,6 +137,10 @@ class BucketScreenViewModel(
 				if (it.count { it.bucketType == bucketType.name } < 1) _repository.value?.putBucketSuspended(bucketObject) else callback("Join Graphite Pro to create more ${bucketType.name} buckets")
 			}
 		}
+	}
+
+	fun onReorderBucketList(idList : List<RealmUUID>) {
+		viewModelScope.launch(Dispatchers.Default) { _repository.value?.reorderBucketList(idList) }
 	}
 
 	fun onClickMultiFavourite(idList: Set<RealmUUID>, isAllFavourite: Boolean) {

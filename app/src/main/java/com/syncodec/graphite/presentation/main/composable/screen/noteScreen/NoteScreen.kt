@@ -37,6 +37,7 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.MainSelectionActionView
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteGrid.NoteGrid
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList.NoteList
@@ -46,6 +47,7 @@ import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.compose.koinViewModel
+import kotlin.random.Random
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,8 +72,7 @@ fun NoteScreen(
 	fun onClickNote(id: RealmUUID) {
 		if (isSelecting) {
 			onSelect(id)
-		}
-		else {
+		} else {
 			Intent(context, NoteActivity2::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
@@ -114,8 +115,7 @@ fun NoteScreen(
 							}
 						}
 					}
-				}
-				else {
+				} else {
 					NoteFloatingActionButton(isExpanded = true) {
 						Intent(context, NoteActivity2::class.java).apply {
 							putExtra(Extra.Companion.Extra.IsNew.name, true)
@@ -128,35 +128,45 @@ fun NoteScreen(
 			}
 		},
 	) {
-		AnimatedContent(
-			targetState = viewType,
-			transitionSpec = { (fadeIn(tween(470)) + scaleIn(tween(470), 0.71f)).togetherWith(fadeOut(tween(470)) + scaleOut(tween(470), 0.71f)) },
-			modifier = Modifier.fillMaxSize(),
-			label = "viewType_animation"
-		) { viewType1 ->
-			when (viewType1) {
-				ViewType.List -> NoteList(
-					noteMap = noteMap,
-					isSelecting = isSelecting,
-					selectedIdList = selectedIdList,
-					onClickNote = ::onClickNote,
-					onLongClickNote = { onSelect(it) },
+		noteMap?.let { noteMap1 ->
+			if (noteMap1.isEmpty()) {
+				EmptyView(
+					image = remember { if (Random.nextBoolean()) R.drawable.il_writing_b else R.drawable.il_writing_g },
+					title = "The town was paper, but the memories were not.",
+					subTitle = "― John Green, Paper Towns",
 				)
+			} else {
+				AnimatedContent(
+					targetState = viewType,
+					transitionSpec = { (fadeIn(tween(470)) + scaleIn(tween(470), 0.71f)).togetherWith(fadeOut(tween(470)) + scaleOut(tween(470), 0.71f)) },
+					modifier = Modifier.fillMaxSize(),
+					label = "viewType_animation"
+				) { viewType1 ->
+					when (viewType1) {
+						ViewType.List -> NoteList(
+							noteMap = noteMap1,
+							isSelecting = isSelecting,
+							selectedIdList = selectedIdList,
+							onClickNote = ::onClickNote,
+							onLongClickNote = { onSelect(it) },
+						)
 
-				ViewType.Grid -> NoteGrid(
-					noteMap = noteMap,
-					isSelecting = isSelecting,
-					selectedIdList = selectedIdList,
-					onClickNote = ::onClickNote,
-					onLongClickNote = { onSelect(it) },
-				)
+						ViewType.Grid -> NoteGrid(
+							noteMap = noteMap1,
+							isSelecting = isSelecting,
+							selectedIdList = selectedIdList,
+							onClickNote = ::onClickNote,
+							onLongClickNote = { onSelect(it) },
+						)
 
-				else -> LoadingView()
+						else -> LoadingView()
+					}
+				}
 			}
-		}
+		} ?: LoadingView()
 
-		val isAllFavourite by remember(noteMap.values, selectedIdList) { derivedStateOf { noteMap.values.flatten().filter { it.id in selectedIdList }.all { it.isFavourite } } }
-		val isAllLocked by remember(noteMap.values, selectedIdList) { derivedStateOf { noteMap.values.flatten().filter { it.id in selectedIdList }.all { it.isLocked } } }
+		val isAllFavourite by remember(noteMap?.values, selectedIdList) { derivedStateOf { noteMap?.values?.flatten()?.filter { it.id in selectedIdList }?.all { it.isFavourite } ?: false } }
+		val isAllLocked by remember(noteMap?.values, selectedIdList) { derivedStateOf { noteMap?.values?.flatten()?.filter { it.id in selectedIdList }?.all { it.isLocked } ?: false } }
 		MainSelectionActionView(
 			modifier = Modifier
 				.align(Alignment.BottomCenter)

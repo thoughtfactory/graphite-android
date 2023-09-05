@@ -42,6 +42,7 @@ import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -67,6 +68,7 @@ class BaseApplication : Application() {
 		val dataStoreInstance = DataStoreInstance(context = this)
 		val sortByFlow = dataStoreInstance.getSortBy
 		val sortOnFlow = dataStoreInstance.getSortOn
+		val isAuthenticated = isAuthenticated.asStateFlow()
 
 		val repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
 
@@ -84,6 +86,7 @@ class BaseApplication : Application() {
 					single { repository }
 					single { repositoryStatusStateFlow }
 					single { dataStoreInstance }
+					single { isAuthenticated }
 					single { sortByFlow }
 					single { sortOnFlow }
 					single { geoLocator }

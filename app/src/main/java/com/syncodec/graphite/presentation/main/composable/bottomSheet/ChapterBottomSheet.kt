@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
@@ -64,6 +67,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
@@ -74,10 +78,13 @@ import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CancelButton
+import com.syncodec.graphite.presentation.common.dialog.ColorPickerDialog
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
 import com.syncodec.graphite.utils.getInverseBWColor
+import com.syncodec.graphite.utils.getRandomColor
 import com.syncodec.graphite.utils.imageList
+import com.syncodec.graphite.utils.toHexString
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -254,9 +261,15 @@ private fun CoverPicker(
 @Preview
 @Composable
 private fun ColorPicker(
-	selectedColor: Color? = null,
+	selectedColor: Color? = getRandomColor(),
 	onSelectColor: (Color) -> Unit = {},
 ) {
+
+	var isCustomColorPickerVisible by remember { mutableStateOf(false) }
+
+	val containerColor by animateColorAsState(targetValue = selectedColor ?: Color.Transparent, label = "containerColor_animation")
+	val contentColor by animateColorAsState(targetValue = (selectedColor ?: MaterialTheme.colorScheme.onBackground).getInverseBWColor(), label = "containerColor_animation")
+
 	val colorList = remember {
 		listOf(
 			Color(0xFFE57373),
@@ -286,31 +299,68 @@ private fun ColorPicker(
 		)
 	}
 
-	FlowRow(
-		modifier = Modifier.fillMaxWidth(),
-		horizontalArrangement = Arrangement.SpaceAround
-	) {
-		colorList.forEach { color ->
-			Box(
-				contentAlignment = Alignment.Center,
-				modifier = Modifier
-					.requiredSize(40.dp)
-					.padding(4.dp)
-					.background(color, MaterialTheme.shapes.small)
-					.clip(MaterialTheme.shapes.small)
-					.clickable { onSelectColor(color) }
-			) {
-				if (selectedColor == color) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_fa_check),
-						contentDescription = "Selected color",
-						tint = color.getInverseBWColor(),
-						modifier = Modifier.requiredSize(16.dp)
-					)
+	Column {
+		FlowRow(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.SpaceAround
+		) {
+			colorList.forEach { color ->
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = Modifier
+						.requiredSize(40.dp)
+						.padding(4.dp)
+						.background(color, MaterialTheme.shapes.small)
+						.clip(MaterialTheme.shapes.small)
+						.clickable { onSelectColor(color) }
+				) {
+					if (selectedColor == color) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_fa_check),
+							contentDescription = "Selected color",
+							tint = color.getInverseBWColor(),
+							modifier = Modifier.requiredSize(16.dp)
+						)
+					}
 				}
 			}
 		}
+
+		Spacer(modifier = Modifier.height(16.dp))
+
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier.fillMaxWidth()
+		) {
+			Text(text = stringResource(id = R.string.custom_color))
+			Spacer(modifier = Modifier.weight(1f))
+			Box(
+				contentAlignment = Alignment.Center,
+				modifier = Modifier
+					.width(96.dp)
+					.height(40.dp)
+					.background(containerColor, MaterialTheme.shapes.medium)
+					.clip(MaterialTheme.shapes.medium)
+					.clickable { isCustomColorPickerVisible = true }
+			) {
+				Text(
+					text = selectedColor?.toHexString() ?: "null",
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.Bold,
+					color = contentColor
+				)
+			}
+		}
 	}
+
+	ColorPickerDialog(
+		isDialogVisible = isCustomColorPickerVisible,
+		onDismissRequest = { isCustomColorPickerVisible = false },
+		onSelectColor = {
+			isCustomColorPickerVisible = false
+			onSelectColor(it)
+		}
+	)
 }
 
 @Preview

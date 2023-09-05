@@ -24,7 +24,8 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class NoteScreenViewModel(
 	repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>,
-	private val dataStoreInstance: DataStoreInstance
+	private val dataStoreInstance: DataStoreInstance,
+	private val isAuthenticated: StateFlow<Boolean>,
 ) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
@@ -35,8 +36,8 @@ class NoteScreenViewModel(
 	private val _noteList: MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
 	private val _tagList: MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
 	private val _taggedNoteList: MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
-	private val _mappedNoteList: MutableStateFlow<Map<String, List<NoteObjectLite>>> = MutableStateFlow(mapOf())
-	val mappedNoteList: StateFlow<Map<String, List<NoteObjectLite>>> = _mappedNoteList
+	private val _mappedNoteList: MutableStateFlow<Map<String, List<NoteObjectLite>>?> = MutableStateFlow(null)
+	val mappedNoteList: StateFlow<Map<String, List<NoteObjectLite>>?> = _mappedNoteList
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -85,8 +86,16 @@ class NoteScreenViewModel(
 	}
 
 	private suspend fun sortAndFilterNote() {
-		combine(_taggedNoteList, dataStoreInstance.getSortBy, dataStoreInstance.getSortOn) { taggedNoteList1, sortBy1, sortOn1 ->
-			taggedNoteList1
+		combine(
+			_taggedNoteList,
+			isAuthenticated,
+			dataStoreInstance.getSortBy,
+			dataStoreInstance.getSortOn
+		) { taggedNoteList1, isAuthenticated1, sortBy1, sortOn1 ->
+
+			val lockedFilteredNoteList = if (!isAuthenticated1) taggedNoteList1.filter { !it.isLocked } else taggedNoteList1
+
+			lockedFilteredNoteList
 				.groupBy {
 					when (sortOn1) {
 						SortOn.Title -> it.title?.lowercase() ?: "."
@@ -107,7 +116,7 @@ class NoteScreenViewModel(
 		}
 	}
 
-	fun onClickMultiFavourite(idList: Set<RealmUUID>, isAllFavourite : Boolean) {
+	fun onClickMultiFavourite(idList: Set<RealmUUID>, isAllFavourite: Boolean) {
 		viewModelScope.launch(Dispatchers.Default) {
 			idList.forEach { noteId ->
 				_repository.value?.getNoteFromId(id = noteId)?.clone()?.apply {
@@ -118,7 +127,7 @@ class NoteScreenViewModel(
 		}
 	}
 
-	fun onClickMultiLock(idList: Set<RealmUUID>, isAllLocked : Boolean) {
+	fun onClickMultiLock(idList: Set<RealmUUID>, isAllLocked: Boolean) {
 		viewModelScope.launch(Dispatchers.Default) {
 			idList.forEach { noteId ->
 				_repository.value?.getNoteFromId(id = noteId)?.clone()?.apply {
