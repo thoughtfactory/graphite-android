@@ -23,9 +23,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.button.BackButton
 import com.syncodec.graphite.presentation.common.button.FavouriteButton
 import com.syncodec.graphite.presentation.common.button.LockButton
 import com.syncodec.graphite.presentation.common.button.GenericButton
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.ui.IconButtonSize
 
 
@@ -48,13 +50,7 @@ fun ViewerTopBar(
 	var isMenuDropdownVisible by remember { mutableStateOf(false) }
 
 	TopAppBar(
-		navigationIcon = {
-			GenericButton(
-				icon = R.drawable.ic_fa_back,
-				tooltip = "Back",
-				onClick = onClickBack
-			)
-		},
+		navigationIcon = { BackButton() },
 		title = {},
 		actions = {
 			LockButton(
@@ -66,17 +62,14 @@ fun ViewerTopBar(
 				onClick = onClickFavourite,
 			)
 			Box {
-				GenericButton(
-					icon = R.drawable.ic_fa_menu,
-					tooltip = "Menu",
-					onClick = { isMenuDropdownVisible = true },
-				)
+				MenuButton { isMenuDropdownVisible = true }
 				DropdownMenu(
 					expanded = isMenuDropdownVisible,
 					onDismissRequest = { isMenuDropdownVisible = false }
 				) {
 					DropdownMenuItem(
 						leadingIcon = {
+
 							Icon(
 								painter = painterResource(id = R.drawable.ic_fa_pin),
 								contentDescription = "Pin to notification",

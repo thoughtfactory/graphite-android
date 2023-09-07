@@ -19,6 +19,7 @@ import com.syncodec.graphite.presentation.common.button.VaultButton
 @Preview
 @Composable
 fun BottomBar(
+	showEveryWhere: Boolean = true,
 	onClickSelect: () -> Unit = {},
 	onClickEverywhere: () -> Unit = {},
 ) {
@@ -32,19 +33,21 @@ fun BottomBar(
 			),
 			modifier = Modifier.weight(1f)
 		) {
-			Text(text = stringResource(id = R.string.select))
+			Text(text = stringResource(id = if (showEveryWhere) R.string.select else R.string.select_chapter))
 		}
-		Spacer(modifier = Modifier.width(8.dp))
-		OutlinedButton(
-			onClick = onClickEverywhere,
-			shape = MaterialTheme.shapes.medium,
-			colors = ButtonDefaults.outlinedButtonColors(
-				containerColor = MaterialTheme.colorScheme.background,
-				contentColor = MaterialTheme.colorScheme.onBackground
-			),
-			modifier = Modifier.weight(1f)
-		) {
-			Text(text = stringResource(id = R.string.everywhere))
+		if (showEveryWhere) {
+			Spacer(modifier = Modifier.width(8.dp))
+			OutlinedButton(
+				onClick = onClickEverywhere,
+				shape = MaterialTheme.shapes.medium,
+				colors = ButtonDefaults.outlinedButtonColors(
+					containerColor = MaterialTheme.colorScheme.background,
+					contentColor = MaterialTheme.colorScheme.onBackground
+				),
+				modifier = Modifier.weight(1f)
+			) {
+				Text(text = stringResource(id = R.string.everywhere))
+			}
 		}
 		Spacer(modifier = Modifier.width(12.dp))
 		VaultButton()

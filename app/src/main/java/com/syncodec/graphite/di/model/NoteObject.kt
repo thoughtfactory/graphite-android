@@ -15,6 +15,7 @@ import com.syncodec.graphite.di.repository.cache.NoteCache
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -69,6 +70,10 @@ class NoteObject() : RealmObject {
 
 	@Serializable(with = RealmUUIDNullableSerializer::class)
 	var parentId: RealmUUID? = null
+
+	fun updateModifyTimestamp() {
+		this.modifiedTimestamp = Instant.now().toEpochMilli()
+	}
 
 	fun setLatLng(latLng: LatLng?) {
 		try {

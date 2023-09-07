@@ -62,7 +62,8 @@ fun ViewerHeader(
 	locationData: LocationData = LocationData.Init,
 	parentChapter: ChapterObjectLite? = null,
 	fileList: List<File> = listOf(),
-	connectedTagList: List<TagObject> = listOf(),
+	connectedTagList: Set<TagObject> = setOf(),
+	onClickChapterSelector : () -> Unit = {},
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth()
@@ -122,10 +123,8 @@ fun ViewerHeader(
 				Spacer(modifier = Modifier.weight(1f))
 				Spacer(modifier = Modifier.width(64.dp))
 
-				ChapterView(parentChapter = parentChapter)
+				ChapterView(parentChapter = parentChapter, onClickChapterSelector = onClickChapterSelector)
 			}
-
-			Spacer(modifier = Modifier.height(8.dp))
 
 			SelectionContainer {
 				LocationView(
@@ -133,14 +132,11 @@ fun ViewerHeader(
 				)
 			}
 
-			if (true) {
-				Spacer(modifier = Modifier.height(8.dp))
+			if (connectedTagList.isNotEmpty()) {
 				TagView(
-					connectedTagList = listOf(TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance()),
+					connectedTagList = connectedTagList,
 				)
 			}
-
-			TitleView(title = title)
 		}
 	}
 }
@@ -149,17 +145,18 @@ fun ViewerHeader(
 @Composable
 private fun ChapterView(
 	parentChapter: ChapterObjectLite? = null,
+	onClickChapterSelector : () -> Unit = {},
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier
-			.background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
-			.clip(MaterialTheme.shapes.medium)
-			.clickable { }
-			.padding(vertical = 12.dp, horizontal = 16.dp)
+			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.small)
+			.clip(MaterialTheme.shapes.small)
+			.clickable {onClickChapterSelector() }
+			.padding(vertical = 8.dp, horizontal = 12.dp)
 	) {
 		Icon(
-			painter = painterResource(id = R.drawable.ic_fa_notebook),
+			painter = painterResource(id = R.drawable.ic_fa_notebook_duotone),
 			contentDescription = "Parent chapter",
 			tint = MaterialTheme.colorScheme.onSurface,
 			modifier = Modifier.requiredSize(16.dp)
@@ -185,7 +182,7 @@ private fun LocationView(
 	val inlineContentMap = remember {
 		mapOf(
 			"mapMarker" to InlineTextContent(
-				Placeholder(12.sp, 10.sp, PlaceholderVerticalAlign.TextCenter)
+				Placeholder(9.sp, 9.sp, PlaceholderVerticalAlign.AboveBaseline)
 			) {
 				Row {
 					Icon(
@@ -194,7 +191,6 @@ private fun LocationView(
 						tint = Color.LocationContainer,
 						modifier = Modifier
 					)
-					Spacer(modifier = Modifier.width(2.dp))
 				}
 			}
 		)
@@ -207,57 +203,64 @@ private fun LocationView(
 		fontFamily = MaterialTheme.typography.labelMedium.fontFamily,
 	)
 
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(horizontal = 12.dp)
-	) {
-		when (locationData) {
-			is LocationData.Init -> Unit
-			is LocationData.Loading -> Unit
-			is LocationData.SuccessOnlyLatLng -> Row(
-				modifier = Modifier,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				val annotatedString = buildAnnotatedString {
-					appendInlineContent(id = "mapMarker")
-					append(locationData.latLng.toString())
-					addStyle(style = spanStyle, start = 0, end = length)
+	Column {
+		Spacer(modifier = Modifier.height(4.dp))
+		Box(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(horizontal = 12.dp)
+		) {
+			when (locationData) {
+				is LocationData.Init -> Unit
+				is LocationData.Loading -> Unit
+				is LocationData.SuccessOnlyLatLng -> Row(
+					modifier = Modifier,
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					val annotatedString = buildAnnotatedString {
+						appendInlineContent(id = "mapMarker")
+						append(locationData.latLng.toString())
+						addStyle(style = spanStyle, start = 0, end = length)
+					}
+
+					Text(annotatedString, inlineContent = inlineContentMap)
 				}
 
-				Text(annotatedString, inlineContent = inlineContentMap)
-			}
+				is LocationData.SuccessOnlyAddress -> Row(
+					modifier = Modifier,
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					val annotatedString = buildAnnotatedString {
+						appendInlineContent(id = "mapMarker")
+						append(locationData.address)
+						addStyle(style = spanStyle, start = 0, end = length)
+					}
 
-			is LocationData.SuccessOnlyAddress -> Row(
-				modifier = Modifier,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				val annotatedString = buildAnnotatedString {
-					appendInlineContent(id = "mapMarker")
-					append(locationData.address)
-					addStyle(style = spanStyle, start = 0, end = length)
+					Text(annotatedString, inlineContent = inlineContentMap)
 				}
 
-				Text(annotatedString, inlineContent = inlineContentMap)
-			}
+				is LocationData.Success -> Row(
+					modifier = Modifier,
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					val annotatedString = buildAnnotatedString {
+						appendInlineContent(id = "mapMarker")
+						append(locationData.address)
+						addStyle(style = spanStyle, start = 0, end = length)
+					}
 
-			is LocationData.Success -> Row(
-				modifier = Modifier,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				val annotatedString = buildAnnotatedString {
-					appendInlineContent(id = "mapMarker")
-					append(locationData.address)
-					addStyle(style = spanStyle, start = 0, end = length)
+					Text(
+						text = annotatedString,
+						inlineContent = inlineContentMap,
+						lineHeight = 12.sp
+					)
 				}
 
-				Text(annotatedString, inlineContent = inlineContentMap)
+				is LocationData.Removed -> Unit
+				is LocationData.NoPermission -> Unit
+				is LocationData.AutoFetchDisabled -> Unit
+				is LocationData.Error -> Unit
 			}
-
-			is LocationData.Removed -> Unit
-			is LocationData.NoPermission -> Unit
-			is LocationData.AutoFetchDisabled -> Unit
-			is LocationData.Error -> Unit
 		}
 	}
 }
@@ -265,7 +268,7 @@ private fun LocationView(
 @Preview
 @Composable
 private fun TagView(
-	connectedTagList: List<TagObject> = listOf(),
+	connectedTagList: Set<TagObject> = setOf(),
 ) {
 	LazyRow(
 		modifier = Modifier.fillMaxWidth(),
@@ -305,33 +308,13 @@ private fun TagItemView(
 
 @Preview
 @Composable
-private fun TitleView(
-	title: String? = null,
-) {
-	title?.let {
-		if (it.isNotEmpty()) {
-			Spacer(modifier = Modifier.height(4.dp))
-			Text(
-				text = it,
-				style = MaterialTheme.typography.displaySmall,
-				fontWeight = FontWeight.Bold,
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(horizontal = 12.dp)
-			)
-		}
-	}
-}
-
-@Preview
-@Composable
 private fun Preview() {
 	ViewerHeader(
 		title = "Title",
 		userTimestamp = Instant.now().toEpochMilli(),
-		locationData = LocationData.Success(latLng = LatLng(0.0, 0.0), address = "Address"),
+		locationData = LocationData.Success(latLng = LatLng(0.0, 0.0), address = "Court 3, Tennis Court, Nirma University, Ahmedabad, Gujarat, India"),
 		parentChapter = ChapterObjectLite.getRandomInstance(),
 		fileList = listOf(),
-		connectedTagList = listOf(TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance())
+		connectedTagList = setOf(TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance())
 	)
 }

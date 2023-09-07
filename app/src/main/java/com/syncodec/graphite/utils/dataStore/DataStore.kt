@@ -42,6 +42,7 @@ class DataStoreInstance(private val context : Context) {
 		private val PREFERENCE_IS_AUTO_SYNC_ENABLED = booleanPreferencesKey("is_auto_sync_enabled")
 
 		private val PREFERENCE_SHOW_WHATS_NEW_CARD = intPreferencesKey("show_whats_new_card")
+		private val PREFERENCE_SHOW_TAG_INFO_CARD = booleanPreferencesKey("show_tag_info_card")
 		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_ATTACHMENT = booleanPreferencesKey("show_plain_text_warning_attachment")
 		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_LOCAL = booleanPreferencesKey("show_plain_text_warning_local")
 		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_DROPBOX = booleanPreferencesKey("show_plain_text_warning_dropbox")
@@ -203,6 +204,13 @@ class DataStoreInstance(private val context : Context) {
 
 	fun putShowPlainTextWarningAttachment(showUnencryptedAttachment : Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_PLAIN_TEXT_WARNING_ATTACHMENT] = showUnencryptedAttachment }
+	}
+
+	val showTagInfoCard : Flow<Boolean> =
+		context.dataStore.data.map { preferences -> preferences[PREFERENCE_SHOW_TAG_INFO_CARD] ?: true }
+
+	fun putShowTagInfoCard(showCard : Boolean) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_TAG_INFO_CARD] = showCard }
 	}
 
 	fun clearDatastore() = CoroutineScope(Dispatchers.IO).launch {

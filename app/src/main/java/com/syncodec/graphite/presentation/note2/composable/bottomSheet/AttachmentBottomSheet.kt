@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -27,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -126,8 +124,11 @@ fun AttachmentBottomSheet(
 						)
 					}
 				}
-				newFileList.forEach {
-					item(key = it) { AttachmentItem(it) }
+				newFileList.forEach { uri ->
+					item { AttachmentItem(uri = uri) }
+				}
+				savedFileList.forEach { file ->
+					item { AttachmentItem(file = file) }
 				}
 				if (newFileList.isNotEmpty() || savedFileList.isNotEmpty()) item(
 					span = { GridItemSpan(this.maxLineSpan) }
@@ -142,18 +143,41 @@ fun AttachmentBottomSheet(
 @Preview
 @Composable
 private fun AttachmentItem(
-	file: File = File("")
+	file: File = File(""),
+	onClick: () -> Unit = {}
 ) {
-//	AsyncImage(
-//		model = ImageRequest.Builder(LocalContext.current)
-//			.data("https://example.com/image.jpg")
-//			.crossfade(true)
-//			.build(),
-//		placeholder = painterResource(R.drawable.placeholder),
-//		contentDescription = stringResource(R.string.description),
-//		contentScale = ContentScale.Crop,
-//		modifier = Modifier.clip(CircleShape)
-//	)
+	val context = LocalContext.current
+	val imageRequest = remember(file) {
+		ImageRequest.Builder(context)
+			.data(file)
+			.crossfade(false)
+			.build()
+	}
+
+	Box(
+		contentAlignment = Alignment.Center,
+		modifier = Modifier
+			.fillMaxWidth()
+			.aspectRatio(1f)
+			.padding(1.dp)
+			.clickable { onClick() }
+	) {
+		AsyncImage(
+			model = imageRequest,
+			contentDescription = "stringResource(R.string.description)",
+			contentScale = ContentScale.Crop,
+			modifier = Modifier
+				.fillMaxSize()
+				.blur(24.dp)
+		)
+
+		AsyncImage(
+			model = imageRequest,
+			contentDescription = "stringResource(R.string.description)",
+			contentScale = ContentScale.Fit,
+			modifier = Modifier.fillMaxSize()
+		)
+	}
 }
 
 @Preview
@@ -177,7 +201,6 @@ private fun AttachmentItem(
 			.fillMaxWidth()
 			.aspectRatio(1f)
 			.padding(1.dp)
-			.clip(MaterialTheme.shapes.medium)
 			.clickable { onClick() }
 	) {
 		AsyncImage(

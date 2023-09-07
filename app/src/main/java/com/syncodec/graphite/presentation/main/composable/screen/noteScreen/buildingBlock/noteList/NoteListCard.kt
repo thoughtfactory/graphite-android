@@ -25,6 +25,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -52,6 +54,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
 import com.syncodec.graphite.presentation.ui.AttachmentContainer
@@ -68,19 +71,19 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun NoteListCard(
-	id : RealmUUID = RealmUUID.random(),
-	timestamp : String = "4th May 2021 07:13 AM",
-	title : String? = null,
-	isFavourite : Boolean = false,
-	isLocked : Boolean = false,
-	contentThumbnail : String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
-	thumbnail : String? = null,
-	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
-	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
-	tagList : List<TagObjectLite> = listOf(),
-	isSelected : Boolean = false,
-	onClick : () -> Unit = {},
-	onLongClick : () -> Unit = {}
+	id: RealmUUID = RealmUUID.random(),
+	timestamp: String = "4th May 2021 07:13 AM",
+	title: String? = null,
+	isFavourite: Boolean = false,
+	isLocked: Boolean = false,
+	contentThumbnail: String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
+	thumbnail: String? = null,
+	address: String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
+	latLng: LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
+	tagList: List<TagObjectLite> = listOf(),
+	isSelected: Boolean = false,
+	onClick: () -> Unit = {},
+	onLongClick: () -> Unit = {}
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
@@ -153,21 +156,21 @@ fun NoteListCard(
 @Preview
 @Composable
 private fun NoteSurface(
-	id : RealmUUID = RealmUUID.random(),
-	containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f),
-	timestamp : String = "4th May 2021 07:13 AM",
-	title : String? = null,
-	isFavourite : Boolean = false,
-	isLocked : Boolean = false,
-	contentThumbnail : String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
-	thumbnail : String? = null,
-	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
-	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
-	tagList : List<TagObjectLite> = listOf(),
-	isSelected : Boolean = false,
-	onGloballyPositioned : (LayoutCoordinates) -> Unit = {},
-	onClick : () -> Unit = {},
-	onLongClick : () -> Unit = {}
+	id: RealmUUID = RealmUUID.random(),
+	containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f),
+	timestamp: String = "4th May 2021 07:13 AM",
+	title: String? = null,
+	isFavourite: Boolean = false,
+	isLocked: Boolean = false,
+	contentThumbnail: String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
+	thumbnail: String? = null,
+	address: String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
+	latLng: LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
+	tagList: List<TagObjectLite> = listOf(),
+	isSelected: Boolean = false,
+	onGloballyPositioned: (LayoutCoordinates) -> Unit = {},
+	onClick: () -> Unit = {},
+	onLongClick: () -> Unit = {}
 ) {
 	val context = LocalContext.current
 	val haptic = LocalHapticFeedback.current
@@ -178,8 +181,8 @@ private fun NoteSurface(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(12.dp, 8.dp, 12.dp, 0.dp)
-			.background(containerColor, MaterialTheme.shapes.large)
-			.clip(MaterialTheme.shapes.large)
+			.background(containerColor, MaterialTheme.shapes.medium)
+			.clip(MaterialTheme.shapes.medium)
 			.combinedClickable(
 				onClick = onClick,
 				onLongClick = {
@@ -216,11 +219,11 @@ private fun NoteSurface(
 @Preview
 @Composable
 private fun Header(
-	timestamp : String = "4th May 2021 07:13 AM",
-	title : String? = "Title",
-	isFavourite : Boolean = true,
-	isLocked : Boolean = true,
-	attachmentCount : Int = 1
+	timestamp: String = "4th May 2021 07:13 AM",
+	title: String? = "Title",
+	isFavourite: Boolean = true,
+	isLocked: Boolean = true,
+	attachmentCount: Int = 1
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
@@ -245,9 +248,9 @@ private fun Header(
 @Preview
 @Composable
 private fun Content(
-	contentThumbnail : String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
-	thumbnail : String? = null,
-	tagList : List<TagObjectLite> = listOf(),
+	contentThumbnail: String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
+	thumbnail: String? = null,
+	tagList: List<TagObjectLite> = listOf(),
 ) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
@@ -289,7 +292,7 @@ private fun Content(
 @Preview
 @Composable
 private fun ColumnScope.TagList(
-	tagList : List<TagObjectLite> = listOf()
+	tagList: List<TagObjectLite> = listOf()
 ) {
 	this.apply {
 		if (tagList.isNotEmpty()) {
@@ -300,11 +303,7 @@ private fun ColumnScope.TagList(
 					.horizontalScroll(rememberScrollState())
 			) {
 				tagList.forEach { tagObject ->
-					Tag(
-						tag = tagObject.tag,
-						color = Color(tagObject.color),
-					)
-					Spacer(modifier = Modifier.width(4.dp))
+					TagItemView(tagObject = tagObject)
 				}
 			}
 			Spacer(modifier = Modifier.height(4.dp))
@@ -315,8 +314,8 @@ private fun ColumnScope.TagList(
 @Preview
 @Composable
 private fun ColumnScope.Footer(
-	address : String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
-	latLng : LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
+	address: String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
+	latLng: LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
 ) {
 	if (address != null || latLng != null) {
 		this.apply {
@@ -359,9 +358,9 @@ private fun ColumnScope.Footer(
 @Preview
 @Composable
 private fun HeaderText(
-	modifier : Modifier = Modifier,
-	text : String = "Header",
-	contentColor : Color = MaterialTheme.colorScheme.onSurface,
+	modifier: Modifier = Modifier,
+	text: String = "Header",
+	contentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
 	Text(
 		text = text,
@@ -375,20 +374,22 @@ private fun HeaderText(
 
 @Preview
 @Composable
-private fun Tag(
-	tag : String = "Tag",
-	color : Color = Color.Yellow,
+private fun TagItemView(
+	tagObject: TagObjectLite = TagObject.getRandomInstance().toLite()
 ) {
+	val containerColor = Color(tagObject.color).copy(alpha = 0.13f)
+	val contentColor = Color(tagObject.color)
+
 	Box(
 		modifier = Modifier
-			.background(color, MaterialTheme.shapes.small)
-			.clip(MaterialTheme.shapes.small)
+			.padding(horizontal = 2.dp)
+			.background(containerColor, MaterialTheme.shapes.extraSmall)
 	) {
 		Text(
-			text = tag,
+			text = tagObject.tag,
 			style = MaterialTheme.typography.bodySmall,
-			color = color.getInverseBWColor(),
-			modifier = Modifier.padding(8.dp, 4.dp)
+			color = contentColor,
+			modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
 		)
 	}
 }
@@ -396,46 +397,44 @@ private fun Tag(
 @Preview
 @Composable
 fun StateInfo(
-	isFavourite : Boolean = false,
-	isLocked : Boolean = false,
-	attachmentCount : Int = 0,
+	isFavourite: Boolean = false,
+	isLocked: Boolean = false,
+	attachmentCount: Int = 0,
 ) {
 	if (isLocked || isFavourite || attachmentCount > 0) {
-		Box(
-			modifier = Modifier.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.small)
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.extraSmall)
+				.padding(8.dp, 4.dp)
 		) {
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier.padding(8.dp, 4.dp)
-			) {
-				if (isLocked) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_shield),
-						contentDescription = "Locked",
-						tint = Color.LockClosedContainer,
-						modifier = Modifier.requiredSize(14.dp)
-					)
-					if (isFavourite || attachmentCount > 0) HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
-				}
-				if (isFavourite) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_favourite),
-						contentDescription = "Favourite",
-						tint = Color.FavouriteContainer,
-						modifier = Modifier.requiredSize(14.dp)
-					)
-					if (attachmentCount > 0) HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
-				}
-				if (attachmentCount > 0) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_file),
-						contentDescription = "Attachment count",
-						tint = Color.AttachmentContainer,
-						modifier = Modifier.requiredSize(14.dp)
-					)
-					HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
-					HeaderText(text = "$attachmentCount")
-				}
+			if (isLocked) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_shield),
+					contentDescription = "Locked",
+					tint = Color.LockClosedContainer,
+					modifier = Modifier.requiredSize(14.dp)
+				)
+				if (isFavourite || attachmentCount > 0) HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
+			}
+			if (isFavourite) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_favourite),
+					contentDescription = "Favourite",
+					tint = Color.FavouriteContainer,
+					modifier = Modifier.requiredSize(14.dp)
+				)
+				if (attachmentCount > 0) HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
+			}
+			if (attachmentCount > 0) {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_file),
+					contentDescription = "Attachment count",
+					tint = Color.AttachmentContainer,
+					modifier = Modifier.requiredSize(14.dp)
+				)
+				HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
+				HeaderText(text = "$attachmentCount")
 			}
 		}
 	}

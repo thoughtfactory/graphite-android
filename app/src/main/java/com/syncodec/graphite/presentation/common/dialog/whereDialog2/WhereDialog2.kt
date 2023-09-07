@@ -39,6 +39,9 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 
+/**
+ * Auto dismissible
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
@@ -46,6 +49,7 @@ fun WhereDialog2(
 	isDialogVisible: Boolean = true,
 	onDismissRequest: () -> Unit = {},
 	currentSelectedChapter: RealmUUID? = null,
+	showEveryWhere : Boolean = true,
 	onSelectChapter: (RealmUUID?) -> Unit = {}
 ) {
 	val scope = rememberCoroutineScope()
@@ -79,6 +83,7 @@ fun WhereDialog2(
 			},
 			bottomBar = {
 				BottomBar(
+					showEveryWhere = showEveryWhere,
 					onClickSelect = {
 						onSelectChapter(chapterPath.getOrNull(0)?.id)
 						onDismissRequest()

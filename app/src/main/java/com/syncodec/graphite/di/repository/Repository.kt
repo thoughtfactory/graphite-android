@@ -37,6 +37,7 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -324,6 +325,45 @@ class Repository {
 		}
 	}
 
+	inline fun <reified T : TypedRealmObject> getObjectFromId(id: RealmUUID?) : T? {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(T::class, "id == $0 ", id).first().find()
+		}
+	}
+
+	suspend inline fun <reified T : TypedRealmObject> setObjectFromId(id: RealmUUID?, crossinline write : T.() -> Unit) {
+		realm.let { realm ->
+			if (realm == null) throw RealmNotInitializedException()
+			realm.write {
+				query(T::class, "id == $0 ", id).first().find()?.write()
+			}
+		}
+	}
+
+	inline fun <reified T : TypedRealmObject> setObjectFromIdSuspended(id: RealmUUID?, crossinline insert: MutableRealm.() -> Unit = {}, crossinline update: T.() -> Unit) {
+		realm.let { realm ->
+			if (realm == null) throw RealmNotInitializedException()
+			CoroutineScope(Dispatchers.Default).launch {
+				realm.write {
+					query(T::class, "id == $0 ", id).first().find()?.apply {
+						update()
+					} ?: insert()
+				}
+			}
+		}
+	}
+
+	inline fun <reified T : TypedRealmObject> setMultiObjectFromIdSuspended(idList: Set<RealmUUID>, crossinline write : T.() -> Unit) {
+		realm.let { realm ->
+			if (realm == null) throw RealmNotInitializedException()
+			CoroutineScope(Dispatchers.Default).launch {
+				idList.forEach { id ->
+					realm.write { query(T::class, "id == $0 ", id).first().find()?.write() }
+				}
+			}
+		}
+	}
 
 	/**
 	 * Get list of [ChapterObject] with [parentId] as flow. If [parentId] is null, Notebooks are flowed.
@@ -1090,11 +1130,11 @@ class Repository {
 		const val SCHEMA_VERSION = 4L
 
 		sealed class RepositoryStatus {
-			object Init : RepositoryStatus()
-			object Loading : RepositoryStatus()
-			object Locked : RepositoryStatus()
+			data object Init : RepositoryStatus()
+			data object Loading : RepositoryStatus()
+			data object Locked : RepositoryStatus()
 			data class Success(val repository: Repository) : RepositoryStatus()
-			object Error : RepositoryStatus()
+			data object Error : RepositoryStatus()
 		}
 		enum class RepositoryState {
 			Init,
@@ -1105,8 +1145,8 @@ class Repository {
 		}
 
 		sealed class RealmSnapshotCopyStatus {
-			object Success : RealmSnapshotCopyStatus()
-			object Error : RealmSnapshotCopyStatus()
+			data object Success : RealmSnapshotCopyStatus()
+			data object Error : RealmSnapshotCopyStatus()
 			data class InProgress(val processed: Int, val total: Int) : RealmSnapshotCopyStatus()
 		}
 

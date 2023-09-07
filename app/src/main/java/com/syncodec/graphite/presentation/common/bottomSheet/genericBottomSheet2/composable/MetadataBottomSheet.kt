@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -24,7 +25,7 @@ fun MetadataBottomSheet(
 	id: RealmUUID? = null,
 	createdTimestamp : Long? = null,
 	modifiedTimestamp : Long? = null,
-	extraContent : @Composable (() -> Unit)? = null
+	extraContent : @Composable ColumnScope.() -> Unit = {}
 ) {
 	GenericBottomSheet2(
 		bottomSheetState = bottomSheetState,
@@ -46,7 +47,7 @@ fun MetadataBottomSheet(
 				key = stringResource(id = R.string.modified_on),
 				value = modifiedTimestamp?.timeStampToPrettyFull() ?: "",
 			)
-			extraContent?.invoke()
+			extraContent()
 		}
 	}
 }

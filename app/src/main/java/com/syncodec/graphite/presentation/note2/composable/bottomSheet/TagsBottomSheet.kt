@@ -12,6 +12,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,10 +29,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +46,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -50,8 +58,12 @@ import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.info.InfoCard
-import com.syncodec.graphite.presentation.note2.composable.dialog.AddNewTagDialog
+import com.syncodec.graphite.presentation.note2.NoteViewModel2
+import com.syncodec.graphite.presentation.tags.composable.bottomSheet.AddTagBottomSheet
+import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItemView
 import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,18 +74,18 @@ fun TagsBottomSheet(
 	isBottomSheetVisible: Boolean = false,
 	onDismissRequest: () -> Unit = { },
 	allTagList: List<TagObject> = listOf(),
-	savedTagList: List<TagObject> = listOf(),
-	newTagList: List<TagObject> = listOf(),
-	toRemoveTagList: List<TagObject> = listOf(),
+	tagStateMap: Map<TagObject, NoteViewModel2.Companion.TagObjectState> = mapOf(),
+	onClickTag: (TagObject) -> Unit = {}
 ) {
 	val scope = rememberCoroutineScope()
-
-	var isAddTagDialogVisible by remember { mutableStateOf(false) }
 
 	var searchQuery by remember { mutableStateOf("") }
 
 	val filteredTagList by remember(allTagList, searchQuery) { derivedStateOf { allTagList.filter { searchQuery in it.tag } } }
 	val isAddNewTagItemViewVisible by remember(allTagList, searchQuery) { derivedStateOf { searchQuery.isNotEmpty() && allTagList.none { it.tag == searchQuery } } }
+
+	val newTagBottomSheetState = rememberModalBottomSheetState()
+	var isNewTagBottomSheetVisible by remember { mutableStateOf(false) }
 
 	GenericBottomSheet2(
 		bottomSheetState = bottomSheetState,
@@ -81,13 +93,16 @@ fun TagsBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Tags",
+			title = stringResource(id = R.string.tags),
 		) {
 
-			if (savedTagList.isEmpty() or newTagList.isEmpty()) {
-				NoConnectedTagsView()
-				Spacer(modifier = Modifier.height(12.dp))
-			}
+			NoConnectedTagsView()
+
+			Spacer(modifier = Modifier.height(12.dp))
+
+			ConnectedTagView(tagStateMap = tagStateMap, onClickTag = onClickTag)
+
+			Spacer(modifier = Modifier.height(12.dp))
 
 			DockedSearchBar(
 				query = searchQuery,
@@ -95,7 +110,7 @@ fun TagsBottomSheet(
 				onSearch = {},
 				active = true,
 				onActiveChange = {},
-				placeholder = { Text(text = "Search or add tag") },
+				placeholder = { Text(text = stringResource(id = R.string.search_or_add_tag)) },
 				leadingIcon = {
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_tag),
@@ -137,33 +152,56 @@ fun TagsBottomSheet(
 					AddNewTagItemView(
 						tag = searchQuery,
 						isVisible = isAddNewTagItemViewVisible,
-					) { isAddTagDialogVisible = true }
-					repeat(13) {
-						filteredTagList.forEach { tagObject ->
-							TagItemView(
-								tagObject = tagObject
-							)
-						}
+					) { isNewTagBottomSheetVisible = true }
+					filteredTagList.forEach { tagObject ->
+						TagItemView(
+							tagObject = tagObject,
+							onClick = { onClickTag(tagObject) },
+						)
 					}
 				}
 			}
 		}
 	}
 
-	AddNewTagDialog(
-		isDialogVisible = isAddTagDialogVisible,
+	AddTagBottomSheet(
+		bottomSheetState = newTagBottomSheetState,
+		isBottomSheetVisible = isNewTagBottomSheetVisible,
+		onDismissRequest = { scope.launch { newTagBottomSheetState.hide(); isNewTagBottomSheetVisible = false } },
+		tagText = searchQuery,
+		onChangeTagText = { searchQuery = it.lowercase().split(" ").firstOrNull() ?: "" },
+		onCreateTag = { tag, color ->
+//			if (!putTag(tag, color)) Toast.makeText(context, context.getText(R.string.toast_duplicate_tag), Toast.LENGTH_SHORT).show()
+//			else {
+//				scope.launch { bottomSheetState.hide(); isNewTagBottomSheetVisible = false }
+//				tagText = ""
+//			}
+		},
 	)
 }
 
 @Preview
 @Composable
 private fun NoConnectedTagsView() {
-	InfoCard(
-		title = "Tag your notes",
-		description = "Is it a recipe? Or you just described a beautiful place? Add tags to search and filter through your notes easily",
-		icon = R.drawable.ic_fa_tag,
-		shape = MaterialTheme.shapes.extraLarge,
-	)
+	val context = LocalContext.current
+	val dataStoreInstance = remember { DataStoreInstance(context) }
+	val showTagInfoCard by dataStoreInstance.showTagInfoCard.collectAsState(initial = false)
+
+	AnimatedVisibility(
+		visible = showTagInfoCard,
+		enter = expandVertically(tween(470)),
+		exit = shrinkVertically(tween(470)),
+		label = "showTagInfoCard_visibility"
+	) {
+		InfoCard(
+			title = stringResource(id = R.string.tag_info_title),
+			description = stringResource(id = R.string.tag_info_message),
+			icon = R.drawable.ic_fa_tag,
+			shape = MaterialTheme.shapes.extraLarge,
+			buttonText = stringResource(id = R.string.dismiss),
+			onClickButton = { dataStoreInstance.putShowTagInfoCard(false) }
+		)
+	}
 }
 
 @Preview
@@ -200,28 +238,70 @@ private fun AddNewTagItemView(
 	}
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Preview
 @Composable
-private fun TagItemView(
-	tagObject: TagObject = TagObject(),
-	onClick: () -> Unit = {},
+private fun ConnectedTagView(
+	tagStateMap: Map<TagObject, NoteViewModel2.Companion.TagObjectState> = mapOf(),
+	onClickTag: (TagObject) -> Unit = {},
 ) {
-	Row(
-		verticalAlignment = Alignment.CenterVertically,
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(64.dp)
-			.clickable { onClick() }
-			.padding(horizontal = 18.dp)
+	FlowRow(
+		modifier = Modifier.fillMaxWidth()
 	) {
-		Icon(
-			painter = painterResource(id = R.drawable.ic_fa_tag),
-			contentDescription = "Tag",
-			modifier = Modifier.requiredSize(IconButtonSize)
-		)
-		Spacer(modifier = Modifier.width(24.dp))
-		Text(
-			text = tagObject.tag
-		)
+		tagStateMap.forEach { (tagObject, tagObjectState) ->
+			ConnectedTagItem(
+				tagObject = tagObject,
+				tagObjectState = tagObjectState,
+				onClick = { onClickTag(tagObject) }
+			)
+		}
 	}
 }
+
+@Preview
+@Composable
+private fun ConnectedTagItem(
+	tagObject: TagObject = TagObject.getRandomInstance(),
+	tagObjectState: NoteViewModel2.Companion.TagObjectState = NoteViewModel2.Companion.TagObjectState.New,
+	onClick: () -> Unit = {}
+) {
+	val containerColor = Color(tagObject.color).copy(alpha = 0.13f)
+	val contentColor = Color(tagObject.color)
+
+	SuggestionChip(
+		label = {
+			Text(
+				text = tagObject.tag,
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold,
+			)
+		},
+		icon = when (tagObjectState) {
+			NoteViewModel2.Companion.TagObjectState.Saved -> null
+			NoteViewModel2.Companion.TagObjectState.New -> {
+				{
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_plus),
+						contentDescription = "New tag",
+						modifier = Modifier.requiredSize(14.dp)
+					)
+				}
+			}
+
+			NoteViewModel2.Companion.TagObjectState.ToRemove -> {
+				{
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_x),
+						contentDescription = "Remove tag",
+						modifier = Modifier.requiredSize(14.dp)
+					)
+				}
+			}
+		},
+		colors = SuggestionChipDefaults.suggestionChipColors(containerColor = containerColor, labelColor = contentColor, iconContentColor = contentColor),
+		border = null,
+		modifier = Modifier.padding(horizontal = 4.dp),
+		onClick = onClick
+	)
+}
+

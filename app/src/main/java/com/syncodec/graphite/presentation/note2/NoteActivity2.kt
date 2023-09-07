@@ -4,10 +4,10 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,8 +16,8 @@ import androidx.lifecycle.lifecycleScope
 import com.syncodec.graphite.presentation.note2.KitKat.Companion.KitKatAction
 import com.syncodec.graphite.presentation.note2.composable.KitKatScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,9 +56,6 @@ class NoteActivity2 : ComponentActivity() {
 			}
 		}
 
-
-		val dataStoreInstance = DataStoreInstance(this)
-
 		val kitKat = KitKat(this)
 		kitKat.loadExternalEditor()
 
@@ -66,26 +63,29 @@ class NoteActivity2 : ComponentActivity() {
 
 			BaseContent {
 
+				val isDarkTheme = LocalIsDarkTheme.current
+
 				val isEditing by noteViewModel2.isEditing.collectAsState()
 				val isKitKatReady by kitKat.isReady.collectAsState()
 
-				val noteId by noteViewModel2.noteId.collectAsState()
-				val createdTimestamp by noteViewModel2.createdTimestamp.collectAsState()
-				val modifiedTimestamp by noteViewModel2.modifiedTimestamp.collectAsState()
-				val userTimestamp by noteViewModel2.userTimestamp.collectAsState()
+				val noteObject by noteViewModel2.noteObject.collectAsState()
+				val noteId by remember { derivedStateOf { noteObject?.id } }
+				val createdTimestamp by remember { derivedStateOf { noteObject?.createdTimestamp } }
+				val modifiedTimestamp by remember { derivedStateOf { noteObject?.modifiedTimestamp } }
+				val userTimestamp by remember { derivedStateOf { noteObject?.userTimestamp } }
 				val locationData by noteViewModel2.locationData.collectAsState()
-				val isFavourite by noteViewModel2.isFavourite.collectAsState()
-				val isLocked by noteViewModel2.isLocked.collectAsState()
-				val parentId by noteViewModel2.parentId.collectAsState()
+				val isFavourite by remember { derivedStateOf { noteObject?.isFavourite } }
+				val isLocked by remember { derivedStateOf { noteObject?.isLocked } }
 				val parentChapter by noteViewModel2.parentChapter.collectAsState()
 
 				val savedFileList by noteViewModel2.savedFileList.collectAsState()
 				val newFileList by noteViewModel2.newFileList.collectAsState()
 
 				val allTagList by noteViewModel2.allTagsList.collectAsState()
+				val tagStateMap by noteViewModel2.tagStateMap.collectAsState()
 
-				val title by noteViewModel2.title.collectAsState()
-				val storedContent by noteViewModel2.content.collectAsState()
+				val title by remember { derivedStateOf { noteObject?.title } }
+				val storedContent by remember { derivedStateOf { noteObject?.content } }
 
 				val kitKatFormat by kitKat.kitKatFormat.collectAsState()
 
@@ -96,6 +96,8 @@ class NoteActivity2 : ComponentActivity() {
 //						!!! These delays are disgusting
 						delay(310)
 						kitKat.onKitKatAction(KitKatAction.Other.SetMaxHeight)
+						if (isDarkTheme) kitKat.onKitKatAction(KitKatAction.Other.EnableDarkMode)
+						else kitKat.onKitKatAction(KitKatAction.Other.DisableDarkMode)
 						if (isRecreated) {
 							Log.d("npr71", "recreated : setting updated title and content")
 							noteViewModel2.kitKatFormat.value?.kitKatTitle?.let { kitKat.onKitKatAction(KitKatAction.Edit.SetTitle(it)) }
@@ -152,22 +154,25 @@ class NoteActivity2 : ComponentActivity() {
 					isLocked = isLocked,
 					parentChapter = parentChapter,
 					allTagList = allTagList,
+					tagStateMap = tagStateMap,
 					savedFileList = savedFileList,
 					newFileList = newFileList,
 //					toRemoveFileList =,
 					onClickSave = {
-						noteViewModel2.save(kitKatFormat)
+						noteViewModel2.save()
 						noteViewModel2.isEditing.tryEmit(false)
 					},
 					onClickEdit = { noteViewModel2.isEditing.tryEmit(true) },
-					onSetLocation = { latLng, address -> noteViewModel2.setLocation(latLng, address) },
+					onSetLocation = noteViewModel2::setLocation,
 					onClickRemoveLocation = { noteViewModel2.setLocation(null, null) },
-					onClickReloadLocation = { noteViewModel2.reloadLocation() },
-					onAddNewFile = { noteViewModel2.addNewFileToBuffer(it) },
+					onClickReloadLocation = noteViewModel2::reloadLocation,
+					onAddNewFile = noteViewModel2::addNewFileToBuffer,
 					onRemoveNewFile = {},
 					onRemoveSavedFile = {},
-					onClickFavourite = { noteViewModel2.toggleFavourite() },
-					onClickLock = { noteViewModel2.toggleLocked() },
+					onSelectChapter = noteViewModel2::updateParent,
+					onClickTag = noteViewModel2::toggleTag,
+					onClickFavourite = noteViewModel2::toggleFavourite,
+					onClickLock = noteViewModel2::toggleLocked,
 					onClickBack = { finish() }
 				)
 			}

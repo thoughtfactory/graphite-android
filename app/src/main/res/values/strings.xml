@@ -116,11 +116,14 @@
     <string name="search_or_add_tag">Search or add tag</string>
     <string name="delete_tag">Delete tag</string>
     <string name="delete_tag_message">Are you sure you want to delete this tag? Deleting tag will not delete associated notes</string>
+    <string name="tag_info_title">Tag your notes</string>
+    <string name="tag_info_message">Is it a recipe? Or did you just described a beautiful scenery? Add tags to search and filter through your notes easily</string>
 
     <!--    Generic-->
     <string name="stay_tuned">Stay tuned</string>
     <string name="title">Title</string>
     <string name="description">Description</string>
+    <string name="no_description">No description</string>
     <string name="url">Url</string>
     <string name="clear">Clear</string>
     <string name="unavailable">Unavailable</string>
@@ -173,6 +176,7 @@
     <string name="add">Add</string>
     <string name="custom_color">Custom color</string>
     <string name="color_picker">Color picker</string>
+    <string name="dismiss">Dismiss</string>
 
     <!--   Delete -->
     <string name="delete">Delete</string>

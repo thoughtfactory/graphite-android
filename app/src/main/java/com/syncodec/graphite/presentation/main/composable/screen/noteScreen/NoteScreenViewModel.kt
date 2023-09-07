@@ -45,14 +45,13 @@ class NoteScreenViewModel(
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
+
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
 				launch { observeDefaultChapter(repository = repository1) }
 				launch { observeNotes(repository = repository1) }
 				launch { observeTags(repository = repository1) }
-				launch { observeDefaultChapter(repository = repository1) }
-				launch { mergeNoteTag() }
-				launch { sortAndFilterNote() }
+				launch { mergeSortAndFilterNote() }
 			}
 		}
 	}
@@ -75,27 +74,29 @@ class NoteScreenViewModel(
 		}
 	}
 
-	private suspend fun mergeNoteTag() {
-		combine(_noteList, _tagList) { noteList1, tagList1 ->
-			noteList1.map { noteObjectLite ->
-				noteObjectLite.copy(tagList = tagList1.filter { it.objectIdList.contains(noteObjectLite.id) }.map { it.toLite() })
-			}
-		}.collectLatest { noteList ->
-			this@NoteScreenViewModel._taggedNoteList.tryEmit(noteList)
-		}
-	}
+	private suspend fun mergeSortAndFilterNote() {
 
-	private suspend fun sortAndFilterNote() {
 		combine(
-			_taggedNoteList,
+			_noteList,
+			_defaultChapterId,
 			isAuthenticated,
+			_tagList,
 			dataStoreInstance.getSortBy,
 			dataStoreInstance.getSortOn
-		) { taggedNoteList1, isAuthenticated1, sortBy1, sortOn1 ->
+		) { args ->
+			val noteList1 = args[0] as List<NoteObjectLite>
+			val defaultChapterId1 = args[1] as RealmUUID?
+			val isAuthenticated1 = args[2] as Boolean
+			val tagList1 = args[3] as List<TagObject>
+			val sortBy1 = args[4] as SortBy
+			val sortOn1 = args[5] as SortOn
 
-			val lockedFilteredNoteList = if (!isAuthenticated1) taggedNoteList1.filter { !it.isLocked } else taggedNoteList1
-
-			lockedFilteredNoteList
+			noteList1
+				.filter { it.parentId == defaultChapterId1 }
+				.filter { if (!isAuthenticated1) !it.isLocked else true }
+				.map { noteObjectLite ->
+					noteObjectLite.copy(tagList = tagList1.filter { it.objectIdList.contains(noteObjectLite.id) }.map { it.toLite() })
+				}
 				.groupBy {
 					when (sortOn1) {
 						SortOn.Title -> it.title?.lowercase() ?: "."

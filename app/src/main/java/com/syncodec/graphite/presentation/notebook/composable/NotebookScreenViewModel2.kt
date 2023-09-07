@@ -1,13 +1,13 @@
 package com.syncodec.graphite.presentation.notebook.composable
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.SortBy
@@ -174,8 +174,7 @@ class NotebookScreenViewModel2(
 						repository.value?.putChapterSuspended(this)
 					}
 				}
-			}
-			else {
+			} else {
 //				Edit chapter
 				repository.value?.getChapterFromId(id = chapterId)?.clone()?.apply {
 					apply {
@@ -193,63 +192,47 @@ class NotebookScreenViewModel2(
 		}
 	}
 
-	fun setDefaultChapter(id : RealmUUID) {
+	fun setDefaultChapter(id: RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			repository.value?.putDefaultChapterId(id = id)
 		}
 	}
 
 	fun toggleFavourite(chapterObject: ChapterObject) {
-		chapterObject.clone().apply {
-			this.isFavourite = !this.isFavourite
-			repository.value?.putChapterSuspended(chapterObject = this)
+		repository.value?.setObjectFromIdSuspended<ChapterObject>(id = chapterObject.id) {
+			this.updateModifyTimestamp()
+			this.isFavourite = this.isFavourite.not()
 		}
 	}
 
 	fun toggleLock(chapterObject: ChapterObject) {
-		chapterObject.clone().apply {
-			this.isLocked = !this.isLocked
-			repository.value?.putChapterSuspended(chapterObject = this)
+		repository.value?.setObjectFromIdSuspended<ChapterObject>(id = chapterObject.id) {
+			this.updateModifyTimestamp()
+			this.isLocked = this.isLocked.not()
 		}
 	}
 
 	fun toggleFavourite(idList: Set<RealmUUID>) {
-		viewModelScope.launch(Dispatchers.Default) {
-			val areAllFavourite = noteList.value.filter { it.id in idList }.all { it.isFavourite } && chapterList.value.filter { it.id in idList }.all { it.isFavourite }
-			repository.value?.let { repo ->
-				idList.forEach {
-					repo.getNoteFromId(it)?.clone()?.apply {
-						this.isFavourite = !areAllFavourite
-						repo.putNoteSuspended(noteObject = this)
-					}
-				}
-				idList.forEach {
-					repo.getChapterFromId(it)?.clone()?.apply {
-						this.isFavourite = !areAllFavourite
-						repo.putChapterSuspended(chapterObject = this)
-					}
-				}
-			}
+		val areAllFavourite = noteList.value.filter { it.id in idList }.all { it.isFavourite } && chapterList.value.filter { it.id in idList }.all { it.isFavourite }
+		repository.value?.setMultiObjectFromIdSuspended<ChapterObject>(idList = idList) {
+			this.updateModifyTimestamp()
+			this.isFavourite = !areAllFavourite
+		}
+		repository.value?.setMultiObjectFromIdSuspended<NoteObject>(idList = idList) {
+			this.updateModifyTimestamp()
+			this.isFavourite = !areAllFavourite
 		}
 	}
 
 	fun toggleLock(idList: Set<RealmUUID>) {
-		viewModelScope.launch(Dispatchers.Default) {
-			val areAllLocked = noteList.value.filter { it.id in idList }.all { it.isLocked } && chapterList.value.filter { it.id in idList }.all { it.isLocked }
-			repository.value?.let { repo ->
-				idList.forEach {
-					repo.getNoteFromId(it)?.clone()?.apply {
-						this.isLocked = !areAllLocked
-						repo.putNoteSuspended(noteObject = this)
-					}
-				}
-				idList.forEach {
-					repo.getChapterFromId(it)?.clone()?.apply {
-						this.isLocked = !areAllLocked
-						repo.putChapterSuspended(chapterObject = this)
-					}
-				}
-			}
+		val areAllLocked = noteList.value.filter { it.id in idList }.all { it.isLocked } && chapterList.value.filter { it.id in idList }.all { it.isLocked }
+		repository.value?.setMultiObjectFromIdSuspended<ChapterObject>(idList = idList) {
+			this.updateModifyTimestamp()
+			this.isLocked = !areAllLocked
+		}
+		repository.value?.setMultiObjectFromIdSuspended<NoteObject>(idList = idList) {
+			this.updateModifyTimestamp()
+			this.isLocked = !areAllLocked
 		}
 	}
 }

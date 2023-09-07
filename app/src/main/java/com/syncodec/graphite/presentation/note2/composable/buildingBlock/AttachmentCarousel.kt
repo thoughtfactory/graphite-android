@@ -101,7 +101,7 @@ fun AttachmentCarousel(
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(1.dp)
-				.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f))
+				.background(MaterialTheme.colorScheme.onBackground)
 		)
 	}
 }

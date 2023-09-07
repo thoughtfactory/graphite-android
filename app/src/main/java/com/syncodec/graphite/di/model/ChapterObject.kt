@@ -54,6 +54,10 @@ class ChapterObject() : RealmObject {
 	var parentId : RealmUUID? = null
 
 
+	fun updateModifyTimestamp() {
+		this.modifiedTimestamp = Instant.now().toEpochMilli()
+	}
+
 	fun toLite() : ChapterObjectLite {
 		return ChapterObjectLite(
 			id = this.id,

@@ -285,6 +285,10 @@ fun NotebookScreen2(
 				key = stringResource(id = R.string.parent_id),
 				value = chapterObject?.parentId?.toString() ?: stringResource(id = R.string.root_element),
 			)
+			GenericBottomSheetInfo2(
+				key = stringResource(id = R.string.description),
+				value = chapterObject?.description ?: stringResource(id = R.string.no_description),
+			)
 		}
 	)
 
