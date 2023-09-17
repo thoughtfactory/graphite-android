@@ -14,6 +14,7 @@ import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.cloud.googleDrive.GDrive
 import com.syncodec.graphite.di.locator.GeoLocator
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
@@ -66,12 +67,11 @@ class BaseApplication : Application() {
 		val sortByFlow = dataStoreInstance.getSortBy
 		val sortOnFlow = dataStoreInstance.getSortOn
 
-		val repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
-
+		val lockableRepo = LockableRepo()
 		val repository = Repository()
-//		repository.initRepository(context = this, dataStoreInstance = dataStoreInstance)
-		repositoryStatusStateFlow.tryEmit(Repository.Companion.RepositoryStatus.Success(repository = repository))
+		lockableRepo.initRepository(context = this, dataStoreInstance = dataStoreInstance, repository = repository)
 
+		val repositoryStatusStateFlow = lockableRepo.repositoryStatusFlow
 		val isAuthenticated = repository.isUnlocked
 
 		val geoLocator = GeoLocator(this)
@@ -81,6 +81,7 @@ class BaseApplication : Application() {
 			androidContext(this@BaseApplication)
 			modules(
 				module {
+					single { lockableRepo }
 					single { repository }
 					single { repositoryStatusStateFlow }
 					single { dataStoreInstance }

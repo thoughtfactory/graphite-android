@@ -181,6 +181,8 @@
     <string name="component_height">Component height</string>
     <string name="share">Share</string>
     <string name="share_all">Share all</string>
+    <string name="enable">Enable</string>
+    <string name="cancel">Cancel</string>
     <string name="menu">Menu</string>
     <string name="select_all">Select all</string>
     <string name="move">Move</string>
@@ -251,8 +253,10 @@
     <string name="add_change_passcode">Add/Change passcode</string>
     <string name="remove_passcode">Remove passcode</string>
     <string name="biometric_authentication">Biometric authentication</string>
-    <string name="biometric_authentication_sub">Biometric authentication</string>
+    <string name="biometric_authentication_sub">Enable biometric authentication on launch</string>
     <string name="backspace">Backspace</string>
+    <string name="biometric_authentication_dialog_context">Ask for biometric authentication when opening Graphite.\n\nBiometric will only prompt if you have enabled in your device or else authentication will be skipped. </string>
+
 
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>

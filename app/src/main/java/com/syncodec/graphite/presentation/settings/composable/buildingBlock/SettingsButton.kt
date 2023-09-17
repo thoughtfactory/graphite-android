@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -103,6 +104,67 @@ fun SettingsButton(
 				}
 			}
 		}
+
+		Spacer(modifier = Modifier.width(24.dp))
+	}
+}
+
+@Preview
+@Composable
+fun SettingsSwitch(
+	modifier: Modifier = Modifier,
+	title: String = "Settings",
+	subTitle: String? = null,
+	leadingIcon: SettingsButtonIcon? = null,
+	checked: Boolean = false,
+	enabled: Boolean = true,
+	colors: SettingsButtonColors = SettingsButtonDefaults.settingsButtonColors(),
+	onCheckChanged: () -> Unit = {}
+) {
+	val contentColor by colors.contentColor(enabled)
+	val containerColor by colors.containerColor(enabled)
+
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = modifier
+			.fillMaxWidth()
+			.background(containerColor)
+			.clickable { onCheckChanged() }
+			.padding(vertical = 8.dp)
+	) {
+		Spacer(modifier = Modifier.width(24.dp))
+		leadingIcon?.let {
+			Icon(
+				painter = painterResource(id = it.icon),
+				contentDescription = title,
+				tint = it.color,
+				modifier = Modifier.requiredSize(it.size)
+			)
+			Spacer(modifier = Modifier.width(24.dp))
+		}
+		Column(
+			modifier = Modifier.weight(1f)
+		) {
+			Text(
+				text = title,
+				style = MaterialTheme.typography.titleSmall,
+				color = contentColor,
+				fontWeight = FontWeight.Bold,
+			)
+
+			subTitle?.let {
+				Text(
+					text = it,
+					style = MaterialTheme.typography.bodyMedium,
+					color = contentColor.copy(alpha = 0.71f),
+				)
+			}
+		}
+
+		Switch(
+			checked = checked,
+			onCheckedChange = { onCheckChanged() }
+		)
 
 		Spacer(modifier = Modifier.width(24.dp))
 	}

@@ -48,14 +48,12 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
@@ -66,6 +64,25 @@ import java.time.Instant
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
+
+class LockableRepo {
+
+	private var repository : Repository? = null
+
+	val repositoryStatusFlow : MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
+
+	fun initRepository(context: Context, dataStoreInstance: DataStoreInstance, repository: Repository) {
+		this.repository = repository
+		repository.initRepository(context = context, dataStoreInstance = dataStoreInstance)
+	}
+	fun decryptRepository() {
+		repository?.let { repository1 ->
+			repository1.decryptRepository()
+			repositoryStatusFlow.tryEmit(Repository.Companion.RepositoryStatus.Success(repository1))
+		}
+	}
+
+}
 
 class Repository {
 
@@ -84,6 +101,13 @@ class Repository {
 	var realm: Realm? = null
 	private val _isUnlocked: MutableStateFlow<Boolean> = MutableStateFlow(false)
 	val isUnlocked: StateFlow<Boolean> = _isUnlocked
+
+	fun initRepository(context: Context, dataStoreInstance: DataStoreInstance) {
+		this.context = context
+		this.dataStoreInstance = dataStoreInstance
+		initializeFilter()
+	}
+
 	fun lockRepo() {
 		this._isUnlocked.tryEmit(false)
 	}
@@ -92,13 +116,7 @@ class Repository {
 		this._isUnlocked.tryEmit(true)
 	}
 
-
-	fun initRepository(context: Context, dataStoreInstance: DataStoreInstance) {
-		this.context = context
-		this.dataStoreInstance = dataStoreInstance
-		initializeFilter()
-		attachmentRepository.initRepository(context)
-
+	fun decryptRepository() {
 		try {
 			var key: ByteArray
 			context.getSecretData("realmKey").let {
@@ -152,6 +170,7 @@ class Repository {
 
 			realm = Realm.open(realmConfiguration)
 			repositoryState.value = RepositoryState.Success
+			attachmentRepository.initRepository(context)
 		} catch (e: Exception) {
 			repositoryState.tryEmit(RepositoryState.Error)
 //			e.printStackTrace()
