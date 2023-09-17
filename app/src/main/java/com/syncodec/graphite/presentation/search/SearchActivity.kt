@@ -6,9 +6,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.search.composable.SearchScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -32,7 +31,7 @@ class SearchActivity : ComponentActivity() {
 		}
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val tagList by viewModel.tagList.collectAsState()
 

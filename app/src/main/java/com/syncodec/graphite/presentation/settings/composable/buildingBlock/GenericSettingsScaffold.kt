@@ -1,36 +1,37 @@
 package com.syncodec.graphite.presentation.settings.composable.buildingBlock
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.syncodec.graphite.presentation.common.bar.GenericTopBar
+import com.syncodec.graphite.presentation.common.button.BackButton
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun GenericSettingsScaffold(
 	title: String = "Settings",
 	onClickBack: () -> Unit = {},
-	content: @Composable () -> Unit = {},
+	content: @Composable BoxScope.() -> Unit = {},
 ) {
-	Scaffold(
+	GenericScaffold2(
 		topBar = {
-			GenericTopBar(
-				title = title,
-				onNavigationIconClick = onClickBack,
+			TopAppBar(
+				navigationIcon = { BackButton() },
+				title = { Text(text = title) },
+				colors = TopAppBarDefaults.topAppBarColors(
+					containerColor = MaterialTheme.colorScheme.background,
+					navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+					titleContentColor = MaterialTheme.colorScheme.onBackground,
+				)
 			)
-		}
-	) {
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(it),
-		) {
-			content()
-		}
-	}
+		},
+		content = content
+	)
 }

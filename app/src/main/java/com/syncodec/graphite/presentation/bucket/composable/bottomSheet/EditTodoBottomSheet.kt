@@ -45,10 +45,10 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.button.CheckButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.IconButtonSize
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.LockClosedContainer
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import kotlinx.coroutines.delay
 
 
@@ -67,7 +67,7 @@ fun EditTodoBottomSheet(
 ) {
 	val context = LocalContext.current
 
-	val isAuthenticated = LocalIsAuthenticated.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
 
 	var todoText by remember { mutableStateOf("") }
 	var currentState by remember { mutableIntStateOf(0) }

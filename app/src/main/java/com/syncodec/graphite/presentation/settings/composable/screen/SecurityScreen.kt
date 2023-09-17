@@ -4,8 +4,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
+import com.syncodec.graphite.presentation.base.secureComposable.LocalAuthenticatorAction
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScaffold
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonDefaults
@@ -14,10 +18,13 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Sett
 @Preview
 @Composable
 fun SecurityScreen(
-	onClickBack : () -> Unit = {},
+	onClickBack: () -> Unit = {},
 ) {
+
+	val authenticatorAction = LocalAuthenticatorAction.current
+
 	GenericSettingsScaffold(
-		title = "Security",
+		title = stringResource(id = R.string.security),
 		onClickBack = onClickBack,
 	) {
 		LazyColumn(
@@ -25,38 +32,23 @@ fun SecurityScreen(
 		) {
 			item {
 				SettingsButton(
-					title = "Add/Change passcode",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_password),
-					onClick = { },
+					title = stringResource(id = R.string.add_change_passcode),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_key),
+					onClick = { authenticatorAction(AuthenticationState.AddChangePasscode) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Remove passcode",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_password),
-					onClick = { },
+					title = stringResource(id = R.string.remove_passcode),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_lock_open),
+					onClick = { authenticatorAction(AuthenticationState.RemovePasscode) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Biometric authentication",
-					subTitle = "Ask for fingerprint authentication when opening the app",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_fingerprint),
-					onClick = { },
-				)
-			}
-			item {
-				SettingsButton(
-					title = "Vault timeout",
-					subTitle = "Automatically lock the vault after a period of inactivity",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_chronometer),
-					onClick = { },
-				)
-			}
-			item {
-				SettingsButton(
-					title = "Screenshot protection",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_circle_dashed),
+					title = stringResource(id = R.string.biometric_authentication),
+					subTitle = stringResource(id = R.string.biometric_authentication_sub),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_fingerprint),
 					onClick = { },
 				)
 			}

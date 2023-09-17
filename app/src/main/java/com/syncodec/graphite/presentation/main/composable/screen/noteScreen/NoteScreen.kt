@@ -19,7 +19,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.repository.group.isAll
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
@@ -65,7 +66,8 @@ fun NoteScreen(
 	val viewType by dataStoreInstance.getViewType.collectAsState(null)
 
 	val defaultChapterId by viewModel.defaultChapterId.collectAsState()
-	val noteMap by viewModel.mappedNoteList.collectAsState()
+	val noteGroupList by viewModel.noteList.collectAsState()
+	val tagList by viewModel.tagList.collectAsState()
 
 	var isDeleteDialogVisible by remember { mutableStateOf(false) }
 
@@ -116,64 +118,91 @@ fun NoteScreen(
 						}
 					}
 				} else {
-					NoteFloatingActionButton(isExpanded = true) {
-						Intent(context, NoteActivity2::class.java).apply {
-							putExtra(Extra.Companion.Extra.IsNew.name, true)
-							putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
-							putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-							context.startActivity(this)
+					Column(
+						modifier = Modifier,
+						horizontalAlignment = Alignment.End,
+					) {
+						FloatingActionButton(onClick = { BaseApplication.isPro.tryEmit(true) }) {
+							Icon(painter = painterResource(id = R.drawable.ic_star), contentDescription = null)
+						}
+
+						Spacer(modifier = Modifier.height(16.dp))
+
+						FloatingActionButton(onClick = { viewModel.addDebugData() }) {
+							Icon(painter = painterResource(id = R.drawable.ic_bug), contentDescription = null)
+						}
+
+						Spacer(modifier = Modifier.height(16.dp))
+
+						NoteFloatingActionButton(isExpanded = true) {
+							Intent(context, NoteActivity2::class.java).apply {
+								putExtra(Extra.Companion.Extra.IsNew.name, true)
+								putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
+								putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+								context.startActivity(this)
+							}
 						}
 					}
+
+//					NoteFloatingActionButton(isExpanded = true) {
+//						Intent(context, NoteActivity2::class.java).apply {
+//							putExtra(Extra.Companion.Extra.IsNew.name, true)
+//							putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
+//							putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+//							context.startActivity(this)
+//						}
+//					}
 				}
 			}
 		},
 	) {
-		noteMap?.let { noteMap1 ->
-			if (noteMap1.isEmpty()) {
-				EmptyView(
-					image = remember { if (Random.nextBoolean()) R.drawable.il_writing_b else R.drawable.il_writing_g },
-					title = "The town was paper, but the memories were not.",
-					subTitle = "― John Green, Paper Towns",
-				)
-			} else {
-				AnimatedContent(
-					targetState = viewType,
-					transitionSpec = { (fadeIn(tween(470)) + scaleIn(tween(470), 0.71f)).togetherWith(fadeOut(tween(470)) + scaleOut(tween(470), 0.71f)) },
-					modifier = Modifier.fillMaxSize(),
-					label = "viewType_animation"
-				) { viewType1 ->
-					when (viewType1) {
-						ViewType.List -> NoteList(
-							noteMap = noteMap1,
-							isSelecting = isSelecting,
-							selectedIdList = selectedIdList,
-							onClickNote = ::onClickNote,
-							onLongClickNote = { onSelect(it) },
-						)
+		when {
+			noteGroupList == null -> LoadingView()
+			noteGroupList!!.totalSize == 0 -> EmptyView(
+				image = remember { if (Random.nextBoolean()) R.drawable.il_writing_b else R.drawable.il_writing_g },
+				title = "The town was paper, but the memories were not.",
+				subTitle = "― John Green, Paper Towns",
+			)
 
-						ViewType.Grid -> NoteGrid(
-							noteMap = noteMap1,
-							isSelecting = isSelecting,
-							selectedIdList = selectedIdList,
-							onClickNote = ::onClickNote,
-							onLongClickNote = { onSelect(it) },
-						)
+			else -> AnimatedContent(
+				targetState = viewType,
+				transitionSpec = { (fadeIn(tween(470)) + scaleIn(tween(470), 0.71f)).togetherWith(fadeOut(tween(470)) + scaleOut(tween(470), 0.71f)) },
+				modifier = Modifier.fillMaxSize(),
+				label = "viewType_animation"
+			) { viewType1 ->
+				when (viewType1) {
+					ViewType.List -> NoteList(
+						noteMap = noteGroupList!!,
+						tagList = tagList,
+						isSelecting = isSelecting,
+						selectedIdList = selectedIdList,
+						onClickNote = ::onClickNote,
+						onLongClickNote = { onSelect(it) },
+					)
 
-						else -> LoadingView()
-					}
+					ViewType.Grid -> NoteGrid(
+//							noteMap = noteMap1,
+						isSelecting = isSelecting,
+						selectedIdList = selectedIdList,
+						onClickNote = ::onClickNote,
+						onLongClickNote = { onSelect(it) },
+					)
+
+					else -> LoadingView()
 				}
 			}
-		} ?: LoadingView()
+		}
 
-		val isAllFavourite by remember(noteMap?.values, selectedIdList) { derivedStateOf { noteMap?.values?.flatten()?.filter { it.id in selectedIdList }?.all { it.isFavourite } ?: false } }
-		val isAllLocked by remember(noteMap?.values, selectedIdList) { derivedStateOf { noteMap?.values?.flatten()?.filter { it.id in selectedIdList }?.all { it.isLocked } ?: false } }
+		val isAllFavourite by isAll(isSelecting = isSelecting, selectedIdList = selectedIdList, realmObjectGroupList = noteGroupList, idGetter = NoteObjectLite::id, propGetter = NoteObjectLite::isFavourite)
+		val isAllLocked by isAll(isSelecting = isSelecting, selectedIdList = selectedIdList, realmObjectGroupList = noteGroupList, idGetter = NoteObjectLite::id, propGetter = NoteObjectLite::isLocked)
+
 		MainSelectionActionView(
 			modifier = Modifier
 				.align(Alignment.BottomCenter)
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp),
 			isSelecting = isSelecting,
-			isAllItemFavourite = selectedIdList.isNotEmpty() && isAllFavourite,
-			isAllItemLocked = selectedIdList.isNotEmpty() && isAllLocked,
+			isAllItemFavourite = isAllFavourite,
+			isAllItemLocked = isAllLocked,
 			selectedItemCount = selectedIdList.size,
 			onClickDelete = { isDeleteDialogVisible = true },
 			onClickFavourite = { viewModel.onClickMultiFavourite(idList = selectedIdList, isAllFavourite = isAllFavourite) },

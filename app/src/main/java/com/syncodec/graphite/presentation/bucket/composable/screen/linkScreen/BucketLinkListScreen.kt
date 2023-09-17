@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -52,8 +51,8 @@ import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers

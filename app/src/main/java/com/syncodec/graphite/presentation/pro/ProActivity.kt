@@ -22,7 +22,7 @@ import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 import com.revenuecat.purchases.models.StoreTransaction
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +42,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		getProducts()
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				val productPackage1 by productPackage.collectAsState()
 
 				SubscriptionScreen(

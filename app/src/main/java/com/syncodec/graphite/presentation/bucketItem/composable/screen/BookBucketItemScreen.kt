@@ -20,9 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -50,6 +53,7 @@ fun BookBucketItemScreen(
 	onUpdateState: (BucketItemState) -> Unit = {},
 ) {
 	val context = LocalContext.current
+	val clipboardManager = LocalClipboardManager.current
 
 	val thumbnail by remember(bucketItemObject?.thumbnail) {
 		derivedStateOf {
@@ -72,6 +76,7 @@ fun BookBucketItemScreen(
 	) {
 		Spacer(modifier = Modifier.height(12.dp))
 		BucketThumbnail(
+			id = bucketItemObject?.id,
 			thumbnail = thumbnail
 		)
 		Spacer(modifier = Modifier.height(24.dp))
@@ -87,7 +92,7 @@ fun BookBucketItemScreen(
 				TabItem(text = stringResource(id = R.string.reading), icon = R.drawable.ic_fa_bucket_book, onClick = { onUpdateState(BucketItemState.BETA) }),
 				TabItem(text = stringResource(id = R.string.read), icon = R.drawable.ic_fa_circle_check, onClick = { onUpdateState(BucketItemState.GAMMA) }),
 			),
-			selectedTabIndex = maxOf(0, BucketItemState.values().indexOfFirst { it.name == state }),
+			selectedTabIndex = maxOf(0, BucketItemState.entries.indexOfFirst { it.name == state }),
 			modifier = Modifier.fillMaxWidth(),
 			colors = TabDefaults.tabColors(containerColor = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.88f)))
 		)
@@ -95,25 +100,29 @@ fun BookBucketItemScreen(
 		bookData.key?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.open_library_id),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		bookData.description?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.description),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		bookData.firstPublishYear?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.first_published_year),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		bookData.numberOfPages?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.page_count),
-				value = it.toString()
+				value = it.toString(),
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it.toString())) }
 			)
 		}
 		Button(

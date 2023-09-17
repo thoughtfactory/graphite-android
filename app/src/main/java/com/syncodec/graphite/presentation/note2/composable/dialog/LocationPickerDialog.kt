@@ -48,7 +48,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2Defaults
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.base.IconButtonSize
 import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.locationAddressFilter
 import com.syncodec.graphite.utils.reverseGeocode

@@ -36,9 +36,8 @@ import com.syncodec.graphite.presentation.note.screen.viewerScreen.bottomSheet.V
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.composable.ViewerComponent
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.dialog.Dialog
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.dialog.ViewerDialogType
-import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.utils.share
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -63,8 +62,8 @@ fun ViewerScreen(
 	val scope = rememberCoroutineScope()
 	val viewModel : ViewerScreenViewModel = koinViewModel()
 
-	val isAuthenticated = LocalIsAuthenticated.current
-	val onAuthenticationAction = LocalAuthenticatorAction.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
+//	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	val isOperationPending by viewModel.isOperationPending.collectAsState()
 
@@ -216,8 +215,8 @@ fun ViewerScreen(
 				isLocked = isLocked ?: false,
 				onClickFavourite = viewModel::toggleFavourite,
 				onClickLock = {
-					if (isAuthenticated) viewModel.toggleLock()
-					else onAuthenticationAction(AuthenticatorScreen.Authenticate)
+//					if (isAuthenticated) viewModel.toggleLock()
+//					else onAuthenticationAction(AuthenticationState.Authenticate)
 				},
 				onClickPin = ::pinToNotification,
 				onClickDelete = { blockOnOperationPending { openDialog(ViewerDialogType.Delete) } },

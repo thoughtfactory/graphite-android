@@ -51,9 +51,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.LocationContainer
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LocationContainer
+import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo

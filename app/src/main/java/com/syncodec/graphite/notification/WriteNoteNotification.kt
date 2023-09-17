@@ -52,10 +52,10 @@ class NotificationReceiver : BroadcastReceiver() {
 		val remoteInput = RemoteInput.getResultsFromIntent(intent)
 
 		if (remoteInput != null) {
-			val repository2 = Repository().apply { initRepository(context) }
-			repository2.isAuthenticated.tryEmit(true)
-			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
-			putNote(context, repository2, content)
+//			val repository2 = Repository().apply { initRepository(context) }
+//			repository2.isAuthenticated.tryEmit(true)
+//			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
+//			putNote(context, repository2, content)
 		}
 	}
 

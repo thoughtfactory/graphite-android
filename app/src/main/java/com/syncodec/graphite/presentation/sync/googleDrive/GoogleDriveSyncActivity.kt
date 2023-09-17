@@ -19,13 +19,11 @@ import com.google.android.gms.common.Scopes
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.RuntimeExecutionException
-import com.google.api.client.googleapis.json.GoogleJsonError.ErrorInfo
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.About
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.sync.googleDrive.composable.screen.GoogleDriveSyncScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.service.syncInator.GDriveSyncInatorService
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
@@ -51,7 +49,7 @@ class GoogleDriveSyncActivity : ComponentActivity() {
 		connectWithDrive()
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val aboutState by aboutStateFlow.collectAsState()
 				val snapshotList by viewModel.snapshotList.collectAsState()

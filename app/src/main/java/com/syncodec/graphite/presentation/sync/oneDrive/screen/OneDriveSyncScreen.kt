@@ -37,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.ui.DeleteContainer
-import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.presentation.base.DeleteContainer
+import com.syncodec.graphite.presentation.base.DeleteContent
 
 
 @OptIn(ExperimentalMaterialApi::class)

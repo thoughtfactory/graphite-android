@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.SettingsActivity
@@ -25,7 +26,7 @@ fun DataScreen(
 	var showClearDataDialog by remember { mutableStateOf(false) }
 
 	GenericSettingsScaffold(
-		title = "Data",
+		title = stringResource(id = R.string.data),
 		onClickBack = { /*TODO*/ }
 	) {
 		LazyColumn(
@@ -33,22 +34,22 @@ fun DataScreen(
 		) {
 			item {
 				SettingsButton(
-					title = "Import data",
+					title = stringResource(id = R.string.import_data),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_import),
 					onClick = { onNavigate(SettingsActivity.Companion.SettingsScreen.ImportData) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Export data",
+					title = stringResource(id = R.string.export_data),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_export),
 					onClick = { },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Clear data",
-					subTitle = "Clear all local data from this device",
+					title = stringResource(id = R.string.clear_data),
+					subTitle = stringResource(id = R.string.clear_data_sub),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_file_delete, color = SettingsButtonDefaults.warningSettingsButtonColors().contentColor),
 					colors = SettingsButtonDefaults.warningSettingsButtonColors(),
 					onClick = { showClearDataDialog = true },

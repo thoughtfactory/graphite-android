@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.syncodec.graphite.presentation.sync.googleDrive.composable.screen.GoogleDriveSyncScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 
 
 class OneDriveSyncActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class OneDriveSyncActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				GoogleDriveSyncScreen(
 					onClickConnect = {  }
 				)

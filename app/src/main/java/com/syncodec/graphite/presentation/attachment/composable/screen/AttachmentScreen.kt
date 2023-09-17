@@ -40,7 +40,7 @@ import com.syncodec.graphite.presentation.common.selectionAction.AttachmentSelec
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LoaderStatus
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.utils.viewExternally
 import com.syncodec.graphite.utils.xor
 import org.koin.androidx.compose.koinViewModel
@@ -55,7 +55,7 @@ fun AttachmentScreen() {
 	val viewModel: AttachmentScreenViewModel = koinViewModel()
 	val haptic = LocalHapticFeedback.current
 
-	val isAuthenticated = LocalIsAuthenticated.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
 
 	val contentStatus by viewModel.loaderStatus.collectAsState()
 	val enableNoteNavigation by viewModel.enableNoteNavigation.collectAsState()

@@ -6,10 +6,10 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.note2.KitKat
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
@@ -19,7 +19,6 @@ import com.syncodec.graphite.utils.share
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 import org.apache.commons.text.StringEscapeUtils
-import java.io.File
 
 
 enum class NoteBottomSheet {
@@ -37,32 +36,30 @@ enum class NoteBottomSheet {
 @Composable
 fun BottomSheet(
 	bottomSheetState: SheetState = rememberModalBottomSheetState(),
-	isEditorMetadataBottomSheetVisible : Boolean = false,
-	isViewerMetadataBottomSheetVisible : Boolean = false,
-	isEditorLocationBottomSheetVisible : Boolean = false,
-	isViewerLocationBottomSheetVisible : Boolean = false,
-	isAttachmentBottomSheetVisible : Boolean = false,
-	isExportBottomSheetVisible : Boolean = false,
-	isTagsBottomSheetVisible : Boolean = false,
+	isEditorMetadataBottomSheetVisible: Boolean = false,
+	isViewerMetadataBottomSheetVisible: Boolean = false,
+	isEditorLocationBottomSheetVisible: Boolean = false,
+	isViewerLocationBottomSheetVisible: Boolean = false,
+	isAttachmentBottomSheetVisible: Boolean = false,
+	isExportBottomSheetVisible: Boolean = false,
+	isTagsBottomSheetVisible: Boolean = false,
 	kitKat: KitKat = KitKat(context = LocalContext.current),
-	noteId : RealmUUID? = null,
-	createdTimestamp : Long? = null,
-	modifiedTimestamp : Long? = null,
-	parentChapter : ChapterObjectLite? = null,
-	locationData : LocationData = LocationData.Init,
+	noteId: RealmUUID? = null,
+	createdTimestamp: Long? = null,
+	modifiedTimestamp: Long? = null,
+	parentChapter: ChapterObjectLite? = null,
+	locationData: LocationData = LocationData.Init,
 	allTagList: List<TagObject> = listOf(),
-	tagStateMap : Map<TagObject, NoteViewModel2.Companion.TagObjectState> = mapOf(),
-	savedFileList: List<File> = listOf(),
-	newFileList: List<Uri> = listOf(),
-	toRemoveFileList: List<File> = listOf(),
+	tagStateMap: Map<TagObject, NoteViewModel2.Companion.TagObjectState> = mapOf(),
+	attachmentList: List<NoteViewModel2.Companion.AttachmentState> = listOf(),
 	onClickRemoveLocation: () -> Unit = {},
 	onClickReloadLocation: () -> Unit = {},
-	onAddNewFile: (List<Uri>) -> Unit = {},
-	onRemoveNewFile: (List<Uri>) -> Unit = {},
-	onRemoveSavedFile: (List<File>) -> Unit = {},
+	onAddNewAttachment: (List<Uri>) -> Unit = {},
+	toggleAttachment: (NoteViewModel2.Companion.AttachmentState) -> Unit = {},
 	onClickTag: (TagObject) -> Unit = {},
-	closeLocationPickerDialog : () -> Unit = {},
-	onDismissRequest : (NoteBottomSheet) -> Unit = {}
+	putTag: (String, Color) -> Boolean = { _, _ -> false },
+	closeLocationPickerDialog: () -> Unit = {},
+	onDismissRequest: (NoteBottomSheet) -> Unit = {}
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
@@ -114,12 +111,9 @@ fun BottomSheet(
 		bottomSheetState = bottomSheetState,
 		isBottomSheetVisible = isAttachmentBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); onDismissRequest(NoteBottomSheet.Attachment) } },
-		savedFileList = savedFileList,
-		newFileList = newFileList,
-		toRemoveFileList = toRemoveFileList,
-		onAddNewFile = onAddNewFile,
-		onRemoveNewFile = onRemoveNewFile,
-		onRemoveSavedFile = onRemoveSavedFile,
+		attachmentList = attachmentList,
+		onAddNewAttachment = onAddNewAttachment,
+		toggleAttachment = toggleAttachment,
 	)
 
 	ExportBottomSheet(
@@ -151,7 +145,7 @@ fun BottomSheet(
 				ExportNote.exportData(context = context, dataString = markdownString, noteId = noteId?.toString() ?: "note", ext = "md")
 			})
 		},
-		onClickExportAttachments = { savedFileList.share(context = context) },
+		onClickExportAttachments = { attachmentList.filterIsInstance<NoteViewModel2.Companion.AttachmentState.Saved>().map { it.file }.share(context = context) },
 	)
 
 	TagsBottomSheet(
@@ -161,5 +155,6 @@ fun BottomSheet(
 		allTagList = allTagList,
 		tagStateMap = tagStateMap,
 		onClickTag = onClickTag,
+		putTag = putTag,
 	)
 }

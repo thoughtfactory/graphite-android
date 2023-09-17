@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.syncodec.graphite.presentation.explorer.atlas.composable.AtlasScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -23,7 +23,7 @@ class AtlasActivity : ComponentActivity() {
 		viewModel.loadChapter(chapterId = chapterId)
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val chapterObject by viewModel.currentChapter.collectAsState()
 				val chapterFilteredNoteList by viewModel.chapterFilteredNoteList.collectAsState()

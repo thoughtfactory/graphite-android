@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.syncodec.graphite.presentation.tags.composable.TagScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -18,7 +18,7 @@ class TagsActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				val tagList by viewModel.tagList.collectAsState()
 
 				TagScreen(

@@ -2,11 +2,17 @@ package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,8 +57,11 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketObjectLite
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.repository.group.isAll
 import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.component.bucket.BucketCard
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
 import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
@@ -64,10 +73,13 @@ import com.syncodec.graphite.presentation.common.selectionAction.MainSelectionAc
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.BucketBottomSheet
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.buildingBlock.BucketCard
+import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteGrid.NoteGrid
+import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList.NoteList
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
+import com.syncodec.graphite.utils.isTablet
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -92,13 +104,9 @@ fun BucketScreen(
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
 	var bucketFilter by rememberSaveable { mutableStateOf(setOf(BucketType.TODO, BucketType.BOOK, BucketType.SHOW, BucketType.LINK)) }
-	val bucketList by viewModel.orderedBucketList.collectAsState()
-	var orderedBucketList by remember { mutableStateOf<List<BucketObjectLite>?>(listOf()) }
-	val isLoading by remember(bucketList) { derivedStateOf { bucketList == null } }
-
-	LaunchedEffect(key1 = bucketList) {
-		orderedBucketList = bucketList
-	}
+	val bucketList by viewModel.bucketList.collectAsState()
+	var orderedBucketList by remember { mutableStateOf<List<BucketObjectLite>?>(null) }
+	LaunchedEffect(key1 = bucketList) { orderedBucketList = bucketList?.toList() }
 
 	fun onClickBucket(id: RealmUUID) {
 		if (isSelecting) onSelect(id)
@@ -137,95 +145,79 @@ fun BucketScreen(
 		},
 		isFloatingActionButtonVisible = !isSelecting,
 	) {
-		Box(
-			contentAlignment = Alignment.TopCenter,
-			modifier = Modifier.fillMaxSize()
-		) {
-			Crossfade(
-				targetState = isLoading,
-				animationSpec = tween(300),
-				label = "bucketListStatus_crossfade"
-			) { isLoading1 ->
-				if (isLoading1) {
-					LoadingView()
-				}
-				else {
-					if (orderedBucketList.isNullOrEmpty()) {
-						EmptyView(
-							image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
-							title = "I think, therefore, I am",
-							subTitle = "― René Descartes",
-						)
-					}
-					else {
-						Column(
-							modifier = Modifier.fillMaxSize()
-						) {
-							BucketListFilter(
-								bucketFilter = bucketFilter,
-								bucketList = orderedBucketList ?: listOf(),
+		when {
+			orderedBucketList == null -> LoadingView()
+			orderedBucketList!!.isEmpty() -> EmptyView(
+				image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
+				title = "I think, therefore, I am",
+				subTitle = "― René Descartes",
+			)
+
+			else -> Column(
+				modifier = Modifier.fillMaxSize()
+			) {
+				BucketListFilter(
+					bucketFilter = bucketFilter,
+					bucketList = orderedBucketList ?: listOf(),
+					isSelecting = isSelecting,
+					onClickFilterChip = { bucketFilter.toMutableSet().apply { xor(it); bucketFilter = toSet() } }
+				)
+				Spacer(modifier = Modifier.height(8.dp))
+				LazyVerticalGrid(
+					columns = GridCells.Adaptive(if (isTablet()) 256.dp else 144.dp),
+					state = state.gridState,
+					contentPadding = PaddingValues(horizontal = 10.dp),
+					verticalArrangement = Arrangement.spacedBy(4.dp),
+					horizontalArrangement = Arrangement.spacedBy(4.dp),
+					modifier = Modifier
+						.weight(1f)
+						.reorderable(state)
+				) {
+					items(
+						items = orderedBucketList?.filter { it.bucketType in bucketFilter } ?: listOf(),
+						key = { it.id.toString() }
+					) { bucketObject ->
+						ReorderableItem(
+							reorderableState = state,
+							key = bucketObject.id.toString(),
+						) { isDragging ->
+							BucketCard(
+								title = bucketObject.title,
+								bucketSize = bucketObject.bucketItemCount,
+								bucketType = bucketObject.bucketType,
+								isLocked = bucketObject.isLocked,
+								isFavourite = bucketObject.isFavourite,
 								isSelecting = isSelecting,
-								onClickFilterChip = { bucketFilter.toMutableSet().apply { xor(it); bucketFilter = toSet() } }
+								isSelected = bucketObject.id in selectedIdList,
+								isDragging = isDragging,
+								handle = {
+									Icon(
+										painter = painterResource(id = R.drawable.ic_fa_grip),
+										contentDescription = "Reorder",
+										tint = MaterialTheme.colorScheme.onSurface,
+										modifier = Modifier
+											.size(16.dp)
+											.detectReorder(state)
+									)
+								},
+								onClick = { onClickBucket(bucketObject.id) },
+								onLongClick = { onLongClickBucket(bucketObject.id) },
 							)
-							Spacer(modifier = Modifier.height(8.dp))
-							LazyVerticalGrid(
-								columns = GridCells.Adaptive(144.dp),
-								state = state.gridState,
-								contentPadding = PaddingValues(horizontal = 10.dp),
-								verticalArrangement = Arrangement.spacedBy(4.dp),
-								horizontalArrangement = Arrangement.spacedBy(4.dp),
-								modifier = Modifier
-									.weight(1f)
-									.reorderable(state)
-							) {
-								items(
-									items = orderedBucketList?.filter { it.bucketType in bucketFilter } ?: listOf(),
-									key = { it.id.toString() }
-								) { bucketObject ->
-									ReorderableItem(
-										reorderableState = state,
-										key = bucketObject.id.toString(),
-									) { isDragging ->
-										BucketCard(
-											title = bucketObject.title,
-											bucketSize = bucketObject.bucketItemCount,
-											bucketType = bucketObject.bucketType,
-											isLocked = bucketObject.isLocked,
-											isFavourite = bucketObject.isFavourite,
-											isSelecting = isSelecting,
-											isSelected = bucketObject.id in selectedIdList,
-											isDragging = isDragging,
-											handle = {
-												Icon(
-													painter = painterResource(id = R.drawable.ic_fa_grip),
-													contentDescription = "Reorder",
-													tint = MaterialTheme.colorScheme.onSurface,
-													modifier = Modifier
-														.size(16.dp)
-														.detectReorder(state)
-												)
-											},
-											onClick = { onClickBucket(bucketObject.id) },
-											onLongClick = { onLongClickBucket(bucketObject.id) },
-										)
-									}
-								}
-							}
 						}
 					}
 				}
 			}
 		}
 
-		val isAllFavourite by remember(orderedBucketList, selectedIdList) { derivedStateOf { orderedBucketList?.filter { it.id in selectedIdList }?.all { it.isFavourite } ?: false } }
-		val isAllLocked by remember(orderedBucketList, selectedIdList) { derivedStateOf { orderedBucketList?.filter { it.id in selectedIdList }?.all { it.isLocked } ?: false } }
+		val isAllFavourite by isAll(isSelecting = isSelecting, selectedIdList = selectedIdList, objectList = orderedBucketList, idGetter = BucketObjectLite::id, propGetter = BucketObjectLite::isFavourite)
+		val isAllLocked by isAll(isSelecting = isSelecting, selectedIdList = selectedIdList, objectList = orderedBucketList, idGetter = BucketObjectLite::id, propGetter = BucketObjectLite::isLocked)
 		MainSelectionActionView(
 			modifier = Modifier
 				.align(Alignment.BottomCenter)
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp),
 			isSelecting = isSelecting,
-			isAllItemFavourite = selectedIdList.isNotEmpty() && isAllFavourite,
-			isAllItemLocked = selectedIdList.isNotEmpty() && isAllLocked,
+			isAllItemFavourite = isAllFavourite,
+			isAllItemLocked = isAllLocked,
 			selectedItemCount = selectedIdList.size,
 			onClickDelete = { isDeleteDialogVisible = true },
 			onClickFavourite = { viewModel.onClickMultiFavourite(idList = selectedIdList, isAllFavourite = isAllFavourite) },
@@ -236,7 +228,7 @@ fun BucketScreen(
 			isDialogVisible = isDeleteDialogVisible,
 			onDismissRequest = { isDeleteDialogVisible = false },
 			title = stringResource(id = R.string.delete_items_multiple),
-			contentText = stringResource(id = R.string.are_you_sure_delete_bucket),
+			contentText = stringResource(id = R.string.are_you_sure_delete_selected_bucket),
 			onConfirmDelete = { isDeleteDialogVisible = false; viewModel.delete(selectedIdList); onUnSelectAll() },
 		)
 	}

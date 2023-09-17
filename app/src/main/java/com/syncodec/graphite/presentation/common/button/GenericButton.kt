@@ -3,7 +3,6 @@ package com.syncodec.graphite.presentation.common.button
 import android.widget.Toast
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,6 +20,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
@@ -31,7 +31,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,12 +46,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.FilterAndViewBottomSheet
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.IconButtonSize
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.LockClosedContainer
+import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
+import com.syncodec.graphite.presentation.base.secureComposable.LocalAuthenticatorAction
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 
 
 @Immutable
@@ -64,12 +63,12 @@ class GenericButtonColors(
 ) {
 	@Composable
 	internal fun containerColor(checked: Boolean): State<Color> {
-		return rememberUpdatedState(if (checked) containerColor else checkedContainerColor)
+		return rememberUpdatedState(if (checked) checkedContainerColor else containerColor)
 	}
 
 	@Composable
-	internal fun contentColor(enabled: Boolean): State<Color> {
-		return rememberUpdatedState(if (enabled) iconColor else checkedIconColor)
+	internal fun contentColor(checked: Boolean): State<Color> {
+		return rememberUpdatedState(if (checked) checkedIconColor else iconColor)
 	}
 
 	override fun hashCode(): Int {
@@ -186,34 +185,65 @@ fun GenericButton(
 	shape: Shape = MaterialTheme.shapes.medium,
 	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
 	buttonSize: Dp = IconButtonSize,
-	showTooltipOnClick: Boolean = false,
 	onClick: () -> Unit = {},
 ) {
-	val scope = rememberCoroutineScope()
-
-	val containerColor by animateColorAsState(
-		targetValue = if (checked == true) colors.checkedContainerColor else colors.containerColor,
-		animationSpec = tween(300)
-	)
-	val iconColor by animateColorAsState(
-		targetValue = if (checked == true) colors.checkedIconColor else colors.iconColor,
-		animationSpec = tween(300)
-	)
+	val containerColor by colors.containerColor(checked = checked == true)
+	val iconColor by colors.contentColor(checked = checked == true)
 
 	val rippleColor = if (checked == true) colors.containerColor else colors.checkedContainerColor
 	val rippleIndication = rememberRipple(color = rippleColor)
 
-
 	CompositionLocalProvider(
 		LocalIndication provides rippleIndication,
 	) {
-//		PlainTooltipBox(
-//			tooltip = {
-//				Text(text = tooltip ?: "", style = MaterialTheme.typography.bodyMedium)
-//			},
-//			tooltipState = tooltipState,
-//		) {
-		Box(
+		tooltip?.let {
+			PlainTooltipBox(
+				tooltip = { Text(text = tooltip) }
+			) {
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = modifier
+						.requiredSize((buttonSize * 2) + 2.dp)
+						.padding(2.dp)
+						.background(containerColor, shape)
+						.combinedClickable(
+							enabled = enabled,
+							onClick = { onClick() },
+						)
+				) {
+					AnimatedContent(
+						targetState = icon,
+						transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) },
+						label = "genericButton"
+					) { icon1 ->
+						badgeCount?.let {
+							BadgedBox(
+								badge = {
+									Badge(
+										containerColor = MaterialTheme.colorScheme.primary,
+										contentColor = MaterialTheme.colorScheme.onPrimary
+									) {
+										Text(text = it.toString())
+									}
+								}
+							) {
+								Icon(
+									painter = painterResource(id = icon1),
+									contentDescription = tooltip,
+									tint = iconColor.copy(alpha = if (enabled) 1f else 0.31f),
+									modifier = Modifier.requiredSize(buttonSize)
+								)
+							}
+						} ?: Icon(
+							painter = painterResource(id = icon1),
+							contentDescription = tooltip,
+							tint = iconColor.copy(alpha = if (enabled) 1f else 0.31f),
+							modifier = Modifier.requiredSize(buttonSize)
+						)
+					}
+				}
+			}
+		} ?: Box(
 			contentAlignment = Alignment.Center,
 			modifier = modifier
 				.requiredSize((buttonSize * 2) + 2.dp)
@@ -226,7 +256,7 @@ fun GenericButton(
 		) {
 			AnimatedContent(
 				targetState = icon,
-				transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
+				transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) },
 				label = "genericButton"
 			) { icon1 ->
 				badgeCount?.let {
@@ -255,7 +285,6 @@ fun GenericButton(
 				)
 			}
 		}
-//		}
 	}
 }
 
@@ -281,6 +310,7 @@ fun MenuButton(
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_menu,
+		tooltip = stringResource(id = R.string.menu),
 		colors = colors,
 		onClick = onClick
 	)
@@ -294,6 +324,7 @@ fun ShareButton(
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_share,
+		tooltip = stringResource(id = R.string.share),
 		colors = colors,
 		onClick = onClick
 	)
@@ -307,6 +338,21 @@ fun DeleteButton(
 ) {
 	GenericButton(
 		icon = R.drawable.ic_fa_delete,
+		tooltip = stringResource(id = R.string.delete),
+		colors = colors,
+		onClick = onClick
+	)
+}
+
+@Preview
+@Composable
+fun PinButton(
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_pin,
+		tooltip = stringResource(id = R.string.pin_to_notification_bar),
 		colors = colors,
 		onClick = onClick
 	)
@@ -323,6 +369,7 @@ fun FilterButton(
 
 	GenericButton(
 		icon = R.drawable.ic_fa_filter,
+		tooltip = stringResource(id = R.string.filter_and_view),
 		colors = colors,
 		onClick = { isFilterAndViewBottomSheetVisible = true }
 	)
@@ -378,7 +425,7 @@ fun LockButton(
 	onClick: () -> Unit = {},
 ) {
 	val context = LocalContext.current
-	val isAuthenticate = LocalIsAuthenticated.current
+	val isRepoUnlocked = LocalIsRepoUnlocked.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	GenericButton(
@@ -387,10 +434,10 @@ fun LockButton(
 		checked = isLocked,
 		colors = colors,
 		onClick = {
-			if (isAuthenticate) onClick()
+			if (isRepoUnlocked) onClick()
 			else {
 				Toast.makeText(context, context.getText(R.string.toast_not_authenticated), Toast.LENGTH_SHORT).show()
-				onAuthenticationAction(AuthenticatorScreen.Authenticate)
+				onAuthenticationAction(AuthenticationState.Authenticate)
 			}
 		}
 	)
@@ -399,17 +446,22 @@ fun LockButton(
 @Preview
 @Composable
 fun VaultButton(
-	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
+	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(
+		containerColor = Color.Transparent,
+		iconColor = MaterialTheme.colorScheme.onBackground,
+		checkedContainerColor = MaterialTheme.colorScheme.surface,
+		checkedIconColor = MaterialTheme.colorScheme.onSurface
+	),
 ) {
-	val isAuthenticate = LocalIsAuthenticated.current
+	val isRepoUnlocked = LocalIsRepoUnlocked.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	GenericButton(
 		icon = R.drawable.ic_fa_vault_duotone,
 		tooltip = stringResource(id = R.string.vault),
-		checked = isAuthenticate,
+		checked = isRepoUnlocked,
 		colors = colors,
-		onClick = { onAuthenticationAction(AuthenticatorScreen.Authenticate) },
+		onClick = { onAuthenticationAction(AuthenticationState.Authenticate) },
 	)
 }
 
@@ -491,7 +543,7 @@ fun CancelButton(
 
 @Preview
 @Composable
-fun AddButton(
+fun PlusButton(
 	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
@@ -502,6 +554,21 @@ fun AddButton(
 		onClick = onClick
 	)
 }
+
+@Preview
+@Composable
+fun MinusButton(
+	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
+	onClick: () -> Unit = {},
+) {
+	GenericButton(
+		icon = R.drawable.ic_fa_minus,
+		tooltip = stringResource(id = R.string.remove),
+		colors = colors,
+		onClick = onClick
+	)
+}
+
 
 @Preview
 @Composable

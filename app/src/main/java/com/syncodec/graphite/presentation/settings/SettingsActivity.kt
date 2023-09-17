@@ -39,8 +39,8 @@ import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataS
 import com.syncodec.graphite.presentation.settings.composable.screen.PreferenceScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SecurityScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.utils.AuthenticatorScreen
+import com.syncodec.graphite.presentation.base.BaseComposable
+import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +57,8 @@ class SettingsActivity : ComponentActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
+//		window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
 		auth = Firebase.auth
 
@@ -87,13 +89,13 @@ class SettingsActivity : ComponentActivity() {
 		if (hasExtrasScreen) {
 			val extrasScreenString = intent.getStringExtra(Extras.SettingsScreen.name)
 			if (extrasScreenString.isNullOrBlank()) Toast.makeText(this, "Error navigating to screen", Toast.LENGTH_SHORT).show()
-			else extrasScreen = SettingsScreen.values().find { it.name == extrasScreenString }
+			else extrasScreen = SettingsScreen.entries.find { it.name == extrasScreenString }
 		}
 
-		var authenticatorScreen by mutableStateOf(AuthenticatorScreen.None)
+		var authenticationState by mutableStateOf(AuthenticationState.None)
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val firebaseUser by this.firebaseUser
 

@@ -19,8 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -50,6 +53,7 @@ fun MovieBucketItemScreen(
 	onUpdateState: (BucketItemState) -> Unit = {},
 ) {
 	val context = LocalContext.current
+	val clipboardManager = LocalClipboardManager.current
 
 	val thumbnail by remember(bucketItemObject?.thumbnail) {
 		derivedStateOf {
@@ -85,7 +89,7 @@ fun MovieBucketItemScreen(
 				TabItem(text = stringResource(id = R.string.watching), icon = R.drawable.ic_fa_bucket_show, onClick = { onUpdateState(BucketItemState.BETA) }),
 				TabItem(text = stringResource(id = R.string.watched), icon = R.drawable.ic_fa_circle_check, onClick = { onUpdateState(BucketItemState.GAMMA) }),
 			),
-			selectedTabIndex = maxOf(0, BucketItemState.values().indexOfFirst { it.name == state }),
+			selectedTabIndex = maxOf(0, BucketItemState.entries.indexOfFirst { it.name == state }),
 			modifier = Modifier.fillMaxWidth(),
 			colors = TabDefaults.tabColors(containerColor = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.88f)))
 		)
@@ -93,25 +97,29 @@ fun MovieBucketItemScreen(
 		movieData?.releaseDate?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.released_on),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		movieData?.overview?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.overview),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		movieData?.originalTitle?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.original_title),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		movieData?.runtime?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.runtime),
-				value = "$it ${stringResource(id = R.string.minutes)}"
+				value = "$it ${stringResource(id = R.string.minutes)}",
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("$it ${context.getText(R.string.minutes)}")) }
 			)
 		}
 		movieData?.id?.let {
@@ -128,7 +136,8 @@ fun MovieBucketItemScreen(
 							Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
 						}
 					}
-				}
+				},
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("https://www.themoviedb.org/movie/$it")) }
 			)
 		}
 		movieData?.imdbId?.let {
@@ -145,7 +154,8 @@ fun MovieBucketItemScreen(
 							Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
 						}
 					}
-				}
+				},
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("https://www.imdb.com/title/$it")) }
 			)
 		}
 		if (!movieData?.homepage.isNullOrEmpty()) {
@@ -153,6 +163,7 @@ fun MovieBucketItemScreen(
 				GenericBottomSheetInfo2(
 					key = stringResource(id = R.string.homepage),
 					value = it,
+					onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("https://www.themoviedb.org/movie/$it")) }
 				)
 			}
 		}
@@ -163,7 +174,7 @@ fun MovieBucketItemScreen(
 				genre.name?.let {
 					SuggestionChip(
 						label = { Text(text = it) },
-						onClick = { /*TODO*/ },
+						onClick = { },
 					)
 					Spacer(modifier = Modifier.width(4.dp))
 				}

@@ -3,12 +3,16 @@ package com.syncodec.graphite.presentation.notebook.composable
 import android.content.Intent
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -18,11 +22,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,27 +45,31 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
+import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
 import com.syncodec.graphite.presentation.explorer.atlas.AtlasActivity
 import com.syncodec.graphite.presentation.explorer.calendar.CalendarActivity
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
-import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.note2.NoteActivity2
 import com.syncodec.graphite.presentation.notebook.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.notebook.composable.bar.COLLAPSED_TOP_BAR_HEIGHT
 import com.syncodec.graphite.presentation.notebook.composable.bar.CollapsedTopBar
 import com.syncodec.graphite.presentation.notebook.composable.bar.EXPANDED_TOP_BAR_HEIGHT
 import com.syncodec.graphite.presentation.notebook.composable.bar.ExpandedTopBar
+import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.BottomSheet
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.MenuBottomSheet
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.chapterList
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.noteList
+import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.NotebookBottomSheet
+import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.ChapterCard
+import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.NoteCard
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
+import com.syncodec.graphite.utils.timeStampToPrettyFull
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
@@ -71,6 +82,9 @@ fun NotebookScreen2(
 	chapterObject: ChapterObject? = null,
 	chapterList: List<ChapterObject> = listOf(),
 	noteList: List<NoteObjectLite> = listOf(),
+	tagList: List<TagObject> = listOf(),
+	chapterNoteItemCount: Map<RealmUUID?, Int> = mapOf(),
+	chapterChapterItemCount: Map<RealmUUID?, Int> = mapOf(),
 	chapterPath: List<ChapterObjectLite> = listOf(),
 	defaultChapterId: RealmUUID? = null,
 	onLoadChapter: (RealmUUID) -> Unit = {},
@@ -80,26 +94,31 @@ fun NotebookScreen2(
 	onClickMultiLock: (Set<RealmUUID>) -> Unit = {},
 	onClickSetDefault: (RealmUUID) -> Unit = {},
 	putChapter: (RealmUUID?, String, String, Color?, Bitmap?) -> Unit = { _, _, _, _, _ -> },
+	onConfirmDelete: (Set<RealmUUID>) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
 	val density = LocalDensity.current
 
+	var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+
 	val bitmap by remember(chapterObject) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	val editChapterBottomSheetState = rememberModalBottomSheetState()
-	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
-	var isMetadataBottomSheetVisibe by remember { mutableStateOf(false) }
-	var isNewChapterBottomSheetVisible by remember { mutableStateOf(false) }
-	var isEditChapterBottomSheetVisible by remember { mutableStateOf(false) }
+	var isMenuBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+	var isMetadataBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+	var isNewChapterBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+	var isEditChapterBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+
+	var isDeleteDialogVisible by rememberSaveable { mutableStateOf(false) }
 
 //	null : selecting nothing
 //	true : selecting notes
 //	false : selecting chapters
-	var selectionType by remember { mutableStateOf<Boolean?>(null) }
-	var selectedIdList: Set<RealmUUID> by remember { mutableStateOf(setOf()) }
+	var selectionType by rememberSaveable { mutableStateOf<Boolean?>(null) }
+	var selectedIdList: Set<RealmUUID> by rememberSaveable { mutableStateOf(setOf()) }
 
 	fun onSelect(id: RealmUUID) {
 		selectedIdList.toMutableSet().apply {
@@ -112,7 +131,7 @@ fun NotebookScreen2(
 		when (selectionType) {
 			true -> onSelect(id = id)
 			false -> Unit
-			null -> Intent(context, NoteActivity::class.java).apply {
+			null -> Intent(context, NoteActivity2::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -138,8 +157,27 @@ fun NotebookScreen2(
 
 //	val firstVisibleItemScrollOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
 
+	var noteScrollState by rememberSaveable { mutableStateOf(Pair(0, 0)) }
+	var chapterScrollState by rememberSaveable { mutableStateOf(Pair(0, 0)) }
+	fun onSelectTab(newTab: Int) {
+		if (newTab == selectedTab) return
+		else {
+			scope.launch {
+				if (newTab == 0) {
+					chapterScrollState = Pair(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+					selectedTab = 0
+					listState.scrollToItem(noteScrollState.first, noteScrollState.second)
+				} else {
+					noteScrollState = Pair(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+					selectedTab = 1
+					listState.scrollToItem(chapterScrollState.first, chapterScrollState.second)
+				}
+			}
+		}
+	}
+
 	GenericScaffold2(
-		bottomBar = { BottomBar(onClickMetadata = { isMetadataBottomSheetVisibe = true }) },
+		bottomBar = { BottomBar(onClickMetadata = { isMetadataBottomSheetVisible = true }) },
 		isTopBarVisible = selectionType == null,
 		isBottomBarVisible = selectionType == null,
 		floatingActionButton = {
@@ -183,12 +221,17 @@ fun NotebookScreen2(
 			chapterColor = chapterObject?.color?.let { Color(it) },
 			chapterPath = chapterPath,
 			defaultChapterId = defaultChapterId,
+			selectedTab = selectedTab,
 			isCollapsed = isCollapsed,
+			isSelecting = selectionType != null,
 			onContainerColor = bitmap?.let { Color.White } ?: chapterObject?.color?.let { Color(it) }?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
 			onClickFavourite = { chapterObject?.let(onClickFavourite) },
 			onClickLock = { chapterObject?.let(onClickLock) },
 			onClickMenuButton = { isMenuBottomSheetVisible = true },
+			onLoadChapter = onLoadChapter,
+			onSelectTab = ::onSelectTab
 		)
+
 		LazyColumn(
 			state = listState,
 			modifier = Modifier.fillMaxSize()
@@ -200,26 +243,33 @@ fun NotebookScreen2(
 					containerColor = chapterObject?.color?.let { Color(it) },
 					defaultChapterId = defaultChapterId,
 					chapterPath = chapterPath,
+					selectedTab = selectedTab,
+					isSelecting = selectionType != null,
+					onLoadChapter = onLoadChapter,
+					onSelectTab = ::onSelectTab
 				)
 			}
-			noteList(
-				noteList = noteList.toSet(),
-				selectedIdList = selectedIdList,
-				isVisible = true,
-				toggleVisibility = {},
-				onClick = { onClickNote(it.id) },
-			) { selectionType = true; onSelect(it.id) }
-			chapterList(
-				chapterList = chapterList,
-//				chapterNoteItemCount = chapterNoteItemCount,
-//				chapterChapterItemCount = chapterChapterItemCount,
-//				tagList = tagList,
-				selectedIdList = selectedIdList,
-//				isVisible = isChapterListVisible,
-//				toggleVisibility = onToggleChapterVisibility,
-				onClick = { onClickChapter(it.id) },
-				onLongClick = { selectionType = false; onSelect(it.id) }
-			)
+			when {
+				selectedTab == 0 && noteList.isEmpty() -> Unit
+				selectedTab == 0 -> noteList(
+					noteList = noteList.toSet(),
+					tagList = tagList,
+					selectedIdList = selectedIdList,
+					onClick = { onClickNote(it.id) },
+					onLongClick = { selectionType = true; onSelect(it.id) }
+				)
+
+				chapterList.isEmpty() -> Unit
+				else -> chapterList(
+					chapterList = chapterList,
+					chapterNoteItemCount = chapterNoteItemCount,
+					chapterChapterItemCount = chapterChapterItemCount,
+					selectedIdList = selectedIdList,
+					onClick = { onClickChapter(it.id) },
+					onLongClick = { selectionType = false; onSelect(it.id) }
+				)
+
+			}
 
 			item { Spacer(modifier = Modifier.height(128.dp)) }
 		}
@@ -229,85 +279,129 @@ fun NotebookScreen2(
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)
 				.align(Alignment.BottomCenter),
 			isSelecting = selectionType != null,
-			isAllItemFavourite = noteList.filter { it.id in selectedIdList }.all { it.isFavourite } && chapterList.filter { it.id in selectedIdList }.all { it.isFavourite },
-			isAllItemLocked = noteList.filter { it.id in selectedIdList }.all { it.isLocked } && chapterList.filter { it.id in selectedIdList }.all { it.isLocked },
+			isAllItemFavourite = selectedIdList.isNotEmpty() && noteList.filter { it.id in selectedIdList }.all { it.isFavourite } && chapterList.filter { it.id in selectedIdList }.all { it.isFavourite },
+			isAllItemLocked = selectedIdList.isNotEmpty() && noteList.filter { it.id in selectedIdList }.all { it.isLocked } && chapterList.filter { it.id in selectedIdList }.all { it.isLocked },
 			selectedItemCount = selectedIdList.size,
-			onClickDelete = {},
+			onClickDelete = { isDeleteDialogVisible = true },
 			onClickFavourite = { onClickMultiFavourite(selectedIdList) },
 			onClickLock = { onClickMultiLock(selectedIdList) }
 		)
 	}
 
-	MenuBottomSheet(
+	BottomSheet(
 		bottomSheetState = bottomSheetState,
-		isBottomSheetVisible = isMenuBottomSheetVisible,
-		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false } },
-		isChapterDefault = chapterObject?.id == defaultChapterId,
-		onClickAttachments = {
-			Intent(context, AttachmentActivity::class.java).apply {
-				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
-				context.startActivity(this)
-			}
-		},
-		onClickAtlas = {
-			Intent(context, AtlasActivity::class.java).apply {
-				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
-				context.startActivity(this)
-			}
-		},
-		onClickCalendar = {
-			Intent(context, CalendarActivity::class.java).apply {
-				putExtra(Extra.Companion.Extra.ExplorerType.name, Extra.Companion.ExplorerType.Calendar.name)
-				putExtra(Extra.Companion.Extra.ChapterId.name, chapterObject?.id?.bytes)
-				context.startActivity(this)
-			}
-		},
-		onClickSetAsDefault = { chapterObject?.id?.let(onClickSetDefault) },
-		onClickEdit = {
-			scope.launch {
-				bottomSheetState.hide()
-				isMenuBottomSheetVisible = false
-				isEditChapterBottomSheetVisible = true
-			}
-		},
-		onClickDelete = {},
-	)
-
-	MetadataBottomSheet(
-		bottomSheetState = bottomSheetState,
-		isBottomSheetVisible = isMetadataBottomSheetVisibe,
-		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMetadataBottomSheetVisibe = false } },
-		id = chapterObject?.id,
-		createdTimestamp = chapterObject?.createdTimestamp,
-		modifiedTimestamp = chapterObject?.modifiedTimestamp,
-		extraContent = {
-			GenericBottomSheetInfo2(
-				key = stringResource(id = R.string.parent_id),
-				value = chapterObject?.parentId?.toString() ?: stringResource(id = R.string.root_element),
-			)
-			GenericBottomSheetInfo2(
-				key = stringResource(id = R.string.description),
-				value = chapterObject?.description ?: stringResource(id = R.string.no_description),
-			)
-		}
-	)
-
-//	New chapter
-	ChapterBottomSheet(
-		bottomSheetState = bottomSheetState,
-		isBottomSheetVisible = isNewChapterBottomSheetVisible,
-		onDismissRequest = { scope.launch { bottomSheetState.hide(); isNewChapterBottomSheetVisible = false } },
-		title = stringResource(id = R.string.new_chapter),
-		putChapter = putChapter,
-	)
-
-//	Edit chapter
-	ChapterBottomSheet(
-		bottomSheetState = editChapterBottomSheetState,
-		isBottomSheetVisible = isEditChapterBottomSheetVisible,
-		onDismissRequest = { scope.launch { editChapterBottomSheetState.hide(); isEditChapterBottomSheetVisible = false } },
-		title = stringResource(id = R.string.edit_chapter),
+		editChapterBottomSheetState = editChapterBottomSheetState,
+		isMenuBottomSheetVisible = isMenuBottomSheetVisible,
+		isMetadataBottomSheetVisible = isMetadataBottomSheetVisible,
+		isNewChapterBottomSheetVisible = isNewChapterBottomSheetVisible,
+		isEditChapterBottomSheetVisible = isEditChapterBottomSheetVisible,
 		chapterObject = chapterObject,
+		defaultChapterId = defaultChapterId,
 		putChapter = putChapter,
+		onClickSetDefault = onClickSetDefault,
+		onClickEditChapter = { isEditChapterBottomSheetVisible = true },
+		onDismissRequest = { notebookBottomSheet ->
+			when (notebookBottomSheet) {
+				NotebookBottomSheet.Menu -> scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false }
+				NotebookBottomSheet.Metadata -> scope.launch { bottomSheetState.hide(); isMetadataBottomSheetVisible = false }
+				NotebookBottomSheet.NewChapter -> scope.launch { bottomSheetState.hide(); isNewChapterBottomSheetVisible = false }
+				NotebookBottomSheet.EditChapter -> scope.launch { editChapterBottomSheetState.hide(); isEditChapterBottomSheetVisible = false }
+			}
+		},
+	)
+
+	DeleteDialog(
+		isDialogVisible = isDeleteDialogVisible,
+		onDismissRequest = { isDeleteDialogVisible = false },
+		title = stringResource(id = R.string.delete_items_multiple),
+		contentText = stringResource(id = R.string.are_you_sure_delete_multiple),
+		onConfirmDelete = {
+			onConfirmDelete(selectedIdList.toSet())
+			isDeleteDialogVisible = false
+			selectedIdList = setOf()
+		},
 	)
 }
+
+@OptIn(ExperimentalFoundationApi::class)
+fun LazyListScope.noteList(
+	noteList: Set<NoteObjectLite> = setOf(),
+	tagList: List<TagObject> = listOf(),
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onClick: (NoteObjectLite) -> Unit = {},
+	onLongClick: (NoteObjectLite) -> Unit = {},
+) {
+	item { Spacer(modifier = Modifier.height(8.dp)) }
+
+	noteList.forEach { note ->
+		item(
+			key = note.id.toString(),
+			contentType = { NoteObjectLite::class }
+		) {
+			Box(
+				modifier = Modifier.animateItemPlacement(tween(470))
+			) {
+				NoteCard(
+					id = note.id,
+					timestamp = note.userTimestamp.timeStampToPrettyFull(),
+					title = note.title,
+					isFavourite = note.isFavourite,
+					isLocked = note.isLocked,
+					contentThumbnail = note.contentThumbnail,
+					thumbnail = note.thumbnail,
+					address = note.address,
+					latLng = note.latLng,
+					tagList = tagList.filter { note.id in it.objectIdList }.map { it.toLite() },
+					isSelected = note.id in selectedIdList,
+					onClick = { onClick(note) },
+					onLongClick = { onLongClick(note) },
+				)
+			}
+		}
+	}
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+fun LazyListScope.chapterList(
+	chapterList: List<ChapterObject> = listOf(),
+	chapterNoteItemCount: Map<RealmUUID?, Int> = mapOf(),
+	chapterChapterItemCount: Map<RealmUUID?, Int> = mapOf(),
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onClick: (ChapterObject) -> Unit = {},
+	onLongClick: (ChapterObject) -> Unit = {},
+) {
+	item { Spacer(modifier = Modifier.height(8.dp)) }
+
+	chapterList
+		.forEach { chapterObject ->
+			item(
+				key = chapterObject.id.toString(),
+				contentType = { ChapterObject::class }
+			) {
+				Box(
+					modifier = Modifier.animateItemPlacement(tween(470))
+				) {
+					ChapterCard(
+						id = chapterObject.id,
+						createdTimestamp = chapterObject.createdTimestamp,
+						modifiedTimestamp = chapterObject.modifiedTimestamp,
+						title = chapterObject.title,
+						description = chapterObject.description,
+						isFavourite = chapterObject.isFavourite,
+						isLocked = chapterObject.isLocked,
+						color = chapterObject.color?.let { Color(it) },
+						thumbnail = chapterObject.thumbnail,
+						noteCount = chapterNoteItemCount[chapterObject.id] ?: 0,
+						chapterCount = chapterChapterItemCount[chapterObject.id] ?: 0,
+						isSelected = chapterObject.id in selectedIdList,
+						onClick = { onClick(chapterObject) },
+						onLongClick = { onLongClick(chapterObject) },
+					)
+				}
+			}
+		}
+
+	item { Spacer(modifier = Modifier.height(96.dp)) }
+}
+
+

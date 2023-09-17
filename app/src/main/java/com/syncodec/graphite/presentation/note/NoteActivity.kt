@@ -17,7 +17,7 @@ import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.screen.NoteScreen
 import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import io.realm.kotlin.types.RealmUUID
@@ -63,7 +63,7 @@ class NoteActivity : ComponentActivity() {
 		val dataStoreInstance = DataStoreInstance(this)
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val containerColor = MaterialTheme.colorScheme.background
 				val contentColor = MaterialTheme.colorScheme.onBackground

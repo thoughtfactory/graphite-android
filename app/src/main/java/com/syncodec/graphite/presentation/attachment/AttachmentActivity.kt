@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreen
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -59,7 +59,7 @@ class AttachmentActivity : ComponentActivity() {
 		}
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				AttachmentScreen()
 			}
 		}

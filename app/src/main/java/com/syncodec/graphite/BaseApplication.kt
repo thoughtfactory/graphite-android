@@ -20,8 +20,8 @@ import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemViewModel
-import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
-import com.syncodec.graphite.presentation.common.dialog.whereDialog2.WhereDialogViewModel2
+import com.syncodec.graphite.presentation.common.dialog.where.whereBucketDialog.WhereBucketDialogViewModel2
+import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.WhereChapterDialogViewModel2
 import com.syncodec.graphite.presentation.explorer.atlas.AtlasViewModel
 import com.syncodec.graphite.presentation.explorer.calendar.CalendarViewModel
 import com.syncodec.graphite.presentation.main.MainViewModel
@@ -36,13 +36,12 @@ import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataV
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
-import com.syncodec.graphite.utils.AuthenticatorScreen
+import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -55,8 +54,6 @@ import java.time.Instant
 
 class BaseApplication : Application() {
 
-	private lateinit var dataStore: DataStoreInstance
-
 	override fun onCreate() {
 		super.onCreate()
 		FirebaseApp.initializeApp(this)
@@ -68,13 +65,14 @@ class BaseApplication : Application() {
 		val dataStoreInstance = DataStoreInstance(context = this)
 		val sortByFlow = dataStoreInstance.getSortBy
 		val sortOnFlow = dataStoreInstance.getSortOn
-		val isAuthenticated = isAuthenticated.asStateFlow()
 
 		val repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
 
 		val repository = Repository()
-		repository.initRepository(this)
+//		repository.initRepository(context = this, dataStoreInstance = dataStoreInstance)
 		repositoryStatusStateFlow.tryEmit(Repository.Companion.RepositoryStatus.Success(repository = repository))
+
+		val isAuthenticated = repository.isUnlocked
 
 		val geoLocator = GeoLocator(this)
 
@@ -119,8 +117,8 @@ class BaseApplication : Application() {
 //					viewModelOf(::ClearDataViewModel)
 //					viewModelOf(::LocalBackupViewModel)
 //					viewModelOf(::LocalBackupViewModel)
-					viewModelOf(::WhereDialogViewModel)
-					viewModelOf(::WhereDialogViewModel2)
+					viewModelOf(::WhereChapterDialogViewModel2)
+					viewModelOf(::WhereBucketDialogViewModel2)
 					viewModelOf(::AtlasViewModel)
 					viewModelOf(::CalendarViewModel)
 					viewModelOf(::SearchViewModel)
@@ -130,7 +128,6 @@ class BaseApplication : Application() {
 			)
 		}
 
-		dataStore = DataStoreInstance(this)
 		Purchases.debugLogsEnabled = false
 		val auth = Firebase.auth
 
@@ -146,7 +143,7 @@ class BaseApplication : Application() {
 
 		auth.currentUser?.uid?.let { uid ->
 			CoroutineScope(Dispatchers.Default).launch {
-				dataStore.getSuperExpiryTime.collect { superExpiryTimeString ->
+				dataStoreInstance.getSuperExpiryTime.collect { superExpiryTimeString ->
 					try {
 						val currentTimestamp = Instant.now().toEpochMilli()
 						when {
@@ -188,10 +185,7 @@ class BaseApplication : Application() {
 	}
 
 	companion object {
-		val isPro: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
-		val isAuthenticated: MutableStateFlow<Boolean> = MutableStateFlow(false)
-		val authenticatorScreen: MutableStateFlow<AuthenticatorScreen> =
-			MutableStateFlow(AuthenticatorScreen.None)
+		val isPro: MutableStateFlow<Boolean> = MutableStateFlow(true)
+		val authenticationState: MutableStateFlow<AuthenticationState> = MutableStateFlow(AuthenticationState.None)
 	}
 }

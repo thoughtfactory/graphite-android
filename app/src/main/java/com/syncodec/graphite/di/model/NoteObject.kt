@@ -1,7 +1,6 @@
 package com.syncodec.graphite.di.model
 
 import android.graphics.Color
-import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -15,7 +14,6 @@ import com.syncodec.graphite.di.repository.cache.NoteCache
 import com.syncodec.graphite.utils.getRandomColor
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
-import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -124,12 +122,7 @@ class NoteObject() : RealmObject {
 				null
 			},
 			address = this.address,
-//			contentThumbnail = if (NoteCache.noteContentThumbnailMap[id]?.first == this.hashCode()) NoteCache.noteContentThumbnailMap[id]?.second else {
-//				val cacheContentThumbnail = this.content?.let { Json.decodeFromString<KitKatContent>(it) }?.toTxt()?.take(256)
-//				NoteCache.noteContentThumbnailMap[id] = Pair(this.hashCode(), cacheContentThumbnail)
-//				cacheContentThumbnail
-//			},
-			contentThumbnail = null,
+			contentThumbnail = NoteCache.getOrSetCache(noteObject = this),
 			thumbnail = this.thumbnail,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked,
@@ -258,8 +251,8 @@ data class NoteObjectLite(
 	val thumbnail: String? = null,
 	val isFavourite: Boolean,
 	val isLocked: Boolean,
-	val tagList : List<TagObjectLite> = listOf(),
-	val attachmentList : List<File> = listOf(),
+	val tagList: List<TagObjectLite> = listOf(),
+	val attachmentList: List<File> = listOf(),
 	val overWritable: Boolean = true,
 	val deletable: Boolean = true,
 	val localOnly: Boolean = false

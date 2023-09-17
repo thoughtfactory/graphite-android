@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericButton
@@ -40,11 +41,8 @@ import com.syncodec.graphite.presentation.notebook.screen.composable.bottomSheet
 import com.syncodec.graphite.presentation.notebook.screen.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.notebook.screen.composable.dialog.NotebookDialog
 import com.syncodec.graphite.presentation.notebook.screen.composable.dialog.NotebookDialogType
-import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LoaderStatus
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -61,8 +59,8 @@ fun NotebookScreen() {
 	val viewModel : NotebookScreenViewModel = koinViewModel()
 	val hapticFeedback = LocalHapticFeedback.current
 
-	val isAuthenticated = LocalIsAuthenticated.current
-	val onAuthenticationAction = LocalAuthenticatorAction.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
+//	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	val defaultChapterId by viewModel.defaultChapterId.collectAsState()
 
@@ -186,7 +184,7 @@ fun NotebookScreen() {
 				onClickLock = {
 					if (chapterId == defaultChapterId)
 					else chapterId?.let {
-						if (isAuthenticated) viewModel.toggleLock(it) else onAuthenticationAction(AuthenticatorScreen.Authenticate)
+//						if (isAuthenticated) viewModel.toggleLock(it) else onAuthenticationAction(AuthenticationState.Authenticate)
 					}
 				},
 				onClickFavourite = { chapterId?.let { viewModel.toggleFavourite(it) } },

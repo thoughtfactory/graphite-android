@@ -7,12 +7,13 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.utils.isTablet
 
 
 @Composable
 fun SameHeightRowGrid(
 	modifier: Modifier = Modifier,
-	minWidthItem: Dp = 96.dp,
+	minWidthItem: Dp = if (isTablet()) 144.dp else 96.dp,
 	content: @Composable () -> Unit
 ) {
 	SubcomposeLayout(

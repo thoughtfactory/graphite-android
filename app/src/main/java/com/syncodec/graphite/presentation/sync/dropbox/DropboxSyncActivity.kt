@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.sync.dropbox.composable.screen.DropboxSyncScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.share
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +58,7 @@ class DropboxSyncActivity : ComponentActivity() {
 			var isGeneratingSnapshot by remember { mutableStateOf(false) }
 			var isRestoringSnapshot by remember { mutableStateOf(false) }
 
-			BaseContent {
+			BaseComposable {
 				DropboxSyncScreen(
 					testConnectionResponse = _testConnectionResponse,
 					snapshotList = snapshotList,

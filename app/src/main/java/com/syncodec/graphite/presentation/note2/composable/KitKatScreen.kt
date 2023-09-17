@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +33,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.common.dialog.whereDialog2.WhereDialog2
+import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.WhereChapterDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.note2.KitKat
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
@@ -46,7 +47,6 @@ import com.syncodec.graphite.presentation.note2.composable.buildingBlock.ViewerH
 import com.syncodec.graphite.presentation.note2.composable.dialog.LocationPickerDialog
 import com.syncodec.graphite.utils.LocationData
 import io.realm.kotlin.types.RealmUUID
-import java.io.File
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,19 +65,17 @@ fun KitKatScreen(
 	parentChapter: ChapterObjectLite? = null,
 	allTagList: List<TagObject> = listOf(),
 	tagStateMap: Map<TagObject, NoteViewModel2.Companion.TagObjectState> = mapOf(),
-	savedFileList: List<File> = listOf(),
-	newFileList: List<Uri> = listOf(),
-	toRemoveFileList: List<File> = listOf(),
+	attachmentList : List<NoteViewModel2.Companion.AttachmentState> = listOf(),
 	onClickSave: () -> Unit = {},
 	onClickEdit: () -> Unit = {},
 	onSetLocation: (LatLng, String?) -> Unit = { _, _ -> },
 	onClickRemoveLocation: () -> Unit = {},
 	onClickReloadLocation: () -> Unit = {},
-	onAddNewFile: (List<Uri>) -> Unit = {},
-	onRemoveNewFile: (List<Uri>) -> Unit = {},
-	onRemoveSavedFile: (List<File>) -> Unit = {},
+	onAddNewAttachment: (List<Uri>) -> Unit = {},
+	toggleAttachment: (NoteViewModel2.Companion.AttachmentState) -> Unit = {},
 	onSelectChapter: (RealmUUID) -> Unit = {},
 	onClickTag: (TagObject) -> Unit = {},
+	putTag: (String, Color) -> Boolean = { _, _ -> false },
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
 	onClickBack: () -> Unit = {},
@@ -129,7 +127,6 @@ fun KitKatScreen(
 				onClickTags = { isTagsBottomSheetVisible = true },
 				onKitKatAction = { kitKat.onKitKatAction(it) }
 			) else ViewerBottomBar(
-				attachmentCount = savedFileList.size,
 				onClickMetadata = { isViewerMetadataBottomSheetVisible = true },
 				onClickLocation = { isViewerLocationBottomSheetVisible = true },
 				onClickExport = { isExportBottomSheetVisible = true },
@@ -147,7 +144,7 @@ fun KitKatScreen(
 					userTimestamp = userTimestamp,
 					locationData = locationData,
 					parentChapter = parentChapter,
-					fileList = savedFileList,
+					savedAttachmentList = attachmentList.filterIsInstance<NoteViewModel2.Companion.AttachmentState.Saved>(),
 					connectedTagList = tagStateMap.filterValues { it == NoteViewModel2.Companion.TagObjectState.Saved }.keys,
 					modifier = Modifier
 						.fillMaxWidth()
@@ -201,15 +198,13 @@ fun KitKatScreen(
 		locationData = locationData,
 		allTagList = allTagList,
 		tagStateMap = tagStateMap,
-		savedFileList = savedFileList,
-		newFileList = newFileList,
-		toRemoveFileList = toRemoveFileList,
+		attachmentList = attachmentList,
 		onClickRemoveLocation = onClickRemoveLocation,
 		onClickReloadLocation = onClickReloadLocation,
-		onAddNewFile = onAddNewFile,
-		onRemoveNewFile = onRemoveNewFile,
-		onRemoveSavedFile = onRemoveSavedFile,
+		onAddNewAttachment = onAddNewAttachment,
+		toggleAttachment = toggleAttachment,
 		onClickTag = onClickTag,
+		putTag = putTag,
 		closeLocationPickerDialog = { isLocationPickerDialogVisible = false },
 		onDismissRequest = {
 			when (it) {
@@ -234,7 +229,7 @@ fun KitKatScreen(
 		},
 	)
 
-	WhereDialog2(
+	WhereChapterDialog2(
 		isDialogVisible = isWhereDialogVisible,
 		onDismissRequest = { isWhereDialogVisible = false },
 		currentSelectedChapter = parentChapter?.id,

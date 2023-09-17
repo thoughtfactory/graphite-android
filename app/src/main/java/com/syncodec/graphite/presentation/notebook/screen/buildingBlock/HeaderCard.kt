@@ -1,12 +1,11 @@
 package com.syncodec.graphite.presentation.notebook.screen.buildingBlock
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -28,11 +27,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.utils.getInverseBWColor
-import io.github.esentsov.PackagePrivate
 
 
-@OptIn(ExperimentalAnimationApi::class)
-@PackagePrivate
 @Preview
 @Composable
 fun Header(
@@ -68,7 +64,7 @@ fun Header(
 					style = MaterialTheme.typography.bodyLarge,
 					color = backgroundColor.getInverseBWColor(),
 					fontWeight = FontWeight.Bold,
-					transitionSpec = { scaleIn(tween(300), 0.71f) + fadeIn(tween(300)) with scaleOut(tween(300), 0.71f) + fadeOut(tween(300)) },
+					transitionSpec = { (scaleIn(tween(300), 0.71f) + fadeIn(tween(300))).togetherWith(scaleOut(tween(300), 0.71f) + fadeOut(tween(300))) },
 				)
 
 				Spacer(modifier = Modifier.weight(1f))
@@ -78,7 +74,7 @@ fun Header(
 					style = MaterialTheme.typography.bodyMedium,
 					color = backgroundColor.getInverseBWColor(),
 					fontWeight = FontWeight.Bold,
-					transitionSpec = { scaleIn(tween(300), 0.71f) + fadeIn(tween(300)) with scaleOut(tween(300), 0.71f) + fadeOut(tween(300)) },
+					transitionSpec = { (scaleIn(tween(300), 0.71f) + fadeIn(tween(300))).togetherWith(scaleOut(tween(300), 0.71f) + fadeOut(tween(300))) },
 				)
 			}
 		}

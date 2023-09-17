@@ -4,9 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,11 +30,11 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.search.SearchViewModel
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItemView
-import com.syncodec.graphite.presentation.ui.AttachmentContainer
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.IconButtonSize
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.AttachmentContainer
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.LockClosedContainer
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 
 
 @Preview
@@ -45,7 +43,7 @@ fun SearchWhatView(
 	tagList: Set<TagObject> = setOf(),
 	onAddFilter: (SearchViewModel.Companion.NoteFilter) -> Unit = {},
 ) {
-	val isAuthenticated = LocalIsAuthenticated.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
 
 	LazyColumn(
 		modifier = Modifier.fillMaxSize()

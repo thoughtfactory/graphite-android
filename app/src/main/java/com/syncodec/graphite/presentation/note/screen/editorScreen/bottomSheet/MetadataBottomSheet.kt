@@ -29,7 +29,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyValueCard
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.base.IconButtonSize
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.github.esentsov.PackagePrivate
 import io.realm.kotlin.types.RealmUUID

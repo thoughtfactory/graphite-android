@@ -3,7 +3,6 @@ package com.syncodec.graphite.presentation.bucket.composable.screen
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
@@ -27,16 +26,19 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucket.composable.bar.TopBar
+import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.EditBucketBottomSheet
+import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.MenuBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.screen.bookScreen.BucketBookScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.linkScreen.BucketLinkScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.showScreen.BucketShowScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen.BucketTodoScreen
 import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
+import com.syncodec.graphite.presentation.common.dialog.where.whereBucketDialog.WhereBucketDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.BucketSelectionActionView
-import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.enumValueOf
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
@@ -55,12 +57,8 @@ fun BucketScreen(
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
-	val isAuthenticated = LocalIsAuthenticated.current
-
 	val viewModel: BucketViewModel = koinViewModel()
 	val bucketScreenCommonViewModel: BucketScreenCommonViewModel = koinViewModel()
-
-	val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
 	val pagerState = rememberPagerState(
 		initialPage = 0,
@@ -84,38 +82,32 @@ fun BucketScreen(
 
 	val searchQueryList by bucketScreenCommonViewModel.searchQueryList.collectAsState()
 
-	var showEditBucketDialog by remember { mutableStateOf(false) }
-	var showDeleteBucketItemsDialog by remember { mutableStateOf(false) }
-	var showDeleteBucketDialog by remember { mutableStateOf(false) }
-
 	val bucketObject by viewModel.bucketObject.collectAsState()
-	val title by viewModel.title.collectAsState()
-	val bucketType by viewModel.bucketType.collectAsState()
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
 	var isMetadataBottomSheetVisible by remember { mutableStateOf(false) }
+	var isEditBucketBottomSheetVisible by remember { mutableStateOf(false) }
 
-	var isDeleteDialogVisible by remember { mutableStateOf(false) }
+	var isWhereBucketDialogVisible by remember { mutableStateOf(false) }
+	var isDeleteBucketDialogVisible by remember { mutableStateOf(false) }
+	var isDeleteSelectedItemDialogVisible by remember { mutableStateOf(false) }
 
 	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = setOf() }
 	BackHandler(enabled = isSearching) { isSearching = false; bucketScreenCommonViewModel.clearSearchFilter() }
 
-	fun share(shareAll: Boolean = false) {
-		viewModel.shareBucketItems(shareAll = shareAll, realmUUIDList = selectedIdList.toList()) {
-			withContext(Dispatchers.Main) {
-				Intent(Intent.ACTION_SEND).apply {
-					type = "text/html"
-					putExtra(Intent.EXTRA_SUBJECT, title ?: bucketType)
-					putExtra(Intent.EXTRA_TEXT, it)
+	suspend fun share(shareText: String) {
+		withContext(Dispatchers.Main) {
+			Intent(Intent.ACTION_SEND).apply {
+				type = "text/html"
+				putExtra(Intent.EXTRA_SUBJECT, "My book list")
+				putExtra(Intent.EXTRA_TEXT, shareText)
+				addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-					if (resolveActivity(context.packageManager) != null) context.startActivity(Intent.createChooser(this, "Share using"))
-					else Toast.makeText(context, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
-				}
+				if (resolveActivity(context.packageManager) != null) context.startActivity(Intent.createChooser(this, "Share using"))
+				else Toast.makeText(context, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
 			}
 		}
-		isSelecting = false
-		selectedIdList = setOf()
 	}
 
 	bucketObject?.let { bucketObject1 ->
@@ -130,9 +122,10 @@ fun BucketScreen(
 					isSearching = isSearching,
 					isSelecting = isSelecting,
 					searchQueryList = searchQueryList,
-					onClickFavourite = viewModel::toggleFavourite,
-					onClickLock = { viewModel.toggleLock() },
+					onClickFavourite = { viewModel.toggleFavourite(bucketObject1.id) },
+					onClickLock = { viewModel.toggleLock(bucketObject1.id) },
 					onClickSearch = { isSearching = true },
+					onClickMenuButton = { isMenuBottomSheetVisible = true },
 					addSearchQuery = { bucketScreenCommonViewModel.filterBySearchAdd(it) },
 					removeSearchQuery = { bucketScreenCommonViewModel.filterBySearchRemove(it) },
 				)
@@ -144,26 +137,25 @@ fun BucketScreen(
 			},
 			isBottomBarVisible = !isSelecting,
 			dialogContent = {
-//				BucketDialog(
-//					bucketObject = bucketObject1,
-//					showEditBucketDialog = showEditBucketDialog,
-//					showDeleteBucketItemsDialog = showDeleteBucketItemsDialog,
-//					showDeleteBucketDialog = showDeleteBucketDialog,
-//					onUpdateBucket = viewModel::updateBucket,
-//					onDelete = {
-//						viewModel.deleteBucketItem(selectedIdList.toList())
-//						isSelecting = false
-//						selectedIdList = setOf()
-//					},
-//					onDeleteBucket = {
-//						viewModel.deleteBucket(bucketObject1.id) {
-//							closeDialog(BucketDialogType.DeleteBucket)
-//							withContext(Dispatchers.Main) { Toast.makeText(context, "Bucket Deleted", Toast.LENGTH_SHORT).show() }
-//							afterDeleteBucket()
-//						}
-//					},
-//					closeDialog = ::closeDialog,
-//				)
+				DeleteDialog(
+					isDialogVisible = isDeleteSelectedItemDialogVisible,
+					onDismissRequest = { isDeleteSelectedItemDialogVisible = false },
+					title = stringResource(id = R.string.delete_items_multiple),
+					contentText = stringResource(id = R.string.are_you_sure_delete_multiple),
+					onConfirmDelete = {
+						bucketScreenCommonViewModel.deleteMultiple(idList = selectedIdList.toSet())
+						isSelecting = false; selectedIdList = setOf()
+						isDeleteSelectedItemDialogVisible = false
+					},
+				)
+
+				DeleteDialog(
+					isDialogVisible = isDeleteBucketDialogVisible,
+					onDismissRequest = { isDeleteBucketDialogVisible = false },
+					title = stringResource(id = R.string.delete_item),
+					contentText = stringResource(id = R.string.are_you_sure_delete_bucket),
+					onConfirmDelete = {},
+				)
 			},
 			isButtonVisible = !isSelecting
 		) {
@@ -196,26 +188,24 @@ fun BucketScreen(
 					onSelect = ::onSelect
 				)
 
-				BucketType.UNKNOWN.name -> null
-				else -> null
+				else -> Unit
 			}
 
 			BucketSelectionActionView(
 				modifier = Modifier
 					.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)
 					.align(Alignment.BottomCenter),
+				bucketType = BucketType.entries.find { it.name == bucketObject?.bucketType },
 				isSelecting = isSelecting,
 				selectedItemCount = selectedIdList.size,
-				onClickShare = {},
+				onClickShare = { bucketScreenCommonViewModel.shareBucketItems(idList = selectedIdList, callback = ::share) },
 				onClickSelectAll = { selectedIdList.toMutableSet().apply { addAll(toSelectIdList); selectedIdList = toSet() } },
-				onClickDelete = { isDeleteDialogVisible = true },
-				onClickMove = {},
+				onClickDelete = { isDeleteSelectedItemDialogVisible = true },
+				onClickMove = { isWhereBucketDialogVisible = true },
 				onClickFavourite = { bucketScreenCommonViewModel.toggleFavourite(selectedIdList) },
-				onClickLock = {
-					if (isAuthenticated) bucketScreenCommonViewModel.toggleLock(selectedIdList)
-					else Toast.makeText(context, context.getText(R.string.toast_not_authenticated), Toast.LENGTH_SHORT).show()
-				},
-			) {}
+				onClickLock = { bucketScreenCommonViewModel.toggleLock(selectedIdList) },
+				onClickSetAs = { bucketScreenCommonViewModel.updateBucketItemState(selectedIdList, it) }
+			)
 		}
 	} ?: LoadingView()
 
@@ -226,17 +216,37 @@ fun BucketScreen(
 		id = bucketObject?.id,
 		createdTimestamp = bucketObject?.createdTimestamp,
 		modifiedTimestamp = bucketObject?.modifiedTimestamp,
+		extraContent = {
+			GenericBottomSheetInfo2(
+				key = stringResource(id = R.string.description),
+				value = bucketObject?.description ?: stringResource(id = R.string.no_description),
+			)
+		}
+
 	)
 
-	DeleteDialog(
-		isDialogVisible = isDeleteDialogVisible,
-		onDismissRequest = { isDeleteDialogVisible = false },
-		title = stringResource(id = R.string.delete_items_multiple),
-		contentText = stringResource(id = R.string.are_you_sure_delete_multiple),
-		onConfirmDelete = {
-			bucketScreenCommonViewModel.deleteMultiple(idList = selectedIdList.toSet())
-			isSelecting = false; selectedIdList = setOf()
-			isDeleteDialogVisible = false
-		},
+	MenuBottomSheet(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isMenuBottomSheetVisible,
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false } },
+		onClickShareAll = {},
+		onClickEdit = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false; isEditBucketBottomSheetVisible = true } },
+		onClickDelete = { isDeleteBucketDialogVisible = true },
+	)
+
+	EditBucketBottomSheet(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isEditBucketBottomSheetVisible,
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isEditBucketBottomSheetVisible = false } },
+		bucketObject = bucketObject,
+		onClickUpdate = { newTitle, newDescription -> viewModel.updateTitleDescription(id = bucketObject?.id, title = newTitle, description = newDescription) },
+	)
+
+	WhereBucketDialog2(
+		isDialogVisible = isWhereBucketDialogVisible,
+		onDismissRequest = { isWhereBucketDialogVisible = false },
+		currentSelectedBucket = bucketObject?.id,
+		currentBucketType = bucketObject?.bucketType,
+		onSelectBucket = { bucketScreenCommonViewModel.moveBucketItem(idList = selectedIdList, newParentId = it); selectedIdList = setOf() },
 	)
 }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItemView
@@ -27,12 +28,12 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Gene
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonDefaults
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonIcon
-import com.syncodec.graphite.presentation.ui.Defaults
-import com.syncodec.graphite.presentation.ui.MontserratTypography
-import com.syncodec.graphite.presentation.ui.PTMonoTypography
-import com.syncodec.graphite.presentation.ui.RobotoTypography
-import com.syncodec.graphite.presentation.ui.TiltNeonTypography
-import com.syncodec.graphite.presentation.ui.UbuntuTypography
+import com.syncodec.graphite.presentation.base.Defaults
+import com.syncodec.graphite.presentation.base.MontserratTypography
+import com.syncodec.graphite.presentation.base.PTMonoTypography
+import com.syncodec.graphite.presentation.base.RobotoTypography
+import com.syncodec.graphite.presentation.base.TiltNeonTypography
+import com.syncodec.graphite.presentation.base.UbuntuTypography
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 
 
@@ -49,10 +50,10 @@ fun PreferenceScreen(
 	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
 
 	var showTypographyDropdownMenu by remember { mutableStateOf(false) }
-	var showforceSideDropdownMenu by remember { mutableStateOf(false) }
+	var showForceSideDropdownMenu by remember { mutableStateOf(false) }
 
 	GenericSettingsScaffold(
-		title = "Preferences",
+		title = stringResource(id = R.string.preferences),
 		onClickBack = onClickBack,
 	) {
 		LazyColumn(
@@ -64,8 +65,8 @@ fun PreferenceScreen(
 					onExpandedChange = { showTypographyDropdownMenu = !it },
 				) {
 					SettingsButton(
-						title = "Typography",
-						leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_typography),
+						title = stringResource(id = R.string.typography),
+						leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_typography),
 						subTitle = typography ?: Defaults.DefaultTypagrophyName,
 						modifier = Modifier.menuAnchor(),
 						onClick = { showTypographyDropdownMenu = true },
@@ -117,18 +118,18 @@ fun PreferenceScreen(
 			}
 			item {
 				ExposedDropdownMenuBox(
-					expanded = showforceSideDropdownMenu,
-					onExpandedChange = { showforceSideDropdownMenu = !it },
+					expanded = showForceSideDropdownMenu,
+					onExpandedChange = { showForceSideDropdownMenu = !it },
 				) {
 					SettingsButton(
-						title = "Which side are you on?",
+						title = stringResource(id = R.string.dark_light_theme),
 						subTitle = when (darkTheme) {
-							SettingsActivity.Companion.DarkTheme.SyncWithSystem -> "Same as system"
-							SettingsActivity.Companion.DarkTheme.AlwaysOn -> "Dark side"
-							SettingsActivity.Companion.DarkTheme.AlwaysOff -> "Light side"
-							null -> "Same as system"
+							SettingsActivity.Companion.DarkTheme.SyncWithSystem -> stringResource(id = R.string.theme_same_as_system)
+							SettingsActivity.Companion.DarkTheme.AlwaysOn -> stringResource(id = R.string.theme_dark)
+							SettingsActivity.Companion.DarkTheme.AlwaysOff -> stringResource(id = R.string.theme_light)
+							null -> stringResource(id = R.string.theme_same_as_system)
 						},
-						leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_bulb),
+						leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_bulb),
 						trailingIcon = SettingsButtonIcon(
 							icon = when (darkTheme) {
 								SettingsActivity.Companion.DarkTheme.SyncWithSystem -> R.drawable.ic_flat_r2d2
@@ -144,50 +145,50 @@ fun PreferenceScreen(
 							}
 						),
 						modifier = Modifier.menuAnchor(),
-						onClick = { showforceSideDropdownMenu = true }
+						onClick = { showForceSideDropdownMenu = true }
 					)
 					ExposedDropdownMenu(
-						expanded = showforceSideDropdownMenu,
-						onDismissRequest = { showforceSideDropdownMenu = false },
+						expanded = showForceSideDropdownMenu,
+						onDismissRequest = { showForceSideDropdownMenu = false },
 						modifier = Modifier
 							.wrapContentWidth()
 							.background(MaterialTheme.colorScheme.background),
 					) {
 						DropdownMenuItemView(
 							icon = R.drawable.ic_flat_r2d2,
-							title = "Same as system",
+							title = stringResource(id = R.string.theme_same_as_system),
 							iconColor = MaterialTheme.colorScheme.onBackground,
 						) {
 							dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.SyncWithSystem)
-							showforceSideDropdownMenu = false
+							showForceSideDropdownMenu = false
 						}
 
 						DropdownMenuItemView(
 							icon = R.drawable.ic_light_side,
-							title = "Light side",
+							title = stringResource(id = R.string.theme_light),
 							iconColor = Color.Unspecified,
 						) {
 							dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.AlwaysOff)
-							showforceSideDropdownMenu = false
+							showForceSideDropdownMenu = false
 						}
 
 						DropdownMenuItemView(
 							icon = R.drawable.ic_dark_side,
-							title = "Dark side",
+							title = stringResource(id = R.string.theme_dark),
 							iconColor = Color.Unspecified,
 							isPro = false,
 						) {
 							dataStoreInstance.putDarkTheme(SettingsActivity.Companion.DarkTheme.AlwaysOn)
-							showforceSideDropdownMenu = false
+							showForceSideDropdownMenu = false
 						}
 					}
 				}
 			}
 			item {
 				SettingsButton(
-					title = "Language",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_language),
-					subTitle = "We are working on more languages",
+					title = stringResource(id = R.string.language),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_language),
+					subTitle = stringResource(id = R.string.language_sub),
 					onClick = { },
 				)
 			}

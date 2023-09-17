@@ -8,7 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.functions.FirebaseFunctions
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.report.composable.ReportScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -19,7 +19,7 @@ class ReportActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				ReportScreen(
 					onClickSubmit = { reportType, reportComponent, title, email, description ->
 						val data = hashMapOf(

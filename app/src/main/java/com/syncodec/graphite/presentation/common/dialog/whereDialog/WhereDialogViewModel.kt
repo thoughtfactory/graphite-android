@@ -60,7 +60,7 @@ class WhereDialogViewModel(val repository : Repository) : ViewModel() {
 		viewModelScope.launch(Dispatchers.Default) {
 			chapterCounterCoroutine?.cancel()
 			chapterCounterCoroutine = this
-			repository.getAllChapterAsFlow().cancellable().collect {
+			repository.getAllChapterAsFlow().collect {
 				it.groupingBy { it.parentId }.eachCount().let { _chapterChapterItemCount.tryEmit(it) }
 			}
 		}
@@ -68,7 +68,7 @@ class WhereDialogViewModel(val repository : Repository) : ViewModel() {
 		viewModelScope.launch(Dispatchers.Default) {
 			noteCounterCoroutine?.cancel()
 			noteCounterCoroutine = this
-			repository.getAllNoteAsFlow().cancellable().collect {
+			repository.getAllNoteAsFlow().collect {
 				it.groupingBy { it.parentId }.eachCount().let { _chapterNoteItemCount.tryEmit(it) }
 			}
 		}

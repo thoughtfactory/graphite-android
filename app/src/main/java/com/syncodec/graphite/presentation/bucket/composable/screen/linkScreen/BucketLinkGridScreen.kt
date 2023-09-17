@@ -53,9 +53,10 @@ import com.syncodec.graphite.presentation.common.reorderable.lazyState.rememberR
 import com.syncodec.graphite.presentation.common.reorderable.reorderable
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainerDefaults
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import com.syncodec.graphite.utils.isTablet
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,14 +91,13 @@ fun BucketLinkGridScreen(
 	if (bucketItemListOrdered.isEmpty()) {
 		EmptyView(bucketType = BucketType.LINK)
 	} else {
-
 		LazyVerticalStaggeredGrid(
 			state = state.lazyStaggeredGridState,
-			columns = StaggeredGridCells.Fixed(2),
+			columns = StaggeredGridCells.Adaptive(if (isTablet()) 256.dp else 144.dp),
+			contentPadding = PaddingValues(8.dp),
 			modifier = Modifier
 				.fillMaxSize()
-				.reorderable(state),
-			contentPadding = PaddingValues(8.dp)
+				.reorderable(state)
 		) {
 			items(
 				items = bucketItemListOrdered,
@@ -122,7 +122,7 @@ fun BucketLinkGridScreen(
 							) {
 								Icon(
 									painter = painterResource(id = R.drawable.ic_fa_grip),
-									contentDescription = "Reorder grip",
+									contentDescription = stringResource(id = R.string.reorder_grip),
 									tint = MaterialTheme.colorScheme.onBackground,
 									modifier = Modifier.requiredSize(16.dp)
 								)
@@ -154,6 +154,7 @@ private fun LinkItem(
 	onLongClick: () -> Unit = {},
 ) {
 	val context = LocalContext.current
+	val isTablet = isTablet()
 
 	val thumbnail1 by remember(thumbnail) { derivedStateOf { thumbnail?.decodeBase64ToBitmap() } }
 
@@ -187,7 +188,7 @@ private fun LinkItem(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(96.dp)
+					.height(if (isTablet) 144.dp else 96.dp)
 			) {
 				SubcomposeAsyncImage(
 					model = ImageRequest.Builder(context)
@@ -234,7 +235,7 @@ private fun LinkItem(
 								if (isLocked) {
 									Icon(
 										painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
-										contentDescription = "Locked",
+										contentDescription = stringResource(id = R.string.locked),
 										tint = Color.LockClosedContainer,
 										modifier = Modifier.requiredSize(14.dp)
 									)
@@ -249,7 +250,7 @@ private fun LinkItem(
 								if (isFavourite) {
 									Icon(
 										painter = painterResource(id = R.drawable.ic_fa_heart_solid),
-										contentDescription = "Favourite",
+										contentDescription = stringResource(id = R.string.favourite),
 										tint = Color.FavouriteContainer,
 										modifier = Modifier.requiredSize(14.dp)
 									)
@@ -266,11 +267,11 @@ private fun LinkItem(
 					.padding(12.dp)
 			) {
 				Text(
-					text = title ?: "Untitled",
+					text = title ?: stringResource(id = R.string.untitled),
 					style = MaterialTheme.typography.bodyMedium,
 					fontWeight = if (title?.isNotEmpty() == true) FontWeight.Black else FontWeight.Normal,
 					overflow = TextOverflow.Ellipsis,
-					maxLines = 2,
+					maxLines = if (isTablet) 3 else 2,
 					modifier = Modifier.fillMaxWidth()
 				)
 				openGraphResult?.url?.let {
@@ -278,7 +279,7 @@ private fun LinkItem(
 						text = it,
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-						maxLines = 2,
+						maxLines = if (isTablet) 3 else 2,
 						overflow = TextOverflow.Ellipsis
 					)
 				}
@@ -288,7 +289,7 @@ private fun LinkItem(
 						text = it,
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-						maxLines = 2,
+						maxLines = if (isTablet) 3 else 2,
 						overflow = TextOverflow.Ellipsis
 					)
 				}
@@ -299,7 +300,7 @@ private fun LinkItem(
 						text = it,
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-						maxLines = 1,
+						maxLines = if (isTablet) 4 else 1,
 						overflow = TextOverflow.Ellipsis
 					)
 					Spacer(modifier = Modifier.height(4.dp))

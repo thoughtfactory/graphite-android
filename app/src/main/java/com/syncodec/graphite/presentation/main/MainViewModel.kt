@@ -60,16 +60,13 @@ class MainViewModel(private val repository: Repository, private val dBox: DBox, 
 	}
 
 	fun onAuthenticate(context: Context) {
-		repository.initRepository(context)
-		repository.isAuthenticated.tryEmit(true)
+//		repository.initRepository(context)
 	}
 
 	fun onAuthFailure() {
-		repository.isAuthenticated.tryEmit(false)
 	}
 
 	fun onDeauthenticate() {
-		repository.isAuthenticated.tryEmit(false)
 	}
 
 	fun testRemoteConnection(syncProvider: SyncDataStoreInstance.Companion.SyncProvider?) {

@@ -1,10 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen.notebookScreen
 
 import android.content.Intent
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,7 +13,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.repository.group.isAll
+import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
 import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
@@ -46,6 +44,7 @@ import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
+import com.syncodec.graphite.utils.isTablet
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -67,8 +66,8 @@ fun NotebookScreen(
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val notebookList by viewModel.orderedNotebookList.collectAsState()
-	var orderedNotebookList by remember { mutableStateOf<List<ChapterObject>>(listOf()) }
+	val notebookList by viewModel.notebookList.collectAsState()
+	var orderedNotebookList by remember { mutableStateOf<List<ChapterObject>?>(null) }
 	LaunchedEffect(key1 = notebookList) {
 		orderedNotebookList = notebookList
 	}
@@ -87,14 +86,14 @@ fun NotebookScreen(
 	val state = rememberReorderableLazyGridState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
 		onMove = { from, to ->
-			orderedNotebookList.toMutableList().apply {
+			orderedNotebookList?.toMutableList()?.apply {
 				add(to.index, removeAt(from.index))
 				orderedNotebookList = this
 			}
 		},
 		onDragEnd = { from, to ->
 			scope.launch(Dispatchers.Default) {
-				viewModel.onReorderNotebookList(orderedNotebookList.map { it.id })
+				viewModel.onReorderNotebookList(orderedNotebookList?.map { it.id } ?: listOf())
 				dataStoreInstance.putSortOn(SortOn.Custom)
 			}
 		}
@@ -111,66 +110,57 @@ fun NotebookScreen(
 		},
 		isFloatingActionButtonVisible = !isSelecting,
 	) {
-		Box(
-			contentAlignment = Alignment.TopCenter,
-			modifier = Modifier
-				.fillMaxSize()
-		) {
-			Crossfade(
-				targetState = orderedNotebookList.isEmpty(),
-				animationSpec = tween(300), label = ""
-			) { isEmpty ->
-				if (isEmpty) {
-					EmptyView(
-						image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
-						title = "I think, therefore, I am",
-						subTitle = "― René Descartes",
-					)
-				} else {
-					LazyVerticalGrid(
-						columns = GridCells.Adaptive(144.dp),
-						state = state.gridState,
-						contentPadding = PaddingValues(horizontal = 8.dp),
-						verticalArrangement = Arrangement.spacedBy(4.dp),
-						horizontalArrangement = Arrangement.spacedBy(4.dp),
-						modifier = Modifier
-							.fillMaxSize()
-							.reorderable(state)
-					) {
-						items(
-							items = orderedNotebookList,
-							key = { it.id.toString() }
-						) { chapterObject ->
-							ReorderableItem(
-								reorderableState = state,
-								key = chapterObject.id.toString(),
-							) { isDragging ->
-								NotebookCard(
-									handleModifier = Modifier.detectReorder(state),
-									title = chapterObject.title,
-									color = chapterObject.color?.let { it1 -> Color(it1) },
-									thumbnail = chapterObject.thumbnail,
-									isSelected = chapterObject.id in selectedIdList,
-									isDragging = isDragging,
-									onClick = { onClickNotebook(chapterObject.id) },
-									onLongClick = { onLongClickNotebook(chapterObject.id) }
-								)
-							}
-						}
+
+		when {
+			orderedNotebookList == null -> LoadingView()
+			orderedNotebookList!!.isEmpty() -> EmptyView(
+				image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
+				title = "I think, therefore, I am",
+				subTitle = "― René Descartes",
+			)
+
+			else -> LazyVerticalGrid(
+				columns = GridCells.Adaptive(if (isTablet()) 256.dp else 144.dp),
+				state = state.gridState,
+				contentPadding = PaddingValues(horizontal = 8.dp),
+				verticalArrangement = Arrangement.spacedBy(4.dp),
+				horizontalArrangement = Arrangement.spacedBy(4.dp),
+				modifier = Modifier
+					.fillMaxSize()
+					.reorderable(state)
+			) {
+				items(
+					items = orderedNotebookList!!,
+					key = { it.id.toString() }
+				) { chapterObject ->
+					ReorderableItem(
+						reorderableState = state,
+						key = chapterObject.id.toString(),
+					) { isDragging ->
+						NotebookCard(
+							handleModifier = Modifier.detectReorder(state),
+							title = chapterObject.title,
+							color = chapterObject.color?.let { it1 -> Color(it1) },
+							thumbnail = chapterObject.thumbnail,
+							isSelected = chapterObject.id in selectedIdList,
+							isDragging = isDragging,
+							onClick = { onClickNotebook(chapterObject.id) },
+							onLongClick = { onLongClickNotebook(chapterObject.id) }
+						)
 					}
 				}
 			}
 		}
 
-		val isAllFavourite by remember(orderedNotebookList, selectedIdList) { derivedStateOf { orderedNotebookList.filter { it.id in selectedIdList }.all { it.isFavourite } } }
-		val isAllLocked by remember(orderedNotebookList, selectedIdList) { derivedStateOf { orderedNotebookList.filter { it.id in selectedIdList }.all { it.isLocked } } }
+		val isAllFavourite by isAll(isSelecting = isSelecting, selectedIdList = selectedIdList, objectList = orderedNotebookList, idGetter = ChapterObject::id, propGetter = ChapterObject::isFavourite)
+		val isAllLocked by isAll(isSelecting = isSelecting, selectedIdList = selectedIdList, objectList = orderedNotebookList, idGetter = ChapterObject::id, propGetter = ChapterObject::isLocked)
 		MainSelectionActionView(
 			modifier = Modifier
 				.align(Alignment.BottomCenter)
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp),
 			isSelecting = isSelecting,
-			isAllItemFavourite = selectedIdList.isNotEmpty() && isAllFavourite,
-			isAllItemLocked = selectedIdList.isNotEmpty() && isAllLocked,
+			isAllItemFavourite = isAllFavourite,
+			isAllItemLocked = isAllLocked,
 			selectedItemCount = selectedIdList.size,
 			onClickDelete = { isDeleteDialogVisible = true },
 			onClickFavourite = { viewModel.onClickMultiFavourite(idList = selectedIdList, isAllFavourite = isAllFavourite) },
@@ -181,7 +171,7 @@ fun NotebookScreen(
 			isDialogVisible = isDeleteDialogVisible,
 			onDismissRequest = { isDeleteDialogVisible = false },
 			title = stringResource(id = R.string.delete_items_multiple),
-			contentText = stringResource(id = R.string.are_you_sure_delete_bucket),
+			contentText = stringResource(id = R.string.are_you_sure_delete_selected_bucket),
 			onConfirmDelete = { isDeleteDialogVisible = false; viewModel.delete(selectedIdList); onUnSelectAll() },
 		)
 	}

@@ -19,7 +19,7 @@ import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.SearchButton
 import com.syncodec.graphite.presentation.common.button.VaultButton
-import com.syncodec.graphite.presentation.ui.SyncState
+import com.syncodec.graphite.presentation.base.SyncState
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 
 

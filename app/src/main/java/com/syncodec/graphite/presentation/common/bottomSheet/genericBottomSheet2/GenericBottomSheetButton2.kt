@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
@@ -24,13 +23,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.base.IconButtonSize
 
 
 @Preview
@@ -149,5 +149,84 @@ object GenericBottomSheetButton2Defaults {
 		checkedContainerColor = disabledContainerColor,
 		checkedContentColor = disabledContentColor,
 		checkedIconColor = disabledIconColor,
+	)
+}
+
+@Preview
+@Composable
+fun ShareButton(
+	onClick: () -> Unit = {}
+) {
+	GenericBottomSheetButton2(
+		icon = R.drawable.ic_fa_share,
+		text = stringResource(id = R.string.share_all),
+		contentDescription = stringResource(id = R.string.share_all),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+fun EditButton(
+	onClick: () -> Unit = {}
+) {
+	GenericBottomSheetButton2(
+		icon = R.drawable.ic_fa_pen,
+		text = stringResource(id = R.string.edit),
+		contentDescription = stringResource(id = R.string.edit),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+fun AttachmentButton(
+	onClick: () -> Unit = {}
+) {
+	GenericBottomSheetButton2(
+		icon = R.drawable.ic_fa_gallery,
+		text = stringResource(id = R.string.attachments),
+		contentDescription = stringResource(id = R.string.attachments),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+fun CalendarButton(
+	onClick: () -> Unit = {}
+) {
+	GenericBottomSheetButton2(
+		icon = R.drawable.ic_fa_calendar,
+		text = stringResource(id = R.string.calendar),
+		contentDescription = stringResource(id = R.string.calendar),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+fun AtlasButton(
+	onClick: () -> Unit = {}
+) {
+	GenericBottomSheetButton2(
+		icon = R.drawable.ic_fa_atlas,
+		text = stringResource(id = R.string.atlas),
+		contentDescription = stringResource(id = R.string.atlas),
+		onClick = onClick,
+	)
+}
+
+@Preview
+@Composable
+fun DeleteButton(
+	onClick: () -> Unit = {}
+) {
+	GenericBottomSheetButton2(
+		icon = R.drawable.ic_fa_delete,
+		text = stringResource(id = R.string.delete),
+		contentDescription = stringResource(id = R.string.delete),
+		colors = GenericBottomSheetButton2Defaults.errorButtonColors(),
+		onClick = onClick,
 	)
 }

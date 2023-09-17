@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -18,9 +19,7 @@ import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenu
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
-import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 
 
 @Preview
@@ -36,8 +35,8 @@ fun BottomBar(
 	onClickEditNote : () -> Unit = {}
 ) {
 
-	val isAuthenticated = LocalIsAuthenticated.current
-	val onAuthenticationAction = LocalAuthenticatorAction.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
+//	val onAuthenticationAction = LocalAuthenticatorAction.current
 
 	var isExportDropdownVisible by remember { mutableStateOf(false) }
 
@@ -56,20 +55,20 @@ fun BottomBar(
 		Box {
 			GenericButton(
 				icon = R.drawable.ic_export,
-				tooltip = "Export Note",
+				tooltip = stringResource(id = R.string.export_note),
 				colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
 				onClick = { isExportDropdownVisible = true }
 			)
 
 			DropdownMenu(
-				title = "Export note",
+				title = stringResource(id = R.string.export_note),
 				itemList = listOf(
-					DropdownMenuItem(title = "As txt", icon = R.drawable.ic_file_txt, onClick = onClickExportAsTxt),
-					DropdownMenuItem(title = "As pdf", icon = R.drawable.ic_file_pdf, onClick = onClickExportAsPdf),
-					DropdownMenuItem(title = "As html", icon = R.drawable.ic_file_html, onClick = onClickExportAsHtml, isPro = true),
-					DropdownMenuItem(title = "As json", icon = R.drawable.ic_file_json, onClick = onClickExportAsJson, isPro = true),
-					DropdownMenuItem(title = "As markdown", icon = R.drawable.ic_file_md, onClick = onClickExportAsMarkdown, isPro = true),
-					DropdownMenuItem(title = "Attachments", icon = R.drawable.ic_gallery, onClick = onClickExportAttachments),
+					DropdownMenuItem(title = stringResource(id = R.string.as_txt), icon = R.drawable.ic_file_txt, onClick = onClickExportAsTxt),
+					DropdownMenuItem(title = stringResource(id = R.string.as_pdf), icon = R.drawable.ic_file_pdf, onClick = onClickExportAsPdf),
+					DropdownMenuItem(title = stringResource(id = R.string.as_html), icon = R.drawable.ic_file_html, onClick = onClickExportAsHtml, isPro = true),
+					DropdownMenuItem(title = stringResource(id = R.string.as_json), icon = R.drawable.ic_file_json, onClick = onClickExportAsJson, isPro = true),
+					DropdownMenuItem(title = stringResource(id = R.string.as_markdown), icon = R.drawable.ic_file_md, onClick = onClickExportAsMarkdown, isPro = true),
+					DropdownMenuItem(title = stringResource(id = R.string.attachments), icon = R.drawable.ic_gallery, onClick = onClickExportAttachments),
 				),
 				isVisible = isExportDropdownVisible,
 			) { isExportDropdownVisible = false }
@@ -77,12 +76,12 @@ fun BottomBar(
 
 		Spacer(modifier = Modifier.weight(1f))
 
-		GenericButton(
-			icon = R.drawable.ic_vault,
-			tooltip = "Vault",
-			checked = isAuthenticated,
-			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
-		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
+//		GenericButton(
+//			icon = R.drawable.ic_vault,
+//			tooltip = "Vault",
+//			checked = isAuthenticated,
+//			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
+//		) { onAuthenticationAction(AuthenticationState.Authenticate) }
 
 		GenericButton(
 			icon = R.drawable.ic_pencil,

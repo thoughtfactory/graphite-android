@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.notebook.screen.buildingBlock
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
@@ -27,6 +26,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -45,6 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,10 +56,10 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
-import com.syncodec.graphite.presentation.ui.AttachmentContainer
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.LocationContainer
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.presentation.base.AttachmentContainer
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LocationContainer
+import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.utils.addEmptyLines
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -137,7 +139,7 @@ object NoteCardDefaults {
 }
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun NoteCard(
@@ -258,8 +260,8 @@ private fun Header(
 				) {
 					if (isLocked) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_shield),
-							contentDescription = "Locked",
+							painter = painterResource(id = R.drawable.ic_fa_lock_close_duotone),
+							contentDescription = stringResource(id = R.string.locked),
 							tint = Color.LockClosedContainer,
 							modifier = Modifier.requiredSize(14.dp)
 						)
@@ -267,17 +269,17 @@ private fun Header(
 					}
 					if (isFavourite) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_favourite),
-							contentDescription = "Favourite",
-							tint = Color.FavouriteContainer,
+							painter = painterResource(id = R.drawable.ic_fa_heart_solid),
+							contentDescription = stringResource(id = R.string.favourite),
+							tint = Color.FavouriteContainer.copy(alpha = 0.47f),
 							modifier = Modifier.requiredSize(14.dp)
 						)
 						if (attachmentCount > 0) HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
 					}
 					if (attachmentCount > 0) {
 						Icon(
-							painter = painterResource(id = R.drawable.ic_file),
-							contentDescription = "Attachment count",
+							painter = painterResource(id = R.drawable.ic_fa_file_duotone),
+							contentDescription = stringResource(id = R.string.attachment_count),
 							tint = Color.AttachmentContainer,
 							modifier = Modifier.requiredSize(14.dp)
 						)
@@ -353,7 +355,6 @@ private fun ColumnScope.TagList(
 						tag = tagObject.tag,
 						color = Color(tagObject.color),
 					)
-					Spacer(modifier = Modifier.width(4.dp))
 				}
 			}
 			Spacer(modifier = Modifier.height(2.dp))
@@ -391,7 +392,7 @@ private fun ColumnScope.Footer(
 					)
 				} ?: latLng?.let {
 					Text(
-						text = "${it.latitude?.roundTo(6)}, ${it.longitude?.roundTo(6)}",
+						text = "${it.latitude.roundTo(6)}, ${it.longitude.roundTo(6)}",
 						style = MaterialTheme.typography.labelMedium,
 						fontStyle = FontStyle.Italic,
 						overflow = TextOverflow.Ellipsis,
@@ -418,22 +419,26 @@ private fun HeaderText(
 	)
 }
 
+
 @Preview
 @Composable
 private fun Tag(
 	tag : String = "Tag",
 	color : Color = Color.Yellow,
 ) {
-	Box(
-		modifier = Modifier
-			.background(color, MaterialTheme.shapes.small)
-			.clip(MaterialTheme.shapes.small)
-	) {
-		Text(
-			text = tag,
-			style = MaterialTheme.typography.bodySmall,
-			color = color.getInverseBWColor(),
-			modifier = Modifier.padding(8.dp, 4.dp)
-		)
-	}
+	val containerColor = color.copy(alpha = 0.13f)
+
+	SuggestionChip(
+		label = {
+			Text(
+				text = tag,
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.Bold,
+			)
+		},
+		colors = SuggestionChipDefaults.suggestionChipColors(containerColor = containerColor, labelColor = color, iconContentColor = color),
+		border = null,
+		modifier = Modifier.padding(horizontal = 4.dp),
+		onClick = {}
+	)
 }

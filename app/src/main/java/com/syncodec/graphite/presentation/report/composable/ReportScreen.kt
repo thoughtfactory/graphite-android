@@ -48,7 +48,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.base.IconButtonSize
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)

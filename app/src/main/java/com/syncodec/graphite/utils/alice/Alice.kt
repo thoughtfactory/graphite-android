@@ -30,14 +30,40 @@ enum class AliceRequestResult {
 }
 
 data class AliceRequest(
-	val result : AliceRequestResult,
-	val data : ByteArray? = null,
-	val error : Exception? = null
+	val result: AliceRequestResult,
+	val data: ByteArray? = null,
+	val error: Exception? = null
 )
 
-fun Context.putSecretData(key : String, value : ByteArray) {
+sealed class AliceRequest2 {
+	data class Success(val data: ByteArray) : AliceRequest2() {
+		override fun equals(other: Any?): Boolean {
+			if (this === other) return true
+			if (javaClass != other?.javaClass) return false
+
+			other as Success
+
+			return data.contentEquals(other.data)
+		}
+
+		override fun hashCode(): Int {
+			return data.contentHashCode()
+		}
+	}
+
+	data object KeystoreUninitialized : AliceRequest2()
+
+	data object KeyNotFound : AliceRequest2()
+
+	data object UnknownError : AliceRequest2()
+}
+
+fun Context.putSecretData(key: String, value: ByteArray) {
+
 	val keyStore = KeyStore.getInstance("AndroidKeyStore")
+
 	keyStore.load(null)
+
 	var secretKey = keyStore.getKey("grey_alice", null) as SecretKey?
 	if (secretKey == null) generateSecretKey()
 	secretKey = keyStore.getKey("grey_alice", null) as SecretKey?
@@ -46,31 +72,34 @@ fun Context.putSecretData(key : String, value : ByteArray) {
 		val cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7)
 
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-		val encryptedKeyForRealm : ByteArray = cipher.doFinal(value)
-		val initializationVector : ByteArray = cipher.iv
+		val encryptedKeyForRealm: ByteArray = cipher.doFinal(value)
+		val initializationVector: ByteArray = cipher.iv
 		val initializationVectorAndEncryptedKey = ByteArray(Integer.BYTES + initializationVector.size + encryptedKeyForRealm.size)
+
 		val buffer = ByteBuffer.wrap(initializationVectorAndEncryptedKey)
 		buffer.order(ByteOrder.BIG_ENDIAN)
 		buffer.putInt(initializationVector.size)
 		buffer.put(initializationVector)
 		buffer.put(encryptedKeyForRealm)
-		getSharedPreferences("alice", Context.MODE_PRIVATE).edit()
+
+		getSharedPreferences("alice", Context.MODE_PRIVATE)
+			.edit()
 			.putString("${key}_iv_and_encrypted_key", Base64.encodeToString(initializationVectorAndEncryptedKey, Base64.NO_WRAP))
 			.apply()
 	}
 }
 
-fun Context.putSecretData(key : String, value : String) = putSecretData(key, value.encodeToByteArray())
+fun Context.putSecretData(key: String, value: String) = putSecretData(key, value.encodeToByteArray())
 
-fun Context.getSecretData(key : String) : AliceRequest {
-	val keyStore : KeyStore = KeyStore.getInstance("AndroidKeyStore")
+fun Context.getSecretData(key: String): AliceRequest {
+
+	val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
+
 	keyStore.load(null)
+
 	val hasData = getSharedPreferences("alice", Context.MODE_PRIVATE).contains("${key}_iv_and_encrypted_key")
 	if (hasData) {
-		val initializationVectorAndEncryptedKey = Base64.decode(
-			getSharedPreferences("alice", Context.MODE_PRIVATE)
-				?.getString("${key}_iv_and_encrypted_key", null), Base64.DEFAULT
-		)
+		val initializationVectorAndEncryptedKey = Base64.decode(getSharedPreferences("alice", Context.MODE_PRIVATE)?.getString("${key}_iv_and_encrypted_key", null), Base64.DEFAULT)
 		val buffer = ByteBuffer.wrap(initializationVectorAndEncryptedKey)
 		buffer.order(ByteOrder.BIG_ENDIAN)
 		val initializationVectorLength = buffer.int
@@ -78,19 +107,19 @@ fun Context.getSecretData(key : String) : AliceRequest {
 		buffer[initializationVector]
 		val encryptedKey = ByteArray(initializationVectorAndEncryptedKey.size - Integer.BYTES - initializationVectorLength)
 		buffer[encryptedKey]
-		val cipher : Cipher = try {
+		val cipher: Cipher = try {
 			Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7)
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 			return AliceRequest(AliceRequestResult.UNKNOWN_ERROR, null, e)
 		}
-		val decryptedKey : ByteArray = try {
+		val decryptedKey: ByteArray = try {
 			val secretKey = keyStore.getKey("grey_alice", null) as SecretKey
 			val initializationVectorSpec = IvParameterSpec(initializationVector)
 			cipher.init(Cipher.DECRYPT_MODE, secretKey, initializationVectorSpec)
 			cipher.doFinal(encryptedKey)
-		} catch (e : InvalidKeyException) {
+		} catch (e: InvalidKeyException) {
 			return AliceRequest(AliceRequestResult.UNKNOWN_ERROR, null, e)
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 			return AliceRequest(AliceRequestResult.UNKNOWN_ERROR, null, e)
 		}
 		return AliceRequest(AliceRequestResult.SUCCESS, decryptedKey)
@@ -99,7 +128,45 @@ fun Context.getSecretData(key : String) : AliceRequest {
 	}
 }
 
-fun Context.deleteSecretData(key : String) {
+fun Context.getSecretData2(key: String): AliceRequest2 {
+
+	val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
+
+	keyStore.load(null)
+
+	val hasData = getSharedPreferences("alice", Context.MODE_PRIVATE).contains("${key}_iv_and_encrypted_key")
+	if (hasData) {
+		val initializationVectorAndEncryptedKey = Base64.decode(getSharedPreferences("alice", Context.MODE_PRIVATE)?.getString("${key}_iv_and_encrypted_key", null), Base64.DEFAULT)
+		val buffer = ByteBuffer.wrap(initializationVectorAndEncryptedKey)
+		buffer.order(ByteOrder.BIG_ENDIAN)
+		val initializationVectorLength = buffer.int
+		val initializationVector = ByteArray(initializationVectorLength)
+		buffer[initializationVector]
+		val encryptedKey = ByteArray(initializationVectorAndEncryptedKey.size - Integer.BYTES - initializationVectorLength)
+		buffer[encryptedKey]
+		val cipher: Cipher = try {
+			Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7)
+		} catch (e: Exception) {
+			return AliceRequest2.UnknownError
+		}
+		val decryptedKey: ByteArray = try {
+			val secretKey = keyStore.getKey("grey_alice", null) as SecretKey
+			val initializationVectorSpec = IvParameterSpec(initializationVector)
+			cipher.init(Cipher.DECRYPT_MODE, secretKey, initializationVectorSpec)
+			cipher.doFinal(encryptedKey)
+		} catch (e: InvalidKeyException) {
+			return return AliceRequest2.UnknownError
+		} catch (e: Exception) {
+			return return AliceRequest2.UnknownError
+		}
+		return return AliceRequest2.Success(data = decryptedKey)
+	} else {
+		return return AliceRequest2.KeyNotFound
+	}
+}
+
+
+fun Context.deleteSecretData(key: String) {
 	getSharedPreferences("alice", Context.MODE_PRIVATE).edit().remove("${key}_iv_and_encrypted_key").apply()
 }
 
@@ -122,17 +189,17 @@ fun generateSecretKey() {
 }
 
 
-fun Context.deleteKey(keyAlias : String) {
-	val keyStore : KeyStore
+fun Context.deleteKey(keyAlias: String) {
+	val keyStore: KeyStore
 	try {
 		keyStore = KeyStore.getInstance("AndroidKeyStore")
 		keyStore.load(null)
-	} catch (e : Exception) {
+	} catch (e: Exception) {
 		throw e
 	}
 	try {
 		keyStore.deleteEntry(keyAlias)
-	} catch (e : KeyStoreException) {
+	} catch (e: KeyStoreException) {
 		throw e
 	}
 	getSharedPreferences("key", Context.MODE_PRIVATE).edit()
@@ -140,18 +207,18 @@ fun Context.deleteKey(keyAlias : String) {
 		.apply()
 }
 
-fun Context.hasKeyAlias(keyAlias : String) : Boolean {
-	val keyStore : KeyStore
+fun Context.hasKeyAlias(keyAlias: String): Boolean {
+	val keyStore: KeyStore
 	try {
 		keyStore = KeyStore.getInstance("AndroidKeyStore")
 		keyStore.load(null)
-	} catch (e : Exception) {
+	} catch (e: Exception) {
 		throw e
 	}
 	return keyStore.containsAlias(keyAlias)
 }
 
-fun Context.hasKey(keyAlias : String) : Boolean {
+fun Context.hasKey(keyAlias: String): Boolean {
 	return getSharedPreferences("key", Context.MODE_PRIVATE)?.getString("${keyAlias}_iv_and_encrypted_key", null) != null
 }
 
@@ -183,7 +250,7 @@ class Alice {
 			}
 		}
 
-		fun encrypt(byteArray : ByteArray, password: String): String? {
+		fun encrypt(byteArray: ByteArray, password: String): String? {
 			val salt = generateSalt()
 			val key: SecretKey = deriveKey(password, salt)
 			return try {

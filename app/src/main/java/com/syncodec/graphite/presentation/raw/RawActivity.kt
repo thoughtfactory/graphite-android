@@ -7,7 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.getValue
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 
@@ -40,7 +40,7 @@ class RawActivity : ComponentActivity() {
 		}
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				val jsonObject by viewModel.jsonObject
 
 				Crossfade(targetState = jsonObject) {

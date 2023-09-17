@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.bucketItem.activity
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,7 +10,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BookBucketItemScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -27,7 +26,7 @@ class BookBucketItemActivity : ComponentActivity() {
 		unloadIntent()
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val isNew by viewModel.isNew.collectAsState()
 				val bucketItemObject by viewModel.bucketItemObject.collectAsState()

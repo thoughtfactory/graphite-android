@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.GridItem
+import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.BucketGridItem
 import com.syncodec.graphite.presentation.bucketItem.activity.ShowBucketItemActivity
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
@@ -53,7 +53,7 @@ fun BucketShowGridScreen(
 					Box(
 						modifier = Modifier.animateItemPlacement()
 					) {
-						GridItem(
+						BucketGridItem(
 							title = bucketItemObject.title,
 							thumbnail = bucketItemObject.thumbnail,
 							isSelected = bucketItemObject.id in selectedIdList,
@@ -68,7 +68,7 @@ fun BucketShowGridScreen(
 								putExtra(Extra.Companion.Extra.BUCKET_ID.name, bucketId?.bytes)
 								putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
 								putExtra(Extra.Companion.Extra.BUCKET_ITEM_ID.name, bucketItemObject.id.bytes)
-								bucketItemObject.getData()?.let { data ->
+								bucketItemObject.getShowData()?.let { data ->
 									if (data is BucketItemObject.Companion.BucketItemData.ShowData) {
 										putExtra(Extra.Companion.Extra.SHOW_TYPE.name, data.type?.name)
 									}

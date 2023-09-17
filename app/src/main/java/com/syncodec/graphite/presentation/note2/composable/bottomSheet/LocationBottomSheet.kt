@@ -49,7 +49,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
+import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
 import com.syncodec.graphite.utils.GoogleMapUtil
 import com.syncodec.graphite.utils.LocationData
 

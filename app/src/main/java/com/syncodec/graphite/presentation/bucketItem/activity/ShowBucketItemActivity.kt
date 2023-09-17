@@ -13,7 +13,7 @@ import com.syncodec.graphite.presentation.bucketItem.composable.screen.MovieBuck
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.TvBucketItemScreen
 import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemViewModel
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -29,7 +29,7 @@ class ShowBucketItemActivity : ComponentActivity() {
 		unloadIntent()
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val isNew by viewModel.isNew.collectAsState()
 				val showType by viewModel.showType.collectAsState()

@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -66,7 +67,7 @@ fun SettingsScreen(
 	var showAccountBottomSheet by remember { mutableStateOf(false) }
 
 	GenericSettingsScaffold(
-		title = "Settings",
+		title = stringResource(id = R.string.settings),
 		onClickBack = { /*TODO*/ }
 	) {
 		LazyColumn(
@@ -82,101 +83,99 @@ fun SettingsScreen(
 			}
 			item {
 				SettingsButton(
-					title = "Account",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_account),
+					title = stringResource(id = R.string.account),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_user),
 					onClick = { showAccountBottomSheet = true },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Graphite Pro",
-					subTitle = "Unleash the full power of Graphite",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_pro),
-					onClick = {
-							  context.startActivity(Intent(context, ProActivity::class.java))
-					},
+					title = stringResource(id = R.string.graphite_pro),
+					subTitle = stringResource(id = R.string.unleash_the_full_potential_of_graphite),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_pro),
+					onClick = { context.startActivity(Intent(context, ProActivity::class.java)) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Preferences",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_preferences),
+					title = stringResource(id = R.string.preferences),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_preferences),
 					onClick = { onNavigate(SettingsActivity.Companion.SettingsScreen.Preferences) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Security",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_lock),
+					title = stringResource(id = R.string.security),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_lock_close),
 					onClick = { onNavigate(SettingsActivity.Companion.SettingsScreen.Security) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Data",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_data),
+					title = stringResource(id = R.string.data),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_data),
 					onClick = { onNavigate(SettingsActivity.Companion.SettingsScreen.Data) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Backup & Sync",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_ftp),
+					title = stringResource(id = R.string.backup_and_sync),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_network),
 					onClick = { onNavigate(SettingsActivity.Companion.SettingsScreen.BackUpAndSync) },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Extensions",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_extensions),
+					title = stringResource(id = R.string.extensions),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_extension),
 					onClick = { },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Knowledge Base",
-					subTitle = "Learn how everything connects",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_knowledge_base),
+					title = stringResource(id = R.string.knowledge_base),
+					subTitle = stringResource(id = R.string.knowledge_base_sub),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_knowledge_base),
 					onClick = { },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Feedback",
-					subTitle = "Report a bug or suggest a feature, or just say hi!",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_bug),
+					title = stringResource(id = R.string.feedback),
+					subTitle = stringResource(id = R.string.feedback_sub),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_bug),
 					onClick = { },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Graphite Progress",
-					subTitle = "Look what are we working on",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_kanban),
-					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_flat_open_externally),
+					title = stringResource(id = R.string.graphite_progress),
+					subTitle = stringResource(id = R.string.graphite_progress_sub),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_kanban),
+					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_fa_open_externally),
 					onClick = { },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Privacy Policy",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_shield),
-					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_flat_open_externally),
+					title = stringResource(id = R.string.privacy_policy),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_policy),
+					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_fa_open_externally),
 					onClick = { },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "Terms of Service",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_terms),
-					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_flat_open_externally),
+					title = stringResource(id = R.string.terms_of_service),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_file_txt),
+					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_fa_open_externally),
 					onClick = { },
 				)
 			}
 			item {
 				SettingsButton(
-					title = "About",
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_info),
+					title = stringResource(id = R.string.about),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_info),
 					onClick = { },
 				)
 			}

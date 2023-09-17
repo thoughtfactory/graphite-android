@@ -48,8 +48,7 @@ import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.presentation.main.composable.screen.RepositoryLockedScreen
-import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.ExplorerViewModel
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.service.syncInator.DropboxSyncServiceConnectionManager
 import com.syncodec.graphite.service.syncInator.GDriveSyncServiceConnectionManager
 import com.syncodec.graphite.service.syncInator.SyncInatorService
@@ -101,7 +100,7 @@ class MainActivity : ComponentActivity() {
 			.build()
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
 				val isBiometricsEnabled by dataStoreInstance.getUseBiometric().collectAsState(initial = null)
 				var isBiometricUsed by remember { mutableStateOf(false) }

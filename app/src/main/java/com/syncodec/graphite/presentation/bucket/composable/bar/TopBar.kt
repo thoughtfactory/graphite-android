@@ -32,6 +32,7 @@ import com.syncodec.graphite.presentation.common.button.FilterButton
 import com.syncodec.graphite.presentation.common.button.LockButton
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
 import kotlinx.coroutines.launch
@@ -52,6 +53,7 @@ fun TopBar(
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
 	onClickSearch: () -> Unit = {},
+	onClickMenuButton: () -> Unit = {},
 	addSearchQuery: (String) -> Unit = {},
 	removeSearchQuery: (String) -> Unit = {},
 ) {
@@ -86,6 +88,7 @@ fun TopBar(
 						onClickFavourite = onClickFavourite,
 						onClickLock = onClickLock,
 						onClickSearch = onClickSearch,
+						onClickMenuButton = onClickMenuButton,
 					)
 				}
 			}
@@ -114,6 +117,7 @@ private fun NormalTopBar(
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
 	onClickSearch: () -> Unit = {},
+	onClickMenuButton: () -> Unit = {},
 ) {
 	TopAppBar(
 		navigationIcon = { BackButton() },
@@ -124,8 +128,6 @@ private fun NormalTopBar(
 			)
 		},
 		actions = {
-			FilterButton()
-
 			LockButton(
 				isLocked = isLocked,
 				onClick = onClickLock,
@@ -141,6 +143,8 @@ private fun NormalTopBar(
 				colors = GenericButtonDefaults.bottomBarColorWhite(),
 				onClick = onClickSearch
 			)
+
+			MenuButton(onClick = onClickMenuButton)
 		},
 		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = MaterialTheme.colorScheme.background,

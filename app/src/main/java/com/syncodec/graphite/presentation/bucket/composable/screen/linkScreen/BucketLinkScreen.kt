@@ -32,8 +32,8 @@ import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.PreviewL
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
-import com.syncodec.graphite.presentation.ui.LocalAppDataStore
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.LocalAppDataStore
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.utils.ViewType
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
@@ -50,7 +50,7 @@ fun BucketLinkScreen(
 ) {
 	val scope = rememberCoroutineScope()
 
-	val isAuthenticated = LocalIsAuthenticated.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
 
 	val appDataStore = LocalAppDataStore.current
 	val viewType by appDataStore.getViewType.collectAsState(initial = null)
@@ -133,7 +133,7 @@ fun BucketLinkScreen(
 		isBottomSheetVisible = isPreviewLinkBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isPreviewLinkBottomSheetVisible = false } },
 		bucketItemObject = previewBucketItemObject,
-		onToggleFavourite = { viewModel.toggleFavourite(it) },
-		onToggleLock = { viewModel.toggleLock(it) },
+		onToggleFavourite = { viewModel.toggleFavourite(it.id) },
+		onToggleLock = { viewModel.toggleLock(it.id) },
 	)
 }

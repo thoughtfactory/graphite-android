@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.note2.composable.bottomSheet
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -61,7 +62,7 @@ import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
 import com.syncodec.graphite.presentation.tags.composable.bottomSheet.AddTagBottomSheet
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItemView
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.base.IconButtonSize
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.launch
 
@@ -75,8 +76,11 @@ fun TagsBottomSheet(
 	onDismissRequest: () -> Unit = { },
 	allTagList: List<TagObject> = listOf(),
 	tagStateMap: Map<TagObject, NoteViewModel2.Companion.TagObjectState> = mapOf(),
-	onClickTag: (TagObject) -> Unit = {}
+	onClickTag: (TagObject) -> Unit = {},
+	putTag: (String, Color) -> Boolean = { _, _ -> false },
 ) {
+	val context = LocalContext.current
+
 	val scope = rememberCoroutineScope()
 
 	var searchQuery by remember { mutableStateOf("") }
@@ -171,11 +175,8 @@ fun TagsBottomSheet(
 		tagText = searchQuery,
 		onChangeTagText = { searchQuery = it.lowercase().split(" ").firstOrNull() ?: "" },
 		onCreateTag = { tag, color ->
-//			if (!putTag(tag, color)) Toast.makeText(context, context.getText(R.string.toast_duplicate_tag), Toast.LENGTH_SHORT).show()
-//			else {
-//				scope.launch { bottomSheetState.hide(); isNewTagBottomSheetVisible = false }
-//				tagText = ""
-//			}
+			if (!putTag(tag, color)) Toast.makeText(context, context.getText(R.string.toast_duplicate_tag), Toast.LENGTH_SHORT).show()
+			else scope.launch { newTagBottomSheetState.hide(); isNewTagBottomSheetVisible = false }
 		},
 	)
 }

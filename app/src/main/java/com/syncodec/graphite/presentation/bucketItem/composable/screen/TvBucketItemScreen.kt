@@ -19,8 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -50,6 +53,7 @@ fun TvBucketItemScreen(
 	onUpdateState: (BucketItemState) -> Unit = {},
 ) {
 	val context = LocalContext.current
+	val clipboardManager = LocalClipboardManager.current
 
 	val thumbnail by remember(bucketItemObject?.thumbnail) {
 		derivedStateOf {
@@ -95,19 +99,22 @@ fun TvBucketItemScreen(
 		tvData?.firstAirDate?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.first_air_date),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		tvData?.overview?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.overview),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		tvData?.originalName?.let {
 			GenericBottomSheetInfo2(
 				key = stringResource(id = R.string.original_title),
-				value = it
+				value = it,
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		GenericBottomSheetInfo2(
@@ -128,7 +135,8 @@ fun TvBucketItemScreen(
 							Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
 						}
 					}
-				}
+				},
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("https://www.themoviedb.org/tv/$it")) }
 			)
 		}
 		if (!tvData?.homepage.isNullOrEmpty()) {
@@ -136,6 +144,7 @@ fun TvBucketItemScreen(
 				GenericBottomSheetInfo2(
 					key = stringResource(id = R.string.homepage),
 					value = it,
+					onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("https://www.themoviedb.org/tv/$it")) }
 				)
 			}
 		}
@@ -146,7 +155,7 @@ fun TvBucketItemScreen(
 				genre.name?.let {
 					SuggestionChip(
 						label = { Text(text = it) },
-						onClick = { /*TODO*/ },
+						onClick = { },
 					)
 					Spacer(modifier = Modifier.width(4.dp))
 				}

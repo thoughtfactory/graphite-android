@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.common.dialog.dialog2
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,9 @@ fun GenericDialog2(
 	onDismissRequest: () -> Unit = {},
 	content: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
+
+	BackHandler(enabled = isDialogVisible) { onDismissRequest() }
+
 	if (isDialogVisible) {
 		Box(
 			modifier = Modifier

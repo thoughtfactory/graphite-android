@@ -40,8 +40,8 @@ import com.syncodec.graphite.presentation.common.dialog.whereDialog.composable.b
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.chapterList
-import com.syncodec.graphite.presentation.ui.IconButtonSize
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -60,7 +60,7 @@ fun WhereDialog(
 	val viewModel : WhereDialogViewModel = koinViewModel()
 	val scope = rememberCoroutineScope()
 
-	val isAuthenticated = LocalIsAuthenticated.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
 
 	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 	var bottomSheetType by remember { mutableStateOf(WhereBottomSheetType.Chapter) }

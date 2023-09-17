@@ -29,13 +29,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemState
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.AddTodoBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.EditTodoBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
-import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -57,8 +55,7 @@ fun BucketTodoScreen(
 ) {
 	val scope = rememberCoroutineScope()
 
-	val isAuthenticated = LocalIsAuthenticated.current
-	val onAuthenticationAction = LocalAuthenticatorAction.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
 
 	val bucketItemList by viewModel.orderedBucketItemList.collectAsState()
 	val previewBucketItemObject by viewModel.previewBucketItemObject.collectAsState(initial = null)
@@ -109,8 +106,6 @@ fun BucketTodoScreen(
 					viewModel.selectBucketItemObject(it.id)
 					isEditTodoSheetVisible = true
 				},
-				onClickFavourite = viewModel::toggleFavourite,
-				onClickLock = { if (isAuthenticated) viewModel.toggleLock(it) else onAuthenticationAction(AuthenticatorScreen.Authenticate) },
 				onCheckedChange = viewModel::toggleBucketItemState,
 				onReorderBucketItemList = viewModel::onReorderBucketItem
 			)
@@ -122,7 +117,7 @@ fun BucketTodoScreen(
 		isBottomSheetVisible = isAddTodoSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isAddTodoSheetVisible = false } },
 		onAddTodo = { todoTitle, state ->
-			viewModel.putTodo(realmUUID = null, title = todoTitle, state = BucketItemState.values().getOrElse(state) { BucketItemState.ALPHA })
+			viewModel.putTodo(realmUUID = null, title = todoTitle, state = BucketItemState.entries.getOrElse(state) { BucketItemState.ALPHA })
 		}
 	)
 
@@ -131,9 +126,9 @@ fun BucketTodoScreen(
 		isBottomSheetVisible = isEditTodoSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isEditTodoSheetVisible = false } },
 		bucketItemObject = previewBucketItemObject,
-		onUpdateTitle = { bucketItemObject, title -> viewModel.updateBucketItemTitle(bucketItemObject, title) },
-		onUpdateState = { bucketItemObject, state -> viewModel.updateBucketItemState(bucketItemObject, state) },
-		onToggleFavourite = { viewModel.toggleFavourite(it) },
-		onToggleLock = { viewModel.toggleLock(it) },
+		onUpdateTitle = { bucketItemObject, title -> viewModel.updateBucketItemTitle(bucketItemObject.id, title) },
+		onUpdateState = { bucketItemObject, state -> viewModel.updateBucketItemState(bucketItemObject.id, state) },
+		onToggleFavourite = { viewModel.toggleFavourite(it.id) },
+		onToggleLock = { viewModel.toggleLock(it.id) },
 	)
 }

@@ -7,7 +7,7 @@ import androidx.activity.compose.setContent
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -25,7 +25,7 @@ class BucketActivity : ComponentActivity() {
 		if (hasBucketId) {
 			val bucketId = intent.getByteArrayExtra(Extra.Companion.Extra.BUCKET_ID.name)?.let { RealmUUID.from(it) }
 			bucketId?.let { realmUUID ->
-				viewModel.loadAndViewData(realmUUID)
+				viewModel.initBucket(realmUUID)
 				bucketScreenCommonViewModel.initBucket(realmUUID)
 			} ?: run {
 				Toast.makeText(this, "Error loading bucket. No id specified.", Toast.LENGTH_SHORT).show()
@@ -37,7 +37,7 @@ class BucketActivity : ComponentActivity() {
 		}
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 				BucketScreen(afterDeleteBucket = { finish() })
 			}
 		}

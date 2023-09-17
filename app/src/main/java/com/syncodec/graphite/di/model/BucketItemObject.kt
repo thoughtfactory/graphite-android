@@ -1,5 +1,6 @@
 package com.syncodec.graphite.di.model
 
+import android.util.Log
 import androidx.annotation.Keep
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -62,13 +63,44 @@ class BucketItemObject() : RealmObject {
 
 	var googleDriveId: String? = null
 
-
-	fun getData(): BucketItemData? {
+	fun getShowData(): BucketItemData.ShowData? {
 		val json = Json { ignoreUnknownKeys = true }
 		return try {
 			this.data?.let { json.decodeFromString<BucketItemData.ShowData?>(it) }
 		} catch (e: Exception) {
 //			e.printStackTrace()
+			null
+		}
+	}
+
+	fun getBookData(): BucketItemData.BookData? {
+		val json = Json { ignoreUnknownKeys = true }
+		return try {
+			this.data?.let { json.decodeFromString<BucketItemData.BookData?>(it) }
+		} catch (e: Exception) {
+//			e.printStackTrace()
+			null
+		}
+	}
+
+	fun getBookDescription(): String? {
+		val json = Json { ignoreUnknownKeys = true }
+
+		return try {
+			this.data?.let { json.decodeFromString<BucketItemData.BookData?>(it) }?.description
+		} catch (_: Exception) {
+			null
+		}
+	}
+
+	fun getShowDescription(): String? {
+		val json = Json { ignoreUnknownKeys = true }
+
+		return try {
+			this.data?.let { json.decodeFromString<BucketItemData.ShowData?>(it) }?.let {
+				it.tvData?.overview ?: it.movieData?.overview
+			}
+		} catch (_: Exception) {
 			null
 		}
 	}
@@ -87,9 +119,13 @@ class BucketItemObject() : RealmObject {
 		this.data = jsonMapper { addModule(kotlinModule()) }.writeValueAsString(openGraphResult)
 	}
 
-	fun getState(): Int = BucketItemState.values().find { it.name == this.state }?.ordinal ?: 0
-	fun setState(stateInt : Int) {
-		this.state = BucketItemState.values().getOrNull(stateInt)?.name ?: BucketItemState.ALPHA.name
+	fun updateModifyTimestamp() {
+		this.modifiedTimestamp = Instant.now().toEpochMilli()
+	}
+
+	fun getState(): Int = BucketItemState.entries.find { it.name == this.state }?.ordinal ?: 0
+	fun setState(stateInt: Int) {
+		this.state = BucketItemState.entries.getOrNull(stateInt)?.name ?: BucketItemState.ALPHA.name
 	}
 
 	fun clone(): BucketItemObject {
@@ -225,7 +261,7 @@ class BucketItemObject() : RealmObject {
 //						objectMapper.writeValueAsString(this)
 						Json.encodeToString(this)
 					} catch (e: Exception) {
-			            e.printStackTrace()
+						e.printStackTrace()
 						"null"
 					}
 				}

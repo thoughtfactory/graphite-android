@@ -7,7 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.syncodec.graphite.presentation.notebook.composable.NotebookScreen2
 import com.syncodec.graphite.presentation.notebook.composable.NotebookScreenViewModel2
-import com.syncodec.graphite.presentation.ui.BaseContent
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -32,11 +32,14 @@ class NotebookActivity : ComponentActivity() {
 		}
 
 		setContent {
-			BaseContent {
+			BaseComposable {
 
 				val chapterObject by viewModel.currentChapter.collectAsState()
 				val chapterList by viewModel.chapterList.collectAsState()
 				val noteList by viewModel.noteList.collectAsState()
+				val tagList by viewModel.tagList.collectAsState()
+				val chapterNoteItemCount by viewModel.chapterNoteItemCount.collectAsState()
+				val chapterChapterItemCount by viewModel.chapterChapterItemCount.collectAsState()
 				val chapterPath by viewModel.currentChapterPath.collectAsState()
 				val defaultChapterId by viewModel.defaultChapterId.collectAsState()
 
@@ -44,6 +47,9 @@ class NotebookActivity : ComponentActivity() {
 					chapterObject = chapterObject,
 					chapterList = chapterList,
 					noteList = noteList,
+					tagList = tagList,
+					chapterNoteItemCount = chapterNoteItemCount,
+					chapterChapterItemCount = chapterChapterItemCount,
 					chapterPath = chapterPath,
 					defaultChapterId = defaultChapterId,
 					onLoadChapter = viewModel::loadChapter,
@@ -53,6 +59,7 @@ class NotebookActivity : ComponentActivity() {
 					onClickMultiLock = viewModel::toggleLock,
 					onClickSetDefault = viewModel::setDefaultChapter,
 					putChapter = viewModel::putChapter,
+					onConfirmDelete = viewModel::delete
 				)
 			}
 		}

@@ -15,8 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.syncodec.graphite.presentation.note2.KitKat.Companion.KitKatAction
 import com.syncodec.graphite.presentation.note2.composable.KitKatScreen
-import com.syncodec.graphite.presentation.ui.BaseContent
-import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
+import com.syncodec.graphite.presentation.base.BaseComposable
+import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.delay
@@ -61,7 +61,7 @@ class NoteActivity2 : ComponentActivity() {
 
 		setContent {
 
-			BaseContent {
+			BaseComposable {
 
 				val isDarkTheme = LocalIsDarkTheme.current
 
@@ -78,8 +78,7 @@ class NoteActivity2 : ComponentActivity() {
 				val isLocked by remember { derivedStateOf { noteObject?.isLocked } }
 				val parentChapter by noteViewModel2.parentChapter.collectAsState()
 
-				val savedFileList by noteViewModel2.savedFileList.collectAsState()
-				val newFileList by noteViewModel2.newFileList.collectAsState()
+				val attachmentList by noteViewModel2.attachmentList.collectAsState()
 
 				val allTagList by noteViewModel2.allTagsList.collectAsState()
 				val tagStateMap by noteViewModel2.tagStateMap.collectAsState()
@@ -155,9 +154,7 @@ class NoteActivity2 : ComponentActivity() {
 					parentChapter = parentChapter,
 					allTagList = allTagList,
 					tagStateMap = tagStateMap,
-					savedFileList = savedFileList,
-					newFileList = newFileList,
-//					toRemoveFileList =,
+					attachmentList = attachmentList,
 					onClickSave = {
 						noteViewModel2.save()
 						noteViewModel2.isEditing.tryEmit(false)
@@ -166,11 +163,11 @@ class NoteActivity2 : ComponentActivity() {
 					onSetLocation = noteViewModel2::setLocation,
 					onClickRemoveLocation = { noteViewModel2.setLocation(null, null) },
 					onClickReloadLocation = noteViewModel2::reloadLocation,
-					onAddNewFile = noteViewModel2::addNewFileToBuffer,
-					onRemoveNewFile = {},
-					onRemoveSavedFile = {},
+					onAddNewAttachment = noteViewModel2::addNewAttachment,
+					toggleAttachment = noteViewModel2::toggleAttachment,
 					onSelectChapter = noteViewModel2::updateParent,
 					onClickTag = noteViewModel2::toggleTag,
+					putTag = noteViewModel2::putTag,
 					onClickFavourite = noteViewModel2::toggleFavourite,
 					onClickLock = noteViewModel2::toggleLocked,
 					onClickBack = { finish() }

@@ -37,8 +37,8 @@ import com.google.api.services.drive.model.File
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
-import com.syncodec.graphite.presentation.ui.DeleteContainer
-import com.syncodec.graphite.presentation.ui.DeleteContent
+import com.syncodec.graphite.presentation.base.DeleteContainer
+import com.syncodec.graphite.presentation.base.DeleteContent
 import com.syncodec.graphite.service.syncInator.GDriveSyncInatorService
 
 

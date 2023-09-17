@@ -7,18 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.repository.Repository
-import com.syncodec.graphite.utils.SortBy
-import com.syncodec.graphite.utils.SortOn
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.encodeBase64
-import com.syncodec.graphite.utils.timestampToCalendarDay
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -26,19 +21,14 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class NotebookScreenViewModel(
 	repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>,
-	private val dataStoreInstance: DataStoreInstance,
-	private val isAuthenticated: StateFlow<Boolean>,
 ) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
 	private val _defaultChapterId: MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
 
-	private val _unorderedNotebookList: MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
-	private val _orderedIdList: MutableStateFlow<List<RealmUUID>> = MutableStateFlow(listOf())
-
-	private val _orderedNotebookList: MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
-	val orderedNotebookList: StateFlow<List<ChapterObject>> = _orderedNotebookList
+	private val _notebookList: MutableStateFlow<List<ChapterObject>?> = MutableStateFlow(null)
+	val notebookList: StateFlow<List<ChapterObject>?> = _notebookList
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
@@ -50,8 +40,6 @@ class NotebookScreenViewModel(
 			_repository.collectLatest { repository1 ->
 				launch { observeDefaultChapter(repository = repository1) }
 				launch { observeNotebook(repository = repository1) }
-				launch { observeNotebookOrder(repository = repository1) }
-				launch { sortAndFilterNotebook() }
 			}
 		}
 	}
@@ -63,54 +51,8 @@ class NotebookScreenViewModel(
 	}
 
 	private suspend fun observeNotebook(repository: Repository?) {
-		repository?.getChapterWithParentIdAsFlow(parentId = null)?.cancellable()?.collectLatest {
-			this@NotebookScreenViewModel._unorderedNotebookList.tryEmit(it.list)
-		}
-	}
-
-	private suspend fun observeNotebookOrder(repository: Repository?) {
-		repository?.getBaseObjectAsFlow()?.cancellable()?.collectLatest {
-			this@NotebookScreenViewModel._orderedIdList.tryEmit(it?.notebookIdOrderList ?: listOf())
-		}
-	}
-
-	private suspend fun sortAndFilterNotebook() {
-		viewModelScope.launch(Dispatchers.Default) {
-			combine(
-				_unorderedNotebookList,
-				_orderedIdList,
-				isAuthenticated,
-				dataStoreInstance.getSortBy,
-				dataStoreInstance.getSortOn,
-			) { args ->
-				val unorderedNotebookList1 = args[0] as List<ChapterObject>
-				val orderedIdList1 = args[1] as List<RealmUUID>
-				val isAuthenticated1 = args[2] as Boolean
-				val sortBy1 = args[3] as SortBy
-				val sortOn1 = args[4] as SortOn
-
-				val lockFilteredNotebookList = if (!isAuthenticated1) unorderedNotebookList1.filter { !it.isLocked } else unorderedNotebookList1
-
-				when (sortBy1) {
-					SortBy.Ascending -> when (sortOn1) {
-						SortOn.Title -> lockFilteredNotebookList.sortedBy { it.title?.lowercase() ?: "." }
-						SortOn.Timestamp -> lockFilteredNotebookList.sortedBy { timestampToCalendarDay(it.createdTimestamp) }
-						SortOn.Modified -> lockFilteredNotebookList.sortedBy { timestampToCalendarDay(it.modifiedTimestamp) }
-						SortOn.Custom -> lockFilteredNotebookList.sortedBy { orderedIdList1.indexOf(it.id) }
-						else -> lockFilteredNotebookList.sortedBy { it.title?.lowercase() ?: "." }
-					}
-
-					SortBy.Descending -> when (sortOn1) {
-						SortOn.Title -> lockFilteredNotebookList.sortedByDescending { it.title?.lowercase() ?: "." }
-						SortOn.Timestamp -> lockFilteredNotebookList.sortedByDescending { timestampToCalendarDay(it.createdTimestamp) }
-						SortOn.Modified -> lockFilteredNotebookList.sortedByDescending { timestampToCalendarDay(it.modifiedTimestamp) }
-						SortOn.Custom -> lockFilteredNotebookList.sortedByDescending { orderedIdList1.indexOf(it.id) }
-						else -> lockFilteredNotebookList.sortedByDescending { it.title?.lowercase() ?: "." }
-					}
-				}
-			}.collectLatest {
-				this@NotebookScreenViewModel._orderedNotebookList.tryEmit(it)
-			}
+		repository?.getNotebookAsFlow()?.collectLatest {
+			this@NotebookScreenViewModel._notebookList.tryEmit(it)
 		}
 	}
 

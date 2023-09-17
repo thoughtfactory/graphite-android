@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.GridItem
+import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.BucketGridItem
 import com.syncodec.graphite.presentation.bucketItem.activity.BookBucketItemActivity
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
@@ -53,7 +53,8 @@ fun BucketBookGridScreen(
 					Box(
 						modifier = Modifier.animateItemPlacement()
 					) {
-						GridItem(
+						BucketGridItem(
+							id = bucketItemObject.id,
 							title = bucketItemObject.title,
 							thumbnail = bucketItemObject.thumbnail,
 							isSelected = bucketItemObject.id in selectedIdList,

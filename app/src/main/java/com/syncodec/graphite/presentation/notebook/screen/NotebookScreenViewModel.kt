@@ -132,7 +132,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 		viewModelScope.launch(Dispatchers.Default) {
 			chapterCounterCoroutine?.cancel()
 			chapterCounterCoroutine = this
-			repository.getAllChapterAsFlow().cancellable().collect {
+			repository.getAllChapterAsFlow().collect {
 				it.groupingBy { it.parentId }.eachCount().let { _chapterChapterItemCount.tryEmit(it) }
 			}
 		}
@@ -140,7 +140,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 		viewModelScope.launch(Dispatchers.Default) {
 			noteCounterCoroutine?.cancel()
 			noteCounterCoroutine = this
-			repository.getAllNoteAsFlow().cancellable().collect {
+			repository.getAllNoteAsFlow().collect {
 				it.groupingBy { it.parentId }.eachCount().let { _chapterNoteItemCount.tryEmit(it) }
 			}
 		}
@@ -151,7 +151,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 			noteLoaderCoroutine?.cancel()
 			noteLoaderCoroutine = this
 			repository.getNoteWithParentIdAsFlow(parentId = parentId).collect { noteList ->
-				this@NotebookScreenViewModel._noteList.tryEmit(noteList.list.map { it.toLite() })
+//				this@NotebookScreenViewModel._noteList.tryEmit(noteList.list.map { it.toLite() })
 			}
 		}
 	}
@@ -161,7 +161,7 @@ class NotebookScreenViewModel(private val repository : Repository) : ViewModel()
 			chapterLoaderCoroutine?.cancel()
 			chapterLoaderCoroutine = this
 			repository.getChapterWithParentIdAsFlow(parentId = parentId).collect { chapterList ->
-				this@NotebookScreenViewModel._chapterList.tryEmit(chapterList.list)
+//				this@NotebookScreenViewModel._chapterList.tryEmit(chapterList.list)
 			}
 		}
 	}

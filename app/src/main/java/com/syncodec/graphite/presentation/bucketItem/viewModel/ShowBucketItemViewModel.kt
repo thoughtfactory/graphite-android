@@ -51,7 +51,7 @@ class ShowBucketItemViewModel(repositoryStateFlow: MutableStateFlow<Repository.C
 				bucketItemId?.let {
 					repository1?.getBucketItemAsFlow(id = bucketItemId)?.collect {
 						this@ShowBucketItemViewModel._bucketItemObject.tryEmit(it)
-						this@ShowBucketItemViewModel._showType.tryEmit((it?.getData() as? BucketItemObject.Companion.BucketItemData.ShowData)?.type)
+						this@ShowBucketItemViewModel._showType.tryEmit((it?.getShowData() as? BucketItemObject.Companion.BucketItemData.ShowData)?.type)
 					}
 				}
 			}

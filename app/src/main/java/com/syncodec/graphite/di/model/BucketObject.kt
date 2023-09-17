@@ -65,6 +65,10 @@ class BucketObject() : RealmObject {
 
 	var googleDriveId: String? = null
 
+	fun updateModifyTimestamp() {
+		this.modifiedTimestamp = Instant.now().toEpochMilli()
+	}
+
 	fun toLite(): BucketObjectLite = BucketObjectLite(
 		id = this.id,
 		createdTimestamp = this.createdTimestamp,
@@ -153,7 +157,7 @@ data class BucketObjectLite(
 	val bucketType: BucketType,
 	val isFavourite: Boolean,
 	val isLocked: Boolean,
-	val bucketItemCount: Int
+	var bucketItemCount: Int
 ) {
 	override fun hashCode(): Int {
 		var result = id.hashCode()

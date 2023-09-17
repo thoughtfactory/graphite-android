@@ -36,12 +36,12 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.BackButton
 import com.syncodec.graphite.presentation.common.button.SearchButton
 import com.syncodec.graphite.presentation.search.SearchViewModel
-import com.syncodec.graphite.presentation.ui.AttachmentContainer
-import com.syncodec.graphite.presentation.ui.AttachmentContent
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.FavouriteContent
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.presentation.ui.LockClosedContent
+import com.syncodec.graphite.presentation.base.AttachmentContainer
+import com.syncodec.graphite.presentation.base.AttachmentContent
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.FavouriteContent
+import com.syncodec.graphite.presentation.base.LockClosedContainer
+import com.syncodec.graphite.presentation.base.LockClosedContent
 import com.syncodec.graphite.utils.getInverseBWColor
 
 

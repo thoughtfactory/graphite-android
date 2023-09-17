@@ -42,13 +42,13 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.ui.LocationContainer
+import com.syncodec.graphite.presentation.note2.NoteViewModel2
+import com.syncodec.graphite.presentation.base.LocationContainer
 import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.toDate
 import com.syncodec.graphite.utils.toDayTime
 import com.syncodec.graphite.utils.toMonthYear
 import io.realm.kotlin.types.RealmUUID
-import java.io.File
 import java.time.Instant
 
 
@@ -61,18 +61,18 @@ fun ViewerHeader(
 	userTimestamp: Long? = null,
 	locationData: LocationData = LocationData.Init,
 	parentChapter: ChapterObjectLite? = null,
-	fileList: List<File> = listOf(),
+	savedAttachmentList : List<NoteViewModel2.Companion.AttachmentState.Saved> = listOf(),
 	connectedTagList: Set<TagObject> = setOf(),
 	onClickChapterSelector : () -> Unit = {},
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth()
 	) {
-		if (fileList.isNotEmpty()) {
+		if (savedAttachmentList.isNotEmpty()) {
 			AttachmentCarousel(
 				modifier = modifier,
 				noteId = noteId,
-				fileList = fileList
+				fileList = savedAttachmentList.map { it.file }
 			)
 		}
 
@@ -314,7 +314,6 @@ private fun Preview() {
 		userTimestamp = Instant.now().toEpochMilli(),
 		locationData = LocationData.Success(latLng = LatLng(0.0, 0.0), address = "Court 3, Tennis Court, Nirma University, Ahmedabad, Gujarat, India"),
 		parentChapter = ChapterObjectLite.getRandomInstance(),
-		fileList = listOf(),
 		connectedTagList = setOf(TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance(), TagObject.getRandomInstance())
 	)
 }

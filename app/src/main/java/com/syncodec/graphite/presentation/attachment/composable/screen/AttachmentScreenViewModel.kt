@@ -65,7 +65,7 @@ class AttachmentScreenViewModel(private val repository : Repository) : ViewModel
 		viewModelScope.launch(Dispatchers.Default) {
 			loadAllCoroutine?.cancel()
 			loadAllCoroutine = this
-			repository.getAllNoteLiteAsFlow().cancellable().collect {
+			repository.getAllNoteLiteAsFlow().collect {
 				loaderStatus.tryEmit(LoaderStatus.Loading)
 				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
 				it.forEach { note ->
@@ -91,7 +91,7 @@ class AttachmentScreenViewModel(private val repository : Repository) : ViewModel
 			viewModelScope.launch(Dispatchers.Default) {
 				loadNoteCoroutine?.cancel()
 				loadNoteCoroutine = this
-				repository.getNoteFromIdAsFlow(id = it).cancellable().collect {
+				repository.getNoteFromIdAsFlow(id = it).collect {
 					it?.let { noteObject ->
 						repository.attachmentRepository.getAttachmentFromNote(parentId = noteObject.id).let { attachmentList ->
 							noteAttachmentListMap.tryEmit(mapOf(noteObject.toLite() to attachmentList))
@@ -115,11 +115,11 @@ class AttachmentScreenViewModel(private val repository : Repository) : ViewModel
 			viewModelScope.launch(Dispatchers.Default) {
 				loadChapterCoroutine?.cancel()
 				loadChapterCoroutine = this
-				repository.getNoteWithParentIdAsFlow(parentId = it).cancellable().collect {
+				repository.getNoteWithParentIdAsFlow(parentId = it).collect {
 					val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
-					it.list.forEach { note ->
+					it.forEach { note ->
 						repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
-							if (attachmentList.isNotEmpty()) noteAttachmentListMap[note.toLite()] = attachmentList
+							if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
 						}
 					}
 					this@AttachmentScreenViewModel.noteAttachmentListMap.tryEmit(noteAttachmentListMap)

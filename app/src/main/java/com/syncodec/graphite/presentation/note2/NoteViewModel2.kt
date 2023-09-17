@@ -2,6 +2,8 @@ package com.syncodec.graphite.presentation.note2
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObjectLite
@@ -13,10 +15,8 @@ import com.syncodec.graphite.utils.Location.getLocation
 import com.syncodec.graphite.utils.LocationData
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.types.RealmUUID
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.cancellable
@@ -50,11 +50,8 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 	val parentChapter: StateFlow<ChapterObjectLite?> = _parentChapter
 
 	//	Attachments
-	private val _savedFileList: MutableStateFlow<List<File>> = MutableStateFlow(listOf())
-	val savedFileList: StateFlow<List<File>> = _savedFileList
-
-	private val _newFileList: MutableStateFlow<List<Uri>> = MutableStateFlow(listOf())
-	val newFileList: StateFlow<List<Uri>> = _newFileList
+	private val _attachmentList: MutableStateFlow<List<AttachmentState>> = MutableStateFlow(listOf())
+	val attachmentList: StateFlow<List<AttachmentState>> = _attachmentList
 
 	//	Tags
 	private val _allTagsList: MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
@@ -86,10 +83,10 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 	}
 
 	private suspend fun observeNote(repository: Repository, noteId: RealmUUID) {
-		repository.getNoteFromIdAsFlow(id = noteId).cancellable().collectLatest { noteObject1 ->
+		repository.getNoteFromIdAsFlow(id = noteId).collectLatest { noteObject1 ->
 			this@NoteViewModel2._noteObject.tryEmit(noteObject1)
 			setLocation(latLng = noteObject1?.getLatLng(), address = noteObject1?.address)
-			noteObject1?.id?.let { this@NoteViewModel2._savedFileList.tryEmit(repository.attachmentRepository.getAttachmentFromNote(parentId = it)) }
+			noteObject1?.id?.let { this@NoteViewModel2._attachmentList.tryEmit(repository.attachmentRepository.getAttachmentFromNote(parentId = it).map { AttachmentState.Saved(file = it) }) }
 		}
 	}
 
@@ -101,7 +98,7 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 	}
 
 	private suspend fun observeAllTags(repository: Repository?) {
-		repository?.getAllTagAsFlow()?.cancellable()?.collectLatest { tagList1 ->
+		repository?.getAllTagAsFlow()?.collectLatest { tagList1 ->
 			this@NoteViewModel2._allTagsList.tryEmit(tagList1)
 		}
 	}
@@ -142,44 +139,71 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 		}
 	}
 
-	fun addNewFileToBuffer(fileList: List<Uri>) {
-		val updatedNewFileList = _newFileList.value.toMutableList().apply { addAll(fileList) }
-		_newFileList.tryEmit(updatedNewFileList)
+	fun addNewAttachment(toAddAttachmentList: List<Uri>) {
+		this._attachmentList.value.toMutableList().apply {
+			addAll(toAddAttachmentList.map { AttachmentState.New(uri = it) })
+			this@NoteViewModel2._attachmentList.tryEmit(toList())
+		}
+	}
+
+	fun toggleAttachment(attachmentState: AttachmentState) {
+		when (attachmentState) {
+			is AttachmentState.Saved -> this._attachmentList.value.toMutableList().apply {
+				remove(attachmentState)
+				add(attachmentState.toRemove())
+				this@NoteViewModel2._attachmentList.tryEmit(toList())
+			}
+
+			is AttachmentState.New -> this._attachmentList.value.toMutableList().apply {
+				remove(attachmentState)
+				this@NoteViewModel2._attachmentList.tryEmit(toList())
+			}
+
+			is AttachmentState.ToRemove -> this._attachmentList.value.toMutableList().apply {
+				remove(attachmentState)
+				add(attachmentState.toSave())
+				this@NoteViewModel2._attachmentList.tryEmit(toList())
+			}
+		}
 	}
 
 	fun save() {
-		_repository.value?.setObjectFromIdSuspended<NoteObject>(
-			id = _noteId.value,
-			insert = {
-				Log.d("npr71", "insert")
-				noteObject.value?.apply {
-					this.updateModifyTimestamp()
-					this.title = kitKatFormat.value?.kitKatTitle
-					this.content = kitKatFormat.value?.kitKatContent
-					this.latLng = Json.encodeToString(this@NoteViewModel2.locationData.value.getLatLngOrNull())
-					this.address = this@NoteViewModel2.locationData.value.getAddressOrNull()
-					copyToRealm(this, UpdatePolicy.ALL)
-					getNote(noteId = this.id)
+		_repository.value?.let { repository ->
+			repository.setObjectFromIdSuspended<NoteObject>(
+				id = _noteId.value,
+				insert = {
+					Log.d("npr71", "insert")
+					noteObject.value?.apply {
+						this.updateModifyTimestamp()
+						this.title = kitKatFormat.value?.kitKatTitle
+						this.content = kitKatFormat.value?.kitKatContent
+						this.latLng = Json.encodeToString(this@NoteViewModel2.locationData.value.getLatLngOrNull())
+						this.address = this@NoteViewModel2.locationData.value.getAddressOrNull()
+						copyToRealm(this, UpdatePolicy.ALL)
+						getNote(noteId = this.id)
+					}
 				}
+			) {
+				Log.d("npr71", "update")
+				this.updateModifyTimestamp()
+				this.title = kitKatFormat.value?.kitKatTitle
+				this.content = kitKatFormat.value?.kitKatContent
+				this.latLng = Json.encodeToString(this@NoteViewModel2.locationData.value.getLatLngOrNull())
+				this.address = this@NoteViewModel2.locationData.value.getAddressOrNull()
 			}
-		) {
-			Log.d("npr71", "update")
-			this.updateModifyTimestamp()
-			this.title = kitKatFormat.value?.kitKatTitle
-			this.content = kitKatFormat.value?.kitKatContent
-			this.latLng = Json.encodeToString(this@NoteViewModel2.locationData.value.getLatLngOrNull())
-			this.address = this@NoteViewModel2.locationData.value.getAddressOrNull()
+
+			noteObject.value?.id?.let { noteId1 ->
+				repository.updateTagConnections(
+					id = noteId1,
+					tagListToAdd = tagStateMap.value.filterValues { it == TagObjectState.New }.keys.map { it.id },
+					tagListToRemove = tagStateMap.value.filterValues { it == TagObjectState.ToRemove }.keys.map { it.id }
+				)
+
+				repository.attachmentRepository.putAttachment(parentId = noteId1, uriList = this.attachmentList.value.filterIsInstance<AttachmentState.New>().map { it.uri })
+				repository.attachmentRepository.delete(attachmentList = this.attachmentList.value.filterIsInstance<AttachmentState.ToRemove>().map { it.file })
+			}
 		}
 
-		noteObject.value?.id?.let {
-			_repository.value?.updateTagConnections(
-				id = it,
-				tagListToAdd = tagStateMap.value.filterValues { it == TagObjectState.New }.keys.map { it.id },
-				tagListToRemove = tagStateMap.value.filterValues { it == TagObjectState.ToRemove }.keys.map { it.id }
-			)
-
-			_repository.value?.attachmentRepository?.putAttachment(parentId = it, uriList = newFileList.value, keepName = true)
-		}
 	}
 
 	fun toggleTag(tagObject: TagObject) {
@@ -213,11 +237,40 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 		}
 	}
 
+	fun putTag(tag: String, color: Color): Boolean {
+		return if (allTagsList.value.find { it.tag == tag } != null) {
+			false
+		}
+		else {
+			viewModelScope.launch(Dispatchers.Default) {
+				TagObject().apply {
+					this.tag = tag
+					this.color = color.toArgb()
+
+					_repository.value?.putTag(this)
+				}
+			}
+			true
+		}
+	}
+
+
 	companion object {
 		sealed class TagObjectState {
 			data object Saved : TagObjectState()
 			data object New : TagObjectState()
 			data object ToRemove : TagObjectState()
+		}
+
+		sealed class AttachmentState(val name : String?) {
+			data class Saved(val file: File) : AttachmentState(name = file.name) {
+				fun toRemove() = ToRemove(file = file)
+			}
+
+			data class New(val uri: Uri) : AttachmentState(name = uri.path)
+			data class ToRemove(val file: File) : AttachmentState(name = file.name) {
+				fun toSave() = Saved(file = file)
+			}
 		}
 	}
 }

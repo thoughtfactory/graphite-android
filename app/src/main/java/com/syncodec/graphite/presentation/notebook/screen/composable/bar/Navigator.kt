@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -93,8 +95,8 @@ private fun NavigatorItem(
 	isDefault: Boolean = false,
 	onClick: () -> Unit = {},
 ) {
-	val containerColor = color ?: MaterialTheme.colorScheme.surface
-	val contentColor = color?.getInverseBWColor() ?: MaterialTheme.colorScheme.onSurface
+	val containerColor = color?.copy(alpha = 0.13f) ?: MaterialTheme.colorScheme.surface
+	val contentColor = color ?: MaterialTheme.colorScheme.onBackground
 
 	SuggestionChip(
 		onClick = onClick,
@@ -103,7 +105,7 @@ private fun NavigatorItem(
 			{
 				Icon(
 					painter = painterResource(id = R.drawable.ic_fa_sparkles),
-					contentDescription = "Default Chapter",
+					contentDescription = stringResource(id = R.string.default_chapter),
 					tint = contentColor,
 					modifier = Modifier.requiredSize(16.dp)
 				)
@@ -129,13 +131,13 @@ private fun RootNavigatorItem(
 		label = {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_home),
-				contentDescription = "Root Chapter",
+				contentDescription = stringResource(id = R.string.root_element),
 				modifier = Modifier.requiredSize(16.dp)
 			)
 		},
 		colors = SuggestionChipDefaults.suggestionChipColors(
-			containerColor = MaterialTheme.colorScheme.surface,
-			labelColor = MaterialTheme.colorScheme.onSurface,
+			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.13f),
+			labelColor = MaterialTheme.colorScheme.surface,
 		),
 		border = null,
 		modifier = Modifier.padding(2.dp, 0.dp),

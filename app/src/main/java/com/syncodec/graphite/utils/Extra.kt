@@ -188,6 +188,7 @@ enum class MimeType {
 	VIDEO,
 	AUDIO,
 	TEXT,
+	PDF,
 	APPLICATION,
 }
 

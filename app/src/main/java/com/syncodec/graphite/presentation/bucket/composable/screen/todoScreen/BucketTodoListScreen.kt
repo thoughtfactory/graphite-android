@@ -1,10 +1,5 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,12 +19,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -46,11 +41,9 @@ import com.syncodec.graphite.presentation.common.reorderable.detectReorder
 import com.syncodec.graphite.presentation.common.reorderable.lazyState.rememberReorderableLazyListState
 import com.syncodec.graphite.presentation.common.reorderable.reorderable
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LockClosedContainer
 import io.realm.kotlin.types.RealmUUID
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
 @Preview
@@ -61,13 +54,9 @@ fun BucketTodoListScreen(
 	selectedIdList: Set<RealmUUID> = setOf(),
 	onSelect: (RealmUUID) -> Unit = {},
 	onClickBucketItem: (BucketItemObject) -> Unit = {},
-	onClickFavourite: (BucketItemObject) -> Unit = {},
-	onClickLock: (BucketItemObject) -> Unit = {},
-	onCheckedChange: (BucketItemObject) -> Unit = {},
+	onCheckedChange: (RealmUUID) -> Unit = {},
 	onReorderBucketItemList: (List<RealmUUID>) -> Unit = {},
 ) {
-	val scope = rememberCoroutineScope()
-
 	var bucketItemListOrdered by remember { mutableStateOf<List<BucketItemObject>>(listOf()) }
 	LaunchedEffect(bucketItemList) { bucketItemListOrdered = bucketItemList.toList() }
 	val state = rememberReorderableLazyListState(
@@ -78,9 +67,7 @@ fun BucketTodoListScreen(
 				bucketItemListOrdered = toList()
 			}
 		},
-		onDragEnd = { from, to ->
-			scope.launch(Dispatchers.Default) { onReorderBucketItemList(bucketItemListOrdered.map { it.id }) }
-		}
+		onDragEnd = { from, to -> onReorderBucketItemList(bucketItemListOrdered.map { it.id }) }
 	)
 
 	if (bucketItemList.isEmpty()) {
@@ -90,7 +77,7 @@ fun BucketTodoListScreen(
 			state = state.listState,
 			modifier = Modifier
 				.fillMaxSize()
-//				.reorderable(state)
+				.reorderable(state)
 		) {
 			bucketItemListOrdered.forEach { bucketItemObject ->
 				item(
@@ -118,7 +105,7 @@ fun BucketTodoListScreen(
 							isSelected = isDragging or (bucketItemObject.id in selectedIdList),
 							onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject) },
 							onLongClick = { onSelect(bucketItemObject.id) },
-							onCheckedChange = { onCheckedChange(bucketItemObject) },
+							onCheckedChange = { onCheckedChange(bucketItemObject.id) },
 						)
 					}
 				}
@@ -156,7 +143,7 @@ private fun TodoItem(
 			Spacer(modifier = Modifier.width(4.dp))
 
 			TriStateCheckbox(
-				state = ToggleableState.values().getOrElse((state + 1) % 3) { ToggleableState.Off },
+				state = ToggleableState.entries.getOrElse((state + 1) % 3) { ToggleableState.Off },
 				onClick = onCheckedChange
 			)
 
@@ -168,23 +155,23 @@ private fun TodoItem(
 //				modifier = Modifier.weight(1f),
 //				label = ""
 //			) {
-				if (state == 2) {
-					Text(
-						text = if (title.isNullOrEmpty()) "Untitled" else title,
-						style = MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough),
-						maxLines = 1,
-						fontStyle = if (title.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
-						modifier = Modifier.weight(1f)
-					)
-				} else {
-					Text(
-						text = if (title.isNullOrEmpty()) "Untitled" else title,
-						style = MaterialTheme.typography.bodyLarge,
-						maxLines = 1,
-						fontStyle = if (title.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
-						modifier = Modifier.weight(1f)
-					)
-				}
+			if (state == 2) {
+				Text(
+					text = if (title.isNullOrEmpty()) stringResource(id = R.string.untitled) else title,
+					style = MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough),
+					maxLines = 1,
+					fontStyle = if (title.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
+					modifier = Modifier.weight(1f)
+				)
+			} else {
+				Text(
+					text = if (title.isNullOrEmpty()) stringResource(id = R.string.untitled) else title,
+					style = MaterialTheme.typography.bodyLarge,
+					maxLines = 1,
+					fontStyle = if (title.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
+					modifier = Modifier.weight(1f)
+				)
+			}
 //			}
 
 			Spacer(modifier = Modifier.width(12.dp))
@@ -199,7 +186,7 @@ private fun TodoItem(
 					if (isLocked) {
 						Icon(
 							painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
-							contentDescription = "locked",
+							contentDescription = stringResource(id = R.string.locked),
 							tint = Color.LockClosedContainer,
 							modifier = Modifier.requiredSize(12.dp)
 						)
@@ -216,7 +203,7 @@ private fun TodoItem(
 					if (isFavourite) {
 						Icon(
 							painter = painterResource(id = R.drawable.ic_fa_heart_solid),
-							contentDescription = "favourite",
+							contentDescription = stringResource(id = R.string.favourite),
 							tint = Color.FavouriteContainer,
 							modifier = Modifier.requiredSize(12.dp)
 						)

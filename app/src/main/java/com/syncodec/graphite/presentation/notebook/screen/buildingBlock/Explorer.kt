@@ -16,7 +16,7 @@ import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
-import com.syncodec.graphite.utils.LocalIsAuthenticated
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
 import io.realm.kotlin.types.RealmUUID
@@ -42,7 +42,7 @@ fun Explorer(
 	onLongClickChapter : (RealmUUID) -> Unit = {},
 ) {
 	val context = LocalContext.current
-	val isAuthenticated = LocalIsAuthenticated.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = null)

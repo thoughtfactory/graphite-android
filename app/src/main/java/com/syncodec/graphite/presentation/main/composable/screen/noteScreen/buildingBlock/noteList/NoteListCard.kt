@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,11 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,13 +35,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
@@ -57,15 +49,20 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
-import com.syncodec.graphite.presentation.ui.AttachmentContainer
-import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.LocationContainer
-import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.di.repository.cache.AttachmentCache
+import com.syncodec.graphite.presentation.common.attachment.ImageAttachmentPreview
+import com.syncodec.graphite.presentation.common.attachment.PdfAttachmentPreview
+import com.syncodec.graphite.presentation.common.attachment.VideoAttachmentPreview
+import com.syncodec.graphite.presentation.common.attachment.previewer.PreviewData
+import com.syncodec.graphite.presentation.base.AttachmentContainer
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LocationContainer
+import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.utils.addEmptyLines
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.roundTo
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 @Preview
@@ -77,20 +74,18 @@ fun NoteListCard(
 	isFavourite: Boolean = false,
 	isLocked: Boolean = false,
 	contentThumbnail: String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
-	thumbnail: String? = null,
 	address: String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
 	latLng: LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
 	tagList: List<TagObjectLite> = listOf(),
 	isSelected: Boolean = false,
+	cardHeight: Int = 144,
 	onClick: () -> Unit = {},
 	onLongClick: () -> Unit = {}
 ) {
 	val containerColor by animateColorAsState(
-		targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
-		else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f)
+		targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp) else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
+		label = "containerColor_animation"
 	)
-
-	var surfaceHeight by remember { mutableStateOf<Int?>(null) }
 
 	Box(
 		modifier = Modifier.fillMaxWidth()
@@ -99,14 +94,12 @@ fun NoteListCard(
 			modifier = Modifier.fillMaxWidth()
 		) {
 			Spacer(modifier = Modifier.width(14.dp))
-			surfaceHeight?.let {
-				Box(
-					modifier = Modifier
-						.width(4.dp)
-						.height(with(LocalDensity.current) { it.toDp() + 8.dp })
-						.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
-				)
-			} ?: Spacer(modifier = Modifier.width(12.dp))
+			Box(
+				modifier = Modifier
+					.width(4.dp)
+					.height(cardHeight.dp)
+					.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
+			)
 
 			NoteSurface(
 				id = id,
@@ -116,12 +109,11 @@ fun NoteListCard(
 				isFavourite = isFavourite,
 				isLocked = isLocked,
 				contentThumbnail = contentThumbnail,
-				thumbnail = thumbnail,
 				address = address,
 				latLng = latLng,
 				tagList = tagList,
 				isSelected = isSelected,
-				onGloballyPositioned = { surfaceHeight = it.size.height },
+				cardHeight = cardHeight,
 				onClick = onClick,
 				onLongClick = onLongClick
 			)
@@ -129,8 +121,8 @@ fun NoteListCard(
 
 		AnimatedVisibility(
 			visible = isSelected,
-			enter = scaleIn(tween(300)),
-			exit = scaleOut(tween(300)),
+			enter = scaleIn(tween(470)),
+			exit = scaleOut(tween(470)),
 			modifier = Modifier.align(Alignment.TopEnd)
 		) {
 			Box(
@@ -163,34 +155,41 @@ private fun NoteSurface(
 	isFavourite: Boolean = false,
 	isLocked: Boolean = false,
 	contentThumbnail: String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
-	thumbnail: String? = null,
 	address: String? = "Tennis Court, Nirma University, Ahmedabad, Gujarat, India",
 	latLng: LatLng? = LatLng(latitude = 23.12601812343727, longitude = 72.54642652228279),
 	tagList: List<TagObjectLite> = listOf(),
 	isSelected: Boolean = false,
-	onGloballyPositioned: (LayoutCoordinates) -> Unit = {},
+	cardHeight: Int = 144,
 	onClick: () -> Unit = {},
 	onLongClick: () -> Unit = {}
 ) {
 	val context = LocalContext.current
+
 	val haptic = LocalHapticFeedback.current
 
 	val attachmentCount = context.getAttachmentCountFromNoteId(parentId = id)
 
+	var attachmentPreviewData by remember { mutableStateOf<PreviewData?>(null) }
+	LaunchedEffect(key1 = id) {
+		withContext(Dispatchers.IO) {
+			attachmentPreviewData = AttachmentCache.getAttachmentThumbnail(parentId = id, id.hashCode(), context = context)
+		}
+	}
+
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
+			.height(cardHeight.dp)
 			.padding(12.dp, 8.dp, 12.dp, 0.dp)
-			.background(containerColor, MaterialTheme.shapes.medium)
-			.clip(MaterialTheme.shapes.medium)
+			.background(containerColor, MaterialTheme.shapes.small)
+			.clip(MaterialTheme.shapes.small)
 			.combinedClickable(
 				onClick = onClick,
 				onLongClick = {
 					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 					onLongClick()
 				}
-			)
-			.onGloballyPositioned { onGloballyPositioned(it) },
+			),
 	) {
 		Column(
 			modifier = Modifier
@@ -206,9 +205,11 @@ private fun NoteSurface(
 			)
 			Spacer(modifier = Modifier.height(4.dp))
 			Content(
+				modifier = Modifier.weight(1f),
 				contentThumbnail = contentThumbnail,
-				thumbnail = if (attachmentCount > 0) thumbnail else null,
+				previewData = attachmentPreviewData,
 				tagList = tagList,
+				cardHeight = cardHeight,
 			)
 			Footer(address = address, latLng = latLng)
 		}
@@ -233,10 +234,9 @@ private fun Header(
 		title?.let {
 			if (it.isNotBlank()) {
 				HeaderText(text = "·", modifier = Modifier.padding(horizontal = 2.dp))
-				HeaderText(text = it)
+				HeaderText(text = it, modifier = Modifier.weight(1f))
 			}
-		}
-		Spacer(modifier = Modifier.weight(1f))
+		} ?: Spacer(modifier = Modifier.weight(1f))
 		StateInfo(
 			isFavourite = isFavourite,
 			isLocked = isLocked,
@@ -248,12 +248,15 @@ private fun Header(
 @Preview
 @Composable
 private fun Content(
+	modifier: Modifier = Modifier,
 	contentThumbnail: String? = "The question is, what color will everything be at the moment I come for you? What will the sky be saying?",
-	thumbnail: String? = null,
+	previewData: PreviewData? = null,
 	tagList: List<TagObjectLite> = listOf(),
+	cardHeight: Int = 144
 ) {
 	Row(
-		modifier = Modifier.fillMaxWidth(),
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = modifier.fillMaxWidth()
 	) {
 		Column(
 			modifier = Modifier.weight(1f)
@@ -262,28 +265,43 @@ private fun Content(
 				text = (contentThumbnail ?: "").addEmptyLines(6),
 				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
-				maxLines = if (tagList.isEmpty()) 4 else 3,
-				modifier = Modifier.fillMaxWidth()
+//				maxLines = if (tagList.isEmpty()) 4 else 3,
+				overflow = TextOverflow.Ellipsis,
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
 			)
 
 			TagList(tagList = tagList)
 		}
 
-		thumbnail?.decodeBase64ToBitmap()?.asImageBitmap()?.let {
+		AttachmentView(
+			previewData = previewData,
+			modifier = Modifier
+				.requiredSize(if (cardHeight < 144) (cardHeight - 56).dp else 88.dp)
+				.clip(MaterialTheme.shapes.extraSmall)
+		)
+	}
+}
+
+@Preview
+@Composable
+private fun AttachmentView(
+	modifier: Modifier = Modifier,
+	previewData: PreviewData? = null
+) {
+	if (previewData != null && previewData !is PreviewData.Unknown) {
+		Row {
 			Spacer(modifier = Modifier.width(8.dp))
 			Box(
-				modifier = Modifier
-					.requiredSize(72.dp)
-					.padding(2.dp)
-					.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
-					.clip(MaterialTheme.shapes.medium)
+				modifier = modifier
 			) {
-				Image(
-					bitmap = it,
-					contentDescription = "Chapter Thumbnail",
-					contentScale = ContentScale.Crop,
-					modifier = Modifier.fillMaxSize()
-				)
+				when (previewData) {
+					is PreviewData.Image -> ImageAttachmentPreview(previewData = previewData)
+					is PreviewData.Video -> VideoAttachmentPreview(previewData = previewData)
+					is PreviewData.Pdf -> PdfAttachmentPreview(previewData = previewData)
+					else -> Unit
+				}
 			}
 		}
 	}
@@ -342,7 +360,7 @@ private fun ColumnScope.Footer(
 					)
 				} ?: latLng?.let {
 					Text(
-						text = "${it.latitude?.roundTo(6)}, ${it.longitude?.roundTo(6)}",
+						text = "${it.latitude.roundTo(6)}, ${it.longitude.roundTo(6)}",
 						style = MaterialTheme.typography.labelMedium,
 						color = MaterialTheme.colorScheme.onSurface,
 						fontStyle = FontStyle.Italic,
@@ -368,6 +386,7 @@ private fun HeaderText(
 		color = contentColor,
 		fontWeight = FontWeight.Bold,
 		maxLines = 1,
+		overflow = TextOverflow.Ellipsis,
 		modifier = modifier
 	)
 }

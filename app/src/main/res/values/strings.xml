@@ -17,12 +17,14 @@
 
     <!--    Bucket-->
     <string name="todo">Todo</string>
+    <string name="to_do">To do</string>
     <string name="book">Book</string>
     <string name="movies_and_series">Movies &amp; Series</string>
     <string name="doing">Doing</string>
     <string name="done">Done</string>
     <string name="to_read">To read</string>
     <string name="to_watch">To watch</string>
+    <string name="to_visit">To visit</string>
     <string name="reading">Reading</string>
     <string name="watching">Watching</string>
     <string name="read">Read</string>
@@ -45,6 +47,9 @@
     <string name="book_list">Book list</string>
     <string name="link_preview_error_title">Error fetching data</string>
     <string name="link_preview_error_description">Check if the url is valid. Also check if network connection is available. Or maybe it\'s a server error, you can click add link to save current url</string>
+    <string name="set_as">Set as</string>
+    <string name="select_bucket">Select bucket</string>
+    <string name="new_bucket">New bucket</string>
 
     <!--    Bucket description-->
     <string name="bucket_new_list">New List</string>
@@ -71,6 +76,7 @@
     <string name="first_published_year">First published year</string>
     <string name="open_library_id">OpenLibrary ID</string>
     <string name="open_in_open_library">"Open in OpenLibrary"</string>
+    <string name="thumbnail_not_found">Thumbnail not found</string>
 
     <!--    Movie data-->
     <string name="overview">Overview</string>
@@ -88,6 +94,11 @@
     <string name="episode">Episode</string>
 
     <!--    Notebook-->
+    <string name="note">Note</string>
+    <string name="notes">Notes</string>
+    <string name="chapter">Chapter</string>
+    <string name="chapters">Chapters</string>
+    <string name="notebook">Notebook</string>
     <string name="new_notebook">New notebook</string>
     <string name="new_chapter">New chapter</string>
     <string name="edit_chapter">Edit chapter</string>
@@ -101,6 +112,12 @@
     <string name="gallery">Gallery</string>
     <string name="file">File</string>
     <string name="select_chapter">Select chapter</string>
+    <string name="export_note">Export note</string>
+    <string name="as_txt">As txt</string>
+    <string name="as_pdf">As pdf</string>
+    <string name="as_html">As html</string>
+    <string name="as_json">As json</string>
+    <string name="as_markdown">As markdown</string>
 
     <!--    Explorer-->
     <string name="in_visible_region">Everywhere</string>
@@ -129,10 +146,14 @@
     <string name="unavailable">Unavailable</string>
     <string name="favourite">Favourite</string>
     <string name="lock">Lock</string>
+    <string name="attachment_count">Attachment count</string>
     <string name="toggle_favourite">Toggle favourite</string>
     <string name="toggle_lock">Toggle lock</string>
     <string name="thumbnail">Thumbnail</string>
+    <string name="pin">Pin</string>
+    <string name="pin_to_notification_bar">Pin to notification bar</string>
     <string name="save">Save</string>
+    <string name="new_">New</string>
     <string name="create">Create</string>
     <string name="update">Update</string>
     <string name="search">Search</string>
@@ -157,7 +178,9 @@
     <string name="view_type">View type</string>
     <string name="list">List</string>
     <string name="grid">Grid</string>
+    <string name="component_height">Component height</string>
     <string name="share">Share</string>
+    <string name="share_all">Share all</string>
     <string name="menu">Menu</string>
     <string name="select_all">Select all</string>
     <string name="move">Move</string>
@@ -166,6 +189,7 @@
     <string name="id">ID</string>
     <string name="parent_id">Parent ID</string>
     <string name="root_element">Root element</string>
+    <string name="default_chapter">Default chapter</string>
     <string name="not_saved">Not saved</string>
     <string name="created_on">Created on</string>
     <string name="modified_on">Modified on</string>
@@ -174,21 +198,61 @@
     <string name="select">Select</string>
     <string name="everywhere">Everywhere</string>
     <string name="add">Add</string>
+    <string name="remove">Remove</string>
     <string name="custom_color">Custom color</string>
     <string name="color_picker">Color picker</string>
     <string name="dismiss">Dismiss</string>
+    <string name="reorder_grip">Reorder grip</string>
+    <string name="experimental">Experimental</string>
 
     <!--   Delete -->
     <string name="delete">Delete</string>
     <string name="delete_item">Delete item</string>
+    <string name="delete_bucket">Delete bucket</string>
     <string name="delete_items_multiple">Delete selected items</string>
     <string name="are_you_sure_delete">Are you sure you want to delete this item?</string>
     <string name="are_you_sure_delete_multiple">Are you sure you want to delete selected items?</string>
-    <string name="are_you_sure_delete_bucket">Are you sure you want to delete selected buckets? This will also delete bucket items too</string>
+    <string name="are_you_sure_delete_bucket">Are you sure you want to delete this bucket? This will also delete bucket items too</string>
+    <string name="are_you_sure_delete_selected_bucket">Are you sure you want to delete selected buckets? This will also delete bucket items too</string>
 
     <!--    Time-->
     <string name="minute">Minute</string>
     <string name="minutes">Minutes</string>
+
+    <!--    Settings-->
+    <string name="account">Account</string>
+    <string name="graphite_pro">Graphite Pro</string>
+    <string name="unleash_the_full_potential_of_graphite">Unleash the full potential of Graphite</string>
+    <string name="preferences">Preferences</string>
+    <string name="security">Security</string>
+    <string name="data">Data</string>
+    <string name="backup_and_sync">Backup &amp; Sync</string>
+    <string name="extensions">Extensions</string>
+    <string name="knowledge_base">Knowledge Base</string>
+    <string name="knowledge_base_sub">Learn how everything works</string>
+    <string name="feedback">Feedback</string>
+    <string name="feedback_sub">Report a bug or suggest a feature, or just say hi!</string>
+    <string name="graphite_progress">Graphite Progress</string>
+    <string name="graphite_progress_sub">Look what are we working on</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="about">About</string>
+    <string name="typography">Typography</string>
+    <string name="dark_light_theme">Which side are you on?</string>
+    <string name="theme_dark">Dark side</string>
+    <string name="theme_light">Light side</string>
+    <string name="theme_same_as_system">Same as system</string>
+    <string name="language">Language</string>
+    <string name="language_sub">We are working on more languages</string>
+    <string name="import_data">Import data</string>
+    <string name="export_data">Export data</string>
+    <string name="clear_data">Clear data</string>
+    <string name="clear_data_sub">Clear all local data from this device</string>
+    <string name="add_change_passcode">Add/Change passcode</string>
+    <string name="remove_passcode">Remove passcode</string>
+    <string name="biometric_authentication">Biometric authentication</string>
+    <string name="biometric_authentication_sub">Biometric authentication</string>
+    <string name="backspace">Backspace</string>
 
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
@@ -198,4 +262,6 @@
     <string name="toast_error_loading_data">Error loading data</string>
     <string name="toast_error_opening_link">Error opening link</string>
     <string name="toast_duplicate_tag">Tag is already present</string>
+    <string name="toast_items_updated">Items updated</string>
+    <string name="toast_no_bucket_selected">No bucket selected</string>
 </resources>

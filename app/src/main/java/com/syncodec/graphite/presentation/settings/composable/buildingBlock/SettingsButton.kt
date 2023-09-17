@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.IconButtonSize
 
 
 @Preview
@@ -111,7 +112,7 @@ fun SettingsButton(
 data class SettingsButtonIcon(
 	val icon: Int,
 	val color: Color,
-	val size : Dp = 20.dp
+	val size: Dp = 20.dp
 ) {
 	override fun hashCode(): Int {
 		var result = icon
@@ -195,13 +196,13 @@ object SettingsButtonDefaults {
 	fun settingsButtonLeadingIcon(
 		icon: Int,
 		color: Color = MaterialTheme.colorScheme.onBackground,
-		size: Dp = 20.dp
-	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size,)
+		size: Dp = IconButtonSize
+	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size)
 
 	@Composable
 	fun settingsButtonTrailingIcon(
-		icon: Int = R.drawable.ic_flat_chevron,
+		icon: Int = R.drawable.ic_fa_caret,
 		color: Color = MaterialTheme.colorScheme.onBackground,
-		size: Dp = 20.dp
-	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size,)
+		size: Dp = IconButtonSize
+	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size)
 }

@@ -39,7 +39,7 @@ import com.google.maps.android.compose.clustering.Clustering
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
+import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
 import com.syncodec.graphite.utils.GoogleMapUtil
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID

@@ -15,7 +15,7 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.bar.GenericBottomBar
 import com.syncodec.graphite.presentation.common.button.VaultButton
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.base.IconButtonSize
 import com.syncodec.graphite.utils.getInverseBWColor
 
 

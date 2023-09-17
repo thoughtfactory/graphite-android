@@ -61,7 +61,7 @@ fun GenericTabRow(
 		contentColor = colors.contentColor,
 		indicator = indicator,
 		divider = {},
-		modifier = modifier.clip(MaterialTheme.shapes.large)
+		modifier = modifier.clip(MaterialTheme.shapes.small)
 	) {
 		tabItemList.forEachIndexed { index, tabItem ->
 			Row(
@@ -103,7 +103,7 @@ fun TabIndicator(
 		modifier
 			.padding(4.dp)
 			.fillMaxSize()
-			.background(containerColor, MaterialTheme.shapes.medium),
+			.background(containerColor, MaterialTheme.shapes.small),
 		contentAlignment = Alignment.Center,
 	) {
 		AnimatedContent(

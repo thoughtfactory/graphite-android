@@ -17,17 +17,24 @@ import com.syncodec.graphite.di.model.DeletedObject
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDirPath
+import com.syncodec.graphite.di.repository.group.RealmObjectGroup
+import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.RecursiveFileObserver
+import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
 import com.syncodec.graphite.utils.compress7z
 import com.syncodec.graphite.utils.copyInDirectory
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.extract7z
 import com.syncodec.graphite.utils.scaleBitmap
+import com.syncodec.graphite.utils.timeStampToPrettyDay
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
@@ -35,14 +42,20 @@ import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmSchema
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
@@ -51,12 +64,17 @@ import java.io.InputStream
 import java.security.SecureRandom
 import java.time.Instant
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 
 class Repository {
 
 	lateinit var context: Context
+	lateinit var dataStoreInstance: DataStoreInstance
 	val attachmentRepository = AttachmentRepository()
+
+	private val sortByFlow: MutableStateFlow<SortBy?> = MutableStateFlow(null)
+	private val sortOnFlow: MutableStateFlow<SortOn?> = MutableStateFlow(null)
 
 	/**
 	 * The state of the repository.This is used to determine if the repository is ready to be used. Use repository when [repositoryState] is [RepositoryState.Success].
@@ -64,10 +82,23 @@ class Repository {
 	val repositoryState: MutableStateFlow<RepositoryState> = MutableStateFlow(RepositoryState.Init)
 
 	var realm: Realm? = null
+	private val _isUnlocked: MutableStateFlow<Boolean> = MutableStateFlow(false)
+	val isUnlocked: StateFlow<Boolean> = _isUnlocked
+	fun lockRepo() {
+		this._isUnlocked.tryEmit(false)
+	}
 
-	fun initRepository(context: Context) {
+	fun unlockRepo() {
+		this._isUnlocked.tryEmit(true)
+	}
+
+
+	fun initRepository(context: Context, dataStoreInstance: DataStoreInstance) {
 		this.context = context
+		this.dataStoreInstance = dataStoreInstance
+		initializeFilter()
 		attachmentRepository.initRepository(context)
+
 		try {
 			var key: ByteArray
 			context.getSecretData("realmKey").let {
@@ -127,7 +158,13 @@ class Repository {
 		}
 	}
 
-	val isAuthenticated: MutableStateFlow<Boolean?> = MutableStateFlow(null)
+	private fun initializeFilter() {
+		CoroutineScope(Dispatchers.IO).apply {
+			launch { dataStoreInstance.getSortBy.collectLatest { this@Repository.sortByFlow.tryEmit(it) } }
+			launch { dataStoreInstance.getSortOn.collectLatest { this@Repository.sortOnFlow.tryEmit(it) } }
+		}
+	}
+
 	fun getRealmSchema(): Pair<RealmSchema, Long>? {
 		realm?.let {
 			return Pair(it.schema(), it.schemaVersion())
@@ -325,14 +362,14 @@ class Repository {
 		}
 	}
 
-	inline fun <reified T : TypedRealmObject> getObjectFromId(id: RealmUUID?) : T? {
+	inline fun <reified T : TypedRealmObject> getObjectFromId(id: RealmUUID?): T? {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
 			else realm.query(T::class, "id == $0 ", id).first().find()
 		}
 	}
 
-	suspend inline fun <reified T : TypedRealmObject> setObjectFromId(id: RealmUUID?, crossinline write : T.() -> Unit) {
+	suspend inline fun <reified T : TypedRealmObject> setObjectFromId(id: RealmUUID?, crossinline write: T.() -> Unit) {
 		realm.let { realm ->
 			if (realm == null) throw RealmNotInitializedException()
 			realm.write {
@@ -354,7 +391,7 @@ class Repository {
 		}
 	}
 
-	inline fun <reified T : TypedRealmObject> setMultiObjectFromIdSuspended(idList: Set<RealmUUID>, crossinline write : T.() -> Unit) {
+	inline fun <reified T : TypedRealmObject> setMultiObjectFromIdSuspended(idList: Set<RealmUUID>, crossinline write: T.() -> Unit) {
 		realm.let { realm ->
 			if (realm == null) throw RealmNotInitializedException()
 			CoroutineScope(Dispatchers.Default).launch {
@@ -371,11 +408,42 @@ class Repository {
 	 * @since 2.0.0
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
-	fun getChapterWithParentIdAsFlow(parentId: RealmUUID?): Flow<ResultsChange<ChapterObject>> {
+	fun getChapterWithParentIdAsFlow(parentId: RealmUUID?): Flow<List<ChapterObject>> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(ChapterObject::class, "parentId = $0", parentId).asFlow()
+			else realm.query(ChapterObject::class, "parentId = $0", parentId)
+				.asFlow()
+				.extractList()
+				.filterLocked(isLockedGetter = ChapterObject::isLocked)
+				.applySortOnBy(
+					idGetter = ChapterObject::id,
+					titleGetter = ChapterObject::title,
+					timestampGetter = ChapterObject::createdTimestamp,
+					modifiedTimestampGetter = ChapterObject::modifiedTimestamp,
+					customOrderFlow = getNotebookOrderAsFlow(),
+				)
 		}
+	}
+
+	fun getNotebookAsFlow(): Flow<List<ChapterObject>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.query(ChapterObject::class, "parentId = $0", null)
+				.asFlow()
+				.extractList()
+				.filterLocked(isLockedGetter = ChapterObject::isLocked)
+				.applySortOnBy(
+					idGetter = ChapterObject::id,
+					titleGetter = ChapterObject::title,
+					timestampGetter = ChapterObject::createdTimestamp,
+					modifiedTimestampGetter = ChapterObject::modifiedTimestamp,
+					customOrderFlow = getNotebookOrderAsFlow(),
+				)
+		}
+	}
+
+	private fun getNotebookOrderAsFlow(): Flow<List<RealmUUID>> {
+		return getBaseObjectAsFlow().map { it?.notebookIdOrderList ?: listOf() }
 	}
 
 	/**
@@ -495,9 +563,253 @@ class Repository {
 	}
 
 	fun getAllNoteLiteAsFlow(): Flow<List<NoteObjectLite>> {
+//		realm!!.query(NoteObject::class).al
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
 			else realm.let { it.query(NoteObject::class).asFlow().map { it.list.map { it.toLite() } } }
+		}
+	}
+
+	fun getDefaultNoteLiteMapAsFlow(): Flow<List<NoteObjectLite>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.let { it.query(NoteObject::class).asFlow().map { it.list.map { it.toLite() } } }
+		}
+	}
+
+	fun getDefaultNoteLiteMapAsFlow2(): Flow<RealmObjectGroupList<NoteObjectLite>> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else realm.let { realm1 ->
+				realm1.query(NoteObject::class)
+					.asFlow()
+					.toLite { toLite() }
+					.combine(getDefaultChapterIdAsFlow()) { noteList1, defaultChapterId1 -> noteList1.filter { it.parentId == defaultChapterId1 } }
+					.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
+//					.mergeTag(idGetter = NoteObjectLite::id) { noteObjectLite, tagObjectList -> noteObjectLite.copy(tagList = tagObjectList) }
+					.applyGroupOn(
+						titleGetter = NoteObjectLite::title,
+						timestampGetter = NoteObjectLite::userTimestamp,
+						modifiedTimestampGetter = NoteObjectLite::modifiedTimestamp,
+						customGetter = { it.userTimestamp.toString() }
+					)
+					.toGroupList()
+//					.applySortOnBy(
+//						titleGetter = NoteObjectLite::title,
+//						timestampGetter = NoteObjectLite::userTimestamp,
+//						modifiedTimestampGetter = NoteObjectLite::modifiedTimestamp,
+//						customGetter = { noteObjectLite -> noteObjectLite.userTimestamp.timeStampToPrettyDay() },
+//					)
+			}
+		}
+	}
+
+	private fun <T : BaseRealmObject> Flow<ResultsChange<T>>.extractList(): Flow<List<T>> {
+		return map { it.list.toList() }
+	}
+
+	private fun <T : BaseRealmObject, R> Flow<ResultsChange<T>>.toLite(converter: T.() -> R): Flow<List<R>> {
+		return map { it.list.toList().map { it.converter() } }
+	}
+
+	/**
+	 * Filters locked objects from list of objects. Uses [isUnlocked] internally
+	 * @author pushpull
+	 * @since 3.0.0
+	 * @param isLockedGetter Getter of locked property
+	 * @sample getDefaultNoteLiteMapAsFlow
+	 */
+	private fun <T> Flow<List<T>>.filterLocked(isLockedGetter: KProperty1<T, Boolean>): Flow<List<T>> {
+		return this.combine(isUnlocked) { objectList, isUnlocked1 -> if (isUnlocked1) objectList else objectList.filter { !isLockedGetter.get(it) } }
+	}
+
+	private fun <T> Flow<List<T>>.applyGroupOn(
+		titleGetter: KProperty1<T, String?>,
+		timestampGetter: KProperty1<T, Long>,
+		modifiedTimestampGetter: KProperty1<T, Long>,
+		customGetter: (T) -> String,
+	): Flow<List<RealmObjectGroup<T>>> {
+		return combine(this, sortOnFlow) { objectList1, sortOn1 ->
+			objectList1.groupBy {
+				sortOnKeySelector(
+					t = it,
+					sortOn = sortOn1,
+					titleGetter = titleGetter,
+					timestampGetter = timestampGetter,
+					modifiedTimestampGetter = modifiedTimestampGetter,
+					customGetter = customGetter,
+				)
+			}.map {
+				RealmObjectGroup(
+					title = it.key,
+					objectList = it.value
+				)
+			}
+		}
+	}
+
+	private fun <T> Flow<List<T>>.applySingleGroupOn(
+		customGetter: (T) -> String,
+	): Flow<List<RealmObjectGroup<T>>> {
+		return this.map {
+			listOf(
+				RealmObjectGroup(
+					title = "",
+					objectList = it
+				)
+			)
+		}
+	}
+
+	private fun <T> Flow<List<RealmObjectGroup<T>>>.toGroupList(): Flow<RealmObjectGroupList<T>> {
+		return map {
+			RealmObjectGroupList(
+				groupList = it,
+				totalSize = it.fold(0) { acc, realmObjectGroup -> acc + realmObjectGroup.objectList.size }
+			)
+		}
+	}
+
+	private fun <T> sortOnKeySelector(
+		t: T,
+		sortOn: SortOn?,
+		titleGetter: KProperty1<T, String?>,
+		timestampGetter: KProperty1<T, Long>,
+		modifiedTimestampGetter: KProperty1<T, Long>,
+		customGetter: (T) -> String,
+	): String {
+		return when (sortOn) {
+			SortOn.Title -> titleGetter(t)?.firstOrNull()?.lowercase() ?: "."
+			SortOn.Timestamp -> timestampGetter(t).timeStampToPrettyDay()
+			SortOn.Modified -> modifiedTimestampGetter(t).timeStampToPrettyDay()
+			else -> customGetter(t)
+		}
+	}
+
+//	private fun <T> Flow<List<RealmObjectGroup<T>>>.applySortOnBy(
+//		titleGetter: KProperty1<T, String?>,
+//		timestampGetter: KProperty1<T, Long>,
+//		modifiedTimestampGetter: KProperty1<T, Long>,
+//		customGetter: (T) -> String,
+//	): Flow<List<RealmObjectGroup<T>>> {
+//		return this.combine(sortOnFlow) { realmObjectGroupList1, sortOn1 ->
+//			realmObjectGroupList1.sortedBy { it.title }.map { realmObjectGroup ->
+//				realmObjectGroup.copy(
+//					objectList = realmObjectGroup.objectList.sortedBy { t ->
+//						sortOnKeySelector(
+//							t = t,
+//							sortOn = sortOn1,
+//							titleGetter = titleGetter,
+//							timestampGetter = timestampGetter,
+//							modifiedTimestampGetter = modifiedTimestampGetter,
+//							customGetter = customGetter,
+//						)
+//					}
+//				)
+//			}
+//		}.combine(sortByFlow) { realmObjectGroupList1, sortBy1 ->
+//			when (sortBy1) {
+//				SortBy.Ascending -> realmObjectGroupList1
+//				SortBy.Descending -> realmObjectGroupList1.map { it.copy(objectList = it.objectList.reversed()) }.reversed()
+//				else -> realmObjectGroupList1
+//			}
+//		}
+//	}
+
+	private fun <T> Flow<RealmObjectGroupList<T>>.applySortOnBy(
+		titleGetter: KProperty1<T, String?>,
+		timestampGetter: KProperty1<T, Long>,
+		modifiedTimestampGetter: KProperty1<T, Long>,
+		customGetter: (T) -> String,
+	): Flow<RealmObjectGroupList<T>> {
+		return this.combine(sortOnFlow) { realmObjectGroup1, sortOn1 ->
+			realmObjectGroup1.copy(
+				groupList = realmObjectGroup1.groupList.sortedBy { it.title }.map { realmObjectGroup ->
+					realmObjectGroup.copy(
+						objectList = realmObjectGroup.objectList.sortedBy { t ->
+							sortOnKeySelector(
+								t = t,
+								sortOn = sortOn1,
+								titleGetter = titleGetter,
+								timestampGetter = timestampGetter,
+								modifiedTimestampGetter = modifiedTimestampGetter,
+								customGetter = customGetter,
+							)
+						}
+					)
+				}
+			)
+		}.combine(sortByFlow) { realmObjectGroupList1, sortBy1 ->
+			when (sortBy1) {
+				SortBy.Ascending -> realmObjectGroupList1
+				SortBy.Descending -> realmObjectGroupList1.copy(groupList = realmObjectGroupList1.groupList.map { it.copy(objectList = it.objectList.reversed()) }.reversed())
+				else -> realmObjectGroupList1
+			}
+		}
+	}
+
+	private fun <T> Flow<List<T>>.applySortOnBy(
+		idGetter: KProperty1<T, RealmUUID>,
+		titleGetter: KProperty1<T, String?>,
+		timestampGetter: KProperty1<T, Long>,
+		modifiedTimestampGetter: KProperty1<T, Long>,
+		customOrderFlow: Flow<List<RealmUUID>>? = null
+	): Flow<List<T>> {
+		if (customOrderFlow == null) {
+			return combine(this, sortOnFlow, sortByFlow) { realmObjectList1, sortOn1, sortBy1 ->
+				realmObjectList1.sortedBy { t ->
+					sortOnKeySelector(
+						t = t,
+						sortOn = sortOn1,
+						titleGetter = titleGetter,
+						timestampGetter = timestampGetter,
+						modifiedTimestampGetter = modifiedTimestampGetter,
+						customGetter = { "" }
+					)
+				}.let {
+					when (sortBy1) {
+						SortBy.Ascending -> it
+						SortBy.Descending -> it.reversed()
+						else -> it
+					}
+				}
+			}
+		} else {
+			return combine(this, sortOnFlow, customOrderFlow, sortByFlow) { realmObjectList1, sortOn1, customOrder1, sortBy1 ->
+				if (sortOn1 == SortOn.Custom) {
+					realmObjectList1.sortedBy { customOrder1.indexOf(idGetter(it)) }
+				} else {
+					realmObjectList1.sortedBy { t ->
+						sortOnKeySelector(
+							t = t,
+							sortOn = sortOn1,
+							titleGetter = titleGetter,
+							timestampGetter = timestampGetter,
+							modifiedTimestampGetter = modifiedTimestampGetter,
+							customGetter = { "" }
+						)
+					}.let {
+						when (sortBy1) {
+							SortBy.Ascending -> it
+							SortBy.Descending -> it.reversed()
+							else -> it
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	private fun <T> Flow<List<T>>.mergeTag(
+		idGetter: KProperty1<T, RealmUUID>,
+		merge: (T, List<TagObjectLite>) -> T
+	): Flow<List<T>> {
+		return this.combine(getAllTagAsFlow()) { objectList1, tagList1 ->
+			objectList1.map { realmObject: T ->
+				val containedTagList = tagList1.filter { it.objectIdList.contains(idGetter(realmObject)) }.map { it.toLite() }
+				merge(realmObject, containedTagList)
+			}
 		}
 	}
 
@@ -505,10 +817,20 @@ class Repository {
 	 * Get all notes with [parentId] as flow.
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getNoteWithParentIdAsFlow(parentId: RealmUUID?): Flow<ResultsChange<NoteObject>> {
+	fun getNoteWithParentIdAsFlow(parentId: RealmUUID?): Flow<List<NoteObjectLite>> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(NoteObject::class, "parentId = $0", parentId).asFlow()
+			else realm.query(NoteObject::class, "parentId = $0", parentId)
+				.asFlow()
+				.toLite { toLite() }
+				.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
+				.applySortOnBy(
+					idGetter = NoteObjectLite::id,
+					titleGetter = NoteObjectLite::title,
+					timestampGetter = NoteObjectLite::createdTimestamp,
+					modifiedTimestampGetter = NoteObjectLite::modifiedTimestamp,
+					customOrderFlow = getNotebookOrderAsFlow(),
+				)
 		}
 	}
 
@@ -533,7 +855,7 @@ class Repository {
 		}
 	}
 
-	fun putBucket(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
+	fun putBucket(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
 		realm?.writeBlocking {
 			val storedBucketObject = getBucketFromId(bucketObject.id)
 			storedBucketObject?.let {
@@ -551,8 +873,8 @@ class Repository {
 		}
 	}
 
-	fun putBucketSuspended(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
-		CoroutineScope(Dispatchers.Default).launch { putBucket(bucketObject, modifyTimestampAuto, googleDriveId,) }
+	fun putBucketSuspended(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
+		CoroutineScope(Dispatchers.Default).launch { putBucket(bucketObject, modifyTimestampAuto, googleDriveId) }
 	}
 
 	fun reorderBucketList(idOrderList: List<RealmUUID>) {
@@ -570,7 +892,7 @@ class Repository {
 		CoroutineScope(Dispatchers.Default).launch { reorderBucketList(idOrderList) }
 	}
 
-	fun putBucketItem(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
+	fun putBucketItem(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
 		realm?.writeBlocking {
 			val storedBucketItemObject = getBucketItemFromId(bucketItemObject.id)
 			storedBucketItemObject?.let {
@@ -592,37 +914,51 @@ class Repository {
 		}
 	}
 
-	fun putBucketItemSuspended(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null,) {
+	fun putBucketItemSuspended(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) {
 		CoroutineScope(Dispatchers.Default).launch { putBucketItem(bucketItemObject, modifyTimestampAuto) }
 	}
 
 	fun reorderBucketItemList(parentId: RealmUUID, idOrderList: List<RealmUUID>) {
-		realm?.writeBlocking {
-			val storedBucketObject = getBucketFromId(parentId)
-			storedBucketObject?.let {
-				findLatest(it)?.let { latestBucketObject ->
-					latestBucketObject.bucketItemOrderList = idOrderList.toRealmList()
-				}
-			}
+		setObjectFromIdSuspended<BucketObject>(id = parentId) {
+			this.bucketItemOrderList = idOrderList.toRealmList()
 		}
 	}
 
-	fun reorderBucketItemListSuspended(parentId: RealmUUID, idOrderList: List<RealmUUID>) {
-		CoroutineScope(Dispatchers.Default).launch { reorderBucketItemList(parentId, idOrderList) }
-	}
-
-	fun getAllBucketAsFlow(): Flow<RealmResults<BucketObject>> {
+	fun getAllBucketAsFlow(): Flow<List<BucketObject>> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(BucketObject::class).asFlow().map { it.list }
+			else realm.query(BucketObject::class).asFlow().map { it.list }.combine(isUnlocked) { bucketList, isAuthenticated ->
+				if (isAuthenticated) bucketList else bucketList.filter { !it.isLocked }
+			}
 		}
 	}
 
 	fun getAllBucketLiteAsFlow(): Flow<List<BucketObjectLite>> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(BucketObject::class).asFlow().map { it.list.map { it.toLite() } }
+			else realm.query(BucketObject::class)
+				.asFlow()
+				.toLite { toLite() }
+				.filterLocked(isLockedGetter = BucketObjectLite::isLocked)
+				.mergeBucketSize()
+				.applySortOnBy(
+					idGetter = BucketObjectLite::id,
+					titleGetter = BucketObjectLite::title,
+					timestampGetter = BucketObjectLite::createdTimestamp,
+					modifiedTimestampGetter = BucketObjectLite::modifiedTimestamp,
+					customOrderFlow = getBucketOrderAsFlow(),
+				)
 		}
+	}
+
+	private  fun Flow<List<BucketObjectLite>>.mergeBucketSize() : Flow<List<BucketObjectLite>> {
+		return combine(getAllBucketSizeAsFlow()) { bucketList1, bucketSizeMap1 ->
+			bucketList1.map { it.copy(bucketItemCount = bucketSizeMap1[it.id] ?:0 ) }
+		}
+	}
+
+	private fun getBucketOrderAsFlow(): Flow<List<RealmUUID>> {
+		return getBaseObjectAsFlow().map { it?.bucketIdOrderList ?: listOf() }
 	}
 
 	/**
@@ -653,10 +989,12 @@ class Repository {
 		}
 	}
 
-	fun getAllBucketSizeAsFlow() : Flow<Map<RealmUUID?, Int>> {
+	fun getAllBucketSizeAsFlow(): Flow<Map<RealmUUID?, Int>> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(BucketItemObject::class).asFlow().map { it.list.groupBy { it.parentId }.mapValues { it.value.size } }
+			else realm.query(BucketItemObject::class).asFlow().combine(isUnlocked) { bucketItemList1, isAuthenticated1 ->
+				if (isAuthenticated1) bucketItemList1.list else bucketItemList1.list.filter { !it.isLocked }
+			}.map { it.groupBy { it.parentId }.mapValues { it.value.size } }
 		}
 	}
 
@@ -690,7 +1028,7 @@ class Repository {
 		}
 	}
 
-	fun getBucketItemWithParentId(parentId: RealmUUID): List<BucketItemObject> {
+	fun getBucketItemWithParentId(parentId: RealmUUID?): List<BucketItemObject> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
 			else realm.query(BucketItemObject::class, "parentId == $0 ", parentId).find().map { it }
@@ -769,7 +1107,7 @@ class Repository {
 	 * @since 2.0.0
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getAllTagAsFlow(): Flow<RealmResults<TagObject>> {
+	fun getAllTagAsFlow(): Flow<List<TagObject>> {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
 			else realm.query(TagObject::class).asFlow().map { it.list }
@@ -1136,6 +1474,7 @@ class Repository {
 			data class Success(val repository: Repository) : RepositoryStatus()
 			data object Error : RepositoryStatus()
 		}
+
 		enum class RepositoryState {
 			Init,
 			Locked,

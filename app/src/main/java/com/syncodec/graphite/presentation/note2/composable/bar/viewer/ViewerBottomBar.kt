@@ -24,7 +24,6 @@ import com.syncodec.graphite.presentation.common.button.VaultButton
 @Preview
 @Composable
 fun ViewerBottomBar(
-	attachmentCount: Int = 0,
 	onClickMetadata: () -> Unit = {},
 	onClickLocation: () -> Unit = {},
 	onClickExport : () -> Unit = {},

@@ -2,6 +2,7 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import android.net.Uri
+import com.syncodec.graphite.presentation.common.attachment.previewer.FilePreviewer
 import com.syncodec.graphite.service.syncInator.DropboxSyncInatorService
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
@@ -17,27 +18,27 @@ import java.io.File
 
 class AttachmentRepository {
 
-	private lateinit var attachmentDir : File
-	private lateinit var context : Context
+	private lateinit var attachmentDir: File
+	private lateinit var context: Context
 
-	fun initRepository(context : Context) {
+	fun initRepository(context: Context) {
 		this.context = context
 		attachmentDir = File("${context.filesDir.path}/data/attachment")
 		this::attachmentDir.isInitialized
 	}
 
-	fun putAttachment(parentId : RealmUUID, file : File, keepName : Boolean = false) {
+	fun putAttachment(parentId: RealmUUID, file: File, keepName: Boolean = false) {
 		val fileName = if (keepName) file.name else "${RealmUUID.random()}_${file.name.split(".").lastOrNull()?.let { ".$it" }}"
 		val newFile = File(context.attachmentDir(parentId, true), fileName).also { it.createNewFile() }
 		file.copyTo(newFile, true)
 	}
 
-	fun putAttachment(parentId : RealmUUID, fileName : String, byteArray : ByteArray) {
+	fun putAttachment(parentId: RealmUUID, fileName: String, byteArray: ByteArray) {
 		val newFile = File(context.attachmentDir(parentId, true), fileName).also { it.createNewFile() }
 		newFile.writeBytes(byteArray)
 	}
 
-	fun putAttachment(parentId : RealmUUID, uriList : List<Uri>, keepName : Boolean = false) {
+	fun putAttachment(parentId: RealmUUID, uriList: List<Uri>, keepName: Boolean = false) {
 		uriList.forEach { uri ->
 			val fileName = if (keepName) context.getFileName(uri) else "${RealmUUID.random()}_${uri.getFileName(context)}"
 			val inputStream = context.contentResolver.openInputStream(uri)?.also { inputStream ->
@@ -48,7 +49,7 @@ class AttachmentRepository {
 		}
 	}
 
-	fun putAttachment(parentId : RealmUUID, zipFile : ZipFile, attachmentList : List<ZipArchiveEntry>, keepName : Boolean = false) {
+	fun putAttachment(parentId: RealmUUID, zipFile: ZipFile, attachmentList: List<ZipArchiveEntry>, keepName: Boolean = false) {
 		attachmentList.forEach { zipArchiveEntry ->
 			val inputStream = zipFile.getInputStream(zipArchiveEntry).also { inputStream ->
 				val fileName = if (keepName) zipArchiveEntry.name else "${RealmUUID.random()}.${zipArchiveEntry.name.split(".").last()}"
@@ -59,15 +60,15 @@ class AttachmentRepository {
 		}
 	}
 
-	fun doFileExist(parentId : RealmUUID, fileName : String) : Boolean {
+	fun doFileExist(parentId: RealmUUID, fileName: String): Boolean {
 		return File(context.attachmentDirPath(parentId = parentId), fileName).exists()
 	}
 
-	fun checkIfFilesAreSame(file1 : File, file2 : File) : Boolean {
+	fun checkIfFilesAreSame(file1: File, file2: File): Boolean {
 		return file1.readBytes().contentEquals(file2.readBytes())
 	}
 
-	fun checkIfFilesAreSame(file1 : File, file2 : Uri) : Boolean {
+	fun checkIfFilesAreSame(file1: File, file2: Uri): Boolean {
 		val inputStream = context.contentResolver.openInputStream(file2)?.also { inputStream ->
 			val areFilesSame = file1.readBytes().contentEquals(inputStream.readBytes())
 			inputStream.close()
@@ -76,76 +77,76 @@ class AttachmentRepository {
 		return false
 	}
 
-	fun getAttachmentDir() : File {
+	fun getAttachmentDir(): File {
 		return attachmentDir
 	}
 
-	fun getNoteAttachmentDir(parentId : RealmUUID) : File {
+	fun getNoteAttachmentDir(parentId: RealmUUID): File {
 		return File("${attachmentDir.path}/$parentId")
 	}
 
-	fun getAttachment(parentId : RealmUUID, name : String) : File? {
+	fun getAttachment(parentId: RealmUUID, name: String): File? {
 		return try {
 			val file = File("${attachmentDir.path}/$parentId/$name")
 			if (file.exists()) file else null
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 			null
 		}
 	}
 
-	fun getAttachmentFromNote(parentId : RealmUUID) : List<File> {
+	fun getAttachmentFromNote(parentId: RealmUUID): List<File> {
 		return getNoteAttachmentDir(parentId).listFiles()?.toList() ?: listOf()
 	}
 
-	fun haveAttachment(parentId : RealmUUID) : Boolean {
+	fun haveAttachment(parentId: RealmUUID): Boolean {
 		return getNoteAttachmentDir(parentId).listFiles()?.isNotEmpty() ?: false
 	}
 
-	fun importAttachmentFromGraphite(file : File) {
+	fun importAttachmentFromGraphite(file: File) {
 		try {
 			if (file.isDirectory) {
 				file.listFiles()?.forEach {
 					val parentId = try {
 						RealmUUID.from(it.name)
-					} catch (e : Exception) {
+					} catch (e: Exception) {
 						return@forEach
 					}
 					val noteAttachmentDir = File("${attachmentDir.path}/$parentId")
-					if (! noteAttachmentDir.exists()) noteAttachmentDir.mkdirs()
+					if (!noteAttachmentDir.exists()) noteAttachmentDir.mkdirs()
 					it.listFiles()?.forEach { attachment -> putAttachment(parentId = parentId, file = attachment, keepName = true) }
 				}
 			}
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 		}
 	}
 
-	fun delete(attachmentList : List<File>) {
+	fun delete(attachmentList: List<File>) {
 		CoroutineScope(Dispatchers.IO).launch {
 			attachmentList.forEach {
 				try {
 					if (it.exists()) it.delete()
-				} catch (e : Exception) {
+				} catch (e: Exception) {
 				}
 			}
 		}
 	}
 
-	fun delete(parentId : RealmUUID) {
+	fun delete(parentId: RealmUUID) {
 		CoroutineScope(Dispatchers.IO).launch {
 			getNoteAttachmentDir(parentId = parentId).deleteRecursively()
 		}
 	}
 
-	fun delete(parentId : RealmUUID, fileName : String) {
+	fun delete(parentId: RealmUUID, fileName: String) {
 		try {
 			val file = File("${attachmentDir.path}/$parentId/$fileName")
 			if (file.exists()) file.delete()
-		} catch (e : Exception) {
+		} catch (e: Exception) {
 
 		}
 	}
 
-	fun deleteSuspended(parentId : RealmUUID, name : String) {
+	fun deleteSuspended(parentId: RealmUUID, name: String) {
 		CoroutineScope(Dispatchers.IO).launch {
 			delete(parentId, name)
 		}
@@ -156,18 +157,18 @@ class AttachmentRepository {
 			attachmentDir.listFiles()?.forEach {
 				try {
 					if (it.exists()) it.deleteRecursively()
-				} catch (e : Exception) {
+				} catch (e: Exception) {
 				}
 			}
 		}
 	}
 
-	fun getAttachmentMetadataMap() : Map<RealmUUID, List<SyncInatorService.Companion.AttachmentMetadata>> {
+	fun getAttachmentMetadataMap(): Map<RealmUUID, List<SyncInatorService.Companion.AttachmentMetadata>> {
 		val attachmentMetadataMap = mutableMapOf<RealmUUID, List<SyncInatorService.Companion.AttachmentMetadata>>()
 		attachmentDir.listFiles()?.forEach { noteAttachmentDir ->
 			val noteId = try {
 				RealmUUID.from(noteAttachmentDir.name)
-			} catch (e : Exception) {
+			} catch (e: Exception) {
 				return@forEach
 			}
 			val attachmentMetadataList = noteAttachmentDir.listFiles()?.map { attachmentFile ->
@@ -182,12 +183,12 @@ class AttachmentRepository {
 		return attachmentMetadataMap
 	}
 
-	fun getAttachmentMetadataSet() : Set<SyncInatorService.Companion.AttachmentMetadata> {
+	fun getAttachmentMetadataSet(): Set<SyncInatorService.Companion.AttachmentMetadata> {
 		val attachmentMetadataSet = mutableSetOf<SyncInatorService.Companion.AttachmentMetadata>()
 		attachmentDir.listFiles()?.forEach { noteAttachmentDir ->
 			val noteId = try {
 				RealmUUID.from(noteAttachmentDir.name)
-			} catch (e : Exception) {
+			} catch (e: Exception) {
 				return@forEach
 			}
 			noteAttachmentDir.listFiles()?.forEach { attachmentFile ->
@@ -205,10 +206,10 @@ class AttachmentRepository {
 
 	companion object {
 		fun Context.attachmentDirPath() = "${this.filesDir.path}/data/attachment"
-		fun Context.attachmentDirPath(parentId : RealmUUID) = "${this.filesDir.path}/data/attachment/$parentId"
-		fun Context.attachmentDir(parentId : RealmUUID, mkdir : Boolean = false) = File(attachmentDirPath(parentId = parentId)).also { if (mkdir) it.mkdirs() }
+		fun Context.attachmentDirPath(parentId: RealmUUID) = "${this.filesDir.path}/data/attachment/$parentId"
+		fun Context.attachmentDir(parentId: RealmUUID, mkdir: Boolean = false) = File(attachmentDirPath(parentId = parentId)).also { if (mkdir) it.mkdirs() }
 
-		fun Context.getAttachmentCountFromNoteId(parentId : RealmUUID) : Int {
+		fun Context.getAttachmentCountFromNoteId(parentId: RealmUUID): Int {
 			val attachmentDir = File(attachmentDirPath(parentId = parentId))
 			return if (attachmentDir.exists()) attachmentDir.listFiles()?.size ?: 0
 			else 0

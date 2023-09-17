@@ -296,59 +296,6 @@ fun extract7z(sevenZFile: SevenZFile, outputFile: File, progressReport: (Int, In
 	sevenZFile.close()
 }
 
-fun Uri.getPreview(context: Context): Bitmap? {
-	val type = context.contentResolver.getType(this)?.split("/")
-	val mimeType = type?.getOrNull(0)
-	val mimeSubType = type?.getOrNull(1)
-
-	var bitmap: Bitmap? = null
-	val parcelFileDescriptor = context.contentResolver.openFileDescriptor(this, "r")
-
-	when (mimeType) {
-		"image" -> {
-			val exif = ExifInterface(context.contentResolver.openInputStream(this) ?: return null)
-			val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-
-			val matrix = Matrix()
-
-			when (orientation) {
-				ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90F)
-				ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180F)
-				ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270F)
-			}
-
-			parcelFileDescriptor?.let {
-				bitmap = BitmapFactory.decodeFileDescriptor(it.fileDescriptor)?.let {
-					Bitmap.createBitmap(it, 0, 0, it.width, it.height, matrix, true)
-				}
-			}
-		}
-
-		"video" -> {
-			val mediaMetadataRetriever = MediaMetadataRetriever()
-			mediaMetadataRetriever.setDataSource(context, this)
-			bitmap = mediaMetadataRetriever.getFrameAtTime(1000)
-		}
-
-		"audio" -> {
-			val mediaMetadataRetriever = MediaMetadataRetriever()
-			mediaMetadataRetriever.setDataSource(context, this)
-			bitmap = mediaMetadataRetriever.embeddedPicture?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-		}
-
-		"application" -> {
-			when (mimeSubType) {
-				"pdf" -> {
-				}
-			}
-		}
-	}
-
-	parcelFileDescriptor?.close()
-
-	return bitmap
-}
-
 fun Uri.getFileName(context: Context): String? {
 	var result: String? = null
 	if (this.scheme == "content") {

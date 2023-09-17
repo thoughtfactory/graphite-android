@@ -16,10 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -40,7 +41,7 @@ fun HomeScreen(
 	onSelect: (RealmUUID) -> Unit = {},
 	onUnSelectAll: () -> Unit = {},
 ) {
-	var currentScreen by remember { mutableIntStateOf(0) }
+	var currentScreen by rememberSaveable { mutableIntStateOf(0) }
 
 	Column(
 		modifier = Modifier.fillMaxSize(),
@@ -103,9 +104,9 @@ private fun TabNavigator(
 			Spacer(modifier = Modifier.width(12.dp))
 			GenericTabRow(
 				tabItemList = listOf(
-					TabItem(text = "Note", icon = R.drawable.ic_fa_note_duotone) { onChangeScreen(0) },
-					TabItem(text = "List", icon = R.drawable.ic_fa_bucket_list_duotone) { onChangeScreen(1) },
-					TabItem(text = "Notebook", icon = R.drawable.ic_fa_notebook_duotone) { onChangeScreen(2) },
+					TabItem(text = stringResource(id = R.string.note), icon = R.drawable.ic_fa_note_duotone) { onChangeScreen(0) },
+					TabItem(text = stringResource(id = R.string.list), icon = R.drawable.ic_fa_bucket_list_duotone) { onChangeScreen(1) },
+					TabItem(text = stringResource(id = R.string.notebook), icon = R.drawable.ic_fa_notebook_duotone) { onChangeScreen(2) },
 				),
 				selectedTabIndex = currentScreen,
 				modifier = Modifier.weight(1f)

@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.dialog.whereDialog2.WhereDialog2
+import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.WhereChapterDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.ExplorerSelectionActionView
 import com.syncodec.graphite.presentation.explorer.composable.bar.BottomBar
@@ -68,7 +68,7 @@ fun ExplorerScreen(
 			)
 		},
 		dialogContent = {
-			WhereDialog2(
+			WhereChapterDialog2(
 				isDialogVisible = isWhereDialogVisible,
 				onDismissRequest = { isWhereDialogVisible = false },
 				currentSelectedChapter = currentChapter?.id,

@@ -1,6 +1,6 @@
 package com.syncodec.graphite.presentation.note2.composable.bar.editor
 
-import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -21,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -44,9 +46,9 @@ import com.syncodec.graphite.presentation.note2.KitKat
 import com.syncodec.graphite.presentation.note2.KitKat.Companion.KitKatAction
 import com.syncodec.graphite.presentation.note2.composable.bar.editor.bottomSheet.ColorBottomSheet
 import com.syncodec.graphite.presentation.note2.composable.bar.editor.bottomSheet.LinkBottomSheet
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.LocalIsPro
 import com.syncodec.graphite.utils.LocationData
-import com.syncodec.graphite.utils.export.ExportNote
 import com.syncodec.graphite.utils.toHexString
 import kotlinx.coroutines.launch
 
@@ -190,7 +192,7 @@ private fun NoteAction(
 				icon = R.drawable.ic_fa_bug,
 				tooltip = "Debug",
 				isChecked = false,
-				onClick = {  }
+				onClick = { }
 			)
 		}
 	}
@@ -236,12 +238,14 @@ private fun BasicAction(
 			icon = R.drawable.ic_fa_italic,
 			tooltip = "Toggle italic",
 			isChecked = kitKatFormat.italic,
+			isPremium = true,
 			onClick = { onKitKatAction(KitKatAction.Italic) }
 		)
 
 		EditorButton(
 			icon = R.drawable.ic_fa_format_underline,
-			tooltip = "Toggle italic",
+			tooltip = "Toggle underline",
+			isPremium = true,
 			isChecked = kitKatFormat.underline,
 			onClick = { onKitKatAction(KitKatAction.Underline) }
 		)
@@ -250,6 +254,7 @@ private fun BasicAction(
 			icon = R.drawable.ic_fa_format_strikethrough,
 			tooltip = "Toggle strikethrough",
 			isChecked = kitKatFormat.strike,
+			isPremium = true,
 			onClick = { onKitKatAction(KitKatAction.StrikeThrough) }
 		)
 
@@ -257,6 +262,7 @@ private fun BasicAction(
 			icon = R.drawable.ic_fa_format_superscript,
 			tooltip = "Toggle superscript",
 			isChecked = kitKatFormat.superscript,
+			isPremium = true,
 			onClick = { onKitKatAction(KitKatAction.Superscript) }
 		)
 
@@ -264,6 +270,7 @@ private fun BasicAction(
 			icon = R.drawable.ic_fa_format_subscript,
 			tooltip = "Toggle subscript",
 			isChecked = kitKatFormat.subscript,
+			isPremium = true,
 			onClick = { onKitKatAction(KitKatAction.Subscript) }
 		)
 		EditorButton(
@@ -291,13 +298,13 @@ private fun BreakAction(
 ) {
 	BarBlock {
 		EditorButton(
-			icon = R.drawable.ic_format_hard_break,
+			icon = R.drawable.ic_fa_format_hard_break,
 			tooltip = "Hard break",
 			isChecked = false,
 			onClick = { onKitKatAction(KitKatAction.HardLineBreak) }
 		)
 		EditorButton(
-			icon = R.drawable.ic_flat_format_horizontal_rule,
+			icon = R.drawable.ic_fa_minus,
 			tooltip = "Horizontal rule",
 			isChecked = false,
 			onClick = { onKitKatAction(KitKatAction.HorizontalRule) }
@@ -313,12 +320,6 @@ private fun ListAction(
 ) {
 	BarBlock {
 		EditorButton(
-			icon = R.drawable.ic_fa_format_list_check,
-			tooltip = "Check list",
-			isChecked = kitKatFormat.taskList,
-			onClick = { onKitKatAction(KitKatAction.List.CheckList) }
-		)
-		EditorButton(
 			icon = R.drawable.ic_fa_format_list_unordered,
 			tooltip = "Unordered list",
 			isChecked = kitKatFormat.bulletList,
@@ -328,7 +329,15 @@ private fun ListAction(
 			icon = R.drawable.ic_fa_format_list_ordered,
 			tooltip = "Ordered list",
 			isChecked = kitKatFormat.orderedList,
+			isPremium = true,
 			onClick = { onKitKatAction(KitKatAction.List.OrderedList) }
+		)
+		EditorButton(
+			icon = R.drawable.ic_fa_format_list_check,
+			tooltip = "Check list",
+			isChecked = kitKatFormat.taskList,
+			isPremium = true,
+			onClick = { onKitKatAction(KitKatAction.List.CheckList) }
 		)
 	}
 }
@@ -340,6 +349,9 @@ private fun BlockAction(
 	kitKatFormat: KitKat.Companion.KitKatFormat = KitKat.Companion.KitKatFormat(),
 	onKitKatAction: (KitKatAction) -> Unit = {},
 ) {
+	val context = LocalContext.current
+	val isPro = LocalIsPro.current
+
 	var isAlignmentMenuVisible by remember { mutableStateOf(false) }
 	var isHeadingMenuVisible by remember { mutableStateOf(false) }
 
@@ -358,36 +370,59 @@ private fun BlockAction(
 				.height(40.dp)
 				.padding(2.dp)
 		) {
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
-					.fillMaxHeight()
-					.clickable(onClickLabel = "Heading", role = Role.Button) { isHeadingMenuVisible = true }
-					.menuAnchor()
-			) {
-				Spacer(modifier = Modifier.width(8.dp))
-				if (kitKatFormat.paragraph) {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_fa_format_paragraph),
-						contentDescription = "Paragraph",
-						modifier = Modifier.requiredSize(IconButtonSize)
-					)
-				} else {
-					Text(
-						text = when {
-							kitKatFormat.heading1 -> "H1"
-							kitKatFormat.heading2 -> "H2"
-							kitKatFormat.heading3 -> "H3"
-							kitKatFormat.heading4 -> "H4"
-							kitKatFormat.heading5 -> "H5"
-							kitKatFormat.heading6 -> "H6"
-							else -> "Unknown"
-						},
-						style = MaterialTheme.typography.titleMedium,
-						fontWeight = FontWeight.Bold,
-					)
+			Box(modifier = Modifier) {
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier
+						.fillMaxHeight()
+						.clickable(onClickLabel = "Heading", role = Role.Button) {
+							if (isPro) isHeadingMenuVisible = true
+							else Toast
+								.makeText(context, "Join Graphite pro to unlock full potential of editor", Toast.LENGTH_SHORT)
+								.show()
+						}
+						.menuAnchor()
+				) {
+					Spacer(modifier = Modifier.width(8.dp))
+					if (kitKatFormat.paragraph) {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_fa_format_paragraph),
+							contentDescription = "Paragraph",
+							modifier = Modifier.requiredSize(IconButtonSize)
+						)
+					} else {
+						Text(
+							text = when {
+								kitKatFormat.heading1 -> "H1"
+								kitKatFormat.heading2 -> "H2"
+								kitKatFormat.heading3 -> "H3"
+								kitKatFormat.heading4 -> "H4"
+								kitKatFormat.heading5 -> "H5"
+								kitKatFormat.heading6 -> "H6"
+								else -> "Unknown"
+							},
+							style = MaterialTheme.typography.titleMedium,
+							fontWeight = FontWeight.Bold,
+						)
+					}
+					Spacer(modifier = Modifier.width(8.dp))
 				}
-				Spacer(modifier = Modifier.width(8.dp))
+
+				Box(
+					modifier = Modifier
+						.matchParentSize()
+						.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), MaterialTheme.shapes.small)
+				)
+
+				Icon(
+					painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onBackground,
+					modifier = Modifier
+						.requiredSize(20.dp)
+						.padding(4.dp)
+						.align(Alignment.BottomEnd)
+				)
 			}
 			ExposedDropdownMenu(
 				expanded = isHeadingMenuVisible,
@@ -434,43 +469,72 @@ private fun BlockAction(
 				.height(40.dp)
 				.padding(2.dp)
 		) {
-			Row(
-				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier
-					.fillMaxHeight()
-					.clickable(onClickLabel = "Alignment", role = Role.Button) { isAlignmentMenuVisible = true }
-					.menuAnchor()
+			PlainTooltipBox(
+				tooltip = { Text(text = "Alignment") }
 			) {
-				Spacer(modifier = Modifier.width(8.dp))
-				Icon(
-					painter = painterResource(
-						id = when {
-							kitKatFormat.alignLeft -> R.drawable.ic_fa_format_align_left
-							kitKatFormat.alignCenter -> R.drawable.ic_fa_format_align_center
-							kitKatFormat.alignRight -> R.drawable.ic_fa_format_align_right
-							kitKatFormat.alignJustify -> R.drawable.ic_fa_format_align_justify
-							else -> R.drawable.ic_fa_format_align_left
-						}
-					),
-					contentDescription = "Alignment",
-					modifier = Modifier.requiredSize(IconButtonSize)
-				)
+				Box(
+					modifier = Modifier.menuAnchor()
+				) {
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						modifier = Modifier
+							.fillMaxHeight()
+							.clip(MaterialTheme.shapes.small)
+							.clickable(onClickLabel = "Alignment", role = Role.Button) {
+								if (isPro) isAlignmentMenuVisible = true
+								else Toast
+									.makeText(context, "Join Graphite pro to unlock full potential of editor", Toast.LENGTH_SHORT)
+									.show()
+							}
+					) {
+						Spacer(modifier = Modifier.width(8.dp))
+						Icon(
+							painter = painterResource(
+								id = when {
+									kitKatFormat.alignLeft -> R.drawable.ic_fa_format_align_left
+									kitKatFormat.alignCenter -> R.drawable.ic_fa_format_align_center
+									kitKatFormat.alignRight -> R.drawable.ic_fa_format_align_right
+									kitKatFormat.alignJustify -> R.drawable.ic_fa_format_align_justify
+									else -> R.drawable.ic_fa_format_align_left
+								}
+							),
+							contentDescription = "Alignment",
+							modifier = Modifier.requiredSize(IconButtonSize)
+						)
 
-				Spacer(modifier = Modifier.width(4.dp))
+						Spacer(modifier = Modifier.width(4.dp))
 
-				Text(
-					text = when {
-						kitKatFormat.alignLeft -> "Left"
-						kitKatFormat.alignCenter -> "Center"
-						kitKatFormat.alignRight -> "Right"
-						kitKatFormat.alignJustify -> "Justify"
-						else -> "Unknown"
-					},
-					style = MaterialTheme.typography.bodyMedium,
-					fontWeight = FontWeight.Bold,
-					modifier = Modifier.padding(horizontal = 8.dp)
-				)
-				Spacer(modifier = Modifier.width(8.dp))
+						Text(
+							text = when {
+								kitKatFormat.alignLeft -> "Left"
+								kitKatFormat.alignCenter -> "Center"
+								kitKatFormat.alignRight -> "Right"
+								kitKatFormat.alignJustify -> "Justify"
+								else -> "Unknown"
+							},
+							style = MaterialTheme.typography.bodyMedium,
+							fontWeight = FontWeight.Bold,
+							modifier = Modifier.padding(horizontal = 8.dp)
+						)
+						Spacer(modifier = Modifier.width(8.dp))
+					}
+
+					Box(
+						modifier = Modifier
+							.matchParentSize()
+							.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), MaterialTheme.shapes.small)
+					)
+
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
+						contentDescription = null,
+						tint = MaterialTheme.colorScheme.onBackground,
+						modifier = Modifier
+							.requiredSize(20.dp)
+							.padding(4.dp)
+							.align(Alignment.BottomEnd)
+					)
+				}
 			}
 			ExposedDropdownMenu(
 				expanded = isAlignmentMenuVisible,
@@ -536,12 +600,14 @@ private fun ColorfulAction(
 			icon = R.drawable.ic_fa_format_text_color,
 			tooltip = "Text color",
 			isChecked = false,
+			isPremium = true,
 			onClick = { isTextColorBottomSheetVisible = true }
 		)
 		EditorButton(
-			icon = R.drawable.ic_fa_format_text_color,
+			icon = R.drawable.ic_fa_format_highlighter,
 			tooltip = "Highlight color",
 			isChecked = false,
+			isPremium = true,
 			onClick = { isHighlightColorBottomSheetVisible = true }
 		)
 	}

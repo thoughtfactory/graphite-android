@@ -9,11 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
-import com.syncodec.graphite.utils.AuthenticatorScreen
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
-import com.syncodec.graphite.utils.LocalIsAuthenticated
 
 
 @Preview
@@ -21,8 +19,8 @@ import com.syncodec.graphite.utils.LocalIsAuthenticated
 fun BottomBar(
 	onClickMenu : () -> Unit = {},
 ) {
-	val isAuthenticated = LocalIsAuthenticated.current
-	val onAuthenticationAction = LocalAuthenticatorAction.current
+	val isAuthenticated = LocalIsRepoUnlocked.current
+//	val onAuthenticationAction = LocalAuthenticatorAction.current
 	
 	BottomAppBar(
 		modifier = Modifier.fillMaxWidth(),
@@ -33,11 +31,11 @@ fun BottomBar(
 
 		Spacer(modifier = Modifier.weight(1f))
 
-		GenericButton(
-			icon = R.drawable.ic_vault,
-			checked = isAuthenticated,
-			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
-		) { onAuthenticationAction(AuthenticatorScreen.Authenticate) }
+//		GenericButton(
+//			icon = R.drawable.ic_vault,
+//			checked = isAuthenticated,
+//			colors = GenericButtonDefaults.genericButtonColorsOnSurface(),
+//		) { onAuthenticationAction(AuthenticationState.Authenticate) }
 
 		GenericButton(
 			icon = R.drawable.ic_menu,
