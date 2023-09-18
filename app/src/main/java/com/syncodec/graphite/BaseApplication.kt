@@ -33,11 +33,11 @@ import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
 import com.syncodec.graphite.presentation.notebook.composable.NotebookScreenViewModel2
 import com.syncodec.graphite.presentation.search.SearchViewModel
-import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataViewModel
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
+import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.ExportDataViewModel
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.CoroutineScope
@@ -106,10 +106,11 @@ class BaseApplication : Application() {
 					viewModelOf(::NotebookScreenViewModel2)
 					viewModelOf(::TagsViewModel)
 					viewModelOf(::AttachmentScreenViewModel)
-					viewModelOf(::ImportDataViewModel)
 
 					viewModelOf(::BookBucketItemViewModel)
 					viewModelOf(::ShowBucketItemViewModel)
+
+					viewModelOf(::ExportDataViewModel)
 
 //					viewModelOf(::ExportDataViewModel)
 //					viewModelOf(::ImportDataGraphiteViewModel)
@@ -132,32 +133,32 @@ class BaseApplication : Application() {
 		Purchases.debugLogsEnabled = false
 		val auth = Firebase.auth
 
-		val purchasesConfiguration = PurchasesConfiguration
-			.Builder(
-				this,
-				Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@")
-					?: ""
-			)
-			.appUserID(auth.currentUser?.uid)
-			.build()
-		Purchases.configure(purchasesConfiguration)
-
-		auth.currentUser?.uid?.let { uid ->
-			CoroutineScope(Dispatchers.Default).launch {
-				dataStoreInstance.getSuperExpiryTime.collect { superExpiryTimeString ->
-					try {
-						val currentTimestamp = Instant.now().toEpochMilli()
-						when {
-							superExpiryTimeString == "" -> getRevenueCatInfo(auth)
-							superExpiryTimeString.toLong() > currentTimestamp -> isPro.tryEmit(true)
-							else -> getRevenueCatInfo(auth)
-						}
-					} catch (e: Exception) {
-						getRevenueCatInfo(auth)
-					}
-				}
-			}
-		}
+//		val purchasesConfiguration = PurchasesConfiguration
+//			.Builder(
+//				this,
+//				Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@")
+//					?: ""
+//			)
+//			.appUserID(auth.currentUser?.uid)
+//			.build()
+//		Purchases.configure(purchasesConfiguration)
+//
+//		auth.currentUser?.uid?.let { uid ->
+//			CoroutineScope(Dispatchers.Default).launch {
+//				dataStoreInstance.getSuperExpiryTime.collect { superExpiryTimeString ->
+//					try {
+//						val currentTimestamp = Instant.now().toEpochMilli()
+//						when {
+//							superExpiryTimeString == "" -> getRevenueCatInfo(auth)
+//							superExpiryTimeString.toLong() > currentTimestamp -> isPro.tryEmit(true)
+//							else -> getRevenueCatInfo(auth)
+//						}
+//					} catch (e: Exception) {
+//						getRevenueCatInfo(auth)
+//					}
+//				}
+//			}
+//		}
 	}
 
 	private fun initDirectory() {

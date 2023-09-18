@@ -24,9 +24,7 @@ import com.syncodec.graphite.presentation.settings.composable.dialog.BiometricEn
 
 @Preview
 @Composable
-fun SecurityScreen(
-	onClickBack: () -> Unit = {},
-) {
+fun SecurityScreen() {
 	val appDataStore = LocalAppDataStore.current
 
 	val authenticatorAction = LocalAuthenticatorAction.current
@@ -37,7 +35,6 @@ fun SecurityScreen(
 
 	GenericSettingsScaffold(
 		title = stringResource(id = R.string.security),
-		onClickBack = onClickBack,
 	) {
 		LazyColumn(
 			modifier = Modifier.fillMaxSize()

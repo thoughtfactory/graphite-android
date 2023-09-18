@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -258,5 +259,5 @@ object GenericDialogDefaults {
 		)
 
 	@Composable
-	fun genericDialogButtonDismiss(onClick: () -> Unit) = genericDialogButtonSecondary(text = "Dismiss", onClick = onClick)
+	fun genericDialogButtonDismiss(onClick: () -> Unit) = genericDialogButtonSecondary(text = stringResource(id = R.string.dismiss), onClick = onClick)
 }

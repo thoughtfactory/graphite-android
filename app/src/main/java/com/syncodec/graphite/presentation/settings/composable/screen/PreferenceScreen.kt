@@ -40,9 +40,7 @@ import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun PreferenceScreen(
-	onClickBack : () -> Unit = {},
-) {
+fun PreferenceScreen() {
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
@@ -54,7 +52,6 @@ fun PreferenceScreen(
 
 	GenericSettingsScaffold(
 		title = stringResource(id = R.string.preferences),
-		onClickBack = onClickBack,
 	) {
 		LazyColumn(
 			modifier = Modifier.fillMaxSize()

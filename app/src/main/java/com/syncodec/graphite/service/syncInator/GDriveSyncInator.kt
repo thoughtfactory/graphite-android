@@ -341,7 +341,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 	) {
 		val baseObject = repository.getBaseObject()
 		val noteObjectList = repository.getAllNote()
-		val chapterObjectList = repository.getAllChapter()
+		val chapterObjectList = repository.getAllChapter(true)
 		val bucketItemObjectList = repository.getAllBucketItem()
 		val bucketObjectList = repository.getAllBucket()
 		val tagObjectList = repository.getAllTag()

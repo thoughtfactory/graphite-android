@@ -38,6 +38,7 @@ import com.syncodec.graphite.utils.timeStampToPrettyDay
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmResults
@@ -346,10 +347,10 @@ class Repository {
 	 * @since 2.0.0
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getAllChapter(): List<ChapterObject> {
-		realm.let { realm ->
-			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(ChapterObject::class).find()
+	fun getAllChapter(includeLocked : Boolean): List<ChapterObject> {
+		realm.let { realm1 ->
+			return if (realm1 == null) throw RealmNotInitializedException()
+			else if (includeLocked) realm1.query<ChapterObject>().find().map { it } else realm1.query<ChapterObject>("isLocked == $0", false).find().map { it }
 		}
 	}
 
@@ -378,6 +379,13 @@ class Repository {
 		realm.let { realm ->
 			return if (realm == null) throw RealmNotInitializedException()
 			else realm.query(ChapterObject::class, "id == $0 ", id).first().find()
+		}
+	}
+
+	inline fun <reified T : TypedRealmObject> getAllObjectOfType(includeLocked: Boolean): List<T> {
+		realm.let { realm ->
+			return if (realm == null) throw RealmNotInitializedException()
+			else if (includeLocked) realm.query<T>().find().map { it } else realm.query<T>("isLocked == $0", false).find().map { it }
 		}
 	}
 
@@ -867,10 +875,10 @@ class Repository {
 	 * @return List of all NoteObject from realm
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getAllNote(): List<NoteObject> {
-		realm.let { realm ->
-			return if (realm == null) throw RealmNotInitializedException()
-			else realm.query(NoteObject::class).find().map { it }
+	fun getAllNote(includeLocked : Boolean = false): List<NoteObject> {
+		realm.let { realm1 ->
+			return if (realm1 == null) throw RealmNotInitializedException()
+			else if (includeLocked) realm1.query<NoteObject>().find().map { it } else realm1.query<NoteObject>("isLocked == $0", false).find().map { it }
 		}
 	}
 

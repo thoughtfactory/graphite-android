@@ -246,10 +246,6 @@
     <string name="theme_same_as_system">Same as system</string>
     <string name="language">Language</string>
     <string name="language_sub">We are working on more languages</string>
-    <string name="import_data">Import data</string>
-    <string name="export_data">Export data</string>
-    <string name="clear_data">Clear data</string>
-    <string name="clear_data_sub">Clear all local data from this device</string>
     <string name="add_change_passcode">Add/Change passcode</string>
     <string name="remove_passcode">Remove passcode</string>
     <string name="biometric_authentication">Biometric authentication</string>
@@ -257,6 +253,18 @@
     <string name="backspace">Backspace</string>
     <string name="biometric_authentication_dialog_context">Ask for biometric authentication when opening Graphite.\n\nBiometric will only prompt if you have enabled in your device or else authentication will be skipped. </string>
 
+    <!--    Data exchanger-->
+    <string name="import_data">Import data</string>
+    <string name="export_data">Export data</string>
+    <string name="exporting">Exporting</string>
+    <string name="clear_data">Clear data</string>
+    <string name="clear_data_sub">Clear all local data from this device</string>
+    <string name="import_data_from">Import data from</string>
+    <string name="select_items_to_export">Select items to export</string>
+    <string name="notes_and_notebooks">Notes and notebooks</string>
+    <string name="buckets_and_bucket_items">Buckets and bucket items</string>
+    <string name="please_wait_while_your_data_is_being_processed">Please wait while your data is being processed</string>
+    <string name="include_locked_items">Include locked items</string>
 
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
@@ -268,4 +276,6 @@
     <string name="toast_duplicate_tag">Tag is already present</string>
     <string name="toast_items_updated">Items updated</string>
     <string name="toast_no_bucket_selected">No bucket selected</string>
+    <string name="toast_no_file_selected">No file selected</string>
+    <string name="toast_open_vault_to_include_selected">Open vault to include selected</string>
 </resources>

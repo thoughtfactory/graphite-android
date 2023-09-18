@@ -173,7 +173,7 @@ class DataStoreInstance(private val context: Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_VIEW_TYPE] = viewType.ordinal }
 	}
 
-	val isBiometricEnabled: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_USE_BIOMETRIC] ?: true }
+	val isBiometricEnabled: Flow<Boolean> = context.dataStore.data.map { preferences -> preferences[PREFERENCE_USE_BIOMETRIC] ?: false }
 
 	fun putUseBiometric(useBiometric: Boolean) = CoroutineScope(Dispatchers.IO).launch {
 		context.dataStore.edit { pref -> pref[PREFERENCE_USE_BIOMETRIC] = useBiometric }

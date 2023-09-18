@@ -15,12 +15,9 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Sett
 
 @Preview
 @Composable
-fun BackUpAndSyncScreen(
-	onClickBack: () -> Unit = {},
-) {
+fun BackUpAndSyncScreen() {
 	GenericSettingsScaffold(
 		title = "Back up & sync",
-		onClickBack = onClickBack,
 	) {
 		LazyColumn(
 			modifier = Modifier.fillMaxSize()

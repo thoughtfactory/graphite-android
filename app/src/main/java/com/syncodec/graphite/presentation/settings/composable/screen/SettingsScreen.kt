@@ -68,7 +68,6 @@ fun SettingsScreen(
 
 	GenericSettingsScaffold(
 		title = stringResource(id = R.string.settings),
-		onClickBack = { /*TODO*/ }
 	) {
 		LazyColumn(
 			modifier = Modifier.fillMaxSize()

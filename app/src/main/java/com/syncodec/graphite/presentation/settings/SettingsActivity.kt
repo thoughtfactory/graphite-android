@@ -34,13 +34,13 @@ import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.presentation.settings.composable.screen.BackUpAndSyncScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.DataScreen
-import com.syncodec.graphite.presentation.settings.composable.screen.ImportDataScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.DataScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.PreferenceScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SecurityScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
+import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.ImportDataScreen
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.Dispatchers
@@ -92,8 +92,6 @@ class SettingsActivity : ComponentActivity() {
 			else extrasScreen = SettingsScreen.entries.find { it.name == extrasScreenString }
 		}
 
-		var authenticationState by mutableStateOf(AuthenticationState.None)
-
 		setContent {
 			BaseComposable {
 
@@ -107,14 +105,14 @@ class SettingsActivity : ComponentActivity() {
 							onClickSignIn = { onClickSignIn() },
 							onClickSignOut = { onClickSignOut() },
 							onClickDeleteAccount = { deleteAccount() },
-						) { navController.navigate(it.name) }
+							onNavigate = {navController.navigate(it.name)}
+						)
 					}
-					composable(SettingsScreen.Preferences.name) { PreferenceScreen { navController.popBackStack() } }
-					composable(SettingsScreen.Security.name) { SecurityScreen { navController.popBackStack() } }
+					composable(SettingsScreen.Preferences.name) { PreferenceScreen() }
+					composable(SettingsScreen.Security.name) { SecurityScreen() }
 					composable(SettingsScreen.Data.name) { DataScreen { navController.navigate(it.name) } }
-					composable(SettingsScreen.ImportData.name) { ImportDataScreen { navController.popBackStack() } }
-					composable(SettingsScreen.ExportData.name) { ImportDataScreen() }
-					composable(SettingsScreen.BackUpAndSync.name) { BackUpAndSyncScreen { navController.popBackStack() } }
+					composable(SettingsScreen.ImportData.name) { ImportDataScreen() }
+					composable(SettingsScreen.BackUpAndSync.name) { BackUpAndSyncScreen() }
 				}
 			}
 		}

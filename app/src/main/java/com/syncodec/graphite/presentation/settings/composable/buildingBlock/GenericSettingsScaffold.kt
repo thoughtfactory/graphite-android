@@ -17,7 +17,6 @@ import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 @Composable
 fun GenericSettingsScaffold(
 	title: String = "Settings",
-	onClickBack: () -> Unit = {},
 	content: @Composable BoxScope.() -> Unit = {},
 ) {
 	GenericScaffold2(
