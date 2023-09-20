@@ -41,8 +41,8 @@ class NoteObject() : RealmObject {
 			this.setLatLng(LatLng(lat, lng))
 		}
 		this.address = jsonObject.optString("address").let { if (it.isNullOrEmpty() || it == "null") null else it }
-		this.contentThumbnail = jsonObject.optString("contentThumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.content = jsonObject.optString("content").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.content2 = jsonObject.optString("content2").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.thumbnail = jsonObject.optString("thumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
@@ -60,8 +60,8 @@ class NoteObject() : RealmObject {
 	var color: Int? = null
 	var latLng: String? = null
 	var address: String? = null
-	var contentThumbnail: String? = null
 	var content: String? = null
+	var content2 : String? = null
 	var thumbnail: String? = null
 	var isFavourite: Boolean = false
 	var isLocked: Boolean = false
@@ -138,8 +138,8 @@ class NoteObject() : RealmObject {
 		this.color = this@NoteObject.color
 		this.latLng = this@NoteObject.latLng
 		this.address = this@NoteObject.address
-		this.contentThumbnail = this@NoteObject.contentThumbnail
 		this.content = this@NoteObject.content
+		this.content2 = this@NoteObject.content2
 		this.thumbnail = this@NoteObject.thumbnail
 		this.isFavourite = this@NoteObject.isFavourite
 		this.isLocked = this@NoteObject.isLocked
@@ -172,7 +172,6 @@ class NoteObject() : RealmObject {
 		result = 31 * result + (color ?: 0)
 		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
-		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
 		result = 31 * result + (content?.hashCode() ?: 0)
 		result = 31 * result + (thumbnail?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
@@ -193,7 +192,6 @@ class NoteObject() : RealmObject {
 		if (color != other.color) return false
 		if (latLng != other.latLng) return false
 		if (address != other.address) return false
-		if (contentThumbnail != other.contentThumbnail) return false
 		if (content != other.content) return false
 		if (thumbnail != other.thumbnail) return false
 		if (isFavourite != other.isFavourite) return false
@@ -227,7 +225,6 @@ class NoteObject() : RealmObject {
 				this.color = Color.argb(255, Random.nextInt(256), Random.nextInt(256), Random.nextInt(256))
 				setLatLng(LatLng(0.0, 0.0))
 				this.address = "Random Address ${Random.nextInt()}"
-				this.contentThumbnail = "Random Content Thumbnail ${Random.nextInt()}"
 				this.isFavourite = Random.nextBoolean()
 				this.isLocked = Random.nextBoolean()
 				this.parentId = RealmUUID.random()

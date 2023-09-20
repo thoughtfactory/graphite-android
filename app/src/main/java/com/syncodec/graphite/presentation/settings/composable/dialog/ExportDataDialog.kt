@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.dialog
+package com.syncodec.graphite.presentation.settings.composable.dialog
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Row
@@ -22,13 +22,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.presentation.common.button.VaultButton
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
-import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.ExportDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.viewModel.ExportDataViewModel
 import com.syncodec.graphite.utils.share
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +45,7 @@ fun ExportDataDialog(
 
 	val scope = rememberCoroutineScope()
 
-	val viewModel : ExportDataViewModel = koinViewModel()
+	val viewModel: ExportDataViewModel = koinViewModel()
 
 	var isNotesSelected by remember { mutableStateOf(true) }
 	var isBucketsSelected by remember { mutableStateOf(true) }
@@ -62,7 +61,8 @@ fun ExportDataDialog(
 		onDismissRequest()
 		isExportingDialogVisible = true
 		scope.launch(Dispatchers.IO) {
-			val exportFile = viewModel.exportData(isNotesSelected = isNotesSelected, isBucketsSelected = isBucketsSelected, isTagsSelected = isTagsSelected, isAttachmentsSelected = isAttachmentsSelected, includeLockedItems = includeLockedItems)
+			val exportFile =
+				viewModel.exportData(isNotesSelected = isNotesSelected, isBucketsSelected = isBucketsSelected, isTagsSelected = isTagsSelected, isAttachmentsSelected = isAttachmentsSelected, includeLockedItems = includeLockedItems)
 			withContext(Dispatchers.Main) {
 				exportFile?.share(context = context)
 				isExportingDialogVisible = false
@@ -124,7 +124,7 @@ fun ExportDataDialog(
 				color = MaterialTheme.colorScheme.onBackground
 			)
 			Spacer(modifier = Modifier.weight(1f))
-			VaultButton()
+			VaultButton { onDismissRequest() }
 		}
 	}
 

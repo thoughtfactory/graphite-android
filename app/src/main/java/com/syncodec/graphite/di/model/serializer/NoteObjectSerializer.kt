@@ -100,7 +100,6 @@ object NoteObjectSerializer : KSerializer<NoteObject> {
 				this.isFavourite = isFavourite ?: false
 				this.isLocked = isLocked ?: false
 				this.parentId = parentId
-				this.contentThumbnail = getContentString().take(256)
 			}
 		}
 	}

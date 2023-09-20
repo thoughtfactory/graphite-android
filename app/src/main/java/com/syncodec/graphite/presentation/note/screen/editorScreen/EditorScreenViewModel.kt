@@ -129,7 +129,6 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 					this@EditorScreenViewModel.color.tryEmit(noteObject.color)
 					this@EditorScreenViewModel.latLng.tryEmit(noteObject.getLatLng())
 					this@EditorScreenViewModel.address.tryEmit(noteObject.address)
-					this@EditorScreenViewModel.contentThumbnail.tryEmit(noteObject.contentThumbnail)
 					this@EditorScreenViewModel.content.tryEmit(noteObject.content)
 					this@EditorScreenViewModel.thumbnail.tryEmit(noteObject.thumbnail?.decodeBase64ToBitmap())
 					this@EditorScreenViewModel.isFavourite.tryEmit(noteObject.isFavourite)
@@ -158,7 +157,6 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 					this@EditorScreenViewModel.color.tryEmit(it.color)
 					this@EditorScreenViewModel.latLng.tryEmit(it.getLatLng())
 					this@EditorScreenViewModel.address.tryEmit(it.address)
-					this@EditorScreenViewModel.contentThumbnail.tryEmit(it.contentThumbnail)
 					this@EditorScreenViewModel.content.tryEmit(it.content)
 					this@EditorScreenViewModel.thumbnail.tryEmit(it.thumbnail?.decodeBase64ToBitmap())
 					this@EditorScreenViewModel.isFavourite.tryEmit(it.isFavourite)
@@ -185,7 +183,6 @@ class EditorScreenViewModel(private val repository : Repository) : ViewModel() {
 				this@EditorScreenViewModel.color.value?.let { this.color = it }
 				this@EditorScreenViewModel.latLng.value?.let { this.setLatLng(it) }
 				this@EditorScreenViewModel.address.value?.let { this.address = it }
-				this@EditorScreenViewModel.contentThumbnail.value?.let { this.contentThumbnail = it }
 				this@EditorScreenViewModel.content.value?.let { this.content = it }
 				this@EditorScreenViewModel.isFavourite.value?.let { this.isFavourite = it }
 				this@EditorScreenViewModel.isLocked.value?.let { this.isLocked = it }

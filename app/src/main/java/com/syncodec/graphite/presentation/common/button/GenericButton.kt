@@ -452,6 +452,7 @@ fun VaultButton(
 		checkedContainerColor = MaterialTheme.colorScheme.surface,
 		checkedIconColor = MaterialTheme.colorScheme.onSurface
 	),
+	sideEffect : () -> Unit = {}
 ) {
 	val isRepoUnlocked = LocalIsRepoUnlocked.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current
@@ -461,7 +462,7 @@ fun VaultButton(
 		tooltip = stringResource(id = R.string.vault),
 		checked = isRepoUnlocked,
 		colors = colors,
-		onClick = { onAuthenticationAction(AuthenticationState.Authenticate) },
+		onClick = { onAuthenticationAction(AuthenticationState.Authenticate); sideEffect() },
 	)
 }
 

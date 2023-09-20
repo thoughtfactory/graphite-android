@@ -84,7 +84,7 @@ class NoteActivity2 : ComponentActivity() {
 				val tagStateMap by noteViewModel2.tagStateMap.collectAsState()
 
 				val title by remember { derivedStateOf { noteObject?.title } }
-				val storedContent by remember { derivedStateOf { noteObject?.content } }
+				val storedContent by remember { derivedStateOf { noteObject?.content2 } }
 
 				val kitKatFormat by kitKat.kitKatFormat.collectAsState()
 
@@ -94,13 +94,13 @@ class NoteActivity2 : ComponentActivity() {
 					if (isKitKatReady) {
 //						!!! These delays are disgusting
 						delay(310)
-						kitKat.onKitKatAction(KitKatAction.Other.SetMaxHeight)
-						if (isDarkTheme) kitKat.onKitKatAction(KitKatAction.Other.EnableDarkMode)
-						else kitKat.onKitKatAction(KitKatAction.Other.DisableDarkMode)
+						kitKat.onKitKatActionAsync(KitKatAction.Other.SetMaxHeight)
+						if (isDarkTheme) kitKat.onKitKatActionAsync(KitKatAction.Other.EnableDarkMode)
+						else kitKat.onKitKatActionAsync(KitKatAction.Other.DisableDarkMode)
 						if (isRecreated) {
 							Log.d("npr71", "recreated : setting updated title and content")
-							noteViewModel2.kitKatFormat.value?.kitKatTitle?.let { kitKat.onKitKatAction(KitKatAction.Edit.SetTitle(it)) }
-							noteViewModel2.kitKatFormat.value?.kitKatContent?.let { kitKat.onKitKatAction(KitKatAction.Edit.SetContent(it)) }
+							noteViewModel2.kitKatFormat.value?.kitKatTitle?.let { kitKat.onKitKatActionAsync(KitKatAction.Edit.SetTitle(it)) }
+							noteViewModel2.kitKatFormat.value?.kitKatContent?.let { kitKat.onKitKatActionAsync(KitKatAction.Edit.SetContent(it)) }
 						}
 						isReCreateDataRestored = true
 					}
@@ -110,8 +110,8 @@ class NoteActivity2 : ComponentActivity() {
 					if (isKitKatReady) {
 //						!!! These delays are disgusting
 						delay(470)
-						if (isEditing == true) kitKat.onKitKatAction(KitKatAction.Edit.Enable)
-						else kitKat.onKitKatAction(KitKatAction.Edit.Disable)
+						if (isEditing == true) kitKat.onKitKatActionAsync(KitKatAction.Edit.Enable)
+						else kitKat.onKitKatActionAsync(KitKatAction.Edit.Disable)
 					}
 				}
 
@@ -121,7 +121,7 @@ class NoteActivity2 : ComponentActivity() {
 						delay(470)
 						if (!isRecreated) {
 							Log.d("npr71", "setting saved title")
-							kitKat.onKitKatAction(KitKatAction.Edit.SetTitle(title))
+							kitKat.onKitKatActionAsync(KitKatAction.Edit.SetTitle(title))
 						}
 					}
 				}
@@ -132,7 +132,7 @@ class NoteActivity2 : ComponentActivity() {
 						delay(470)
 						if (!isRecreated) {
 							Log.d("npr71", "setting saved content")
-							kitKat.onKitKatAction(KitKatAction.Edit.SetContent(storedContent))
+							kitKat.onKitKatActionAsync(KitKatAction.Edit.SetContent(storedContent))
 						}
 					}
 				}

@@ -125,7 +125,7 @@ fun KitKatScreen(
 				noClickLocation = { isEditorLocationBottomSheetVisible = true },
 				onClickAttachments = { isAttachmentBottomSheetVisible = true },
 				onClickTags = { isTagsBottomSheetVisible = true },
-				onKitKatAction = { kitKat.onKitKatAction(it) }
+				onKitKatAction = { kitKat.onKitKatActionAsync(it) }
 			) else ViewerBottomBar(
 				onClickMetadata = { isViewerMetadataBottomSheetVisible = true },
 				onClickLocation = { isViewerLocationBottomSheetVisible = true },

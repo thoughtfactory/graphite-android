@@ -106,7 +106,6 @@ class ViewerScreenViewModel(private val repository : Repository) : ViewModel() {
 					this@ViewerScreenViewModel.color.tryEmit(it.color)
 					this@ViewerScreenViewModel.latLng.tryEmit(it.getLatLng())
 					this@ViewerScreenViewModel.address.tryEmit(it.address)
-					this@ViewerScreenViewModel.contentThumbnail.tryEmit(it.contentThumbnail)
 					this@ViewerScreenViewModel.content.tryEmit(it.content)
 					this@ViewerScreenViewModel.thumbnail.tryEmit(it.thumbnail?.decodeBase64ToBitmap())
 					this@ViewerScreenViewModel.isFavourite.tryEmit(it.isFavourite)
@@ -132,7 +131,6 @@ class ViewerScreenViewModel(private val repository : Repository) : ViewModel() {
 				this@ViewerScreenViewModel.color.value?.let { this.color = it }
 				this@ViewerScreenViewModel.latLng.value?.let { this.setLatLng(it) }
 				this@ViewerScreenViewModel.address.value?.let { this.address = it }
-				this@ViewerScreenViewModel.contentThumbnail.value?.let { this.contentThumbnail = it }
 				this@ViewerScreenViewModel.content.value?.let { this.content = it }
 //				this@EditorScreenViewModel.thumbnail.value?.let { this.thumbnail = it }
 				this@ViewerScreenViewModel.isFavourite.value?.let { this.isFavourite = it }

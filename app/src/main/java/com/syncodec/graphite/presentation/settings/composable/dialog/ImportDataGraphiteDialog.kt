@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.dialog
+package com.syncodec.graphite.presentation.settings.composable.dialog
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult

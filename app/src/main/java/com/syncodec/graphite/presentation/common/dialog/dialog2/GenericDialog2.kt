@@ -214,7 +214,7 @@ object GenericDialogDefaults {
 	fun genericDialogIcon(icon: Int, tint: Color = MaterialTheme.colorScheme.onBackground): GenericDialogIcon = GenericDialogIcon(icon = icon, tint = tint)
 
 	@Composable
-	fun genericDialogWarningIcon(): GenericDialogIcon = GenericDialogIcon(icon = R.drawable.ic_flat_warning, tint = MaterialTheme.colorScheme.error)
+	fun genericDialogWarningIcon(): GenericDialogIcon = GenericDialogIcon(icon = R.drawable.ic_fa_warning, tint = MaterialTheme.colorScheme.error)
 
 	@Composable
 	fun genericDialogButton(text: String, buttonColors: ButtonColors, onClick: () -> Unit): GenericDialogButton = GenericDialogButton(text = text, colors = buttonColors, onClick = onClick)

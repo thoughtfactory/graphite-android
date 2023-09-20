@@ -8,7 +8,6 @@ import com.google.firebase.ktx.Firebase
 import com.revenuecat.purchases.CacheFetchPolicy
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Purchases
-import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.di.cloud.dropbox.DBox
@@ -37,20 +36,18 @@ import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
-import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.ExportDataViewModel
-import com.syncodec.graphite.utils.alice.Alice
+import com.syncodec.graphite.presentation.settings.composable.viewModel.ClearDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.viewModel.ExportDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.viewModel.ImportDataViewModel
+import com.syncodec.graphite.presentation.settings.composable.viewModel.LocalBackupViewModel
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import java.io.File
-import java.time.Instant
 
 
 class BaseApplication : Application() {
@@ -111,6 +108,9 @@ class BaseApplication : Application() {
 					viewModelOf(::ShowBucketItemViewModel)
 
 					viewModelOf(::ExportDataViewModel)
+					viewModelOf(::ImportDataViewModel)
+					viewModelOf(::ClearDataViewModel)
+					viewModelOf(::LocalBackupViewModel)
 
 //					viewModelOf(::ExportDataViewModel)
 //					viewModelOf(::ImportDataGraphiteViewModel)

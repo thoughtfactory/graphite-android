@@ -68,14 +68,15 @@ import kotlin.reflect.KProperty1
 
 class LockableRepo {
 
-	private var repository : Repository? = null
+	private var repository: Repository? = null
 
-	val repositoryStatusFlow : MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
+	val repositoryStatusFlow: MutableStateFlow<Repository.Companion.RepositoryStatus> = MutableStateFlow(Repository.Companion.RepositoryStatus.Init)
 
 	fun initRepository(context: Context, dataStoreInstance: DataStoreInstance, repository: Repository) {
 		this.repository = repository
 		repository.initRepository(context = context, dataStoreInstance = dataStoreInstance)
 	}
+
 	fun decryptRepository() {
 		repository?.let { repository1 ->
 			repository1.decryptRepository()
@@ -347,7 +348,7 @@ class Repository {
 	 * @since 2.0.0
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getAllChapter(includeLocked : Boolean): List<ChapterObject> {
+	fun getAllChapter(includeLocked: Boolean): List<ChapterObject> {
 		realm.let { realm1 ->
 			return if (realm1 == null) throw RealmNotInitializedException()
 			else if (includeLocked) realm1.query<ChapterObject>().find().map { it } else realm1.query<ChapterObject>("isLocked == $0", false).find().map { it }
@@ -529,8 +530,8 @@ class Repository {
 					latestNoteObject.color = noteObject.color
 					latestNoteObject.latLng = noteObject.latLng
 					latestNoteObject.address = noteObject.address
-					latestNoteObject.contentThumbnail = noteObject.contentThumbnail
 					latestNoteObject.content = noteObject.content
+					latestNoteObject.content2 = noteObject.content2
 					latestNoteObject.thumbnail = noteObject.thumbnail
 					latestNoteObject.isFavourite = noteObject.isFavourite
 					latestNoteObject.isLocked = noteObject.isLocked
@@ -875,7 +876,7 @@ class Repository {
 	 * @return List of all NoteObject from realm
 	 * @throws [RealmNotInitializedException] if realm is not initialized
 	 */
-	fun getAllNote(includeLocked : Boolean = false): List<NoteObject> {
+	fun getAllNote(includeLocked: Boolean = false): List<NoteObject> {
 		realm.let { realm1 ->
 			return if (realm1 == null) throw RealmNotInitializedException()
 			else if (includeLocked) realm1.query<NoteObject>().find().map { it } else realm1.query<NoteObject>("isLocked == $0", false).find().map { it }
@@ -978,9 +979,9 @@ class Repository {
 		}
 	}
 
-	private  fun Flow<List<BucketObjectLite>>.mergeBucketSize() : Flow<List<BucketObjectLite>> {
+	private fun Flow<List<BucketObjectLite>>.mergeBucketSize(): Flow<List<BucketObjectLite>> {
 		return combine(getAllBucketSizeAsFlow()) { bucketList1, bucketSizeMap1 ->
-			bucketList1.map { it.copy(bucketItemCount = bucketSizeMap1[it.id] ?:0 ) }
+			bucketList1.map { it.copy(bucketItemCount = bucketSizeMap1[it.id] ?: 0) }
 		}
 	}
 
@@ -1271,13 +1272,13 @@ class Repository {
 	}
 
 	/**
-	 * Clears everything from realm. It does not reinitialize realm with default values. See [initializeRealm].
+	 * Clears everything from realm. It does not reinitialize realm with default values. See [initializeRealmSuspended].
 	 * @author pushpull
 	 * @since 2.2.0
 	 * @return Callback with true if successful, false if not along with exception
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
-	fun clearRealm(callback: (Boolean, Exception?) -> Unit) = realm?.let {
+	fun clearRealmSuspended(callback: (Boolean, Exception?) -> Unit) = realm?.let {
 		CoroutineScope(Dispatchers.Default).launch {
 			try {
 				attachmentRepository.deleteAll()
@@ -1290,13 +1291,41 @@ class Repository {
 	} ?: callback(false, RealmNotInitializedException())
 
 	/**
-	 * Initialize realm with default values. It does not clear anything from realm. See [clearRealm].
+	 * Clears everything from realm and reinitialize realm with default values. See [initializeRealmSuspended].
+	 * @author pushpull
+	 * @since 3.0.0
+	 * @return true if successful, false if not
+	 */
+	suspend fun resetRealm(): Boolean {
+		return try {
+			attachmentRepository.deleteAll()
+			realm?.write {
+				deleteAll()
+				val chapterObject = ChapterObject().apply {
+					this.title = "Diary"
+					this.description = "Default diary. Every notes will be saved in this notebook by default"
+				}
+				val baseObject = BaseObject().apply {
+					this.defaultChapterId = chapterObject.id
+				}
+				copyToRealm(chapterObject)
+				copyToRealm(baseObject)
+			}
+			true
+		} catch (e: Exception) {
+			if (BuildConfig.DEBUG) e.printStackTrace()
+			false
+		}
+	}
+
+	/**
+	 * Initialize realm with default values. It does not clear anything from realm. See [clearRealmSuspended].
 	 * @author pushpull
 	 * @since 2.2.0
 	 * @return Callback with true if successful, false if not along with exception
 	 * @throws [RealmNotInitializedException] if realm is not initialized.
 	 */
-	fun initializeRealm(callback: (Boolean, Exception?) -> Unit) = realm?.let {
+	fun initializeRealmSuspended(callback: (Boolean, Exception?) -> Unit) = realm?.let {
 		CoroutineScope(Dispatchers.Default).launch {
 			try {
 				it.write { copyToRealm(BaseObject()) }
@@ -1492,7 +1521,7 @@ class Repository {
 
 	companion object {
 
-		const val SCHEMA_VERSION = 4L
+		const val SCHEMA_VERSION = 5L
 
 		sealed class RepositoryStatus {
 			data object Init : RepositoryStatus()

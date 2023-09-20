@@ -14,7 +14,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScaffold
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonDefaults
-import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.dialog.ImportDataGraphiteDialog
+import com.syncodec.graphite.presentation.settings.composable.dialog.ImportDataGraphiteDialog
+import com.syncodec.graphite.presentation.settings.composable.dialog.ImportDataJourneyDialog
 
 
 @Preview
@@ -22,6 +23,8 @@ import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.
 fun ImportDataScreen() {
 
 	var isImportDataGraphiteDialogVisible by remember { mutableStateOf(false) }
+	var isImportDataJourneyDialogVisible by remember { mutableStateOf(false) }
+	var isImportDataGoogleKeepDialogVisible by remember { mutableStateOf(false) }
 
 	GenericSettingsScaffold(
 		title = stringResource(id = R.string.import_data)
@@ -42,8 +45,7 @@ fun ImportDataScreen() {
 					title = "Journey",
 					subTitle = stringResource(id = R.string.import_data_from) + " Journey",
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_import),
-					onClick = {
-					},
+					onClick = { isImportDataJourneyDialogVisible = true },
 				)
 			}
 			item {
@@ -62,4 +64,10 @@ fun ImportDataScreen() {
 		isDialogVisible = isImportDataGraphiteDialogVisible,
 		onDismissRequest = { isImportDataGraphiteDialogVisible = false }
 	)
+
+	ImportDataJourneyDialog(
+		isDialogVisible = isImportDataJourneyDialogVisible,
+		onDismissRequest = { isImportDataJourneyDialogVisible = false }
+	)
+
 }

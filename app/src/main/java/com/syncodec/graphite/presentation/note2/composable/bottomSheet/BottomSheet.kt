@@ -121,26 +121,26 @@ fun BottomSheet(
 		isBottomSheetVisible = isExportBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); onDismissRequest(NoteBottomSheet.Export) } },
 		onClickExportAsTxt = {
-			kitKat.onKitKatAction(KitKat.Companion.KitKatAction.Export.Text {
+			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Text {
 				val textString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = textString, noteId = noteId?.toString() ?: "note", ext = "txt")
 			})
 		},
 		onClickExportAsPdf = { noteId?.toString()?.let { kitKat.print(it) } },
 		onClickExportAsHtml = {
-			kitKat.onKitKatAction(KitKat.Companion.KitKatAction.Export.Html {
+			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Html {
 				val htmlString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = htmlString, noteId = noteId?.toString() ?: "note", ext = "html")
 			})
 		},
 		onClickExportAsJson = {
-			kitKat.onKitKatAction(KitKat.Companion.KitKatAction.Export.Json {
+			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Json {
 				val jsonString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = jsonString, noteId = noteId?.toString() ?: "note", ext = "json")
 			})
 		},
 		onClickExportAsMarkdown = {
-			kitKat.onKitKatAction(KitKat.Companion.KitKatAction.Export.Markdown {
+			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Markdown {
 				val markdownString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = markdownString, noteId = noteId?.toString() ?: "note", ext = "md")
 			})

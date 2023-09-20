@@ -16,7 +16,7 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Gene
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonDefaults
 import com.syncodec.graphite.presentation.settings.composable.dialog.ClearDataDialog
-import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.dialog.ExportDataDialog
+import com.syncodec.graphite.presentation.settings.composable.dialog.ExportDataDialog
 
 
 @Preview
@@ -52,7 +52,7 @@ fun DataScreen(
 				SettingsButton(
 					title = stringResource(id = R.string.clear_data),
 					subTitle = stringResource(id = R.string.clear_data_sub),
-					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_flat_file_delete, color = SettingsButtonDefaults.warningSettingsButtonColors().contentColor),
+					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_eraser, color = SettingsButtonDefaults.warningSettingsButtonColors().contentColor),
 					colors = SettingsButtonDefaults.warningSettingsButtonColors(),
 					onClick = { isClearDataDialogVisible = true },
 				)
@@ -66,10 +66,7 @@ fun DataScreen(
 	)
 
 	ClearDataDialog(
-		showDialog = isClearDataDialogVisible,
-		onConfirmDelete = {
-			isClearDataDialogVisible = false
-		},
+		isDialogVisible = isClearDataDialogVisible,
 		onDismissRequest = { isClearDataDialogVisible = false },
 	)
 }

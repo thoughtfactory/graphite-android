@@ -72,7 +72,6 @@ class NotificationReceiver : BroadcastReceiver() {
 							this.content =
 								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
 							this.parentId = it
-							this.contentThumbnail = content.substring(0, minOf(256, content.length))
 
 							repository2.putNote(this)
 							WriteNoteNotification.showSimpleNotification(context)

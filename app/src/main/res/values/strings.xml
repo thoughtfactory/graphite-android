@@ -206,6 +206,8 @@
     <string name="dismiss">Dismiss</string>
     <string name="reorder_grip">Reorder grip</string>
     <string name="experimental">Experimental</string>
+    <string name="manage">Manage</string>
+    <string name="coming_soon">Coming soon</string>
 
     <!--   Delete -->
     <string name="delete">Delete</string>
@@ -229,6 +231,7 @@
     <string name="security">Security</string>
     <string name="data">Data</string>
     <string name="backup_and_sync">Backup &amp; Sync</string>
+    <string name="local_backup">Local backup</string>
     <string name="extensions">Extensions</string>
     <string name="knowledge_base">Knowledge Base</string>
     <string name="knowledge_base_sub">Learn how everything works</string>
@@ -255,6 +258,8 @@
 
     <!--    Data exchanger-->
     <string name="import_data">Import data</string>
+    <string name="importing_data">Importing data</string>
+    <string name="importing_data_dialog_content">Please wait while data is being imported</string>
     <string name="export_data">Export data</string>
     <string name="exporting">Exporting</string>
     <string name="clear_data">Clear data</string>
@@ -265,6 +270,22 @@
     <string name="buckets_and_bucket_items">Buckets and bucket items</string>
     <string name="please_wait_while_your_data_is_being_processed">Please wait while your data is being processed</string>
     <string name="include_locked_items">Include locked items</string>
+    <string name="import_journey_message">Select an exported Journey data file to import. It will a zip file. The data will be imported in the default notebook.</string>
+    <string name="clear_data_dialog_content">Clear data is a destructive and non recoverable action. It is advised to back up your data before clearing</string>
+    <string name="clearing_data">Clearing data</string>
+    <string name="clearing_data_dialog_content">Please wait while data is being cleared</string>
+    <string name="clear_data_successful">Data cleared</string>
+    <string name="clear_data_failure">Error clearing data</string>
+
+    <!--    Backup and sync-->
+    <string name="automatic_backup">Automatic backup </string>
+    <string name="setup_backup_folder">Setup backup folder</string>
+    <string name="setup_backup_folder_sub">Backup folder not set</string>
+    <string name="remove_backup_folder">Remove backup folder</string>
+    <string name="remove_backup_folder_sub">Content of the folder will not be removed</string>
+    <string name="take_snapshot">Take snapshot</string>
+    <string name="snapshot_warehouse">Snapshot warehouse</string>
+    <string name="snapshots_are_not_encrypted">Snapshots are not encrypted</string>
 
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
@@ -278,4 +299,8 @@
     <string name="toast_no_bucket_selected">No bucket selected</string>
     <string name="toast_no_file_selected">No file selected</string>
     <string name="toast_open_vault_to_include_selected">Open vault to include selected</string>
+    <string name="toast_back_folder_set_to">Backup folder set to</string>
+    <string name="toast_error_setting_backup_folder">Error setting backup folder</string>
+    <string name="toast_backup_folder_removed">Backup folder removed</string>
+    <string name="toast_error_removing_backup_folder">Backup folder removed</string>
 </resources>

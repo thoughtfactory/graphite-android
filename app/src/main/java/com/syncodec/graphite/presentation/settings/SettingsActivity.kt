@@ -10,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,13 +32,13 @@ import com.revenuecat.purchases.interfaces.LogInCallback
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.presentation.settings.composable.screen.BackUpAndSyncScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.backupAndSyncScreen.BackUpAndSyncScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.DataScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.PreferenceScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SecurityScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
 import com.syncodec.graphite.presentation.base.BaseComposable
-import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
+import com.syncodec.graphite.presentation.settings.composable.screen.backupAndSyncScreen.LocalBackupScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.ImportDataScreen
 import com.syncodec.graphite.utils.alice.Alice
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
@@ -105,14 +104,15 @@ class SettingsActivity : ComponentActivity() {
 							onClickSignIn = { onClickSignIn() },
 							onClickSignOut = { onClickSignOut() },
 							onClickDeleteAccount = { deleteAccount() },
-							onNavigate = {navController.navigate(it.name)}
+							onNavigate = { navController.navigate(it.name) }
 						)
 					}
 					composable(SettingsScreen.Preferences.name) { PreferenceScreen() }
 					composable(SettingsScreen.Security.name) { SecurityScreen() }
 					composable(SettingsScreen.Data.name) { DataScreen { navController.navigate(it.name) } }
 					composable(SettingsScreen.ImportData.name) { ImportDataScreen() }
-					composable(SettingsScreen.BackUpAndSync.name) { BackUpAndSyncScreen() }
+					composable(SettingsScreen.BackUpAndSync.name) { BackUpAndSyncScreen { navController.navigate(it.name) } }
+					composable(SettingsScreen.LocalBackup.name) { LocalBackupScreen() }
 				}
 			}
 		}
@@ -127,8 +127,7 @@ class SettingsActivity : ComponentActivity() {
 
 				if (idToken == null) {
 					Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-				}
-				else {
+				} else {
 					val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
 					auth.signInWithCredential(firebaseCredential)
 						.addOnSuccessListener {
@@ -211,8 +210,7 @@ class SettingsActivity : ComponentActivity() {
 					if (data == "Ok") {
 						Toast.makeText(this@SettingsActivity, "Your account is scheduled for deletion.", Toast.LENGTH_SHORT).show()
 						onClickSignOut()
-					}
-					else if (data == "Error") {
+					} else if (data == "Error") {
 						Toast.makeText(this@SettingsActivity, "Error deleting account. You can write us a mail about account deletion.", Toast.LENGTH_SHORT)
 							.show()
 					}
@@ -240,6 +238,7 @@ class SettingsActivity : ComponentActivity() {
 			ImportData,
 			ExportData,
 			BackUpAndSync,
+			LocalBackup
 		}
 
 		enum class DarkTheme {

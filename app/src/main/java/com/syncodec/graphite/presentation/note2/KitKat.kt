@@ -16,9 +16,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.json.JSONObject
 
 
 class KitKat(
@@ -97,15 +97,24 @@ class KitKat(
 		evaluateJavascript(trigger, callback)
 	}
 
-	private fun exec(trigger: String, callback: (String) -> Unit = {}) {
+	private fun execAsync(trigger: String, callback: (String) -> Unit = {}) {
 		findViewTreeLifecycleOwner()?.lifecycleScope?.launch(Dispatchers.Main) {
 			while (true) {
 				if (isReady.value) break
 				delay(400)
 			}
-			withContext(Dispatchers.Main) { load(trigger, callback) }
+			load(trigger, callback)
 		}
 	}
+
+	private fun exec(trigger: String, callback: (String) -> Unit = {}) {
+		try {
+			load(trigger, callback)
+		} catch (_: Exception) {
+		}
+	}
+
+	fun onKitKatActionAsync(editorAction: KitKatAction) = execAsync(trigger = editorAction.action, callback = editorAction.callback)
 
 	fun onKitKatAction(editorAction: KitKatAction) = exec(trigger = editorAction.action, callback = editorAction.callback)
 
@@ -137,10 +146,6 @@ class KitKat(
 	@JavascriptInterface
 	fun titleUpdate(title: String?) {
 		_kitKatFormat.tryEmit(kitKatFormat.value.copy(kitKatTitle = title))
-	}
-
-	@JavascriptInterface
-	fun restoreContent(content: String) {
 	}
 
 	companion object {
@@ -252,7 +257,7 @@ class KitKat(
 				data object Enable : Edit(action2 = "editor.enable();")
 				data object Disable : Edit(action2 = "editor.disable();")
 				data class SetTitle(val title: String?) : Edit(action2 = "editor.setTitle('${title ?: ""}');")
-				data class SetContent(val content: String?) : Edit(action2 = "editor.setContent(${content ?: DEFAULT_CONTENT});") {
+				data class SetContent(val content: String?) : Edit(action2 = "editor.setContent(${content?.let { JSONObject().apply { put("content", it) }.toString() } ?: DEFAULT_CONTENT});") {
 					companion object {
 						const val DEFAULT_CONTENT = ""
 					}
