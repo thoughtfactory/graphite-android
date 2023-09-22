@@ -2,8 +2,6 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import android.net.Uri
-import com.syncodec.graphite.presentation.common.attachment.previewer.FilePreviewer
-import com.syncodec.graphite.service.syncInator.DropboxSyncInatorService
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.getFileName
@@ -11,8 +9,6 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.File
 
 
@@ -46,17 +42,6 @@ class AttachmentRepository {
 				file.outputStream().use { outputStream -> copyInputStreamToOutputStream(inputStream, outputStream) }
 			}
 			inputStream?.close()
-		}
-	}
-
-	fun putAttachment(parentId: RealmUUID, zipFile: ZipFile, attachmentList: List<ZipArchiveEntry>, keepName: Boolean = false) {
-		attachmentList.forEach { zipArchiveEntry ->
-			val inputStream = zipFile.getInputStream(zipArchiveEntry).also { inputStream ->
-				val fileName = if (keepName) zipArchiveEntry.name else "${RealmUUID.random()}.${zipArchiveEntry.name.split(".").last()}"
-				val file = File(context.attachmentDir(parentId, true), fileName).also { it.createNewFile() }
-				file.outputStream().use { outputStream -> copyInputStreamToOutputStream(inputStream, outputStream) }
-			}
-			inputStream.close()
 		}
 	}
 
@@ -100,6 +85,13 @@ class AttachmentRepository {
 
 	fun haveAttachment(parentId: RealmUUID): Boolean {
 		return getNoteAttachmentDir(parentId).listFiles()?.isNotEmpty() ?: false
+	}
+
+	fun countTotalAttachment() : Int {
+		return getAttachmentDir().listFiles()?.fold(0) { acc, file ->
+			if (file.isDirectory) acc + (file.listFiles()?.size ?: 0)
+			else acc
+		} ?: 0
 	}
 
 	fun importAttachmentFromGraphite(file: File) {

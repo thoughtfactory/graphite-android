@@ -16,6 +16,8 @@
     <string name="error_fetching_location">Error fetching location. Try reloading or set location manually. Check if GPS is enabled.</string>
 
     <!--    Bucket-->
+    <string name="bucket">Bucket</string>
+    <string name="bucket_item">Bucket item</string>
     <string name="todo">Todo</string>
     <string name="to_do">To do</string>
     <string name="book">Book</string>
@@ -103,6 +105,7 @@
     <string name="new_chapter">New chapter</string>
     <string name="edit_chapter">Edit chapter</string>
     <string name="new_note">New note</string>
+    <string name="attachment">Attachment</string>
     <string name="attachments">Attachments</string>
     <string name="atlas">Atlas</string>
     <string name="calendar">Calendar</string>
@@ -207,6 +210,7 @@
     <string name="reorder_grip">Reorder grip</string>
     <string name="experimental">Experimental</string>
     <string name="manage">Manage</string>
+    <string name="restore">Restore</string>
     <string name="coming_soon">Coming soon</string>
 
     <!--   Delete -->
@@ -286,6 +290,9 @@
     <string name="take_snapshot">Take snapshot</string>
     <string name="snapshot_warehouse">Snapshot warehouse</string>
     <string name="snapshots_are_not_encrypted">Snapshots are not encrypted</string>
+    <string name="restore_snapshot">Restore snapshot</string>
+    <string name="restore_snapshot_content">Restoring snapshot will override current data with snapshot. This action is a non recoverable action</string>
+    <string name="restoring_snapshot">Restoring snapshot</string>
 
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
@@ -303,4 +310,5 @@
     <string name="toast_error_setting_backup_folder">Error setting backup folder</string>
     <string name="toast_backup_folder_removed">Backup folder removed</string>
     <string name="toast_error_removing_backup_folder">Backup folder removed</string>
+    <string name="toast_error_restoring_snapshot">Error restoring snapshot</string>
 </resources>

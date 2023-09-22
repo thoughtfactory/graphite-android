@@ -74,27 +74,27 @@ class BaseObject : RealmObject {
 		return jsonObject.toString()
 	}
 
-	override fun hashCode(): Int {
-		var result = id.hashCode()
-		result = 31 * result + (defaultChapterId?.hashCode() ?: 0)
-		result = 31 * result + bucketIdOrderList.hashCode()
-		result = 31 * result + deletedObjectSet.hashCode()
-		result = 31 * result + modifiedTimestamp.hashCode()
-		return result
-	}
-
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (other !is BaseObject) return false
-
-		if (id != other.id) return false
-		if (defaultChapterId != other.defaultChapterId) return false
-		if (bucketIdOrderList != other.bucketIdOrderList) return false
-		if (deletedObjectSet != other.deletedObjectSet) return false
-		if (modifiedTimestamp != other.modifiedTimestamp) return false
-
-		return true
-	}
+//	override fun hashCode(): Int {
+//		var result = id.hashCode()
+//		result = 31 * result + (defaultChapterId?.hashCode() ?: 0)
+//		result = 31 * result + bucketIdOrderList.hashCode()
+//		result = 31 * result + deletedObjectSet.hashCode()
+//		result = 31 * result + modifiedTimestamp.hashCode()
+//		return result
+//	}
+//
+//	override fun equals(other: Any?): Boolean {
+//		if (this === other) return true
+//		if (other !is BaseObject) return false
+//
+//		if (id != other.id) return false
+//		if (defaultChapterId != other.defaultChapterId) return false
+//		if (bucketIdOrderList != other.bucketIdOrderList) return false
+//		if (deletedObjectSet != other.deletedObjectSet) return false
+//		if (modifiedTimestamp != other.modifiedTimestamp) return false
+//
+//		return true
+//	}
 
 	companion object {
 		fun fromCloudSnapshot(snapshot: ByteArray): BaseObject? {

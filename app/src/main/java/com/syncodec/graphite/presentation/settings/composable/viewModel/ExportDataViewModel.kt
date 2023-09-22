@@ -13,7 +13,7 @@ import com.syncodec.graphite.di.model.exporter.schema3.ExportChapterObject
 import com.syncodec.graphite.di.model.exporter.schema3.ExportNoteObject
 import com.syncodec.graphite.di.model.exporter.schema3.ExportTagObject
 import com.syncodec.graphite.di.repository.Repository
-import com.syncodec.graphite.utils.archiveUtil.ZipUtil
+import com.syncodec.graphite.utils.archiveUtil.CompressUtil
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -119,7 +119,7 @@ class ExportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository
 			}
 
 			val exportZippedFile = File(repository1.context.cacheDir, "graphite_export_$timestamp.zip")
-			ZipUtil.createZipFile(inputFile = exportDir, outputFile = exportZippedFile)
+			CompressUtil.Zip.createZipFile(inputFile = exportDir, outputFile = exportZippedFile)
 
 			return exportZippedFile
 		} ?: return null

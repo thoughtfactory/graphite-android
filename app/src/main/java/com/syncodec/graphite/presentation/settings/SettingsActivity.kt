@@ -7,9 +7,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -97,7 +100,11 @@ class SettingsActivity : ComponentActivity() {
 				val firebaseUser by this.firebaseUser
 
 				val navController = rememberNavController()
-				NavHost(navController = navController, startDestination = SettingsScreen.Settings.name) {
+				NavHost(
+					navController = navController,
+					startDestination = SettingsScreen.Settings.name,
+					modifier = Modifier.background(MaterialTheme.colorScheme.background)
+				) {
 					composable(SettingsScreen.Settings.name) {
 						SettingsScreen(
 							firebaseUser = firebaseUser,

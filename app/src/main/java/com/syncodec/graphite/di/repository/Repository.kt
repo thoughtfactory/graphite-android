@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.FileObserver
 import android.util.Log
+import androidx.annotation.WorkerThread
 import com.jakewharton.processphoenix.ProcessPhoenix
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.BaseObject
@@ -21,6 +22,7 @@ import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.attachmentDirPath
 import com.syncodec.graphite.di.repository.group.RealmObjectGroup
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
+import com.syncodec.graphite.presentation.settings.composable.viewModel.LocalBackupViewModel
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.RecursiveFileObserver
 import com.syncodec.graphite.utils.SortBy
@@ -28,11 +30,10 @@ import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
-import com.syncodec.graphite.utils.compress7z
+import com.syncodec.graphite.utils.archiveUtil.CompressUtil
 import com.syncodec.graphite.utils.copyInDirectory
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.encodeBase64
-import com.syncodec.graphite.utils.extract7z
 import com.syncodec.graphite.utils.scaleBitmap
 import com.syncodec.graphite.utils.timeStampToPrettyDay
 import io.realm.kotlin.MutableRealm
@@ -56,8 +57,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.apache.commons.compress.archivers.sevenz.SevenZFile
-import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import okhttp3.internal.closeQuietly
 import java.io.File
 import java.io.InputStream
 import java.security.SecureRandom
@@ -1362,12 +1364,11 @@ class Repository {
 				.name(name)
 				.migration(RealmMigrator())
 				.build()
-
 			realm?.writeCopyTo(realmConfiguration)
 		}
 	}
 
-	fun restoreRealmSnapshot(context: Context, name: String, path: String, callback: (Boolean, Exception?) -> Unit) {
+	fun restoreRealmSnapshot(name: String, path: String, callback: (Boolean, Exception?) -> Unit) {
 		CoroutineScope(Dispatchers.Default).launch {
 			try {
 				val realmConfiguration = RealmConfiguration
@@ -1448,11 +1449,12 @@ class Repository {
 
 	inner class Snapshot {
 
-		private fun getImportSnapshotDir() = File(context.cacheDir, "importSnapshot").also {
+		private fun getTmpImportSnapshotDir() = File(context.cacheDir, "importSnapshot").also {
 			it.deleteRecursively()
 			it.mkdirs()
 		}
 
+		@WorkerThread
 		fun generate(callback: (File) -> Unit) {
 			val snapshotDir = File(context.cacheDir, "snapshot").also {
 				it.deleteRecursively()
@@ -1463,20 +1465,33 @@ class Repository {
 				it.mkdirs()
 			}
 
+			val snapshotMetadata = LocalBackupViewModel.Companion.SnapshotMetadata(
+				timestamp = Instant.now().toEpochMilli(),
+				noteCount = getAllObjectOfType<NoteObject>(includeLocked = true).size,
+				chapterCount = getAllObjectOfType<ChapterObject>(includeLocked = true).size,
+				bucketItemCount = getAllObjectOfType<BucketItemObject>(includeLocked = true).size,
+				bucketCount = getAllObjectOfType<BucketObject>(includeLocked = true).size,
+				tagCount = getAllObjectOfType<TagObject>(includeLocked = true).size,
+				attachmentCount = attachmentRepository.countTotalAttachment(),
+			)
+
 			val observer = RecursiveFileObserver(
 				mPath = currentSnapshotDir.path,
 				mask = FileObserver.CLOSE_WRITE,
 				mListener = object : RecursiveFileObserver.EventListener {
 					override fun onEvent(event: Int, file: File?) {
 						if (event == FileObserver.CLOSE_WRITE && file == File(currentSnapshotDir, "$fileName.realm")) {
+
 							val attachmentFolder = File(currentSnapshotDir, "attachment").also { it.mkdirs() }
+							val snapshotMetadataFile = File(currentSnapshotDir, "metadata.json")
+							snapshotMetadataFile.createNewFile()
+							snapshotMetadataFile.writeText(Json.encodeToString(snapshotMetadata))
+
 							copyInDirectory(File(context.attachmentDirPath()), attachmentFolder)
 
-							val sevenZFile = File(snapshotDir, "${fileName}.7z")
-							val sevenZOutput = SevenZOutputFile(sevenZFile)
-							compress7z(currentSnapshotDir, sevenZOutput) { progress, total -> }
-
-							callback(sevenZFile)
+							val zipFile = File(snapshotDir, "${fileName}.zip")
+							CompressUtil.Zip.createZipFile(currentSnapshotDir, zipFile)
+							callback(zipFile)
 						}
 					}
 				}
@@ -1486,25 +1501,37 @@ class Repository {
 			getRealmSnapshot("$fileName.realm", currentSnapshotDir.path)
 		}
 
-		fun restore(inputStream: InputStream, callback: (Boolean) -> Unit) {
-			val importSnapshotDir = getImportSnapshotDir()
+		fun restore(inputStream: InputStream, is7z : Boolean = false, callback: (Boolean) -> Unit) {
+			val importSnapshotDir = getTmpImportSnapshotDir()
 
-			val sevenZImportFile = File(importSnapshotDir, "graphite_snapshot.7z")
-			sevenZImportFile.outputStream().use { outputStream ->
-				inputStream.copyTo(outputStream)
-				outputStream.close()
+			val snapshotDir = if (is7z) {
+				val sevenZImportFile = File(importSnapshotDir, "graphite_snapshot.7z")
+				sevenZImportFile.outputStream().use { outputStream ->
+					inputStream.copyTo(outputStream)
+					inputStream.closeQuietly()
+				}
+
+				val snapshotDir1 = File(importSnapshotDir, "snapshot")
+				CompressUtil.SevenZ.extractSevenZFile(inputFile = sevenZImportFile, outputFile = snapshotDir1)
+				snapshotDir1
+			} else {
+				val zipImportFile = File(importSnapshotDir, "graphite_snapshot.zip")
+				zipImportFile.outputStream().use { outputStream ->
+					inputStream.copyTo(outputStream)
+					inputStream.closeQuietly()
+				}
+
+				val snapshotDir1 = File(importSnapshotDir, "snapshot")
+				CompressUtil.Zip.extractZipFile(inputFile = zipImportFile, outputFile = snapshotDir1)
+				snapshotDir1
 			}
-			inputStream.close()
-
-			val sevenZFile = SevenZFile(sevenZImportFile)
-			val snapshotDir = File(importSnapshotDir, "snapshot")
-			extract7z(sevenZFile, snapshotDir) { progress, total -> }
 
 			// Delete attachment folder
 			attachmentRepository.deleteAll()
 
-			snapshotDir.listFiles()?.firstOrNull { it.name.endsWith(".realm") }?.let {
-				restoreRealmSnapshot(context, it.name, snapshotDir.path) { isSuccess, exception ->
+			snapshotDir.listFiles()?.firstOrNull { it.name.endsWith(".realm") }?.let { realmFile ->
+				restoreRealmSnapshot(realmFile.name, snapshotDir.path) { isSuccess, exception ->
+					if (BuildConfig.DEBUG) exception?.printStackTrace()
 					if (isSuccess) {
 						snapshotDir.listFiles()?.firstOrNull { it.name == "attachment" }?.let { attachmentDir ->
 							attachmentRepository.importAttachmentFromGraphite(attachmentDir)

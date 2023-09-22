@@ -263,39 +263,6 @@ fun copyInDirectory(srcDir: File, destDir: File) {
 	}
 }
 
-fun compress7z(fileToCompress: File, outputFile: SevenZOutputFile, progressReport: (Int, Int) -> Unit = { _, _ -> }) {
-	outputFile.use { sevenZOutput ->
-		val archivePackage = fileToCompress.walk()
-		val totalPackage = archivePackage.count()
-		archivePackage.forEachIndexed { index, file ->
-			if (file.isFile) {
-				try {
-					val entry: SevenZArchiveEntry = sevenZOutput.createArchiveEntry(file, file.path.replace(fileToCompress.path, ""))
-					sevenZOutput.putArchiveEntry(entry)
-					sevenZOutput.write(file.readBytes())
-					sevenZOutput.closeArchiveEntry()
-				} catch (e: IOException) {
-				}
-				progressReport(index, totalPackage)
-			}
-		}
-		sevenZOutput.finish()
-	}
-}
-
-fun extract7z(sevenZFile: SevenZFile, outputFile: File, progressReport: (Int, Int) -> Unit = { _, _ -> }) {
-	val totalPackage = sevenZFile.entries.count()
-	sevenZFile.entries.forEachIndexed { index, sevenZArchiveEntry ->
-		if (sevenZArchiveEntry.isDirectory) File(outputFile, sevenZArchiveEntry.name).mkdirs() else {
-			val file = File(outputFile, sevenZArchiveEntry.name)
-			file.parentFile?.mkdirs()
-			file.outputStream().use { outputStream -> sevenZFile.getInputStream(sevenZArchiveEntry).copyTo(outputStream) }
-		}
-		progressReport(index, totalPackage)
-	}
-	sevenZFile.close()
-}
-
 fun Uri.getFileName(context: Context): String? {
 	var result: String? = null
 	if (this.scheme == "content") {

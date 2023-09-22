@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.WorkerThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.importer.JourneyNote
@@ -53,20 +54,34 @@ class ImportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository
 
 				archivedJourneyList
 					.forEachIndexed { index, zipArchiveEntry ->
-						val journeyNote = json.decodeFromStream<JourneyNote>(zipFile.getInputStream(zipArchiveEntry))
+						try {
+							val journeyNote = json.decodeFromStream<JourneyNote>(zipFile.getInputStream(zipArchiveEntry))
 
-						val noteObject = NoteObject().apply {
-							journeyNote.dateJournal?.let { this.createdTimestamp = it; this.userTimestamp = it }
-							journeyNote.dateModified?.let { this.modifiedTimestamp = it }
-							if (journeyNote.lat != null && journeyNote.lon != null) this.setLatLng(LatLng(journeyNote.lat, journeyNote.lon))
-							this.address = journeyNote.address
-							this.content2 = journeyNote.text
-							this.isFavourite = journeyNote.favourite ?: false
-							this.parentId = defaultChapterId
+							val noteObject = NoteObject().apply {
+								journeyNote.dateJournal?.let { this.createdTimestamp = it; this.userTimestamp = it }
+								journeyNote.dateModified?.let { this.modifiedTimestamp = it }
+								if (journeyNote.lat != null && journeyNote.lon != null) this.setLatLng(LatLng(journeyNote.lat, journeyNote.lon))
+								this.address = journeyNote.address
+								this.content2 = journeyNote.text
+								this.isFavourite = journeyNote.favourite ?: false
+								this.parentId = defaultChapterId
+							}
+
+							repository1.putNote(noteObject = noteObject)
+
+							journeyNote.photos
+								?.filterNotNull()
+								?.mapNotNull { attachmentFileName -> zipArchiveEntryList.find { it.name == attachmentFileName } }
+								?.forEach { attachmentZipArchiveEntry ->
+									zipFile.getInputStream(attachmentZipArchiveEntry).use {
+										repository1.attachmentRepository.putAttachment(parentId = noteObject.id, fileName = attachmentZipArchiveEntry.name, byteArray = it.readBytes())
+									}
+								}
+
+							callback(archivedJourneyList.size, index)
+						} catch (e : Exception) {
+							if (BuildConfig.DEBUG) e.printStackTrace()
 						}
-
-						repository1.putNote(noteObject = noteObject)
-						callback(archivedJourneyList.size, index)
 					}
 			}
 			inputStream?.close()
