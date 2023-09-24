@@ -42,12 +42,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.note2.KitKat
-import com.syncodec.graphite.presentation.note2.KitKat.Companion.KitKatAction
+import com.syncodec.graphite.presentation.note2.kitKat.KitKat
 import com.syncodec.graphite.presentation.note2.composable.bar.editor.bottomSheet.ColorBottomSheet
 import com.syncodec.graphite.presentation.note2.composable.bar.editor.bottomSheet.LinkBottomSheet
 import com.syncodec.graphite.presentation.base.IconButtonSize
 import com.syncodec.graphite.presentation.base.LocalIsPro
+import com.syncodec.graphite.presentation.note2.kitKat.KitKatAction
+import com.syncodec.graphite.presentation.note2.kitKat.KitKatFormat
 import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.toHexString
 import kotlinx.coroutines.launch
@@ -56,7 +57,7 @@ import kotlinx.coroutines.launch
 @Preview
 @Composable
 fun EditorBottomBar(
-	kitKatFormat: KitKat.Companion.KitKatFormat = KitKat.Companion.KitKatFormat(),
+	kitKatFormat: KitKatFormat = KitKatFormat(),
 	locationData: LocationData = LocationData.Init,
 	onClickMetadata: () -> Unit = {},
 	noClickLocation: () -> Unit = {},
@@ -202,7 +203,7 @@ private fun NoteAction(
 @Preview
 @Composable
 private fun BasicAction(
-	kitKatFormat: KitKat.Companion.KitKatFormat = KitKat.Companion.KitKatFormat(),
+	kitKatFormat: KitKatFormat = KitKatFormat(),
 	onKitKatAction: (KitKatAction) -> Unit = {},
 ) {
 	val scope = rememberCoroutineScope()
@@ -293,7 +294,7 @@ private fun BasicAction(
 @Preview
 @Composable
 private fun BreakAction(
-	kitKatFormat: KitKat.Companion.KitKatFormat = KitKat.Companion.KitKatFormat(),
+	kitKatFormat: KitKatFormat = KitKatFormat(),
 	onKitKatAction: (KitKatAction) -> Unit = {},
 ) {
 	BarBlock {
@@ -315,7 +316,7 @@ private fun BreakAction(
 @Preview
 @Composable
 private fun ListAction(
-	kitKatFormat: KitKat.Companion.KitKatFormat = KitKat.Companion.KitKatFormat(),
+	kitKatFormat: KitKatFormat = KitKatFormat(),
 	onKitKatAction: (KitKatAction) -> Unit = {},
 ) {
 	BarBlock {
@@ -346,7 +347,7 @@ private fun ListAction(
 @Preview
 @Composable
 private fun BlockAction(
-	kitKatFormat: KitKat.Companion.KitKatFormat = KitKat.Companion.KitKatFormat(),
+	kitKatFormat: KitKatFormat = KitKatFormat(),
 	onKitKatAction: (KitKatAction) -> Unit = {},
 ) {
 	val context = LocalContext.current
@@ -586,7 +587,7 @@ private fun BlockAction(
 @Preview
 @Composable
 private fun ColorfulAction(
-	kitKatFormat: KitKat.Companion.KitKatFormat = KitKat.Companion.KitKatFormat(),
+	kitKatFormat: KitKatFormat = KitKatFormat(),
 	onKitKatAction: (KitKatAction) -> Unit = {},
 ) {
 	val scope = rememberCoroutineScope()

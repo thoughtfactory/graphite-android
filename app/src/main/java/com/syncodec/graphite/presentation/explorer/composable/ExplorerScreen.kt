@@ -33,13 +33,13 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
+import com.syncodec.graphite.presentation.common.component.note.NoteListCard2
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.WhereChapterDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.ExplorerSelectionActionView
 import com.syncodec.graphite.presentation.explorer.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.explorer.composable.bar.TopBar
 import com.syncodec.graphite.presentation.note2.NoteActivity2
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.NoteCard
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import com.syncodec.graphite.utils.xor
@@ -124,18 +124,18 @@ fun ExplorerView(
 				noteList
 					.forEach { note ->
 						item(key = note.id.toString()) {
-							NoteCard(
+							NoteListCard2(
 								id = note.id,
 								timestamp = note.userTimestamp.timeStampToPrettyFull(),
 								title = note.title,
 								isFavourite = note.isFavourite,
 								isLocked = note.isLocked,
 								contentThumbnail = note.contentThumbnail,
-								thumbnail = note.thumbnail,
+//								thumbnail = note.thumbnail,
 								address = note.address,
 								latLng = note.latLng,
 								tagList = note.tagList,
-								isSelected = note.id in selectedIdList,
+								selected = note.id in selectedIdList,
 								onClick = {
 									if (isSelecting) onSelect(id = note.id)
 									else {

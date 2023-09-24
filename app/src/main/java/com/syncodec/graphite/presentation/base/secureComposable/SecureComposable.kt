@@ -15,7 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.BaseApplication
-import com.syncodec.graphite.di.repository.Repository
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.utils.alice.AliceRequestResult
 import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
@@ -30,7 +30,7 @@ fun SecureComposable(
 ) {
 	val context = LocalContext.current
 
-	val repository = koinInject<Repository>()
+	val repository = koinInject<LockableRepo>()
 
 	val authenticationState by BaseApplication.authenticationState.collectAsState()
 	val isUnlocked by repository.isUnlocked.collectAsState()

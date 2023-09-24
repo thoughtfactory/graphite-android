@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -18,13 +19,13 @@ import com.syncodec.graphite.presentation.common.attachment.previewer.PreviewDat
 
 
 @Composable
-fun UnknownAttachmentPreview(previewData: PreviewData) {
+fun UnknownAttachmentPreview(previewData: PreviewData, small : Boolean = false) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Icon(
 			painter = painterResource(id = R.drawable.ic_fa_file_duotone),
-			contentDescription = "Unknown file",
+			contentDescription = stringResource(id = R.string.thumbnail),
 			tint = MaterialTheme.colorScheme.onBackground,
 			modifier = Modifier.requiredSize(48.dp)
 		)
@@ -32,7 +33,7 @@ fun UnknownAttachmentPreview(previewData: PreviewData) {
 			Spacer(modifier = Modifier.height(8.dp))
 			Text(
 				text = it,
-				style = MaterialTheme.typography.bodyLarge,
+				style = if (small) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyLarge,
 				color = MaterialTheme.colorScheme.onBackground,
 				fontWeight = FontWeight.Bold
 			)

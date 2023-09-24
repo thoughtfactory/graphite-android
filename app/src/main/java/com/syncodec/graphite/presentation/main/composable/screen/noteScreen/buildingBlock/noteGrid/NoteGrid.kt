@@ -1,97 +1,115 @@
 package com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteGrid
 
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
+import com.syncodec.graphite.presentation.base.sortOn
+import com.syncodec.graphite.presentation.common.component.LocalComponentColumnCount
+import com.syncodec.graphite.presentation.common.component.note.NoteGridCard2
+import com.syncodec.graphite.presentation.common.component.note.NoteGroupHeader
+import com.syncodec.graphite.presentation.common.component.note.NoteListCard2
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.utils.SortOn
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.RealmUUID
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun NoteGrid(
-	noteMap: Map<String, List<NoteObjectLite>> = mapOf(),
+	noteGroupList: RealmObjectGroupList<NoteObjectLite> = RealmObjectGroupList(),
+	tagList: List<TagObject> = listOf(),
 	isSelecting: Boolean = false,
 	selectedIdList: Set<RealmUUID> = setOf(),
 	onClickNote: (RealmUUID) -> Unit = {},
 	onLongClickNote: (RealmUUID) -> Unit = {},
 ) {
-	val context = LocalContext.current
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(null)
+	val sortOn1 by sortOn()
+
+	val columnCount = LocalComponentColumnCount.current
+
+	val lazyStaggeredGridState = rememberLazyStaggeredGridState()
 
 	LazyVerticalStaggeredGrid(
-		state = rememberLazyStaggeredGridState(),
-		columns = StaggeredGridCells.Fixed(2),
-		contentPadding = PaddingValues(8.dp, 0.dp),
+		state = lazyStaggeredGridState,
+		columns = StaggeredGridCells.Fixed(columnCount),
+		contentPadding = PaddingValues(horizontal = 8.dp),
 		modifier = Modifier.fillMaxSize()
 	) {
-		StaggeredGridItemSpan.FullLine
-		noteMap.forEach { (header, noteList) ->
 
-			val noteListSize = noteList.size
-			if (noteListSize > 0) {
-				item(
-					span = StaggeredGridItemSpan.FullLine,
-				) {
-					NotebookHeaderCard(
-						title = header,
-						noEntries = "$noteListSize ${if (noteListSize == 1) "entry" else "entries"}",
-						color = MaterialTheme.colorScheme.background,
-						showTimelineLine = false
-					)
+		noteGroupList
+			.groupList
+			.forEach { (title, noteList) ->
+				if (noteList.isNotEmpty()) {
+					item(
+						span = StaggeredGridItemSpan.FullLine,
+						key = title,
+						contentType = { 0 }
+					) {
+						Box(
+							modifier = Modifier.animateItemPlacement(tween(470))
+						) {
+							NoteGroupHeader(
+								text = title,
+								subText = "${noteList.size} ${if (noteList.size == 1) "entry" else "entries"}",
+							)
+						}
+					}
 				}
-			}
 
-			noteList.forEach { note ->
-				item(
-					key = note.id.toString(),
-					contentType = note
-				) {
-					val timestamp = when (sortOn) {
-						SortOn.Title -> note.userTimestamp.timeStampToPrettyFull()
-						SortOn.Timestamp -> note.userTimestamp.timeStampToTime()
-						SortOn.Modified -> note.modifiedTimestamp.timeStampToTime()
-						else -> note.userTimestamp.timeStampToPrettyFull()
+				items(
+					items = noteList,
+					key = { it.id.toString() },
+					contentType = { 1 }
+				) { noteObjectLite ->
+					Box(
+						modifier = Modifier.animateItemPlacement(tween(470))
+					) {
+						NoteGridCard2(
+							id = noteObjectLite.id,
+							timestamp = when (sortOn1) {
+								SortOn.Title -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+								SortOn.Timestamp -> noteObjectLite.userTimestamp.timeStampToTime()
+								SortOn.Modified -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+								else -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+							},
+							title = noteObjectLite.title,
+							contentThumbnail = noteObjectLite.contentThumbnail,
+							address = noteObjectLite.address,
+							latLng = noteObjectLite.latLng,
+							isFavourite = noteObjectLite.isFavourite,
+							isLocked = noteObjectLite.isLocked,
+							tagList = tagList.filter { noteObjectLite.id in it.objectIdList }.map { it.toLite() },
+							selected = noteObjectLite.id in selectedIdList,
+							onClick = { onClickNote(noteObjectLite.id) },
+							onLongClick = { onLongClickNote(noteObjectLite.id) },
+							modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+						)
 					}
 
-					NoteGridCard(
-						id = note.id,
-						timestamp = timestamp,
-						title = note.title,
-						isFavourite = note.isFavourite,
-						isLocked = note.isLocked,
-						contentThumbnail = note.contentThumbnail,
-						thumbnail = note.thumbnail,
-						address = note.address,
-						latLng = note.latLng,
-						tagList = note.tagList,
-						isSelected = note.id in selectedIdList,
-						onClick = { onClickNote(note.id) },
-						onLongClick = { onLongClickNote(note.id) }
-					)
 				}
 			}
-		}
 
 		item(span = StaggeredGridItemSpan.FullLine) { Spacer(modifier = Modifier.height(96.dp)) }
 	}

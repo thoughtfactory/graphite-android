@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import io.realm.kotlin.types.RealmUUID
@@ -14,14 +15,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class NoteScreenViewModel(
-	repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>,
-) : ViewModel() {
+class NoteScreenViewModel(lockableRepo: LockableRepo, ) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -35,7 +35,7 @@ class NoteScreenViewModel(
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}

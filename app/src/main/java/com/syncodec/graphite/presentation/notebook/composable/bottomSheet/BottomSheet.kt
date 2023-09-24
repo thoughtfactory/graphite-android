@@ -14,7 +14,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.MetadataBottomSheet
 import com.syncodec.graphite.presentation.explorer.atlas.AtlasActivity
 import com.syncodec.graphite.presentation.explorer.calendar.CalendarActivity
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet

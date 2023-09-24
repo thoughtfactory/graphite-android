@@ -22,13 +22,14 @@ import com.syncodec.graphite.presentation.common.attachment.previewer.PreviewDat
 
 @Composable
 fun VideoAttachmentPreview(
-	previewData: PreviewData.Video
+	previewData: PreviewData.Video,
+	blur : Boolean = true,
 ) {
 	Box(
 		contentAlignment = Alignment.Center,
 		modifier = Modifier.fillMaxSize()
 	) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) AsyncImage(
+		if (blur && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)) AsyncImage(
 			model = previewData.drawable,
 			contentDescription = "stringResource(R.string.description)",
 			contentScale = ContentScale.Crop,
@@ -44,7 +45,7 @@ fun VideoAttachmentPreview(
 		AsyncImage(
 			model = previewData.drawable,
 			contentDescription = "stringResource(R.string.description)",
-			contentScale = ContentScale.Fit,
+			contentScale = if (blur) ContentScale.Fit else ContentScale.Crop,
 			modifier = Modifier.fillMaxSize()
 		)
 

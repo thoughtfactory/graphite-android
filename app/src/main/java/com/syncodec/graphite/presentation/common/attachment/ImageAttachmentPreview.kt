@@ -9,18 +9,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.attachment.previewer.PreviewData
 
 
 @Composable
 fun ImageAttachmentPreview(
-	previewData: PreviewData.Image
+	previewData: PreviewData.Image,
+	blur : Boolean = true,
 ) {
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) AsyncImage(
+	if (blur && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)) AsyncImage(
 		model = previewData.drawable,
-		contentDescription = "stringResource(R.string.description)",
+		contentDescription = stringResource(R.string.thumbnail),
 		contentScale = ContentScale.Crop,
 		modifier = Modifier
 			.fillMaxSize()
@@ -33,8 +36,8 @@ fun ImageAttachmentPreview(
 
 	AsyncImage(
 		model = previewData.drawable,
-		contentDescription = "stringResource(R.string.description)",
-		contentScale = ContentScale.Fit,
+		contentDescription = stringResource(R.string.thumbnail),
+		contentScale = if (blur) ContentScale.Fit else ContentScale.Crop,
 		modifier = Modifier.fillMaxSize()
 	)
 }

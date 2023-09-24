@@ -10,8 +10,8 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
-import com.syncodec.graphite.presentation.common.richText.viewer.util.randomUUID
 import com.syncodec.graphite.utils.alice.Alice
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,7 +68,7 @@ class Printer(context : Context) : WebView(context) {
 
 		this.loadData(data, "text/html", "UTF-8")
 
-		val jobName = randomUUID()
+		val jobName = RealmUUID.random().toString()
 		val attributes = PrintAttributes.Builder()
 			.setMediaSize(PrintAttributes.MediaSize.ISO_A4)
 			.setResolution(Resolution("pdf", "pdf", 600, 600))

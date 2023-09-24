@@ -34,7 +34,7 @@ import com.syncodec.graphite.presentation.bucket.composable.screen.showScreen.Bu
 import com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen.BucketTodoScreen
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.MetadataBottomSheet
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.where.whereBucketDialog.WhereBucketDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2

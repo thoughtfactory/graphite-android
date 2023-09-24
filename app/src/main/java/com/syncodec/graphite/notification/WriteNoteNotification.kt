@@ -64,22 +64,22 @@ class NotificationReceiver : BroadcastReceiver() {
         repository2 : Repository,
         content : String,
 	) {
-		CoroutineScope(Dispatchers.Default).launch {
-			repository2.repositoryState.collect {
-				if (it == Repository.Companion.RepositoryState.Success) {
-					repository2.getDefaultChapterId()?.let {
-						NoteObject().apply {
-							this.content =
-								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
-							this.parentId = it
-
-							repository2.putNote(this)
-							WriteNoteNotification.showSimpleNotification(context)
-						}
-					}
-				}
-			}
-		}
+//		CoroutineScope(Dispatchers.Default).launch {
+//			repository2.repositoryState.collect {
+//				if (it == Repository.Companion.RepositoryState.Success) {
+//					repository2.getDefaultChapterId()?.let {
+//						NoteObject().apply {
+//							this.content =
+//								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
+//							this.parentId = it
+//
+//							repository2.putNote(this)
+//							WriteNoteNotification.showSimpleNotification(context)
+//						}
+//					}
+//				}
+//			}
+//		}
 	}
 }
 

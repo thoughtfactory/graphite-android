@@ -33,7 +33,7 @@ import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.chapterList
+import com.syncodec.graphite.presentation.notebook.composable.chapterList
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel

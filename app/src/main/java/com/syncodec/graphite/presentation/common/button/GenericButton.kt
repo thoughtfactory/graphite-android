@@ -45,7 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.FilterAndViewBottomSheet
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.FilterAndViewBottomSheet
 import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.IconButtonSize
 import com.syncodec.graphite.presentation.base.LockClosedContainer

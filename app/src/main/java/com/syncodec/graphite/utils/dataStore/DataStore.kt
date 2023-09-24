@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlin.math.max
 
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore("dataStore")
@@ -48,7 +47,9 @@ class DataStoreInstance(private val context: Context) {
 		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_LOCAL = booleanPreferencesKey("show_plain_text_warning_local")
 		private val PREFERENCE_SHOW_PLAIN_TEXT_WARNING_DROPBOX = booleanPreferencesKey("show_plain_text_warning_dropbox")
 
-		private val PREFERENCE_HOME_CARD_HEIGHT = intPreferencesKey("home_card_height")
+		private val PREFERENCE_COMPONENT_HEIGHT = intPreferencesKey("component_height")
+		private val PREFERENCE_COMPONENT_WIDTH = intPreferencesKey("component_width")
+		private val PREFERENCE_COMPONENT_COLUMN_COUNT = intPreferencesKey("component_column_count")
 	}
 
 	fun clearDatastore() = CoroutineScope(Dispatchers.IO).launch {
@@ -220,9 +221,21 @@ class DataStoreInstance(private val context: Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_TAG_INFO_CARD] = showCard }
 	}
 
-	val homeCardHeight = context.dataStore.data.map { maxOf(96, it[PREFERENCE_HOME_CARD_HEIGHT] ?: 96) }
+	val componentHeight = context.dataStore.data.map { maxOf(96, it[PREFERENCE_COMPONENT_HEIGHT] ?: 96) }
 
-	fun putHoneCardHeight(newHeight : Int) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { it[PREFERENCE_HOME_CARD_HEIGHT] = maxOf(newHeight, 96) }
+	fun putComponentHeight(newHeight : Int) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { it[PREFERENCE_COMPONENT_HEIGHT] = maxOf(newHeight, 96) }
+	}
+
+	val componentWidth = context.dataStore.data.map { maxOf(96, it[PREFERENCE_COMPONENT_WIDTH] ?: 96) }
+
+	fun putComponentWidth(newWidth : Int) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { it[PREFERENCE_COMPONENT_WIDTH] = maxOf(newWidth, 2) }
+	}
+
+	val componentColumnCount = context.dataStore.data.map { maxOf(2, it[PREFERENCE_COMPONENT_COLUMN_COUNT] ?: 2) }
+
+	fun putComponentColumnCount(newColumnCount : Int) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { it[PREFERENCE_COMPONENT_COLUMN_COUNT] = maxOf(newColumnCount, 2) }
 	}
 }

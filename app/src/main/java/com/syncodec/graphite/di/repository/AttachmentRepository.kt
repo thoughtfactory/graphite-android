@@ -12,16 +12,9 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 
-class AttachmentRepository {
+class AttachmentRepository(private val context: Context) {
 
-	private lateinit var attachmentDir: File
-	private lateinit var context: Context
-
-	fun initRepository(context: Context) {
-		this.context = context
-		attachmentDir = File("${context.filesDir.path}/data/attachment")
-		this::attachmentDir.isInitialized
-	}
+	private val attachmentDir: File = File("${context.filesDir.path}/data/attachment")
 
 	fun putAttachment(parentId: RealmUUID, file: File, keepName: Boolean = false) {
 		val fileName = if (keepName) file.name else "${RealmUUID.random()}_${file.name.split(".").lastOrNull()?.let { ".$it" }}"

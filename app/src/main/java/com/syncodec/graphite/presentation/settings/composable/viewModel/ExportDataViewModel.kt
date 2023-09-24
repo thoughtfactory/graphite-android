@@ -12,6 +12,7 @@ import com.syncodec.graphite.di.model.exporter.schema3.ExportBucketObject
 import com.syncodec.graphite.di.model.exporter.schema3.ExportChapterObject
 import com.syncodec.graphite.di.model.exporter.schema3.ExportNoteObject
 import com.syncodec.graphite.di.model.exporter.schema3.ExportTagObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.archiveUtil.CompressUtil
 import io.realm.kotlin.types.RealmUUID
@@ -27,7 +28,7 @@ import java.time.Instant
 
 
 @KoinViewModel
-class ExportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class ExportDataViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
 
 	private val json = Json
 
@@ -35,7 +36,7 @@ class ExportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStatusStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -53,7 +54,7 @@ class ExportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository
 
 			val timestamp = Instant.now().toEpochMilli()
 
-			val exportDir = File(repository1.context.cacheDir, "export_$timestamp")
+			val exportDir = File(lockableRepo.context.cacheDir, "export_$timestamp")
 			exportDir.mkdirs()
 
 			if (isNotesSelected) {
@@ -118,7 +119,7 @@ class ExportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository
 					}
 			}
 
-			val exportZippedFile = File(repository1.context.cacheDir, "graphite_export_$timestamp.zip")
+			val exportZippedFile = File(lockableRepo.context.cacheDir, "graphite_export_$timestamp.zip")
 			CompressUtil.Zip.createZipFile(inputFile = exportDir, outputFile = exportZippedFile)
 
 			return exportZippedFile

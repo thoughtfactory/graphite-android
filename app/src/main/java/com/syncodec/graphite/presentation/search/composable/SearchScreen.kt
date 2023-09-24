@@ -24,7 +24,7 @@ import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.SearchSelectionActionView
 import com.syncodec.graphite.presentation.note2.NoteActivity2
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.noteList
+import com.syncodec.graphite.presentation.notebook.composable.noteList
 import com.syncodec.graphite.presentation.search.SearchViewModel
 import com.syncodec.graphite.presentation.search.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.search.composable.bar.TopBar
@@ -96,7 +96,6 @@ fun SearchScreen(
 //						headerBackgroundColor =,
 //						isVisible =,
 //						toggleVisibility =,
-						headerEnabled = false,
 						onClick = {
 							if (isSelecting) {
 								onSelect(it.id)

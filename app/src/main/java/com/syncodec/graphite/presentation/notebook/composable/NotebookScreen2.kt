@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -46,15 +45,11 @@ import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.attachment.AttachmentActivity
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.composable.MetadataBottomSheet
+import com.syncodec.graphite.presentation.common.component.chapter.ChapterListCard
+import com.syncodec.graphite.presentation.common.component.note.NoteListCard2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
-import com.syncodec.graphite.presentation.explorer.atlas.AtlasActivity
-import com.syncodec.graphite.presentation.explorer.calendar.CalendarActivity
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
 import com.syncodec.graphite.presentation.note2.NoteActivity2
 import com.syncodec.graphite.presentation.notebook.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.notebook.composable.bar.COLLAPSED_TOP_BAR_HEIGHT
@@ -62,10 +57,7 @@ import com.syncodec.graphite.presentation.notebook.composable.bar.CollapsedTopBa
 import com.syncodec.graphite.presentation.notebook.composable.bar.EXPANDED_TOP_BAR_HEIGHT
 import com.syncodec.graphite.presentation.notebook.composable.bar.ExpandedTopBar
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.BottomSheet
-import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.MenuBottomSheet
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.NotebookBottomSheet
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.ChapterCard
-import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.NoteCard
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -341,18 +333,18 @@ fun LazyListScope.noteList(
 			Box(
 				modifier = Modifier.animateItemPlacement(tween(470))
 			) {
-				NoteCard(
+				NoteListCard2(
 					id = note.id,
 					timestamp = note.userTimestamp.timeStampToPrettyFull(),
 					title = note.title,
 					isFavourite = note.isFavourite,
 					isLocked = note.isLocked,
 					contentThumbnail = note.contentThumbnail,
-					thumbnail = note.thumbnail,
+//					thumbnail = note.thumbnail,
 					address = note.address,
 					latLng = note.latLng,
 					tagList = tagList.filter { note.id in it.objectIdList }.map { it.toLite() },
-					isSelected = note.id in selectedIdList,
+					selected = note.id in selectedIdList,
 					onClick = { onClick(note) },
 					onLongClick = { onLongClick(note) },
 				)
@@ -381,7 +373,7 @@ fun LazyListScope.chapterList(
 				Box(
 					modifier = Modifier.animateItemPlacement(tween(470))
 				) {
-					ChapterCard(
+					ChapterListCard(
 						id = chapterObject.id,
 						createdTimestamp = chapterObject.createdTimestamp,
 						modifiedTimestamp = chapterObject.modifiedTimestamp,

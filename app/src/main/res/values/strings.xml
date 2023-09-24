@@ -182,6 +182,8 @@
     <string name="list">List</string>
     <string name="grid">Grid</string>
     <string name="component_height">Component height</string>
+    <string name="component_width">Component width</string>
+    <string name="component_column_count">Component column count</string>
     <string name="share">Share</string>
     <string name="share_all">Share all</string>
     <string name="enable">Enable</string>

@@ -10,7 +10,9 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
+import com.syncodec.graphite.presentation.note2.kitKat.KitKatFormat
 import com.syncodec.graphite.utils.Location.getLocation
 import com.syncodec.graphite.utils.LocationData
 import io.realm.kotlin.UpdatePolicy
@@ -19,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.transformLatest
@@ -31,7 +32,7 @@ import java.io.File
 
 
 @KoinViewModel
-class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class NoteViewModel2(private val lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -61,11 +62,11 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 	val tagStateMap: StateFlow<Map<TagObject, TagObjectState>> = _tagStateMap
 
 	val isEditing: MutableStateFlow<Boolean?> = MutableStateFlow(null)
-	val kitKatFormat: MutableStateFlow<KitKat.Companion.KitKatFormat?> = MutableStateFlow(null)
+	val kitKatFormat: MutableStateFlow<KitKatFormat?> = MutableStateFlow(null)
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStatusStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -126,7 +127,7 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 
 	fun reloadLocation() {
 		viewModelScope.launch(Dispatchers.IO) {
-			_repository.value?.context?.let { getLocation(context = it) { _locationData.tryEmit(it) } }
+			getLocation(context = lockableRepo.context) { _locationData.tryEmit(it) }
 		}
 	}
 
@@ -176,7 +177,7 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 					noteObject.value?.apply {
 						this.updateModifyTimestamp()
 						this.title = kitKatFormat.value?.kitKatTitle
-						this.content = kitKatFormat.value?.kitKatContent
+						this.content2 = kitKatFormat.value?.kitKatContent?.drop(1)?.dropLast(1)
 						this.latLng = Json.encodeToString(this@NoteViewModel2.locationData.value.getLatLngOrNull())
 						this.address = this@NoteViewModel2.locationData.value.getAddressOrNull()
 						copyToRealm(this, UpdatePolicy.ALL)
@@ -187,7 +188,7 @@ class NoteViewModel2(repositoryStatusStateFlow: MutableStateFlow<Repository.Comp
 				Log.d("npr71", "update")
 				this.updateModifyTimestamp()
 				this.title = kitKatFormat.value?.kitKatTitle
-				this.content = kitKatFormat.value?.kitKatContent
+				this.content2 = kitKatFormat.value?.kitKatContent?.drop(1)?.dropLast(1)
 				this.latLng = Json.encodeToString(this@NoteViewModel2.locationData.value.getLatLngOrNull())
 				this.address = this@NoteViewModel2.locationData.value.getAddressOrNull()
 			}

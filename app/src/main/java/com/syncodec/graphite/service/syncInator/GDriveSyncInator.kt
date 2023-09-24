@@ -406,7 +406,7 @@ class GDriveSyncInatorService : SyncInatorService() {
 			folderId = googleDriveState.bucketItemFolderId,
 		) { content, fileId ->
 			BucketItemObject.fromCloudSnapshot(content)?.let { bucketItemObject ->
-				repository.putBucketItemSuspended(bucketItemObject = bucketItemObject, modifyTimestampAuto = false, googleDriveId = fileId)
+				repository.putBucketItemSuspended(bucketItemObject = bucketItemObject, modifyTimestampAuto = false)
 			}
 		}.let { deletedObjectList.addAll(it) }
 

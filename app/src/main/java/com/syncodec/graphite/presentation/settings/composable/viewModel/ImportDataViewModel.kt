@@ -8,6 +8,7 @@ import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.importer.JourneyNote
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ImportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class ImportDataViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
 
 	private val json = Json { ignoreUnknownKeys = true }
 
@@ -30,7 +31,7 @@ class ImportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStatusStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -43,7 +44,7 @@ class ImportDataViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository
 
 			val defaultChapterId = repository1.getDefaultChapterId()
 
-			val inputStream = repository1.context.contentResolver.openInputStream(inputUri)
+			val inputStream = lockableRepo.context.contentResolver.openInputStream(inputUri)
 			if (inputStream != null) {
 				val inMemoryByteChannel = SeekableInMemoryByteChannel(inputStream.readBytes())
 				val zipFile = ZipFile(inMemoryByteChannel)

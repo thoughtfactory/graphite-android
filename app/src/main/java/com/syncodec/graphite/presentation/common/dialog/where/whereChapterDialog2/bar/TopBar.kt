@@ -12,7 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.button.CancelButton
-import com.syncodec.graphite.presentation.notebook.screen.composable.bar.Navigator
+import com.syncodec.graphite.presentation.common.component.chapter.Navigator
 import io.realm.kotlin.types.RealmUUID
 
 

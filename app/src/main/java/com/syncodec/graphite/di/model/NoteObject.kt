@@ -43,7 +43,6 @@ class NoteObject() : RealmObject {
 		this.address = jsonObject.optString("address").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.content = jsonObject.optString("content").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.content2 = jsonObject.optString("content2").let { if (it.isNullOrEmpty() || it == "null") null else it }
-		this.thumbnail = jsonObject.optString("thumbnail").let { if (it.isNullOrEmpty() || it == "null") null else it }
 		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
 		this.isLocked = jsonObject.optBoolean("isLocked", false)
 		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
@@ -62,7 +61,6 @@ class NoteObject() : RealmObject {
 	var address: String? = null
 	var content: String? = null
 	var content2 : String? = null
-	var thumbnail: String? = null
 	var isFavourite: Boolean = false
 	var isLocked: Boolean = false
 
@@ -123,7 +121,6 @@ class NoteObject() : RealmObject {
 			},
 			address = this.address,
 			contentThumbnail = NoteCache.getOrSetCache(noteObject = this),
-			thumbnail = this.thumbnail,
 			isFavourite = this.isFavourite,
 			isLocked = this.isLocked,
 		)
@@ -140,7 +137,6 @@ class NoteObject() : RealmObject {
 		this.address = this@NoteObject.address
 		this.content = this@NoteObject.content
 		this.content2 = this@NoteObject.content2
-		this.thumbnail = this@NoteObject.thumbnail
 		this.isFavourite = this@NoteObject.isFavourite
 		this.isLocked = this@NoteObject.isLocked
 		this.parentId = this@NoteObject.parentId
@@ -173,7 +169,6 @@ class NoteObject() : RealmObject {
 		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
 		result = 31 * result + (content?.hashCode() ?: 0)
-		result = 31 * result + (thumbnail?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + parentId.hashCode()
@@ -193,7 +188,6 @@ class NoteObject() : RealmObject {
 		if (latLng != other.latLng) return false
 		if (address != other.address) return false
 		if (content != other.content) return false
-		if (thumbnail != other.thumbnail) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 		if (parentId != other.parentId) return false
@@ -245,7 +239,6 @@ data class NoteObjectLite(
 	val latLng: LatLng?,
 	val address: String?,
 	val contentThumbnail: String?,
-	val thumbnail: String? = null,
 	val isFavourite: Boolean,
 	val isLocked: Boolean,
 	val tagList: List<TagObjectLite> = listOf(),
@@ -268,7 +261,6 @@ data class NoteObjectLite(
 		if (latLng != other.latLng) return false
 		if (address != other.address) return false
 		if (contentThumbnail != other.contentThumbnail) return false
-		if (thumbnail != other.thumbnail) return false
 		if (isFavourite != other.isFavourite) return false
 		if (isLocked != other.isLocked) return false
 		if (overWritable != other.overWritable) return false
@@ -289,7 +281,6 @@ data class NoteObjectLite(
 		result = 31 * result + (latLng?.hashCode() ?: 0)
 		result = 31 * result + (address?.hashCode() ?: 0)
 		result = 31 * result + (contentThumbnail?.hashCode() ?: 0)
-		result = 31 * result + (thumbnail?.hashCode() ?: 0)
 		result = 31 * result + isFavourite.hashCode()
 		result = 31 * result + isLocked.hashCode()
 		result = 31 * result + overWritable.hashCode()

@@ -11,8 +11,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.note2.KitKat
+import com.syncodec.graphite.presentation.note2.kitKat.KitKat
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
+import com.syncodec.graphite.presentation.note2.kitKat.KitKatAction
 import com.syncodec.graphite.utils.LocationData
 import com.syncodec.graphite.utils.export.ExportNote
 import com.syncodec.graphite.utils.share
@@ -121,26 +122,26 @@ fun BottomSheet(
 		isBottomSheetVisible = isExportBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); onDismissRequest(NoteBottomSheet.Export) } },
 		onClickExportAsTxt = {
-			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Text {
+			kitKat.onKitKatActionAsync(KitKatAction.Export.Text {
 				val textString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = textString, noteId = noteId?.toString() ?: "note", ext = "txt")
 			})
 		},
 		onClickExportAsPdf = { noteId?.toString()?.let { kitKat.print(it) } },
 		onClickExportAsHtml = {
-			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Html {
+			kitKat.onKitKatActionAsync(KitKatAction.Export.Html {
 				val htmlString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = htmlString, noteId = noteId?.toString() ?: "note", ext = "html")
 			})
 		},
 		onClickExportAsJson = {
-			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Json {
+			kitKat.onKitKatActionAsync(KitKatAction.Export.Json {
 				val jsonString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = jsonString, noteId = noteId?.toString() ?: "note", ext = "json")
 			})
 		},
 		onClickExportAsMarkdown = {
-			kitKat.onKitKatActionAsync(KitKat.Companion.KitKatAction.Export.Markdown {
+			kitKat.onKitKatActionAsync(KitKatAction.Export.Markdown {
 				val markdownString = StringEscapeUtils.unescapeJava(it)
 				ExportNote.exportData(context = context, dataString = markdownString, noteId = noteId?.toString() ?: "note", ext = "md")
 			})

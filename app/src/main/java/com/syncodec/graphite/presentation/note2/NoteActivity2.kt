@@ -13,10 +13,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
-import com.syncodec.graphite.presentation.note2.KitKat.Companion.KitKatAction
 import com.syncodec.graphite.presentation.note2.composable.KitKatScreen
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
+import com.syncodec.graphite.presentation.note2.kitKat.KitKat
+import com.syncodec.graphite.presentation.note2.kitKat.KitKatAction
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.delay

@@ -104,69 +104,69 @@ fun AtlasView2(
 		uiSettings = mapUiSettings,
 		modifier = modifier,
 	) {
-		Clustering(
-			items = noteList.mapNotNull { note -> note.latLng?.toGLatLng()?.let { AtlasNoteClusterItem(note = note, latLng = it, itemTitle = note.title) } },
-			clusterContent = { cluster: Cluster<AtlasNoteClusterItem> ->
-				val bitmap = cluster
-					.items
-					.firstNotNullOfOrNull { it.note.thumbnail?.decodeBase64ToBitmap() }
-				Box(
-					modifier = Modifier.size(52.dp)
-				) {
-					bitmap?.let { bitmap ->
-						Image(
-							painter = rememberAsyncImagePainter(bitmap),
-							contentDescription = null,
-							contentScale = ContentScale.Crop,
-							modifier = Modifier
-								.align(Alignment.Center)
-								.padding(4.dp)
-								.clip(MaterialTheme.shapes.small),
-						)
-					} ?: Image(
-						painter = painterResource(id = R.drawable.ic_note_cluster),
-						contentDescription = null,
-						modifier = Modifier
-							.align(Alignment.Center)
-							.padding(2.dp),
-					)
-					Text(
-						text = cluster.size.toString(),
-						color = MaterialTheme.colorScheme.onSurface,
-						style = MaterialTheme.typography.labelMedium,
-						modifier = Modifier
-							.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp), MaterialTheme.shapes.extraSmall)
-							.requiredSize(48.dp)
-							.padding(4.dp, 2.dp)
-							.align(Alignment.TopEnd)
-					)
-				}
-			},
-			clusterItemContent = {
-				Box(
-					modifier = Modifier.size(52.dp)
-				) {
-					it.note.thumbnail?.decodeBase64ToBitmap()?.let { bitmap ->
-						Image(
-							painter = rememberAsyncImagePainter(bitmap),
-							contentDescription = null,
-							contentScale = ContentScale.Crop,
-							modifier = Modifier
-								.align(Alignment.Center)
-								.padding(2.dp)
-								.clip(MaterialTheme.shapes.small),
-						)
-					} ?: Image(
-						painter = painterResource(id = R.drawable.ic_note_cluster),
-						contentDescription = null,
-						modifier = Modifier
-							.align(Alignment.Center)
-							.requiredSize(48.dp)
-							.padding(2.dp)
-					)
-				}
-			}
-		)
+//		Clustering(
+//			items = noteList.mapNotNull { note -> note.latLng?.toGLatLng()?.let { AtlasNoteClusterItem(note = note, latLng = it, itemTitle = note.title) } },
+//			clusterContent = { cluster: Cluster<AtlasNoteClusterItem> ->
+//				val bitmap = cluster
+//					.items
+//					.firstNotNullOfOrNull { it.note.thumbnail?.decodeBase64ToBitmap() }
+//				Box(
+//					modifier = Modifier.size(52.dp)
+//				) {
+//					bitmap?.let { bitmap ->
+//						Image(
+//							painter = rememberAsyncImagePainter(bitmap),
+//							contentDescription = null,
+//							contentScale = ContentScale.Crop,
+//							modifier = Modifier
+//								.align(Alignment.Center)
+//								.padding(4.dp)
+//								.clip(MaterialTheme.shapes.small),
+//						)
+//					} ?: Image(
+//						painter = painterResource(id = R.drawable.ic_note_cluster),
+//						contentDescription = null,
+//						modifier = Modifier
+//							.align(Alignment.Center)
+//							.padding(2.dp),
+//					)
+//					Text(
+//						text = cluster.size.toString(),
+//						color = MaterialTheme.colorScheme.onSurface,
+//						style = MaterialTheme.typography.labelMedium,
+//						modifier = Modifier
+//							.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp), MaterialTheme.shapes.extraSmall)
+//							.requiredSize(48.dp)
+//							.padding(4.dp, 2.dp)
+//							.align(Alignment.TopEnd)
+//					)
+//				}
+//			},
+//			clusterItemContent = {
+//				Box(
+//					modifier = Modifier.size(52.dp)
+//				) {
+//					it.note.thumbnail?.decodeBase64ToBitmap()?.let { bitmap ->
+//						Image(
+//							painter = rememberAsyncImagePainter(bitmap),
+//							contentDescription = null,
+//							contentScale = ContentScale.Crop,
+//							modifier = Modifier
+//								.align(Alignment.Center)
+//								.padding(2.dp)
+//								.clip(MaterialTheme.shapes.small),
+//						)
+//					} ?: Image(
+//						painter = painterResource(id = R.drawable.ic_note_cluster),
+//						contentDescription = null,
+//						modifier = Modifier
+//							.align(Alignment.Center)
+//							.requiredSize(48.dp)
+//							.padding(2.dp)
+//					)
+//				}
+//			}
+//		)
 	}
 }
 

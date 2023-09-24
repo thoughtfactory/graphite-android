@@ -172,7 +172,7 @@ fun NoteScreen(
 			) { viewType1 ->
 				when (viewType1) {
 					ViewType.List -> NoteList(
-						noteMap = noteGroupList!!,
+						noteGroupList = noteGroupList!!,
 						tagList = tagList,
 						isSelecting = isSelecting,
 						selectedIdList = selectedIdList,
@@ -181,7 +181,8 @@ fun NoteScreen(
 					)
 
 					ViewType.Grid -> NoteGrid(
-//							noteMap = noteMap1,
+						noteGroupList = noteGroupList!!,
+						tagList = tagList,
 						isSelecting = isSelecting,
 						selectedIdList = selectedIdList,
 						onClickNote = ::onClickNote,

@@ -30,10 +30,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.IconButtonSize
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.note2.KitKat
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.note2.kitKat.KitKatAction
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +44,7 @@ fun LinkBottomSheet(
 	isBottomSheetVisible: Boolean = false,
 	onDismissRequest: () -> Unit = { },
 	link: String? = null,
-	onKitKatAction: (KitKat.Companion.KitKatAction) -> Unit = {}
+	onKitKatAction: (KitKatAction) -> Unit = {}
 ) {
 	val context = LocalContext.current
 	val clipboardManager = LocalClipboardManager.current
@@ -87,7 +87,7 @@ fun LinkBottomSheet(
 			OutlinedButton(
 				shape = MaterialTheme.shapes.medium,
 				modifier = Modifier.fillMaxWidth(),
-				onClick = { onKitKatAction(KitKat.Companion.KitKatAction.Link.ExtendSelection) }
+				onClick = { onKitKatAction(KitKatAction.Link.ExtendSelection) }
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_fa_extend_selection),
@@ -108,7 +108,7 @@ fun LinkBottomSheet(
 				OutlinedButton(
 					shape = MaterialTheme.shapes.medium,
 					modifier = Modifier.weight(1f),
-					onClick = { onKitKatAction(KitKat.Companion.KitKatAction.Link.Unset) },
+					onClick = { onKitKatAction(KitKatAction.Link.Unset) },
 				) {
 					Text(text = "Unset")
 				}
@@ -120,7 +120,7 @@ fun LinkBottomSheet(
 					modifier = Modifier.weight(1f),
 					onClick = {
 						if (newLink.isEmpty()) Toast.makeText(context, "Link is empty", Toast.LENGTH_SHORT).show() else {
-							onKitKatAction(KitKat.Companion.KitKatAction.Link.Set(newLink))
+							onKitKatAction(KitKatAction.Link.Set(newLink))
 							onDismissRequest()
 						}
 					},

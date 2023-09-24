@@ -57,7 +57,7 @@ fun TagItemView(
 					}
 				)
 		) {
-			Spacer(modifier = Modifier.width(24.dp))
+			Spacer(modifier = Modifier.width(19.dp))
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_tag),
 				contentDescription = tagObject.tag,
@@ -88,7 +88,7 @@ fun TagItemView(
 				)
 			}
 
-			Spacer(modifier = Modifier.width(24.dp))
+			Spacer(modifier = Modifier.width(19.dp))
 		}
 		Divider()
 	}

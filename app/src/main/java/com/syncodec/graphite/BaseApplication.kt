@@ -61,15 +61,10 @@ class BaseApplication : Application() {
 		initDirectory()
 
 		val dataStoreInstance = DataStoreInstance(context = this)
-		val sortByFlow = dataStoreInstance.getSortBy
-		val sortOnFlow = dataStoreInstance.getSortOn
-
-		val lockableRepo = LockableRepo()
-		val repository = Repository()
-		lockableRepo.initRepository(context = this, dataStoreInstance = dataStoreInstance, repository = repository)
+		val lockableRepo = LockableRepo(context = this.applicationContext, dataStoreInstance = dataStoreInstance)
 
 		val repositoryStatusStateFlow = lockableRepo.repositoryStatusFlow
-		val isAuthenticated = repository.isUnlocked
+		val isAuthenticated = lockableRepo.isUnlocked
 
 		val geoLocator = GeoLocator(this)
 
@@ -79,12 +74,9 @@ class BaseApplication : Application() {
 			modules(
 				module {
 					single { lockableRepo }
-					single { repository }
 					single { repositoryStatusStateFlow }
 					single { dataStoreInstance }
 					single { isAuthenticated }
-					single { sortByFlow }
-					single { sortOnFlow }
 					single { geoLocator }
 					single { DBox(this@BaseApplication) }
 					single { GDrive(this@BaseApplication) }

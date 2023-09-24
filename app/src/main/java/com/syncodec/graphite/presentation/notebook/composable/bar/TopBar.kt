@@ -43,10 +43,10 @@ import com.syncodec.graphite.presentation.common.button.LockButton
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
-import com.syncodec.graphite.presentation.notebook.screen.composable.bar.Navigator
 import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
 import com.syncodec.graphite.presentation.base.LockClosedContainer
+import com.syncodec.graphite.presentation.common.component.chapter.Navigator
 import com.syncodec.graphite.utils.getInverseBWColor
 import io.realm.kotlin.types.RealmUUID
 

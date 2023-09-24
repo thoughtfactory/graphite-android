@@ -35,7 +35,7 @@ import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.WhereChapterDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
-import com.syncodec.graphite.presentation.note2.KitKat
+import com.syncodec.graphite.presentation.note2.kitKat.KitKat
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
 import com.syncodec.graphite.presentation.note2.composable.bar.editor.EditorBottomBar
 import com.syncodec.graphite.presentation.note2.composable.bar.editor.EditorTopBar

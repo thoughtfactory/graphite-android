@@ -15,7 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.note.NoteActivity
+import com.syncodec.graphite.presentation.note2.NoteActivity2
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlin.random.Random
@@ -65,7 +65,7 @@ class NotePinNotification {
 			}
 
 			createNotificationChannel(context)
-			val noteActivity = Intent(context, NoteActivity::class.java).apply {
+			val noteActivity = Intent(context, NoteActivity2::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)

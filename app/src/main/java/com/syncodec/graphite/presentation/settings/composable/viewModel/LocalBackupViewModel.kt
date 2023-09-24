@@ -1,15 +1,13 @@
 package com.syncodec.graphite.presentation.settings.composable.viewModel
 
 import android.content.Context
-import android.net.Uri
 import androidx.annotation.WorkerThread
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jakewharton.processphoenix.ProcessPhoenix
 import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
-import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -19,16 +17,14 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.internal.closeQuietly
-import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
 import org.koin.android.annotation.KoinViewModel
-import java.io.File
 import java.time.Instant
 
 
 @KoinViewModel
-class LocalBackupViewModel(repositoryStatusStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class LocalBackupViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
 
 	private val json = Json
 
@@ -36,7 +32,7 @@ class LocalBackupViewModel(repositoryStatusStateFlow: MutableStateFlow<Repositor
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStatusStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -46,12 +42,12 @@ class LocalBackupViewModel(repositoryStatusStateFlow: MutableStateFlow<Repositor
 		viewModelScope.launch(Dispatchers.IO) {
 			_repository.value?.let { repository1 ->
 				repository1.snapshot.generate { zipFile ->
-					val uri = repository1.context.contentResolver.persistedUriPermissions.firstOrNull()?.uri
+					val uri = lockableRepo.context.contentResolver.persistedUriPermissions.firstOrNull()?.uri
 					if (uri != null) {
-						val snapshotFile = DocumentFile.fromTreeUri(repository1.context, uri)?.createFile("application/zip", zipFile.name)
+						val snapshotFile = DocumentFile.fromTreeUri(lockableRepo.context, uri)?.createFile("application/zip", zipFile.name)
 						if (snapshotFile != null) {
 							val inputStream = zipFile.inputStream()
-							val outputStream = repository1.context.contentResolver.openOutputStream(snapshotFile.uri)
+							val outputStream = lockableRepo.context.contentResolver.openOutputStream(snapshotFile.uri)
 							outputStream?.let(inputStream::copyTo)
 							inputStream.closeQuietly()
 							outputStream?.closeQuietly()
@@ -66,13 +62,13 @@ class LocalBackupViewModel(repositoryStatusStateFlow: MutableStateFlow<Repositor
 	@WorkerThread
 	fun readBackupFolder(): Map<DocumentFile, SnapshotMetadata?> {
 		return _repository.value?.let { repository1 ->
-			val uri = repository1.context.contentResolver.persistedUriPermissions.firstOrNull()?.uri
+			val uri = lockableRepo.context.contentResolver.persistedUriPermissions.firstOrNull()?.uri
 			if (uri != null) {
-				val documentTree = DocumentFile.fromTreeUri(repository1.context, uri)
+				val documentTree = DocumentFile.fromTreeUri(lockableRepo.context, uri)
 				documentTree
 					?.listFiles()
 					?.filter { it.name?.endsWith(".zip") == true || it.name?.endsWith(".7z") == true }
-					?.associateWith { it.getFileInfo(context = repository1.context) }
+					?.associateWith { it.getFileInfo(context = lockableRepo.context) }
 			} else mapOf()
 		} ?: mapOf()
 	}
@@ -108,7 +104,7 @@ class LocalBackupViewModel(repositoryStatusStateFlow: MutableStateFlow<Repositor
 	@WorkerThread
 	fun restoreSnapshot(documentFile: DocumentFile, callback: (Boolean) -> Unit) {
 		_repository.value?.let { repository1 ->
-			repository1.context.contentResolver.openInputStream(documentFile.uri)?.use {
+			lockableRepo.context.contentResolver.openInputStream(documentFile.uri)?.use {
 				repository1.snapshot.restore(inputStream = it, is7z = documentFile.name?.endsWith(".7z") == true, callback = callback)
 			}
 		}

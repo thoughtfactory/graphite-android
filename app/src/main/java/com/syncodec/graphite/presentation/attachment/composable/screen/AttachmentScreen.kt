@@ -37,10 +37,10 @@ import com.syncodec.graphite.presentation.common.ErrorView
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.AttachmentSelectionActionView
-import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LoaderStatus
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
+import com.syncodec.graphite.presentation.note2.NoteActivity2
 import com.syncodec.graphite.utils.viewExternally
 import com.syncodec.graphite.utils.xor
 import org.koin.androidx.compose.koinViewModel
@@ -130,7 +130,7 @@ fun AttachmentScreen() {
 				selectedFileList = this
 			}
 		} else {
-			if (enableNoteNavigation) Intent(context, NoteActivity::class.java).apply {
+			if (enableNoteNavigation) Intent(context, NoteActivity2::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, note.id.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)

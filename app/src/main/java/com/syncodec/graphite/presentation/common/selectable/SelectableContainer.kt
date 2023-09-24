@@ -1,15 +1,20 @@
 package com.syncodec.graphite.presentation.common.selectable
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,6 +26,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SelectableContainer(
 	modifier: Modifier = Modifier,
+	shape: Shape = RectangleShape,
+	border: BorderStroke? = null,
 	isSelected: Boolean = false,
 	enabled: Boolean = true,
 	colors: SelectableContainerColors = SelectableContainerDefaults.selectableContainerColors(),
@@ -34,11 +41,15 @@ fun SelectableContainer(
 	val contentColor by colors.contentColor(selected = isSelected)
 
 	Surface(
+		shape = shape,
 		color = containerColor,
 		contentColor = contentColor,
 		tonalElevation = 0.dp,
 		shadowElevation = 0.dp,
-		modifier = modifier.combinedClickable(
+		border = border,
+		modifier = modifier
+			.clip(shape)
+			.combinedClickable(
 			enabled = enabled,
 			onClick = onClick,
 			onLongClick = {
@@ -50,6 +61,7 @@ fun SelectableContainer(
 	)
 }
 
+@Immutable
 data class SelectableContainerColors(
 	val containerColor: Color,
 	val contentColor: Color,
