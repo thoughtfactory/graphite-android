@@ -26,7 +26,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.presentation.base.LocalIsPro
 
 
@@ -103,7 +103,7 @@ private fun ProEditorButton(
 				painter = painterResource(id = icon),
 				contentDescription = tooltip,
 				tint = contentColor,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 			)
 
 			Box(
@@ -163,7 +163,7 @@ private fun StandardEditorButton(
 				painter = painterResource(id = icon),
 				contentDescription = tooltip,
 				tint = contentColor,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 			)
 		}
 	}

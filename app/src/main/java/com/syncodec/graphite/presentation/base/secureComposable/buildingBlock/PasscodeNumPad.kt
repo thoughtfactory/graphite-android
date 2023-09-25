@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.utils.isTablet
 
 
@@ -175,7 +175,7 @@ private fun NumPadBackspaceButton(
 				painter = painterResource(id = R.drawable.ic_fa_backsapce),
 				contentDescription = stringResource(id = R.string.backspace),
 				tint = MaterialTheme.colorScheme.onBackground,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 			)
 		}
 	}

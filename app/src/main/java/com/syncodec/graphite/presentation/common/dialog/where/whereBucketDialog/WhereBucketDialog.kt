@@ -126,7 +126,7 @@ fun WhereBucketDialog2(
 						bucketType = bucketObject.bucketType,
 						isLocked = bucketObject.isLocked,
 						isFavourite = bucketObject.isFavourite,
-						isSelected = bucketObject.id == selectedBucketObjectId,
+						selected = bucketObject.id == selectedBucketObjectId,
 						onClick = { selectedBucketObjectId = bucketObject.id },
 					)
 				}

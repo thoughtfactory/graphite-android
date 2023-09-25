@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 
 
 @Preview
@@ -61,7 +61,7 @@ fun GraTextField(
 				contentAlignment = Alignment.CenterStart,
 				modifier = Modifier
 					.fillMaxWidth()
-					.height((IconButtonSize * 2) + 2.dp)
+					.height((ICON_BUTTON_SIZE * 2) + 2.dp)
 					.background(colors.containerColor, MaterialTheme.shapes.medium)
 					.padding(12.dp, 0.dp),
 			) {

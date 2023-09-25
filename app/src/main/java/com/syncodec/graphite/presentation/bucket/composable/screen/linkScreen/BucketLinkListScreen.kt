@@ -151,7 +151,7 @@ private fun LinkItem(
 	val thumbnail1 by remember(thumbnail) { derivedStateOf { thumbnail?.decodeBase64ToBitmap() } }
 
 	SelectableContainer(
-		isSelected = isSelected,
+		selected = isSelected,
 		modifier = Modifier.height(96.dp),
 		onClick = onClick,
 		onLongClick = onLongClick,

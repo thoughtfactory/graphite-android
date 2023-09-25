@@ -93,30 +93,28 @@ fun NoteList(
 					key = { it.id.toString() },
 					contentType = { NoteObjectLite::class }
 				) { noteObjectLite ->
-					Box(
-						modifier = Modifier.animateItemPlacement(tween(470))
-					) {
-						NoteListCard2(
-							id = noteObjectLite.id,
-							timestamp = 						when (sortOn1) {
-								SortOn.Title -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
-								SortOn.Timestamp -> noteObjectLite.userTimestamp.timeStampToTime()
-								SortOn.Modified -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
-								else -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
-							},
-							title = noteObjectLite.title,
-							contentThumbnail = noteObjectLite.contentThumbnail,
-							address = noteObjectLite.address,
-							latLng = noteObjectLite.latLng,
-							isFavourite = noteObjectLite.isFavourite,
-							isLocked = noteObjectLite.isLocked,
-							tagList = tagList.filter { noteObjectLite.id in it.objectIdList }.map { it.toLite() },
-							selected = noteObjectLite.id in selectedIdList,
-							onClick = { onClickNote(noteObjectLite.id) },
-							onLongClick = { onLongClickNote(noteObjectLite.id) },
-							modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-						)
-					}
+					NoteListCard2(
+						id = noteObjectLite.id,
+						timestamp = when (sortOn1) {
+							SortOn.Title -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+							SortOn.Timestamp -> noteObjectLite.userTimestamp.timeStampToTime()
+							SortOn.Modified -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+							else -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+						},
+						title = noteObjectLite.title,
+						contentThumbnail = noteObjectLite.contentThumbnail,
+						address = noteObjectLite.address,
+						latLng = noteObjectLite.latLng,
+						isFavourite = noteObjectLite.isFavourite,
+						isLocked = noteObjectLite.isLocked,
+						tagList = tagList.filter { noteObjectLite.id in it.objectIdList }.map { it.toLite() },
+						selected = noteObjectLite.id in selectedIdList,
+						onClick = { onClickNote(noteObjectLite.id) },
+						onLongClick = { onLongClickNote(noteObjectLite.id) },
+						modifier = Modifier
+							.animateItemPlacement(tween(470))
+							.padding(2.dp)
+					)
 				}
 			}
 

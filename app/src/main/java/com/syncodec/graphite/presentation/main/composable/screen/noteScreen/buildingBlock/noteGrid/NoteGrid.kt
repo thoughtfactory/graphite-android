@@ -104,7 +104,7 @@ fun NoteGrid(
 							selected = noteObjectLite.id in selectedIdList,
 							onClick = { onClickNote(noteObjectLite.id) },
 							onLongClick = { onLongClickNote(noteObjectLite.id) },
-							modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+							modifier = Modifier.padding(2.dp)
 						)
 					}
 

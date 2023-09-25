@@ -170,7 +170,7 @@ private fun LinkItem(
 	)
 
 	SelectableContainer(
-		isSelected = isSelected,
+		selected = isSelected,
 		colors = SelectableContainerDefaults.surfaceColors(
 			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.31f),
 			contentColor = MaterialTheme.colorScheme.onSurface,

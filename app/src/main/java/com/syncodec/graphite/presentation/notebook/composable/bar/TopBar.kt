@@ -52,6 +52,7 @@ import io.realm.kotlin.types.RealmUUID
 
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Preview
 @Composable
 fun CollapsedTopBar(
 	modifier: Modifier = Modifier,
@@ -182,6 +183,7 @@ fun CollapsedTopBar(
 @Composable
 fun ExpandedTopBar(
 	chapterTitle: String? = null,
+	chapterDescription : String? = null,
 	containerColor: Color? = null,
 	bitmap: Bitmap? = null,
 	defaultChapterId: RealmUUID? = null,
@@ -235,13 +237,27 @@ fun ExpandedTopBar(
 						.background(Color.Black.copy(alpha = 0.17f))
 				)
 			}
-			Text(
-				text = chapterTitle ?: stringResource(id = R.string.untitled),
-				style = MaterialTheme.typography.headlineLarge,
-				fontStyle = if (chapterTitle.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
-				color = if (bitmap == null) containerColor1.getInverseBWColor() else Color.White,
+
+			Column(
 				modifier = Modifier.padding(16.dp)
-			)
+			) {
+				Text(
+					text = chapterTitle ?: stringResource(id = R.string.untitled),
+					style = MaterialTheme.typography.headlineLarge,
+					fontStyle = if (chapterTitle.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
+					color = if (bitmap == null) containerColor1.getInverseBWColor() else Color.White,
+				)
+
+				chapterDescription?.let {
+					Spacer(modifier = Modifier.height(4.dp))
+					Text(
+						text = it,
+						style = MaterialTheme.typography.bodySmall,
+						color = if (bitmap == null) containerColor1.getInverseBWColor() else Color.White,
+						modifier = Modifier.padding(start = 2.dp)
+					)
+				}
+			}
 		}
 
 		AnimatedVisibility(

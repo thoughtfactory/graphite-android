@@ -27,7 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
@@ -61,7 +61,7 @@ fun TagItemView(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_tag),
 				contentDescription = tagObject.tag,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 			)
 
 			Spacer(modifier = Modifier.width(12.dp))

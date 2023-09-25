@@ -113,12 +113,12 @@ fun WhereChapterDialog2(
 			else LazyColumn(
 				modifier = Modifier.fillMaxSize()
 			) {
-				chapterList(
-					chapterList = childChapterObject,
-					chapterNoteItemCount = childNoteCountMap,
-					chapterChapterItemCount = childChapterCountMap,
-					onClick = { viewModel.exploreChapter(it.id) },
-				)
+//				chapterList(
+//					chapterList = childChapterObject,
+//					chapterNoteItemCount = childNoteCountMap,
+//					chapterChapterItemCount = childChapterCountMap,
+//					onClick = { viewModel.exploreChapter(it.id) },
+//				)
 			}
 
 		}

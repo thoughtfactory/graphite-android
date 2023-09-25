@@ -48,7 +48,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
@@ -198,7 +198,7 @@ private fun ReportTypeSelector(
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onBackground,
 						modifier = Modifier
-							.requiredSize(IconButtonSize)
+							.requiredSize(ICON_BUTTON_SIZE)
 							.padding(2.dp)
 					)
 					Spacer(modifier = Modifier.width(8.dp))
@@ -216,7 +216,7 @@ private fun ReportTypeSelector(
 				contentDescription = null,
 				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
-					.requiredSize(IconButtonSize)
+					.requiredSize(ICON_BUTTON_SIZE)
 					.graphicsLayer { rotationZ = if (selectedReportType == null) 0f else 180f }
 			)
 		}
@@ -258,7 +258,7 @@ private fun ReportComponentSelector(
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onBackground,
 						modifier = Modifier
-							.requiredSize(IconButtonSize)
+							.requiredSize(ICON_BUTTON_SIZE)
 							.padding(2.dp)
 					)
 					Spacer(modifier = Modifier.width(8.dp))
@@ -276,7 +276,7 @@ private fun ReportComponentSelector(
 				contentDescription = null,
 				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
-					.requiredSize(IconButtonSize)
+					.requiredSize(ICON_BUTTON_SIZE)
 					.graphicsLayer { rotationZ = if (selectedReportComponent == null) 0f else 180f }
 			)
 		}
@@ -316,7 +316,7 @@ private fun ReportTypeMenu(
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onBackground,
 							modifier = Modifier
-								.requiredSize(IconButtonSize)
+								.requiredSize(ICON_BUTTON_SIZE)
 								.padding(2.dp)
 						)
 					},
@@ -367,7 +367,7 @@ private fun ReportComponentMenu(
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onBackground,
 							modifier = Modifier
-								.requiredSize(IconButtonSize)
+								.requiredSize(ICON_BUTTON_SIZE)
 								.padding(0.dp)
 						)
 					},

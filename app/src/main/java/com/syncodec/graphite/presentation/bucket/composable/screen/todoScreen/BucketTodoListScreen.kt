@@ -128,7 +128,7 @@ private fun TodoItem(
 	onCheckedChange: () -> Unit = {},
 ) {
 	SelectableContainer(
-		isSelected = isSelected,
+		selected = isSelected,
 		onClick = onClick,
 		onLongClick = onLongClick,
 	) {

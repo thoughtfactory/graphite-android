@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.common.selectable
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -18,7 +19,9 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.common.conditional
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -28,7 +31,7 @@ fun SelectableContainer(
 	modifier: Modifier = Modifier,
 	shape: Shape = RectangleShape,
 	border: BorderStroke? = null,
-	isSelected: Boolean = false,
+	selected: Boolean = false,
 	enabled: Boolean = true,
 	colors: SelectableContainerColors = SelectableContainerDefaults.selectableContainerColors(),
 	onClick: () -> Unit = {},
@@ -37,8 +40,8 @@ fun SelectableContainer(
 ) {
 	val hapticFeedback = LocalHapticFeedback.current
 
-	val containerColor by colors.containerColor(selected = isSelected)
-	val contentColor by colors.contentColor(selected = isSelected)
+	val containerColor by colors.containerColor(selected = selected)
+	val contentColor by colors.contentColor(selected = selected)
 
 	Surface(
 		shape = shape,
@@ -46,17 +49,17 @@ fun SelectableContainer(
 		contentColor = contentColor,
 		tonalElevation = 0.dp,
 		shadowElevation = 0.dp,
-		border = border,
 		modifier = modifier
+			.conditional(border != null) { border(border ?: BorderStroke(Dp.Hairline, Color.Transparent), shape) }
 			.clip(shape)
 			.combinedClickable(
-			enabled = enabled,
-			onClick = onClick,
-			onLongClick = {
-				hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-				onLongClick()
-			}
-		),
+				enabled = enabled,
+				onClick = onClick,
+				onLongClick = {
+					hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+					onLongClick()
+				}
+			),
 		content = content,
 	)
 }
@@ -100,7 +103,7 @@ object SelectableContainerDefaults {
 	fun selectableContainerColors(
 		containerColor: Color = MaterialTheme.colorScheme.background,
 		contentColor: Color = MaterialTheme.colorScheme.onBackground,
-		selectedContainerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
+		selectedContainerColor: Color = MaterialTheme.colorScheme.surface,
 		selectedContentColor: Color = MaterialTheme.colorScheme.onSurface,
 	): SelectableContainerColors = SelectableContainerColors(
 		containerColor = containerColor,

@@ -1,12 +1,5 @@
 package com.syncodec.graphite.presentation.common.component.note
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -23,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -34,10 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,6 +45,7 @@ import com.syncodec.graphite.presentation.common.attachment.UnknownAttachmentPre
 import com.syncodec.graphite.presentation.common.attachment.VideoAttachmentPreview
 import com.syncodec.graphite.presentation.common.attachment.previewer.PreviewData
 import com.syncodec.graphite.presentation.common.component.LocalComponentHeight
+import com.syncodec.graphite.presentation.common.component.composable.HeaderText
 import com.syncodec.graphite.presentation.common.component.composable.StateInfo
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainerColors
@@ -100,6 +93,7 @@ fun NoteListCard2(
 	SelectableContainer(
 		shape = MaterialTheme.shapes.small,
 		border = BorderStroke(1.dp, contentColor.copy(alpha = 0.31f)),
+		selected = selected,
 		colors = colors,
 		onClick = onClick,
 		onLongClick = onLongClick,
@@ -143,20 +137,10 @@ private fun Header(
 		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier.heightIn(22.dp)
 	) {
-		AnimatedContent(
-			targetState = headerText,
-			label = "headerText_animation",
-			transitionSpec = { scaleIn(tween(470)) + fadeIn(tween(470)) togetherWith scaleOut(tween(470)) + fadeOut(tween(470)) },
+		HeaderText(
+			text = headerText,
 			modifier = Modifier.weight(1f)
-		) {
-			Text(
-				text = it,
-				style = MaterialTheme.typography.bodySmall,
-				fontWeight = FontWeight.Bold,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-			)
-		}
+		)
 		StateInfo(
 			isFavourite = isFavourite,
 			isLocked = isLocked,
@@ -193,16 +177,15 @@ private fun ContentPreview(
 
 		if (previewData != null) {
 			Spacer(modifier = Modifier.width(12.dp))
-			Box(
-				modifier = Modifier
-					.size(if (componentHeight < 144.dp) (componentHeight - 56.dp) else 88.dp)
-					.clip(MaterialTheme.shapes.small)
+			Surface(
+				shape = MaterialTheme.shapes.small,
+				modifier = Modifier.size(if (componentHeight < 144.dp) (componentHeight - 56.dp) else 88.dp),
 			) {
 				when (previewData) {
 					is PreviewData.Image -> ImageAttachmentPreview(previewData = previewData, blur = false)
 					is PreviewData.Video -> VideoAttachmentPreview(previewData = previewData, blur = false)
 					is PreviewData.Pdf -> PdfAttachmentPreview(previewData = previewData)
-					else -> UnknownAttachmentPreview(previewData = previewData)
+					else -> UnknownAttachmentPreview(previewData = previewData, small = true)
 				}
 			}
 		}

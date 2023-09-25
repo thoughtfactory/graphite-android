@@ -21,8 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.repository.Repository
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 
 
@@ -71,7 +70,7 @@ fun LockedRepositoryView(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_fingerprint),
 				contentDescription = "Unlock with biometric",
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 			)
 			Spacer(modifier = Modifier.width(8.dp))
 			Text(text = "Unlock with biometric")

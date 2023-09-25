@@ -48,7 +48,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2Defaults
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.locationAddressFilter
 import com.syncodec.graphite.utils.reverseGeocode
@@ -205,7 +205,7 @@ fun LocationPickerDialog(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_check),
 						contentDescription = "Select location",
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 				}
 			}

@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.FilterAndViewBottomSheet
 import com.syncodec.graphite.presentation.base.FavouriteContainer
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.presentation.base.secureComposable.LocalAuthenticatorAction
@@ -184,7 +184,7 @@ fun GenericButton(
 	enabled: Boolean = true,
 	shape: Shape = MaterialTheme.shapes.medium,
 	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
-	buttonSize: Dp = IconButtonSize,
+	buttonSize: Dp = ICON_BUTTON_SIZE,
 	onClick: () -> Unit = {},
 ) {
 	val containerColor by colors.containerColor(checked = checked == true)

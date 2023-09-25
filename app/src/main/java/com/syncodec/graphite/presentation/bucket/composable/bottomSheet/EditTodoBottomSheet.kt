@@ -46,7 +46,7 @@ import com.syncodec.graphite.presentation.common.button.CheckButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
 import com.syncodec.graphite.presentation.base.FavouriteContainer
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import kotlinx.coroutines.delay
@@ -143,12 +143,12 @@ fun EditTodoBottomSheet(
 						painter = painterResource(id = R.drawable.ic_fa_heart_solid),
 						contentDescription = stringResource(id = R.string.toggle_favourite),
 						tint = Color.FavouriteContainer,
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					else Icon(
 						painter = painterResource(id = R.drawable.ic_fa_heart),
 						contentDescription = stringResource(id = R.string.toggle_favourite),
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					Spacer(modifier = Modifier.width(12.dp))
 					Text(text = stringResource(id = R.string.favourite))
@@ -168,12 +168,12 @@ fun EditTodoBottomSheet(
 						painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
 						contentDescription = stringResource(id = R.string.toggle_lock),
 						tint = Color.LockClosedContainer,
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					else Icon(
 						painter = painterResource(id = R.drawable.ic_fa_lock_open),
 						contentDescription = stringResource(id = R.string.toggle_lock),
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					Spacer(modifier = Modifier.width(12.dp))
 					Text(text = stringResource(id = R.string.lock))

@@ -1,7 +1,10 @@
 package com.syncodec.graphite.presentation.common.attachment
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.Icon
@@ -19,18 +22,20 @@ import com.syncodec.graphite.presentation.common.attachment.previewer.PreviewDat
 
 
 @Composable
-fun UnknownAttachmentPreview(previewData: PreviewData, small : Boolean = false) {
+fun UnknownAttachmentPreview(previewData: PreviewData, small: Boolean = false) {
 	Column(
-		horizontalAlignment = Alignment.CenterHorizontally
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center,
+		modifier = Modifier.fillMaxSize()
 	) {
 		Icon(
 			painter = painterResource(id = R.drawable.ic_fa_file_duotone),
 			contentDescription = stringResource(id = R.string.thumbnail),
 			tint = MaterialTheme.colorScheme.onBackground,
-			modifier = Modifier.requiredSize(48.dp)
+			modifier = Modifier.requiredSize(if (small) 24.dp else 48.dp)
 		)
 		previewData.extension?.let {
-			Spacer(modifier = Modifier.height(8.dp))
+			Spacer(modifier = Modifier.height(if (small) 4.dp else 8.dp))
 			Text(
 				text = it,
 				style = if (small) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyLarge,

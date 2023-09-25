@@ -5,15 +5,17 @@ import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
@@ -45,8 +47,9 @@ import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.common.component.chapter.ChapterListCard
-import com.syncodec.graphite.presentation.common.component.note.NoteListCard2
+import com.syncodec.graphite.presentation.common.component.LocalComponentColumnCount
+import com.syncodec.graphite.presentation.common.component.chapter.ChapterGridCard
+import com.syncodec.graphite.presentation.common.component.note.NoteGridCard2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
@@ -94,6 +97,7 @@ fun NotebookScreen2(
 	val density = LocalDensity.current
 
 	var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+	val componentColumnCount = LocalComponentColumnCount.current
 
 	val bitmap by remember(chapterObject) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
 
@@ -106,13 +110,11 @@ fun NotebookScreen2(
 
 	var isDeleteDialogVisible by rememberSaveable { mutableStateOf(false) }
 
-//	null : selecting nothing
-//	true : selecting notes
-//	false : selecting chapters
-	var selectionType by rememberSaveable { mutableStateOf<Boolean?>(null) }
+	var isSelecting by rememberSaveable { mutableStateOf(false) }
 	var selectedIdList: Set<RealmUUID> by rememberSaveable { mutableStateOf(setOf()) }
 
 	fun onSelect(id: RealmUUID) {
+		isSelecting = true
 		selectedIdList.toMutableSet().apply {
 			xor(id)
 			selectedIdList = toSet()
@@ -120,32 +122,24 @@ fun NotebookScreen2(
 	}
 
 	fun onClickNote(id: RealmUUID) {
-		when (selectionType) {
-			true -> onSelect(id = id)
-			false -> Unit
-			null -> Intent(context, NoteActivity2::class.java).apply {
-				putExtra(Extra.Companion.Extra.IsNew.name, false)
-				putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
-				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-				context.startActivity(this)
-			}
+		if (isSelecting) onSelect(id) else Intent(context, NoteActivity2::class.java).apply {
+			putExtra(Extra.Companion.Extra.IsNew.name, false)
+			putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
+			putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+			context.startActivity(this)
 		}
 	}
 
 	fun onClickChapter(id: RealmUUID) {
-		when (selectionType) {
-			true -> onSelect(id = id)
-			false -> Unit
-			null -> onLoadChapter(id)
-		}
+		if (isSelecting) onSelect(id) else onLoadChapter(id)
 	}
 
 	BackHandler(enabled = chapterPath.size > 1) { onLoadChapter(chapterPath[1].id) }
-	BackHandler(enabled = selectionType != null) { selectionType = null; selectedIdList = setOf() }
+	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = setOf() }
 
-	val listState = rememberLazyListState()
+	val staggeredGridState = rememberLazyStaggeredGridState()
 	val overlapHeightPx = remember { with(density) { EXPANDED_TOP_BAR_HEIGHT.toPx() - COLLAPSED_TOP_BAR_HEIGHT.toPx() } }
-	val isCollapsed: Boolean by remember { derivedStateOf { (listState.firstVisibleItemScrollOffset > overlapHeightPx) || listState.firstVisibleItemIndex > 0 } }
+	val isCollapsed: Boolean by remember { derivedStateOf { (staggeredGridState.firstVisibleItemScrollOffset > overlapHeightPx) || staggeredGridState.firstVisibleItemIndex > 0 } }
 
 //	val firstVisibleItemScrollOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
 
@@ -156,13 +150,13 @@ fun NotebookScreen2(
 		else {
 			scope.launch {
 				if (newTab == 0) {
-					chapterScrollState = Pair(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+					chapterScrollState = Pair(staggeredGridState.firstVisibleItemIndex, staggeredGridState.firstVisibleItemScrollOffset)
 					selectedTab = 0
-					listState.scrollToItem(noteScrollState.first, noteScrollState.second)
+					staggeredGridState.scrollToItem(noteScrollState.first, noteScrollState.second)
 				} else {
-					noteScrollState = Pair(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+					noteScrollState = Pair(staggeredGridState.firstVisibleItemIndex, staggeredGridState.firstVisibleItemScrollOffset)
 					selectedTab = 1
-					listState.scrollToItem(chapterScrollState.first, chapterScrollState.second)
+					staggeredGridState.scrollToItem(chapterScrollState.first, chapterScrollState.second)
 				}
 			}
 		}
@@ -170,8 +164,8 @@ fun NotebookScreen2(
 
 	GenericScaffold2(
 		bottomBar = { BottomBar(onClickMetadata = { isMetadataBottomSheetVisible = true }) },
-		isTopBarVisible = selectionType == null,
-		isBottomBarVisible = selectionType == null,
+		isTopBarVisible = !isSelecting,
+		isBottomBarVisible = !isSelecting,
 		floatingActionButton = {
 			FloatingActionButton(
 				onClick = { isNewChapterBottomSheetVisible = true }
@@ -202,7 +196,7 @@ fun NotebookScreen2(
 				}
 			)
 		},
-		isFloatingActionButtonVisible = selectionType == null,
+		isFloatingActionButtonVisible = !isSelecting,
 		modifier = Modifier.fillMaxSize()
 	) {
 		CollapsedTopBar(
@@ -215,7 +209,7 @@ fun NotebookScreen2(
 			defaultChapterId = defaultChapterId,
 			selectedTab = selectedTab,
 			isCollapsed = isCollapsed,
-			isSelecting = selectionType != null,
+			isSelecting = isSelecting,
 			onContainerColor = bitmap?.let { Color.White } ?: chapterObject?.color?.let { Color(it) }?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
 			onClickFavourite = { chapterObject?.let(onClickFavourite) },
 			onClickLock = { chapterObject?.let(onClickLock) },
@@ -224,31 +218,46 @@ fun NotebookScreen2(
 			onSelectTab = ::onSelectTab
 		)
 
-		LazyColumn(
-			state = listState,
+		LazyVerticalStaggeredGrid(
+			state = staggeredGridState,
+			columns = StaggeredGridCells.Fixed(componentColumnCount),
 			modifier = Modifier.fillMaxSize()
 		) {
-			item {
+			item(
+				key = 0,
+				contentType = { 0 },
+				span = StaggeredGridItemSpan.FullLine
+			) {
 				ExpandedTopBar(
 					chapterTitle = chapterObject?.title,
+					chapterDescription = chapterObject?.description,
 					bitmap = bitmap,
 					containerColor = chapterObject?.color?.let { Color(it) },
 					defaultChapterId = defaultChapterId,
 					chapterPath = chapterPath,
 					selectedTab = selectedTab,
-					isSelecting = selectionType != null,
+					isSelecting = isSelecting,
 					onLoadChapter = onLoadChapter,
 					onSelectTab = ::onSelectTab
 				)
 			}
+
+			item(
+				key = 1,
+				contentType = 1,
+				span = StaggeredGridItemSpan.FullLine
+			) {
+				Spacer(modifier = Modifier.height(8.dp))
+			}
+
 			when {
 				selectedTab == 0 && noteList.isEmpty() -> Unit
 				selectedTab == 0 -> noteList(
-					noteList = noteList.toSet(),
+					noteList = noteList,
 					tagList = tagList,
 					selectedIdList = selectedIdList,
 					onClick = { onClickNote(it.id) },
-					onLongClick = { selectionType = true; onSelect(it.id) }
+					onLongClick = { onSelect(it.id) }
 				)
 
 				chapterList.isEmpty() -> Unit
@@ -257,20 +266,22 @@ fun NotebookScreen2(
 					chapterNoteItemCount = chapterNoteItemCount,
 					chapterChapterItemCount = chapterChapterItemCount,
 					selectedIdList = selectedIdList,
+					componentColumnCount = componentColumnCount,
 					onClick = { onClickChapter(it.id) },
-					onLongClick = { selectionType = false; onSelect(it.id) }
+					onLongClick = { onSelect(it.id) }
 				)
 
 			}
 
-			item { Spacer(modifier = Modifier.height(128.dp)) }
+			item(key = 3, contentType = 1) { Spacer(modifier = Modifier.height(128.dp)) }
+
 		}
 
 		NotebookSelectionActionView(
 			modifier = Modifier
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)
 				.align(Alignment.BottomCenter),
-			isSelecting = selectionType != null,
+			isSelecting = isSelecting,
 			isAllItemFavourite = selectedIdList.isNotEmpty() && noteList.filter { it.id in selectedIdList }.all { it.isFavourite } && chapterList.filter { it.id in selectedIdList }.all { it.isFavourite },
 			isAllItemLocked = selectedIdList.isNotEmpty() && noteList.filter { it.id in selectedIdList }.all { it.isLocked } && chapterList.filter { it.id in selectedIdList }.all { it.isLocked },
 			selectedItemCount = selectedIdList.size,
@@ -316,84 +327,73 @@ fun NotebookScreen2(
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-fun LazyListScope.noteList(
-	noteList: Set<NoteObjectLite> = setOf(),
+fun LazyStaggeredGridScope.noteList(
+	noteList: List<NoteObjectLite> = listOf(),
 	tagList: List<TagObject> = listOf(),
 	selectedIdList: Set<RealmUUID> = setOf(),
 	onClick: (NoteObjectLite) -> Unit = {},
 	onLongClick: (NoteObjectLite) -> Unit = {},
 ) {
-	item { Spacer(modifier = Modifier.height(8.dp)) }
-
-	noteList.forEach { note ->
-		item(
-			key = note.id.toString(),
-			contentType = { NoteObjectLite::class }
-		) {
-			Box(
-				modifier = Modifier.animateItemPlacement(tween(470))
-			) {
-				NoteListCard2(
-					id = note.id,
-					timestamp = note.userTimestamp.timeStampToPrettyFull(),
-					title = note.title,
-					isFavourite = note.isFavourite,
-					isLocked = note.isLocked,
-					contentThumbnail = note.contentThumbnail,
-//					thumbnail = note.thumbnail,
-					address = note.address,
-					latLng = note.latLng,
-					tagList = tagList.filter { note.id in it.objectIdList }.map { it.toLite() },
-					selected = note.id in selectedIdList,
-					onClick = { onClick(note) },
-					onLongClick = { onLongClick(note) },
-				)
-			}
-		}
+	items(
+		items = noteList,
+		key = { it.id.toString() },
+		contentType = { 2 }
+	) { noteObjectLite ->
+		NoteGridCard2(
+			id = noteObjectLite.id,
+			timestamp = noteObjectLite.userTimestamp.timeStampToPrettyFull(),
+			title = noteObjectLite.title,
+			contentThumbnail = noteObjectLite.contentThumbnail,
+			address = noteObjectLite.address,
+			latLng = noteObjectLite.latLng,
+			isFavourite = noteObjectLite.isFavourite,
+			isLocked = noteObjectLite.isLocked,
+			tagList = tagList.filter { noteObjectLite.id in it.objectIdList }.map { it.toLite() },
+			selected = noteObjectLite.id in selectedIdList,
+			onClick = { onClick(noteObjectLite) },
+			onLongClick = { onLongClick(noteObjectLite) },
+			modifier = Modifier
+				.animateItemPlacement(tween(470))
+				.padding(2.dp)
+		)
 	}
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-fun LazyListScope.chapterList(
+fun LazyStaggeredGridScope.chapterList(
 	chapterList: List<ChapterObject> = listOf(),
 	chapterNoteItemCount: Map<RealmUUID?, Int> = mapOf(),
 	chapterChapterItemCount: Map<RealmUUID?, Int> = mapOf(),
 	selectedIdList: Set<RealmUUID> = setOf(),
+	componentColumnCount: Int = 2,
 	onClick: (ChapterObject) -> Unit = {},
 	onLongClick: (ChapterObject) -> Unit = {},
 ) {
-	item { Spacer(modifier = Modifier.height(8.dp)) }
 
-	chapterList
-		.forEach { chapterObject ->
-			item(
-				key = chapterObject.id.toString(),
-				contentType = { ChapterObject::class }
-			) {
-				Box(
-					modifier = Modifier.animateItemPlacement(tween(470))
-				) {
-					ChapterListCard(
-						id = chapterObject.id,
-						createdTimestamp = chapterObject.createdTimestamp,
-						modifiedTimestamp = chapterObject.modifiedTimestamp,
-						title = chapterObject.title,
-						description = chapterObject.description,
-						isFavourite = chapterObject.isFavourite,
-						isLocked = chapterObject.isLocked,
-						color = chapterObject.color?.let { Color(it) },
-						thumbnail = chapterObject.thumbnail,
-						noteCount = chapterNoteItemCount[chapterObject.id] ?: 0,
-						chapterCount = chapterChapterItemCount[chapterObject.id] ?: 0,
-						isSelected = chapterObject.id in selectedIdList,
-						onClick = { onClick(chapterObject) },
-						onLongClick = { onLongClick(chapterObject) },
-					)
-				}
-			}
-		}
-
-	item { Spacer(modifier = Modifier.height(96.dp)) }
+	items(
+		count = chapterList.size,
+		key = { chapterList[it].id.toString() },
+		contentType = { 2 }
+	) { index ->
+		val chapterObject = chapterList[index]
+		ChapterGridCard(
+			id = chapterObject.id,
+			createdTimestamp = chapterObject.createdTimestamp,
+			modifiedTimestamp = chapterObject.modifiedTimestamp,
+			title = chapterObject.title,
+			description = chapterObject.description,
+			isFavourite = chapterObject.isFavourite,
+			isLocked = chapterObject.isLocked,
+			color = chapterObject.color?.let { Color(it) },
+			thumbnail = chapterObject.thumbnail,
+			noteCount = chapterNoteItemCount[chapterObject.id] ?: 0,
+			chapterCount = chapterChapterItemCount[chapterObject.id] ?: 0,
+			selected = chapterObject.id in selectedIdList,
+			onClick = { onClick(chapterObject) },
+			onLongClick = { onLongClick(chapterObject) },
+			modifier = Modifier
+				.animateItemPlacement(tween(470))
+				.padding(start = if (index % componentColumnCount == 0) 12.dp else 4.dp, top = 4.dp, end = if ((index + 1) % componentColumnCount == 0) 12.dp else 4.dp, bottom = 4.dp)
+		)
+	}
 }
-
-

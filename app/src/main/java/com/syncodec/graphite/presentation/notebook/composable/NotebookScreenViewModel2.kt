@@ -11,6 +11,7 @@ import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
@@ -26,7 +27,7 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class NotebookScreenViewModel2(
-	repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>
+	lockableRepo: LockableRepo
 ) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
@@ -62,7 +63,7 @@ class NotebookScreenViewModel2(
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collect { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collect { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -108,6 +109,7 @@ class NotebookScreenViewModel2(
 				observeChildChapterJob = job
 				launch(Dispatchers.Default + job) {
 					repository.getChapterWithParentIdAsFlow(parentId = currentChapterId).collectLatest { chapterList ->
+						Log.d("npr71", "found ${chapterList.size} chapters")
 						this@NotebookScreenViewModel2._chapterList.tryEmit(chapterList)
 					}
 				}
@@ -122,6 +124,7 @@ class NotebookScreenViewModel2(
 				observeChildNoteJob = job
 				launch(Dispatchers.Default + job) {
 					repository.getNoteWithParentIdAsFlow(parentId = currentChapterId).collectLatest { noteList ->
+						Log.d("npr71", "found ${noteList.size} notes")
 						this@NotebookScreenViewModel2._noteList.tryEmit(noteList)
 					}
 				}
@@ -136,8 +139,8 @@ class NotebookScreenViewModel2(
 	}
 
 	private suspend fun observeNoteCount(repository: Repository) {
-		repository.getAllNoteAsFlow().collectLatest {
-			it.groupingBy { it.parentId }.eachCount().let { _chapterNoteItemCount.tryEmit(it) }
+		repository.getAllNoteAsFlow().collectLatest { noteObjectList ->
+			noteObjectList.groupingBy { it.parentId }.eachCount().let { _chapterNoteItemCount.tryEmit(it) }
 		}
 	}
 

@@ -23,7 +23,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2ListButtonDefaults
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetButton2ListButton
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,6 +80,6 @@ private fun ExportButtonSuffix() {
 		painter = painterResource(id = R.drawable.ic_fa_pro),
 		contentDescription = "Pro",
 		tint = MaterialTheme.colorScheme.onBackground,
-		modifier = Modifier.requiredSize(IconButtonSize)
+		modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 	)
 }

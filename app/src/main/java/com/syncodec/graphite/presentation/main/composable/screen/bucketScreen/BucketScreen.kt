@@ -2,20 +2,14 @@ package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen
 
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -40,7 +34,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,8 +50,9 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketObjectLite
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.group.isAll
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
+import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.bucket.BucketActivity
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.component.bucket.BucketCard
@@ -73,12 +67,8 @@ import com.syncodec.graphite.presentation.common.selectionAction.MainSelectionAc
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.BucketBottomSheet
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.BucketFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteGrid.NoteGrid
-import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList.NoteList
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.SortOn
-import com.syncodec.graphite.utils.ViewType
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.isTablet
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
@@ -101,7 +91,7 @@ fun BucketScreen(
 	val viewModel: BucketScreenViewModel = koinViewModel()
 	val scope = rememberCoroutineScope()
 
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+	val appDataStore = LocalAppDataStore.current
 
 	var bucketFilter by rememberSaveable { mutableStateOf(setOf(BucketType.TODO, BucketType.BOOK, BucketType.SHOW, BucketType.LINK)) }
 	val bucketList by viewModel.bucketList.collectAsState()
@@ -129,7 +119,7 @@ fun BucketScreen(
 		onDragEnd = { from, to ->
 			scope.launch(Dispatchers.Default) {
 				viewModel.onReorderBucketList(orderedBucketList?.map { it.id } ?: listOf())
-				dataStoreInstance.putSortOn(SortOn.Custom)
+				appDataStore.putSortOn(SortOn.Custom)
 			}
 		}
 	)
@@ -175,6 +165,7 @@ fun BucketScreen(
 				) {
 					items(
 						items = orderedBucketList?.filter { it.bucketType in bucketFilter } ?: listOf(),
+						contentType = { 0 },
 						key = { it.id.toString() }
 					) { bucketObject ->
 						ReorderableItem(
@@ -187,18 +178,23 @@ fun BucketScreen(
 								bucketType = bucketObject.bucketType,
 								isLocked = bucketObject.isLocked,
 								isFavourite = bucketObject.isFavourite,
-								isSelecting = isSelecting,
-								isSelected = bucketObject.id in selectedIdList,
+								selected = bucketObject.id in selectedIdList,
 								isDragging = isDragging,
 								handle = {
-									Icon(
-										painter = painterResource(id = R.drawable.ic_fa_grip),
-										contentDescription = "Reorder",
-										tint = MaterialTheme.colorScheme.onSurface,
-										modifier = Modifier
-											.size(16.dp)
-											.detectReorder(state)
-									)
+									androidx.compose.animation.AnimatedVisibility(
+										visible = !isSelecting,
+										enter = scaleIn(tween(ANIMATION_DURATION_MILLIS)),
+										exit = scaleOut(tween(ANIMATION_DURATION_MILLIS))
+									) {
+										Icon(
+											painter = painterResource(id = R.drawable.ic_fa_grip),
+											contentDescription = "Reorder",
+											tint = MaterialTheme.colorScheme.onSurface,
+											modifier = Modifier
+												.size(16.dp)
+												.detectReorder(state)
+										)
+									}
 								},
 								onClick = { onClickBucket(bucketObject.id) },
 								onLongClick = { onLongClickBucket(bucketObject.id) },

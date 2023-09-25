@@ -32,7 +32,7 @@ import com.syncodec.graphite.presentation.search.SearchViewModel
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItemView
 import com.syncodec.graphite.presentation.base.AttachmentContainer
 import com.syncodec.graphite.presentation.base.FavouriteContainer
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 
@@ -40,7 +40,7 @@ import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnloc
 @Preview
 @Composable
 fun SearchWhatView(
-	tagList: Set<TagObject> = setOf(),
+	tagList: List<TagObject> = listOf(),
 	onAddFilter: (SearchViewModel.Companion.NoteFilter) -> Unit = {},
 ) {
 	val isAuthenticated = LocalIsRepoUnlocked.current
@@ -110,7 +110,7 @@ private fun FilterButton(
 				painter = painterResource(id = icon),
 				contentDescription = title,
 				tint = iconTint,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 			)
 
 			Spacer(modifier = Modifier.width(12.dp))

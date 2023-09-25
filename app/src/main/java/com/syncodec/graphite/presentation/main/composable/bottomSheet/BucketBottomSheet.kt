@@ -50,7 +50,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.button.CancelButton
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
@@ -260,7 +260,7 @@ fun BucketSelectorItem(
 				Icon(
 					painter = icon,
 					contentDescription = title,
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 				)
 
 				Spacer(modifier = Modifier.weight(1f))

@@ -6,12 +6,12 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketObjectLite
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
@@ -19,7 +19,7 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class BucketScreenViewModel(
-	repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>,
+	lockableRepo: LockableRepo,
 ) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
@@ -29,7 +29,7 @@ class BucketScreenViewModel(
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -67,7 +67,7 @@ class BucketScreenViewModel(
 	}
 
 	fun onReorderBucketList(idList : List<RealmUUID>) {
-		viewModelScope.launch(Dispatchers.Default) { _repository.value?.reorderBucketList(idList) }
+		viewModelScope.launch(Dispatchers.Default) { _repository.value?.reorderBucketList(idOrderList = idList) }
 	}
 
 	fun onClickMultiFavourite(idList: Set<RealmUUID>, isAllFavourite: Boolean) {

@@ -41,8 +41,8 @@ class SearchActivity : ComponentActivity() {
 				BackHandler(enabled = currentFilterList.isNotEmpty()) { viewModel.removeAllFilter() }
 
 				SearchScreen(
-					tagList = tagList,
-					filteredNoteList = filteredNoteList,
+					tagList = tagList.toList(),
+					filteredNoteList = filteredNoteList.toList(),
 					currentFilterList = currentFilterList,
 					onAddFilter = { viewModel.addFilter(it) },
 					onRemoveFilter = { viewModel.removeFilter(it) },

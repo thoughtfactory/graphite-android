@@ -44,7 +44,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -180,7 +180,7 @@ private fun PrimaryButton(
 					painter = painterResource(id = primaryIcon),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onPrimary,
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 				)
 
 				Spacer(modifier = Modifier.width(12.dp))
@@ -215,7 +215,7 @@ private fun PrimaryButton(
 						contentDescription = it.text,
 						tint = MaterialTheme.colorScheme.onPrimary,
 						modifier = Modifier
-							.requiredSize(IconButtonSize)
+							.requiredSize(ICON_BUTTON_SIZE)
 							.padding(2.dp)
 					)
 					Spacer(modifier = Modifier.width(16.dp))

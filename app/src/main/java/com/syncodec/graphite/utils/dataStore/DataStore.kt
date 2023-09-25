@@ -221,10 +221,10 @@ class DataStoreInstance(private val context: Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SHOW_TAG_INFO_CARD] = showCard }
 	}
 
-	val componentHeight = context.dataStore.data.map { maxOf(96, it[PREFERENCE_COMPONENT_HEIGHT] ?: 96) }
+	val componentHeight = context.dataStore.data.map { maxOf(128, it[PREFERENCE_COMPONENT_HEIGHT] ?: 128) }
 
 	fun putComponentHeight(newHeight : Int) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { it[PREFERENCE_COMPONENT_HEIGHT] = maxOf(newHeight, 96) }
+		context.dataStore.edit { it[PREFERENCE_COMPONENT_HEIGHT] = maxOf(newHeight, 128) }
 	}
 
 	val componentWidth = context.dataStore.data.map { maxOf(96, it[PREFERENCE_COMPONENT_WIDTH] ?: 96) }

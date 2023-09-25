@@ -45,7 +45,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.base.FavouriteContainer
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
@@ -167,12 +167,12 @@ fun PreviewLinkBottomSheet(
 						painter = painterResource(id = R.drawable.ic_fa_heart_solid),
 						contentDescription = stringResource(id = R.string.toggle_favourite),
 						tint = Color.FavouriteContainer,
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					else Icon(
 						painter = painterResource(id = R.drawable.ic_fa_heart),
 						contentDescription = stringResource(id = R.string.toggle_favourite),
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					Spacer(modifier = Modifier.width(12.dp))
 					Text(text = stringResource(id = R.string.favourite))
@@ -192,12 +192,12 @@ fun PreviewLinkBottomSheet(
 						painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
 						contentDescription = stringResource(id = R.string.toggle_lock),
 						tint = Color.LockClosedContainer,
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					else Icon(
 						painter = painterResource(id = R.drawable.ic_fa_lock_open),
 						contentDescription = stringResource(id = R.string.toggle_lock),
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 					)
 					Spacer(modifier = Modifier.width(12.dp))
 					Text(text = stringResource(id = R.string.lock))

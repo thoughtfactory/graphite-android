@@ -34,12 +34,12 @@ import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun SearchScreen(
-	tagList: Set<TagObject> = setOf(),
-	filteredNoteList: Set<NoteObjectLite> = setOf(),
+	tagList: List<TagObject> = listOf(),
+	filteredNoteList: List<NoteObjectLite> = listOf(),
 	currentFilterList: Set<SearchViewModel.Companion.NoteFilter> = setOf(),
 	onAddFilter: (SearchViewModel.Companion.NoteFilter) -> Unit = {},
 	onRemoveFilter: (SearchViewModel.Companion.NoteFilter) -> Unit = {},
@@ -87,30 +87,30 @@ fun SearchScreen(
 				LazyColumn(
 					modifier = Modifier.fillMaxSize()
 				) {
-					noteList(
-						noteList = filteredNoteList,
-						selectedIdList = selectedIdList,
-//						headerTitle = ,
-//						headerSubTitle =,
-//						headerMinHeight =,
-//						headerBackgroundColor =,
-//						isVisible =,
-//						toggleVisibility =,
-						onClick = {
-							if (isSelecting) {
-								onSelect(it.id)
-							}
-							else {
-								Intent(context, NoteActivity2::class.java).apply {
-									putExtra(Extra.Companion.Extra.IsNew.name, false)
-									putExtra(Extra.Companion.Extra.NoteId.name, it.id.bytes)
-									putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-									context.startActivity(this)
-								}
-							}
-						},
-						onLongClick = { onSelect(it.id) },
-					)
+//					noteList(
+//						noteList = filteredNoteList,
+//						selectedIdList = selectedIdList,
+////						headerTitle = ,
+////						headerSubTitle =,
+////						headerMinHeight =,
+////						headerBackgroundColor =,
+////						isVisible =,
+////						toggleVisibility =,
+//						onClick = {
+//							if (isSelecting) {
+//								onSelect(it.id)
+//							}
+//							else {
+//								Intent(context, NoteActivity2::class.java).apply {
+//									putExtra(Extra.Companion.Extra.IsNew.name, false)
+//									putExtra(Extra.Companion.Extra.NoteId.name, it.id.bytes)
+//									putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
+//									context.startActivity(this)
+//								}
+//							}
+//						},
+//						onLongClick = { onSelect(it.id) },
+//					)
 				}
 			}
 		}

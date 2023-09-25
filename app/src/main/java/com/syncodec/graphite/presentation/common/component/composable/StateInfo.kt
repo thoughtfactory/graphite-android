@@ -1,6 +1,8 @@
 package com.syncodec.graphite.presentation.common.component.composable
 
+import androidx.annotation.FloatRange
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.Icon
@@ -30,12 +32,14 @@ import com.syncodec.graphite.presentation.base.LockClosedContainer
 fun StateInfo(
 	isFavourite: Boolean = true,
 	isLocked: Boolean = true,
-	attachmentCount: Int = 7,
+	attachmentCount: Int = 0,
+	@FloatRange(from = 0.0, to = 1.0) containerAlpha: Float = 1f,
+	extra: @Composable (RowScope.() -> Unit)? = null,
 ) {
-	if (isLocked || isFavourite || attachmentCount > 0) {
+	if (isLocked || isFavourite || attachmentCount > 0 || extra != null) {
 		Surface(
 			shape = MaterialTheme.shapes.extraSmall,
-			color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), MaterialTheme.colorScheme.surface.toArgb(), 0.47f)),
+			color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), MaterialTheme.colorScheme.surface.toArgb(), 0.47f)).copy(alpha = containerAlpha),
 			contentColor = MaterialTheme.colorScheme.onSurface
 		) {
 			Row(
@@ -49,12 +53,7 @@ fun StateInfo(
 						tint = Color.LockClosedContainer,
 						modifier = Modifier.requiredSize(14.dp)
 					)
-					if (isFavourite || attachmentCount > 0) Text(
-						text = "·",
-						style = MaterialTheme.typography.bodySmall,
-						fontWeight = FontWeight.Bold,
-						modifier = Modifier.padding(horizontal = 2.dp)
-					)
+					if (isFavourite || attachmentCount > 0) DotSeparator()
 				}
 				if (isFavourite) {
 					Icon(
@@ -63,12 +62,7 @@ fun StateInfo(
 						tint = Color.FavouriteContainer.copy(alpha = 0.47f),
 						modifier = Modifier.requiredSize(14.dp)
 					)
-					if (attachmentCount > 0) Text(
-						text = "·",
-						style = MaterialTheme.typography.bodySmall,
-						fontWeight = FontWeight.Bold,
-						modifier = Modifier.padding(horizontal = 2.dp)
-					)
+					if (attachmentCount > 0) DotSeparator()
 				}
 				if (attachmentCount > 0) {
 					Icon(
@@ -85,6 +79,7 @@ fun StateInfo(
 						overflow = TextOverflow.Ellipsis,
 					)
 				}
+				if (extra != null) extra()
 			}
 		}
 	}

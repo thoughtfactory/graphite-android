@@ -62,7 +62,7 @@ import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
 import com.syncodec.graphite.presentation.tags.composable.bottomSheet.AddTagBottomSheet
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItemView
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.launch
 
@@ -119,7 +119,7 @@ fun TagsBottomSheet(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_tag),
 						contentDescription = "Tag",
-						modifier = Modifier.requiredSize(IconButtonSize),
+						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE),
 					)
 				},
 				trailingIcon = {
@@ -132,13 +132,13 @@ fun TagsBottomSheet(
 							Icon(
 								painter = painterResource(id = R.drawable.ic_fa_search),
 								contentDescription = "Search in all tags",
-								modifier = Modifier.requiredSize(IconButtonSize),
+								modifier = Modifier.requiredSize(ICON_BUTTON_SIZE),
 							)
 						} else {
 							Icon(
 								painter = painterResource(id = R.drawable.ic_fa_plus),
 								contentDescription = "Add a new tag",
-								modifier = Modifier.requiredSize(IconButtonSize),
+								modifier = Modifier.requiredSize(ICON_BUTTON_SIZE),
 							)
 						}
 					}
@@ -229,7 +229,7 @@ private fun AddNewTagItemView(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_plus),
 				contentDescription = "Add new tag",
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 			)
 			Spacer(modifier = Modifier.width(24.dp))
 			Text(

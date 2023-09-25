@@ -7,11 +7,12 @@ import com.syncodec.graphite.presentation.common.attachment.previewer.FilePrevie
 import com.syncodec.graphite.presentation.common.attachment.previewer.PreviewData
 import io.realm.kotlin.types.RealmUUID
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 
 object AttachmentCache {
 
-	private val attachmentThumbnailMap: MutableMap<RealmUUID, Pair<Int, PreviewData>> = mutableMapOf()
+	private val attachmentThumbnailMap: ConcurrentHashMap<RealmUUID, Pair<Int, PreviewData>> = ConcurrentHashMap()
 
 	suspend fun getAttachmentThumbnail(parentId: RealmUUID, hashCode: Int, context: Context): PreviewData? {
 
@@ -24,10 +25,10 @@ object AttachmentCache {
 			val previewDataMap = attachmentDir.listFiles()?.map { file -> FilePreviewer.getPreview(file = file, context = context) }
 
 			if (previewDataMap == null) {
-				Log.d("npr71", "getAttachmentThumbnail : $parentId : no attachment")
+//				Log.d("npr71", "getAttachmentThumbnail : $parentId : no attachment")
 				return null
 			} else {
-				Log.d("npr71", "getAttachmentThumbnail : $parentId : cache not found")
+//				Log.d("npr71", "getAttachmentThumbnail : $parentId : cache not found")
 
 				var newCacheData: PreviewData? = previewDataMap.filterIsInstance<PreviewData.Image>().firstOrNull()
 				if (newCacheData != null) {

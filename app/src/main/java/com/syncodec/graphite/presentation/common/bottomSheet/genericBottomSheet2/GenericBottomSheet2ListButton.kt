@@ -28,7 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 
 
 @Preview
@@ -60,7 +60,7 @@ fun GenericBottomSheetButton2ListButton(
 			painter = painterResource(id = icon),
 			contentDescription = contentDescription,
 			tint = iconColor,
-			modifier = Modifier.requiredSize(IconButtonSize)
+			modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
 		)
 
 		Spacer(modifier = Modifier.width(16.dp))

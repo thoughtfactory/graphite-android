@@ -32,7 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.IconButtonSize
+import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 
 
 @Preview
@@ -258,13 +258,13 @@ object SettingsButtonDefaults {
 	fun settingsButtonLeadingIcon(
 		icon: Int,
 		color: Color = MaterialTheme.colorScheme.onBackground,
-		size: Dp = IconButtonSize
+		size: Dp = ICON_BUTTON_SIZE
 	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size)
 
 	@Composable
 	fun settingsButtonTrailingIcon(
 		icon: Int = R.drawable.ic_fa_caret,
 		color: Color = MaterialTheme.colorScheme.onBackground,
-		size: Dp = IconButtonSize
+		size: Dp = ICON_BUTTON_SIZE
 	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size)
 }
