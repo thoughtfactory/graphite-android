@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,8 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun NoteList(
+	modifier: Modifier = Modifier,
+	lazyListState : LazyListState = rememberLazyListState(),
 	noteGroupList: RealmObjectGroupList<NoteObjectLite> = RealmObjectGroupList(),
 	tagList: List<TagObject> = listOf(),
 	isSelecting: Boolean = false,
@@ -45,13 +48,10 @@ fun NoteList(
 ) {
 	val sortOn1 by sortOn()
 
-	val lazyListState = rememberLazyListState()
-
 	LazyColumn(
 		state = lazyListState,
 		contentPadding = PaddingValues(horizontal = 8.dp),
-		modifier = Modifier
-			.fillMaxSize()
+		modifier = modifier
 			.scrollbar(
 				state = lazyListState,
 				horizontal = false,
@@ -117,6 +117,67 @@ fun NoteList(
 					)
 				}
 			}
+
+		item { Spacer(modifier = Modifier.height(96.dp)) }
+	}
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Preview
+@Composable
+fun NoteList(
+	modifier: Modifier = Modifier,
+	lazyListState : LazyListState = rememberLazyListState(),
+	noteList: List<NoteObjectLite> = listOf(),
+	tagList: List<TagObject> = listOf(),
+	isSelecting: Boolean = false,
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onClickNote: (RealmUUID) -> Unit = {},
+	onLongClickNote: (RealmUUID) -> Unit = {},
+) {
+	val sortOn1 by sortOn()
+
+	LazyColumn(
+		state = lazyListState,
+		contentPadding = PaddingValues(horizontal = 8.dp),
+		modifier = modifier
+			.scrollbar(
+				state = lazyListState,
+				horizontal = false,
+				thickness = 8.dp,
+				fixedKnobRatio = 0.13f,
+				knobColor = MaterialTheme.colorScheme.onBackground,
+				trackColor = Color.Transparent,
+			)
+	) {
+		items(
+			items = noteList,
+			key = { it.id.toString() },
+			contentType = { NoteObjectLite::class }
+		) { noteObjectLite ->
+			NoteListCard2(
+				id = noteObjectLite.id,
+				timestamp = when (sortOn1) {
+					SortOn.Title -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+					SortOn.Timestamp -> noteObjectLite.userTimestamp.timeStampToTime()
+					SortOn.Modified -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+					else -> noteObjectLite.userTimestamp.timeStampToPrettyFull()
+				},
+				title = noteObjectLite.title,
+				contentThumbnail = noteObjectLite.contentThumbnail,
+				address = noteObjectLite.address,
+				latLng = noteObjectLite.latLng,
+				isFavourite = noteObjectLite.isFavourite,
+				isLocked = noteObjectLite.isLocked,
+				tagList = tagList.filter { noteObjectLite.id in it.objectIdList }.map { it.toLite() },
+				selected = noteObjectLite.id in selectedIdList,
+				onClick = { onClickNote(noteObjectLite.id) },
+				onLongClick = { onLongClickNote(noteObjectLite.id) },
+				modifier = Modifier
+					.animateItemPlacement(tween(470))
+					.padding(2.dp)
+			)
+		}
 
 		item { Spacer(modifier = Modifier.height(96.dp)) }
 	}

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
@@ -75,10 +76,14 @@ fun TvBucketItemScreen(
 		onClickLock = onClickLock,
 	) {
 		Spacer(modifier = Modifier.height(12.dp))
+
 		BucketThumbnail(
+			key = tvData?.id,
 			thumbnail = thumbnail
 		)
+
 		Spacer(modifier = Modifier.height(24.dp))
+
 		MovieTitleView(
 			title = tvData?.name,
 			tagLine = tvData?.tagline,
@@ -144,6 +149,18 @@ fun TvBucketItemScreen(
 				GenericBottomSheetInfo2(
 					key = stringResource(id = R.string.homepage),
 					value = it,
+					suffix = {
+						OpenExternallyButton(
+							colors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onSurface)
+						) {
+							try {
+								context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it)))
+							} catch (e: Exception) {
+								if (BuildConfig.DEBUG) e.printStackTrace()
+								Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+							}
+						}
+					},
 					onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("https://www.themoviedb.org/tv/$it")) }
 				)
 			}

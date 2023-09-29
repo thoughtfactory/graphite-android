@@ -153,6 +153,7 @@
     <string name="toggle_favourite">Toggle favourite</string>
     <string name="toggle_lock">Toggle lock</string>
     <string name="thumbnail">Thumbnail</string>
+    <string name="location_marker">Location marker</string>
     <string name="pin">Pin</string>
     <string name="pin_to_notification_bar">Pin to notification bar</string>
     <string name="save">Save</string>

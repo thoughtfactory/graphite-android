@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.explorer.calendar
 
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.explorer.meta.AbstractExploreViewModel
 import kotlinx.coroutines.Dispatchers
@@ -17,11 +18,12 @@ import java.time.ZoneOffset
 
 
 @KoinViewModel
-class CalendarViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : AbstractExploreViewModel(repositoryStateFlow) {
+class CalendarViewModel(lockableRepo: LockableRepo) : AbstractExploreViewModel(lockableRepo) {
 
 	//	Map of date and list of notes
 	private val _chapterFilteredNoteListDateMap: MutableStateFlow<Map<LocalDate, List<NoteObjectLite>>> = MutableStateFlow(mapOf())
-	val chapterFilteredNoteListDateMap: StateFlow<Map<LocalDate, List<NoteObjectLite>>> = _chapterFilteredNoteListDateMap
+	private val _chapterFilteredNoteListDateCountMap: MutableStateFlow<Map<LocalDate, Int>> = MutableStateFlow(mapOf())
+	val chapterFilteredNoteListDateCountMap: StateFlow<Map<LocalDate, Int>> = _chapterFilteredNoteListDateCountMap
 
 	//	List of notes filtered for specific date
 	private val _contextFilteredNoteList: MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
@@ -39,10 +41,10 @@ class CalendarViewModel(repositoryStateFlow: MutableStateFlow<Repository.Compani
 		}
 
 		viewModelScope.launch(Dispatchers.Default) {
-			combine(this@CalendarViewModel.chapterFilteredNoteListDateMap, this@CalendarViewModel._selectedDate) { noteListMap1, selectedDate1 ->
-				Pair(noteListMap1, selectedDate1)
-			}.collectLatest { (noteListMap, date) ->
-				this@CalendarViewModel._contextFilteredNoteList.tryEmit(noteListMap[date] ?: listOf())
+			combine(this@CalendarViewModel._chapterFilteredNoteListDateMap, this@CalendarViewModel._selectedDate) { noteListMap1, selectedDate1 ->
+				noteListMap1[selectedDate1] ?: listOf()
+			}.collectLatest { noteList1 ->
+				this@CalendarViewModel._contextFilteredNoteList.tryEmit(noteList1)
 			}
 		}
 	}

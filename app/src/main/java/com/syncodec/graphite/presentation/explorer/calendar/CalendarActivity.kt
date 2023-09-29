@@ -27,13 +27,13 @@ class CalendarActivity : ComponentActivity() {
 
 				val chapterObject by viewModel.currentChapter.collectAsState()
 				val selectedDate by viewModel.selectedDate.collectAsState()
-				val chapterFilteredNoteListDayMap by viewModel.chapterFilteredNoteListDateMap.collectAsState()
+				val chapterFilteredNoteListDateCountMap by viewModel.chapterFilteredNoteListDateCountMap.collectAsState()
 				val contextFilteredNoteList by viewModel.contextFilteredNoteList.collectAsState()
 
 				CalendarScreen(
 					chapterObject = chapterObject,
 					selectedDate = selectedDate,
-					chapterFilteredNoteListDayMap = chapterFilteredNoteListDayMap,
+					noteListDateCountMap = chapterFilteredNoteListDateCountMap,
 					contextFilteredNoteList = contextFilteredNoteList,
 					onExploreChapter = { chapterId -> viewModel.loadChapter(chapterId = chapterId) },
 					onSelectDate = viewModel::onSelectDate,

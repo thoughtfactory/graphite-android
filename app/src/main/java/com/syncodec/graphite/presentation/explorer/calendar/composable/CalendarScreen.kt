@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
 fun CalendarScreen(
 	chapterObject: ChapterObjectLite? = null,
 	selectedDate : LocalDate = LocalDate.now(),
-	chapterFilteredNoteListDayMap: Map<LocalDate, List<NoteObjectLite>> = mapOf(),
+	noteListDateCountMap: Map<LocalDate, Int> = mapOf(),
 	contextFilteredNoteList: List<NoteObjectLite> = listOf(),
 	onSelectDate : (LocalDate) -> Unit = {},
 	onExploreChapter: (RealmUUID?) -> Unit = {},
@@ -34,7 +34,7 @@ fun CalendarScreen(
 	) {
 		CalendarView(
 			selectedDate = selectedDate,
-			noteListMap = chapterFilteredNoteListDayMap,
+			noteListDateCountMap = noteListDateCountMap,
 			onSelectDate = onSelectDate,
 			modifier = Modifier.fillMaxSize()
 		)

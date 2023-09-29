@@ -21,8 +21,8 @@ import io.realm.kotlin.types.RealmUUID
 @Composable
 fun BucketThumbnail(
 	modifier: Modifier = Modifier,
-	id : RealmUUID? = null,
-	thumbnail : Bitmap? = null,
+	key: String? = null,
+	thumbnail: Bitmap? = null,
 ) {
 	val context = LocalContext.current
 
@@ -31,8 +31,8 @@ fun BucketThumbnail(
 			.data(thumbnail)
 			.diskCachePolicy(CachePolicy.ENABLED)
 			.memoryCachePolicy(CachePolicy.ENABLED)
-			.diskCacheKey(id.toString())
-			.memoryCacheKey(id.toString())
+			.diskCacheKey(key = key)
+			.memoryCacheKey(key = key)
 			.crossfade(130)
 			.build(),
 		contentDescription = "Thumbnail",

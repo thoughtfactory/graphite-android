@@ -7,14 +7,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,15 +31,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.model.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
 import com.syncodec.graphite.di.repository.cache.AttachmentCache
+import com.syncodec.graphite.presentation.base.LocationContainer
 import com.syncodec.graphite.presentation.common.attachment.ImageAttachmentPreview
 import com.syncodec.graphite.presentation.common.attachment.PdfAttachmentPreview
 import com.syncodec.graphite.presentation.common.attachment.UnknownAttachmentPreview
@@ -79,8 +85,6 @@ fun NoteListCard2(
 
 	val contentColor by colors.contentColor(selected = selected)
 
-	val componentHeight = LocalComponentHeight.current
-
 	val attachmentCount = context.getAttachmentCountFromNoteId(parentId = id)
 
 	var previewData by remember { mutableStateOf<PreviewData?>(null) }
@@ -97,12 +101,10 @@ fun NoteListCard2(
 		colors = colors,
 		onClick = onClick,
 		onLongClick = onLongClick,
-		modifier = modifier.height(componentHeight)
+		modifier = modifier
 	) {
 		Column(
-			modifier = Modifier
-				.fillMaxHeight()
-				.padding(10.dp)
+			modifier = Modifier.padding(10.dp)
 		) {
 			Header(
 				timestamp = timestamp,
@@ -116,6 +118,10 @@ fun NoteListCard2(
 				textContent = contentThumbnail,
 				previewData = previewData,
 				tagList = tagList
+			)
+			LocationView(
+				latLng = latLng,
+				address = address,
 			)
 		}
 	}
@@ -160,7 +166,7 @@ private fun ContentPreview(
 	val componentHeight = LocalComponentHeight.current
 
 	Row(
-		modifier = Modifier
+		modifier = Modifier.height(componentHeight)
 	) {
 		Column(
 			modifier = Modifier.weight(1f)
@@ -179,7 +185,7 @@ private fun ContentPreview(
 			Spacer(modifier = Modifier.width(12.dp))
 			Surface(
 				shape = MaterialTheme.shapes.small,
-				modifier = Modifier.size(if (componentHeight < 144.dp) (componentHeight - 56.dp) else 88.dp),
+				modifier = Modifier.size(if (componentHeight < 108.dp) (componentHeight - 20.dp) else 88.dp),
 			) {
 				when (previewData) {
 					is PreviewData.Image -> ImageAttachmentPreview(previewData = previewData, blur = false)
@@ -227,6 +233,58 @@ private fun TagItemView(
 			color = contentColor,
 			modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
 		)
+	}
+}
+
+@Preview
+@Composable
+private fun LocationView(
+	latLng: LatLng? = null,
+	address: String? = null,
+) {
+	if (latLng != null || !address.isNullOrEmpty()) {
+		Column {
+			Spacer(modifier = Modifier.height(6.dp))
+			when {
+				!address.isNullOrEmpty() -> Row(
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_map_marker_dot_solid),
+						contentDescription = stringResource(id = R.string.location_marker),
+						tint = Color.LocationContainer.copy(alpha = 0.47f),
+						modifier = Modifier.requiredSize(12.dp)
+					)
+					Spacer(modifier = Modifier.width(4.dp))
+					Text(
+						text = address,
+						style = MaterialTheme.typography.labelMedium,
+						fontStyle = FontStyle.Italic,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+					)
+				}
+
+				latLng != null -> Row(
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_map_marker_dot),
+						contentDescription = stringResource(id = R.string.location_marker),
+						tint = Color.LocationContainer.copy(alpha = 0.47f),
+						modifier = Modifier.requiredSize(12.dp)
+					)
+					Spacer(modifier = Modifier.width(4.dp))
+					Text(
+						text = latLng.toString(),
+						style = MaterialTheme.typography.labelMedium,
+						fontStyle = FontStyle.Italic,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+					)
+				}
+			}
+		}
 	}
 }
 

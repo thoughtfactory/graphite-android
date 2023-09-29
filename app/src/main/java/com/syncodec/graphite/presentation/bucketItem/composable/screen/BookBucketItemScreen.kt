@@ -76,7 +76,7 @@ fun BookBucketItemScreen(
 	) {
 		Spacer(modifier = Modifier.height(12.dp))
 		BucketThumbnail(
-			id = bucketItemObject?.id,
+			key = bookData.key,
 			thumbnail = thumbnail
 		)
 		Spacer(modifier = Modifier.height(24.dp))

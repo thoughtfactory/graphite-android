@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.explorer.atlas
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLngBounds
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.explorer.meta.AbstractExploreViewModel
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +16,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class AtlasViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : AbstractExploreViewModel(repositoryStateFlow) {
+class AtlasViewModel(lockableRepo: LockableRepo) : AbstractExploreViewModel(lockableRepo) {
 
 	private val _contextFilteredNoteList: MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
 	val contextFilteredNoteList: StateFlow<List<NoteObjectLite>> = _contextFilteredNoteList

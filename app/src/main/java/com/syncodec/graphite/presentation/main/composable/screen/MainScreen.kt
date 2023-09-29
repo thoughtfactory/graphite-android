@@ -112,7 +112,12 @@ fun MainScreen(
 					onUnSelectAll = { selectedIdList = setOf() },
 				)
 
-				BottomNavigationItem.Calendar -> CalendarScreen()
+				BottomNavigationItem.Calendar -> CalendarScreen(
+					isSelecting = isSelecting,
+					selectedIdList = selectedIdList,
+					onSelect = ::onSelect,
+					onUnSelectAll = { selectedIdList = setOf() },
+				)
 				BottomNavigationItem.Atlas -> AtlasScreen()
 			}
 		}

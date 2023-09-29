@@ -430,18 +430,28 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	 */
 	fun getNoteFromIdAsFlow(id: RealmUUID?): Flow<NoteObject?> = realm.query(NoteObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
 
-	fun getAllNoteAsFlow(): Flow<RealmResults<NoteObject>> = realm.query(NoteObject::class).asFlow().map { it.list }
+	fun getAllNoteAsFlow(): Flow<List<NoteObject>> = realm.query(NoteObject::class)
+		.asFlow()
+		.extractList()
+		.combine(getDefaultChapterIdAsFlow()) { noteList1, defaultChapterId1 -> noteList1.filter { it.parentId == defaultChapterId1 } }
+		.filterLocked(isLockedGetter = NoteObject::isLocked)
+
 
 	fun getAllNoteLiteAsFlow(): Flow<List<NoteObjectLite>> = realm.let { it.query(NoteObject::class).asFlow().map { it.list.map { it.toLite() } } }
 
-	fun getDefaultNoteLiteMapAsFlow(): Flow<List<NoteObjectLite>> = realm.let { it.query(NoteObject::class).asFlow().map { it.list.map { it.toLite() } } }
-
-	fun getDefaultNoteLiteMapAsFlow2(): Flow<RealmObjectGroupList<NoteObjectLite>> = realm.query(NoteObject::class)
+	fun getAllNoteLiteAsFlow2(): Flow<List<NoteObjectLite>> = realm.query(NoteObject::class)
 		.asFlow()
+		.extractList()
 		.toLite { toLite() }
 		.combine(getDefaultChapterIdAsFlow()) { noteList1, defaultChapterId1 -> noteList1.filter { it.parentId == defaultChapterId1 } }
 		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
-//					.mergeTag(idGetter = NoteObjectLite::id) { noteObjectLite, tagObjectList -> noteObjectLite.copy(tagList = tagObjectList) }
+
+	fun getDefaultNoteLiteMapAsFlow2(): Flow<RealmObjectGroupList<NoteObjectLite>> = realm.query(NoteObject::class)
+		.asFlow()
+		.extractList()
+		.toLite { toLite() }
+		.combine(getDefaultChapterIdAsFlow()) { noteList1, defaultChapterId1 -> noteList1.filter { it.parentId == defaultChapterId1 } }
+		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
 		.applyGroupOn(
 			titleGetter = NoteObjectLite::title,
 			timestampGetter = NoteObjectLite::userTimestamp,
@@ -453,14 +463,13 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 
 	private fun <T : BaseRealmObject> Flow<ResultsChange<T>>.extractList(): Flow<List<T>> = this.map { it.list.toList() }
 
-	private fun <T : BaseRealmObject, R> Flow<ResultsChange<T>>.toLite(converter: T.() -> R): Flow<List<R>> = this.map { it.list.toList().map { it.converter() } }
+	private fun <T : BaseRealmObject, R> Flow<List<T>>.toLite(converter: T.() -> R): Flow<List<R>> = this.map { it.map(converter) }
 
 	/**
 	 * Filters locked objects from list of objects. Uses [isUnlocked] internally
 	 * @author pushpull
 	 * @since 3.0.0
 	 * @param isLockedGetter Getter of locked property
-	 * @sample getDefaultNoteLiteMapAsFlow
 	 */
 	private fun <T> Flow<List<T>>.filterLocked(isLockedGetter: KProperty1<T, Boolean>): Flow<List<T>> = this.combine(isUnlocked) { objectList, isUnlocked1 -> if (isUnlocked1) objectList else objectList.filter { !isLockedGetter.get(it) } }
 
@@ -642,6 +651,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	 */
 	fun getNoteWithParentIdAsFlow(parentId: RealmUUID?): Flow<List<NoteObjectLite>> = realm.query(NoteObject::class, "parentId = $0", parentId)
 		.asFlow()
+		.extractList()
 		.toLite { toLite() }
 		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
 		.applySortOnBy(
@@ -723,6 +733,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 
 	fun getAllBucketLiteAsFlow(): Flow<List<BucketObjectLite>> = realm.query(BucketObject::class)
 		.asFlow()
+		.extractList()
 		.toLite { toLite() }
 		.filterLocked(isLockedGetter = BucketObjectLite::isLocked)
 		.mergeBucketSize()

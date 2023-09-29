@@ -7,6 +7,7 @@ import com.syncodec.graphite.di.model.KitKatContent
 import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class SearchViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -43,7 +44,7 @@ class SearchViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}

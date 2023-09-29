@@ -11,7 +11,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.ShareButton
-import com.syncodec.graphite.presentation.common.button.EditButton
+import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.EditButton
 import com.syncodec.graphite.presentation.common.row.SameHeightRowGrid
 
 

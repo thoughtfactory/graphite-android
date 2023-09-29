@@ -34,6 +34,7 @@ import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.group.isAll
+import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
@@ -62,7 +63,7 @@ fun NoteScreen(
 	val context = LocalContext.current
 	val viewModel: NoteScreenViewModel = koinViewModel()
 
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+	val dataStoreInstance = LocalAppDataStore.current
 	val viewType by dataStoreInstance.getViewType.collectAsState(null)
 
 	val defaultChapterId by viewModel.defaultChapterId.collectAsState()
@@ -178,6 +179,7 @@ fun NoteScreen(
 						selectedIdList = selectedIdList,
 						onClickNote = ::onClickNote,
 						onLongClickNote = { onSelect(it) },
+						modifier = Modifier.fillMaxSize(),
 					)
 
 					ViewType.Grid -> NoteGrid(
@@ -187,6 +189,7 @@ fun NoteScreen(
 						selectedIdList = selectedIdList,
 						onClickNote = ::onClickNote,
 						onLongClickNote = { onSelect(it) },
+						modifier = Modifier.fillMaxSize(),
 					)
 
 					else -> LoadingView()

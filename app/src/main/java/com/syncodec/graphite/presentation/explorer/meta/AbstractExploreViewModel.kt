@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
-abstract class AbstractExploreViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+abstract class AbstractExploreViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -31,7 +32,7 @@ abstract class AbstractExploreViewModel(repositoryStateFlow: MutableStateFlow<Re
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collect { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collect { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -48,7 +49,7 @@ abstract class AbstractExploreViewModel(repositoryStateFlow: MutableStateFlow<Re
 //		Observe notes
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
-				repository1?.getAllNoteLiteAsFlow()?.collectLatest { noteObjectLiteList ->
+				repository1?.getAllNoteLiteAsFlow2()?.collectLatest { noteObjectLiteList ->
 					this@AbstractExploreViewModel._noteList.tryEmit(noteObjectLiteList)
 				}
 			}

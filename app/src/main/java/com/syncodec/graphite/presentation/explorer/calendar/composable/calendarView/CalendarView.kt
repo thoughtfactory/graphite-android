@@ -14,7 +14,6 @@ import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
-import com.syncodec.graphite.di.model.NoteObjectLite
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -24,7 +23,7 @@ import java.time.YearMonth
 fun CalendarView(
 	modifier: Modifier = Modifier,
 	selectedDate: LocalDate = LocalDate.now(),
-	noteListMap: Map<LocalDate, List<NoteObjectLite>> = mapOf(),
+	noteListDateCountMap: Map<LocalDate, Int> = mapOf(),
 	onSelectDate: (LocalDate) -> Unit = {}
 ) {
 	val calendarState = rememberCalendarState(
@@ -46,12 +45,11 @@ fun CalendarView(
 		VerticalCalendar(
 			modifier = Modifier.weight(1f),
 			dayContent = { day ->
-				val noteMap = noteListMap[day.date] ?: listOf()
 				if (day.position == DayPosition.MonthDate) {
 					Day(
 						day = day,
 						isSelected = day.date == selectedDate,
-						itemCount = noteMap.size,
+						itemCount = noteListDateCountMap[day.date] ?: 0,
 						onClick = { onSelectDate(day.date) }
 					)
 				}
