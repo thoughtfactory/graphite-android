@@ -8,6 +8,7 @@ import com.jakewharton.processphoenix.ProcessPhoenix
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.model.BaseObject
 import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketObject
 import com.syncodec.graphite.di.model.BucketObjectLite
 import com.syncodec.graphite.di.model.ChapterObject
@@ -39,20 +40,24 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.notifications.SingleQueryChange
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -311,6 +316,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	inline fun <reified T : TypedRealmObject> getAllObjectOfType(includeLocked: Boolean): List<T> = if (includeLocked) realm.query<T>().find().map { it } else realm.query<T>("isLocked == $0", false).find().map { it }
 
 	inline fun <reified T : TypedRealmObject> getObjectFromId(id: RealmUUID?): T? = realm.query(T::class, "id == $0 ", id).first().find()
+	inline fun <reified T : TypedRealmObject> getObjectFromIdAsFlow(id: RealmUUID?): Flow<T?> = realm.query(T::class, "id == $0 ", id).first().asFlow().extractObject()
 
 	suspend inline fun <reified T : TypedRealmObject> setObjectFromId(id: RealmUUID?, crossinline write: T.() -> Unit) = realm.write {
 		query(T::class, "id == $0 ", id).first().find()?.write()
@@ -462,6 +468,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 
 
 	private fun <T : BaseRealmObject> Flow<ResultsChange<T>>.extractList(): Flow<List<T>> = this.map { it.list.toList() }
+	fun <T : BaseRealmObject> Flow<SingleQueryChange<T>>.extractObject(): Flow<T?> = this.map { it.obj }
 
 	private fun <T : BaseRealmObject, R> Flow<List<T>>.toLite(converter: T.() -> R): Flow<List<R>> = this.map { it.map(converter) }
 
@@ -673,7 +680,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	fun getAllNote(includeLocked: Boolean = false): List<NoteObject> = if (includeLocked) realm.query<NoteObject>().find().map { it } else realm.query<NoteObject>("isLocked == $0", false).find().map { it }
 
 	fun putBucket(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true, googleDriveId: String? = null) = realm.writeBlocking {
-		val storedBucketObject = getBucketFromId(bucketObject.id)
+		val storedBucketObject = getObjectFromId<BucketObject>(id = bucketObject.id)
 		storedBucketObject?.let {
 			findLatest(it)?.let { latestBucketItemObject ->
 				latestBucketItemObject.createdTimestamp = bucketObject.createdTimestamp
@@ -749,7 +756,15 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 		bucketList1.map { it.copy(bucketItemCount = bucketSizeMap1[it.id] ?: 0) }
 	}
 
+	/**
+	 * Order of bucket list as stored in [BaseObject.bucketIdOrderList]
+	 * @author pushpull
+	 * @since 3.0.0
+	 * @return Flow of list of [BucketObject.id] of [BucketObject]
+	 */
 	private fun getBucketOrderAsFlow(): Flow<List<RealmUUID>> = getBaseObjectAsFlow().map { it?.bucketIdOrderList ?: listOf() }
+
+	private fun getBucketItemOrderAsFlow(parentId: RealmUUID): Flow<List<RealmUUID>> = getObjectFromIdAsFlow<BucketObject>(id = parentId).map { it?.bucketItemOrderList ?: listOf() }
 
 	/**
 	 * Get all buckets as a list
@@ -760,8 +775,6 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	fun getAllBucket(): List<BucketObject> = realm.query(BucketObject::class).find().map { it }
 
 	fun getBucketAsFlow(id: RealmUUID): Flow<BucketObject?> = realm.query(BucketObject::class, "id == $0 ", id).first().asFlow().map { it.obj }
-
-	fun getBucketFromId(id: RealmUUID): BucketObject? = realm.query(BucketObject::class, "id == $0 ", id).first().find()
 
 	fun getAllBucketSizeAsFlow(): Flow<Map<RealmUUID?, Int>> = realm.query(BucketItemObject::class).asFlow().combine(isUnlocked) { bucketItemList1, isAuthenticated1 ->
 		if (isAuthenticated1) bucketItemList1.list else bucketItemList1.list.filter { !it.isLocked }
@@ -783,7 +796,34 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	 * @param parentId RealmUUID of the parent bucket.
 	 * @return Flow of RealmResults of BucketItemObject with provided parent id.
 	 */
-	fun getBucketItemWithParentIdAsFlow(parentId: RealmUUID): Flow<RealmResults<BucketItemObject>> = realm.query(BucketItemObject::class, "parentId == $0 ", parentId).asFlow().map { it.list }
+	fun getBucketItemListFromParentIdAsFlow(parentId: RealmUUID): Flow<List<BucketItemObject>> = realm
+		.query(BucketItemObject::class, "parentId == $0 ", parentId)
+		.asFlow()
+		.extractList()
+		.filterLocked(isLockedGetter = BucketItemObject::isLocked)
+		.applySortOnBy(
+			idGetter = BucketItemObject::id,
+			titleGetter = BucketItemObject::title,
+			timestampGetter = BucketItemObject::createdTimestamp,
+			modifiedTimestampGetter = BucketItemObject::modifiedTimestamp,
+			customOrderFlow = getBucketItemOrderAsFlow(parentId = parentId),
+		)
+
+	@OptIn(ExperimentalCoroutinesApi::class)
+	fun getBucketItemListGroupFromParentIdAsFlow(parentId: RealmUUID): Flow<Map<BucketItemState?, List<BucketItemObject>>> = realm
+		.query(BucketItemObject::class, "parentId == $0 ", parentId)
+		.asFlow()
+		.extractList()
+		.filterLocked(isLockedGetter = BucketItemObject::isLocked)
+		.applySortOnBy(
+			idGetter = BucketItemObject::id,
+			titleGetter = BucketItemObject::title,
+			timestampGetter = BucketItemObject::createdTimestamp,
+			modifiedTimestampGetter = BucketItemObject::modifiedTimestamp,
+			customOrderFlow = getBucketItemOrderAsFlow(parentId = parentId),
+		)
+		.mapLatest { bucketItemObjectList -> bucketItemObjectList.groupBy { it.state }.mapKeys { mapEntry -> BucketItemState.entries.find { it.name == mapEntry.key } } }
+
 
 	fun getBucketItemWithParentId(parentId: RealmUUID?): List<BucketItemObject> = realm.query(BucketItemObject::class, "parentId == $0 ", parentId).find().map { it }
 
@@ -877,7 +917,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	/**
 	 * Deletes [NoteObject], [ChapterObject], [BucketItemObject], [BucketObject] or [TagObject]
 	 *
-	 * [NoteObject] will delete all associated [AttachmentObject]
+	 * [NoteObject] will delete all associated attachments
 	 *
 	 * [ChapterObject] will delete all [NoteObject]s with [ChapterObject.id] as [NoteObject.parentId] and [ChapterObject]s with [ChapterObject.parentId] as [ChapterObject.id]
 	 *
@@ -890,7 +930,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	 * @param keepHistory if true, id will be added to [BaseObject.deletedObjectSet]
 	 */
 	private fun delete(id: RealmUUID, keepHistory: Boolean) {
-		getNoteFromId(id)?.let {
+		getObjectFromId<NoteObject>(id = id)?.let {
 			deleteAttachment(attachmentRepository.getAttachmentFromNote(it.id), keepHistory)
 			attachmentRepository.delete(it.id)
 			realm.writeBlocking {
@@ -898,7 +938,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 				findLatest(it)?.let { delete(it) }
 			}
 		}
-		getChapterFromId(id)?.let {
+		getObjectFromId<ChapterObject>(id = id)?.let {
 			delete(getChapterWithParentId(id).map { it.id }, keepHistory)
 			delete(getNoteWithParentId(id).map { it.id }, keepHistory)
 			realm.writeBlocking {
@@ -906,20 +946,20 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 				findLatest(it)?.let { delete(it) }
 			}
 		}
-		getBucketItemFromId(id)?.let {
+		getObjectFromId<BucketItemObject>(id = id)?.let {
 			realm.writeBlocking {
 				if (keepHistory) updateDeleteHistory(id, BucketItemObject::class.simpleName)
 				findLatest(it)?.let { delete(it) }
 			}
 		}
-		getBucketFromId(id)?.let {
+		getObjectFromId<BucketObject>(id = id)?.let {
 			delete(getBucketItemWithParentId(id).map { it.id }, keepHistory)
 			realm.writeBlocking {
 				if (keepHistory) updateDeleteHistory(id, BucketObject::class.simpleName)
 				findLatest(it)?.let { delete(it) }
 			}
 		}
-		getTagFromId(id)?.let {
+		getObjectFromId<TagObject>(id = id)?.let {
 			realm.writeBlocking {
 				if (keepHistory) updateDeleteHistory(id, TagObject::class.simpleName)
 				findLatest(it)?.let { delete(it) }

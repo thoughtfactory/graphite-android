@@ -7,8 +7,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.di.cloud.dropbox.DBox
@@ -45,6 +47,7 @@ fun MainScreen(
 	val context = LocalContext.current
 
 	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
+	var currentScreen by rememberSaveable { mutableIntStateOf(0) }
 	var currentComponentType: ComponentType by remember { mutableStateOf(ComponentType.Note) }
 
 	val bottomSheetState = rememberModalBottomSheetState()
@@ -60,6 +63,7 @@ fun MainScreen(
 		}
 	}
 
+	BackHandler(enabled = currentScreen != 0) { currentScreen = 0 }
 	BackHandler(enabled = currentRoute != BottomNavigationItem.Home) { currentRoute = BottomNavigationItem.Home }
 	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = setOf() }
 
@@ -106,8 +110,10 @@ fun MainScreen(
 		) {
 			when (it) {
 				BottomNavigationItem.Home -> HomeScreen(
+					currentScreen = currentScreen,
 					isSelecting = isSelecting,
 					selectedIdList = selectedIdList,
+					onChangeScreen = { currentScreen = it },
 					onSelect = ::onSelect,
 					onUnSelectAll = { selectedIdList = setOf() },
 				)
@@ -118,7 +124,13 @@ fun MainScreen(
 					onSelect = ::onSelect,
 					onUnSelectAll = { selectedIdList = setOf() },
 				)
-				BottomNavigationItem.Atlas -> AtlasScreen()
+
+				BottomNavigationItem.Atlas -> AtlasScreen(
+					isSelecting = isSelecting,
+					selectedIdList = selectedIdList,
+					onSelect = ::onSelect,
+					onUnSelectAll = { selectedIdList = setOf() },
+				)
 			}
 		}
 

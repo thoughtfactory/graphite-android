@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -19,13 +20,11 @@ fun NoteFloatingActionButton(
 	onClick: () -> Unit = {},
 ) {
 	ExtendedFloatingActionButton(
-		text = {
-			Text(text = "New Note")
-		},
+		text = { Text(text = stringResource(id = R.string.new_note)) },
 		icon = {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_pen),
-				contentDescription = "New note",
+				contentDescription = stringResource(id = R.string.new_note),
 				modifier = Modifier.requiredSize(16.dp)
 			)
 		},
@@ -41,13 +40,11 @@ fun BucketFloatingActionButton(
 	onClick: () -> Unit = {},
 ) {
 	ExtendedFloatingActionButton(
-		text = {
-			Text(text = "New List")
-		},
+		text = { Text(text = stringResource(id = R.string.new_list)) },
 		icon = {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_bucket_list),
-				contentDescription = "New bucket",
+				contentDescription = stringResource(id = R.string.new_list),
 				modifier = Modifier.requiredSize(16.dp)
 			)
 		},
@@ -63,13 +60,11 @@ fun NotebookFloatingActionButton(
 	onClick: () -> Unit = {},
 ) {
 	ExtendedFloatingActionButton(
-		text = {
-			Text(text = "New Notebook")
-		},
+		text = { Text(text = stringResource(id = R.string.new_notebook)) },
 		icon = {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_notebook),
-				contentDescription = "New notebook",
+				contentDescription = stringResource(id = R.string.new_notebook),
 				modifier = Modifier.requiredSize(16.dp)
 			)
 		},

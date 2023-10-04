@@ -63,7 +63,7 @@ fun CollapsedTopBar(
 	chapterPath: List<ChapterObjectLite> = listOf(),
 	defaultChapterId: RealmUUID? = null,
 	selectedTab: Int = 0,
-	isCollapsed: Boolean,
+	isCollapsed: Boolean = false,
 	isSelecting: Boolean = false,
 	onContainerColor: Color = MaterialTheme.colorScheme.onBackground,
 	onClickFavourite: () -> Unit = {},
@@ -88,7 +88,12 @@ fun CollapsedTopBar(
 		else -> Color.Transparent
 	}
 
-	val contentColor = if (isCollapsed) MaterialTheme.colorScheme.onBackground else onContainerColor
+	val contentColor = when {
+		isCollapsed -> MaterialTheme.colorScheme.onBackground
+		chapterColor == null -> Color.White
+		isDarkTheme -> Color.White
+		else -> chapterColor.getInverseBWColor()
+	}
 
 	Column(
 		modifier = modifier.fillMaxWidth()
@@ -183,8 +188,8 @@ fun CollapsedTopBar(
 @Composable
 fun ExpandedTopBar(
 	chapterTitle: String? = null,
-	chapterDescription : String? = null,
-	containerColor: Color? = null,
+	chapterDescription: String? = null,
+	chapterColor: Color? = null,
 	bitmap: Bitmap? = null,
 	defaultChapterId: RealmUUID? = null,
 	chapterPath: List<ChapterObjectLite> = listOf(),
@@ -197,9 +202,18 @@ fun ExpandedTopBar(
 
 	val isDarkTheme = LocalIsDarkTheme.current
 
-	val containerColor1 by animateColorAsState(
-		targetValue = (if (isDarkTheme) containerColor?.copy(alpha = 0.47f) else containerColor) ?: MaterialTheme.colorScheme.background,
-		label = "animateContainerColor"
+	val containerColor by animateColorAsState(
+		targetValue = (if (isDarkTheme) chapterColor?.copy(alpha = 0.47f) else chapterColor) ?: MaterialTheme.colorScheme.background,
+		label = "containerColor_animation"
+	)
+	val contentColor by animateColorAsState(
+		targetValue = when {
+			isDarkTheme -> Color.White
+			// If thumbnail is available
+			chapterColor == null -> Color.White
+			else -> chapterColor.getInverseBWColor()
+		},
+		label = "contentColor_animation"
 	)
 
 	Column(
@@ -223,7 +237,7 @@ fun ExpandedTopBar(
 					Box(
 						modifier = Modifier
 							.fillMaxSize()
-							.background(containerColor1)
+							.background(containerColor)
 					)
 				},
 				contentDescription = null,
@@ -245,7 +259,7 @@ fun ExpandedTopBar(
 					text = chapterTitle ?: stringResource(id = R.string.untitled),
 					style = MaterialTheme.typography.headlineLarge,
 					fontStyle = if (chapterTitle.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
-					color = if (bitmap == null) containerColor1.getInverseBWColor() else Color.White,
+					color = contentColor,
 				)
 
 				chapterDescription?.let {
@@ -253,7 +267,7 @@ fun ExpandedTopBar(
 					Text(
 						text = it,
 						style = MaterialTheme.typography.bodySmall,
-						color = if (bitmap == null) containerColor1.getInverseBWColor() else Color.White,
+						color = contentColor,
 						modifier = Modifier.padding(start = 2.dp)
 					)
 				}

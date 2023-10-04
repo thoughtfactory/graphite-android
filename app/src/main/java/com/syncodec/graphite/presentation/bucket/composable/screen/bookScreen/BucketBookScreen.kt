@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.AddBookBottomSheet
@@ -71,8 +72,8 @@ fun BucketBookScreen(
 	val appDataStore = LocalAppDataStore.current
 	val viewType by appDataStore.getViewType.collectAsState(initial = null)
 
-	val bucketId by viewModel.id.collectAsState()
-	val bucketItemList by viewModel.orderedBucketItemList.collectAsState()
+	val bucketId by viewModel.bucketId.collectAsState()
+	val bucketItemList = listOf<BucketItemObject>()
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isAddBookBottomSheetVisible by rememberSaveable { mutableStateOf(false) }

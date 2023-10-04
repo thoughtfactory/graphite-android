@@ -12,6 +12,8 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.LatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -54,16 +56,15 @@ object Location {
 				.addOnSuccessListener { location ->
 					callback(LocationData.SuccessOnlyLatLng(LatLng(location.latitude, location.longitude)))
 					try {
-						context.reverseGeocode(
+						reverseGeocode(
+							context = context,
 							latitude = location.latitude,
 							longitude = location.longitude,
 							onAddressAvailable = { address ->
 								locationAddressFilter(address = address)?.let { callback(LocationData.Success(LatLng(location.latitude, location.longitude), it)) }
 							},
-							onIoException = {
-							},
-							onException = {
-							}
+							onIoException = {},
+							onException = {}
 						)
 					} catch (_: Exception) {
 						callback(LocationData.Error(message = "Unknown error"))
@@ -78,11 +79,11 @@ object Location {
 	@WorkerThread
 	fun reverseGeocode(
 		context: Context,
-		latitude : Double,
-		longitude : Double,
-		onAddressAvailable : (Address?) -> Unit,
-		onIoException : () -> Unit = {},
-		onException : () -> Unit = {}
+		latitude: Double,
+		longitude: Double,
+		onAddressAvailable: (Address?) -> Unit,
+		onIoException: () -> Unit = {},
+		onException: () -> Unit = {}
 	) {
 		try {
 			val geocoder = Geocoder(context, Locale.getDefault())
@@ -91,17 +92,19 @@ object Location {
 					onAddressAvailable(addresses.getOrNull(0))
 				}
 			} else {
-//			Deprecation is handled in upper block
+//			    Deprecation is handled in upper block
 				val addresses = geocoder.getFromLocation(latitude, longitude, 1)
 				onAddressAvailable(addresses?.firstOrNull())
 			}
 
-		} catch (exception : IOException) {
+		} catch (e: IOException) {
+			if (BuildConfig.DEBUG) e.printStackTrace()
 			onIoException()
-		} catch (exception : Exception) {
+		} catch (e: Exception) {
+			if (BuildConfig.DEBUG) e.printStackTrace()
 			onException()
 		}
 	}
 
-
+	fun getMapStyle(isDarkTheme: Boolean): Int = if (isDarkTheme) R.raw.map_style_night_1 else R.raw.map_style_day_1
 }

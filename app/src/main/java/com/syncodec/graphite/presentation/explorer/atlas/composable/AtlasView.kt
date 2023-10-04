@@ -11,18 +11,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -40,9 +39,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
-import com.syncodec.graphite.utils.GoogleMapUtil
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import io.realm.kotlin.types.RealmUUID
+import com.syncodec.graphite.utils.Location
 
 
 @OptIn(MapsComposeExperimentalApi::class)
@@ -51,11 +48,12 @@ import io.realm.kotlin.types.RealmUUID
 fun AtlasView2(
 	modifier: Modifier = Modifier,
 	noteList: List<NoteObjectLite> = listOf(),
-	onClickNote: (RealmUUID) -> Unit = {},
 	onUpdateCameraBound: (LatLngBounds?) -> Unit = {}
 ) {
 	val context = LocalContext.current
 	val isDarkTheme = LocalIsDarkTheme.current
+
+	val clusteringList by remember(noteList) { derivedStateOf { noteList.mapNotNull { note -> note.latLng?.toGLatLng()?.let { AtlasNoteClusterItem(note = note, latLng = it, itemTitle = note.title) } } } }
 
 	val mapUiSettings by remember {
 		mutableStateOf(
@@ -81,7 +79,7 @@ fun AtlasView2(
 				isMyLocationEnabled = false,
 				isTrafficEnabled = false,
 				latLngBoundsForCameraTarget = null,
-				mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, GoogleMapUtil.getMapStyle(isDarkTheme)),
+				mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, Location.getMapStyle(isDarkTheme)),
 				mapType = MapType.NORMAL,
 				maxZoomPreference = 18f,
 				minZoomPreference = 1f,
@@ -104,69 +102,42 @@ fun AtlasView2(
 		uiSettings = mapUiSettings,
 		modifier = modifier,
 	) {
-//		Clustering(
-//			items = noteList.mapNotNull { note -> note.latLng?.toGLatLng()?.let { AtlasNoteClusterItem(note = note, latLng = it, itemTitle = note.title) } },
-//			clusterContent = { cluster: Cluster<AtlasNoteClusterItem> ->
-//				val bitmap = cluster
-//					.items
-//					.firstNotNullOfOrNull { it.note.thumbnail?.decodeBase64ToBitmap() }
-//				Box(
-//					modifier = Modifier.size(52.dp)
-//				) {
-//					bitmap?.let { bitmap ->
-//						Image(
-//							painter = rememberAsyncImagePainter(bitmap),
-//							contentDescription = null,
-//							contentScale = ContentScale.Crop,
-//							modifier = Modifier
-//								.align(Alignment.Center)
-//								.padding(4.dp)
-//								.clip(MaterialTheme.shapes.small),
-//						)
-//					} ?: Image(
-//						painter = painterResource(id = R.drawable.ic_note_cluster),
-//						contentDescription = null,
-//						modifier = Modifier
-//							.align(Alignment.Center)
-//							.padding(2.dp),
-//					)
-//					Text(
-//						text = cluster.size.toString(),
-//						color = MaterialTheme.colorScheme.onSurface,
-//						style = MaterialTheme.typography.labelMedium,
-//						modifier = Modifier
-//							.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp), MaterialTheme.shapes.extraSmall)
-//							.requiredSize(48.dp)
-//							.padding(4.dp, 2.dp)
-//							.align(Alignment.TopEnd)
-//					)
-//				}
-//			},
-//			clusterItemContent = {
-//				Box(
-//					modifier = Modifier.size(52.dp)
-//				) {
-//					it.note.thumbnail?.decodeBase64ToBitmap()?.let { bitmap ->
-//						Image(
-//							painter = rememberAsyncImagePainter(bitmap),
-//							contentDescription = null,
-//							contentScale = ContentScale.Crop,
-//							modifier = Modifier
-//								.align(Alignment.Center)
-//								.padding(2.dp)
-//								.clip(MaterialTheme.shapes.small),
-//						)
-//					} ?: Image(
-//						painter = painterResource(id = R.drawable.ic_note_cluster),
-//						contentDescription = null,
-//						modifier = Modifier
-//							.align(Alignment.Center)
-//							.requiredSize(48.dp)
-//							.padding(2.dp)
-//					)
-//				}
-//			}
-//		)
+		Clustering(
+			items = clusteringList,
+			clusterContent = { cluster: Cluster<AtlasNoteClusterItem> ->
+				Box(
+					modifier = Modifier.size(64.dp)
+				) {
+					Image(
+						painter = painterResource(id = R.drawable.ic_map_note),
+						contentDescription = null,
+						modifier = Modifier
+							.align(Alignment.Center)
+							.requiredSize(64.dp)
+							.padding(4.dp),
+					)
+					Text(
+						text = cluster.size.toString(),
+						color = MaterialTheme.colorScheme.onSurface,
+						style = MaterialTheme.typography.labelMedium,
+						fontWeight = FontWeight.Bold,
+						modifier = Modifier
+							.background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp), MaterialTheme.shapes.extraSmall)
+							.padding(6.dp, 4.dp)
+							.align(Alignment.BottomEnd)
+					)
+				}
+			},
+			clusterItemContent = {
+				Image(
+					painter = painterResource(id = R.drawable.ic_map_note),
+					contentDescription = null,
+					modifier = Modifier
+						.requiredSize(64.dp)
+						.padding(4.dp)
+				)
+			}
+		)
 	}
 }
 
@@ -178,4 +149,5 @@ private class AtlasNoteClusterItem(
 	override fun getPosition(): LatLng = latLng
 	override fun getTitle(): String? = itemTitle
 	override fun getSnippet(): String? = null
+	override fun getZIndex(): Float = 0f
 }

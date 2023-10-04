@@ -50,7 +50,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
-import com.syncodec.graphite.utils.GoogleMapUtil
+import com.syncodec.graphite.utils.Location
 import com.syncodec.graphite.utils.LocationData
 
 
@@ -118,7 +118,7 @@ fun ViewerLocationBottomSheet(
 					isMyLocationEnabled = false,
 					isTrafficEnabled = false,
 					latLngBoundsForCameraTarget = null,
-					mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, GoogleMapUtil.getMapStyle(isDarkTheme)),
+					mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, Location.getMapStyle(isDarkTheme)),
 					mapType = MapType.NORMAL,
 					maxZoomPreference = 16f,
 					minZoomPreference = 16f,
@@ -253,7 +253,7 @@ private fun LocationSuccess(
 			isMyLocationEnabled = false,
 			isTrafficEnabled = false,
 			latLngBoundsForCameraTarget = null,
-			mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, GoogleMapUtil.getMapStyle(isDarkTheme)),
+			mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, Location.getMapStyle(isDarkTheme)),
 			mapType = MapType.NORMAL,
 			maxZoomPreference = 16f,
 			minZoomPreference = 16f,

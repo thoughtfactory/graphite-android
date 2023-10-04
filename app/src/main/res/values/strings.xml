@@ -18,6 +18,7 @@
     <!--    Bucket-->
     <string name="bucket">Bucket</string>
     <string name="bucket_item">Bucket item</string>
+    <string name="new_list">New list</string>
     <string name="todo">Todo</string>
     <string name="to_do">To do</string>
     <string name="book">Book</string>
@@ -54,7 +55,6 @@
     <string name="new_bucket">New bucket</string>
 
     <!--    Bucket description-->
-    <string name="bucket_new_list">New List</string>
     <string name="bucket_title_placeholder">Name your list</string>
     <string name="bucket_description_placeholder">What is it about?</string>
 
@@ -314,4 +314,5 @@
     <string name="toast_backup_folder_removed">Backup folder removed</string>
     <string name="toast_error_removing_backup_folder">Backup folder removed</string>
     <string name="toast_error_restoring_snapshot">Error restoring snapshot</string>
+
 </resources>

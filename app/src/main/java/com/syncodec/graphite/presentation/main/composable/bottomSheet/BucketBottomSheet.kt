@@ -74,7 +74,7 @@ fun BucketBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		Text(
-			text = stringResource(id = R.string.bucket_new_list),
+			text = stringResource(id = R.string.new_list),
 			style = MaterialTheme.typography.headlineSmall,
 			fontWeight = FontWeight.Bold,
 			modifier = Modifier.padding(start = 24.dp)

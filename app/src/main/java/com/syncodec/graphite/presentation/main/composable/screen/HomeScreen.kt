@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.main.composable.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -36,20 +37,20 @@ import io.realm.kotlin.types.RealmUUID
 @Preview
 @Composable
 fun HomeScreen(
+	currentScreen: Int = 0,
 	isSelecting: Boolean = false,
 	selectedIdList: Set<RealmUUID> = setOf(),
+	onChangeScreen: (Int) -> Unit = {},
 	onSelect: (RealmUUID) -> Unit = {},
 	onUnSelectAll: () -> Unit = {},
 ) {
-	var currentScreen by rememberSaveable { mutableIntStateOf(0) }
-
 	Column(
 		modifier = Modifier.fillMaxSize(),
 	) {
 		TabNavigator(
 			currentScreen = currentScreen,
 			isSelecting = isSelecting,
-			onChangeScreen = { currentScreen = it }
+			onChangeScreen = onChangeScreen
 		)
 
 		Spacer(modifier = Modifier.height(6.dp))

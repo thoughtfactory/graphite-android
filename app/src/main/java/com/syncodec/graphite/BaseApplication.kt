@@ -14,9 +14,8 @@ import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.cloud.googleDrive.GDrive
 import com.syncodec.graphite.di.locator.GeoLocator
 import com.syncodec.graphite.di.repository.LockableRepo
-import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
-import com.syncodec.graphite.presentation.bucket.BucketViewModel
+import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemViewModel
@@ -32,14 +31,13 @@ import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.
 import com.syncodec.graphite.presentation.note2.NoteViewModel2
 import com.syncodec.graphite.presentation.notebook.composable.NotebookScreenViewModel2
 import com.syncodec.graphite.presentation.search.SearchViewModel
-import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
-import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
-import com.syncodec.graphite.presentation.tags.TagsViewModel
-import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ClearDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ExportDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ImportDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.viewModel.LocalBackupViewModel
+import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
+import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
+import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.android.ext.koin.androidContext
@@ -90,7 +88,6 @@ class BaseApplication : Application() {
 					viewModelOf(::NoteViewModel2)
 //					viewModelOf(::ViewerScreenViewModel)
 
-					viewModelOf(::BucketViewModel)
 					viewModelOf(::BucketScreenCommonViewModel)
 					viewModelOf(::NotebookScreenViewModel2)
 					viewModelOf(::TagsViewModel)

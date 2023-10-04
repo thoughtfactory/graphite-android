@@ -252,11 +252,11 @@ dependencies {
 
 	implementation 'com.google.android.play:core:1.10.3'
 
-	implementation 'com.google.android.gms:play-services-location:21.0.1'
-	implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
-	implementation 'com.google.maps.android:maps-compose:2.11.4'
-	implementation 'com.google.maps.android:maps-compose-utils:2.11.2'
-	implementation 'com.google.android.gms:play-services-maps:18.1.0'
+	implementation("com.google.android.gms:play-services-location:21.0.1")
+	implementation("com.google.maps.android:maps-utils-ktx:4.0.0")
+	implementation("com.google.maps.android:maps-compose:2.15.0")
+	implementation("com.google.maps.android:maps-compose-utils:2.15.0")
+	implementation("com.google.android.gms:play-services-maps:18.1.0")
 
 	implementation 'androidx.datastore:datastore-preferences-core:1.0.0'
 	implementation 'androidx.datastore:datastore-preferences:1.0.0'

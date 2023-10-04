@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.AddLinkBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.PreviewLinkBottomSheet
@@ -55,8 +57,9 @@ fun BucketLinkScreen(
 	val appDataStore = LocalAppDataStore.current
 	val viewType by appDataStore.getViewType.collectAsState(initial = null)
 
-	val bucketItemList by viewModel.orderedBucketItemList.collectAsState()
-	val previewBucketItemObject by viewModel.previewBucketItemObject.collectAsState(initial = null)
+	val bucketItemList= listOf<BucketItemObject>()
+//	val bucketItemList by viewModel.filteredBucketItemList.collectAsState()
+	var previewBucketItemObject by remember { mutableStateOf<BucketItemObject?>(null) }
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isAddLinkBottomSheetVisible by rememberSaveable { mutableStateOf(false) }

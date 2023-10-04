@@ -8,6 +8,7 @@ import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.json.JSONObject
 import java.time.Instant
@@ -32,6 +33,25 @@ val bucketTypeIconMap = mapOf(
 @Keep
 @JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
 class BucketObject() : RealmObject {
+
+	/**
+	 * Uniquely identifies [BucketObject] in realm
+	 */
+	@PrimaryKey
+	var id: RealmUUID = RealmUUID.random()
+
+	var createdTimestamp: Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp: Long = Instant.now().toEpochMilli()
+	var title: String? = null
+	var description: String? = null
+	var bucketType: String = BucketType.UNKNOWN.name
+	var isFavourite: Boolean = false
+	var isLocked: Boolean = false
+
+	var bucketItemOrderList: RealmList<RealmUUID> = realmListOf()
+
+	var googleDriveId: String? = null
+
 	constructor(jsonObject: JSONObject) : this() {
 		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
 		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
@@ -49,21 +69,6 @@ class BucketObject() : RealmObject {
 			realmList
 		} ?: realmListOf()
 	}
-
-	@PrimaryKey
-	var id: RealmUUID = RealmUUID.random()
-
-	var createdTimestamp: Long = Instant.now().toEpochMilli()
-	var modifiedTimestamp: Long = Instant.now().toEpochMilli()
-	var title: String? = null
-	var description: String? = null
-	var bucketType: String = BucketType.UNKNOWN.name
-	var isFavourite: Boolean = false
-	var isLocked: Boolean = false
-
-	var bucketItemOrderList: RealmList<RealmUUID> = realmListOf()
-
-	var googleDriveId: String? = null
 
 	fun updateModifyTimestamp() {
 		this.modifiedTimestamp = Instant.now().toEpochMilli()

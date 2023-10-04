@@ -50,8 +50,8 @@ import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
 import com.syncodec.graphite.utils.ContentStatus
+import com.syncodec.graphite.utils.Location
 import com.syncodec.graphite.utils.locationAddressFilter
-import com.syncodec.graphite.utils.reverseGeocode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -83,7 +83,8 @@ fun LocationPickerDialog(
 			job?.cancel()
 			job = scope.launch(Dispatchers.IO) {
 				addressContentStatus = ContentStatus.Loading
-				context.reverseGeocode(
+				Location.reverseGeocode(
+					context = context,
 					latitude = cameraPositionState.position.target.latitude,
 					longitude = cameraPositionState.position.target.longitude,
 					onAddressAvailable = { address ->
@@ -200,7 +201,7 @@ fun LocationPickerDialog(
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 				FloatingActionButton(
-					onClick = { onSetLocation(LatLng(latitude = cameraPositionState.position.target.latitude, longitude = cameraPositionState.position.target.longitude,), addressContentStatus.dataOrNull) }
+					onClick = { onSetLocation(LatLng(latitude = cameraPositionState.position.target.latitude, longitude = cameraPositionState.position.target.longitude), addressContentStatus.dataOrNull) }
 				) {
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_check),

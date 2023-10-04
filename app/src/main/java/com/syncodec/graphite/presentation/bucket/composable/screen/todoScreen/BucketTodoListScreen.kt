@@ -1,15 +1,18 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,6 +49,7 @@ import com.syncodec.graphite.presentation.base.LockClosedContainer
 import io.realm.kotlin.types.RealmUUID
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun BucketTodoListScreen(
@@ -70,47 +74,46 @@ fun BucketTodoListScreen(
 		onDragEnd = { from, to -> onReorderBucketItemList(bucketItemListOrdered.map { it.id }) }
 	)
 
-	if (bucketItemList.isEmpty()) {
-		EmptyView(bucketType = BucketType.TODO)
-	} else {
-		LazyColumn(
-			state = state.listState,
-			modifier = Modifier
-				.fillMaxSize()
-				.reorderable(state)
-		) {
-			bucketItemListOrdered.forEach { bucketItemObject ->
-				item(
-					key = bucketItemObject.id.toString()
-				) {
-					ReorderableItem(
-						reorderableState = state,
-						key = bucketItemObject.id.toString()
-					) { isDragging ->
-						TodoItem(
-							title = bucketItemObject.title,
-							state = bucketItemObject.getState(),
-							dragHandle = {
-								Icon(
-									painter = painterResource(id = R.drawable.ic_fa_grip),
-									contentDescription = "Reorder",
-									tint = MaterialTheme.colorScheme.onSurface,
-									modifier = Modifier
-										.size(16.dp)
-										.detectReorder(state)
-								)
-							},
-							isLocked = bucketItemObject.isLocked,
-							isFavourite = bucketItemObject.isFavourite,
-							isSelected = isDragging or (bucketItemObject.id in selectedIdList),
-							onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject) },
-							onLongClick = { onSelect(bucketItemObject.id) },
-							onCheckedChange = { onCheckedChange(bucketItemObject.id) },
+	if (bucketItemList.isEmpty()) EmptyView(bucketType = BucketType.TODO)
+	else LazyColumn(
+		state = state.listState,
+		modifier = Modifier
+			.fillMaxSize()
+			.reorderable(state)
+	) {
+		items(
+			items = bucketItemListOrdered,
+			key = { it.id.toString() },
+			contentType = { 0 }
+		) { bucketItemObject ->
+			ReorderableItem(
+				reorderableState = state,
+				key = bucketItemObject.id.toString(),
+				modifier = Modifier.animateItemPlacement()
+			) { isDragging ->
+				TodoItem(
+					title = bucketItemObject.title,
+					state = bucketItemObject.getState(),
+					dragHandle = {
+						Icon(
+							painter = painterResource(id = R.drawable.ic_fa_grip),
+							contentDescription = stringResource(id = R.string.reorder_grip),
+							tint = MaterialTheme.colorScheme.onSurface,
+							modifier = Modifier
+								.size(16.dp)
+								.detectReorder(state)
 						)
-					}
-				}
+					},
+					isLocked = bucketItemObject.isLocked,
+					isFavourite = bucketItemObject.isFavourite,
+					isSelected = isDragging or (bucketItemObject.id in selectedIdList),
+					onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject) },
+					onLongClick = { onSelect(bucketItemObject.id) },
+					onCheckedChange = { onCheckedChange(bucketItemObject.id) },
+				)
 			}
 		}
+		item { Spacer(modifier = Modifier.height(128.dp)) }
 	}
 }
 

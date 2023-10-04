@@ -32,7 +32,6 @@ fun AtlasScreen(
 		AtlasView2(
 			noteList = chapterFilteredNoteList,
 			modifier = Modifier.fillMaxSize(),
-			onClickNote = {},
 			onUpdateCameraBound = onUpdateCameraBound,
 		)
 	}

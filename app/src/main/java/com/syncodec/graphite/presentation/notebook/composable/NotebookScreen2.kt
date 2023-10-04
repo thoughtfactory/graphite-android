@@ -99,7 +99,7 @@ fun NotebookScreen2(
 	var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 	val componentColumnCount = LocalComponentColumnCount.current
 
-	val bitmap by remember(chapterObject) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
+	val bitmap by remember(chapterObject?.thumbnail) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	val editChapterBottomSheetState = rememberModalBottomSheetState()
@@ -210,7 +210,6 @@ fun NotebookScreen2(
 			selectedTab = selectedTab,
 			isCollapsed = isCollapsed,
 			isSelecting = isSelecting,
-			onContainerColor = bitmap?.let { Color.White } ?: chapterObject?.color?.let { Color(it) }?.getInverseBWColor() ?: MaterialTheme.colorScheme.onBackground,
 			onClickFavourite = { chapterObject?.let(onClickFavourite) },
 			onClickLock = { chapterObject?.let(onClickLock) },
 			onClickMenuButton = { isMenuBottomSheetVisible = true },
@@ -232,7 +231,7 @@ fun NotebookScreen2(
 					chapterTitle = chapterObject?.title,
 					chapterDescription = chapterObject?.description,
 					bitmap = bitmap,
-					containerColor = chapterObject?.color?.let { Color(it) },
+					chapterColor = chapterObject?.color?.let { Color(it) },
 					defaultChapterId = defaultChapterId,
 					chapterPath = chapterPath,
 					selectedTab = selectedTab,
