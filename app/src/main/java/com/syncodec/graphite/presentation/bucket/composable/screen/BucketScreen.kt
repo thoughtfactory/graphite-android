@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 fun BucketScreen(
 	pagerState: PagerState = rememberPagerState { 4 },
 	bucketObject: BucketObject? = null,
-	bucketItemListMap: Map<BucketItemState?, List<BucketItemObject>> = mapOf(),
+	bucketItemList: List<BucketItemObject> = listOf(),
 	searchQueryList: Set<String> = setOf(),
 	isSelecting: Boolean = false,
 	selectedIdList: Set<RealmUUID> = setOf(),
@@ -64,12 +64,13 @@ fun BucketScreen(
 	onSelectAll: () -> Unit = {},
 	onUnselectAll: () -> Unit = {},
 	shareBucketItems: (idList: Set<RealmUUID>) -> Unit = {},
+	shareBucket : () -> Unit = {},
+	deleteBucket : () -> Unit = {},
 	content: @Composable BoxScope.() -> Unit = {},
 ) {
 	val scope = rememberCoroutineScope()
 
 	var isSearching by remember { mutableStateOf(false) }
-
 
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
@@ -126,7 +127,7 @@ fun BucketScreen(
 					onDismissRequest = { isDeleteBucketDialogVisible = false },
 					title = stringResource(id = R.string.delete_item),
 					contentText = stringResource(id = R.string.are_you_sure_delete_bucket),
-					onConfirmDelete = {},
+					onConfirmDelete = deleteBucket,
 				)
 			},
 			isButtonVisible = !isSelecting
@@ -139,8 +140,8 @@ fun BucketScreen(
 				bucketType = BucketType.entries.find { it.name == bucketObject.bucketType },
 				isSelecting = isSelecting,
 				selectedItemCount = selectedIdList.size,
-				isAllItemFavourite = selectedIdList.isNotEmpty() && bucketItemListMap.flatMap { it.value }.filter { it.id in selectedIdList }.all { it.isFavourite },
-				isAllItemLocked = selectedIdList.isNotEmpty() && bucketItemListMap.flatMap { it.value }.filter { it.id in selectedIdList }.all { it.isLocked },
+				isAllItemFavourite = selectedIdList.isNotEmpty() && bucketItemList.filter { it.id in selectedIdList }.all { it.isFavourite },
+				isAllItemLocked = selectedIdList.isNotEmpty() && bucketItemList.filter { it.id in selectedIdList }.all { it.isLocked },
 				onClickShare = { shareBucketItems(selectedIdList) },
 				onClickSelectAll = onSelectAll,
 				onClickDelete = { isDeleteSelectedItemDialogVisible = true },
@@ -172,7 +173,7 @@ fun BucketScreen(
 		bottomSheetState = bottomSheetState,
 		isBottomSheetVisible = isMenuBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false } },
-		onClickShareAll = {},
+		onClickShareAll = shareBucket,
 		onClickEdit = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false; isEditBucketBottomSheetVisible = true } },
 		onClickDelete = { isDeleteBucketDialogVisible = true },
 	)

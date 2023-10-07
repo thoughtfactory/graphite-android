@@ -2,13 +2,16 @@ package com.syncodec.graphite.presentation.bucket.composable.bottomSheet
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
@@ -42,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -50,12 +55,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.TMDBResponse
 import com.syncodec.graphite.di.network.TMDBSearchResult
 import com.syncodec.graphite.di.network.TMDbApi
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.bucketItem.activity.ShowBucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
@@ -84,7 +91,6 @@ fun AddShowBottomSheet(
 	parentId: RealmUUID? = null,
 ) {
 	val scope = rememberCoroutineScope()
-
 	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var queryText by rememberSaveable { mutableStateOf("") }
@@ -144,8 +150,8 @@ fun AddShowBottomSheet(
 					imeAction = ImeAction.Search,
 				),
 				keyboardActions = KeyboardActions {
-					searchForShow(queryText)
 					keyboardController?.hide()
+					searchForShow(queryText)
 				},
 				modifier = Modifier.fillMaxWidth()
 			)
@@ -192,7 +198,6 @@ fun AddShowBottomSheet(
 					Spacer(modifier = Modifier.height(4.dp))
 				}
 			}
-
 		}
 	}
 }
@@ -269,6 +274,7 @@ private fun ShowCard(
 
 	var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
 	LaunchedEffect(key1 = posterPath) {
+		Log.d("npr71", "posterPath : $posterPath")
 		withContext(Dispatchers.IO) {
 			thumbnail = null
 			thumbnail = TMDbApi.retrieveShowPoster(posterPath = posterPath)
@@ -282,16 +288,25 @@ private fun ShowCard(
 		SubcomposeAsyncImage(
 			model = ImageRequest.Builder(context)
 				.data(thumbnail)
-				.crossfade(470)
+				.diskCachePolicy(CachePolicy.ENABLED)
+				.memoryCachePolicy(CachePolicy.ENABLED)
+				.diskCacheKey("show_$posterPath")
+				.memoryCacheKey("show_$posterPath")
+				.crossfade(ANIMATION_DURATION_MILLIS)
 				.build(),
 			loading = { CircularProgressIndicator(modifier = Modifier.requiredSize(32.dp)) },
 			error = {
-				Text(
-					text = "No image found",
-					modifier = Modifier.padding(8.dp),
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f)
-				)
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = Modifier.fillMaxSize()
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_bucket_show),
+						contentDescription = stringResource(id = R.string.thumbnail),
+						tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
+						modifier = Modifier.requiredSize(32.dp)
+					)
+				}
 			},
 			contentDescription = title,
 			contentScale = ContentScale.Crop,
@@ -306,7 +321,7 @@ private fun ShowCard(
 		Spacer(modifier = Modifier.height(4.dp))
 
 		Text(
-			text = title ?: "Untitled",
+			text = title ?: stringResource(R.string.untitled),
 			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onBackground,
 			fontStyle = if (title == null) FontStyle.Italic else FontStyle.Normal,

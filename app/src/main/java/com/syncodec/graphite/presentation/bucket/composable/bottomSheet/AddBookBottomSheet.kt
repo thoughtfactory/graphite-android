@@ -5,10 +5,12 @@ import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +23,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
@@ -34,10 +37,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -46,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
@@ -53,6 +60,7 @@ import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.network.OpenLibraryResponse
 import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.bucketItem.activity.BookBucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
@@ -68,16 +76,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Preview
 @Composable
 fun AddBookBottomSheet(
 	bottomSheetState: SheetState = rememberModalBottomSheetState(),
 	isBottomSheetVisible: Boolean = false,
 	onDismissRequest: () -> Unit = { },
-	parentId : RealmUUID? = null,
+	parentId: RealmUUID? = null,
 ) {
 	val context = LocalContext.current
+	val keyboardController = LocalSoftwareKeyboardController.current
 
 	var queryText by rememberSaveable { mutableStateOf("") }
 
@@ -121,7 +130,10 @@ fun AddBookBottomSheet(
 					keyboardType = KeyboardType.Text,
 					imeAction = ImeAction.Search,
 				),
-				keyboardActions = KeyboardActions { searchForBook(queryText) },
+				keyboardActions = KeyboardActions {
+					keyboardController?.hide()
+					searchForBook(queryText)
+				},
 				modifier = Modifier.fillMaxWidth()
 			)
 
@@ -166,7 +178,6 @@ fun AddBookBottomSheet(
 					Spacer(modifier = Modifier.height(4.dp))
 				}
 			}
-
 		}
 	}
 }
@@ -198,7 +209,7 @@ private fun BookCard(
 	val context = LocalContext.current
 
 	var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
-	LaunchedEffect(key1 = bookData) {
+	LaunchedEffect(key1 = bookData.coverI) {
 		withContext(Dispatchers.IO) {
 			thumbnail = null
 			thumbnail = OpenLibraryApi.retrieveBookCover(bookData.coverI)
@@ -212,16 +223,25 @@ private fun BookCard(
 		SubcomposeAsyncImage(
 			model = ImageRequest.Builder(context)
 				.data(thumbnail)
-				.crossfade(470)
+				.diskCachePolicy(CachePolicy.ENABLED)
+				.memoryCachePolicy(CachePolicy.ENABLED)
+				.diskCacheKey("book_${bookData.coverI}")
+				.memoryCacheKey("book_${bookData.coverI}")
+				.crossfade(ANIMATION_DURATION_MILLIS)
 				.build(),
 			loading = { CircularProgressIndicator(modifier = Modifier.requiredSize(32.dp)) },
 			error = {
-				Text(
-					text = "No image found",
-					modifier = Modifier.padding(8.dp),
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f)
-				)
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = Modifier.fillMaxSize()
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_fa_bucket_book),
+						contentDescription = stringResource(id = R.string.thumbnail),
+						tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
+						modifier = Modifier.requiredSize(32.dp)
+					)
+				}
 			},
 			contentDescription = bookData.title,
 			contentScale = ContentScale.Crop,
@@ -236,7 +256,7 @@ private fun BookCard(
 		Spacer(modifier = Modifier.height(4.dp))
 
 		Text(
-			text = bookData.title ?: "Untitled",
+			text = bookData.title ?: stringResource(R.string.untitled),
 			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onBackground,
 			fontStyle = if (bookData.title == null) FontStyle.Italic else FontStyle.Normal,

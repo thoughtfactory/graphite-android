@@ -50,6 +50,87 @@ fun TodoFloatingActionButton(
 
 @Preview
 @Composable
+fun BookFloatingActionButton(
+	visible: Boolean = true,
+	onClick: () -> Unit = {},
+) {
+	AnimatedVisibility(
+		visible = visible,
+		enter = scaleIn(tween(ANIMATION_DURATION_MILLIS)),
+		exit = scaleOut(tween(ANIMATION_DURATION_MILLIS)),
+		label = "addTodoFab_animation"
+	) {
+		ExtendedFloatingActionButton(
+			text = { Text(text = stringResource(id = R.string.add_book)) },
+			icon = {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_fa_plus),
+					contentDescription = stringResource(id = R.string.add_book),
+					modifier = Modifier.requiredSize(16.dp)
+				)
+			},
+			onClick = onClick
+		)
+	}
+}
+
+
+@Preview
+@Composable
+fun ShowFloatingActionButton(
+	visible: Boolean = true,
+	onClick: () -> Unit = {},
+) {
+	AnimatedVisibility(
+		visible = visible,
+		enter = scaleIn(tween(ANIMATION_DURATION_MILLIS)),
+		exit = scaleOut(tween(ANIMATION_DURATION_MILLIS)),
+		label = "addTodoFab_animation"
+	) {
+		ExtendedFloatingActionButton(
+			text = { Text(text = stringResource(id = R.string.add_show)) },
+			icon = {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_fa_plus),
+					contentDescription = stringResource(id = R.string.add_show),
+					modifier = Modifier.requiredSize(16.dp)
+				)
+			},
+			onClick = onClick
+		)
+	}
+}
+
+
+@Preview
+@Composable
+fun LinkFloatingActionButton(
+	visible: Boolean = true,
+	onClick: () -> Unit = {},
+) {
+	AnimatedVisibility(
+		visible = visible,
+		enter = scaleIn(tween(ANIMATION_DURATION_MILLIS)),
+		exit = scaleOut(tween(ANIMATION_DURATION_MILLIS)),
+		label = "addTodoFab_animation"
+	) {
+		ExtendedFloatingActionButton(
+			text = { Text(text = stringResource(id = R.string.add_link)) },
+			icon = {
+				Icon(
+					painter = painterResource(id = R.drawable.ic_fa_plus),
+					contentDescription = stringResource(id = R.string.add_link),
+					modifier = Modifier.requiredSize(16.dp)
+				)
+			},
+			onClick = onClick
+		)
+	}
+}
+
+
+@Preview
+@Composable
 fun TodoFloatingActionButtonDebug(
 	visible: Boolean = true,
 	onClick: () -> Unit = {},

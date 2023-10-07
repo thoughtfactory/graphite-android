@@ -32,7 +32,7 @@ enum class ShowType {
 }
 
 sealed class TMDBResponse {
-	object Loading : TMDBResponse()
+	data object Loading : TMDBResponse()
 	data class Success(val data: TMDBSearchResult) : TMDBResponse()
 	data class Error(val message: String = "Unknown error") : TMDBResponse()
 }

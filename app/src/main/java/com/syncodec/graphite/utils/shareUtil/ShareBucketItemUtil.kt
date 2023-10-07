@@ -49,7 +49,7 @@ object ShareBucketItemUtil {
 
 	fun getLinkItemShareText(bucketItemList: List<BucketItemObject>): String {
 		return bucketItemList
-			.map { "${it.title} - ${it.getOpenGraphResult()?.url ?: it.key}}" }           //  key is an OpenLibrary Id. It already contains /  ->
+			.map { "${it.title} - ${it.getOpenGraphResult()?.url ?: it.key}" }           //  key is an OpenLibrary Id. It already contains /  ->
 			.fold("") { acc, s -> "$acc$s\n" }
 	}
 

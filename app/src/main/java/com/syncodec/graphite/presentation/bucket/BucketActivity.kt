@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
@@ -56,7 +55,7 @@ class BucketActivity : ComponentActivity() {
 			BaseComposable {
 
 				val bucketObject by viewModel.bucketObject.collectAsState()
-				val bucketItemListMap by viewModel.filteredBucketItemListMap.collectAsState()
+				val bucketItemList by viewModel.filteredBucketItemList.collectAsState()
 				val previewBucketItemObject by viewModel.previewBucketItemObject.collectAsState()
 				val searchQueryList by viewModel.filterQueryList.collectAsState()
 
@@ -83,7 +82,7 @@ class BucketActivity : ComponentActivity() {
 				BucketScreen(
 					pagerState = pagerState,
 					bucketObject = bucketObject,
-					bucketItemListMap = bucketItemListMap,
+					bucketItemList = bucketItemList,
 					searchQueryList = searchQueryList,
 					isSelecting = isSelecting,
 					selectedIdList = selectedIdList,
@@ -100,19 +99,20 @@ class BucketActivity : ComponentActivity() {
 					clearSearchFilter = viewModel::clearSearchFilter,
 					onSelectAll = { selectedIdList.toMutableSet().apply { addAll(toSelectIdList); selectedIdList = toSet() } },
 					onUnselectAll = { selectedIdList = setOf() },
-					shareBucketItems = { viewModel.shareBucketItems(idList = it, callback = ::share) }
+					shareBucketItems = { viewModel.shareBucketItems(idList = it, callback = ::share) },
+					shareBucket = { viewModel.shareBucketItems(idList = bucketItemList.map { it.id }.toSet(), callback = ::share) },
+					deleteBucket = { bucketObject?.id?.let { viewModel.delete(setOf(it)); finish() } },
 				) {
 					when (bucketObject?.bucketType) {
 						BucketType.TODO.name -> BucketTodoScreen(
 							pagerState = pagerState,
-							bucketItemListMap = bucketItemListMap,
+							bucketItemList = bucketItemList,
 							previewBucketItemObject = previewBucketItemObject,
 							isSelecting = isSelecting,
 							selectedIdList = selectedIdList,
 							onSelect = ::onSelect,
 							selectBucketItemObjectForPreview = viewModel::selectBucketItemObject,
 							onUpdateTitle = { bucketItemObject, title -> viewModel.updateBucketItemTitle(bucketItemObject.id, title) },
-							onUpdateState = { bucketItemObject, state -> viewModel.updateBucketItemState(bucketItemObject.id, state) },
 							toggleFavourite = viewModel::toggleFavourite,
 							toggleLock = viewModel::toggleLock,
 							toggleBucketItemState = viewModel::toggleBucketItemState,
@@ -120,28 +120,40 @@ class BucketActivity : ComponentActivity() {
 							updateBucketItemTitle = viewModel::updateBucketItemTitle,
 							updateBucketItemState = { bucketItemObject, state -> viewModel.updateBucketItemState(bucketItemObject, state) },
 							putTodo = viewModel::putTodo,
-							addTodoDebugData = viewModel::addTodoDebugData
+							addTodoDebugData = viewModel::addTodoDebugData,
 						)
 
 						BucketType.BOOK.name -> BucketBookScreen(
 							pagerState = pagerState,
+							bucketId = bucketObject?.id,
+							bucketItemList = bucketItemList,
 							isSelecting = isSelecting,
 							selectedIdList = selectedIdList,
-							onSelect = ::onSelect
+							onSelect = ::onSelect,
+							onReorderBucketItemList = viewModel::onReorderBucketItem,
 						)
 
 						BucketType.SHOW.name -> BucketShowScreen(
 							pagerState = pagerState,
+							bucketId = bucketObject?.id,
+							bucketItemList = bucketItemList,
 							isSelecting = isSelecting,
 							selectedIdList = selectedIdList,
-							onSelect = ::onSelect
+							onSelect = ::onSelect,
+							onReorderBucketItemList = viewModel::onReorderBucketItem,
 						)
 
 						BucketType.LINK.name -> BucketLinkScreen(
-//					        viewModel = viewModel,
+							bucketItemList = bucketItemList,
+							previewBucketItemObject = previewBucketItemObject,
 							isSelecting = isSelecting,
 							selectedIdList = selectedIdList,
-							onSelect = ::onSelect
+							onSelect = ::onSelect,
+							selectBucketItemObjectForPreview = viewModel::selectBucketItemObject,
+							toggleFavourite = viewModel::toggleFavourite,
+							toggleLock = viewModel::toggleLock,
+							onReorderBucketItemList = viewModel::onReorderBucketItem,
+							putLink = viewModel::putLink,
 						)
 
 						else -> Unit
@@ -163,38 +175,5 @@ class BucketActivity : ComponentActivity() {
 				else Toast.makeText(this@BucketActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
 			}
 		}
-	}
-
-
-	private fun onShare(bucketItemObjectList: List<BucketItemObject>, shareAll: Boolean) {
-
-//		val baseUrl = when (bucketObject.bucketType) {
-//			BucketType.TODO.name -> ""
-//			BucketType.BOOK.name -> " - https://openlibrary.org"
-//			BucketType.SHOW.name -> " - https://www.themoviedb.org/"
-//			BucketType.LINK.name -> ""
-//			BucketType.UNKNOWN.name -> ""
-//			else -> ""
-//		}
-//
-//		var shareText = ""
-//		bucketItemObjectList.filter { if (shareAll) true else it.id in selectedRealmUUIDList }.forEach {
-//			val connector = when (it.getShowData()?.type) {
-//				ShowType.TV -> "tv/"
-//				ShowType.MOVIE -> "movie/"
-//				else -> ""
-//			}
-//			shareText += "${it.title}$baseUrl$connector${if (bucketObject.bucketType == BucketType.TODO.name) "" else it.key}\n"
-//		}
-//
-//		Intent(Intent.ACTION_SEND).apply {
-//			type = "text/html"
-//			putExtra(Intent.EXTRA_SUBJECT, bucketObject.title ?: bucketObject.bucketType)
-////			putExtra(Intent.EXTRA_TEXT, Html.fromHtml(shareText, Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST))
-//			putExtra(Intent.EXTRA_TEXT, shareText)
-//
-//			if (resolveActivity(this@BucketActivity.packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
-//			else Toast.makeText(this@BucketActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
-//		}
 	}
 }

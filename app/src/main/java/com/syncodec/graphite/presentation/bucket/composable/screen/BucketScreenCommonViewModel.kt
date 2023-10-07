@@ -18,7 +18,6 @@ import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.shareUtil.ShareBucketItemUtil
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -38,9 +37,9 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	private val _bucketId: MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
 	val bucketId: StateFlow<RealmUUID?> = _bucketId
 
-	private val _bucketItemListMap: MutableStateFlow<Map<BucketItemState?, List<BucketItemObject>>> = MutableStateFlow(mapOf())
-	private val _filteredBucketItemListMap: MutableStateFlow<Map<BucketItemState?, List<BucketItemObject>>> = MutableStateFlow(mapOf())
-	val filteredBucketItemListMap: StateFlow<Map<BucketItemState?, List<BucketItemObject>>> = _filteredBucketItemListMap
+	private val _bucketItemList: MutableStateFlow<List<BucketItemObject>> = MutableStateFlow(listOf())
+	private val _filteredBucketItemList: MutableStateFlow<List<BucketItemObject>> = MutableStateFlow(listOf())
+	val filteredBucketItemList: StateFlow<List<BucketItemObject>> = _filteredBucketItemList
 
 	private val _filterQueryList: MutableStateFlow<Set<String>> = MutableStateFlow(setOf())
 	val filterQueryList: StateFlow<Set<String>> = _filterQueryList
@@ -51,12 +50,12 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			lockableRepo.repositoryStatusFlow.collect { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {
-			combine(_repository, bucketId) { repository1, id1 -> Pair(repository1, id1) }.collect { (repository1, id1) ->
+			combine(_repository, bucketId) { repository1, id1 -> Pair(repository1, id1) }.collectLatest { (repository1, id1) ->
 				id1?.let { id2 ->
 					repository1?.let { repository2 ->
 						launch { observeBucket(repository = repository2, id = id2) }
@@ -80,32 +79,32 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	private suspend fun observeBucketItems(repository: Repository, id: RealmUUID) {
-		repository.getBucketItemListGroupFromParentIdAsFlow(parentId = id).collectLatest {
-			this@BucketScreenCommonViewModel._filteredBucketItemListMap.tryEmit(it)
+		repository.getBucketItemListFromParentIdAsFlow(parentId = id).collectLatest {
+			this@BucketScreenCommonViewModel._bucketItemList.tryEmit(it)
 		}
 	}
 
 	private suspend fun observePreviewBucketItem() {
-		combine(_previewBucketItemObjectId, _bucketItemListMap) { previewBucketItemObjectId1, bucketItemList1 ->
-			bucketItemList1.flatMap { it.value }.firstOrNull { it.id == previewBucketItemObjectId1 }
+		combine(_previewBucketItemObjectId, _bucketItemList) { previewBucketItemObjectId1, bucketItemList1 ->
+			bucketItemList1.firstOrNull { it.id == previewBucketItemObjectId1 }
 		}.collectLatest {
 			this@BucketScreenCommonViewModel._previewBucketItemObject.tryEmit(it)
 		}
 	}
 
 	private suspend fun filterSearchQuery() {
-		combine(_bucketItemListMap, _filterQueryList) { bucketItemListMap1, filterQueryList1 ->
+		combine(_bucketItemList, _filterQueryList) { bucketItemList1, filterQueryList1 ->
 
-			if (filterQueryList1.isEmpty()) bucketItemListMap1
+			if (filterQueryList1.isEmpty()) bucketItemList1
 			else when (bucketObject.value?.bucketType) {
-				BucketType.TODO.name -> bucketItemListMap1.mapValues { entry -> entry.value.filter { filterTodoBucketItem(it, filterQueryList1) } }
-				BucketType.BOOK.name -> bucketItemListMap1.mapValues { entry -> entry.value.filter { filterBookBucketItem(it, filterQueryList1) } }
-				BucketType.SHOW.name -> bucketItemListMap1.mapValues { entry -> entry.value.filter { filterShowBucketItem(it, filterQueryList1) } }
-				BucketType.LINK.name -> bucketItemListMap1.mapValues { entry -> entry.value.filter { filterLinkBucketItem(it, filterQueryList1) } }
-				else -> bucketItemListMap1
+				BucketType.TODO.name -> bucketItemList1.filter { filterTodoBucketItem(it, filterQueryList1) }
+				BucketType.BOOK.name -> bucketItemList1.filter { filterBookBucketItem(it, filterQueryList1) }
+				BucketType.SHOW.name -> bucketItemList1.filter { filterShowBucketItem(it, filterQueryList1) }
+				BucketType.LINK.name -> bucketItemList1.filter { filterLinkBucketItem(it, filterQueryList1) }
+				else -> bucketItemList1
 			}
-		}.collectLatest { filteredBucketListMap1 ->
-			this@BucketScreenCommonViewModel._filteredBucketItemListMap.tryEmit(filteredBucketListMap1)
+		}.collectLatest { filteredBucketList1 ->
+			this@BucketScreenCommonViewModel._filteredBucketItemList.tryEmit(filteredBucketList1)
 		}
 	}
 
@@ -229,7 +228,7 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	fun toggleMultiFavourite(idList: Set<RealmUUID>) {
-		val areAllFavourite = this.filteredBucketItemListMap.value.flatMap { it.value }.filter { it.id in idList }.all { it.isFavourite }
+		val areAllFavourite = this.filteredBucketItemList.value.filter { it.id in idList }.all { it.isFavourite }
 		_repository.value?.setMultiObjectFromIdSuspended<BucketItemObject>(idList = idList) {
 			this.updateModifyTimestamp()
 			this.isFavourite = !areAllFavourite
@@ -237,7 +236,7 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	fun toggleMultiLock(idList: Set<RealmUUID>) {
-		val areAllLocked = this.filteredBucketItemListMap.value.flatMap { it.value }.filter { it.id in idList }.all { it.isLocked }
+		val areAllLocked = this.filteredBucketItemList.value.filter { it.id in idList }.all { it.isLocked }
 		_repository.value?.setMultiObjectFromIdSuspended<BucketItemObject>(idList = idList) {
 			this.updateModifyTimestamp()
 			this.isLocked = !areAllLocked
@@ -284,9 +283,11 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	fun filterBySearchAdd(query: String) {
-		_filterQueryList.value.toMutableSet().apply {
-			add(query)
-			_filterQueryList.tryEmit(this.toSet())
+		if (query.isNotBlank()) {
+			_filterQueryList.value.toMutableSet().apply {
+				add(query)
+				_filterQueryList.tryEmit(this.toSet())
+			}
 		}
 	}
 
@@ -302,14 +303,12 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	fun delete(idList: Set<RealmUUID>) {
-		viewModelScope.launch(Dispatchers.Default) {
-			_repository.value?.deleteSuspended(idList = idList)
-		}
+		_repository.value?.deleteSuspended(idList = idList)
 	}
 
 	fun shareBucketItems(idList: Set<RealmUUID>, callback: suspend (String) -> Unit) {
 		viewModelScope.launch(Dispatchers.Default) {
-			val filteredBucketItemList = this@BucketScreenCommonViewModel.filteredBucketItemListMap.value.flatMap { it.value }.filter { it.id in idList }
+			val filteredBucketItemList = this@BucketScreenCommonViewModel.filteredBucketItemList.value.filter { it.id in idList }
 
 			val shareText = when (bucketObject.value?.bucketType) {
 				BucketType.TODO.name -> ShareBucketItemUtil.getTodoItemShareText(bucketItemList = filteredBucketItemList)

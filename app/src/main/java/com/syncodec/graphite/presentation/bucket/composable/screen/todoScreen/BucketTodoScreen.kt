@@ -1,18 +1,10 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,16 +13,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.AddTodoBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.EditTodoBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.TodoFloatingActionButton
@@ -45,14 +31,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun BucketTodoScreen(
 	pagerState: PagerState = rememberPagerState(initialPage = 0, initialPageOffsetFraction = 0f, pageCount = { 0 }),
-	bucketItemListMap: Map<BucketItemState?, List<BucketItemObject>> = mapOf(),
+	bucketItemList: List<BucketItemObject> = listOf(),
 	previewBucketItemObject: BucketItemObject? = null,
 	isSelecting: Boolean = false,
 	selectedIdList: Set<RealmUUID> = setOf(),
 	onSelect: (RealmUUID, Set<RealmUUID>) -> Unit = { _, _ -> },
 	selectBucketItemObjectForPreview: (RealmUUID) -> Unit = {},
 	onUpdateTitle: (BucketItemObject, String) -> Unit = { _, _ -> },
-	onUpdateState: (BucketItemObject, Int) -> Unit = { _, _ -> },
 	toggleFavourite: (RealmUUID) -> Unit = {},
 	toggleLock: (RealmUUID) -> Unit = {},
 	toggleBucketItemState: (RealmUUID) -> Unit = {},
@@ -84,26 +69,21 @@ fun BucketTodoScreen(
 			state = pagerState,
 			userScrollEnabled = !isSelecting,
 		) { page ->
-			val bucketItemList = when (page) {
-				0 -> mutableListOf<BucketItemObject>().apply {
-					addAll(bucketItemListMap[BucketItemState.ALPHA] ?: listOf())
-					addAll(bucketItemListMap[BucketItemState.BETA] ?: listOf())
-					addAll(bucketItemListMap[BucketItemState.GAMMA] ?: listOf())
-				}
-
-				1 -> bucketItemListMap[BucketItemState.ALPHA]
-				2 -> bucketItemListMap[BucketItemState.BETA]
-				3 -> bucketItemListMap[BucketItemState.GAMMA]
-				else -> bucketItemListMap.flatMap { it.value }
-			} ?: listOf()
+			val filteredBucketItemList = when (page) {
+				0 -> bucketItemList
+				1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
+				2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }
+				3 -> bucketItemList.filter { it.state == BucketItemState.GAMMA.name }
+				else -> bucketItemList
+			}
 
 			BucketTodoListScreen(
-				bucketItemList = bucketItemList,
+				bucketItemList = filteredBucketItemList,
 				isSelecting = isSelecting,
 				selectedIdList = selectedIdList,
 				onSelect = { onSelect(it, bucketItemList.map { it.id }.toSet()) },
 				onClickBucketItem = {
-					selectBucketItemObjectForPreview(it.id)
+					selectBucketItemObjectForPreview(it)
 					isEditTodoSheetVisible = true
 				},
 				onCheckedChange = toggleBucketItemState,

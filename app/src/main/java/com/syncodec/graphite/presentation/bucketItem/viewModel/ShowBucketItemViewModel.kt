@@ -14,6 +14,7 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
@@ -42,14 +43,14 @@ class ShowBucketItemViewModel(repositoryStateFlow: MutableStateFlow<Repository.C
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collect { repositoryStatus ->
+			repositoryStateFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) repository.tryEmit(repositoryStatus.repository)
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {
-			combine(repository, id) { repository1, id1 -> Pair(repository1, id1) }.collect { (repository1, bucketItemId) ->
+			combine(repository, id) { repository1, id1 -> Pair(repository1, id1) }.collectLatest { (repository1, bucketItemId) ->
 				bucketItemId?.let {
-					repository1?.getBucketItemAsFlow(id = bucketItemId)?.collect {
+					repository1?.getBucketItemAsFlow(id = bucketItemId)?.collectLatest {
 						this@ShowBucketItemViewModel._bucketItemObject.tryEmit(it)
 						this@ShowBucketItemViewModel._showType.tryEmit((it?.getShowData() as? BucketItemObject.Companion.BucketItemData.ShowData)?.type)
 					}

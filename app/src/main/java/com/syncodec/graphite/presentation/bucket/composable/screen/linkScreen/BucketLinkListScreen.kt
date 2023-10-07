@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.linkScreen
 
-import android.graphics.Bitmap
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -16,20 +15,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,24 +41,28 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
+import com.syncodec.graphite.presentation.base.AttachmentContainer
 import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
+import com.syncodec.graphite.presentation.base.LocationContainer
 import com.syncodec.graphite.presentation.base.LockClosedContainer
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import io.realm.kotlin.types.RealmUUID
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
 import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
 import com.syncodec.graphite.presentation.common.reorderable.detectReorder
 import com.syncodec.graphite.presentation.common.reorderable.lazyState.rememberReorderableLazyListState
 import com.syncodec.graphite.presentation.common.reorderable.reorderable
+import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import io.realm.kotlin.types.RealmUUID
 
 
 @Preview
@@ -74,11 +75,11 @@ fun BucketLinkListScreen(
 	onClickBucketItem: (RealmUUID) -> Unit = {},
 	onReorderBucketItemList: (List<RealmUUID>) -> Unit = {},
 ) {
-	val scope = rememberCoroutineScope()
+	val isDarkTheme = LocalIsDarkTheme.current
 
 	var bucketItemListOrdered by remember { mutableStateOf<List<BucketItemObject>>(listOf()) }
 	LaunchedEffect(bucketItemList) { bucketItemListOrdered = bucketItemList.toList() }
-	val state = rememberReorderableLazyListState(
+	val reorderableLazyListState = rememberReorderableLazyListState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
 		onMove = { from, to ->
 			bucketItemListOrdered.toMutableList().apply {
@@ -86,50 +87,72 @@ fun BucketLinkListScreen(
 				bucketItemListOrdered = toList()
 			}
 		},
-		onDragEnd = { from, to ->
-			scope.launch(Dispatchers.Default) { onReorderBucketItemList(bucketItemListOrdered.map { it.id }) }
-		}
+		onDragEnd = { from, to -> onReorderBucketItemList(bucketItemListOrdered.map { it.id }) }
 	)
 
-	if (bucketItemListOrdered.isEmpty()) {
-		EmptyView(bucketType = BucketType.LINK)
-	} else {
-		LazyColumn(
-			state = state.listState,
-			modifier = Modifier
-				.fillMaxSize()
-				.reorderable(state)
-		) {
-			bucketItemListOrdered.forEach { bucketItemObject ->
-				item(
-					key = bucketItemObject.id.toString()
-				) {
-					ReorderableItem(
-						reorderableState = state,
-						key = bucketItemObject.id.toString(),
-					) { isDragging ->
-						LinkItem(
-							title = bucketItemObject.title,
-							thumbnail = bucketItemObject.thumbnail,
-							openGraphResult = bucketItemObject.getOpenGraphResult(),
-							dragHandle = {
+	if (bucketItemListOrdered.isEmpty()) EmptyView(bucketType = BucketType.LINK)
+	else LazyColumn(
+		state = reorderableLazyListState.listState,
+		modifier = Modifier
+			.fillMaxSize()
+			.reorderable(reorderableLazyListState)
+	) {
+		items(
+			items = bucketItemListOrdered,
+			key = { it.id.toString() },
+			contentType = { 0 }
+		) { bucketItemObject ->
+			ReorderableItem(
+				reorderableState = reorderableLazyListState,
+				key = bucketItemObject.id.toString(),
+			) { isDragging ->
+				LinkItem(
+					title = bucketItemObject.title,
+					thumbnail = bucketItemObject.thumbnail,
+					openGraphResult = bucketItemObject.getOpenGraphResult(),
+					dragHandle = {
+						Box(
+							modifier = Modifier
+								.width(24.dp)
+								.height(108.dp)
+								.background(
+									when (bucketItemObject.state) {
+										BucketItemState.ALPHA.name -> Color.LocationContainer.copy(alpha = if (isDarkTheme) 0.31f else 0.17f)
+										BucketItemState.BETA.name -> Color.AttachmentContainer.copy(alpha = if (isDarkTheme) 0.31f else 0.17f)
+										BucketItemState.GAMMA.name -> Color.LockClosedContainer.copy(alpha = if (isDarkTheme) 0.31f else 0.17f)
+										else -> Color.Transparent
+									},
+									MaterialTheme.shapes.small
+								),
+							contentAlignment = Alignment.Center
+						) {
+							Box(
+								contentAlignment = Alignment.Center,
+								modifier = Modifier
+									.requiredSize(24.dp)
+									.detectReorder(reorderableLazyListState)
+									.padding(2.dp)
+							) {
 								Icon(
 									painter = painterResource(id = R.drawable.ic_fa_grip),
-									contentDescription = "Reorder",
-									tint = MaterialTheme.colorScheme.onSurface,
-									modifier = Modifier
-										.size(16.dp)
-										.detectReorder(state)
+									contentDescription = stringResource(id = R.string.reorder_grip),
+									tint = when (bucketItemObject.state) {
+										BucketItemState.ALPHA.name -> Color.LocationContainer
+										BucketItemState.BETA.name -> Color.AttachmentContainer
+										BucketItemState.GAMMA.name -> Color.LockClosedContainer
+										else -> MaterialTheme.colorScheme.onBackground
+									},
+									modifier = Modifier.requiredSize(16.dp)
 								)
-							},
-							isLocked = bucketItemObject.isLocked,
-							isFavourite = bucketItemObject.isFavourite,
-							isSelected = isDragging or (bucketItemObject.id in selectedIdList),
-							onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject.id) },
-							onLongClick = { onSelect(bucketItemObject.id) },
-						)
-					}
-				}
+							}
+						}
+					},
+					isLocked = bucketItemObject.isLocked,
+					isFavourite = bucketItemObject.isFavourite,
+					isSelected = isDragging or (bucketItemObject.id in selectedIdList),
+					onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject.id) },
+					onLongClick = { onSelect(bucketItemObject.id) },
+				)
 			}
 		}
 	}
@@ -148,8 +171,6 @@ private fun LinkItem(
 	onClick: () -> Unit = {},
 	onLongClick: () -> Unit = {},
 ) {
-	val thumbnail1 by remember(thumbnail) { derivedStateOf { thumbnail?.decodeBase64ToBitmap() } }
-
 	SelectableContainer(
 		selected = isSelected,
 		modifier = Modifier.height(96.dp),
@@ -164,10 +185,11 @@ private fun LinkItem(
 		) {
 			dragHandle()
 
-			Spacer(modifier = Modifier.width(12.dp))
+			Spacer(modifier = Modifier.width(8.dp))
 
 			Thumbnail(
-				thumbnail = thumbnail1,
+				url = openGraphResult?.url,
+				thumbnail = thumbnail,
 				contentDescription = stringResource(id = R.string.thumbnail),
 				isSelected = isSelected
 			)
@@ -225,7 +247,8 @@ private fun LinkItem(
 
 @Composable
 private fun Thumbnail(
-	thumbnail: Bitmap? = null,
+	url : String? = null,
+	thumbnail: String? = null,
 	contentDescription: String? = null,
 	isSelected: Boolean = false,
 ) {
@@ -244,8 +267,12 @@ private fun Thumbnail(
 
 	SubcomposeAsyncImage(
 		model = ImageRequest.Builder(context)
-			.data(thumbnail)
-			.crossfade(470)
+			.data(thumbnail?.decodeBase64ToBitmap())
+			.diskCachePolicy(CachePolicy.ENABLED)
+			.memoryCachePolicy(CachePolicy.ENABLED)
+			.diskCacheKey(url)
+			.memoryCacheKey(url)
+			.crossfade(ANIMATION_DURATION_MILLIS)
 			.build(),
 		contentDescription = contentDescription,
 		error = {
@@ -257,7 +284,7 @@ private fun Thumbnail(
 			) {
 				Icon(
 					painter = painterResource(id = R.drawable.ic_fa_bucket_link),
-					contentDescription = contentDescription,
+					contentDescription = stringResource(id = R.string.thumbnail),
 					tint = contentColor,
 					modifier = Modifier.requiredSize(32.dp)
 				)

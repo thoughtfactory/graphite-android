@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.bucket.composable.screen.todoScreen
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.presentation.base.FavouriteContainer
+import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.common.reorderable.ReorderableItem
 import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation
@@ -44,12 +45,9 @@ import com.syncodec.graphite.presentation.common.reorderable.detectReorder
 import com.syncodec.graphite.presentation.common.reorderable.lazyState.rememberReorderableLazyListState
 import com.syncodec.graphite.presentation.common.reorderable.reorderable
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
-import com.syncodec.graphite.presentation.base.FavouriteContainer
-import com.syncodec.graphite.presentation.base.LockClosedContainer
 import io.realm.kotlin.types.RealmUUID
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun BucketTodoListScreen(
@@ -57,13 +55,13 @@ fun BucketTodoListScreen(
 	isSelecting: Boolean = false,
 	selectedIdList: Set<RealmUUID> = setOf(),
 	onSelect: (RealmUUID) -> Unit = {},
-	onClickBucketItem: (BucketItemObject) -> Unit = {},
+	onClickBucketItem: (RealmUUID) -> Unit = {},
 	onCheckedChange: (RealmUUID) -> Unit = {},
 	onReorderBucketItemList: (List<RealmUUID>) -> Unit = {},
 ) {
 	var bucketItemListOrdered by remember { mutableStateOf<List<BucketItemObject>>(listOf()) }
 	LaunchedEffect(bucketItemList) { bucketItemListOrdered = bucketItemList.toList() }
-	val state = rememberReorderableLazyListState(
+	val reorderableLazyListState = rememberReorderableLazyListState(
 		dragCancelledAnimation = SpringDragCancelledAnimation(),
 		onMove = { from, to ->
 			bucketItemListOrdered.toMutableList().apply {
@@ -76,10 +74,10 @@ fun BucketTodoListScreen(
 
 	if (bucketItemList.isEmpty()) EmptyView(bucketType = BucketType.TODO)
 	else LazyColumn(
-		state = state.listState,
+		state = reorderableLazyListState.listState,
 		modifier = Modifier
 			.fillMaxSize()
-			.reorderable(state)
+			.reorderable(reorderableLazyListState)
 	) {
 		items(
 			items = bucketItemListOrdered,
@@ -87,9 +85,8 @@ fun BucketTodoListScreen(
 			contentType = { 0 }
 		) { bucketItemObject ->
 			ReorderableItem(
-				reorderableState = state,
+				reorderableState = reorderableLazyListState,
 				key = bucketItemObject.id.toString(),
-				modifier = Modifier.animateItemPlacement()
 			) { isDragging ->
 				TodoItem(
 					title = bucketItemObject.title,
@@ -101,13 +98,13 @@ fun BucketTodoListScreen(
 							tint = MaterialTheme.colorScheme.onSurface,
 							modifier = Modifier
 								.size(16.dp)
-								.detectReorder(state)
+								.detectReorder(reorderableLazyListState)
 						)
 					},
 					isLocked = bucketItemObject.isLocked,
 					isFavourite = bucketItemObject.isFavourite,
 					isSelected = isDragging or (bucketItemObject.id in selectedIdList),
-					onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject) },
+					onClick = { if (isSelecting) onSelect(bucketItemObject.id) else onClickBucketItem(bucketItemObject.id) },
 					onLongClick = { onSelect(bucketItemObject.id) },
 					onCheckedChange = { onCheckedChange(bucketItemObject.id) },
 				)
