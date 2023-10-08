@@ -51,20 +51,13 @@ fun MovieBucketItemScreen(
 	onClickSave: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
+	onConfirmDelete : () -> Unit= {},
+	onClickShare : () -> Unit = {},
 	onUpdateState: (BucketItemState) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val clipboardManager = LocalClipboardManager.current
 
-	val thumbnail by remember(bucketItemObject?.thumbnail) {
-		derivedStateOf {
-			try {
-				bucketItemObject?.thumbnail?.decodeBase64ToBitmap()
-			} catch (_: Exception) {
-				null
-			}
-		}
-	}
 	val movieData by remember(bucketItemObject?.data) { derivedStateOf { BucketItemObject.Companion.BucketItemData.ShowData(jsonString = bucketItemObject?.data).movieData } }
 	val state by remember(bucketItemObject?.state) { derivedStateOf { bucketItemObject?.state } }
 
@@ -74,12 +67,14 @@ fun MovieBucketItemScreen(
 		onClickSave = onClickSave,
 		onClickFavourite = onClickFavourite,
 		onClickLock = onClickLock,
+		onClickShare = onClickShare,
+		onConfirmDelete = onConfirmDelete
 	) {
 		Spacer(modifier = Modifier.height(12.dp))
 
 		BucketThumbnail(
-			key = movieData?.id,
-			thumbnail = thumbnail
+			key = bucketItemObject?.id?.toString(),
+			thumbnail = bucketItemObject?.thumbnail
 		)
 
 		Spacer(modifier = Modifier.height(24.dp))

@@ -214,14 +214,14 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	fun toggleFavourite(id: RealmUUID?) {
-		_repository.value?.setObjectFromIdSuspended<BucketItemObject>(id = id) {
+		_repository.value?.setObjectFromIdSuspended<BucketObject>(id = id) {
 			this.updateModifyTimestamp()
 			this.isFavourite = this.isFavourite.not()
 		}
 	}
 
 	fun toggleLock(id: RealmUUID?) {
-		_repository.value?.setObjectFromIdSuspended<BucketItemObject>(id = id) {
+		_repository.value?.setObjectFromIdSuspended<BucketObject>(id = id) {
 			this.updateModifyTimestamp()
 			this.isLocked = this.isLocked.not()
 		}

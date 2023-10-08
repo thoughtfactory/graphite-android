@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.bucketItem.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -15,6 +16,7 @@ import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemVie
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.shareUtil.ShareBucketItemUtil
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -39,24 +41,39 @@ class ShowBucketItemActivity : ComponentActivity() {
 					ShowType.MOVIE -> MovieBucketItemScreen(
 						isNew = isNew == true,
 						bucketItemObject = bucketItemObject,
-						onClickSave = { viewModel.putBucketItem() },
-						onClickFavourite = { viewModel.onClickFavourite() },
-						onClickLock = { viewModel.onClickLock() },
-						onUpdateState = { viewModel.onChangeState(it) }
+						onClickSave = viewModel::putBucketItem,
+						onClickFavourite = viewModel::onClickFavourite,
+						onClickLock = viewModel::onClickLock,
+						onUpdateState = viewModel::onChangeState,
+						onClickShare = { bucketItemObject?.let { share(ShareBucketItemUtil.getShowItemShareText(bucketItemList = listOf(it))) } },
+						onConfirmDelete = { viewModel.delete(); finish() },
 					)
 
 					ShowType.TV -> TvBucketItemScreen(
 						isNew = isNew == true,
 						bucketItemObject = bucketItemObject,
-						onClickSave = { viewModel.putBucketItem() },
-						onClickFavourite = { viewModel.onClickFavourite() },
-						onClickLock = { viewModel.onClickLock() },
-						onUpdateState = { viewModel.onChangeState(it) }
+						onClickSave = viewModel::putBucketItem,
+						onClickFavourite = viewModel::onClickFavourite,
+						onClickLock = viewModel::onClickLock,
+						onUpdateState = viewModel::onChangeState,
+						onClickShare = { bucketItemObject?.let { share(ShareBucketItemUtil.getShowItemShareText(bucketItemList = listOf(it))) } },
+						onConfirmDelete = { viewModel.delete(); finish() },
 					)
 
 					else -> LoadingView()
 				}
 			}
+		}
+	}
+
+	private fun share(shareText: String) {
+		Intent(Intent.ACTION_SEND).apply {
+			type = "text/html"
+			putExtra(Intent.EXTRA_TEXT, shareText)
+			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+			if (resolveActivity(packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
+			else Toast.makeText(this@ShowBucketItemActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
 		}
 	}
 

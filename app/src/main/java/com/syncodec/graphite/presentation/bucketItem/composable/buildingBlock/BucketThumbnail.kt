@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import io.realm.kotlin.types.RealmUUID
 
 
@@ -22,13 +23,13 @@ import io.realm.kotlin.types.RealmUUID
 fun BucketThumbnail(
 	modifier: Modifier = Modifier,
 	key: String? = null,
-	thumbnail: Bitmap? = null,
+	thumbnail: String? = null,
 ) {
 	val context = LocalContext.current
 
 	SubcomposeAsyncImage(
 		model = ImageRequest.Builder(context)
-			.data(thumbnail)
+			.data(thumbnail?.decodeBase64ToBitmap())
 			.diskCachePolicy(CachePolicy.ENABLED)
 			.memoryCachePolicy(CachePolicy.ENABLED)
 			.diskCacheKey(key = key)

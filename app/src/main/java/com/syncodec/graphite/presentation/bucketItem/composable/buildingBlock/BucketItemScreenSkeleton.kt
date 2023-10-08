@@ -39,6 +39,8 @@ fun BucketItemScreenSkeleton(
 	onClickSave: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
+	onClickShare : () -> Unit = {},
+	onConfirmDelete : () -> Unit= {},
 	content: @Composable ColumnScope.() -> Unit = {},
 ) {
 	val scope = rememberCoroutineScope()
@@ -66,7 +68,7 @@ fun BucketItemScreenSkeleton(
 		bottomBar = {
 			BottomBar(
 				onClickMetadata = { isMetadataBottomSheetVisible = true },
-				onClickShare = {},
+				onClickShare = onClickShare,
 			)
 		}
 	) {
@@ -94,6 +96,6 @@ fun BucketItemScreenSkeleton(
 		onDismissRequest = { isDeleteDialogVisible = false },
 		title = stringResource(id = R.string.delete_item),
 		contentText = stringResource(id = R.string.are_you_sure_delete),
-		onConfirmDelete = {}
+		onConfirmDelete = onConfirmDelete
 	)
 }

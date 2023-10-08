@@ -1,6 +1,6 @@
 package com.syncodec.graphite.presentation.bucketItem.activity
 
-import android.os.Build
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -15,6 +15,7 @@ import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemVie
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BookBucketItemScreen
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
+import com.syncodec.graphite.utils.shareUtil.ShareBucketItemUtil
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -37,12 +38,25 @@ class BookBucketItemActivity : ComponentActivity() {
 				BookBucketItemScreen(
 					isNew = isNew == true,
 					bucketItemObject = bucketItemObject,
-					onClickSave = { viewModel.putBucketItem() },
-					onClickFavourite = { viewModel.onClickFavourite() },
-					onClickLock = { viewModel.onClickLock() },
-					onUpdateState = { viewModel.onChangeState(it) }
+					onClickSave = viewModel::putBucketItem,
+					onClickFavourite = viewModel::onClickFavourite,
+					onClickLock = viewModel::onClickLock,
+					onUpdateState = viewModel::onChangeState,
+					onClickShare = { bucketItemObject?.let { share(ShareBucketItemUtil.getBookItemShareText(bucketItemList = listOf(it))) } },
+					onConfirmDelete = { viewModel.delete(); finish() },
 				)
 			}
+		}
+	}
+
+	private fun share(shareText: String) {
+		Intent(Intent.ACTION_SEND).apply {
+			type = "text/html"
+			putExtra(Intent.EXTRA_TEXT, shareText)
+			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+			if (resolveActivity(packageManager) != null) startActivity(Intent.createChooser(this, "Share using"))
+			else Toast.makeText(this@BookBucketItemActivity, "No app found on your device which can perform this action", Toast.LENGTH_SHORT).show()
 		}
 	}
 
@@ -66,10 +80,12 @@ class BookBucketItemActivity : ComponentActivity() {
 					if (BuildConfig.DEBUG) Log.e("npr71", "bucketId : null")
 					errorReadingData()
 				}
+
 				bucketType != BucketType.BOOK.name -> {
 					if (BuildConfig.DEBUG) Log.e("npr71", "bucketType != BucketType.BOOK.name")
 					errorReadingData()
 				}
+
 				bookId != null -> viewModel.initBucketItem(bookId = bookId, parentId = bucketId)
 				(bucketItemId != null) -> viewModel.readBucketItem(bucketItemId, parentId = bucketId)
 				else -> {

@@ -50,20 +50,13 @@ fun BookBucketItemScreen(
 	onClickSave: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
+	onClickShare : () -> Unit = {},
+	onConfirmDelete : () -> Unit= {},
 	onUpdateState: (BucketItemState) -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val clipboardManager = LocalClipboardManager.current
 
-	val thumbnail by remember(bucketItemObject?.thumbnail) {
-		derivedStateOf {
-			try {
-				bucketItemObject?.thumbnail?.decodeBase64ToBitmap()
-			} catch (_: Exception) {
-				null
-			}
-		}
-	}
 	val bookData by remember(bucketItemObject?.data) { derivedStateOf { BucketItemObject.Companion.BucketItemData.BookData(jsonString = bucketItemObject?.data) } }
 	val state by remember(bucketItemObject?.state) { derivedStateOf { bucketItemObject?.state } }
 
@@ -73,11 +66,13 @@ fun BookBucketItemScreen(
 		onClickSave = onClickSave,
 		onClickFavourite = onClickFavourite,
 		onClickLock = onClickLock,
+		onClickShare = onClickShare,
+		onConfirmDelete = onConfirmDelete
 	) {
 		Spacer(modifier = Modifier.height(12.dp))
 		BucketThumbnail(
-			key = bookData.key,
-			thumbnail = thumbnail
+			key = bucketItemObject?.id?.toString(),
+			thumbnail = bucketItemObject?.thumbnail
 		)
 		Spacer(modifier = Modifier.height(24.dp))
 		BookTitleView(

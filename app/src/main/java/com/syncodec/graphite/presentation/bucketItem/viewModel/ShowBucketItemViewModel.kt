@@ -8,6 +8,7 @@ import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
@@ -21,10 +22,9 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ShowBucketItemViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class ShowBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
-	val repositoryState: StateFlow<Repository.Companion.RepositoryStatus> = repositoryStateFlow
-	private val repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
+	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
 	private val _isNew: MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val isNew: StateFlow<Boolean?> = _isNew
@@ -43,12 +43,12 @@ class ShowBucketItemViewModel(repositoryStateFlow: MutableStateFlow<Repository.C
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collectLatest { repositoryStatus ->
-				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) repository.tryEmit(repositoryStatus.repository)
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
+				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
 		viewModelScope.launch(Dispatchers.Default) {
-			combine(repository, id) { repository1, id1 -> Pair(repository1, id1) }.collectLatest { (repository1, bucketItemId) ->
+			combine(_repository, id) { repository1, id1 -> Pair(repository1, id1) }.collectLatest { (repository1, bucketItemId) ->
 				bucketItemId?.let {
 					repository1?.getBucketItemAsFlow(id = bucketItemId)?.collectLatest {
 						this@ShowBucketItemViewModel._bucketItemObject.tryEmit(it)
@@ -113,7 +113,7 @@ class ShowBucketItemViewModel(repositoryStateFlow: MutableStateFlow<Repository.C
 	fun putBucketItem() {
 		viewModelScope.launch(Dispatchers.Default) {
 			this@ShowBucketItemViewModel.bucketItemObject.value?.let { bucketItemObject1 ->
-				repository.value?.putBucketItemSuspended(bucketItemObject1)
+				_repository.value?.putBucketItemSuspended(bucketItemObject1)
 				bucketItemObject1.parentId?.let { readBucketItem(id = bucketItemObject1.id, parentId = it) } ?: Log.e("npr71", "bucket item parent id is null")
 			}
 		}
@@ -149,5 +149,9 @@ class ShowBucketItemViewModel(repositoryStateFlow: MutableStateFlow<Repository.C
 			this@ShowBucketItemViewModel._bucketItemObject.tryEmit(this)
 			putBucketItem()
 		}
+	}
+
+	fun delete() {
+		this._id.value?.let { _repository.value?.deleteSuspended(id = it) }
 	}
 }
