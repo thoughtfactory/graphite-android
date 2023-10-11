@@ -97,12 +97,6 @@ class NoteObject() : RealmObject {
 		}
 	}
 
-	fun getContentString(): String {
-		val json = Json { ignoreUnknownKeys = true }
-		val kitKatContent = json.decodeFromString<KitKatContent>(content ?: "")
-		return kitKatContent.toTxt()
-	}
-
 	override fun toString(): String = this.id.toString()
 
 	fun toLite(): NoteObjectLite {
@@ -214,7 +208,6 @@ class NoteObject() : RealmObject {
 				this.createdTimestamp = Instant.now().toEpochMilli()
 				this.modifiedTimestamp = Instant.now().toEpochMilli()
 				this.userTimestamp = Instant.now().toEpochMilli()
-
 				this.title = "Random Title ${Random.nextInt()}"
 				this.color = Color.argb(255, Random.nextInt(256), Random.nextInt(256), Random.nextInt(256))
 				setLatLng(LatLng(0.0, 0.0))

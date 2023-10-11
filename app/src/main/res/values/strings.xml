@@ -15,6 +15,11 @@
     <string name="error_fetching_location_content_description">Error fetching location</string>
     <string name="error_fetching_location">Error fetching location. Try reloading or set location manually. Check if GPS is enabled.</string>
 
+    <!--    Notification-->
+    <string name="notification_permission_unavailable">Notification permission unavailable</string>
+    <string name="notification_permission_dialog_title">Notification permission</string>
+    <string name="get_notification_permission_message">Grant notification permission to pin item to notification bar.</string>
+
     <!--    Bucket-->
     <string name="bucket">Bucket</string>
     <string name="bucket_item">Bucket item</string>
@@ -122,6 +127,35 @@
     <string name="as_json">As json</string>
     <string name="as_markdown">As markdown</string>
 
+    <!--    Note toolbar-->
+    <string name="note_metadata">Note metadata</string>
+    <string name="note_format_redo">Redo</string>
+    <string name="note_format_undo">Undo</string>
+    <string name="note_format_toggle_bold">Toggle bold</string>
+    <string name="note_format_toggle_italic">Toggle italic</string>
+    <string name="note_format_toggle_underline">Toggle underline</string>
+    <string name="note_format_toggle_strikethrough">Toggle strikethrough</string>
+    <string name="note_format_toggle_superscript">Toggle superscript</string>
+    <string name="note_format_toggle_subscript">Toggle subscript</string>
+    <string name="note_format_toggle_link">Toggle link</string>
+    <string name="note_format_hard_break">Hard break</string>
+    <string name="note_format_horizontal_rule">Horizontal rule</string>
+    <string name="note_format_unordered_list">Unordered list</string>
+    <string name="note_format_ordered_list">Ordered list</string>
+    <string name="note_format_check_list">Check list</string>
+    <string name="note_format_blockquote">Blockquote</string>
+    <string name="note_format_heading">Heading</string>
+    <string name="note_format_paragraph">Paragraph</string>
+    <string name="note_format_alignment">Alignment</string>
+    <string name="note_format_alignment_left">Left</string>
+    <string name="note_format_alignment_center">Center</string>
+    <string name="note_format_alignment_right">Right</string>
+    <string name="note_format_alignment_justify">Justify</string>
+    <string name="note_format_indent">Indent</string>
+    <string name="note_format_outdent">Outdent</string>
+    <string name="note_format_text_color">Text color</string>
+    <string name="note_format_highlight_color">Highlight color</string>
+
     <!--    Explorer-->
     <string name="in_visible_region">Everywhere</string>
     <string name="with_attachments">With attachments</string>
@@ -173,6 +207,7 @@
     <string name="select_from_gallery">Select from gallery</string>
     <string name="modified">Modified</string>
     <string name="custom">Custom</string>
+    <string name="date">Date</string>
     <string name="sort_by">Sort by</string>
     <string name="sort_on">Sort on</string>
     <string name="ascending">Ascending</string>
@@ -314,5 +349,6 @@
     <string name="toast_backup_folder_removed">Backup folder removed</string>
     <string name="toast_error_removing_backup_folder">Backup folder removed</string>
     <string name="toast_error_restoring_snapshot">Error restoring snapshot</string>
+    <string name="toast_pin_to_notification">Join Graphite Pro to pin items to notification</string>
 
 </resources>

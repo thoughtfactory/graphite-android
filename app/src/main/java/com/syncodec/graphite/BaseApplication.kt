@@ -28,7 +28,7 @@ import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.Bu
 import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.ExplorerViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
-import com.syncodec.graphite.presentation.note2.NoteViewModel2
+import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.notebook.composable.NotebookScreenViewModel2
 import com.syncodec.graphite.presentation.search.SearchViewModel
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ClearDataViewModel
@@ -85,7 +85,7 @@ class BaseApplication : Application() {
 					viewModelOf(::NotebookScreenViewModel)
 					viewModelOf(::ExplorerViewModel)
 
-					viewModelOf(::NoteViewModel2)
+					viewModelOf(::NoteViewModel)
 //					viewModelOf(::ViewerScreenViewModel)
 
 					viewModelOf(::BucketScreenCommonViewModel)
@@ -176,7 +176,7 @@ class BaseApplication : Application() {
 	}
 
 	companion object {
-		val isPro: MutableStateFlow<Boolean> = MutableStateFlow(true)
+		val isPro: MutableStateFlow<Boolean> = MutableStateFlow(false)
 		val authenticationState: MutableStateFlow<AuthenticationState> = MutableStateFlow(AuthenticationState.None)
 	}
 }

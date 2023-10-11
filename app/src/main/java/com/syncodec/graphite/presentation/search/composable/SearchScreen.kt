@@ -1,15 +1,12 @@
 package com.syncodec.graphite.presentation.search.composable
 
-import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,13 +20,10 @@ import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.SearchSelectionActionView
-import com.syncodec.graphite.presentation.note2.NoteActivity2
-import com.syncodec.graphite.presentation.notebook.composable.noteList
 import com.syncodec.graphite.presentation.search.SearchViewModel
 import com.syncodec.graphite.presentation.search.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.search.composable.bar.TopBar
 import com.syncodec.graphite.presentation.search.composable.buildingBlock.SearchWhatView
-import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 

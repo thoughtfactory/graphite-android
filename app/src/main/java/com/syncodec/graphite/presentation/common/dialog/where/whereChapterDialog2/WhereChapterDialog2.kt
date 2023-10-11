@@ -28,6 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
+import com.syncodec.graphite.presentation.common.component.LocalComponentColumnCount
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.bar.BottomBar
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.bar.TopBar
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
@@ -56,7 +58,7 @@ fun WhereChapterDialog2(
 	val viewModel: WhereChapterDialogViewModel2 = koinViewModel()
 
 	val chapterPath by viewModel.currentChapterPath.collectAsState()
-	val childChapterObject by viewModel.childChapterObject.collectAsState()
+	val childChapterList by viewModel.childChapterObject.collectAsState()
 	val childChapterCountMap by viewModel.childChapterCountMap.collectAsState()
 	val childNoteCountMap by viewModel.childNoteCountMap.collectAsState()
 
@@ -70,8 +72,8 @@ fun WhereChapterDialog2(
 
 	AnimatedVisibility(
 		visible = isDialogVisible,
-		enter = slideInVertically(tween(470)) { it / 2 } + fadeIn(tween(470)),
-		exit = slideOutVertically(tween(470)) { it / 2 } + fadeOut(tween(470))
+		enter = slideInVertically(tween(ANIMATION_DURATION_MILLIS)) { it / 2 } + fadeIn(tween(ANIMATION_DURATION_MILLIS)),
+		exit = slideOutVertically(tween(ANIMATION_DURATION_MILLIS)) { it / 2 } + fadeOut(tween(ANIMATION_DURATION_MILLIS))
 	) {
 		GenericScaffold2(
 			topBar = {
@@ -106,21 +108,21 @@ fun WhereChapterDialog2(
 				}
 			}
 		) {
-			if (childChapterObject.isEmpty()) EmptyView(
+			if (childChapterList.isEmpty()) EmptyView(
 				image = R.drawable.il_empty_chapter,
 				title = "No chapters found"
 			)
 			else LazyColumn(
-				modifier = Modifier.fillMaxSize()
+				modifier = Modifier.fillMaxSize(),
 			) {
-//				chapterList(
-//					chapterList = childChapterObject,
-//					chapterNoteItemCount = childNoteCountMap,
-//					chapterChapterItemCount = childChapterCountMap,
-//					onClick = { viewModel.exploreChapter(it.id) },
-//				)
+				chapterList(
+					chapterList = childChapterList,
+					chapterNoteItemCount = childNoteCountMap,
+					chapterChapterItemCount = childChapterCountMap,
+					componentColumnCount = 1,
+					onClick = { viewModel.exploreChapter(it.id) },
+				)
 			}
-
 		}
 	}
 

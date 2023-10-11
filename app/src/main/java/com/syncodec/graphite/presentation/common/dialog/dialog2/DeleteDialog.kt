@@ -18,6 +18,7 @@ fun DeleteDialog(
 ) {
 	GenericDialog2(
 		isDialogVisible = isDialogVisible,
+		onDismissRequest = onDismissRequest,
 		icon = GenericDialogIcon(icon = R.drawable.ic_fa_delete, tint = MaterialTheme.colorScheme.error),
 		title = title,
 		contentText = contentText,

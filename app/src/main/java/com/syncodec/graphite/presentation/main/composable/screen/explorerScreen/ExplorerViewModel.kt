@@ -4,9 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLngBounds
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.LockableRepo
-import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.explorer.meta.AbstractExploreViewModel
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +19,6 @@ import java.time.ZoneOffset
 @KoinViewModel
 class ExplorerViewModel(lockableRepo: LockableRepo) : AbstractExploreViewModel(lockableRepo) {
 
-	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
 	private val _latLngBound: MutableStateFlow<LatLngBounds?> = MutableStateFlow(null)
 	private val _locationFilteredNoteList: MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
@@ -39,24 +36,15 @@ class ExplorerViewModel(lockableRepo: LockableRepo) : AbstractExploreViewModel(l
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			lockableRepo.repositoryStatusFlow.collect { repositoryStatus ->
-				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
-			}
-		}
-
-		viewModelScope.launch(Dispatchers.Default) {
-			_repository.collectLatest { repository ->
-				repository?.getDefaultChapterIdAsFlow()?.collectLatest { defaultChapterId ->
-					super.loadChapter(chapterId = defaultChapterId)
-				}
-			}
-		}
-
-		viewModelScope.launch(Dispatchers.Default) {
+			launch { loadDefaultChapter() }
 			launch { filterNoteByChapter() }
 			launch { observeDateFilter() }
 			launch { observeLocationFilter() }
 		}
+	}
+
+	private suspend fun loadDefaultChapter() {
+		super.defaultChapterId.collectLatest { super.loadChapter(chapterId = it) }
 	}
 
 	private suspend fun filterNoteByChapter() {
@@ -90,33 +78,5 @@ class ExplorerViewModel(lockableRepo: LockableRepo) : AbstractExploreViewModel(l
 
 	fun onSelectDate(date: LocalDate) {
 		this._selectedDate.tryEmit(date)
-	}
-
-	fun onClickMultiFavourite(idList: Set<RealmUUID>) {
-		viewModelScope.launch(Dispatchers.Default) {
-			val isAllFavourite = super.chapterFilteredNoteList.value.filter { it.id in idList }.all { it.isFavourite }
-			idList.forEach { noteId ->
-				_repository.value?.getNoteFromId(id = noteId)?.clone()?.apply {
-					this.isFavourite = !isAllFavourite
-					_repository.value?.putNote(this)
-				}
-			}
-		}
-	}
-
-	fun onClickMultiLock(idList: Set<RealmUUID>) {
-		viewModelScope.launch(Dispatchers.Default) {
-			val isAllLocked = super.chapterFilteredNoteList.value.filter { it.id in idList }.all { it.isLocked }
-			idList.forEach { noteId ->
-				_repository.value?.getNoteFromId(id = noteId)?.clone()?.apply {
-					this.isLocked = !isAllLocked
-					_repository.value?.putNote(this)
-				}
-			}
-		}
-	}
-
-	fun delete(idList: Set<RealmUUID>) {
-		_repository.value?.deleteSuspended(idList)
 	}
 }

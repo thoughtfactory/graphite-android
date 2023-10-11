@@ -1,18 +1,17 @@
 package com.syncodec.graphite.presentation.attachment.composable.screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
-import com.syncodec.graphite.utils.LoaderStatus
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 import java.io.File
@@ -21,133 +20,103 @@ import java.io.File
 @KoinViewModel
 class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
 
-	val repositoryState = lockableRepo.repositoryStatusFlow
+	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
-	private val loadAll : MutableStateFlow<Boolean> = MutableStateFlow(false)
-	private val noteId : MutableStateFlow<String?> = MutableStateFlow(null)
-	private val chapterId : MutableStateFlow<String?> = MutableStateFlow(null)
+	private val loadAll: MutableStateFlow<Boolean> = MutableStateFlow(false)
+	private val noteId: MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
+	private val chapterId: MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
 
-	private var loadAllCoroutine : CoroutineScope? = null
-	private var loadNoteCoroutine : CoroutineScope? = null
-	private var loadChapterCoroutine : CoroutineScope? = null
+	private var loadAllCoroutine: CoroutineScope? = null
+	private var loadNoteCoroutine: CoroutineScope? = null
+	private var loadChapterCoroutine: CoroutineScope? = null
 
-	val loaderStatus : MutableStateFlow<LoaderStatus> = MutableStateFlow(LoaderStatus.Init)
-	val noteAttachmentListMap : MutableStateFlow<Map<NoteObjectLite, List<File>>> = MutableStateFlow(mapOf())
+	val noteAttachmentListMap: MutableStateFlow<Map<NoteObjectLite, List<File>>> = MutableStateFlow(mapOf())
 
-	val enableNoteNavigation : MutableStateFlow<Boolean> = MutableStateFlow(false)
+	val enableNoteNavigation: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
 	init {
-//		viewModelScope.launch(Dispatchers.Default) {
-//			combine(loadAll, repositoryState) { loadAll, repositoryState ->
-//				loadAll to repositoryState
-//			}.collect { (loadAll, repositoryState) ->
-//				if (loadAll && repositoryState == Repository.Companion.RepositoryState.Success) loadAllData()
-//			}
-//		}
-//
-//		viewModelScope.launch(Dispatchers.Default) {
-//			combine(noteId, repositoryState) { noteId, repositoryState ->
-//				noteId to repositoryState
-//			}.collect { (noteId, repositoryState) ->
-//				if (! noteId.isNullOrEmpty() && repositoryState == Repository.Companion.RepositoryState.Success) loadNoteData(noteId)
-//			}
-//		}
-//
-//		viewModelScope.launch(Dispatchers.Default) {
-//			combine(chapterId, repositoryState) { chapterId, repositoryState ->
-//				chapterId to repositoryState
-//			}.collect { (chapterId, repositoryState) ->
-//				if (! chapterId.isNullOrEmpty() && repositoryState == Repository.Companion.RepositoryState.Success) loadChapterData(chapterId)
-//			}
-//		}
+		viewModelScope.launch(Dispatchers.Default) {
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
+				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
+			}
+		}
+
+		viewModelScope.launch(Dispatchers.Default) {
+			this@AttachmentScreenViewModel._repository.collectLatest { repository1 ->
+				if (repository1 != null) {
+					launch { this@AttachmentScreenViewModel.loadAll.collectLatest { if (it) loadAllData(repository = repository1) } }
+					launch { this@AttachmentScreenViewModel.noteId.collectLatest { if (it != null) loadNoteData(repository = repository1, id = it) } }
+					launch { this@AttachmentScreenViewModel.chapterId.collectLatest { if (it != null) loadChapterData(repository = repository1, id = it) } }
+				}
+			}
+		}
 	}
 
-//	private fun loadAllData() {
-//		viewModelScope.launch(Dispatchers.Default) {
-//			loadAllCoroutine?.cancel()
-//			loadAllCoroutine = this
-//			repository.getAllNoteLiteAsFlow().collect {
-//				loaderStatus.tryEmit(LoaderStatus.Loading)
-//				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
-//				it.forEach { note ->
-//					repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
-//						if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
-//					}
-//				}
-//				this@AttachmentScreenViewModel.noteAttachmentListMap.tryEmit(noteAttachmentListMap)
-//				if (noteAttachmentListMap.isEmpty()) loaderStatus.tryEmit(LoaderStatus.LoadedEmpty) else loaderStatus.tryEmit(LoaderStatus.Loaded)
-//			}
-//		}
-//	}
-//
-//	private fun loadNoteData(id : String) {
-//		loaderStatus.tryEmit(LoaderStatus.Loading)
-//		val noteId = try {
-//			RealmUUID.from(id)
-//		} catch (e : Exception) {
-//			loaderStatus.tryEmit(LoaderStatus.Error)
-//			null
-//		}
-//		noteId?.let {
-//			viewModelScope.launch(Dispatchers.Default) {
-//				loadNoteCoroutine?.cancel()
-//				loadNoteCoroutine = this
-//				repository.getNoteFromIdAsFlow(id = it).collect {
-//					it?.let { noteObject ->
-//						repository.attachmentRepository.getAttachmentFromNote(parentId = noteObject.id).let { attachmentList ->
-//							noteAttachmentListMap.tryEmit(mapOf(noteObject.toLite() to attachmentList))
-//							loaderStatus.tryEmit(LoaderStatus.Loaded)
-//						}
-//					} ?: loaderStatus.tryEmit(LoaderStatus.Error)
-//				}
-//			}
-//		}
-//	}
-//
-//	private fun loadChapterData(id : String) {
-//		loaderStatus.tryEmit(LoaderStatus.Loading)
-//		val chapterId = try {
-//			RealmUUID.from(id)
-//		} catch (e : Exception) {
-//			loaderStatus.tryEmit(LoaderStatus.Error)
-//			null
-//		}
-//		chapterId?.let {
-//			viewModelScope.launch(Dispatchers.Default) {
-//				loadChapterCoroutine?.cancel()
-//				loadChapterCoroutine = this
-//				repository.getNoteWithParentIdAsFlow(parentId = it).collect {
-//					val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
-//					it.forEach { note ->
-//						repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
-//							if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
-//						}
-//					}
-//					this@AttachmentScreenViewModel.noteAttachmentListMap.tryEmit(noteAttachmentListMap)
-//					if (noteAttachmentListMap.isEmpty()) loaderStatus.tryEmit(LoaderStatus.LoadedEmpty) else loaderStatus.tryEmit(LoaderStatus.Loaded)
-//				}
-//			}
-//		}
-//	}
+	private fun loadAllData(repository: Repository) {
+		Log.d("npr71", "loadAllData")
+		viewModelScope.launch(Dispatchers.Default) {
+			loadAllCoroutine?.cancel()
+			loadAllCoroutine = this
+			repository.getAllNoteLiteAsFlow().collect {
+				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
+				it.forEach { note ->
+					repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
+						if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
+					}
+				}
+				this@AttachmentScreenViewModel.noteAttachmentListMap.tryEmit(noteAttachmentListMap)
+			}
+		}
+	}
+
+	private fun loadNoteData(repository: Repository, id: RealmUUID) {
+		Log.d("npr71", "loadNoteData")
+		viewModelScope.launch(Dispatchers.Default) {
+			loadNoteCoroutine?.cancel()
+			loadNoteCoroutine = this
+			repository.getNoteFromIdAsFlow(id = id).collect {
+				it?.let { noteObject ->
+					repository.attachmentRepository.getAttachmentFromNote(parentId = noteObject.id).let { attachmentList ->
+						noteAttachmentListMap.tryEmit(mapOf(noteObject.toLite() to attachmentList))
+					}
+				}
+			}
+		}
+	}
+
+	private fun loadChapterData(repository: Repository, id: RealmUUID) {
+		Log.d("npr71", "loadChapterData")
+		viewModelScope.launch(Dispatchers.Default) {
+			loadChapterCoroutine?.cancel()
+			loadChapterCoroutine = this
+			repository.getNoteWithParentIdAsFlow(parentId = id).collect {
+				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
+				it.forEach { note ->
+					repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
+						if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
+					}
+				}
+				this@AttachmentScreenViewModel.noteAttachmentListMap.tryEmit(noteAttachmentListMap)
+			}
+		}
+	}
 
 	fun loadAll() {
 		this.enableNoteNavigation.tryEmit(true)
 		this.loadAll.tryEmit(true)
 	}
 
-	fun loadNote(noteId : RealmUUID) {
+	fun loadNote(noteId: RealmUUID) {
 		this.enableNoteNavigation.tryEmit(false)
-		this.noteId.tryEmit(noteId.toString())
+		this.noteId.tryEmit(noteId)
 	}
 
-	fun loadChapter(chapterId : RealmUUID) {
+	fun loadChapter(chapterId: RealmUUID) {
 		this.enableNoteNavigation.tryEmit(true)
-		this.chapterId.tryEmit(chapterId.toString())
+		this.chapterId.tryEmit(chapterId)
 	}
 
-	fun deleteAttachment(attachmentList : List<File>) {
-		loaderStatus.tryEmit(LoaderStatus.Loading)
-
+	fun deleteAttachment(attachmentList: List<File>) {
 		viewModelScope.launch(Dispatchers.Default) {
 			val currentNoteAttachmentListMap = noteAttachmentListMap.value
 			val newNoteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
@@ -159,9 +128,6 @@ class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewMo
 			}
 
 			noteAttachmentListMap.tryEmit(newNoteAttachmentListMap)
-			if (newNoteAttachmentListMap.isEmpty()) loaderStatus.tryEmit(LoaderStatus.LoadedEmpty) else loaderStatus.tryEmit(LoaderStatus.Loaded)
 		}
-
-//		repository.deleteAttachment(attachmentList, )
 	}
 }

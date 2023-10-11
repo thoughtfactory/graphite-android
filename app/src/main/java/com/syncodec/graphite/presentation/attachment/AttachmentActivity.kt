@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreen
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.base.BaseComposable
@@ -14,9 +16,9 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class AttachmentActivity : ComponentActivity() {
 
-	private val viewModel : AttachmentScreenViewModel by viewModel()
+	private val viewModel: AttachmentScreenViewModel by viewModel()
 
-	override fun onCreate(savedInstanceState : Bundle?) {
+	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		val showAll = intent.getBooleanExtra(Extra.Companion.Extra.ShowAll.name, false)
@@ -60,7 +62,15 @@ class AttachmentActivity : ComponentActivity() {
 
 		setContent {
 			BaseComposable {
-				AttachmentScreen()
+
+				val enableNoteNavigation by viewModel.enableNoteNavigation.collectAsState()
+				val noteAttachmentListMap by viewModel.noteAttachmentListMap.collectAsState()
+
+				AttachmentScreen(
+					enableNoteNavigation = enableNoteNavigation,
+					noteAttachmentListMap = noteAttachmentListMap,
+					deleteAttachment = viewModel::deleteAttachment,
+				)
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLngBounds
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.repository.LockableRepo
-import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.explorer.meta.AbstractExploreViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,11 +27,8 @@ class AtlasViewModel(lockableRepo: LockableRepo) : AbstractExploreViewModel(lock
 			combine(super.chapterFilteredNoteList, this@AtlasViewModel._latLngBound) { filteredNoteList1, latLngBound ->
 				Pair(filteredNoteList1, latLngBound)
 			}.collectLatest { (filteredNoteList1, latLngBound) ->
-				if (latLngBound != null) {
-					this@AtlasViewModel._contextFilteredNoteList.tryEmit(filteredNoteList1.filter { noteObjectLite -> noteObjectLite.latLng?.toGLatLng()?.let { latLngBound.contains(it) } ?: false })
-				} else {
-					this@AtlasViewModel._contextFilteredNoteList.tryEmit(listOf())
-				}
+				if (latLngBound != null) this@AtlasViewModel._contextFilteredNoteList.tryEmit(filteredNoteList1.filter { noteObjectLite -> noteObjectLite.latLng?.toGLatLng()?.let { latLngBound.contains(it) } ?: false })
+				else this@AtlasViewModel._contextFilteredNoteList.tryEmit(listOf())
 			}
 		}
 	}

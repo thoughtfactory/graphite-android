@@ -130,12 +130,13 @@ private fun RootNavigatorItem(
 			Icon(
 				painter = painterResource(id = R.drawable.ic_fa_home),
 				contentDescription = stringResource(id = R.string.root_element),
+				tint = MaterialTheme.colorScheme.onSurface,
 				modifier = Modifier.requiredSize(16.dp)
 			)
 		},
 		colors = SuggestionChipDefaults.suggestionChipColors(
-			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.13f),
-			labelColor = MaterialTheme.colorScheme.surface,
+			containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.47f),
+			labelColor = MaterialTheme.colorScheme.onSurface,
 		),
 		border = null,
 		modifier = Modifier.padding(2.dp, 0.dp),

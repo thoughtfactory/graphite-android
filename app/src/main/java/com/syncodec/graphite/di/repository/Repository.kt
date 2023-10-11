@@ -54,10 +54,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -449,7 +447,6 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 		.asFlow()
 		.extractList()
 		.toLite { toLite() }
-		.combine(getDefaultChapterIdAsFlow()) { noteList1, defaultChapterId1 -> noteList1.filter { it.parentId == defaultChapterId1 } }
 		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
 
 	fun getDefaultNoteLiteMapAsFlow2(): Flow<RealmObjectGroupList<NoteObjectLite>> = realm.query(NoteObject::class)
@@ -530,7 +527,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 		SortOn.Title -> titleGetter(t)?.firstOrNull()?.lowercase() ?: "."
 		SortOn.Timestamp -> timestampGetter(t).timeStampToPrettyDay()
 		SortOn.Modified -> modifiedTimestampGetter(t).timeStampToPrettyDay()
-		else -> customGetter(t)
+		else -> titleGetter(t)?.firstOrNull()?.lowercase() ?: "."
 	}
 
 //	private fun <T> Flow<List<RealmObjectGroup<T>>>.applySortOnBy(

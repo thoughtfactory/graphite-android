@@ -1,8 +1,10 @@
 package com.syncodec.graphite.presentation.explorer.meta
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.NoteObject
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
@@ -18,6 +20,9 @@ import kotlinx.coroutines.launch
 abstract class AbstractExploreViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
+
+	private val _defaultChapterId : MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
+	val defaultChapterId : StateFlow<RealmUUID?> = _defaultChapterId
 
 	private val _currentChapterId: MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
 	private val _currentChapter: MutableStateFlow<ChapterObjectLite?> = MutableStateFlow(null)
@@ -37,10 +42,18 @@ abstract class AbstractExploreViewModel(lockableRepo: LockableRepo) : ViewModel(
 			}
 		}
 
+		viewModelScope.launch(Dispatchers.Default) {
+			_repository.collectLatest { repository ->
+				repository?.getDefaultChapterIdAsFlow()?.collectLatest { defaultChapterId ->
+					this@AbstractExploreViewModel._defaultChapterId.tryEmit(defaultChapterId )
+				}
+			}
+		}
+
 //		Updates chapterObject
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(_repository, _currentChapterId) { repository1, currentChapterId1 -> Pair(repository1, currentChapterId1) }.collectLatest { (repository1, currentChapterId1) ->
-				repository1?.getChapterFromIdAsFlow(id = currentChapterId1)?.collect { chapterObject1 ->
+				repository1?.getChapterFromIdAsFlow(id = currentChapterId1)?.collectLatest { chapterObject1 ->
 					this@AbstractExploreViewModel._currentChapter.tryEmit(chapterObject1?.toLite())
 				}
 			}
@@ -50,6 +63,7 @@ abstract class AbstractExploreViewModel(lockableRepo: LockableRepo) : ViewModel(
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
 				repository1?.getAllNoteLiteAsFlow2()?.collectLatest { noteObjectLiteList ->
+					Log.d("npr71", "noteObjectLiteList : ${noteObjectLiteList.size}")
 					this@AbstractExploreViewModel._noteList.tryEmit(noteObjectLiteList)
 				}
 			}
@@ -84,5 +98,27 @@ abstract class AbstractExploreViewModel(lockableRepo: LockableRepo) : ViewModel(
 
 	fun loadChapter(chapterId: RealmUUID?) {
 		this._currentChapterId.tryEmit(chapterId)
+	}
+
+	fun onClickMultiFavourite(idList: Set<RealmUUID>) {
+		viewModelScope.launch(Dispatchers.Default) {
+			val isAllFavourite = chapterFilteredNoteList.value.filter { it.id in idList }.all { it.isFavourite }
+			_repository.value?.setMultiObjectFromIdSuspended<NoteObject>(idList = idList) {
+				this.isFavourite = !isAllFavourite
+			}
+		}
+	}
+
+	fun onClickMultiLock(idList: Set<RealmUUID>) {
+		viewModelScope.launch(Dispatchers.Default) {
+			val isAllLocked = chapterFilteredNoteList.value.filter { it.id in idList }.all { it.isLocked }
+			_repository.value?.setMultiObjectFromIdSuspended<NoteObject>(idList = idList) {
+				this.isLocked = !isAllLocked
+			}
+		}
+	}
+
+	fun delete(idList: Set<RealmUUID>) {
+		_repository.value?.deleteSuspended(idList)
 	}
 }

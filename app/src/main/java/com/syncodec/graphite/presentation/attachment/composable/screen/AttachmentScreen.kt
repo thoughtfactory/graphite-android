@@ -6,14 +6,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,33 +32,28 @@ import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.At
 import com.syncodec.graphite.presentation.attachment.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.attachment.composable.dialog.AttachmentDialog
 import com.syncodec.graphite.presentation.attachment.composable.dialog.AttachmentDialogType
-import com.syncodec.graphite.presentation.common.ErrorView
-import com.syncodec.graphite.presentation.common.LoadingView
+import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.AttachmentSelectionActionView
+import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.LoaderStatus
-import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
-import com.syncodec.graphite.presentation.note2.NoteActivity2
 import com.syncodec.graphite.utils.viewExternally
 import com.syncodec.graphite.utils.xor
-import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
 
 @Preview
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AttachmentScreen() {
+fun AttachmentScreen(
+	enableNoteNavigation : Boolean = false,
+	noteAttachmentListMap : Map<NoteObjectLite, List<File>> = mapOf(),
+	deleteAttachment : (List<File>) -> Unit = {},
+) {
 	val context = LocalContext.current
-	val viewModel: AttachmentScreenViewModel = koinViewModel()
 	val haptic = LocalHapticFeedback.current
 
 	val isAuthenticated = LocalIsRepoUnlocked.current
-
-	val contentStatus by viewModel.loaderStatus.collectAsState()
-	val enableNoteNavigation by viewModel.enableNoteNavigation.collectAsState()
-	val noteAttachmentListMap by viewModel.noteAttachmentListMap.collectAsState()
 
 	var isSelecting by remember { mutableStateOf(false) }
 	var selectedFileList: Set<File> by remember { mutableStateOf(setOf()) }
@@ -130,7 +124,7 @@ fun AttachmentScreen() {
 				selectedFileList = this
 			}
 		} else {
-			if (enableNoteNavigation) Intent(context, NoteActivity2::class.java).apply {
+			if (enableNoteNavigation) Intent(context, NoteActivity::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, note.id.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -160,7 +154,7 @@ fun AttachmentScreen() {
 				isDeleteDialogVisible = isDeleteDialogVisible,
 				onDelete = {
 					selectedFileList.toList().let {
-						viewModel.deleteAttachment(it)
+						deleteAttachment(it)
 						selectedFileList = setOf()
 						isSelecting = false
 					}
@@ -169,44 +163,39 @@ fun AttachmentScreen() {
 			)
 		}
 	) {
-		when (contentStatus) {
-			LoaderStatus.Init -> LoadingView()
-			LoaderStatus.Error -> ErrorView()
-			LoaderStatus.Loading -> LoadingView()
-			LoaderStatus.LoadedEmpty -> EmptyView()
-			LoaderStatus.Loaded -> LazyVerticalGrid(
-				columns = GridCells.Adaptive(144.dp),
-			) {
-				noteAttachmentListMap
-					.filter { if (it.key.isLocked) isAuthenticated else true }
-					.forEach { (note, attachmentList) ->
-						item(
-							span = { GridItemSpan(maxCurrentLineSpan) }
-						) {
-							AttachmentHeader(
-								noteId = note.id,
-								title = note.title,
-								isFavourite = note.isFavourite,
-								isLocked = note.isLocked,
-								attachmentCount = attachmentList.size,
-								onClick = { onClickHeader(note = note, attachmentList = attachmentList.toSet()) },
-								onLongClick = { onLongClickHeader(attachmentList = attachmentList.toSet()) },
-							)
-						}
-						attachmentList.forEach { file ->
-							item {
-								AttachmentCard(
-									file = file,
-									isSelected = file in selectedFileList,
-									onClick = { onClickAttachment(file) },
-								) { onLongClickAttachment(file) }
-							}
-						}
-						item(span = { GridItemSpan(maxCurrentLineSpan) }) { Box(modifier = Modifier) }
+		if (noteAttachmentListMap.isEmpty()) EmptyView()
+		else LazyVerticalGrid(
+			columns = GridCells.Adaptive(144.dp),
+			modifier = Modifier.fillMaxSize()
+		) {
+			noteAttachmentListMap
+				.filter { if (it.key.isLocked) isAuthenticated else true }
+				.forEach { (note, attachmentList) ->
+					item(
+						span = { GridItemSpan(maxCurrentLineSpan) }
+					) {
+						AttachmentHeader(
+							noteId = note.id,
+							title = note.title,
+							isFavourite = note.isFavourite,
+							isLocked = note.isLocked,
+							attachmentCount = attachmentList.size,
+							onClick = { onClickHeader(note = note, attachmentList = attachmentList.toSet()) },
+							onLongClick = { onLongClickHeader(attachmentList = attachmentList.toSet()) },
+						)
 					}
-			}
+					attachmentList.forEach { file ->
+						item {
+							AttachmentCard(
+								file = file,
+								isSelected = file in selectedFileList,
+								onClick = { onClickAttachment(file) },
+							) { onLongClickAttachment(file) }
+						}
+					}
+					item(span = { GridItemSpan(maxCurrentLineSpan) }) { Box(modifier = Modifier) }
+				}
 		}
-
 		AttachmentSelectionActionView(
 			modifier = Modifier
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)

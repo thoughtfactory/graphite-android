@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -20,7 +21,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -53,7 +53,7 @@ import com.syncodec.graphite.presentation.common.component.note.NoteGridCard2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
-import com.syncodec.graphite.presentation.note2.NoteActivity2
+import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.notebook.composable.bar.COLLAPSED_TOP_BAR_HEIGHT
 import com.syncodec.graphite.presentation.notebook.composable.bar.CollapsedTopBar
@@ -63,7 +63,6 @@ import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.Bottom
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.NotebookBottomSheet
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
@@ -122,7 +121,7 @@ fun NotebookScreen2(
 	}
 
 	fun onClickNote(id: RealmUUID) {
-		if (isSelecting) onSelect(id) else Intent(context, NoteActivity2::class.java).apply {
+		if (isSelecting) onSelect(id) else Intent(context, NoteActivity::class.java).apply {
 			putExtra(Extra.Companion.Extra.IsNew.name, false)
 			putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
 			putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -187,7 +186,7 @@ fun NotebookScreen2(
 					)
 				},
 				onClick = {
-					Intent(context, NoteActivity2::class.java).apply {
+					Intent(context, NoteActivity::class.java).apply {
 						putExtra(Extra.Companion.Extra.IsNew.name, true)
 						putExtra(Extra.Companion.Extra.ParentId.name, chapterObject?.id?.bytes)
 						putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -368,7 +367,44 @@ fun LazyStaggeredGridScope.chapterList(
 	onClick: (ChapterObject) -> Unit = {},
 	onLongClick: (ChapterObject) -> Unit = {},
 ) {
+	items(
+		count = chapterList.size,
+		key = { chapterList[it].id.toString() },
+		contentType = { 2 }
+	) { index ->
+		val chapterObject = chapterList[index]
+		ChapterGridCard(
+			id = chapterObject.id,
+			createdTimestamp = chapterObject.createdTimestamp,
+			modifiedTimestamp = chapterObject.modifiedTimestamp,
+			title = chapterObject.title,
+			description = chapterObject.description,
+			isFavourite = chapterObject.isFavourite,
+			isLocked = chapterObject.isLocked,
+			color = chapterObject.color?.let { Color(it) },
+			thumbnail = chapterObject.thumbnail,
+			noteCount = chapterNoteItemCount[chapterObject.id] ?: 0,
+			chapterCount = chapterChapterItemCount[chapterObject.id] ?: 0,
+			selected = chapterObject.id in selectedIdList,
+			onClick = { onClick(chapterObject) },
+			onLongClick = { onLongClick(chapterObject) },
+			modifier = Modifier
+				.animateItemPlacement(tween(470))
+				.padding(start = if (index % componentColumnCount == 0) 12.dp else 4.dp, top = 4.dp, end = if ((index + 1) % componentColumnCount == 0) 12.dp else 4.dp, bottom = 4.dp)
+		)
+	}
+}
 
+@OptIn(ExperimentalFoundationApi::class)
+fun LazyListScope.chapterList(
+	chapterList: List<ChapterObject> = listOf(),
+	chapterNoteItemCount: Map<RealmUUID?, Int> = mapOf(),
+	chapterChapterItemCount: Map<RealmUUID?, Int> = mapOf(),
+	selectedIdList: Set<RealmUUID> = setOf(),
+	componentColumnCount: Int = 2,
+	onClick: (ChapterObject) -> Unit = {},
+	onLongClick: (ChapterObject) -> Unit = {},
+) {
 	items(
 		count = chapterList.size,
 		key = { chapterList[it].id.toString() },

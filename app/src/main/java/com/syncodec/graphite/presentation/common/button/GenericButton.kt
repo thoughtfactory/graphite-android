@@ -1,5 +1,7 @@
 package com.syncodec.graphite.presentation.common.button
 
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
@@ -28,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,19 +42,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.isDebugInspectorInfoEnabled
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.FilterAndViewBottomSheet
 import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.LocalIsPro
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.presentation.base.secureComposable.LocalAuthenticatorAction
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
+import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 
 
 @Immutable
@@ -344,18 +355,44 @@ fun DeleteButton(
 	)
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Preview
 @Composable
 fun PinButton(
 	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
 	onClick: () -> Unit = {},
 ) {
-	GenericButton(
-		icon = R.drawable.ic_fa_pin,
-		tooltip = stringResource(id = R.string.pin_to_notification_bar),
-		colors = colors,
-		onClick = onClick
-	)
+	val context = LocalContext.current
+	val isPro = LocalIsPro.current
+
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+		val permissionState = rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
+		var isNotificationPermissionDialogVisible by remember { mutableStateOf(false) }
+		GenericButton(
+			icon = R.drawable.ic_fa_pin,
+			tooltip = stringResource(id = R.string.pin_to_notification_bar),
+			colors = colors,
+			onClick = {
+				if (permissionState.status.isGranted) onClick()
+				else isNotificationPermissionDialogVisible = true
+			}
+		)
+
+		NotificationPermissionDialog(
+			isDialogVisible = isNotificationPermissionDialogVisible,
+			onDismissRequest = { isNotificationPermissionDialogVisible = false },
+		)
+	} else {
+		GenericButton(
+			icon = R.drawable.ic_fa_pin,
+			tooltip = stringResource(id = R.string.pin_to_notification_bar),
+			colors = colors,
+			onClick = {
+				if (isPro) onClick()
+				else Toast.makeText(context, context.getText(R.string.toast_pin_to_notification), Toast.LENGTH_SHORT).show()
+			}
+		)
+	}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -452,7 +489,7 @@ fun VaultButton(
 		checkedContainerColor = MaterialTheme.colorScheme.surface,
 		checkedIconColor = MaterialTheme.colorScheme.onSurface
 	),
-	sideEffect : () -> Unit = {}
+	sideEffect: () -> Unit = {}
 ) {
 	val isRepoUnlocked = LocalIsRepoUnlocked.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current

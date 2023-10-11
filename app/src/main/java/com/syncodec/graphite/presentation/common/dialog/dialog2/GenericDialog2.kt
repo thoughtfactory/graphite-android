@@ -42,6 +42,7 @@ import com.syncodec.graphite.R
 @Composable
 fun GenericDialog2(
 	isDialogVisible: Boolean = false,
+	onDismissRequest: () -> Unit = {},
 	icon: GenericDialogIcon? = null,
 	title: String? = null,
 	contentText: String? = null,
@@ -50,79 +51,72 @@ fun GenericDialog2(
 	isPrimaryButtonEnabled: Boolean = true,
 	isSecondaryButtonEnabled: Boolean = true,
 	innerPadding: PaddingValues = PaddingValues(24.dp),
-	onDismissRequest: () -> Unit = {},
 	content: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
 
 	BackHandler(enabled = isDialogVisible) { onDismissRequest() }
 
 	if (isDialogVisible) {
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.071f))
+		AlertDialog(
+			onDismissRequest = onDismissRequest,
+			properties = DialogProperties(
+				dismissOnBackPress = true,
+				dismissOnClickOutside = true,
+			)
 		) {
-			AlertDialog(
-				onDismissRequest = onDismissRequest,
-				properties = DialogProperties(
-					dismissOnBackPress = true,
-					dismissOnClickOutside = true,
-				)
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.extraLarge)
 			) {
-				Box(
+				Column(
 					modifier = Modifier
 						.fillMaxWidth()
-						.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.extraLarge)
+						.padding(innerPadding)
 				) {
-					Column(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(innerPadding)
-					) {
-						icon?.let {
-							Icon(
-								painter = painterResource(id = it.icon),
-								contentDescription = title,
-								tint = it.tint,
-								modifier = Modifier
-									.requiredSize(24.dp)
-									.align(Alignment.CenterHorizontally)
-							)
-							Spacer(modifier = Modifier.height(24.dp))
-						}
-						title?.let {
-							Text(
-								text = it,
-								style = MaterialTheme.typography.titleLarge,
-								color = MaterialTheme.colorScheme.onBackground,
-								fontWeight = FontWeight.Bold,
-								textAlign = if (icon == null) TextAlign.Start else TextAlign.Center,
-								modifier = Modifier.fillMaxWidth()
-							)
-							Spacer(modifier = Modifier.height(24.dp))
-						}
-
-						contentText?.let {
-							Text(
-								text = it,
-								style = MaterialTheme.typography.bodyMedium,
-								color = MaterialTheme.colorScheme.onBackground,
-							)
-							Spacer(modifier = Modifier.height(24.dp))
-						}
-
-						content?.let {
-							it()
-							Spacer(modifier = Modifier.height(24.dp))
-						}
-
-						GenericDialogButtonView(
-							primaryButton = primaryButton,
-							secondaryButton = secondaryButton,
-							isPrimaryButtonEnabled = isPrimaryButtonEnabled,
-							isSecondaryButtonEnabled = isSecondaryButtonEnabled,
+					icon?.let {
+						Icon(
+							painter = painterResource(id = it.icon),
+							contentDescription = title,
+							tint = it.tint,
+							modifier = Modifier
+								.requiredSize(24.dp)
+								.align(Alignment.CenterHorizontally)
 						)
+						Spacer(modifier = Modifier.height(24.dp))
 					}
+					title?.let {
+						Text(
+							text = it,
+							style = MaterialTheme.typography.titleLarge,
+							color = MaterialTheme.colorScheme.onBackground,
+							fontWeight = FontWeight.Bold,
+							textAlign = if (icon == null) TextAlign.Start else TextAlign.Center,
+							modifier = Modifier.fillMaxWidth()
+						)
+						Spacer(modifier = Modifier.height(24.dp))
+					}
+
+					contentText?.let {
+						Text(
+							text = it,
+							style = MaterialTheme.typography.bodyMedium,
+							color = MaterialTheme.colorScheme.onBackground,
+						)
+						Spacer(modifier = Modifier.height(24.dp))
+					}
+
+					content?.let {
+						it()
+						Spacer(modifier = Modifier.height(24.dp))
+					}
+
+					GenericDialogButtonView(
+						primaryButton = primaryButton,
+						secondaryButton = secondaryButton,
+						isPrimaryButtonEnabled = isPrimaryButtonEnabled,
+						isSecondaryButtonEnabled = isSecondaryButtonEnabled,
+					)
 				}
 			}
 		}

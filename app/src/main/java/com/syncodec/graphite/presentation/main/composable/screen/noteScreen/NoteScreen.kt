@@ -33,6 +33,7 @@ import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import com.syncodec.graphite.di.repository.group.isAll
 import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.common.LoadingView
@@ -43,10 +44,9 @@ import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyVie
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NoteFloatingActionButton
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteGrid.NoteGrid
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList.NoteList
-import com.syncodec.graphite.presentation.note2.NoteActivity2
+import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.ViewType
-import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
@@ -76,7 +76,7 @@ fun NoteScreen(
 		if (isSelecting) {
 			onSelect(id)
 		} else {
-			Intent(context, NoteActivity2::class.java).apply {
+			Intent(context, NoteActivity::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, id.bytes)
 				putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -110,7 +110,7 @@ fun NoteScreen(
 						Spacer(modifier = Modifier.height(16.dp))
 
 						NoteFloatingActionButton(isExpanded = true) {
-							Intent(context, NoteActivity2::class.java).apply {
+							Intent(context, NoteActivity::class.java).apply {
 								putExtra(Extra.Companion.Extra.IsNew.name, true)
 								putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
 								putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -136,7 +136,7 @@ fun NoteScreen(
 						Spacer(modifier = Modifier.height(16.dp))
 
 						NoteFloatingActionButton(isExpanded = true) {
-							Intent(context, NoteActivity2::class.java).apply {
+							Intent(context, NoteActivity::class.java).apply {
 								putExtra(Extra.Companion.Extra.IsNew.name, true)
 								putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
 								putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
@@ -173,7 +173,7 @@ fun NoteScreen(
 			) { viewType1 ->
 				when (viewType1) {
 					ViewType.List -> NoteList(
-						noteGroupList = noteGroupList!!,
+						noteGroupList = noteGroupList ?: RealmObjectGroupList(),
 						tagList = tagList,
 						isSelecting = isSelecting,
 						selectedIdList = selectedIdList,
@@ -183,7 +183,7 @@ fun NoteScreen(
 					)
 
 					ViewType.Grid -> NoteGrid(
-						noteGroupList = noteGroupList!!,
+						noteGroupList = noteGroupList ?: RealmObjectGroupList(),
 						tagList = tagList,
 						isSelecting = isSelecting,
 						selectedIdList = selectedIdList,

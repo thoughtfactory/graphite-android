@@ -26,25 +26,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObjectLite
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
+import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.WhereChapterDialog2
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.ExplorerSelectionActionView
@@ -65,10 +68,18 @@ fun ExplorerScreen(
 	bottomSheetTitle: String = "In visible region",
 	currentChapter: ChapterObjectLite? = null,
 	noteList: List<NoteObjectLite> = listOf(),
+	isSelecting: Boolean = false,
+	selectedIdList: Set<RealmUUID> = setOf(),
+	onSelect: (RealmUUID) -> Unit = {},
+	onClickNote: (RealmUUID) -> Unit = {},
+	onClickFavourite: () -> Unit = {},
+	onClickLock: () -> Unit = {},
+	onUnSelectAll: () -> Unit = {},
 	onExploreChapter: (RealmUUID?) -> Unit = {},
+	onConfirmDelete: (Set<RealmUUID>) -> Unit = {},
 	content: @Composable BoxScope.() -> Unit = {}
 ) {
-	var isWhereDialogVisible by remember { mutableStateOf(false) }
+	var isWhereDialogVisible by rememberSaveable { mutableStateOf(false) }
 
 	GenericScaffold2(
 		topBar = { TopBar(title = screenTitle) },
@@ -90,6 +101,14 @@ fun ExplorerScreen(
 		ExplorerView(
 			bottomSheetTitle = bottomSheetTitle,
 			noteList = noteList,
+			isSelecting = isSelecting,
+			selectedIdList = selectedIdList,
+			onSelect = onSelect,
+			onClickNote = onClickNote,
+			onClickFavourite = onClickFavourite,
+			onClickLock = onClickLock,
+			onUnSelectAll = onUnSelectAll,
+			onConfirmDelete = onConfirmDelete,
 			content = content,
 		)
 	}
@@ -105,9 +124,10 @@ fun ExplorerView(
 	selectedIdList: Set<RealmUUID> = setOf(),
 	onSelect: (RealmUUID) -> Unit = {},
 	onClickNote: (RealmUUID) -> Unit = {},
-	onClickDelete: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
+	onUnSelectAll: () -> Unit = {},
+	onConfirmDelete: (Set<RealmUUID>) -> Unit = {},
 	content: @Composable BoxScope.() -> Unit = {}
 ) {
 	val scope = rememberCoroutineScope()
@@ -116,6 +136,7 @@ fun ExplorerView(
 	val viewType by dataStoreInstance.getViewType.collectAsState(null)
 
 	val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
+	var isDeleteDialogVisible by remember { mutableStateOf(false) }
 
 	BackHandler(enabled = bottomSheetScaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) { scope.launch { bottomSheetScaffoldState.bottomSheetState.partialExpand() } }
 
@@ -173,7 +194,7 @@ fun ExplorerView(
 					isAllItemFavourite = false,
 					isAllItemLocked = false,
 					selectedItemCount = selectedIdList.size,
-					onClickDelete = onClickDelete,
+					onClickDelete = { isDeleteDialogVisible = true },
 					onClickFavourite = onClickFavourite,
 					onClickLock = onClickLock,
 					modifier = Modifier
@@ -185,6 +206,14 @@ fun ExplorerView(
 	) {
 		Box(modifier = Modifier.padding(it), content = content)
 	}
+
+	DeleteDialog(
+		isDialogVisible = isDeleteDialogVisible,
+		onDismissRequest = { isDeleteDialogVisible = false },
+		title = stringResource(id = R.string.delete_items_multiple),
+		contentText = stringResource(id = R.string.are_you_sure_delete_multiple),
+		onConfirmDelete = { isDeleteDialogVisible = false; onConfirmDelete(selectedIdList); onUnSelectAll() },
+	)
 }
 
 @Preview
