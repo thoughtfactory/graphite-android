@@ -3,10 +3,11 @@ package com.syncodec.graphite.presentation.explorer.meta
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.ChapterObject
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.model.local.NoteObjectLite
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
@@ -53,7 +54,7 @@ abstract class AbstractExploreViewModel(lockableRepo: LockableRepo) : ViewModel(
 //		Updates chapterObject
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(_repository, _currentChapterId) { repository1, currentChapterId1 -> Pair(repository1, currentChapterId1) }.collectLatest { (repository1, currentChapterId1) ->
-				repository1?.getChapterFromIdAsFlow(id = currentChapterId1)?.collectLatest { chapterObject1 ->
+				repository1?.getObjectFromIdAsFlow<ChapterObject>(id = currentChapterId1)?.collectLatest { chapterObject1 ->
 					this@AbstractExploreViewModel._currentChapter.tryEmit(chapterObject1?.toLite())
 				}
 			}

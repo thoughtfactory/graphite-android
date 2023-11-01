@@ -2,7 +2,7 @@ package com.syncodec.graphite.presentation.explorer.atlas
 
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLngBounds
-import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.presentation.explorer.meta.AbstractExploreViewModel
 import kotlinx.coroutines.Dispatchers

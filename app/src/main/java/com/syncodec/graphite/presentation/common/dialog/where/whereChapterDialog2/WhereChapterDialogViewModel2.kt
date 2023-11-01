@@ -5,8 +5,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.ChapterObject
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
@@ -20,7 +21,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class WhereChapterDialogViewModel2(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class WhereChapterDialogViewModel2(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -42,7 +43,7 @@ class WhereChapterDialogViewModel2(repositoryStateFlow: MutableStateFlow<Reposit
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collect { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collect { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -58,7 +59,7 @@ class WhereChapterDialogViewModel2(repositoryStateFlow: MutableStateFlow<Reposit
 
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
-				repository1?.getAllNoteLiteAsFlow()?.collectLatest { noteObjectLiteList ->
+				repository1?.getAllNoteLiteAsFlow2()?.collectLatest { noteObjectLiteList ->
 					_childChapterCountMap.tryEmit(noteObjectLiteList.groupingBy { it.parentId }.eachCount())
 				}
 			}

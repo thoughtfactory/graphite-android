@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.utils.toColor
 
 
@@ -85,7 +85,7 @@ fun ColorBottomSheet(
 				Icon(
 					painter = painterResource(id = R.drawable.ic_fa_extend_selection),
 					contentDescription = "Extend selection",
-					modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 
 				Spacer(modifier = Modifier.width(8.dp))

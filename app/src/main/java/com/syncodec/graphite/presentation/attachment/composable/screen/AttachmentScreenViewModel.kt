@@ -3,7 +3,8 @@ package com.syncodec.graphite.presentation.attachment.composable.screen
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
@@ -30,7 +31,7 @@ class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewMo
 	private var loadNoteCoroutine: CoroutineScope? = null
 	private var loadChapterCoroutine: CoroutineScope? = null
 
-	val noteAttachmentListMap: MutableStateFlow<Map<NoteObjectLite, List<File>>> = MutableStateFlow(mapOf())
+	val noteAttachmentListMap: MutableStateFlow<Map<NoteObjectLite, Set<File>>> = MutableStateFlow(mapOf())
 
 	val enableNoteNavigation: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -57,8 +58,8 @@ class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewMo
 		viewModelScope.launch(Dispatchers.Default) {
 			loadAllCoroutine?.cancel()
 			loadAllCoroutine = this
-			repository.getAllNoteLiteAsFlow().collect {
-				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
+			repository.getAllNoteLiteAsFlow2().collect {
+				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, Set<File>>()
 				it.forEach { note ->
 					repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
 						if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
@@ -74,7 +75,7 @@ class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewMo
 		viewModelScope.launch(Dispatchers.Default) {
 			loadNoteCoroutine?.cancel()
 			loadNoteCoroutine = this
-			repository.getNoteFromIdAsFlow(id = id).collect {
+			repository.getObjectFromIdAsFlow<NoteObject>(id = id).collect {
 				it?.let { noteObject ->
 					repository.attachmentRepository.getAttachmentFromNote(parentId = noteObject.id).let { attachmentList ->
 						noteAttachmentListMap.tryEmit(mapOf(noteObject.toLite() to attachmentList))
@@ -90,7 +91,7 @@ class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewMo
 			loadChapterCoroutine?.cancel()
 			loadChapterCoroutine = this
 			repository.getNoteWithParentIdAsFlow(parentId = id).collect {
-				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
+				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, Set<File>>()
 				it.forEach { note ->
 					repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
 						if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
@@ -116,13 +117,14 @@ class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewMo
 		this.chapterId.tryEmit(chapterId)
 	}
 
-	fun deleteAttachment(attachmentList: List<File>) {
+	fun deleteAttachment(attachmentList: Set<File>) {
 		viewModelScope.launch(Dispatchers.Default) {
 			val currentNoteAttachmentListMap = noteAttachmentListMap.value
-			val newNoteAttachmentListMap = mutableMapOf<NoteObjectLite, List<File>>()
+			val newNoteAttachmentListMap = mutableMapOf<NoteObjectLite, Set<File>>()
 
 			currentNoteAttachmentListMap.forEach { (note, currentAttachmentList) ->
-				val newAttachmentList = currentAttachmentList.toMutableList()
+				val newAttachmentList = currentAttachmentList.toMutableSet()
+				_repository.value?.deleteAttachment(attachmentList = attachmentList)
 				newAttachmentList.removeAll(attachmentList)
 				if (newAttachmentList.isNotEmpty()) newNoteAttachmentListMap[note] = newAttachmentList
 			}

@@ -21,18 +21,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.documentfile.provider.DocumentFile
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.snapshot.SnapshotInator
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScaffold
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonDefaults
+import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SnapshotItem
 import com.syncodec.graphite.presentation.settings.composable.dialog.RestoreSnapshotDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.RestoringSnapshotDialog
 import com.syncodec.graphite.presentation.settings.composable.viewModel.LocalBackupViewModel
-import com.syncodec.graphite.utils.timeStampToPrettyFull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
-import java.io.File
 
 
 @Preview
@@ -44,8 +44,8 @@ fun LocalBackupScreen() {
 	val viewModel: LocalBackupViewModel = koinViewModel()
 
 	var backupDirPath by remember { mutableStateOf<String?>(null) }
-	var snapshotList by remember { mutableStateOf<Map<DocumentFile, LocalBackupViewModel.Companion.SnapshotMetadata?>>(mapOf()) }
-	var selectedSnapshot by remember { mutableStateOf<Pair<DocumentFile, LocalBackupViewModel.Companion.SnapshotMetadata?>?>(null) }
+	var snapshotList by remember { mutableStateOf<Map<DocumentFile, SnapshotInator.Companion.SnapshotMetadata?>>(mapOf()) }
+	var selectedSnapshot by remember { mutableStateOf<Pair<DocumentFile, SnapshotInator.Companion.SnapshotMetadata?>?>(null) }
 
 	var isRestoreSnapshotDialogVisible by remember { mutableStateOf(false) }
 	var isRestoringSnapshotDialogVisible by remember { mutableStateOf(false) }
@@ -117,7 +117,12 @@ fun LocalBackupScreen() {
 					title = stringResource(id = R.string.take_snapshot),
 					subTitle = stringResource(id = R.string.snapshots_are_not_encrypted),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_wand),
-					onClick = { context.contentResolver.persistedUriPermissions.firstOrNull()?.uri?.let { viewModel.takeSnapshot { scope.launch(Dispatchers.Main) { snapshotList = viewModel.readBackupFolder() } } } },
+					onClick = {
+						scope.launch(Dispatchers.IO) {
+							viewModel.takeSnapshot()
+							withContext(Dispatchers.Main) { snapshotList = viewModel.readBackupFolder() }
+						}
+					},
 				)
 			}
 			item { Divider() }
@@ -151,30 +156,14 @@ fun LocalBackupScreen() {
 		onClickRestore = { documentFile ->
 			scope.launch(Dispatchers.IO) {
 				withContext(Dispatchers.Main) { isRestoreSnapshotDialogVisible = false; isRestoringSnapshotDialogVisible = true }
-				viewModel.restoreSnapshot(documentFile = documentFile) {
-					if (!it) scope.launch(Dispatchers.Main) {
-						Toast.makeText(context, context.getText(R.string.toast_error_restoring_snapshot), Toast.LENGTH_SHORT).show()
-						isRestoringSnapshotDialogVisible = false
-					}
+				val isRestored = viewModel.restoreSnapshot(snapshotFile = documentFile)
+				if (!isRestored) scope.launch(Dispatchers.Main) {
+					Toast.makeText(context, context.getText(R.string.toast_error_restoring_snapshot), Toast.LENGTH_SHORT).show()
+					isRestoringSnapshotDialogVisible = false
 				}
 			}
 		}
 	)
 
 	RestoringSnapshotDialog(isDialogVisible = isRestoringSnapshotDialogVisible)
-}
-
-@Preview
-@Composable
-private fun SnapshotItem(
-	snapshotMetadata: LocalBackupViewModel.Companion.SnapshotMetadata? = null,
-	documentFile: DocumentFile = DocumentFile.fromFile(File("")),
-	onClick: () -> Unit = {}
-) {
-	SettingsButton(
-		title = documentFile.name ?: snapshotMetadata?.timestamp?.timeStampToPrettyFull() ?: "Snapshot",
-		subTitle = stringResource(id = R.string.created_on) + " " + snapshotMetadata?.timestamp?.timeStampToPrettyFull(),
-		leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_restore),
-		onClick = onClick,
-	)
 }

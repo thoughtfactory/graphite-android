@@ -30,7 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.note.kitKat.KitKatAction
@@ -74,7 +74,7 @@ fun LinkBottomSheet(
 						Icon(
 							painter = painterResource(id = R.drawable.ic_paste),
 							contentDescription = "Paste",
-							modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+							modifier = Modifier.requiredSize(ICON_SIZE)
 						)
 					}
 				},
@@ -92,7 +92,7 @@ fun LinkBottomSheet(
 				Icon(
 					painter = painterResource(id = R.drawable.ic_fa_extend_selection),
 					contentDescription = "Extend selection",
-					modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 
 				Spacer(modifier = Modifier.width(8.dp))

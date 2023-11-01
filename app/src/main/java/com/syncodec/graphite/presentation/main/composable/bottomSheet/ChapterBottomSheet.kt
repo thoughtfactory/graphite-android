@@ -74,7 +74,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CancelButton

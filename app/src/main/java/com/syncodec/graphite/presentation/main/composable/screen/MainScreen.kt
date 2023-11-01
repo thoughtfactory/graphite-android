@@ -10,11 +10,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.di.cloud.dropbox.DBox
-import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.main.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
@@ -23,9 +24,9 @@ import com.syncodec.graphite.presentation.main.composable.bottomSheet.MenuBottom
 import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.AtlasScreen
 import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.CalendarScreen
 import com.syncodec.graphite.presentation.search.SearchActivity
-import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.launch
 
 
 enum class ComponentType {
@@ -37,7 +38,7 @@ enum class ComponentType {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
+//	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	testConnectionResponse: DBox.Companion.TestConnectionResponse? = null,
 	testDropboxConnection: () -> Unit = {},
 	locationFilteredNoteList: List<NoteObjectLite> = listOf(),
@@ -45,6 +46,7 @@ fun MainScreen(
 	onClickForceSync: () -> Unit = {},
 ) {
 	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
 
 	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
 	var currentScreen by rememberSaveable { mutableIntStateOf(0) }
@@ -70,18 +72,17 @@ fun MainScreen(
 	GenericScaffold2(
 		topBar = {
 			TopBar(
-				syncStatus = syncStatus,
 				onClickMenu = { isMenuBottomSheetVisible = true },
 				onClickCloud = {
-					if (syncStatus is SyncInatorService.Companion.SyncStatus.Init
-						|| syncStatus is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
-						|| syncStatus is SyncInatorService.Companion.SyncStatus.Locked
-						|| syncStatus is SyncInatorService.Companion.SyncStatus.CredentialError
-						|| syncStatus is SyncInatorService.Companion.SyncStatus.Idle
-						|| syncStatus is SyncInatorService.Companion.SyncStatus.Failed
-					) {
-						testDropboxConnection()
-					}
+//					if (syncStatus is SyncInatorService.Companion.SyncStatus.Init
+//						|| syncStatus is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
+//						|| syncStatus is SyncInatorService.Companion.SyncStatus.Locked
+//						|| syncStatus is SyncInatorService.Companion.SyncStatus.CredentialError
+//						|| syncStatus is SyncInatorService.Companion.SyncStatus.Idle
+//						|| syncStatus is SyncInatorService.Companion.SyncStatus.Failed
+//					) {
+//						testDropboxConnection()
+//					}
 				},
 				onClickSearch = {
 					Intent(context, SearchActivity::class.java).apply {
@@ -139,6 +140,6 @@ fun MainScreen(
 	MenuBottomSheet(
 		bottomSheetState = bottomSheetState,
 		isBottomSheetVisible = isMenuBottomSheetVisible,
-		onDismissRequest = { isMenuBottomSheetVisible = false },
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false } },
 	)
 }

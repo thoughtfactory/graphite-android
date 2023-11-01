@@ -48,8 +48,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.TagObjectLite
+import com.syncodec.graphite.di.model.local.LatLng
+import com.syncodec.graphite.di.model.local.TagObjectLite
 import com.syncodec.graphite.di.repository.AttachmentRepository.Companion.getAttachmentCountFromNoteId
 import com.syncodec.graphite.presentation.base.AttachmentContainer
 import com.syncodec.graphite.presentation.base.FavouriteContainer

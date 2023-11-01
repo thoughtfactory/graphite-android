@@ -11,14 +11,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.biometric.BiometricComposable
 import com.syncodec.graphite.presentation.main.composable.screen.FirstTimeScreen
 import com.syncodec.graphite.presentation.main.composable.screen.MainScreen
 import com.syncodec.graphite.service.syncInator.DropboxSyncServiceConnectionManager
-import com.syncodec.graphite.service.syncInator.GDriveSyncServiceConnectionManager
 import com.syncodec.graphite.service.syncInator.SyncInatorService
+import com.syncodec.graphite.service.syncInator.SyncStat
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,7 @@ class MainActivity : FragmentActivity() {
 
 	private val viewModel by viewModel<MainViewModel>()
 
-	private val syncStatus = MutableStateFlow<SyncInatorService.Companion.SyncStatus>(SyncInatorService.Companion.SyncStatus.Init)
+	private val syncStat = MutableStateFlow<SyncStat>(SyncStat.Init)
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -39,13 +40,15 @@ class MainActivity : FragmentActivity() {
 
 		val dataStoreInstance = DataStoreInstance(this)
 
+		startSyncService(SyncDataStoreInstance.Companion.SyncProvider.Dropbox)
+
 		setContent {
 			BaseComposable {
 				val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
 
 				AnimatedContent(
 					targetState = isFirstTime,
-					transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) },
+					transitionSpec = { fadeIn(tween(ANIMATION_DURATION_MILLIS)) togetherWith fadeOut(tween(ANIMATION_DURATION_MILLIS)) },
 					label = "isFirstTime_animation"
 				) {
 					when (it) {
@@ -69,40 +72,21 @@ class MainActivity : FragmentActivity() {
 
 
 	private var dropboxServiceConnectionManager: DropboxSyncServiceConnectionManager? = null
-	private var gDriveSyncServiceConnectionManager: GDriveSyncServiceConnectionManager? = null
 
 	private fun startSyncService(syncProvider: SyncDataStoreInstance.Companion.SyncProvider?) {
 		when (syncProvider) {
 			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> {
 				if (dropboxServiceConnectionManager == null) {
 					dropboxServiceConnectionManager = DropboxSyncServiceConnectionManager(applicationContext) { syncInator ->
-						lifecycleScope.launch(Dispatchers.Default) { syncInator.syncStatus.collect { syncStatus.tryEmit(it) } }
+						lifecycleScope.launch(Dispatchers.Default) { syncInator.syncStat.collect { syncStat.tryEmit(it) } }
 					}
-					gDriveSyncServiceConnectionManager?.service?.hardCutOff()
-					gDriveSyncServiceConnectionManager?.unbindFromService()
-					gDriveSyncServiceConnectionManager = null
-				}
-			}
-
-			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> {
-				if (gDriveSyncServiceConnectionManager == null) {
-					gDriveSyncServiceConnectionManager = GDriveSyncServiceConnectionManager(applicationContext) { syncInator ->
-						lifecycleScope.launch(Dispatchers.Default) { syncInator.syncStatus.collect { syncStatus.tryEmit(it) } }
-					}
-					dropboxServiceConnectionManager?.service?.hardCutOff()
-					dropboxServiceConnectionManager?.unbindFromService()
-					dropboxServiceConnectionManager = null
 				}
 			}
 
 			else -> {
-				dropboxServiceConnectionManager?.service?.hardCutOff()
+//				dropboxServiceConnectionManager?.service?.hardCutOff()
 				dropboxServiceConnectionManager?.unbindFromService()
 				dropboxServiceConnectionManager = null
-
-				gDriveSyncServiceConnectionManager?.service?.hardCutOff()
-				gDriveSyncServiceConnectionManager?.unbindFromService()
-				gDriveSyncServiceConnectionManager = null
 			}
 		}
 	}
@@ -124,8 +108,7 @@ class MainActivity : FragmentActivity() {
 	}
 
 	override fun onDestroy() {
-		dropboxServiceConnectionManager?.unbindFromService()
-		gDriveSyncServiceConnectionManager?.unbindFromService()
+//		dropboxServiceConnectionManager?.unbindFromService()
 		super.onDestroy()
 	}
 

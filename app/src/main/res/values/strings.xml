@@ -208,6 +208,7 @@
     <string name="modified">Modified</string>
     <string name="custom">Custom</string>
     <string name="date">Date</string>
+    <string name="created_time_unknown">Created time unknown</string>
     <string name="sort_by">Sort by</string>
     <string name="sort_on">Sort on</string>
     <string name="ascending">Ascending</string>
@@ -221,6 +222,7 @@
     <string name="component_width">Component width</string>
     <string name="component_column_count">Component column count</string>
     <string name="share">Share</string>
+    <string name="share_using">Share using</string>
     <string name="share_all">Share all</string>
     <string name="enable">Enable</string>
     <string name="cancel">Cancel</string>
@@ -297,6 +299,13 @@
     <string name="biometric_authentication_sub">Enable biometric authentication on launch</string>
     <string name="backspace">Backspace</string>
     <string name="biometric_authentication_dialog_context">Ask for biometric authentication when opening Graphite.\n\nBiometric will only prompt if you have enabled in your device or else authentication will be skipped. </string>
+    <string name="open_source_licenses">Open source licenses</string>
+    <string name="rate_us">Rate us</string>
+    <string name="spread_a_word">Spread a word</string>
+    <string name="join_us_on_instagram">Join us on Instagram</string>
+    <string name="year_progress_bar">Year progress bar</string>
+    <string name="geo_tag_notes_automatically">Geotag notes automatically</string>
+    <string name="add_note_from_notification">Add note from notification</string>
 
     <!--    Data exchanger-->
     <string name="import_data">Import data</string>
@@ -313,6 +322,8 @@
     <string name="please_wait_while_your_data_is_being_processed">Please wait while your data is being processed</string>
     <string name="include_locked_items">Include locked items</string>
     <string name="import_journey_message">Select an exported Journey data file to import. It will a zip file. The data will be imported in the default notebook.</string>
+    <string name="import_graphite_message">Select an exported Graphite data file to import. It will a zip file (7z file if exported from older version).</string>
+    <string name="import_google_keep_message">Select an exported Google Keep data file to import. The data will be imported in the default notebook..</string>
     <string name="clear_data_dialog_content">Clear data is a destructive and non recoverable action. It is advised to back up your data before clearing</string>
     <string name="clearing_data">Clearing data</string>
     <string name="clearing_data_dialog_content">Please wait while data is being cleared</string>
@@ -332,6 +343,20 @@
     <string name="restore_snapshot_content">Restoring snapshot will override current data with snapshot. This action is a non recoverable action</string>
     <string name="restoring_snapshot">Restoring snapshot</string>
 
+    <!--    Dropbox-->
+    <string name="connect_with_dropbox">Connect with Dropbox</string>
+    <string name="enter_oauth2_code">Enter OAuth2 code</string>
+    <string name="test_connection">Test connection</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="auto_sync">Auto sync</string>
+    <string name="space_used">Space used</string>
+    <string name="space_available">Available</string>
+    <string name="running_out_of_space_message">You are running out of space. Synchronization might fail if no more space is available.</string>
+    <string name="connection_Error">Connection error</string>
+    <string name="error_connecting_with_dropbox">Error connecting with Dropbox. Check your internet connection or try reconnecting with Dropbox</string>
+    <string name="error_retrieving_dropbox_account_info">Error retrieving account information. Check your internet connection or try reconnecting with Dropbox</string>
+    <string name="open_in_dropbox">Open in Dropbox</string>
+
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
     <string name="toast_chapter_cover_pro">"Join Graphite Pro to add custom cover in notebooks and chapters"</string>
@@ -350,5 +375,8 @@
     <string name="toast_error_removing_backup_folder">Backup folder removed</string>
     <string name="toast_error_restoring_snapshot">Error restoring snapshot</string>
     <string name="toast_pin_to_notification">Join Graphite Pro to pin items to notification</string>
+    <string name="toast_write_from_notification">Join Graphite Pro to write note from notification</string>
+    <string name="toast_error_opening_externally">Error opening externally</string>
+    <string name="toast_error_connecting_with_dropbox">Error connecting with Dropbox</string>
 
 </resources>

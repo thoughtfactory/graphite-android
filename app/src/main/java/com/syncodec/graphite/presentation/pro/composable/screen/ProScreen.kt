@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,16 +46,15 @@ import com.revenuecat.purchases.Package
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.modifier.BorderSide
 import com.syncodec.graphite.presentation.common.modifier.oneSideBorder
-import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.pro.ProActivity
 import com.syncodec.graphite.presentation.pro.composable.bar.TopBar
-import com.syncodec.graphite.presentation.pro.composable.buildingBlock.LifetimePackageView
 import com.syncodec.graphite.presentation.pro.composable.buildingBlock.ProFeaturesView
 import com.syncodec.graphite.presentation.pro.composable.buildingBlock.SubscriptionPackageView
 import com.syncodec.graphite.utils.ContentStatus
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun SubscriptionScreen(
@@ -66,7 +66,7 @@ fun SubscriptionScreen(
 
 	val context = LocalContext.current
 
-	GenericScaffold(
+	GenericScaffold2(
 		topBar = { TopBar() }
 	) {
 		Box(

@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketType
 import kotlin.random.Random
 
 

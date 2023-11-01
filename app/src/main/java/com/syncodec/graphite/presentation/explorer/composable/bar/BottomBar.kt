@@ -11,11 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.bar.GenericBottomBar
 import com.syncodec.graphite.presentation.common.button.VaultButton
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
@@ -40,7 +40,7 @@ fun BottomBar(
 				labelColor = currentChapter?.color?.let { Color(it).getInverseBWColor() } ?: MaterialTheme.colorScheme.onPrimary,
 			),
 			border = null,
-			modifier = Modifier.height((ICON_BUTTON_SIZE * 2) - 2.dp),
+			modifier = Modifier.height((ICON_SIZE * 2) - 2.dp),
 			onClick = onClickSearchIn
 		)
 

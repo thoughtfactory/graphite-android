@@ -16,8 +16,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.di.repository.LockableRepo
+import com.syncodec.graphite.utils.alice.AliceRequest2
 import com.syncodec.graphite.utils.alice.AliceRequestResult
-import com.syncodec.graphite.utils.alice.getSecretData
+import com.syncodec.graphite.utils.alice.getSecretData2
 import com.syncodec.graphite.utils.alice.putSecretData
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -40,7 +41,7 @@ fun SecureComposable(
 	CompositionLocalProvider(
 		LocalIsRepoUnlocked provides isUnlocked,
 		LocalAuthenticatorAction provides { newAuthenticatorState ->
-			val alice = context.getSecretData("passcode")
+			val aliceRequest2 = context.getSecretData2("passcode")
 
 			when {
 				newAuthenticatorState == AuthenticationState.Authenticate && isUnlocked -> {
@@ -48,15 +49,15 @@ fun SecureComposable(
 					AuthenticationState.None
 				}
 
-				newAuthenticatorState == AuthenticationState.Authenticate && !isUnlocked && alice.result == AliceRequestResult.SUCCESS -> AuthenticationState.Authenticate
-				newAuthenticatorState == AuthenticationState.Authenticate && !isUnlocked && alice.result != AliceRequestResult.SUCCESS -> AuthenticationState.AddChangePasscode
+				newAuthenticatorState == AuthenticationState.Authenticate && !isUnlocked && aliceRequest2 is AliceRequest2.Success -> AuthenticationState.Authenticate
+				newAuthenticatorState == AuthenticationState.Authenticate && !isUnlocked && aliceRequest2 !is AliceRequest2.Success -> AuthenticationState.AddChangePasscode
 				newAuthenticatorState == AuthenticationState.AddChangePasscode -> AuthenticationState.AddChangePasscode
-				newAuthenticatorState == AuthenticationState.RemovePasscode && alice.result == AliceRequestResult.KEY_NOT_FOUND -> {
+				newAuthenticatorState == AuthenticationState.RemovePasscode && aliceRequest2 is AliceRequest2.KeyNotFound -> {
 					Toast.makeText(context, "No passcode set", Toast.LENGTH_SHORT).show()
 					AuthenticationState.None
 				}
 
-				newAuthenticatorState == AuthenticationState.RemovePasscode && alice.result != AliceRequestResult.KEY_NOT_FOUND -> AuthenticationState.RemovePasscode
+				newAuthenticatorState == AuthenticationState.RemovePasscode && aliceRequest2 is AliceRequest2.KeyNotFound -> AuthenticationState.RemovePasscode
 				newAuthenticatorState == AuthenticationState.None -> AuthenticationState.None
 				else -> AuthenticationState.None
 			}.let {
@@ -71,9 +72,9 @@ fun SecureComposable(
 			exit = slideOutVertically(tween(470)) { it / 2 } + fadeOut(tween(470))
 		) {
 
-			val alice = context.getSecretData("passcode")
+			val aliceRequest2 = context.getSecretData2("passcode")
 
-			if (alice.result == AliceRequestResult.SUCCESS) {
+			if (aliceRequest2 is AliceRequest2.Success) {
 				ChangePasscode(
 					onUpdatePasscode = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None); repository.unlockRepo(); context.putSecretData("passcode", it.toByteArray()) },
 					onClose = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None) }

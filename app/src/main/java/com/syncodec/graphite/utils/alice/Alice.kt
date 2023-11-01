@@ -52,10 +52,15 @@ sealed class AliceRequest2 {
 	}
 
 	data object KeystoreUninitialized : AliceRequest2()
-
 	data object KeyNotFound : AliceRequest2()
-
 	data object UnknownError : AliceRequest2()
+
+	fun getDataOrNull(): ByteArray? {
+		return when (this) {
+			is Success -> data
+			else -> null
+		}
+	}
 }
 
 fun Context.putSecretData(key: String, value: ByteArray) {
@@ -90,43 +95,6 @@ fun Context.putSecretData(key: String, value: ByteArray) {
 }
 
 fun Context.putSecretData(key: String, value: String) = putSecretData(key, value.encodeToByteArray())
-
-fun Context.getSecretData(key: String): AliceRequest {
-
-	val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-
-	keyStore.load(null)
-
-	val hasData = getSharedPreferences("alice", Context.MODE_PRIVATE).contains("${key}_iv_and_encrypted_key")
-	if (hasData) {
-		val initializationVectorAndEncryptedKey = Base64.decode(getSharedPreferences("alice", Context.MODE_PRIVATE)?.getString("${key}_iv_and_encrypted_key", null), Base64.DEFAULT)
-		val buffer = ByteBuffer.wrap(initializationVectorAndEncryptedKey)
-		buffer.order(ByteOrder.BIG_ENDIAN)
-		val initializationVectorLength = buffer.int
-		val initializationVector = ByteArray(initializationVectorLength)
-		buffer[initializationVector]
-		val encryptedKey = ByteArray(initializationVectorAndEncryptedKey.size - Integer.BYTES - initializationVectorLength)
-		buffer[encryptedKey]
-		val cipher: Cipher = try {
-			Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7)
-		} catch (e: Exception) {
-			return AliceRequest(AliceRequestResult.UNKNOWN_ERROR, null, e)
-		}
-		val decryptedKey: ByteArray = try {
-			val secretKey = keyStore.getKey("grey_alice", null) as SecretKey
-			val initializationVectorSpec = IvParameterSpec(initializationVector)
-			cipher.init(Cipher.DECRYPT_MODE, secretKey, initializationVectorSpec)
-			cipher.doFinal(encryptedKey)
-		} catch (e: InvalidKeyException) {
-			return AliceRequest(AliceRequestResult.UNKNOWN_ERROR, null, e)
-		} catch (e: Exception) {
-			return AliceRequest(AliceRequestResult.UNKNOWN_ERROR, null, e)
-		}
-		return AliceRequest(AliceRequestResult.SUCCESS, decryptedKey)
-	} else {
-		return AliceRequest(result = AliceRequestResult.KEY_NOT_FOUND)
-	}
-}
 
 fun Context.getSecretData2(key: String): AliceRequest2 {
 

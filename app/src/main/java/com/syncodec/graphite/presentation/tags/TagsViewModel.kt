@@ -4,8 +4,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.NoteObjectLite
+import com.syncodec.graphite.di.model.local.TagObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class TagsViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.RepositoryStatus>) : ViewModel() {
+class TagsViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -29,7 +30,7 @@ class TagsViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.R
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			repositoryStateFlow.collectLatest { repositoryStatus ->
+			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
@@ -42,7 +43,7 @@ class TagsViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.R
 					}
 				}
 				launch {
-					repository1?.getAllNoteLiteAsFlow()?.collectLatest { noteList1 ->
+					repository1?.getAllNoteLiteAsFlow2()?.collectLatest { noteList1 ->
 						this@TagsViewModel._noteList.tryEmit(noteList1)
 					}
 				}
@@ -69,11 +70,9 @@ class TagsViewModel(repositoryStateFlow: MutableStateFlow<Repository.Companion.R
 
 	fun updateTag(id: RealmUUID, tag: String, color: Color) {
 		viewModelScope.launch(Dispatchers.Default) {
-			_repository.value?.getTagFromId(id = id)?.clone()?.apply {
+			_repository.value?.setObjectFromIdSuspended<TagObject>(id = id) {
 				this.tag = tag
 				this.color = color.toArgb()
-
-				_repository.value?.putTag(this)
 			}
 		}
 	}

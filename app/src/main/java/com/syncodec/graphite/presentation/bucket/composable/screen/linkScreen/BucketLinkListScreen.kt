@@ -45,9 +45,9 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.AttachmentContainer
 import com.syncodec.graphite.presentation.base.FavouriteContainer

@@ -14,7 +14,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.local.LatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.io.IOException

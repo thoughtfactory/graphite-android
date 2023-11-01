@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.MetadataBottomSheet

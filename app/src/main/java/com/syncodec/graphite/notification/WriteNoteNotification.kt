@@ -5,102 +5,61 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.os.IBinder
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.repository.Repository
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
-class WriteNoteNotificationService : Service() {
-
-	override fun onStartCommand(intent : Intent?, flags : Int, startId : Int) : Int {
-
-		val hasNotificationId = intent?.hasExtra("notificationId")
-
-		if (hasNotificationId == true) {
-			val notificationId = intent.getIntExtra("notificationId", 0)
-			getSystemService(NotificationManager::class.java).cancel(notificationId)
-		}
-
-		super.stopSelf()
-
-		return super.onStartCommand(intent, flags, startId)
-	}
-
-	override fun onBind(intent : Intent?) : IBinder? {
-		return null
-	}
-}
-
-class NotificationReceiver : BroadcastReceiver() {
+class WriteNoteBroadcastReceiver : BroadcastReceiver() {
 
 	override fun onReceive(context : Context, intent : Intent) {
 		val remoteInput = RemoteInput.getResultsFromIntent(intent)
 
 		if (remoteInput != null) {
-//			val repository2 = Repository().apply { initRepository(context) }
-//			repository2.isAuthenticated.tryEmit(true)
-//			val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
-//			putNote(context, repository2, content)
+			val lockableRepo = LockableRepo(context = context, dataStoreInstance = DataStoreInstance(context = context))
+			lockableRepo.decryptRepository()?.let { repo ->
+				val content = remoteInput.getCharSequence("KEY_TEXT_REPLY").toString()
+				NoteObject().apply {
+					this.content = "<p>$content</p>"
+					repo.putNoteInDefaultSuspended(noteObject = this)
+				}
+				WriteNoteNotification.pinIt(context = context)
+			}
 		}
-	}
-
-	private fun putNote(
-        context : Context,
-        repository2 : Repository,
-        content : String,
-	) {
-//		CoroutineScope(Dispatchers.Default).launch {
-//			repository2.repositoryState.collect {
-//				if (it == Repository.Companion.RepositoryState.Success) {
-//					repository2.getDefaultChapterId()?.let {
-//						NoteObject().apply {
-//							this.content =
-//								"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"attrs\":{\"textAlign\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"$content\"}]}]}"
-//							this.parentId = it
-//
-//							repository2.putNote(this)
-//							WriteNoteNotification.showSimpleNotification(context)
-//						}
-//					}
-//				}
-//			}
-//		}
 	}
 }
 
 
 class WriteNoteNotification {
 	companion object {
-		const val CHANNEL_ID = "write_note_channel"
-		const val NOTIFICATION_ID = 2
+		private const val CHANNEL_ID = "write_note_channel"
+		private const val NOTIFICATION_ID = 2
 
-		fun showSimpleNotification(context : Context) {
+		fun pinIt(context: Context) {
+			if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+				Toast.makeText(context, context.getText(R.string.notification_permission_unavailable), Toast.LENGTH_SHORT).show()
+				return
+			}
+
 			createNotificationChannel(context)
 
-			val resKey = "KEY_TEXT_REPLY"
+			val resultIntent = Intent(context, WriteNoteBroadcastReceiver::class.java)
+			val resultPendingIntent = PendingIntent.getBroadcast(context, 0, resultIntent, PendingIntent.FLAG_MUTABLE)
 
+			val resKey = "KEY_TEXT_REPLY"
 			val remoteInput = RemoteInput
 				.Builder(resKey)
 				.build()
-
-			val resultIntent = Intent(context, NotificationReceiver::class.java)
-
-			val resultPendingIntent = PendingIntent.getBroadcast(context, 0, resultIntent, PendingIntent.FLAG_MUTABLE)
 
 			val replyAction = NotificationCompat
 				.Action
@@ -122,14 +81,7 @@ class WriteNoteNotification {
 				.addAction(replyAction)
 				.build()
 
-			with(NotificationManagerCompat.from(context)) {
-				if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-//					onRequestPermission()
-					return
-				}
-
-				notify(NOTIFICATION_ID, notification)
-			}
+			context.getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
 		}
 
 		private fun createNotificationChannel(context : Context) {
@@ -142,9 +94,6 @@ class WriteNoteNotification {
 
 			val notificationManager : NotificationManager = context.getSystemService(NotificationManager::class.java)
 			notificationManager.createNotificationChannel(channel)
-
-			val dataStoreInstance = DataStoreInstance(context)
-			dataStoreInstance.putNoteFromNotification(true)
 		}
 
 		fun cancelNotification(context : Context) {

@@ -25,9 +25,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.model.bucketTypeIconMap
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.di.model.local.BucketType
+import com.syncodec.graphite.di.model.local.bucketTypeIconMap
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.common.component.composable.DotSeparator
 import com.syncodec.graphite.presentation.common.component.composable.HeaderText
 import com.syncodec.graphite.presentation.common.component.composable.StateInfo
@@ -86,7 +86,7 @@ fun BucketCard(
 				Icon(
 					painter = painterResource(id = bucketTypeIconMap.getOrElse(bucketType) { R.drawable.ic_bucket }),
 					contentDescription = null,
-					modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 
 				Spacer(modifier = Modifier.weight(1f))

@@ -44,11 +44,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.model.bucketTypeIconMap
+import com.syncodec.graphite.di.model.local.BucketType
+import com.syncodec.graphite.di.model.local.bucketTypeIconMap
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.base.FavouriteContainer
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.presentation.base.secureComposable.LocalAuthenticatorAction
@@ -121,7 +121,7 @@ private fun SelectionActionButton(
 			painter = painterResource(id = icon),
 			contentDescription = text,
 			tint = iconColor,
-			modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+			modifier = Modifier.requiredSize(ICON_SIZE)
 		)
 		Spacer(modifier = Modifier.height(4.dp))
 		Text(
@@ -439,17 +439,17 @@ fun BucketSelectionActionView(
 						.background(MaterialTheme.colorScheme.background)
 				) {
 					DropdownMenuItem(
-						leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_clock), contentDescription = stateTodo, modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+						leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_clock), contentDescription = stateTodo, modifier = Modifier.requiredSize(ICON_SIZE)) },
 						text = { Text(text = stateTodo) },
 						onClick = { onClickSetAs(0); onSet() }
 					)
 					DropdownMenuItem(
-						leadingIcon = { Icon(painter = painterResource(id = bucketTypeIconMap[bucketType] ?: R.drawable.ic_fa_question), contentDescription = stateDoing, modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+						leadingIcon = { Icon(painter = painterResource(id = bucketTypeIconMap[bucketType] ?: R.drawable.ic_fa_question), contentDescription = stateDoing, modifier = Modifier.requiredSize(ICON_SIZE)) },
 						text = { Text(text = stateDoing) },
 						onClick = { onClickSetAs(1); onSet() }
 					)
 					DropdownMenuItem(
-						leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_circle_check), contentDescription = stateDone, modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+						leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_circle_check), contentDescription = stateDone, modifier = Modifier.requiredSize(ICON_SIZE)) },
 						text = { Text(text = stateDone) },
 						onClick = { onClickSetAs(2); onSet() }
 					)
@@ -560,8 +560,7 @@ fun AttachmentSelectionActionView(
 				.fillMaxWidth()
 				.height(72.dp)
 		) {
-//			Spacer(modifier = Modifier.weight(1f))
-			ShareButton()
+			ShareButton(onClick = onClickShare)
 			DeleteButton(onClick = onClickDelete)
 			CancelButton()
 		}

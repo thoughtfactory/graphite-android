@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import com.syncodec.graphite.di.repository.group.isAll
 import com.syncodec.graphite.presentation.base.LocalAppDataStore

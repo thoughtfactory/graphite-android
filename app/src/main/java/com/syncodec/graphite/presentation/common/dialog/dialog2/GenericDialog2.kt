@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.common.dialog.dialog2
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -48,8 +48,10 @@ fun GenericDialog2(
 	contentText: String? = null,
 	primaryButton: GenericDialogButton? = null,
 	secondaryButton: GenericDialogButton? = null,
+	tertiaryButton: GenericDialogButton? = null,
 	isPrimaryButtonEnabled: Boolean = true,
 	isSecondaryButtonEnabled: Boolean = true,
+	isTertiaryButtonEnabled: Boolean = true,
 	innerPadding: PaddingValues = PaddingValues(24.dp),
 	content: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
@@ -114,8 +116,10 @@ fun GenericDialog2(
 					GenericDialogButtonView(
 						primaryButton = primaryButton,
 						secondaryButton = secondaryButton,
+						tertiaryButton = tertiaryButton,
 						isPrimaryButtonEnabled = isPrimaryButtonEnabled,
 						isSecondaryButtonEnabled = isSecondaryButtonEnabled,
+						isTertiaryButtonEnabled = isTertiaryButtonEnabled,
 					)
 				}
 			}
@@ -128,34 +132,55 @@ fun GenericDialog2(
 fun GenericDialogButtonView(
 	primaryButton: GenericDialogButton? = GenericDialogDefaults.genericDialogButtonPrimary(text = "Primary", onClick = {}),
 	secondaryButton: GenericDialogButton? = GenericDialogDefaults.genericDialogButtonSecondary(text = "Secondary", onClick = {}),
+	tertiaryButton: GenericDialogButton? = GenericDialogDefaults.genericDialogButtonSecondary(text = "Tertiary", onClick = {}),
 	isPrimaryButtonEnabled: Boolean = true,
 	isSecondaryButtonEnabled: Boolean = true,
+	isTertiaryButtonEnabled: Boolean = true,
 ) {
-	if (primaryButton != null || secondaryButton != null) {
-		Row(
+	if (primaryButton != null || secondaryButton != null || tertiaryButton != null) {
+		Column(
 			modifier = Modifier.fillMaxWidth()
 		) {
-			secondaryButton?.let {
-				TextButton(
-					onClick = it.onClick,
-					shape = MaterialTheme.shapes.medium,
-					colors = it.colors,
-					enabled = isSecondaryButtonEnabled,
-					modifier = Modifier.weight(1f),
-				) {
-					Text(text = it.text)
-				}
-			}
-			if (primaryButton != null && secondaryButton != null) Spacer(modifier = Modifier.width(8.dp))
-			primaryButton?.let {
+			if (tertiaryButton != null) {
 				Button(
-					onClick = it.onClick,
+					onClick = tertiaryButton.onClick,
 					shape = MaterialTheme.shapes.medium,
-					colors = it.colors,
-					enabled = isPrimaryButtonEnabled,
-					modifier = Modifier.weight(1f),
+					border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground),
+					colors = tertiaryButton.colors,
+					enabled = isTertiaryButtonEnabled,
+					modifier = Modifier.fillMaxWidth(),
 				) {
-					Text(text = it.text)
+					Text(text = tertiaryButton.text)
+				}
+				Spacer(modifier = Modifier.height(2.dp))
+			}
+			if (primaryButton != null || secondaryButton != null) {
+				Row(
+					modifier = Modifier.fillMaxWidth()
+				) {
+					secondaryButton?.let {
+						TextButton(
+							onClick = it.onClick,
+							shape = MaterialTheme.shapes.medium,
+							colors = it.colors,
+							enabled = isSecondaryButtonEnabled,
+							modifier = Modifier.weight(1f),
+						) {
+							Text(text = it.text)
+						}
+					}
+					if (primaryButton != null && secondaryButton != null) Spacer(modifier = Modifier.width(8.dp))
+					primaryButton?.let {
+						Button(
+							onClick = it.onClick,
+							shape = MaterialTheme.shapes.medium,
+							colors = it.colors,
+							enabled = isPrimaryButtonEnabled,
+							modifier = Modifier.weight(1f),
+						) {
+							Text(text = it.text)
+						}
+					}
 				}
 			}
 		}
@@ -214,43 +239,40 @@ object GenericDialogDefaults {
 	fun genericDialogButton(text: String, buttonColors: ButtonColors, onClick: () -> Unit): GenericDialogButton = GenericDialogButton(text = text, colors = buttonColors, onClick = onClick)
 
 	@Composable
-	fun genericDialogButtonPrimary(text: String, onClick: () -> Unit): GenericDialogButton =
-		GenericDialogButton(
-			text = text,
-			colors = ButtonDefaults.buttonColors(
-				containerColor = MaterialTheme.colorScheme.primaryContainer,
-				contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-				disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.47f),
-				disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-			),
-			onClick = onClick,
-		)
+	fun genericDialogButtonPrimary(text: String, onClick: () -> Unit): GenericDialogButton = GenericDialogButton(
+		text = text,
+		colors = ButtonDefaults.buttonColors(
+			containerColor = MaterialTheme.colorScheme.primaryContainer,
+			contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+			disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.47f),
+			disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+		),
+		onClick = onClick,
+	)
 
 	@Composable
-	fun genericDialogButtonSecondary(text: String, onClick: () -> Unit): GenericDialogButton =
-		GenericDialogButton(
-			text = text,
-			colors = ButtonDefaults.buttonColors(
-				containerColor = Color.Transparent,
-				contentColor = MaterialTheme.colorScheme.onBackground,
-				disabledContainerColor = Color.Transparent,
-				disabledContentColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
-			),
-			onClick = onClick,
-		)
+	fun genericDialogButtonSecondary(text: String, onClick: () -> Unit): GenericDialogButton = GenericDialogButton(
+		text = text,
+		colors = ButtonDefaults.buttonColors(
+			containerColor = Color.Transparent,
+			contentColor = MaterialTheme.colorScheme.onBackground,
+			disabledContainerColor = Color.Transparent,
+			disabledContentColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+		),
+		onClick = onClick,
+	)
 
 	@Composable
-	fun genericDialogButtonWarning(text: String, onClick: () -> Unit): GenericDialogButton =
-		GenericDialogButton(
-			text = text,
-			colors = ButtonDefaults.buttonColors(
-				containerColor = MaterialTheme.colorScheme.errorContainer,
-				contentColor = MaterialTheme.colorScheme.onErrorContainer,
-				disabledContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.47f),
-				disabledContentColor = MaterialTheme.colorScheme.onErrorContainer,
-			),
-			onClick = onClick,
-		)
+	fun genericDialogButtonWarning(text: String, onClick: () -> Unit): GenericDialogButton = GenericDialogButton(
+		text = text,
+		colors = ButtonDefaults.buttonColors(
+			containerColor = MaterialTheme.colorScheme.errorContainer,
+			contentColor = MaterialTheme.colorScheme.onErrorContainer,
+			disabledContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.47f),
+			disabledContentColor = MaterialTheme.colorScheme.onErrorContainer,
+		),
+		onClick = onClick,
+	)
 
 	@Composable
 	fun genericDialogButtonDismiss(onClick: () -> Unit) = genericDialogButtonSecondary(text = stringResource(id = R.string.dismiss), onClick = onClick)

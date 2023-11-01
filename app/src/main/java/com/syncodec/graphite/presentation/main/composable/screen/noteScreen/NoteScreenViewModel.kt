@@ -2,26 +2,26 @@ package com.syncodec.graphite.presentation.main.composable.screen.noteScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.model.local.NoteObjectLite
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class NoteScreenViewModel(lockableRepo: LockableRepo, ) : ViewModel() {
+class NoteScreenViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -33,6 +33,8 @@ class NoteScreenViewModel(lockableRepo: LockableRepo, ) : ViewModel() {
 	private val _noteList: MutableStateFlow<RealmObjectGroupList<NoteObjectLite>?> = MutableStateFlow(null)
 	val noteList: StateFlow<RealmObjectGroupList<NoteObjectLite>?> = _noteList
 
+	private var defaultChapterChildObserverJob: Job? = null
+
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
 			lockableRepo.repositoryStatusFlow.collectLatest { repositoryStatus ->
@@ -43,7 +45,6 @@ class NoteScreenViewModel(lockableRepo: LockableRepo, ) : ViewModel() {
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
 				launch { observeDefaultChapter(repository = repository1) }
-				launch { observeNotes(repository = repository1) }
 				launch { observeTags(repository = repository1) }
 			}
 		}
@@ -52,12 +53,21 @@ class NoteScreenViewModel(lockableRepo: LockableRepo, ) : ViewModel() {
 	private suspend fun observeDefaultChapter(repository: Repository?) {
 		repository?.getDefaultChapterIdAsFlow()?.collectLatest { defaultChapterId1 ->
 			this@NoteScreenViewModel._defaultChapterId.tryEmit(defaultChapterId1)
+			observeNotes(repository = repository, chapterId = defaultChapterId1)
 		}
 	}
 
-	private suspend fun observeNotes(repository: Repository?) {
-		repository?.getDefaultNoteLiteMapAsFlow2()?.collectLatest { noteList1 ->
-			this@NoteScreenViewModel._noteList.tryEmit(noteList1)
+	private fun observeNotes(repository: Repository?, chapterId: RealmUUID?) {
+		defaultChapterChildObserverJob?.cancel()
+		viewModelScope.launch(Dispatchers.Default) {
+			Job(viewModelScope.coroutineContext.job).let { job ->
+				defaultChapterChildObserverJob = job
+				launch(Dispatchers.Default + job) {
+					repository?.getDefaultNoteLiteMapAsFlow2(parentId = chapterId)?.collectLatest { noteList1 ->
+						this@NoteScreenViewModel._noteList.tryEmit(noteList1)
+					}
+				}
+			}
 		}
 	}
 

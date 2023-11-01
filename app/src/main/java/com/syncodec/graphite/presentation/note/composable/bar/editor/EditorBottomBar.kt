@@ -43,7 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.base.LocalIsPro
 import com.syncodec.graphite.presentation.note.composable.bar.editor.bottomSheet.ColorBottomSheet
 import com.syncodec.graphite.presentation.note.composable.bar.editor.bottomSheet.LinkBottomSheet
@@ -399,7 +399,7 @@ private fun BlockAction(
 						Icon(
 							painter = painterResource(id = R.drawable.ic_fa_format_paragraph),
 							contentDescription = stringResource(R.string.note_format_paragraph),
-							modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+							modifier = Modifier.requiredSize(ICON_SIZE)
 						)
 					} else {
 						Text(
@@ -442,7 +442,7 @@ private fun BlockAction(
 				modifier = Modifier.widthIn(64.dp)
 			) {
 				DropdownMenuItem(
-					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_paragraph), contentDescription = "Paragraph", modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_paragraph), contentDescription = "Paragraph", modifier = Modifier.requiredSize(ICON_SIZE)) },
 					text = { Text(text = "") },
 					onClick = { onKitKatAction(KitKatAction.Heading.Paragraph) }
 				)
@@ -511,7 +511,7 @@ private fun BlockAction(
 								}
 							),
 							contentDescription = stringResource(R.string.note_format_alignment),
-							modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+							modifier = Modifier.requiredSize(ICON_SIZE)
 						)
 
 						Spacer(modifier = Modifier.width(4.dp))
@@ -556,22 +556,22 @@ private fun BlockAction(
 				modifier = Modifier.widthIn(128.dp)
 			) {
 				DropdownMenuItem(
-					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_left), contentDescription = "Left align", modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_left), contentDescription = "Left align", modifier = Modifier.requiredSize(ICON_SIZE)) },
 					text = { Text(text = stringResource(R.string.note_format_alignment_left)) },
 					onClick = { onKitKatAction(KitKatAction.Align.Left) }
 				)
 				DropdownMenuItem(
-					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_center), contentDescription = "Center align", modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_center), contentDescription = "Center align", modifier = Modifier.requiredSize(ICON_SIZE)) },
 					text = { Text(text = stringResource(R.string.note_format_alignment_center)) },
 					onClick = { onKitKatAction(KitKatAction.Align.Center) }
 				)
 				DropdownMenuItem(
-					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_right), contentDescription = "Right align", modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_right), contentDescription = "Right align", modifier = Modifier.requiredSize(ICON_SIZE)) },
 					text = { Text(text = stringResource(R.string.note_format_alignment_right)) },
 					onClick = { onKitKatAction(KitKatAction.Align.Right) }
 				)
 				DropdownMenuItem(
-					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_justify), contentDescription = "Justify align", modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)) },
+					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_justify), contentDescription = "Justify align", modifier = Modifier.requiredSize(ICON_SIZE)) },
 					text = { Text(text = stringResource(R.string.note_format_alignment_justify)) },
 					onClick = { onKitKatAction(KitKatAction.Align.Justify) }
 				)

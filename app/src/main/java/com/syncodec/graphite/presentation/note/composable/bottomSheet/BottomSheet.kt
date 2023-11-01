@@ -9,8 +9,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.presentation.note.kitKat.KitKat
 import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.note.kitKat.KitKatAction

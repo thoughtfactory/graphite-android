@@ -102,7 +102,7 @@ fun AttachmentBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Attachments",
+			title = stringResource(R.string.attachments),
 		) {
 			SameHeightRowGrid {
 				GenericBottomSheetButton2(

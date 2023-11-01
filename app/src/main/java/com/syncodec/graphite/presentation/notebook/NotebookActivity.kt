@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.syncodec.graphite.presentation.notebook.composable.NotebookScreen2
+import com.syncodec.graphite.presentation.notebook.composable.NotebookScreen
 import com.syncodec.graphite.presentation.notebook.composable.NotebookScreenViewModel2
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
@@ -43,7 +43,7 @@ class NotebookActivity : ComponentActivity() {
 				val chapterPath by viewModel.currentChapterPath.collectAsState()
 				val defaultChapterId by viewModel.defaultChapterId.collectAsState()
 
-				NotebookScreen2(
+				NotebookScreen(
 					chapterObject = chapterObject,
 					chapterList = chapterList,
 					noteList = noteList,

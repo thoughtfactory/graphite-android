@@ -43,29 +43,29 @@ fun MenuBottomSheet(
 					text = stringResource(id = R.string.attachments),
 					contentDescription = stringResource(id = R.string.attachments),
 				) {
-					onDismissRequest()
 					Intent(context, AttachmentActivity::class.java).apply {
 						putExtra(Extra.Companion.Extra.ShowAll.name, true)
 						context.startActivity(this)
 					}
+					onDismissRequest()
 				}
 				GenericBottomSheetButton2(
 					icon = R.drawable.ic_fa_tag,
 					text = stringResource(id = R.string.tags),
 					contentDescription = stringResource(id = R.string.tags),
 				) {
-					onDismissRequest()
 					Intent(context, TagsActivity::class.java).apply {
 						context.startActivity(this)
 					}
+					onDismissRequest()
 				}
 				GenericBottomSheetButton2(
 					icon = R.drawable.ic_fa_settings,
 					text = stringResource(id = R.string.settings),
 					contentDescription = stringResource(id = R.string.settings),
 				) {
-					onDismissRequest()
 					context.startActivity(Intent(context, SettingsActivity::class.java))
+					onDismissRequest()
 				}
 			}
 		}

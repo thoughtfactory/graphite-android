@@ -39,7 +39,6 @@ import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
 import com.syncodec.graphite.presentation.base.DeleteContainer
 import com.syncodec.graphite.presentation.base.DeleteContent
-import com.syncodec.graphite.service.syncInator.GDriveSyncInatorService
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -47,7 +46,7 @@ import com.syncodec.graphite.service.syncInator.GDriveSyncInatorService
 @Composable
 fun GoogleDriveSyncScreen(
 	aboutState: GoogleDriveSyncActivity.Companion.AboutState = GoogleDriveSyncActivity.Companion.AboutState.Init,
-	snapshotList: GDriveSyncInatorService.Companion.ListFiles? = null,
+//	snapshotList: GDriveSyncInatorService.Companion.ListFiles? = null,
 	isGeneratingSnapshot: Boolean = false,
 	isRestoringSnapshot: Boolean = false,
 	onTestConnection: () -> Unit = {},

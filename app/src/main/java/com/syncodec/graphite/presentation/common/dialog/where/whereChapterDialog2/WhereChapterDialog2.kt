@@ -29,13 +29,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
-import com.syncodec.graphite.presentation.common.component.LocalComponentColumnCount
+import com.syncodec.graphite.presentation.common.component.chapter.chapterList
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.bar.BottomBar
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.bar.TopBar
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
-import com.syncodec.graphite.presentation.notebook.composable.chapterList
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel

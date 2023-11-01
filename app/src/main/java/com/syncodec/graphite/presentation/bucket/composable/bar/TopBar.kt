@@ -39,8 +39,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.model.bucketTypeIconMap
+import com.syncodec.graphite.di.model.local.BucketType
+import com.syncodec.graphite.di.model.local.bucketTypeIconMap
 import com.syncodec.graphite.presentation.common.button.BackButton
 import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.button.FavouriteButton

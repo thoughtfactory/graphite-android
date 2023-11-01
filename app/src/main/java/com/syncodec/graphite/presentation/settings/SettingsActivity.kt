@@ -41,6 +41,8 @@ import com.syncodec.graphite.presentation.settings.composable.screen.PreferenceS
 import com.syncodec.graphite.presentation.settings.composable.screen.SecurityScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.SettingsScreen
 import com.syncodec.graphite.presentation.base.BaseComposable
+import com.syncodec.graphite.presentation.settings.composable.screen.AboutScreen
+import com.syncodec.graphite.presentation.settings.composable.screen.ExtensionScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.backupAndSyncScreen.LocalBackupScreen
 import com.syncodec.graphite.presentation.settings.composable.screen.dataScreen.ImportDataScreen
 import com.syncodec.graphite.utils.alice.Alice
@@ -120,6 +122,8 @@ class SettingsActivity : ComponentActivity() {
 					composable(SettingsScreen.ImportData.name) { ImportDataScreen() }
 					composable(SettingsScreen.BackUpAndSync.name) { BackUpAndSyncScreen { navController.navigate(it.name) } }
 					composable(SettingsScreen.LocalBackup.name) { LocalBackupScreen() }
+					composable(SettingsScreen.Extension.name) { ExtensionScreen() }
+					composable(SettingsScreen.About.name) { AboutScreen() }
 				}
 			}
 		}
@@ -245,7 +249,9 @@ class SettingsActivity : ComponentActivity() {
 			ImportData,
 			ExportData,
 			BackUpAndSync,
-			LocalBackup
+			LocalBackup,
+			Extension,
+			About,
 		}
 
 		enum class DarkTheme {

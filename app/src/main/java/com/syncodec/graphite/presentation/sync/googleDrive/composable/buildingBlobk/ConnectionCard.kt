@@ -1,12 +1,8 @@
 package com.syncodec.graphite.presentation.sync.googleDrive.composable.buildingBlobk
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,10 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.google.api.services.drive.model.About
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.cloud.dropbox.DBox
-import com.syncodec.graphite.presentation.sync.dropbox.composable.buildingBlock.DropboxProfile
 import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
 
 

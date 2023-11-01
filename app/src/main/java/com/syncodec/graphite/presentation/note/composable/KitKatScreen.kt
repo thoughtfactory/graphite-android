@@ -34,10 +34,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.LatLng
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.notification.NotePinNotification
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.dialog.where.whereChapterDialog2.WhereChapterDialog2
@@ -93,12 +93,12 @@ fun KitKatScreen(
 
 	val kitKatFormat by kitKat.kitKatFormat.collectAsState()
 
-	val noteId by remember { derivedStateOf { noteObject?.id } }
-	val createdTimestamp by remember { derivedStateOf { noteObject?.createdTimestamp } }
-	val modifiedTimestamp by remember { derivedStateOf { noteObject?.modifiedTimestamp } }
-	val userTimestamp by remember { derivedStateOf { noteObject?.userTimestamp } }
-	val isFavourite by remember { derivedStateOf { noteObject?.isFavourite } }
-	val isLocked by remember { derivedStateOf { noteObject?.isLocked } }
+	val noteId by remember(noteObject) { derivedStateOf { noteObject?.id } }
+	val createdTimestamp by remember(noteObject) { derivedStateOf { noteObject?.createdTimestamp } }
+	val modifiedTimestamp by remember(noteObject) { derivedStateOf { noteObject?.modifiedTimestamp } }
+	val userTimestamp by remember(noteObject) { derivedStateOf { noteObject?.userTimestamp } }
+	val isFavourite by remember(noteObject) { derivedStateOf { noteObject?.isFavourite } }
+	val isLocked by remember(noteObject) { derivedStateOf { noteObject?.isLocked } }
 
 	var isEditorMetadataBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isEditorLocationBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
@@ -131,7 +131,7 @@ fun KitKatScreen(
 				onClickLock = onClickLock,
 				onClickPin = {
 					noteId?.let {
-						NotePinNotification.pinToNotification(
+						NotePinNotification.pinIt(
 							context = context,
 							noteId = it,
 							title = noteObject?.title,

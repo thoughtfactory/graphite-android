@@ -19,8 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.NoteObjectLite
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import com.syncodec.graphite.presentation.base.sortOn
 import com.syncodec.graphite.presentation.common.component.LocalComponentColumnCount

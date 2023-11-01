@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -32,7 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 
 
 @Preview
@@ -55,18 +57,25 @@ fun SettingsButton(
 		modifier = modifier
 			.fillMaxWidth()
 			.background(containerColor)
-			.clickable { onClick() }
+			.clickable(enabled = enabled) { onClick() }
 			.padding(vertical = 20.dp)
 	) {
-		Spacer(modifier = Modifier.width(24.dp))
-		leadingIcon?.let {
-			Icon(
-				painter = painterResource(id = it.icon),
-				contentDescription = title,
-				tint = it.color,
-				modifier = Modifier.requiredSize(it.size)
-			)
-			Spacer(modifier = Modifier.width(24.dp))
+		Box(
+			contentAlignment = Alignment.Center,
+			modifier = Modifier.width(68.dp)
+		) {
+			leadingIcon?.let {
+				Icon(
+					painter = painterResource(id = it.icon),
+					contentDescription = title,
+					tint = when {
+						enabled -> it.color
+						contentColor == Color.Unspecified -> contentColor
+						else -> contentColor.copy(alpha = 0.47f)
+					},
+					modifier = Modifier.requiredSize(it.size)
+				)
+			}
 		}
 		Column(
 			modifier = Modifier.weight(1f)
@@ -97,7 +106,7 @@ fun SettingsButton(
 					Spacer(modifier = Modifier.width(24.dp))
 					Icon(
 						painter = painterResource(id = it.icon),
-						contentDescription = "Next",
+						contentDescription = title,
 						tint = it.color,
 						modifier = Modifier.requiredSize(it.size)
 					)
@@ -137,7 +146,11 @@ fun SettingsSwitch(
 			Icon(
 				painter = painterResource(id = it.icon),
 				contentDescription = title,
-				tint = it.color,
+				tint = when {
+					enabled -> it.color
+					contentColor == Color.Unspecified -> contentColor
+					else -> contentColor.copy(alpha = 0.47f)
+				},
 				modifier = Modifier.requiredSize(it.size)
 			)
 			Spacer(modifier = Modifier.width(24.dp))
@@ -163,7 +176,9 @@ fun SettingsSwitch(
 
 		Switch(
 			checked = checked,
-			onCheckedChange = { onCheckChanged() }
+			enabled = enabled,
+			colors = SwitchDefaults.colors(),
+			onCheckedChange = { if (enabled) onCheckChanged() },
 		)
 
 		Spacer(modifier = Modifier.width(24.dp))
@@ -258,13 +273,13 @@ object SettingsButtonDefaults {
 	fun settingsButtonLeadingIcon(
 		icon: Int,
 		color: Color = MaterialTheme.colorScheme.onBackground,
-		size: Dp = ICON_BUTTON_SIZE
+		size: Dp = ICON_SIZE
 	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size)
 
 	@Composable
 	fun settingsButtonTrailingIcon(
 		icon: Int = R.drawable.ic_fa_caret,
 		color: Color = MaterialTheme.colorScheme.onBackground,
-		size: Dp = ICON_BUTTON_SIZE
+		size: Dp = ICON_SIZE
 	): SettingsButtonIcon = SettingsButtonIcon(icon = icon, color = color, size = size)
 }

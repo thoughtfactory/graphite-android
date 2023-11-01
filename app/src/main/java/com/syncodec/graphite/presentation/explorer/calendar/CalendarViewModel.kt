@@ -1,11 +1,9 @@
 package com.syncodec.graphite.presentation.explorer.calendar
 
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.NoteObjectLite
+import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.repository.LockableRepo
-import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.explorer.meta.AbstractExploreViewModel
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

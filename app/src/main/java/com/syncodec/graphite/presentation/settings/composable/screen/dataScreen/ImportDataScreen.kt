@@ -14,6 +14,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScaffold
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonDefaults
+import com.syncodec.graphite.presentation.settings.composable.dialog.ImportDataGoogleKeepDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.ImportDataGraphiteDialog
 import com.syncodec.graphite.presentation.settings.composable.dialog.ImportDataJourneyDialog
 
@@ -53,8 +54,7 @@ fun ImportDataScreen() {
 					title = "Google Keep",
 					subTitle = stringResource(id = R.string.import_data_from) + " Google Keep",
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_import),
-					onClick = {
-					},
+					onClick = { isImportDataGoogleKeepDialogVisible = true},
 				)
 			}
 		}
@@ -70,4 +70,8 @@ fun ImportDataScreen() {
 		onDismissRequest = { isImportDataJourneyDialogVisible = false }
 	)
 
+	ImportDataGoogleKeepDialog(
+		isDialogVisible = isImportDataGoogleKeepDialogVisible,
+		onDismissRequest = { isImportDataGoogleKeepDialogVisible = false }
+	)
 }

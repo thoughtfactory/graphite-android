@@ -21,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.presentation.bucketItem.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucketItem.composable.bar.TopBar
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.MetadataBottomSheet

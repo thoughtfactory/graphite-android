@@ -20,50 +20,38 @@ object AttachmentCache {
 
 		if (cachedAttachmentThumbnail == null || hashCode != cachedAttachmentThumbnail.first) {
 
-
 			val attachmentDir = File(context.attachmentDirPath(parentId = parentId))
-			val previewDataMap = attachmentDir.listFiles()?.map { file -> FilePreviewer.getPreview(file = file, context = context) }
 
-			if (previewDataMap == null) {
-//				Log.d("npr71", "getAttachmentThumbnail : $parentId : no attachment")
-				return null
-			} else {
-//				Log.d("npr71", "getAttachmentThumbnail : $parentId : cache not found")
-
-				var newCacheData: PreviewData? = previewDataMap.filterIsInstance<PreviewData.Image>().firstOrNull()
-				if (newCacheData != null) {
-					attachmentThumbnailMap[parentId] = Pair(hashCode, newCacheData)
-					return newCacheData
+			attachmentDir.listFiles()?.forEach { file ->
+				when(val filePreview = FilePreviewer.getPreview(file = file, context = context)) {
+					is PreviewData.Image -> {
+						attachmentThumbnailMap[parentId] = Pair(hashCode, filePreview)
+						Log.d("npr71", "file : ${file.name} : image")
+						return filePreview
+					}
+					is PreviewData.Video -> {
+						attachmentThumbnailMap[parentId] = Pair(hashCode, filePreview)
+						Log.d("npr71", "file : ${file.name} : video")
+						return filePreview
+					}
+					is PreviewData.Pdf -> {
+						attachmentThumbnailMap[parentId] = Pair(hashCode, filePreview)
+						Log.d("npr71", "file : ${file.name} : pdf")
+						return filePreview
+					}
+					is PreviewData.Audio -> {
+						attachmentThumbnailMap[parentId] = Pair(hashCode, filePreview)
+						Log.d("npr71", "file : ${file.name} : audio")
+						return filePreview
+					}
+					else -> Unit
 				}
-
-				newCacheData = previewDataMap.filterIsInstance<PreviewData.Video>().firstOrNull()
-				if (newCacheData != null) {
-					attachmentThumbnailMap[parentId] = Pair(hashCode, newCacheData)
-					return newCacheData
-				}
-
-				newCacheData = previewDataMap.filterIsInstance<PreviewData.Pdf>().firstOrNull()
-				if (newCacheData != null) {
-					attachmentThumbnailMap[parentId] = Pair(hashCode, newCacheData)
-					return newCacheData
-				}
-
-				newCacheData = previewDataMap.filterIsInstance<PreviewData.Audio>().firstOrNull()
-				if (newCacheData != null) {
-					attachmentThumbnailMap[parentId] = Pair(hashCode, newCacheData)
-					return newCacheData
-				}
-
-				newCacheData = previewDataMap.firstOrNull()
-				return if (newCacheData != null) {
-					attachmentThumbnailMap[parentId] = Pair(hashCode, newCacheData)
-					newCacheData
-				} else {
-					null
-				}
+				Log.d("npr71", "file : ${file.name} : else")
 			}
+
+			return null
 		} else {
-			Log.d("npr71", "getAttachmentThumbnail : $parentId : cache found")
+			Log.d("npr71", "getAttachmentThumbnail : $parentId : cache found : ${cachedAttachmentThumbnail.second::class.simpleName}")
 			return cachedAttachmentThumbnail.second
 		}
 	}

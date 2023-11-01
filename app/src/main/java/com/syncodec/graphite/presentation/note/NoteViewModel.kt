@@ -6,19 +6,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.LatLng
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.presentation.note.kitKat.KitKatFormat
 import com.syncodec.graphite.utils.Location.getLocation
 import com.syncodec.graphite.utils.LocationData
+import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -32,7 +34,7 @@ import java.io.File
 
 
 @KoinViewModel
-class NoteViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
+class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStoreInstance : DataStoreInstance) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -81,7 +83,7 @@ class NoteViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	private suspend fun observeNote(repository: Repository, noteId: RealmUUID) {
-		repository.getNoteFromIdAsFlow(id = noteId).collectLatest { noteObject1 ->
+		repository.getObjectFromIdAsFlow<NoteObject>(id = noteId).collectLatest { noteObject1 ->
 			this@NoteViewModel._noteObject.tryEmit(noteObject1)
 			setLocation(latLng = noteObject1?.getLatLng(), address = noteObject1?.address)
 			noteObject1?.id?.let { this@NoteViewModel._attachmentList.tryEmit(repository.attachmentRepository.getAttachmentFromNote(parentId = it).map { AttachmentState.Saved(file = it) }) }
@@ -115,7 +117,13 @@ class NoteViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
 			this@NoteViewModel._noteObject.tryEmit(this)
 		}
 
-		reloadLocation()
+		viewModelScope.launch(Dispatchers.IO) {
+			dataStoreInstance.getGeolocation.collectLatest {
+				if (it) reloadLocation()
+				else _locationData.tryEmit(LocationData.AutoFetchDisabled)
+				cancel()
+			}
+		}
 	}
 
 	fun getNote(noteId: RealmUUID) {
@@ -181,32 +189,35 @@ class NoteViewModel(private val lockableRepo: LockableRepo) : ViewModel() {
 					noteObject.value?.apply {
 						this.updateModifyTimestamp()
 						this.title = kitKatFormat.kitKatTitle
-						this.content2 = kitKatFormat.kitKatContent?.drop(1)?.dropLast(1)
+						this.content = kitKatFormat.kitKatContent?.drop(1)?.dropLast(1)
+						Log.d("npr71", "content : ${this.content}")
 						this.latLng = Json.encodeToString(this@NoteViewModel.locationData.value.getLatLngOrNull())
 						this.address = this@NoteViewModel.locationData.value.getAddressOrNull()
 						copyToRealm(this, UpdatePolicy.ALL)
 						getNote(noteId = this.id)
 					}
+				},
+				update = {
+					Log.d("npr71", "update")
+					this.updateModifyTimestamp()
+					this@NoteViewModel.noteObject.value?.userTimestamp?.let { this.userTimestamp = it }
+					this.title = kitKatFormat.kitKatTitle
+					this.content = kitKatFormat.kitKatContent?.drop(1)?.dropLast(1)
+					Log.d("npr71", "content : ${this.content}")
+					this.latLng = Json.encodeToString(this@NoteViewModel.locationData.value.getLatLngOrNull())
+					this.address = this@NoteViewModel.locationData.value.getAddressOrNull()
 				}
-			) {
-				Log.d("npr71", "update")
-				this.updateModifyTimestamp()
-				this@NoteViewModel.noteObject.value?.userTimestamp?.let { this.userTimestamp = it }
-				this.title = kitKatFormat.kitKatTitle
-				this.content2 = kitKatFormat.kitKatContent?.drop(1)?.dropLast(1)
-				this.latLng = Json.encodeToString(this@NoteViewModel.locationData.value.getLatLngOrNull())
-				this.address = this@NoteViewModel.locationData.value.getAddressOrNull()
-			}
+			)
 
 			noteObject.value?.id?.let { noteId1 ->
 				repository.updateTagConnections(
-					id = noteId1,
+					objectId = noteId1,
 					tagListToAdd = tagStateMap.value.filterValues { it == TagObjectState.New }.keys.map { it.id },
 					tagListToRemove = tagStateMap.value.filterValues { it == TagObjectState.ToRemove }.keys.map { it.id }
 				)
 
 				repository.attachmentRepository.putAttachment(parentId = noteId1, uriList = this.attachmentList.value.filterIsInstance<AttachmentState.New>().map { it.uri })
-				repository.attachmentRepository.delete(attachmentList = this.attachmentList.value.filterIsInstance<AttachmentState.ToRemove>().map { it.file })
+				repository.attachmentRepository.delete(attachmentList = this.attachmentList.value.filterIsInstance<AttachmentState.ToRemove>().map { it.file }.toSet())
 			}
 		}
 

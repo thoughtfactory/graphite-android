@@ -43,12 +43,12 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.local.LatLng
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2Defaults
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Location
 import com.syncodec.graphite.utils.locationAddressFilter
@@ -206,7 +206,7 @@ fun LocationPickerDialog(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_check),
 						contentDescription = "Select location",
-						modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+						modifier = Modifier.requiredSize(ICON_SIZE)
 					)
 				}
 			}

@@ -10,27 +10,19 @@ import com.dropbox.core.v2.files.ListFolderErrorException
 import com.dropbox.core.v2.files.Metadata
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Connected
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.CredentialError
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Failed
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Idle
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Init
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Locked
-import com.syncodec.graphite.service.syncInator.SyncInatorService.Companion.SyncStatus.Syncing
-import com.syncodec.graphite.utils.alice.AliceRequestResult
+import com.syncodec.graphite.di.cloud.dropbox.DBox.Companion.TestConnectionResponse.Error
+import com.syncodec.graphite.di.cloud.dropbox.DBox.Companion.TestConnectionResponse.Loading
+import com.syncodec.graphite.di.cloud.dropbox.DBox.Companion.TestConnectionResponse.NotLoggedIn
+import com.syncodec.graphite.di.cloud.dropbox.DBox.Companion.TestConnectionResponse.Success
 import com.syncodec.graphite.utils.alice.deleteSecretData
-import com.syncodec.graphite.utils.alice.getSecretData
 import com.syncodec.graphite.utils.alice.putSecretData
 import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONException
-import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
-import java.time.Instant
 
 
 class DBox(private val context : Context) {
@@ -77,80 +69,6 @@ class DBox(private val context : Context) {
 
 	@WorkerThread
 	fun getAccessToken(callback : (AccessTokenResponseResponse) -> Unit) {
-		if (dbxAccessToken != null && dbxAccessToken !!.second > Instant.now().toEpochMilli()) {
-			try {
-				DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
-					callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
-					return
-				}
-			} catch (e : Exception) {
-//				e.printStackTrace()
-			}
-		} else {
-			context.getSecretData("dropbox_access_token").let {
-				if (it.result == AliceRequestResult.SUCCESS) {
-					val jsonObject = it.data?.decodeToString()?.let { it1 -> JSONObject(it1) }
-					val accessToken = jsonObject?.getString("accessToken")
-					val expiresAt = jsonObject?.getLong("expiresAt")
-					if (accessToken != null && expiresAt != null) {
-						dbxAccessToken = Pair(accessToken, expiresAt)
-						if (expiresAt > Instant.now().toEpochMilli()) {
-							try {
-								DbxClientV2(DbxRequestConfig("Graphite"), dbxAccessToken !!.first).check().user().result.let {
-									callback(AccessTokenResponseResponse.Success(dbxAccessToken !!.first))
-									return
-								}
-							} catch (e : Exception) {
-//								e.printStackTrace()
-							}
-						}
-					}
-				}
-			}
-		}
-		context.getSecretData("dropbox_refresh_token").let {
-			if (it.result == AliceRequestResult.KEY_NOT_FOUND) {
-				callback(AccessTokenResponseResponse.KeyNotFound)
-				null
-			} else it.data?.decodeToString()
-		}?.let { refreshToken ->
-			try {
-				val data = hashMapOf("refreshToken" to refreshToken)
-
-				Firebase
-					.functions
-					.getHttpsCallable("dropboxExchangeRefreshTokenForAccessToken")
-					.call(data)
-					.addOnSuccessListener {
-						val data = it.data as HashMap<*, *>
-						try {
-							when (data["response"]) {
-								"Ok" -> {
-									val result = JSONObject(data["result"] as String)
-									val accessToken = result.getString("access_token")
-									val expiresIn = result.getLong("expires_in")
-									dbxAccessToken = Pair(accessToken, Instant.now().toEpochMilli() + (expiresIn * 1000))
-									val jsonObject = JSONObject()
-									jsonObject.put("accessToken", accessToken)
-									jsonObject.put("expiresAt", Instant.now().toEpochMilli() + (expiresIn * 1000))
-									context.putSecretData("dropbox_access_token", jsonObject.toString())
-									callback(AccessTokenResponseResponse.Success(accessToken))
-								}
-
-								"Error" -> callback(AccessTokenResponseResponse.Error(Exception("Error"), "Something went wrong. Please try again."))
-								else -> callback(AccessTokenResponseResponse.Error(Exception("Error"), "Something went wrong. Please try again."))
-							}
-						} catch (e : Exception) {
-							callback(AccessTokenResponseResponse.Error(e, "Something went wrong. Please try again."))
-						}
-					}
-					.addOnFailureListener {
-						callback(AccessTokenResponseResponse.Error(it, "Something went wrong. Please try again."))
-					}
-			} catch (e : Exception) {
-				callback(AccessTokenResponseResponse.Error(e, "Something went wrong. Please try again."))
-			}
-		}
 	}
 
 	@WorkerThread
@@ -163,7 +81,7 @@ class DBox(private val context : Context) {
 						DbxClientV2(DbxRequestConfig("Graphite"), accessTokenResponseResponse.accessToken)
 							.users()
 							.let { callback(TestConnectionResponse.Success(
-								it.getCurrentAccount().name.displayName,
+								it.currentAccount.name.displayName,
 								it.getCurrentAccount().email,
 								it.getCurrentAccount().profilePhotoUrl,
 								it.spaceUsage.used,
@@ -402,7 +320,5 @@ class DBox(private val context : Context) {
 			class Error(val exception : Exception, val message : String) : DownloadSnapshotResponse()
 		}
 
-		val DROPBOX_CONNECT =
-			"https://www.dropbox.com/oauth2/authorize?client_id=wqgzkie6sm7xxvw&response_type=code&token_access_type=offline&redirect_uri=https://us-central1-graphite-diary.cloudfunctions.net/dropboxCallback"
 	}
 }

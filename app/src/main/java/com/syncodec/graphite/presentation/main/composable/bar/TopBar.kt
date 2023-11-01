@@ -27,7 +27,6 @@ import com.syncodec.graphite.service.syncInator.SyncInatorService
 @Preview
 @Composable
 fun TopBar(
-	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	onClickMenu: () -> Unit = {},
 	onClickCloud: () -> Unit = {},
 	onClickSearch: () -> Unit = {},
@@ -54,24 +53,24 @@ fun TopBar(
 			)
 		},
 		actions = {
-			CloudButton(
-				syncStatus = syncStatus,
-				onClickSync = onClickCloud
-			)
+//			CloudButton(
+//				syncStatus = syncStatus,
+//				onClickSync = onClickCloud
+//			)
 			SearchButton(onClick = onClickSearch)
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 	)
 }
 
-@Composable
-private fun CloudButton(
-	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
-	onClickSync: () -> Unit
-) {
-	GenericButton(
-		icon = SyncState.syncStatusIcon[syncStatus::class] ?: R.drawable.ic_cloud,
-		colors = GenericButtonDefaults.genericButtonColors(iconColor = SyncState.getSyncStatusIconColor(syncStatus = syncStatus),),
-		onClick = onClickSync
-	)
-}
+//@Composable
+//private fun CloudButton(
+//	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
+//	onClickSync: () -> Unit
+//) {
+//	GenericButton(
+//		icon = SyncState.syncStatusIcon[syncStatus::class] ?: R.drawable.ic_cloud,
+//		colors = GenericButtonDefaults.genericButtonColors(iconColor = SyncState.getSyncStatusIconColor(syncStatus = syncStatus),),
+//		onClick = onClickSync
+//	)
+//}

@@ -15,8 +15,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.AddTodoBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.EditTodoBottomSheet
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.TodoFloatingActionButton

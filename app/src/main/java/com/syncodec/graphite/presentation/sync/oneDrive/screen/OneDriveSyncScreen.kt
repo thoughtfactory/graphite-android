@@ -21,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,18 +37,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.report.ReportActivity
-import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.base.DeleteContainer
 import com.syncodec.graphite.presentation.base.DeleteContent
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun OneDriveSyncScreen(
 	onClickConnect : () -> Unit = {},
 ) {
-	GenericScaffold(
+	GenericScaffold2(
 //		topBar = { TopBar() },
 		dialogContent = {
 		},

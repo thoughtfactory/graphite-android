@@ -34,8 +34,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView

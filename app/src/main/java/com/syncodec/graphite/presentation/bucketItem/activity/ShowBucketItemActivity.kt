@@ -8,7 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.MovieBucketItemScreen
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.TvBucketItemScreen

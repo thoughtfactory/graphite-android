@@ -1,12 +1,13 @@
 package com.syncodec.graphite.presentation.search
 
+import android.text.Html
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.KitKatContent
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.model.local.NoteObjectLite
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
@@ -24,12 +25,10 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
-	private val _noteMap: MutableStateFlow<Map<RealmUUID, NoteObject>> = MutableStateFlow(mapOf())
+	private val _allNoteMap: MutableStateFlow<Map<RealmUUID, NoteObject>> = MutableStateFlow(mapOf())
 
 	private val _tagList: MutableStateFlow<Set<TagObject>> = MutableStateFlow(setOf())
 	val tagList: StateFlow<Set<TagObject>> = _tagList
-
-	private val _noteAttachmentCountMap: MutableStateFlow<Map<RealmUUID, Int>> = MutableStateFlow(mapOf())
 
 	private val _filterChapterObject: MutableStateFlow<ChapterObjectLite?> = MutableStateFlow(null)
 	val filterChapterObject: StateFlow<ChapterObjectLite?> = _filterChapterObject
@@ -53,7 +52,7 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 			this@SearchViewModel._repository.collectLatest { repository1 ->
 				launch {
 					repository1?.getAllNoteAsFlow()?.collectLatest { noteList ->
-						this@SearchViewModel._noteMap.tryEmit(noteList.associateBy { it.id })
+						this@SearchViewModel._allNoteMap.tryEmit(noteList.associateBy { it.id })
 					}
 				}
 				launch {
@@ -70,7 +69,7 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	private fun startFilter() {
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(
-				_noteMap,
+				_allNoteMap,
 				_tagList,
 				_filterChapterObject,
 				_noteFilterList
@@ -100,13 +99,15 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 		val cachedData = _noteQueryCache[noteObject.id]
 		return if (cachedData?.first == word && cachedData.second == noteObject.hashCode()) {
 			true
-		}
-		else {
+		} else {
 			try {
-				val kitKatContent = KitKatContent.fromString(noteObject.content)
-				kitKatContent?.toTxt()?.lowercase()?.contains(word.lowercase()) ?: false
+				val contentString = Html.fromHtml(noteObject.content ?: "", Html.FROM_HTML_MODE_LEGACY)?.toString()
+				contentString?.contains(word, ignoreCase = true)?.let {
+					if (it) _noteQueryCache[noteObject.id] = Pair(word, noteObject.hashCode())
+					it
+				} ?: false
 			} catch (e: Exception) {
-				e.printStackTrace()
+				if (BuildConfig.DEBUG) e.printStackTrace()
 				false
 			}
 		}
@@ -138,6 +139,34 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 				}
 			}
 		}
+	}
+
+	fun loadChapter(chapterId: RealmUUID?) {
+		viewModelScope.launch(Dispatchers.Default) {
+			_repository.value?.getChapterFromId(id = chapterId).let { chapterObject ->
+				this@SearchViewModel._filterChapterObject.tryEmit(chapterObject?.toLite())
+			}
+		}
+	}
+
+	fun toggleFavourite(idList: Set<RealmUUID>) {
+		val areAllFavourite = filteredNoteList.value.filter { it.id in idList }.all { it.isFavourite }
+		_repository.value?.setMultiObjectFromIdSuspended<NoteObject>(idList = idList) {
+			this.updateModifyTimestamp()
+			this.isFavourite = !areAllFavourite
+		}
+	}
+
+	fun toggleLock(idList: Set<RealmUUID>) {
+		val areAllLocked = filteredNoteList.value.filter { it.id in idList }.all { it.isLocked }
+		_repository.value?.setMultiObjectFromIdSuspended<NoteObject>(idList = idList) {
+			this.updateModifyTimestamp()
+			this.isLocked = !areAllLocked
+		}
+	}
+
+	fun delete(idList: Set<RealmUUID>) {
+		_repository.value?.deleteSuspended(idList = idList)
 	}
 
 	companion object {

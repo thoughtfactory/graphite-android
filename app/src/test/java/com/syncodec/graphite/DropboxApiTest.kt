@@ -1,5 +1,8 @@
 package com.syncodec.graphite
 
+import com.syncodec.graphite.service.syncInator.DyncInator
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Test
 
 class DropboxApiTest {
@@ -32,5 +35,17 @@ class DropboxApiTest {
 //				println("result" + it)
 //			}
 //		}
+	}
+
+	@Test
+	fun test_locker() {
+		var locker  : DyncInator.Companion.Locker? = null
+		val json = Json
+
+		repeat(100) {
+			locker = DyncInator.Companion.Locker(sessionId = it.toString(), timestamp = System.currentTimeMillis())
+			val jsonStr = json.encodeToString(locker)
+			println(jsonStr)
+		}
 	}
 }

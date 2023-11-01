@@ -3,9 +3,9 @@ package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.BaseApplication
-import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.model.BucketObjectLite
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketObject
+import com.syncodec.graphite.di.model.local.BucketObjectLite
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import io.realm.kotlin.types.RealmUUID
@@ -60,7 +60,7 @@ class BucketScreenViewModel(
 
 		if (BaseApplication.isPro.value || bucketType == BucketType.TODO) _repository.value?.putBucketSuspended(bucketObject)
 		else viewModelScope.launch(Dispatchers.Default) {
-			_repository.value?.getAllBucket()?.let {
+			_repository.value?.getAllObjectOfType<BucketObject>(includeLocked = true)?.let {
 				if (it.count { it.bucketType == bucketType.name } < 1) _repository.value?.putBucketSuspended(bucketObject) else callback("Join Graphite Pro to create more ${bucketType.name} buckets")
 			}
 		}

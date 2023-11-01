@@ -1,10 +1,12 @@
 package com.syncodec.graphite.presentation.settings.composable.screen.backupAndSyncScreen
 
+import android.content.Intent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -13,6 +15,7 @@ import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.GenericSettingsScaffold
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButton
 import com.syncodec.graphite.presentation.settings.composable.buildingBlock.SettingsButtonDefaults
+import com.syncodec.graphite.presentation.sync.dropbox2.DropboxActivity
 
 
 @Preview
@@ -20,6 +23,8 @@ import com.syncodec.graphite.presentation.settings.composable.buildingBlock.Sett
 fun BackUpAndSyncScreen(
 	onNavigate: (SettingsActivity.Companion.SettingsScreen) -> Unit = {}
 ) {
+	val context = LocalContext.current
+
 	GenericSettingsScaffold(
 		title = stringResource(id = R.string.backup_and_sync),
 	) {
@@ -38,7 +43,11 @@ fun BackUpAndSyncScreen(
 					title = "Dropbox",
 					subTitle = stringResource(id = R.string.manage),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_logo_dropbox, color = Color.Unspecified, size = 28.dp),
-					onClick = { },
+					onClick = {
+						Intent(context, DropboxActivity::class.java).apply {
+							context.startActivity(this)
+						}
+					},
 				)
 			}
 			item {

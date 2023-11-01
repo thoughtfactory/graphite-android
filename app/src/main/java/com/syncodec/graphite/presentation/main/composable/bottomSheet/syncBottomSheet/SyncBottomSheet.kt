@@ -1,7 +1,5 @@
 package com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet
 
-import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,9 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,85 +25,77 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.ConnectedView
-import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet.buildingBlock.NotLoggedInView
-import com.syncodec.graphite.presentation.settings.SettingsActivity
-import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncActivity
-import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncActivity
-import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.NetworkUtils.Companion.isInternetAvailable
-import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 
 
-@Preview
-@Composable
-fun SyncBottomSheet(
-	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
-	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
-	onClickTestConnection : () -> Unit = {},
-	onClickSyncNow : () -> Unit = {},
-	onClickForceSync : () -> Unit = {},
-	closeSheet : () -> Unit = {},
-) {
-	val context = LocalContext.current
-	val syncDataStoreInstance = remember { SyncDataStoreInstance(context) }
-	val syncProvider by syncDataStoreInstance.syncProvider.collectAsState(initial = null)
-
-	fun onClickManage() {
-		Log.d("npr71", "SyncBottomSheet: onClickManage: syncProvider: $syncProvider")
-		val activity = when (syncProvider) {
-			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> DropboxSyncActivity::class.java
-			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> GoogleDriveSyncActivity::class.java
-			else -> null
-		}
-		activity?.let { context.startActivity(Intent(context, activity)) }
-		closeSheet()
-	}
-
-	GenericBottomSheet(
-		title = "Sync",
-		icon = R.drawable.ic_cloud
-	) {
-		when (testConnectionResponse) {
-			is DBox.Companion.TestConnectionResponse.Loading -> LoadingCard(
-				onClickTestConnection = onClickTestConnection,
-				onClickManage = ::onClickManage
-			)
-
-			is DBox.Companion.TestConnectionResponse.Success -> ConnectedView(
-				email = testConnectionResponse.email,
-				name = testConnectionResponse.name,
-				spaceTotal = testConnectionResponse.spaceTotal,
-				spaceUsed = testConnectionResponse.spaceUsed,
-				syncStatus = syncStatus,
-				onForceSync = onClickForceSync,
-				onSync = onClickSyncNow,
-				onClickManage = ::onClickManage,
-			)
-
-			is DBox.Companion.TestConnectionResponse.NotLoggedIn -> NotLoggedInView {
-				Intent(context, SettingsActivity::class.java).apply {
-//					putExtra(SettingsActivity.Companion.Extras.SettingsScreen.name, SettingsActivity.Companion.SettingsScreen.BackupAndSync.name)
-					context.startActivity(this)
-				}
-				closeSheet()
-			}
-			is DBox.Companion.TestConnectionResponse.Error -> ErrorCard(
-				onClickTestConnection = onClickTestConnection,
-				onClickManage = ::onClickManage,
-			)
-			else -> LoadingCard(
-				onClickTestConnection = onClickTestConnection,
-				onClickManage = ::onClickManage,
-			)
-		}
-	}
-}
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Preview
+//@Composable
+//fun SyncBottomSheet(
+//	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
+//	testConnectionResponse : DBox.Companion.TestConnectionResponse? = null,
+//	onClickTestConnection : () -> Unit = {},
+//	onClickSyncNow : () -> Unit = {},
+//	onClickForceSync : () -> Unit = {},
+//	closeSheet : () -> Unit = {},
+//) {
+//	val context = LocalContext.current
+//	val syncDataStoreInstance = remember { SyncDataStoreInstance(context) }
+//	val syncProvider by syncDataStoreInstance.syncProvider.collectAsState(initial = null)
+//
+//	fun onClickManage() {
+//		Log.d("npr71", "SyncBottomSheet: onClickManage: syncProvider: $syncProvider")
+//		val activity = when (syncProvider) {
+//			SyncDataStoreInstance.Companion.SyncProvider.Dropbox -> DropboxSyncActivity::class.java
+//			SyncDataStoreInstance.Companion.SyncProvider.GoogleDrive -> GoogleDriveSyncActivity::class.java
+//			else -> null
+//		}
+//		activity?.let { context.startActivity(Intent(context, activity)) }
+//		closeSheet()
+//	}
+//
+//	GenericBottomSheet2(
+////		title = "Sync",
+////		icon = R.drawable.ic_cloud
+//	) {
+//		when (testConnectionResponse) {
+//			is DBox.Companion.TestConnectionResponse.Loading -> LoadingCard(
+//				onClickTestConnection = onClickTestConnection,
+//				onClickManage = ::onClickManage
+//			)
+//
+//			is DBox.Companion.TestConnectionResponse.Success -> ConnectedView(
+//				email = testConnectionResponse.email,
+//				name = testConnectionResponse.name,
+//				spaceTotal = testConnectionResponse.spaceTotal,
+//				spaceUsed = testConnectionResponse.spaceUsed,
+//				syncStatus = syncStatus,
+//				onForceSync = onClickForceSync,
+//				onSync = onClickSyncNow,
+//				onClickManage = ::onClickManage,
+//			)
+//
+//			is DBox.Companion.TestConnectionResponse.NotLoggedIn -> NotLoggedInView {
+//				Intent(context, SettingsActivity::class.java).apply {
+////					putExtra(SettingsActivity.Companion.Extras.SettingsScreen.name, SettingsActivity.Companion.SettingsScreen.BackupAndSync.name)
+//					context.startActivity(this)
+//				}
+//				closeSheet()
+//			}
+//			is DBox.Companion.TestConnectionResponse.Error -> ErrorCard(
+//				onClickTestConnection = onClickTestConnection,
+//				onClickManage = ::onClickManage,
+//			)
+//			else -> LoadingCard(
+//				onClickTestConnection = onClickTestConnection,
+//				onClickManage = ::onClickManage,
+//			)
+//		}
+//	}
+//}
 
 @Preview
 @Composable

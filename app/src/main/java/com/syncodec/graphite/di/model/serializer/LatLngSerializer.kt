@@ -1,6 +1,6 @@
 package com.syncodec.graphite.di.model.serializer
 
-import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.local.LatLng
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer

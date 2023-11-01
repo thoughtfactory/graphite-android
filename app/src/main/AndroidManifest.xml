@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <queries>
         <intent>
@@ -95,28 +96,6 @@
         </activity>
 
         <activity
-            android:name=".presentation.note.NoteActivity"
-            android:exported="false"
-            android:parentActivityName=".presentation.main.MainActivity"
-            android:theme="@style/Theme.Graphite.NoActionBar"
-            android:windowSoftInputMode="adjustResize">
-
-            <!--            <intent-filter>-->
-            <!--                <action android:name="android.intent.action.SEND" />-->
-            <!--                <category android:name="android.intent.category.DEFAULT" />-->
-
-            <!--                <data android:mimeType="application/*" />-->
-            <!--                <data android:mimeType="audio/*" />-->
-            <!--                <data android:mimeType="image/*" />-->
-            <!--                <data android:mimeType="message/*" />-->
-            <!--                <data android:mimeType="multipart/*" />-->
-            <!--                <data android:mimeType="text/*" />-->
-            <!--                <data android:mimeType="video/*" />-->
-            <!--            </intent-filter>-->
-
-        </activity>
-
-        <activity
             android:name=".presentation.tags.TagsActivity"
             android:exported="false"
             android:theme="@style/Theme.Graphite.NoActionBar"
@@ -189,20 +168,19 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".presentation.sync.dropbox.DropboxSyncActivity"
+            android:name=".presentation.sync.dropbox2.DropboxActivity"
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:host="graphite.syncodec.com"
-                    android:pathPrefix="/dropboxCallback"
-                    android:scheme="https" />
+                <data android:scheme="https" />
+                <data android:host="graphite.syncodec.com" />
+                <data android:pathPrefix="/dropboxCallback" />
             </intent-filter>
         </activity>
 
@@ -211,16 +189,15 @@
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" >
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:host="graphite.syncodec.com"
-                    android:pathPrefix="/googleDriveCallback"
-                    android:scheme="https" />
+                <data android:scheme="https" />
+                <data android:host="graphite.syncodec.com" />
+                <data android:pathPrefix="/googleDriveCallback" />
             </intent-filter>
         </activity>
 
@@ -230,7 +207,9 @@
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
-        <receiver android:name=".notification.NotificationReceiver" />
+        <receiver android:name=".notification.WriteNoteBroadcastReceiver" />
+
+        <receiver android:name=".notification.UnpinNotificationBroadcastReceiver" />
 
 <!--        <receiver-->
 <!--            android:name=".widget.home.WidgetReceiver"-->
@@ -245,25 +224,25 @@
 <!--        </receiver>-->
 
         <service
-            android:name=".service.syncInator.DropboxSyncInatorService"
+            android:name=".service.syncInator.DyncInator"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <service
-            android:name=".service.syncInator.GDriveSyncInatorService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
+<!--        <service-->
+<!--            android:name=".service.syncInator.GDriveSyncInatorService"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="false"-->
+<!--            android:foregroundServiceType="dataSync" />-->
 
-        <service
-            android:name=".notification.NotePinNotificationService"
-            android:enabled="true"
-            android:foregroundServiceType="dataSync"/>
+<!--        <service-->
+<!--            android:name=".notification.NotePinNotificationService"-->
+<!--            android:enabled="true"-->
+<!--            android:foregroundServiceType="dataSync"/>-->
 
-        <service
-            android:name=".notification.WriteNoteNotificationService"
-            android:enabled="true"
-            android:foregroundServiceType="dataSync"/>
+<!--        <service-->
+<!--            android:name=".notification.WriteNoteNotificationService"-->
+<!--            android:enabled="true"-->
+<!--            android:foregroundServiceType="dataSync"/>-->
     </application>
 </manifest>

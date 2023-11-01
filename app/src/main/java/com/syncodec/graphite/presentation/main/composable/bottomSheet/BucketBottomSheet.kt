@@ -47,10 +47,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.button.CancelButton
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
@@ -260,7 +260,7 @@ fun BucketSelectorItem(
 				Icon(
 					painter = icon,
 					contentDescription = title,
-					modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 
 				Spacer(modifier = Modifier.weight(1f))

@@ -13,7 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreen
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel

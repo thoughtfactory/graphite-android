@@ -7,6 +7,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
+import coil.decode.ImageDecoderDecoder
 import coil.decode.VideoFrameDecoder
 import coil.disk.DiskCache
 import coil.request.ImageRequest
@@ -29,10 +30,10 @@ object FilePreviewer {
 			val cachedPreviewData = filePreviewDataCache[file.name]
 
 			if (cachedPreviewData != null) {
-				Log.d("npr71", "getPreview : using cached data")
+				Log.d("npr71", "getPreview : ${file.name} : using cached data")
 				return cachedPreviewData
 			} else {
-				Log.d("npr71", "getPreview : cache not found")
+				Log.d("npr71", "getPreview : ${file.name} : cache not found")
 				val extension = file.extension()
 				val fileType = file.type()
 				val newPreviewData = when (fileType) {
@@ -42,7 +43,8 @@ object FilePreviewer {
 					else -> PreviewData.Unknown(name1 = file.name, extension2 = extension)
 				}
 
-				cachePreviewData(fileName = file.name, previewData = newPreviewData)
+				if (newPreviewData !is PreviewData.Unknown) cachePreviewData(fileName = file.name, previewData = newPreviewData)
+
 				return newPreviewData
 			}
 		} else {
@@ -68,9 +70,12 @@ object FilePreviewer {
 						.build()
 				}
 				.components {
+					add(ImageDecoderDecoder.Factory())
 					add(VideoFrameDecoder.Factory())
 				}
 				.build()
+
+			ImageDecoderDecoder.Factory()
 
 			val imageRequest = ImageRequest.Builder(context)
 				.data(file)

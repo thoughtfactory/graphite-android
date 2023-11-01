@@ -1,7 +1,7 @@
 package com.syncodec.graphite.utils.shareUtil
 
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.di.network.MovieData
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TvData

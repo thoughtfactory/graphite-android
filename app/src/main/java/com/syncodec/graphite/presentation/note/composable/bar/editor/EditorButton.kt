@@ -36,7 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.base.LocalIsPro
 import com.syncodec.graphite.utils.timeStampToTime
 import com.syncodec.graphite.utils.toDate
@@ -117,7 +117,7 @@ private fun ProEditorButton(
 				painter = painterResource(id = icon),
 				contentDescription = tooltip,
 				tint = contentColor,
-				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 
 			Box(
@@ -177,7 +177,7 @@ private fun StandardEditorButton(
 				painter = painterResource(id = icon),
 				contentDescription = tooltip,
 				tint = contentColor,
-				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 		}
 	}

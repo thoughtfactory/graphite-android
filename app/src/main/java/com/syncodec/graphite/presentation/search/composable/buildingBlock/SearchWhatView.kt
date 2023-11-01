@@ -27,12 +27,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.TagObject
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.search.SearchViewModel
 import com.syncodec.graphite.presentation.tags.composable.buildingBlock.TagItemView
 import com.syncodec.graphite.presentation.base.AttachmentContainer
 import com.syncodec.graphite.presentation.base.FavouriteContainer
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 
@@ -59,8 +60,8 @@ fun SearchWhatView(
 		item {
 			AnimatedVisibility(
 				visible = isAuthenticated,
-				enter = expandVertically(tween(470)),
-				exit = shrinkVertically(tween(470))
+				enter = expandVertically(tween(ANIMATION_DURATION_MILLIS)),
+				exit = shrinkVertically(tween(ANIMATION_DURATION_MILLIS))
 			) {
 				FilterButton(
 					title = stringResource(id = R.string.locked),
@@ -110,7 +111,7 @@ private fun FilterButton(
 				painter = painterResource(id = icon),
 				contentDescription = title,
 				tint = iconTint,
-				modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 
 			Spacer(modifier = Modifier.width(12.dp))

@@ -4,8 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
-import com.syncodec.graphite.di.model.LatLng
+import com.syncodec.graphite.di.model.local.BucketType
+import com.syncodec.graphite.di.model.local.LatLng
 
 
 val monthName : List<String> = listOf(

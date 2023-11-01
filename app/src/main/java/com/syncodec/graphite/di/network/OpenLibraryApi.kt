@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.syncodec.graphite.di.model.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -21,7 +21,7 @@ import java.net.URLEncoder
 
 
 sealed class OpenLibraryResponse {
-	object Loading : OpenLibraryResponse()
+	data object Loading : OpenLibraryResponse()
 	data class Success(val data: OpenLibraryTitleSearchResult) : OpenLibraryResponse()
 	data class Error(val message: String = "Unknown error") : OpenLibraryResponse()
 }

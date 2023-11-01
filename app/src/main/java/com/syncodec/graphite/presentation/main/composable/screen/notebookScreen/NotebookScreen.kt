@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObject
+import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.di.repository.group.isAll
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog

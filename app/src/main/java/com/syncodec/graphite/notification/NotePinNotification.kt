@@ -5,12 +5,11 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.IBinder
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -19,31 +18,17 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
-import kotlin.random.Random
 
 
-class NotePinNotificationService : Service() {
-
-	override fun onStartCommand(intent : Intent?, flags : Int, startId : Int) : Int {
-
+class UnpinNotificationBroadcastReceiver() : BroadcastReceiver() {
+	override fun onReceive(context: Context, intent: Intent?) {
 		val hasNotificationId = intent?.hasExtra("notificationId")
-
 		if (hasNotificationId == true) {
 			val notificationId = intent.getIntExtra("notificationId", 0)
-
-			NotificationManagerCompat.from(this).cancel(notificationId)
-
-			val notificationManager = getSystemService(NotificationManager::class.java)
+			NotificationManagerCompat.from(context).cancel(notificationId)
+			val notificationManager = context.getSystemService(NotificationManager::class.java)
 			notificationManager.cancel(notificationId)
 		}
-
-		super.stopSelf()
-
-		return super.onStartCommand(intent, flags, startId)
-	}
-
-	override fun onBind(intent : Intent?) : IBinder? {
-		return null
 	}
 }
 
@@ -52,12 +37,12 @@ class NotePinNotification {
 	companion object {
 		private const val CHANNEL_ID = "note_pin_channel"
 
-		fun pinToNotification(
-			context : Context,
-			noteId : RealmUUID,
-			title : String? = null,
-			content : String,
-			priority : Int = NotificationCompat.PRIORITY_DEFAULT,
+		fun pinIt(
+			context: Context,
+			noteId: RealmUUID,
+			title: String? = null,
+			content: String,
+			priority: Int = NotificationCompat.PRIORITY_DEFAULT,
 		) {
 			if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
 				Toast.makeText(context, context.getText(R.string.notification_permission_unavailable), Toast.LENGTH_SHORT).show()
@@ -65,6 +50,7 @@ class NotePinNotification {
 			}
 
 			createNotificationChannel(context)
+
 			val noteActivity = Intent(context, NoteActivity::class.java).apply {
 				putExtra(Extra.Companion.Extra.IsNew.name, false)
 				putExtra(Extra.Companion.Extra.NoteId.name, noteId.bytes)
@@ -74,16 +60,10 @@ class NotePinNotification {
 			}
 			val openActivityPendingIntent = PendingIntent.getActivity(context, noteId.hashCode(), noteActivity, PendingIntent.FLAG_IMMUTABLE)
 
-			val unpinActionIntent = PendingIntent.getService(
-				context,
-				Random.nextInt(),
-				Intent(context, NotePinNotificationService::class.java).apply {
-					flags = Intent.FLAG_ACTIVITY_NEW_TASK
-					putExtra("notificationId", noteId.hashCode())
-				},
-				PendingIntent.FLAG_IMMUTABLE
-			)
-
+			val cancelIntent = Intent(context, UnpinNotificationBroadcastReceiver::class.java).apply {
+				putExtra("notificationId", noteId.hashCode())
+			}
+			val cancelPendingIntent = PendingIntent.getBroadcast(context, noteId.hashCode(), cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
 			val builder = Notification.Builder(context, CHANNEL_ID)
 				.setSmallIcon(R.drawable.ic_note)
@@ -91,7 +71,7 @@ class NotePinNotification {
 				.setContentText(content)
 				.setActions(
 					Notification.Action.Builder(null, "Open", openActivityPendingIntent).build(),
-					Notification.Action.Builder(null, "Unpin", unpinActionIntent).build(),
+					Notification.Action.Builder(null, "Unpin", cancelPendingIntent).build(),
 				)
 				.addExtras(
 					Bundle().apply {
@@ -105,7 +85,7 @@ class NotePinNotification {
 			context.getSystemService(NotificationManager::class.java).notify(noteId.hashCode(), builder.build())
 		}
 
-		private fun createNotificationChannel(context : Context) {
+		private fun createNotificationChannel(context: Context) {
 			val name = "Pinned note"
 			val descriptionText = "Channel for note pin notification"
 			val importance = NotificationManager.IMPORTANCE_DEFAULT
@@ -113,11 +93,11 @@ class NotePinNotification {
 				description = descriptionText
 			}
 
-			val notificationManager : NotificationManager = context.getSystemService(NotificationManager::class.java)
+			val notificationManager: NotificationManager = context.getSystemService(NotificationManager::class.java)
 			notificationManager.createNotificationChannel(channel)
 		}
 
-		fun isNotificationPinned(context : Context, noteId : RealmUUID?) : Boolean {
+		fun isNotificationPinned(context: Context, noteId: RealmUUID?): Boolean {
 			val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 			return notificationManager.activeNotifications.any {
 				it.notification.extras.getByteArray(Extra.Companion.Extra.NoteId.name).contentEquals(noteId?.bytes)

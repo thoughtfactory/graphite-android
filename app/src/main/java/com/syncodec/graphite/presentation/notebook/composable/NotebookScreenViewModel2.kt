@@ -6,11 +6,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.model.NoteObjectLite
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.ChapterObject
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.NoteObject
+import com.syncodec.graphite.di.model.local.NoteObjectLite
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -95,7 +96,7 @@ class NotebookScreenViewModel2(
 	}
 
 	private suspend fun observeChapter(repository: Repository, currentChapterId: RealmUUID) {
-		repository.getChapterFromIdAsFlow(id = currentChapterId).collectLatest { chapterObject1 ->
+		repository.getObjectFromIdAsFlow<ChapterObject>(id = currentChapterId).collectLatest { chapterObject1 ->
 			Log.d("npr71", "chapterObject1 : ${chapterObject1?.title}")
 			this@NotebookScreenViewModel2._currentChapter.tryEmit(chapterObject1)
 			this@NotebookScreenViewModel2._currentChapterPath.tryEmit(_repository.value?.getChapterPath(id = chapterObject1?.id, includeEdge = true) ?: listOf())
@@ -105,7 +106,7 @@ class NotebookScreenViewModel2(
 	private fun observeChildChapters(repository: Repository, currentChapterId: RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			observeChildChapterJob?.cancel()
-			Job().let { job ->
+			Job(viewModelScope.coroutineContext.job).let { job ->
 				observeChildChapterJob = job
 				launch(Dispatchers.Default + job) {
 					repository.getChapterWithParentIdAsFlow(parentId = currentChapterId).collectLatest { chapterList ->
@@ -120,7 +121,7 @@ class NotebookScreenViewModel2(
 	private fun observeChildNotes(repository: Repository, currentChapterId: RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			observeChildNoteJob?.cancel()
-			Job().let { job ->
+			Job(viewModelScope.coroutineContext.job).let { job ->
 				observeChildNoteJob = job
 				launch(Dispatchers.Default + job) {
 					repository.getNoteWithParentIdAsFlow(parentId = currentChapterId).collectLatest { noteList ->

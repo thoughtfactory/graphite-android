@@ -3,7 +3,7 @@ package com.syncodec.graphite.presentation.note.kitKat
 import org.json.JSONObject
 
 
-sealed class KitKatAction(val action: String, val callback: (String) -> Unit = {}) {
+sealed class KitKatAction(open val action: String, open val callback: (String) -> Unit = {}) {
 	data object Undo : KitKatAction(action = "editor.commands.undo();")
 	data object Redo : KitKatAction(action = "editor.commands.redo();")
 	data object Bold : KitKatAction(action = "editor.chain().focus().toggleBold().run()")
@@ -14,59 +14,62 @@ sealed class KitKatAction(val action: String, val callback: (String) -> Unit = {
 	data object Subscript : KitKatAction(action = "editor.chain().focus().toggleSubscript().run();")
 	data object HardLineBreak : KitKatAction(action = "editor.chain().focus().setHardBreak().run()")
 	data object HorizontalRule : KitKatAction(action = "editor.chain().focus().setHorizontalRule().run()")
-	sealed class List(action2: String) : KitKatAction(action = action2) {
-		data object CheckList : List(action2 = "editor.commands.toggleTaskList();")
-		data object BulletList : List(action2 = "editor.commands.toggleBulletList();")
-		data object OrderedList : List(action2 = "editor.commands.toggleOrderedList();")
+	sealed class List(override val action: String) : KitKatAction(action = action) {
+		data object CheckList : List(action = "editor.commands.toggleTaskList();")
+		data object BulletList : List(action = "editor.commands.toggleBulletList();")
+		data object OrderedList : List(action = "editor.commands.toggleOrderedList();")
 	}
 
-	sealed class Heading(val action2: String) : KitKatAction(action = action2) {
-		data object Paragraph : Heading(action2 = "editor.commands.toggleHeading({ level: 3 });")
-		data object Heading1 : Heading(action2 = "editor.commands.toggleHeading({ level: 1 });")
-		data object Heading2 : Heading(action2 = "editor.commands.toggleHeading({ level: 2 });")
-		data object Heading3 : Heading(action2 = "editor.commands.toggleHeading({ level: 3 });")
-		data object Heading4 : Heading(action2 = "editor.commands.toggleHeading({ level: 4 });")
-		data object Heading5 : Heading(action2 = "editor.commands.toggleHeading({ level: 5 });")
-		data object Heading6 : Heading(action2 = "editor.commands.toggleHeading({ level: 6 });")
+	sealed class Heading(override val action: String) : KitKatAction(action = action) {
+		data object Paragraph : Heading(action = "editor.commands.toggleHeading({ level: 3 });")
+		data object Heading1 : Heading(action = "editor.commands.toggleHeading({ level: 1 });")
+		data object Heading2 : Heading(action = "editor.commands.toggleHeading({ level: 2 });")
+		data object Heading3 : Heading(action = "editor.commands.toggleHeading({ level: 3 });")
+		data object Heading4 : Heading(action = "editor.commands.toggleHeading({ level: 4 });")
+		data object Heading5 : Heading(action = "editor.commands.toggleHeading({ level: 5 });")
+		data object Heading6 : Heading(action = "editor.commands.toggleHeading({ level: 6 });")
 	}
 
 	data object Blockquote : KitKatAction(action = "editor.chain().focus().toggleBlockquote().run();")
 	data object Indent : KitKatAction(action = "editor.chain().focus().sinkListItem('listItem').run()")
 	data object Outdent : KitKatAction(action = "editor.chain().focus().liftListItem('listItem').run()")
 
-	sealed class Link(val action2: String) : KitKatAction(action = action2) {
-		data class Set(val url: String) : Link(action2 = "editor.commands.setLink({ href: '$url' })")
-		data object Unset : Link(action2 = "editor.commands.unsetLink()")
-		data object ExtendSelection : Link(action2 = "editor.commands.extendMarkRange('link')")
+	sealed class Link(override val action: String) : KitKatAction(action = action) {
+		data class Set(val url: String) : Link(action = "editor.commands.setLink({ href: '$url' })")
+		data object Unset : Link(action = "editor.commands.unsetLink()")
+		data object ExtendSelection : Link(action = "editor.commands.extendMarkRange('link')")
 	}
 
-	sealed class Align(action2: String) : KitKatAction(action = action2) {
-		data object Left : Align(action2 = "editor.commands.setTextAlign('left');")
-		data object Center : Align(action2 = "editor.commands.setTextAlign('center');")
-		data object Right : Align(action2 = "editor.commands.setTextAlign('right');")
-		data object Justify : Align(action2 = "editor.commands.setTextAlign('justify');")
-		data object Unset : Align(action2 = "editor.commands.unsetTextAlign();")
+	sealed class Align(override val action: String) : KitKatAction(action = action) {
+		data object Left : Align(action = "editor.commands.setTextAlign('left');")
+		data object Center : Align(action = "editor.commands.setTextAlign('center');")
+		data object Right : Align(action = "editor.commands.setTextAlign('right');")
+		data object Justify : Align(action = "editor.commands.setTextAlign('justify');")
+		data object Unset : Align(action = "editor.commands.unsetTextAlign();")
 	}
 
-	sealed class TextColor(action2: String) : KitKatAction(action = action2) {
-		data class Set(val color: String) : TextColor(action2 = "editor.commands.setColor('$color');")
-		data object Unset : TextColor(action2 = "editor.commands.unsetColor();")
-		data object ExtendSelection : Link(action2 = "editor.commands.extendMarkRange('textStyle')")
+	sealed class TextColor(override val action: String) : KitKatAction(action = action) {
+		data class Set(val color: String) : TextColor(action = "editor.commands.setColor('$color');")
+		data object Unset : TextColor(action = "editor.commands.unsetColor();")
+		data object ExtendSelection : Link(action = "editor.commands.extendMarkRange('textStyle')")
 	}
 
-	sealed class HighlightColor(action2: String) : KitKatAction(action = action2) {
-		data class Set(val color: String) : HighlightColor(action2 = "editor.commands.setHighlight({ color: '$color' });")
-		data object Unset : HighlightColor(action2 = "editor.commands.unsetHighlight();")
-		data object ExtendSelection : Link(action2 = "editor.commands.extendMarkRange('highlight')")
+	sealed class HighlightColor(override val action: String) : KitKatAction(action = action) {
+		data class Set(val color: String) : HighlightColor(action = "editor.commands.setHighlight({ color: '$color' });")
+		data object Unset : HighlightColor(action = "editor.commands.unsetHighlight();")
+		data object ExtendSelection : Link(action = "editor.commands.extendMarkRange('highlight')")
 	}
 
-	sealed class Edit(action2: String) : KitKatAction(action = action2) {
-		data object Enable : Edit(action2 = "editor.enable();")
-		data object Disable : Edit(action2 = "editor.disable();")
-		data class SetTitle(val title: String?) : Edit(action2 = "editor.setTitle('${title ?: ""}');")
-		data class SetContent(val content: String?) : Edit(action2 = "editor.setContent(${content?.let { JSONObject().apply { put("content", it) }.toString() } ?: DEFAULT_CONTENT});") {
+	sealed class Edit(override val action: String) : KitKatAction(action = action) {
+		data object Enable : Edit(action = "editor.enable();")
+		data object Disable : Edit(action = "editor.disable();")
+		data class SetTitle(val title: String? = null) : Edit(action = "editor.setTitle('${title ?: ""}');")
+		sealed class SetContent(override val action: String) : Edit(action = action) {
+			data class Html(val content: String?) : SetContent(action = "editor.setContent(${content?.let { JSONObject().apply { put("content", it) }.toString() } ?: DEFAULT_CONTENT});")
+			data class Json(val content: String?) : SetContent(action = "editor.setContent(${content ?: DEFAULT_CONTENT});")
 			companion object {
 				const val DEFAULT_CONTENT = ""
+				fun auto(content: String?) = if (content?.startsWith("{") == true) Json(content = content) else Html(content = content)
 			}
 		}
 	}

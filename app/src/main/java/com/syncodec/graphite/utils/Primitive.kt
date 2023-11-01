@@ -59,6 +59,13 @@ fun <T> MutableCollection<T>.xor(element: T) {
 	if (element in this) remove(element) else add(element)
 }
 
+fun <K, V> Map<out K?, V?>.filterNotNull(): Map<K, V> = this.mapNotNull {
+	it.key?.let { key ->
+		it.value?.let { value ->
+			key to value
+		}
+	}
+}.toMap()
 
 @Deprecated("Remove in next version")
 fun String.encrypt(key : String = "cJj1w1^x00#r!37#tM@46tM1q1d*&Cm") : String? {
@@ -140,13 +147,6 @@ fun ByteArray.dbxHash() : ByteArray {
 }
 
 fun ByteArray.dbxHashString() : String = dbxHash().joinToString("") { java.lang.String.format("%02x", it) }
-
-fun String.sha256(): String {
-	val bytes = this.encodeToByteArray()
-	val md = MessageDigest.getInstance("SHA-256")
-	val digest = md.digest(bytes)
-	return digest.fold("") { str, it -> str + "%02x".format(it) }
-}
 
 inline fun <reified T : Enum<T>> enumValueOf(name : String?, defaultValue : T) : T {
 	return try {

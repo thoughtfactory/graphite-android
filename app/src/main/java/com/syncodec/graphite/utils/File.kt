@@ -14,6 +14,7 @@ import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
@@ -176,7 +177,7 @@ fun Collection<File>.share(context: Context) {
 			context.startActivity(this)
 		}
 	} catch (e: Exception) {
-//		e.printStackTrace()
+		if (BuildConfig.DEBUG) e.printStackTrace()
 		Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
 	}
 }

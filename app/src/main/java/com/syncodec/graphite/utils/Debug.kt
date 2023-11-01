@@ -1,9 +1,7 @@
 package com.syncodec.graphite.utils
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.NoteObjectLite
-import io.realm.kotlin.types.RealmUUID
+import com.syncodec.graphite.di.model.local.NoteObjectLite
 import java.time.Instant
 
 

@@ -1,6 +1,6 @@
 package com.syncodec.graphite
 
-import com.syncodec.graphite.di.model.BucketObject
+import com.syncodec.graphite.di.model.local.BucketObject
 import org.json.JSONObject
 import org.junit.Test
 import java.io.File

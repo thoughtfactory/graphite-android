@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,9 +45,9 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.AttachmentContainer
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView

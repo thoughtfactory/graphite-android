@@ -12,7 +12,6 @@ import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.syncodec.graphite.BuildConfig
-import com.syncodec.graphite.di.model.BucketItemObject
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.serialization.SerialName
 import okhttp3.OkHttpClient

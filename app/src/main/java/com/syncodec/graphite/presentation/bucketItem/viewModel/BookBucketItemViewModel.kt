@@ -3,9 +3,9 @@ package com.syncodec.graphite.presentation.bucketItem.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
@@ -47,7 +47,7 @@ class BookBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 			combine(_repository, id) { repository1, id1 -> Pair(repository1, id1) }.collect { (repository1, bucketItemId) ->
 				bucketItemId?.let {
 					this.launch {
-						repository1?.getBucketItemAsFlow(id = bucketItemId)?.collect {
+						repository1?.getObjectFromIdAsFlow<BucketItemObject>(id = bucketItemId)?.collect {
 							this@BookBucketItemViewModel._bucketItemObject.tryEmit(it)
 						}
 					}

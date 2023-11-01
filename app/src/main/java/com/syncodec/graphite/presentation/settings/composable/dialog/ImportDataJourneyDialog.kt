@@ -45,14 +45,14 @@ fun ImportDataJourneyDialog(
 	val viewModel: ImportDataViewModel = koinViewModel()
 
 	var isImportingDataDialogVisible by remember { mutableStateOf(false) }
-	var importProcess by remember { mutableStateOf<ImportProcess?>(null) }
+	var importProcess by remember { mutableStateOf<ImportDataViewModel.Companion.ImportProcess?>(null) }
 
 	val filePicker = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
 		if (uri == null) Toast.makeText(context, context.getText(R.string.toast_no_file_selected), Toast.LENGTH_SHORT).show()
 		else scope.launch(Dispatchers.IO) {
 			withContext(Dispatchers.Main) { onDismissRequest(); isImportingDataDialogVisible = true }
 			viewModel.importFromJourney(inputUri = uri) { totalItem, currentItem ->
-				withContext(Dispatchers.Main) { importProcess = ImportProcess(totalItem = totalItem, currentItem = currentItem) }
+				withContext(Dispatchers.Main) { importProcess = ImportDataViewModel.Companion.ImportProcess(totalItem = totalItem, currentItem = currentItem) }
 			}
 			withContext(Dispatchers.Main) { isImportingDataDialogVisible = false }
 		}
@@ -94,11 +94,4 @@ fun ImportDataJourneyDialog(
 			}
 		}
 	}
-}
-
-private data class ImportProcess(
-	val totalItem: Int,
-	val currentItem: Int,
-) {
-	fun percent() = currentItem.toFloat().div(totalItem)
 }

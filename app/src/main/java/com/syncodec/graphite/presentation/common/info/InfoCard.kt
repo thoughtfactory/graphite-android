@@ -26,21 +26,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
 
 
 @Immutable
-class InfoCardColors constructor(
-	val containerColor : Color,
-	val contentColor : Color,
+class InfoCardColors(
+	val containerColor: Color,
+	val contentColor: Color,
 ) {
-	override fun hashCode() : Int {
+	override fun hashCode(): Int {
 		var result = containerColor.hashCode()
 		result = 31 * result + contentColor.hashCode()
 		return result
 	}
 
-	override fun equals(other : Any?) : Boolean {
+	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (other !is InfoCardColors) return false
 
@@ -54,27 +54,27 @@ class InfoCardColors constructor(
 object InfoCardDefaults {
 	@Composable
 	fun infoCardColors(
-		containerColor : Color = Color(0xFF82AAE3),
-		contentColor : Color = Color.White,
-	) : InfoCardColors = InfoCardColors(
+		containerColor: Color = Color(0xFF82AAE3),
+		contentColor: Color = Color.White,
+	): InfoCardColors = InfoCardColors(
 		containerColor = containerColor,
 		contentColor = contentColor,
 	)
 
 	@Composable
 	fun warningCardColors(
-		containerColor : Color = MaterialTheme.colorScheme.errorContainer,
-		contentColor : Color = MaterialTheme.colorScheme.onErrorContainer,
-	) : InfoCardColors = InfoCardColors(
+		containerColor: Color = MaterialTheme.colorScheme.errorContainer,
+		contentColor: Color = MaterialTheme.colorScheme.onErrorContainer,
+	): InfoCardColors = InfoCardColors(
 		containerColor = containerColor,
 		contentColor = contentColor,
 	)
 
 	@Composable
 	fun errorCardColors(
-		containerColor : Color = MaterialTheme.colorScheme.error,
-		contentColor : Color = MaterialTheme.colorScheme.onError,
-	) : InfoCardColors = InfoCardColors(
+		containerColor: Color = MaterialTheme.colorScheme.error,
+		contentColor: Color = MaterialTheme.colorScheme.onError,
+	): InfoCardColors = InfoCardColors(
 		containerColor = containerColor,
 		contentColor = contentColor,
 	)
@@ -83,14 +83,14 @@ object InfoCardDefaults {
 @Preview
 @Composable
 fun InfoCard(
-	modifier : Modifier = Modifier,
-	title : String = "Info Card",
-	description : String = "This is an info card. It can be used to display information to the user.",
-	icon : Int = R.drawable.ic_info,
-	colors : InfoCardColors = InfoCardDefaults.infoCardColors(),
-	shape : Shape = MaterialTheme.shapes.medium,
-	buttonText : String = "Learn more",
-	onClickButton : (() -> Unit)? = null,
+	modifier: Modifier = Modifier,
+	title: String = "Info Card",
+	description: String = "This is an info card. It can be used to display information to the user.",
+	icon: Int = R.drawable.ic_info,
+	colors: InfoCardColors = InfoCardDefaults.infoCardColors(),
+	shape: Shape = MaterialTheme.shapes.medium,
+	buttonText: String = "Learn more",
+	onClickButton: (() -> Unit)? = null,
 ) {
 	Card(
 		shape = shape,
@@ -114,7 +114,7 @@ fun InfoCard(
 				Icon(
 					painter = painterResource(id = icon),
 					contentDescription = title,
-					modifier = Modifier.requiredSize(ICON_BUTTON_SIZE)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 				Spacer(modifier = Modifier.width(12.dp))
 				Text(
@@ -146,4 +146,27 @@ fun InfoCard(
 			}
 		}
 	}
+}
+
+sealed class InfoCardType {
+	data class Normal(
+		val modifier: Modifier = Modifier,
+		val title: String,
+		val description: String,
+		val onClick: (() -> Unit)? = null,
+	) : InfoCardType()
+
+	data class Warning(
+		val modifier: Modifier = Modifier,
+		val title: String,
+		val description: String,
+		val onClick: (() -> Unit)? = null,
+	) : InfoCardType()
+
+	data class Error(
+		val modifier: Modifier = Modifier,
+		val title: String,
+		val description: String,
+		val onClick: (() -> Unit)? = null,
+	) : InfoCardType()
 }

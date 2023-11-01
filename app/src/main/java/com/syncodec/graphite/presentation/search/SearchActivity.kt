@@ -33,19 +33,24 @@ class SearchActivity : ComponentActivity() {
 		setContent {
 			BaseComposable {
 
+				val currentChapter by viewModel.filterChapterObject.collectAsState()
 				val tagList by viewModel.tagList.collectAsState()
-
 				val filteredNoteList by viewModel.filteredNoteList.collectAsState(initial = setOf())
 				val currentFilterList by viewModel.noteFilterList.collectAsState()
 
 				BackHandler(enabled = currentFilterList.isNotEmpty()) { viewModel.removeAllFilter() }
 
 				SearchScreen(
+					currentChapter = currentChapter,
 					tagList = tagList.toList(),
-					filteredNoteList = filteredNoteList.toList(),
+					noteList = filteredNoteList.toList(),
 					currentFilterList = currentFilterList,
-					onAddFilter = { viewModel.addFilter(it) },
-					onRemoveFilter = { viewModel.removeFilter(it) },
+					onExploreChapter = viewModel::loadChapter,
+					onAddFilter = viewModel::addFilter,
+					onRemoveFilter = viewModel::removeFilter,
+					onClickMultiFavourite = viewModel::toggleFavourite,
+					onClickMultiLock = viewModel::toggleLock,
+					onConfirmDelete = viewModel::delete
 				)
 			}
 		}

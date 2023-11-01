@@ -16,9 +16,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.BucketGridItem
 import com.syncodec.graphite.presentation.bucket.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.common.reorderable.SpringDragCancelledAnimation

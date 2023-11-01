@@ -47,8 +47,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.report.ReportActivity
-import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
-import com.syncodec.graphite.presentation.base.ICON_BUTTON_SIZE
+import com.syncodec.graphite.presentation.base.ICON_SIZE
+import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
@@ -68,7 +68,7 @@ fun ReportScreen(
 	var isReportTypeExpanded by remember { mutableStateOf(false) }
 	var isReportComponentExpanded by remember { mutableStateOf(false) }
 
-	GenericScaffold(
+	GenericScaffold2(
 		topBar = { GenericTopBar(title = "Feedback",) },
 	) {
 		ReportTypeMenu(
@@ -198,7 +198,7 @@ private fun ReportTypeSelector(
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onBackground,
 						modifier = Modifier
-							.requiredSize(ICON_BUTTON_SIZE)
+							.requiredSize(ICON_SIZE)
 							.padding(2.dp)
 					)
 					Spacer(modifier = Modifier.width(8.dp))
@@ -216,7 +216,7 @@ private fun ReportTypeSelector(
 				contentDescription = null,
 				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
-					.requiredSize(ICON_BUTTON_SIZE)
+					.requiredSize(ICON_SIZE)
 					.graphicsLayer { rotationZ = if (selectedReportType == null) 0f else 180f }
 			)
 		}
@@ -258,7 +258,7 @@ private fun ReportComponentSelector(
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onBackground,
 						modifier = Modifier
-							.requiredSize(ICON_BUTTON_SIZE)
+							.requiredSize(ICON_SIZE)
 							.padding(2.dp)
 					)
 					Spacer(modifier = Modifier.width(8.dp))
@@ -276,7 +276,7 @@ private fun ReportComponentSelector(
 				contentDescription = null,
 				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
-					.requiredSize(ICON_BUTTON_SIZE)
+					.requiredSize(ICON_SIZE)
 					.graphicsLayer { rotationZ = if (selectedReportComponent == null) 0f else 180f }
 			)
 		}
@@ -316,7 +316,7 @@ private fun ReportTypeMenu(
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onBackground,
 							modifier = Modifier
-								.requiredSize(ICON_BUTTON_SIZE)
+								.requiredSize(ICON_SIZE)
 								.padding(2.dp)
 						)
 					},
@@ -367,7 +367,7 @@ private fun ReportComponentMenu(
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onBackground,
 							modifier = Modifier
-								.requiredSize(ICON_BUTTON_SIZE)
+								.requiredSize(ICON_SIZE)
 								.padding(0.dp)
 						)
 					},

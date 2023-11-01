@@ -35,7 +35,7 @@ import androidx.core.graphics.ColorUtils
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
 import com.syncodec.graphite.presentation.common.button.BackButton
 import com.syncodec.graphite.presentation.common.button.FavouriteButton
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults

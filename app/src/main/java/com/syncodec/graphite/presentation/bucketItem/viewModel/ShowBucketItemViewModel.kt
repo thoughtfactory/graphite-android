@@ -3,9 +3,9 @@ package com.syncodec.graphite.presentation.bucketItem.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.repository.LockableRepo
@@ -50,7 +50,7 @@ class ShowBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(_repository, id) { repository1, id1 -> Pair(repository1, id1) }.collectLatest { (repository1, bucketItemId) ->
 				bucketItemId?.let {
-					repository1?.getBucketItemAsFlow(id = bucketItemId)?.collectLatest {
+					repository1?.getObjectFromIdAsFlow<BucketItemObject>(id = bucketItemId)?.collectLatest {
 						this@ShowBucketItemViewModel._bucketItemObject.tryEmit(it)
 						this@ShowBucketItemViewModel._showType.tryEmit((it?.getShowData() as? BucketItemObject.Companion.BucketItemData.ShowData)?.type)
 					}

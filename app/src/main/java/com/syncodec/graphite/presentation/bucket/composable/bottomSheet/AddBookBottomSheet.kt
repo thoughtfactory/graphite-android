@@ -55,8 +55,8 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.di.network.OpenLibraryApi
 import com.syncodec.graphite.di.network.OpenLibraryResponse
 import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult

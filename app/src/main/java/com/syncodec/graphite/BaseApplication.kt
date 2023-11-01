@@ -11,7 +11,7 @@ import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.di.cloud.dropbox.DBox
-import com.syncodec.graphite.di.cloud.googleDrive.GDrive
+import com.syncodec.graphite.di.cloud.dropbox.DropboxConnector
 import com.syncodec.graphite.di.locator.GeoLocator
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
@@ -35,10 +35,10 @@ import com.syncodec.graphite.presentation.settings.composable.viewModel.ClearDat
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ExportDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ImportDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.viewModel.LocalBackupViewModel
-import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
-import com.syncodec.graphite.presentation.sync.googleDrive.GoogleDriveSyncViewModel
+import com.syncodec.graphite.presentation.sync.dropbox2.DropboxViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
+import com.syncodec.graphite.utils.dataStore.SyncDataStoreInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -59,12 +59,15 @@ class BaseApplication : Application() {
 		initDirectory()
 
 		val dataStoreInstance = DataStoreInstance(context = this)
+		val syncDataStoreInstance = SyncDataStoreInstance(context = this)
 		val lockableRepo = LockableRepo(context = this.applicationContext, dataStoreInstance = dataStoreInstance)
 
 		val repositoryStatusStateFlow = lockableRepo.repositoryStatusFlow
 		val isAuthenticated = lockableRepo.isUnlocked
 
-		val geoLocator = GeoLocator(this)
+		val geoLocator = GeoLocator(context = this)
+
+		val dropboxConnector = DropboxConnector(context = this)
 
 		startKoin {
 			androidLogger()
@@ -74,10 +77,11 @@ class BaseApplication : Application() {
 					single { lockableRepo }
 					single { repositoryStatusStateFlow }
 					single { dataStoreInstance }
+					single { syncDataStoreInstance }
 					single { isAuthenticated }
 					single { geoLocator }
 					single { DBox(this@BaseApplication) }
-					single { GDrive(this@BaseApplication) }
+					single { dropboxConnector }
 
 					viewModelOf(::MainViewModel)
 					viewModelOf(::NoteScreenViewModel)
@@ -113,8 +117,8 @@ class BaseApplication : Application() {
 					viewModelOf(::AtlasViewModel)
 					viewModelOf(::CalendarViewModel)
 					viewModelOf(::SearchViewModel)
-					viewModelOf(::DropboxSyncViewModel)
-					viewModelOf(::GoogleDriveSyncViewModel)
+
+					viewModelOf(::DropboxViewModel)
 				}
 			)
 		}

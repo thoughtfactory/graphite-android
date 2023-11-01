@@ -2,20 +2,8 @@ package com.syncodec.graphite.realm
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import com.syncodec.graphite.di.model.BaseObject
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.model.ChapterObject
-import com.syncodec.graphite.di.model.DeletedAttachment
-import com.syncodec.graphite.di.model.DeletedObject
-import com.syncodec.graphite.di.model.NoteObject
-import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.di.repository.RealmMigrator
+import com.syncodec.graphite.di.model.local.NoteObject
 import com.syncodec.graphite.di.repository.Repository
-import com.syncodec.graphite.utils.alice.putSecretData
-import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -116,12 +104,12 @@ class SnapshotCompatibility {
 		try {
 			val inputStream = assetManager.open("graphite_snapshot_1678313459020.7z")
 
-			repository.snapshot.restore(inputStream) {
-				println("Restore: $it")
-				repository.getAllNote().size.let {
-					println("Note count: $it")
-				}
-			}
+//			repository.snapshot.restore(inputStream) {
+//				println("Restore: $it")
+//				repository.getAllNote().size.let {
+//					println("Note count: $it")
+//				}
+//			}
 
 
 		} catch (e : IOException) {

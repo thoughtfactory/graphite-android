@@ -79,7 +79,7 @@ class NoteActivity : ComponentActivity() {
 				val tagStateMap by viewModel.tagStateMap.collectAsState()
 
 				val storedTitle by remember { derivedStateOf { noteObject?.title } }
-				val storedContent by remember { derivedStateOf { noteObject?.content2 } }
+				val storedContent by remember { derivedStateOf { noteObject?.content } }
 
 				val kitKatFormat by kitKat.kitKatFormat.collectAsState()
 
@@ -96,7 +96,7 @@ class NoteActivity : ComponentActivity() {
 							Log.d("npr71", "recreated : setting cached title and content")
 							viewModel.getKitKatFormat().let { cachedKitKatFormat ->
 								kitKat.onKitKatActionAsync(KitKatAction.Edit.SetTitle(cachedKitKatFormat.kitKatTitle))
-								kitKat.onKitKatActionAsync(KitKatAction.Edit.SetContent(cachedKitKatFormat.kitKatContent?.drop(1)?.dropLast(1)))
+								kitKat.onKitKatActionAsync(KitKatAction.Edit.SetContent.Html(content = cachedKitKatFormat.kitKatContent?.drop(1)?.dropLast(1)))
 								Log.d("npr71", "recreated : ${cachedKitKatFormat.kitKatContent}")
 							}
 						}
@@ -130,7 +130,7 @@ class NoteActivity : ComponentActivity() {
 						delay(470)
 						if (!isRecreated) {
 							Log.d("npr71", "setting saved content : $storedContent")
-							kitKat.onKitKatActionAsync(KitKatAction.Edit.SetContent(storedContent))
+							kitKat.onKitKatActionAsync(KitKatAction.Edit.SetContent.auto(content = storedContent))
 						}
 					}
 				}

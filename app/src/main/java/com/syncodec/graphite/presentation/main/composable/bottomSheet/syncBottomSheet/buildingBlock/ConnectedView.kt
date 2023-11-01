@@ -52,62 +52,62 @@ fun ConnectedView(
 	name : String? = null,
 	spaceTotal : Long? = null,
 	spaceUsed : Long? = null,
-	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
+//	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
 	onForceSync : () -> Unit = {},
 	onSync : () -> Unit = {},
 	onClickManage : () -> Unit = {},
 ) {
-	Column(
-		modifier = Modifier
-	) {
-		Box(
-			modifier = Modifier
-				.fillMaxWidth()
-				.clip(MaterialTheme.shapes.medium)
-				.background(
-					MaterialTheme.colorScheme
-						.surfaceColorAtElevation(8.dp)
-						.copy(alpha = 0.17f)
-				)
-				.padding(16.dp)
-		) {
-			Column(
-				modifier = Modifier.fillMaxWidth()
-			) {
-				Text(
-					text = name ?: "Unknown",
-					style = MaterialTheme.typography.titleMedium,
-					color = MaterialTheme.colorScheme.onSurface,
-					fontWeight = FontWeight.Bold
-				)
-				Text(
-					text = email ?: "Unknown",
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurface
-				)
-				Spacer(modifier = Modifier.height(8.dp))
-
-				SpaceUsage(
-					spaceTotal = spaceTotal,
-					spaceUsed = spaceUsed,
-				)
-			}
-		}
-
-		Spacer(modifier = Modifier.height(6.dp))
-
-		SyncStatusCard(
-			syncStatus = syncStatus,
-		)
-
-		Spacer(modifier = Modifier.height(2.dp))
-
-		SyncButton(
-			onSync = onSync,
-			onForceSync = onForceSync,
-			onClickManage = onClickManage,
-		)
-	}
+//	Column(
+//		modifier = Modifier
+//	) {
+//		Box(
+//			modifier = Modifier
+//				.fillMaxWidth()
+//				.clip(MaterialTheme.shapes.medium)
+//				.background(
+//					MaterialTheme.colorScheme
+//						.surfaceColorAtElevation(8.dp)
+//						.copy(alpha = 0.17f)
+//				)
+//				.padding(16.dp)
+//		) {
+//			Column(
+//				modifier = Modifier.fillMaxWidth()
+//			) {
+//				Text(
+//					text = name ?: "Unknown",
+//					style = MaterialTheme.typography.titleMedium,
+//					color = MaterialTheme.colorScheme.onSurface,
+//					fontWeight = FontWeight.Bold
+//				)
+//				Text(
+//					text = email ?: "Unknown",
+//					style = MaterialTheme.typography.bodyMedium,
+//					color = MaterialTheme.colorScheme.onSurface
+//				)
+//				Spacer(modifier = Modifier.height(8.dp))
+//
+//				SpaceUsage(
+//					spaceTotal = spaceTotal,
+//					spaceUsed = spaceUsed,
+//				)
+//			}
+//		}
+//
+//		Spacer(modifier = Modifier.height(6.dp))
+//
+//		SyncStatusCard(
+//			syncStatus = syncStatus,
+//		)
+//
+//		Spacer(modifier = Modifier.height(2.dp))
+//
+//		SyncButton(
+//			onSync = onSync,
+//			onForceSync = onForceSync,
+//			onClickManage = onClickManage,
+//		)
+//	}
 }
 
 @Preview
@@ -240,44 +240,44 @@ private fun ColumnScope.SyncButton(
 	}
 }
 
-@Preview
-@Composable
-private fun SyncStatusCard(
-	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
-) {
-	when (syncStatus) {
-		is SyncInatorService.Companion.SyncStatus.Init -> SyncStatusCardMessage(message = "Initializing... Trying to connect with cloud.")
-		is SyncInatorService.Companion.SyncStatus.Idle -> SyncStatusCardMessage(message = if (syncStatus.isAutoSyncDisabled) "Idle. Auto sync is disabled." else "Idle")
-		is SyncInatorService.Companion.SyncStatus.Locked -> SyncStatusCardMessage(
-			message = "It seems that another device is syncing. Trying again in few moments...\nIf you believe no other device is syncing or problem persists, try to force sync.",
-			containerColor = MaterialTheme.colorScheme.errorContainer,
-			contentColor = MaterialTheme.colorScheme.onErrorContainer,
-		)
-
-		is SyncInatorService.Companion.SyncStatus.Connected -> SyncStatusCardMessage(message = "Connected to cloud. Syncing...")
-		is SyncInatorService.Companion.SyncStatus.Syncing -> SyncStatusSyncingCardMessage(
-			message = "Syncing...",
-			syncStatus = syncStatus,
-			containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
-			contentColor = MaterialTheme.colorScheme.onSurface,
-		)
-		is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled -> SyncStatusCardMessage(
-			message = "Auto sync is disabled. You can enable it from settings or sync manually.",
-			containerColor = Color(0x71FFD93D),
-			contentColor = MaterialTheme.colorScheme.onSurface,
-		)
-		is SyncInatorService.Companion.SyncStatus.Failed -> SyncStatusCardMessage(
-			message = "Failed. Try to sync again or force sync if problem persists.",
-			containerColor = MaterialTheme.colorScheme.errorContainer,
-			contentColor = MaterialTheme.colorScheme.onErrorContainer,
-		)
-		is SyncInatorService.Companion.SyncStatus.CredentialError -> SyncStatusCardMessage(
-			message = "It seems like your credentials are expired. Try to reconnect with cloud from settings.",
-			containerColor = MaterialTheme.colorScheme.errorContainer,
-			contentColor = MaterialTheme.colorScheme.onErrorContainer,
-		)
-	}
-}
+//@Preview
+//@Composable
+//private fun SyncStatusCard(
+//	syncStatus : SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
+//) {
+//	when (syncStatus) {
+//		is SyncInatorService.Companion.SyncStatus.Init -> SyncStatusCardMessage(message = "Initializing... Trying to connect with cloud.")
+//		is SyncInatorService.Companion.SyncStatus.Idle -> SyncStatusCardMessage(message = if (syncStatus.isAutoSyncDisabled) "Idle. Auto sync is disabled." else "Idle")
+//		is SyncInatorService.Companion.SyncStatus.Locked -> SyncStatusCardMessage(
+//			message = "It seems that another device is syncing. Trying again in few moments...\nIf you believe no other device is syncing or problem persists, try to force sync.",
+//			containerColor = MaterialTheme.colorScheme.errorContainer,
+//			contentColor = MaterialTheme.colorScheme.onErrorContainer,
+//		)
+//
+//		is SyncInatorService.Companion.SyncStatus.Connected -> SyncStatusCardMessage(message = "Connected to cloud. Syncing...")
+//		is SyncInatorService.Companion.SyncStatus.Syncing -> SyncStatusSyncingCardMessage(
+//			message = "Syncing...",
+//			syncStatus = syncStatus,
+//			containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
+//			contentColor = MaterialTheme.colorScheme.onSurface,
+//		)
+//		is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled -> SyncStatusCardMessage(
+//			message = "Auto sync is disabled. You can enable it from settings or sync manually.",
+//			containerColor = Color(0x71FFD93D),
+//			contentColor = MaterialTheme.colorScheme.onSurface,
+//		)
+//		is SyncInatorService.Companion.SyncStatus.Failed -> SyncStatusCardMessage(
+//			message = "Failed. Try to sync again or force sync if problem persists.",
+//			containerColor = MaterialTheme.colorScheme.errorContainer,
+//			contentColor = MaterialTheme.colorScheme.onErrorContainer,
+//		)
+//		is SyncInatorService.Companion.SyncStatus.CredentialError -> SyncStatusCardMessage(
+//			message = "It seems like your credentials are expired. Try to reconnect with cloud from settings.",
+//			containerColor = MaterialTheme.colorScheme.errorContainer,
+//			contentColor = MaterialTheme.colorScheme.onErrorContainer,
+//		)
+//	}
+//}
 
 @Preview
 @Composable
@@ -300,34 +300,34 @@ private fun SyncStatusCardMessage(
 	}
 }
 
-@Composable
-private fun SyncStatusSyncingCardMessage(
-	message : String = "Syncing",
-	syncStatus : SyncInatorService.Companion.SyncStatus.Syncing,
-	containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
-	contentColor : Color = MaterialTheme.colorScheme.onSurface,
-) {
-	Row(
-		verticalAlignment = Alignment.CenterVertically,
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(containerColor, MaterialTheme.shapes.medium)
-			.padding(16.dp),
-	) {
-		Text(
-			text = message,
-			style = MaterialTheme.typography.bodyMedium,
-			color = contentColor,
-		)
-		Spacer(modifier = Modifier.width(4.dp))
-		Spacer(modifier = Modifier.weight(1f))
-		CircularProgressIndicator(
-			color = MaterialTheme.colorScheme.onSurface,
-			strokeWidth = 2.dp,
-			modifier = Modifier.requiredSize(20.dp),
-		)
-	}
-}
+//@Composable
+//private fun SyncStatusSyncingCardMessage(
+//	message : String = "Syncing",
+//	syncStatus : SyncInatorService.Companion.SyncStatus.Syncing,
+//	containerColor : Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.17f),
+//	contentColor : Color = MaterialTheme.colorScheme.onSurface,
+//) {
+//	Row(
+//		verticalAlignment = Alignment.CenterVertically,
+//		modifier = Modifier
+//			.fillMaxWidth()
+//			.background(containerColor, MaterialTheme.shapes.medium)
+//			.padding(16.dp),
+//	) {
+//		Text(
+//			text = message,
+//			style = MaterialTheme.typography.bodyMedium,
+//			color = contentColor,
+//		)
+//		Spacer(modifier = Modifier.width(4.dp))
+//		Spacer(modifier = Modifier.weight(1f))
+//		CircularProgressIndicator(
+//			color = MaterialTheme.colorScheme.onSurface,
+//			strokeWidth = 2.dp,
+//			modifier = Modifier.requiredSize(20.dp),
+//		)
+//	}
+//}
 
 @Preview
 @Composable

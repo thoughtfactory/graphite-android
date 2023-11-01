@@ -23,14 +23,13 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.BucketItemScreenSkeleton
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.BucketThumbnail
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.MovieTitleView
@@ -40,7 +39,6 @@ import com.syncodec.graphite.presentation.common.button.OpenExternallyButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabDefaults
 import com.syncodec.graphite.presentation.common.tab.TabItem
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 
 @Preview

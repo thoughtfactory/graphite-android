@@ -10,7 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.presentation.bucketItem.viewModel.BookBucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.BookBucketItemScreen
 import com.syncodec.graphite.presentation.base.BaseComposable

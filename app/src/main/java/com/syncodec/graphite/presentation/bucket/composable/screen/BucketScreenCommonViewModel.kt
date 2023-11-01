@@ -3,10 +3,10 @@ package com.syncodec.graphite.presentation.bucket.composable.screen
 import androidx.annotation.WorkerThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.model.BucketItemObject
-import com.syncodec.graphite.di.model.BucketItemState
-import com.syncodec.graphite.di.model.BucketObject
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemState
+import com.syncodec.graphite.di.model.local.BucketObject
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.di.network.MovieData
 import com.syncodec.graphite.di.network.OpenGraphApi
 import com.syncodec.graphite.di.network.OpenGraphResponse
@@ -73,7 +73,7 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	private suspend fun observeBucket(repository: Repository, id: RealmUUID) {
-		repository.getBucketAsFlow(id = id).collectLatest { bucketObject1 ->
+		repository.getObjectFromIdAsFlow<BucketObject>(id = id).collectLatest { bucketObject1 ->
 			this@BucketScreenCommonViewModel._bucketObject.tryEmit(bucketObject1)
 		}
 	}

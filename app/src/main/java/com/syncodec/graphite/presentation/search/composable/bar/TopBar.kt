@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.common.button.BackButton
 import com.syncodec.graphite.presentation.common.button.SearchButton
 import com.syncodec.graphite.presentation.search.SearchViewModel
@@ -56,12 +57,14 @@ fun TopBar(
 
 	var query by remember { mutableStateOf("") }
 
-	Column {
+	Column(
+		modifier = Modifier.fillMaxWidth()
+	) {
 		SearchBar(
 			query = query,
 			onQueryChange = { query = it },
 			onSearch = {
-				onAddFilter(SearchViewModel.Companion.NoteFilter.Query(word = it))
+				if (it.isNotEmpty()) onAddFilter(SearchViewModel.Companion.NoteFilter.Query(word = it))
 				query = ""
 			},
 			active = false,
@@ -73,7 +76,7 @@ fun TopBar(
 			placeholder = { Text(text = "Search in notes") },
 			trailingIcon = {
 				SearchButton {
-					onAddFilter(SearchViewModel.Companion.NoteFilter.Query(word = query))
+					if (query.isNotEmpty()) onAddFilter(SearchViewModel.Companion.NoteFilter.Query(word = query))
 					query = ""
 				}
 			},
@@ -96,8 +99,8 @@ private fun FilterListView(
 ) {
 	AnimatedVisibility(
 		visible = currentFilterList.isNotEmpty(),
-		enter = expandVertically(tween(470)),
-		exit = shrinkVertically(tween(470)),
+		enter = expandVertically(tween(ANIMATION_DURATION_MILLIS)),
+		exit = shrinkVertically(tween(ANIMATION_DURATION_MILLIS)),
 		modifier = Modifier.fillMaxWidth()
 	) {
 		Row(

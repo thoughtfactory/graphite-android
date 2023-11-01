@@ -39,9 +39,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.ChapterObjectLite
-import com.syncodec.graphite.di.model.LatLng
-import com.syncodec.graphite.di.model.TagObject
+import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.di.model.local.LatLng
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.base.LocationContainer
 import com.syncodec.graphite.utils.LocationData

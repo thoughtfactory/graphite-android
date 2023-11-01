@@ -58,7 +58,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.BucketType
+import com.syncodec.graphite.di.model.local.BucketType
 import com.syncodec.graphite.di.network.TMDBResponse
 import com.syncodec.graphite.di.network.TMDBSearchResult
 import com.syncodec.graphite.di.network.TMDbApi

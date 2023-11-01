@@ -1,8 +1,11 @@
 package com.syncodec.graphite.presentation.common.attachment
 
 import android.net.Uri
+import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,11 +33,14 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AttachmentPreview(
+	modifier: Modifier = Modifier,
 	file: File,
 	showFileName: Boolean = false,
 	onClick: () -> Unit = {},
+	onLongClick : (() -> Unit)? = null
 ) {
 	val context = LocalContext.current
 	var previewData by remember { mutableStateOf<PreviewData>(PreviewData.Init) }
@@ -42,15 +48,16 @@ fun AttachmentPreview(
 		withContext(Dispatchers.IO) {
 			previewData = PreviewData.Loading
 			previewData = FilePreviewer.getPreview(file = file, context = context)
+			Log.d("npr71", "file : ${file.name} : ${previewData::class.simpleName}")
 		}
 	}
 
 	Box(
 		contentAlignment = Alignment.Center,
-		modifier = Modifier
+		modifier = modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.31f))
-			.clickable { onClick() }
+			.combinedClickable(onClick = onClick, onLongClick = onLongClick)
 	) {
 		previewData.let { previewData1 ->
 			when (previewData1) {

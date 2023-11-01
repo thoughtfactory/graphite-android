@@ -2,6 +2,7 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import android.net.Uri
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import com.syncodec.graphite.utils.copyInputStreamToOutputStream
 import com.syncodec.graphite.utils.getFileName
@@ -72,8 +73,8 @@ class AttachmentRepository(private val context: Context) {
 		}
 	}
 
-	fun getAttachmentFromNote(parentId: RealmUUID): List<File> {
-		return getNoteAttachmentDir(parentId).listFiles()?.toList() ?: listOf()
+	fun getAttachmentFromNote(parentId: RealmUUID): Set<File> {
+		return getNoteAttachmentDir(parentId).listFiles()?.toSet() ?: setOf()
 	}
 
 	fun haveAttachment(parentId: RealmUUID): Boolean {
@@ -105,12 +106,13 @@ class AttachmentRepository(private val context: Context) {
 		}
 	}
 
-	fun delete(attachmentList: List<File>) {
+	fun delete(attachmentList: Set<File>) {
 		CoroutineScope(Dispatchers.IO).launch {
 			attachmentList.forEach {
 				try {
 					if (it.exists()) it.delete()
 				} catch (e: Exception) {
+					if (BuildConfig.DEBUG) e.printStackTrace()
 				}
 			}
 		}

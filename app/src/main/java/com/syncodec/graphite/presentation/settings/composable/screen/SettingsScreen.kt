@@ -1,7 +1,9 @@
 package com.syncodec.graphite.presentation.settings.composable.screen
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -127,7 +129,7 @@ fun SettingsScreen(
 				SettingsButton(
 					title = stringResource(id = R.string.extensions),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_extension),
-					onClick = { },
+					onClick = { onNavigate(SettingsActivity.Companion.SettingsScreen.Extension) },
 				)
 			}
 			item {
@@ -160,7 +162,13 @@ fun SettingsScreen(
 					title = stringResource(id = R.string.privacy_policy),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_policy),
 					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_fa_open_externally),
-					onClick = { },
+					onClick = {
+						try {
+							context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://graphite.syncodec.com/policy.html")))
+						} catch (e : ActivityNotFoundException) {
+							Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+						}
+					},
 				)
 			}
 			item {
@@ -168,14 +176,20 @@ fun SettingsScreen(
 					title = stringResource(id = R.string.terms_of_service),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_file_txt),
 					trailingIcon = SettingsButtonDefaults.settingsButtonTrailingIcon(icon = R.drawable.ic_fa_open_externally),
-					onClick = { },
+					onClick = {
+						try {
+							context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://graphite.syncodec.com/terms.html")))
+						} catch (e : ActivityNotFoundException) {
+							Toast.makeText(context, "Error opening link", Toast.LENGTH_SHORT).show()
+						}
+					},
 				)
 			}
 			item {
 				SettingsButton(
 					title = stringResource(id = R.string.about),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_fa_info),
-					onClick = { },
+					onClick = { onNavigate(SettingsActivity.Companion.SettingsScreen.About) },
 				)
 			}
 			item { Spacer(modifier = Modifier.height(128.dp)) }

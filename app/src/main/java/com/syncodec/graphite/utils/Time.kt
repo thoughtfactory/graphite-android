@@ -3,6 +3,8 @@ package com.syncodec.graphite.utils
 import android.text.format.DateFormat
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
 fun Long.timeStampToPrettyDay(): String = DateFormat.format("dd MMM, yyyy EEE", this).toString()
@@ -49,3 +51,6 @@ fun getToday(): Long = timestampToCalendarDay(Instant.now().toEpochMilli())
 fun quoteTimestampToKey(timestamp: Long) = SimpleDateFormat("yyyy_MM_dd").format(timestamp)
 
 fun quoteKeyToTimestamp(key: String): Long? = SimpleDateFormat("yyyy_MM_dd").parse(key)?.time
+
+val CURRENT_ISO_TIMESTAMP: String
+	get() = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)

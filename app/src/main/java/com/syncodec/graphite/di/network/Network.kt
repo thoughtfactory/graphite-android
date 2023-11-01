@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
+
 object Network {
 
 	private val client = OkHttpClient
@@ -32,4 +33,11 @@ object Network {
 			onResponse(null)
 		}
 	}
+}
+
+sealed class NetworkRequest<out T> {
+	data object Init: NetworkRequest<Nothing>()
+	data object Loading: NetworkRequest<Nothing>()
+	data class Success<T>(val data: T): NetworkRequest<T>()
+	data class Error(val exception: Exception? = null): NetworkRequest<Nothing>()
 }
