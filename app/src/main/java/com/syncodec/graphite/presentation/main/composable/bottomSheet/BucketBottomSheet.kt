@@ -16,18 +16,14 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
@@ -48,12 +43,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.BucketType
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.button.CancelButton
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.ICON_SIZE
+import com.syncodec.graphite.presentation.common.button.CancelButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetButton
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun BucketBottomSheet(
@@ -103,6 +101,7 @@ fun BucketBottomSheet(
 				trailingIcon = { CancelButton { bucketTitleText = "" } },
 				maxLines = 1,
 				singleLine = true,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 
@@ -117,19 +116,14 @@ fun BucketBottomSheet(
 				trailingIcon = { CancelButton { bucketDescriptionText = "" } },
 				maxLines = 1,
 				singleLine = true,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 
 			Spacer(modifier = Modifier.height(8.dp))
 
-			Button(
-				shape = MaterialTheme.shapes.medium,
-				colors = ButtonDefaults.buttonColors(
-					containerColor = MaterialTheme.colorScheme.primary,
-					contentColor = MaterialTheme.colorScheme.onPrimary,
-					disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
-					disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
-				),
+			GenericBottomSheetButton(
+				text = stringResource(id = R.string.save),
 				enabled = selectedBucketType != null && bucketTitleText.isNotBlank(),
 				modifier = Modifier.fillMaxWidth(),
 				onClick = {
@@ -141,9 +135,7 @@ fun BucketBottomSheet(
 					keyboardController?.hide()
 					onDismissRequest()
 				},
-			) {
-				Text(text = stringResource(id = R.string.save))
-			}
+			)
 		}
 
 		Spacer(modifier = Modifier.height(24.dp))
@@ -216,7 +208,6 @@ private fun BucketSelector(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun BucketSelectorItem(
@@ -228,12 +219,12 @@ fun BucketSelectorItem(
 ) {
 	val containerColor by animateColorAsState(
 		targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
-		animationSpec = tween(600),
+		animationSpec = tween(ANIMATION_DURATION_MILLIS),
 		label = "containerColor_animation"
 	)
 	val contentColor by animateColorAsState(
 		targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-		animationSpec = tween(600),
+		animationSpec = tween(ANIMATION_DURATION_MILLIS),
 		label = "contentColor_animation"
 	)
 
@@ -241,9 +232,10 @@ fun BucketSelectorItem(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier.requiredWidth(160.dp)
 	) {
-		Card(
+		Surface(
 			shape = MaterialTheme.shapes.large,
-			colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
+			color = containerColor,
+			contentColor = contentColor,
 			modifier = Modifier
 				.width(160.dp)
 				.height(84.dp)
@@ -260,6 +252,7 @@ fun BucketSelectorItem(
 				Icon(
 					painter = icon,
 					contentDescription = title,
+					tint = contentColor,
 					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 

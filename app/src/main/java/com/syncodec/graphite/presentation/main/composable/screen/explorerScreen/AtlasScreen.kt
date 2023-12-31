@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen.explorerScreen
 
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,6 +32,8 @@ fun AtlasScreen(
 
 	val chapterFilteredNoteList by explorerViewModel.chapterFilteredNoteList.collectAsState()
 	val locationFilteredNoteList by explorerViewModel.locationFilteredNoteList.collectAsState()
+
+	BackHandler(enabled = isSelecting) { onUnSelectAll() }
 
 	fun onClickNote(id: RealmUUID) {
 		if (isSelecting) {

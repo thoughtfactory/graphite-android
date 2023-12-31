@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
+package com.syncodec.graphite.presentation.common.genericBottomSheet2
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +28,7 @@ fun GenericBottomSheet2(
 			onDismissRequest = onDismissRequest,
 			containerColor = MaterialTheme.colorScheme.background,
 			contentColor = MaterialTheme.colorScheme.onBackground,
-			scrimColor = Color.Black.copy(alpha = 0.71f),
+			scrimColor = Color.Black.copy(alpha = 0.42f),
 			modifier = modifier,
 			content = content,
 		)

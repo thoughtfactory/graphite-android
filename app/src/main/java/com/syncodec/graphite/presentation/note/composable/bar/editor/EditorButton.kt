@@ -18,9 +18,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -96,8 +99,14 @@ private fun ProEditorButton(
 		label = "contentColor_animation"
 	)
 
-	PlainTooltipBox(
-		tooltip = { Text(text = tooltip) }
+	TooltipBox(
+		positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+		state = rememberTooltipState(),
+		tooltip = {
+			PlainTooltip {
+				Text(text = tooltip)
+			}
+		}
 	) {
 		Box(
 			contentAlignment = Alignment.Center,
@@ -111,7 +120,6 @@ private fun ProEditorButton(
 						.makeText(context, "Join Graphite pro to unlock full potential of editor", Toast.LENGTH_SHORT)
 						.show()
 				}
-				.tooltipTrigger()
 		) {
 			Icon(
 				painter = painterResource(id = icon),
@@ -160,8 +168,14 @@ private fun StandardEditorButton(
 		label = "contentColor_animation"
 	)
 
-	PlainTooltipBox(
-		tooltip = { Text(text = tooltip) }
+	TooltipBox(
+		positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+		state = rememberTooltipState(),
+		tooltip = {
+			PlainTooltip {
+				Text(text = tooltip)
+			}
+		}
 	) {
 		Box(
 			contentAlignment = Alignment.Center,
@@ -171,7 +185,6 @@ private fun StandardEditorButton(
 				.background(containerColor, MaterialTheme.shapes.small)
 				.clip(MaterialTheme.shapes.small)
 				.clickable(onClickLabel = tooltip, role = Role.Button) { onClick() }
-				.tooltipTrigger()
 		) {
 			Icon(
 				painter = painterResource(id = icon),
@@ -187,11 +200,17 @@ private fun StandardEditorButton(
 @Preview
 @Composable
 fun DatePickerButton(
-	userTimestamp : Long = Instant.now().toEpochMilli(),
+	userTimestamp: Long = Instant.now().toEpochMilli(),
 	onClick: () -> Unit = {},
 ) {
-	PlainTooltipBox(
-		tooltip = { Text(text = stringResource(R.string.date)) }
+	TooltipBox(
+		positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+		state = rememberTooltipState(),
+		tooltip = {
+			PlainTooltip {
+				Text(text = stringResource(R.string.date))
+			}
+		}
 	) {
 		Surface(
 			color = Color.Transparent,
@@ -200,7 +219,6 @@ fun DatePickerButton(
 			modifier = Modifier
 				.requiredHeight(40.dp)
 				.padding(horizontal = 4.dp, vertical = 2.dp)
-				.tooltipTrigger()
 		) {
 			Row(
 				verticalAlignment = Alignment.CenterVertically,

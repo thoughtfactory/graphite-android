@@ -109,7 +109,8 @@ fun WhereChapterDialog2(
 		) {
 			if (childChapterList.isEmpty()) EmptyView(
 				image = R.drawable.il_empty_chapter,
-				title = "No chapters found"
+				title = "No chapters found",
+				modifier = Modifier.fillMaxSize()
 			)
 			else LazyColumn(
 				modifier = Modifier.fillMaxSize(),

@@ -23,7 +23,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.cloud.dropbox.DropboxApi
 import com.syncodec.graphite.di.snapshot.SnapshotInator
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 
 
@@ -36,7 +36,7 @@ fun RestoreSnapshotDialog(
 	snapshotMetadata: SnapshotInator.Companion.SnapshotMetadata? = null,
 	onClickRestore: (DocumentFile) -> Unit = {},
 ) {
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		icon = GenericDialogDefaults.genericDialogWarningIcon(),
 		title = stringResource(id = R.string.restore_snapshot),
@@ -77,7 +77,7 @@ fun RestoreSnapshotDialog(
 	val context = LocalContext.current
 	val uriHandler = LocalUriHandler.current
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		icon = GenericDialogDefaults.genericDialogWarningIcon(),
 		title = stringResource(id = R.string.restore_snapshot),

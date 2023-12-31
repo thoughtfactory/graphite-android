@@ -3,15 +3,14 @@ package com.syncodec.graphite.presentation.bucket.composable.screen
 import androidx.annotation.WorkerThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.di.model.local.BucketObject
 import com.syncodec.graphite.di.model.local.BucketType
-import com.syncodec.graphite.di.network.MovieData
+import com.syncodec.graphite.di.network.Network
+import com.syncodec.graphite.di.network.NetworkRequest
 import com.syncodec.graphite.di.network.OpenGraphApi
-import com.syncodec.graphite.di.network.OpenGraphResponse
-import com.syncodec.graphite.di.network.ShowType
-import com.syncodec.graphite.di.network.TvData
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.encodeBase64
@@ -27,7 +26,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
+class BucketScreenCommonViewModel(lockableRepo: LockableRepo, private val openGraphApi: OpenGraphApi, private val network: Network) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -35,7 +34,7 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	val bucketObject: StateFlow<BucketObject?> = _bucketObject
 
 	private val _bucketId: MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
-	val bucketId: StateFlow<RealmUUID?> = _bucketId
+	private val bucketId: StateFlow<RealmUUID?> = _bucketId
 
 	private val _bucketItemList: MutableStateFlow<List<BucketItemObject>> = MutableStateFlow(listOf())
 	private val _filteredBucketItemList: MutableStateFlow<List<BucketItemObject>> = MutableStateFlow(listOf())
@@ -79,7 +78,7 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	private suspend fun observeBucketItems(repository: Repository, id: RealmUUID) {
-		repository.getBucketItemListFromParentIdAsFlow(parentId = id).collectLatest {
+		repository.getBucketItemWithParentIdAsFlow(parentId = id).collectLatest {
 			this@BucketScreenCommonViewModel._bucketItemList.tryEmit(it)
 		}
 	}
@@ -94,7 +93,6 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private suspend fun filterSearchQuery() {
 		combine(_bucketItemList, _filterQueryList) { bucketItemList1, filterQueryList1 ->
-
 			if (filterQueryList1.isEmpty()) bucketItemList1
 			else when (bucketObject.value?.bucketType) {
 				BucketType.TODO.name -> bucketItemList1.filter { filterTodoBucketItem(it, filterQueryList1) }
@@ -116,46 +114,26 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	@WorkerThread
 	private fun filterBookBucketItem(bucketItemObject: BucketItemObject, filterQueryList1: Set<String>): Boolean {
 		return filterQueryList1.any { bucketItemObject.title?.contains(other = it, ignoreCase = true) ?: false } ||
-				bucketItemObject.getBookData()?.let { bookData ->
-					filterQueryList1.any { query -> bookData.title?.contains(other = query, ignoreCase = true) ?: false } ||
-							filterQueryList1.any { query -> bookData.authorList?.any { author -> author?.contains(other = query, ignoreCase = true) ?: false } ?: false } ||
-							filterQueryList1.any { query -> bookData.description?.contains(other = query, ignoreCase = true) ?: false }
+				bucketItemObject.getBucketItemData<BucketItemData.BookData.OpenLibraryBookData>()?.let { openLibraryBookData ->
+					filterQueryList1.any { query -> openLibraryBookData.title?.contains(other = query, ignoreCase = true) ?: false } ||
+							filterQueryList1.any { query -> openLibraryBookData.authorList.any { author -> author.contains(other = query, ignoreCase = true) } } ||
+							filterQueryList1.any { query -> openLibraryBookData.description?.contains(other = query, ignoreCase = true) ?: false }
 				} ?: false
 	}
 
 	@WorkerThread
 	private fun filterShowBucketItem(bucketItemObject: BucketItemObject, filterQueryList1: Set<String>): Boolean {
 		return filterQueryList1.any { bucketItemObject.title?.contains(other = it, ignoreCase = true) ?: false } ||
-				bucketItemObject.getShowData()?.let { showData ->
-					when (showData.type) {
-						ShowType.MOVIE -> filterMovieBucketItem(movieData = showData.movieData, filterQueryList1 = filterQueryList1)
-						ShowType.TV -> filterTvBucketItem(tvData = showData.tvData, filterQueryList1 = filterQueryList1)
-						else -> false
-					}
+				bucketItemObject.getBucketItemData<BucketItemData.ShowData.TMDbData>()?.let { tmdbData ->
+					filterQueryList1.any { query -> tmdbData.title?.contains(other = query, ignoreCase = true) ?: false } ||
+							filterQueryList1.any { query -> tmdbData.description?.contains(other = query, ignoreCase = true) ?: false }
 				} ?: false
 	}
 
 	@WorkerThread
-	private fun filterMovieBucketItem(movieData: MovieData?, filterQueryList1: Set<String>): Boolean {
-		return filterQueryList1.any { query -> movieData?.title?.contains(other = query, ignoreCase = true) ?: false } ||
-				filterQueryList1.any { query -> movieData?.originalTitle?.contains(other = query, ignoreCase = true) ?: false } ||
-				filterQueryList1.any { query -> movieData?.tagline?.contains(other = query, ignoreCase = true) ?: false } ||
-				filterQueryList1.any { query -> movieData?.overview?.contains(other = query, ignoreCase = true) ?: false }
-	}
-
-	@WorkerThread
-	private fun filterTvBucketItem(tvData: TvData?, filterQueryList1: Set<String>): Boolean {
-		return filterQueryList1.any { query -> tvData?.name?.contains(other = query, ignoreCase = true) ?: false } ||
-				filterQueryList1.any { query -> tvData?.originalName?.contains(other = query, ignoreCase = true) ?: false } ||
-				filterQueryList1.any { query -> tvData?.tagline?.contains(other = query, ignoreCase = true) ?: false } ||
-				filterQueryList1.any { query -> tvData?.overview?.contains(other = query, ignoreCase = true) ?: false }
-	}
-
-
-	@WorkerThread
 	private fun filterLinkBucketItem(bucketItemObject: BucketItemObject, filterQueryList1: Set<String>): Boolean {
 		return filterQueryList1.any { bucketItemObject.title?.contains(other = it, ignoreCase = true) ?: false } ||
-				bucketItemObject.getOpenGraphResult()?.let { openGraphResult ->
+				bucketItemObject.getBucketItemData<BucketItemData.LinkData>()?.let { openGraphResult ->
 					filterQueryList1.any { openGraphResult.title?.contains(other = it, ignoreCase = true) ?: false } ||
 							filterQueryList1.any { openGraphResult.description?.contains(other = it, ignoreCase = true) ?: false } ||
 							filterQueryList1.any { openGraphResult.url?.contains(other = it, ignoreCase = true) ?: false } ||
@@ -188,26 +166,26 @@ class BucketScreenCommonViewModel(lockableRepo: LockableRepo) : ViewModel() {
 		}
 	}
 
-	fun putLink(
-		url: String,
-		state: BucketItemState,
-	) {
-		viewModelScope.launch(Dispatchers.Default) {
+	fun putLink(url: String, state: BucketItemState) {
+		viewModelScope.launch(Dispatchers.IO) {
 			BucketItemObject().apply {
 				this.bucketType = BucketType.LINK.name
 				this.state = state.name
 				this.parentId = this@BucketScreenCommonViewModel.bucketObject.value?.id
 				this.key = url
-				OpenGraphApi.getData(url = url) { openGraphResponse ->
-					if (openGraphResponse is OpenGraphResponse.Success) {
-						this.title = openGraphResponse.openGraphResult.title
-						this.thumbnail = openGraphResponse.bitmap?.encodeBase64()
-						this.putOpenGraphResult(openGraphResponse.openGraphResult.copy(url = url))
 
+				openGraphApi.getLinkData(url = url) { linkDataNetworkRequest1 ->
+					if (linkDataNetworkRequest1 is NetworkRequest.Success) {
+						this.title = linkDataNetworkRequest1.data.title
+						viewModelScope.launch(Dispatchers.IO) {
+							this@apply.thumbnail = network.retrieveImage(linkDataNetworkRequest1.data.imagePath)?.encodeBase64()
+							this@apply.setBucketItemData(linkDataNetworkRequest1.data)
+							_repository.value?.putBucketItemSuspended(this@apply)
+						}
 					} else {
 						this.title = url
+						_repository.value?.putBucketItemSuspended(this)
 					}
-					_repository.value?.putBucketItemSuspended(this.clone())
 				}
 			}
 		}

@@ -2,23 +2,22 @@ package com.syncodec.graphite.di.repository
 
 import android.content.Context
 import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.di.model.local.AttachmentIdentity
 import com.syncodec.graphite.di.model.local.BaseObject
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketObject
 import com.syncodec.graphite.di.model.local.BucketObjectLite
 import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.di.model.local.ChapterObjectLite
-import com.syncodec.graphite.di.model.local.DeletedAttachment
-import com.syncodec.graphite.di.model.local.DeletedObject
 import com.syncodec.graphite.di.model.local.NoteObject
 import com.syncodec.graphite.di.model.local.NoteObjectLite
+import com.syncodec.graphite.di.model.local.ObjectIdentity
 import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.group.RealmObjectGroup
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import com.syncodec.graphite.di.snapshot.SnapshotInator
-import com.syncodec.graphite.service.syncInator.SyncInatorService
-import com.syncodec.graphite.utils.SortBy
 import com.syncodec.graphite.utils.SortOn
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 import com.syncodec.graphite.utils.filterNotNull
 import com.syncodec.graphite.utils.timeStampToPrettyDay
@@ -28,7 +27,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.SingleQueryChange
-import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -39,21 +37,23 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
 import kotlin.reflect.KProperty1
 
 
-class Repository(val realm: Realm, private val context: Context, dataStoreInstance: DataStoreInstance) {
+class Repository(val realm: Realm, context: Context, dataStoreInstance: DataStoreInstance) {
 
 	val attachmentRepository = AttachmentRepository(context = context)
 	val snapshotInator = SnapshotInator(context = context, repository = this)
 
-	private val sortByFlow: Flow<SortBy?> = dataStoreInstance.getSortBy
+	private val sortOrderFlow: Flow<SortOrder?> = dataStoreInstance.getSortOrder
 	private val sortOnFlow: Flow<SortOn?> = dataStoreInstance.getSortOn
 
 	private val _isUnlocked: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -67,9 +67,9 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 		realm.write {
 			val baseObject = this.query(BaseObject::class).first().find()
 			baseObject?.let { findLatest(it)?.defaultChapterId = id }
-				?: BaseObject().also { _baseObject ->
-					_baseObject.defaultChapterId = id
-					copyToRealm(_baseObject)
+				?: BaseObject().also { baseObject1 ->
+					baseObject1.defaultChapterId = id
+					copyToRealm(baseObject1)
 				}
 		}
 	}
@@ -104,39 +104,6 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	 */
 	fun getBaseObjectAsFlow(): Flow<BaseObject?> = realm.query(BaseObject::class).first().asFlow().map { it.obj }
 
-	fun putChapter(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true) {
-		realm.writeBlocking {
-			val storedChapterObject = getChapterFromId(chapterObject.id)
-			storedChapterObject?.let {
-				findLatest(it)?.let { latestChapterObject ->
-					latestChapterObject.modifiedTimestamp = if (modifyTimestampAuto) Instant.now().toEpochMilli() else latestChapterObject.modifiedTimestamp
-					latestChapterObject.title = chapterObject.title
-					latestChapterObject.description = chapterObject.description
-					latestChapterObject.color = chapterObject.color
-					latestChapterObject.thumbnail = chapterObject.thumbnail
-					latestChapterObject.isFavourite = chapterObject.isFavourite
-					latestChapterObject.isLocked = chapterObject.isLocked
-					latestChapterObject.parentId = chapterObject.parentId
-				} ?: copyToRealm(chapterObject)
-			} ?: copyToRealm(chapterObject)
-		}
-	}
-
-	fun putChapterSuspended(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true) {
-		CoroutineScope(Dispatchers.Default).launch { putChapter(chapterObject, modifyTimestampAuto) }
-	}
-
-	fun reorderNotebookList(idOrderList: List<RealmUUID>) {
-		realm.writeBlocking {
-			val storedBaseObject = getBaseObject()
-			storedBaseObject?.let {
-				findLatest(it)?.let { latestBaseObject ->
-					latestBaseObject.notebookIdOrderList = idOrderList.toRealmList()
-				}
-			}
-		}
-	}
-
 	/**
 	 * Get all chapters as a flow of list
 	 * @author pushpull
@@ -144,27 +111,31 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	 */
 	fun getAllChapterAsFlow(): Flow<List<ChapterObject>> = realm.query(ChapterObject::class).asFlow().map { it.list.map { it } }
 
-	/**
-	 * Get chapter from its id
-	 * @author pushpull
-	 * @since 2.0.0
-	 * @param id [RealmUUID] of the chapter. If null, no exceptions will be thrown but result will also be null.
-	 * @return ChapterObject with the given id. If no chapter with the given id exists, null will be returned.
-	 */
-	fun getChapterFromId(id: RealmUUID?): ChapterObject? = realm.query(ChapterObject::class, "id == $0 ", id).first().find()
+	inline fun <reified T : TypedRealmObject> getAllObjectOfType(includeLocked: Boolean): List<T> =
+		if (includeLocked) realm.query<T>().find().map { it }
+		else realm.query<T>("isLocked == $0", false).find().map { it }
 
-	inline fun <reified T : TypedRealmObject> getAllObjectOfType(includeLocked: Boolean): List<T> = if (includeLocked) realm.query<T>().find().map { it } else realm.query<T>("isLocked == $0", false).find().map { it }
+	inline fun <reified T : TypedRealmObject> getAllObjectOfTypeAsFlow(includeLocked: Boolean): Flow<List<T>> =
+		if (includeLocked) realm.query<T>().asFlow().extractList()
+		else realm.query<T>("isLocked == $0", false).asFlow().extractList()
 
 	inline fun <reified T : TypedRealmObject> getObjectFromId(id: RealmUUID?): T? = realm.query<T>("id == $0 ", id).first().find()
 
-	inline fun <reified T : TypedRealmObject> getObjectFromId(idList: List<RealmUUID>, includeLocked: Boolean): List<T> = if (includeLocked) realm.query<T>("id IN $0 ", idList).find() else realm.query<T>("id IN $0 AND isLocked == $1", idList, false).find()
+	inline fun <reified T : TypedRealmObject> getObjectFromId(idList: List<RealmUUID>, includeLocked: Boolean): List<T> =
+		if (includeLocked) realm.query<T>("id IN $0 ", idList).find().map { it }
+		else realm.query<T>("id IN $0 AND isLocked == $1", idList, false).find().map { it }
 
 	inline fun <reified T : TypedRealmObject> getObjectFromIdAsFlow(id: RealmUUID?): Flow<T?> = realm.query<T>("id == $0 ", id).first().asFlow().extractObject()
+
+	inline fun <reified T : TypedRealmObject> getObjectWithParentId(parentId: RealmUUID?, includeLocked: Boolean) =
+		if (includeLocked) realm.query<T>("parentId == $0 ", parentId).find().map { it }
+		else realm.query<T>("parentId == $0 AND isLocked == $1", parentId, false).find().map { it }
+
+	inline fun <reified T : TypedRealmObject> getObjectWithParentIdAsFlow(parentId: RealmUUID?) = realm.query<T>("parentId == $0 ", parentId).asFlow().extractList()
 
 	suspend inline fun <reified T : TypedRealmObject> setObjectFromId(id: RealmUUID?, crossinline write: T.() -> Unit) = realm.write {
 		query(T::class, "id == $0 ", id).first().find()?.write()
 	}
-
 
 	inline fun <reified T : TypedRealmObject> setObjectFromIdSuspended(id: RealmUUID?, crossinline insert: MutableRealm.() -> Unit = {}, crossinline update: T.() -> Unit) = CoroutineScope(Dispatchers.Default).launch {
 		realm.write {
@@ -180,74 +151,143 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 		}
 	}
 
-	inline fun <reified T : TypedRealmObject> getDeletedObjectOfType() = getBaseObject()?.deletedObjectMap?.filter { it.value?.objectType == T::class.simpleName }?.mapKeys {
-		try {
-			RealmUUID.from(it.key)
-		} catch (e: Exception) {
-			if (BuildConfig.DEBUG) e.printStackTrace()
-			null
-		}
-	}?.filterNotNull() ?: mapOf()
+	inline fun <reified T : TypedRealmObject> getDeletedObjectOfType() = getBaseObject()
+		?.deletedObjectSet
+		?.filter { it.objectType == T::class.simpleName }
+		?.associate { it.id to it.toObjectMetadata() }
+		?.filterNotNull() ?: mapOf()
+
+
+	@OptIn(ExperimentalCoroutinesApi::class)
+	fun <T : BaseRealmObject> Flow<ResultsChange<T>>.extractList(): Flow<List<T>> = this.mapLatest { it.list.toList() }
+
+	fun <T : BaseRealmObject> Flow<SingleQueryChange<T>>.extractObject(): Flow<T?> = this.map { it.obj }
+
+	private fun <T : BaseRealmObject, R> Flow<List<T>>.toLite(converter: T.() -> R): Flow<List<R>> = this.map { it.map(converter) }
 
 	/**
-	 * Get list of [ChapterObject] with [parentId] as flow. If [parentId] is null, Notebooks are flowed.
+	 * Filters locked objects from list of objects. Uses [isUnlocked] internally
 	 * @author pushpull
-	 * @since 2.0.0
+	 * @since 3.0.0
+	 * @param isLockedGetter Getter of locked property
 	 */
-	fun getChapterWithParentIdAsFlow(parentId: RealmUUID?): Flow<List<ChapterObject>> = realm.query(ChapterObject::class, "parentId = $0", parentId)
-		.asFlow()
-		.extractList()
-		.filterLocked(isLockedGetter = ChapterObject::isLocked)
-		.applySortOnBy(
-			idGetter = ChapterObject::id,
-			titleGetter = ChapterObject::title,
-			timestampGetter = ChapterObject::createdTimestamp,
-			modifiedTimestampGetter = ChapterObject::modifiedTimestamp,
-			customOrderFlow = getNotebookOrderAsFlow(),
-		)
-
-	fun getNotebookAsFlow(): Flow<List<ChapterObject>> = realm.query(ChapterObject::class, "parentId = $0", null)
-		.asFlow()
-		.extractList()
-		.filterLocked(isLockedGetter = ChapterObject::isLocked)
-		.applySortOnBy(
-			idGetter = ChapterObject::id,
-			titleGetter = ChapterObject::title,
-			timestampGetter = ChapterObject::createdTimestamp,
-			modifiedTimestampGetter = ChapterObject::modifiedTimestamp,
-			customOrderFlow = getNotebookOrderAsFlow(),
-		)
-
-	private fun getNotebookOrderAsFlow(): Flow<List<RealmUUID>> = getBaseObjectAsFlow().map { it?.notebookIdOrderList ?: listOf() }
+	private fun <T> Flow<List<T>>.filterLocked(isLockedGetter: KProperty1<T, Boolean>): Flow<List<T>> = this.combine(isUnlocked) { objectList, isUnlocked1 -> if (isUnlocked1) objectList else objectList.filter { !isLockedGetter.get(it) } }
 
 	/**
+	 * Groups the list of objects according to [SortOn]
+	 * @param titleGetter Getter of title property
+	 * @param timestampGetter Getter of timestamp property
+	 * @param modifiedTimestampGetter Getter of modifiedTimestamp property
+	 * @return Flow of list of [RealmObjectGroup] of [T]
+	 * @see [applyGroupSortOnBy] for group list
 	 * @author pushpull
-	 * @since 2.0.0
-	 * @param parentChapterId Id of the parent chapter. Null if the chapter is a notebook.
-	 * @return Pair of the chapter and the child chapters list.
+	 * @since 3.0.0
 	 */
-	fun getChapterWithParentId(parentChapterId: RealmUUID?): RealmResults<ChapterObject> = realm.query(ChapterObject::class, "parentId == $0 ", parentChapterId).find()
-
-	/**
-	 * Get the path of the chapter within the tree.
-	 * @author pushpull
-	 * @since 2.0.0
-	 * @param id RealmUUID of the current chapter. Null if the chapter is a notebook.
-	 * @param includeEdge If true, the current chapter will be included in the path.
-	 */
-	fun getChapterPath(id: RealmUUID?, includeEdge: Boolean = false): List<ChapterObjectLite> = try {
-		val chapterObject = getChapterFromId(id)
-		val chapterObjectList = mutableListOf<ChapterObjectLite>()
-		if (includeEdge) chapterObject?.toLite()?.let { chapterObjectList.add(it) }
-		var parentChapterObject = chapterObject?.parentId?.let { it1 -> getChapterFromId(it1) }
-		while (parentChapterObject != null) {
-			chapterObjectList.add(parentChapterObject.toLite())
-			parentChapterObject = parentChapterObject.parentId?.let { it1 -> getChapterFromId(it1) }
-		}
-		chapterObjectList
-	} catch (e: Exception) {
-		listOf()
+	private fun <T> Flow<List<T>>.applyGroupOn(
+		titleGetter: KProperty1<T, String?>,
+		timestampGetter: KProperty1<T, Long>,
+		modifiedTimestampGetter: KProperty1<T, Long>,
+	): Flow<List<RealmObjectGroup<T>>> = this.combine(sortOnFlow) { objectList1, sortOn1 ->
+		objectList1.groupBy {
+			when (sortOn1) {
+				SortOn.Title -> titleGetter(it)?.firstOrNull()?.lowercase() ?: "."
+				SortOn.Timestamp -> timestampGetter(it).timeStampToPrettyDay()
+				SortOn.Modified -> modifiedTimestampGetter(it).timeStampToPrettyDay()
+				else -> timestampGetter(it).timeStampToPrettyDay()
+			}
+		}.map { RealmObjectGroup(title = it.key, objectList = it.value) }
 	}
+
+	/**
+	 * Performs sort on the list of objects. Uses [sortOnFlow] and [sortOrderFlow] internally.
+	 * @param idGetter Getter of id property
+	 * @param titleGetter Getter of title property
+	 * @param timestampGetter Getter of timestamp property
+	 * @param modifiedTimestampGetter Getter of modifiedTimestamp property
+	 * @param customOrderFlow Flow of custom order list. This is used when [SortOn.Custom] is selected. This is used to sort the list in the order of user preference, typically used for notebook and bucket item list.
+	 * @return Flow of sorted list of objects
+	 * @see [applyGroupSortOnBy] for group list
+	 * @author pushpull
+	 * @since 3.0.0
+	 */
+	private fun <T> Flow<List<T>>.applySortOnBy(
+		idGetter: KProperty1<T, RealmUUID>,
+		titleGetter: KProperty1<T, String?>,
+		timestampGetter: KProperty1<T, Long>,
+		modifiedTimestampGetter: KProperty1<T, Long>,
+		customOrderFlow: Flow<List<RealmUUID>> = MutableStateFlow(listOf())
+	): Flow<List<T>> = combine(this, sortOnFlow, sortOrderFlow, customOrderFlow) { realmObjectList1, sortOn1, sortOrder1, customOrder1 ->
+		when (sortOn1) {
+			SortOn.Title -> if (sortOrder1 == SortOrder.Ascending) realmObjectList1.sortedBy { titleGetter(it)?.firstOrNull()?.lowercase() ?: "." }
+			else realmObjectList1.sortedByDescending { titleGetter(it)?.firstOrNull()?.lowercase() ?: "." }
+
+			SortOn.Timestamp -> if (sortOrder1 == SortOrder.Ascending) realmObjectList1.sortedBy { timestampGetter(it) }
+			else realmObjectList1.sortedByDescending { timestampGetter(it) }
+
+			SortOn.Modified -> if (sortOrder1 == SortOrder.Ascending) realmObjectList1.sortedBy { modifiedTimestampGetter(it) }
+			else realmObjectList1.sortedByDescending { modifiedTimestampGetter(it) }
+
+			SortOn.Custom -> realmObjectList1.sortedBy { customOrder1.indexOf(idGetter(it)) }
+			else -> if (sortOrder1 == SortOrder.Ascending) realmObjectList1.sortedBy { titleGetter(it)?.firstOrNull()?.lowercase() ?: "." }
+			else realmObjectList1.sortedByDescending { titleGetter(it)?.firstOrNull()?.lowercase() ?: "." }
+		}
+	}
+
+	/**
+	 * Performs sort on the [RealmObjectGroupList]. Sorts [RealmObjectGroupList.groupList] first and [RealmObjectGroup.objectList] next.
+	 * @param idGetter Getter of id property
+	 * @param titleGetter Getter of title property
+	 * @param timestampGetter Getter of timestamp property
+	 * @param modifiedTimestampGetter Getter of modifiedTimestamp property
+	 * @param customOrderFlow Flow of custom order list. This is used when [SortOn.Custom] is selected. This is used to sort the list in the order of user preference, typically used for notebook and bucket item list.
+	 * @return Flow of sorted list of objects
+	 * @see [applySortOnBy] for list
+	 * @see [applyGroupOn] for group list
+	 * @author pushpull
+	 * @since 3.0.0
+	 */
+	private fun <T> Flow<RealmObjectGroupList<T>>.applyGroupSortOnBy(
+		idGetter: KProperty1<T, RealmUUID>,
+		titleGetter: KProperty1<T, String?>,
+		timestampGetter: KProperty1<T, Long>,
+		modifiedTimestampGetter: KProperty1<T, Long>,
+		customOrderFlow: Flow<List<RealmUUID>> = MutableStateFlow(listOf())
+	): Flow<RealmObjectGroupList<T>> = combine(this, sortOnFlow, sortOrderFlow, customOrderFlow) { realmObjectList1, sortOn1, sortOrder1, customOrder1 ->
+		when (sortOn1) {
+			SortOn.Title -> realmObjectList1.sortedBy(sortOrder = sortOrder1) { titleGetter(it)?.firstOrNull()?.lowercase() ?: "." }
+			SortOn.Timestamp -> realmObjectList1.sortedBy(sortOrder = sortOrder1) { timestampGetter(it) }
+			SortOn.Modified -> realmObjectList1.sortedBy(sortOrder = sortOrder1) { modifiedTimestampGetter(it) }
+			SortOn.Custom -> realmObjectList1.sortedBy(sortOrder = sortOrder1) { customOrder1.indexOf(idGetter(it)) }
+			else -> realmObjectList1.sortedBy(sortOrder = sortOrder1) { timestampGetter(it) }
+		}
+	}
+
+	private fun <T> Flow<List<RealmObjectGroup<T>>>.toGroupList(): Flow<RealmObjectGroupList<T>> = this.map {
+		RealmObjectGroupList(
+			groupList = it,
+			totalSize = it.fold(0) { acc, realmObjectGroup -> acc + realmObjectGroup.objectList.size }
+		)
+	}
+
+	fun putChapter(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true) {
+		realm.writeBlocking {
+			val storedChapterObject = getObjectFromId<ChapterObject>(id = chapterObject.id)
+			storedChapterObject?.let {
+				findLatest(it)?.let { latestChapterObject ->
+					latestChapterObject.modifiedTimestamp = if (modifyTimestampAuto) Instant.now().toEpochMilli() else latestChapterObject.modifiedTimestamp
+					latestChapterObject.title = chapterObject.title
+					latestChapterObject.description = chapterObject.description
+					latestChapterObject.color = chapterObject.color
+					latestChapterObject.thumbnail = chapterObject.thumbnail
+					latestChapterObject.isFavourite = chapterObject.isFavourite
+					latestChapterObject.isLocked = chapterObject.isLocked
+					latestChapterObject.parentId = chapterObject.parentId
+				} ?: copyToRealm(chapterObject)
+			} ?: copyToRealm(chapterObject)
+		}
+	}
+
+	fun putChapterSuspended(chapterObject: ChapterObject, modifyTimestampAuto: Boolean = true) = CoroutineScope(Dispatchers.Default).launch { putChapter(chapterObject = chapterObject, modifyTimestampAuto = modifyTimestampAuto) }
 
 	/**
 	 * Saves a note in the database or updates if already present. No need to pass the parent chapter id as it will read from [noteObject].
@@ -256,7 +296,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	 * @since 2.2.0
 	 */
 	fun putNote(noteObject: NoteObject, modifyTimestampAuto: Boolean = true) = realm.writeBlocking {
-		val storedNoteObject = getNoteFromId(noteObject.id)
+		val storedNoteObject = getObjectFromId<NoteObject>(id = noteObject.id)
 		storedNoteObject?.let {
 			findLatest(it)?.let { latestNoteObject ->
 				latestNoteObject.createdTimestamp = noteObject.createdTimestamp
@@ -279,161 +319,6 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 		putNote(noteObject, modifyTimestampAuto)
 	}
 
-	fun getNoteFromId(id: RealmUUID): NoteObject? = realm.query(NoteObject::class, "id == $0 ", id).first().find()
-
-	fun getAllNoteAsFlow(): Flow<List<NoteObject>> = realm.query(NoteObject::class)
-		.asFlow()
-		.extractList()
-		.filterLocked(isLockedGetter = NoteObject::isLocked)
-
-	fun getAllNoteLiteAsFlow2(): Flow<List<NoteObjectLite>> = realm.query(NoteObject::class)
-		.asFlow()
-		.extractList()
-		.toLite { toLite() }
-		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
-
-	@OptIn(ExperimentalCoroutinesApi::class)
-	fun getDefaultNoteLiteMapAsFlow2(parentId: RealmUUID?): Flow<RealmObjectGroupList<NoteObjectLite>> = realm.query(NoteObject::class, "parentId == $0", parentId)
-		.asFlow()
-		.extractList()
-		.toLite { toLite() }
-		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
-		.applyGroupOn(
-			titleGetter = NoteObjectLite::title,
-			timestampGetter = NoteObjectLite::userTimestamp,
-			modifiedTimestampGetter = NoteObjectLite::modifiedTimestamp,
-			customGetter = { it.userTimestamp.toString() }
-		)
-		.toGroupList()
-
-	@OptIn(ExperimentalCoroutinesApi::class)
-	private fun <T : BaseRealmObject> Flow<ResultsChange<T>>.extractList(): Flow<List<T>> = this.mapLatest { it.list.toList() }
-
-	fun <T : BaseRealmObject> Flow<SingleQueryChange<T>>.extractObject(): Flow<T?> = this.map { it.obj }
-
-	private fun <T : BaseRealmObject, R> Flow<List<T>>.toLite(converter: T.() -> R): Flow<List<R>> = this.map { it.map(converter) }
-
-	/**
-	 * Filters locked objects from list of objects. Uses [isUnlocked] internally
-	 * @author pushpull
-	 * @since 3.0.0
-	 * @param isLockedGetter Getter of locked property
-	 */
-	private fun <T> Flow<List<T>>.filterLocked(isLockedGetter: KProperty1<T, Boolean>): Flow<List<T>> = this.combine(isUnlocked) { objectList, isUnlocked1 -> if (isUnlocked1) objectList else objectList.filter { !isLockedGetter.get(it) } }
-
-	private fun <T> Flow<List<T>>.applyGroupOn(
-		titleGetter: KProperty1<T, String?>,
-		timestampGetter: KProperty1<T, Long>,
-		modifiedTimestampGetter: KProperty1<T, Long>,
-		customGetter: (T) -> String,
-	): Flow<List<RealmObjectGroup<T>>> = this.combine(sortOnFlow) { objectList1, sortOn1 ->
-		objectList1.groupBy {
-			sortOnKeySelector(
-				t = it,
-				sortOn = sortOn1,
-				titleGetter = titleGetter,
-				timestampGetter = timestampGetter,
-				modifiedTimestampGetter = modifiedTimestampGetter,
-				customGetter = customGetter,
-			)
-		}.map {
-			RealmObjectGroup(
-				title = it.key,
-				objectList = it.value
-			)
-		}
-	}
-
-	private fun <T> Flow<List<RealmObjectGroup<T>>>.toGroupList(): Flow<RealmObjectGroupList<T>> = this.map {
-		RealmObjectGroupList(
-			groupList = it,
-			totalSize = it.fold(0) { acc, realmObjectGroup -> acc + realmObjectGroup.objectList.size }
-		)
-	}
-
-	private fun <T> sortOnKeySelector(
-		t: T,
-		sortOn: SortOn?,
-		titleGetter: KProperty1<T, String?>,
-		timestampGetter: KProperty1<T, Long>,
-		modifiedTimestampGetter: KProperty1<T, Long>,
-		customGetter: (T) -> String,
-	): String = when (sortOn) {
-		SortOn.Title -> titleGetter(t)?.firstOrNull()?.lowercase() ?: "."
-		SortOn.Timestamp -> timestampGetter(t).timeStampToPrettyDay()
-		SortOn.Modified -> modifiedTimestampGetter(t).timeStampToPrettyDay()
-		SortOn.Custom -> customGetter(t)
-		else -> titleGetter(t)?.firstOrNull()?.lowercase() ?: "."
-	}
-
-	private fun <T> Flow<List<T>>.applySortOnBy(
-		idGetter: KProperty1<T, RealmUUID>,
-		titleGetter: KProperty1<T, String?>,
-		timestampGetter: KProperty1<T, Long>,
-		modifiedTimestampGetter: KProperty1<T, Long>,
-		customOrderFlow: Flow<List<RealmUUID>>? = null
-	): Flow<List<T>> = if (customOrderFlow == null) {
-		combine(this, sortOnFlow, sortByFlow) { realmObjectList1, sortOn1, sortBy1 ->
-			realmObjectList1.sortedBy { t ->
-				sortOnKeySelector(
-					t = t,
-					sortOn = sortOn1,
-					titleGetter = titleGetter,
-					timestampGetter = timestampGetter,
-					modifiedTimestampGetter = modifiedTimestampGetter,
-					customGetter = { "" }
-				)
-			}.let {
-				when (sortBy1) {
-					SortBy.Ascending -> it
-					SortBy.Descending -> it.reversed()
-					else -> it
-				}
-			}
-		}
-	} else {
-		combine(this, sortOnFlow, customOrderFlow, sortByFlow) { realmObjectList1, sortOn1, customOrder1, sortBy1 ->
-			if (sortOn1 == SortOn.Custom) {
-				realmObjectList1.sortedBy { customOrder1.indexOf(idGetter(it)) }
-			} else {
-				realmObjectList1.sortedBy { t ->
-					sortOnKeySelector(
-						t = t,
-						sortOn = sortOn1,
-						titleGetter = titleGetter,
-						timestampGetter = timestampGetter,
-						modifiedTimestampGetter = modifiedTimestampGetter,
-						customGetter = { "" }
-					)
-				}.let {
-					when (sortBy1) {
-						SortBy.Ascending -> it
-						SortBy.Descending -> it.reversed()
-						else -> it
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Get all notes with [parentId] as flow.
-	 */
-	fun getNoteWithParentIdAsFlow(parentId: RealmUUID?): Flow<List<NoteObjectLite>> = realm.query(NoteObject::class, "parentId = $0", parentId)
-		.asFlow()
-		.extractList()
-		.toLite { toLite() }
-		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
-		.applySortOnBy(
-			idGetter = NoteObjectLite::id,
-			titleGetter = NoteObjectLite::title,
-			timestampGetter = NoteObjectLite::createdTimestamp,
-			modifiedTimestampGetter = NoteObjectLite::modifiedTimestamp,
-			customOrderFlow = getNotebookOrderAsFlow(),
-		)
-
-	fun getNoteWithParentId(parentId: RealmUUID): RealmResults<NoteObject> = realm.query(NoteObject::class, "parentId = $0", parentId).find()
-
 	fun putBucket(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true) = realm.writeBlocking {
 		val storedBucketObject = getObjectFromId<BucketObject>(id = bucketObject.id)
 		storedBucketObject?.let {
@@ -451,17 +336,8 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 
 	fun putBucketSuspended(bucketObject: BucketObject, modifyTimestampAuto: Boolean = true) = CoroutineScope(Dispatchers.Default).launch { putBucket(bucketObject, modifyTimestampAuto) }
 
-	fun reorderBucketList(idOrderList: List<RealmUUID>) = realm.writeBlocking {
-		val storedBaseObject = getBaseObject()
-		storedBaseObject?.let {
-			findLatest(it)?.let { latestBaseObject ->
-				latestBaseObject.bucketIdOrderList = idOrderList.toRealmList()
-			}
-		}
-	}
-
 	fun putBucketItem(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true) = realm.writeBlocking {
-		val storedBucketItemObject = getBucketItemFromId(bucketItemObject.id)
+		val storedBucketItemObject = getObjectFromId<BucketItemObject>(id = bucketItemObject.id)
 		storedBucketItemObject?.let {
 			findLatest(it)?.let { latestBucketItemObject ->
 				latestBucketItemObject.createdTimestamp = bucketItemObject.createdTimestamp
@@ -474,25 +350,148 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 				latestBucketItemObject.isLocked = bucketItemObject.isLocked
 				latestBucketItemObject.parentId = bucketItemObject.parentId
 				latestBucketItemObject.key = bucketItemObject.key
-				latestBucketItemObject.data = bucketItemObject.data
+				latestBucketItemObject.bucketItemDataJson = bucketItemObject.bucketItemDataJson
 			} ?: copyToRealm(bucketItemObject)
 		} ?: copyToRealm(bucketItemObject)
 	}
 
-	fun putBucketItemSuspended(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true) = CoroutineScope(Dispatchers.Default).launch { putBucketItem(bucketItemObject, modifyTimestampAuto) }
+	fun putBucketItemSuspended(bucketItemObject: BucketItemObject, modifyTimestampAuto: Boolean = true) =
+		CoroutineScope(Dispatchers.Default).launch { putBucketItem(bucketItemObject = bucketItemObject, modifyTimestampAuto = modifyTimestampAuto) }
 
-	fun reorderBucketItemList(parentId: RealmUUID, idOrderList: List<RealmUUID>) = setObjectFromIdSuspended<BucketObject>(id = parentId) {
-		this.bucketItemOrderList = idOrderList.toRealmList()
+	fun putTag(tagObject: TagObject, modifyTimestampAuto: Boolean = true) = realm.writeBlocking {
+		val storedTagObject = getObjectFromId<TagObject>(id = tagObject.id)
+		storedTagObject?.let {
+			findLatest(it)?.let { latestTagObject ->
+				latestTagObject.modifiedTimestamp = if (modifyTimestampAuto) Instant.now().toEpochMilli() else latestTagObject.modifiedTimestamp
+				latestTagObject.tag = tagObject.tag
+				latestTagObject.color = tagObject.color
+			} ?: copyToRealm(tagObject)
+		} ?: copyToRealm(tagObject)
 	}
 
-	fun getAllBucketAsFlow(): Flow<List<BucketObject>> = realm.query(BucketObject::class).asFlow().map { it.list }.combine(isUnlocked) { bucketList, isAuthenticated ->
-		if (isAuthenticated) bucketList else bucketList.filter { !it.isLocked }
+	fun getAllNoteAsFlow(): Flow<List<NoteObject>> = realm.query(NoteObject::class)
+		.asFlow()
+		.extractList()
+		.filterLocked(isLockedGetter = NoteObject::isLocked)
+
+	fun getAllNoteLiteAsFlow2(): Flow<List<NoteObjectLite>> = realm.query(NoteObject::class)
+		.asFlow()
+		.extractList()
+		.toLite(NoteObject::toLite)
+		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
+
+	@OptIn(ExperimentalCoroutinesApi::class)
+	fun getDefaultNoteLiteMapAsFlow3(): Flow<RealmObjectGroupList<NoteObjectLite>> = getDefaultChapterIdAsFlow().transformLatest { defaultChapterId1 ->
+		getNoteLiteWithParentIdAsFlow(parentId = defaultChapterId1, sort = true).collectLatest { emit(it) }
 	}
+
+	fun getNotebookAsFlow(): Flow<List<ChapterObject>> = getObjectWithParentIdAsFlow<ChapterObject>(parentId = null)
+		.filterLocked(isLockedGetter = ChapterObject::isLocked)
+		.applySortOnBy(
+			idGetter = ChapterObject::id,
+			titleGetter = ChapterObject::title,
+			timestampGetter = ChapterObject::createdTimestamp,
+			modifiedTimestampGetter = ChapterObject::modifiedTimestamp,
+			customOrderFlow = getNotebookOrderAsFlow(),
+		)
+
+	/**
+	 * Order of notebook list as stored in [BaseObject.notebookIdOrderList]. This is used to sort the notebook list in the order of user preference.
+	 * @return Flow of list of [ChapterObject.id] of [ChapterObject]
+	 * @author pushpull
+	 * @since 3.0.0
+	 */
+	private fun getNotebookOrderAsFlow(): Flow<List<RealmUUID>> = getBaseObjectAsFlow().map { it?.notebookIdOrderList ?: listOf() }
+
+	/**
+	 * Order of bucket list as stored in [BaseObject.bucketIdOrderList]
+	 * @return Flow of list of [BucketObject.id] of [BucketObject]
+	 * @author pushpull
+	 * @since 3.0.0
+	 */
+	private fun getBucketOrderAsFlow(): Flow<List<RealmUUID>> = getBaseObjectAsFlow().map { it?.bucketIdOrderList ?: listOf() }
+
+	/**
+	 * Order of bucket item list as stored in [BucketObject.bucketItemOrderList]. This is used to sort the bucket item list in the order of user preference.
+	 * @param parentId [RealmUUID] of parent bucket.
+	 * @return Flow of list of [BucketItemObject.id] of [BucketItemObject]
+	 * @author pushpull
+	 * @since 3.0.0
+	 */
+	private fun getBucketItemOrderAsFlow(parentId: RealmUUID): Flow<List<RealmUUID>> = getObjectFromIdAsFlow<BucketObject>(id = parentId).map { it?.bucketItemOrderList ?: listOf() }
+
+	fun reorderNotebookList(idOrderList: List<RealmUUID>) {
+		realm.writeBlocking {
+			val storedBaseObject = getBaseObject()
+			storedBaseObject?.let {
+				findLatest(it)?.let { latestBaseObject ->
+					latestBaseObject.notebookIdOrderList = idOrderList.toRealmList()
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get the path of the chapter within the tree.
+	 * @param id RealmUUID of the current chapter. Null if the chapter is a notebook.
+	 * @param includeEdge If true, the current chapter will be included in the path.
+	 * @author pushpull
+	 * @since 2.0.0
+	 */
+	fun getChapterPath(id: RealmUUID?, includeEdge: Boolean = false): List<ChapterObjectLite> = try {
+		val chapterObject = getObjectFromId<ChapterObject>(id = id)
+		val chapterObjectList = mutableListOf<ChapterObjectLite>()
+		if (includeEdge) chapterObject?.toLite()?.let { chapterObjectList.add(it) }
+		var parentChapterObject = chapterObject?.parentId?.let { it1 -> getObjectFromId<ChapterObject>(it1) }
+		while (parentChapterObject != null) {
+			chapterObjectList.add(parentChapterObject.toLite())
+			parentChapterObject = parentChapterObject.parentId?.let { it1 -> getObjectFromId<ChapterObject>(it1) }
+		}
+		chapterObjectList
+	} catch (e: Exception) {
+		listOf()
+	}
+
+	/**
+	 * Get all notes with [parentId] as flow.
+	 * @param parentId [RealmUUID] of parent chapter. If null, all notes will be returned.
+	 * @param sort If true, notes will be sorted according to [sortOrderFlow] and [sortOnFlow] else notes will be returned in the order they are stored in the database.
+	 * @return Flow of list of [NoteObjectLite]
+	 * @author pushpull
+	 * @since 2.0.0
+	 */
+	fun getNoteLiteWithParentIdAsFlow(parentId: RealmUUID?, sort: Boolean) = getObjectWithParentIdAsFlow<NoteObject>(parentId = parentId)
+		.toLite(NoteObject::toLite)
+		.filterLocked(isLockedGetter = NoteObjectLite::isLocked)
+		.applyGroupOn(
+			titleGetter = NoteObjectLite::title,
+			timestampGetter = NoteObjectLite::userTimestamp,
+			modifiedTimestampGetter = NoteObjectLite::modifiedTimestamp,
+		)
+		.toGroupList()
+		.let {
+			if (sort) it.applyGroupSortOnBy(
+				idGetter = NoteObjectLite::id,
+				titleGetter = NoteObjectLite::title,
+				timestampGetter = NoteObjectLite::userTimestamp,
+				modifiedTimestampGetter = NoteObjectLite::modifiedTimestamp,
+			) else it
+		}
+
+	fun getBucketItemWithParentIdAsFlow(parentId: RealmUUID) = getObjectWithParentIdAsFlow<BucketItemObject>(parentId = parentId)
+		.filterLocked(isLockedGetter = BucketItemObject::isLocked)
+		.applySortOnBy(
+			idGetter = BucketItemObject::id,
+			titleGetter = BucketItemObject::title,
+			timestampGetter = BucketItemObject::createdTimestamp,
+			modifiedTimestampGetter = BucketItemObject::modifiedTimestamp,
+			customOrderFlow = getBucketItemOrderAsFlow(parentId = parentId),
+		)
 
 	fun getAllBucketLiteAsFlow(): Flow<List<BucketObjectLite>> = realm.query(BucketObject::class)
 		.asFlow()
 		.extractList()
-		.toLite { toLite() }
+		.toLite(BucketObject::toLite)
 		.filterLocked(isLockedGetter = BucketObjectLite::isLocked)
 		.mergeBucketSize()
 		.applySortOnBy(
@@ -503,75 +502,44 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 			customOrderFlow = getBucketOrderAsFlow(),
 		)
 
+	fun reorderBucketList(idOrderList: List<RealmUUID>) = realm.writeBlocking {
+		val storedBaseObject = getBaseObject()
+		storedBaseObject?.let {
+			findLatest(it)?.let { latestBaseObject ->
+				latestBaseObject.bucketIdOrderList = idOrderList.toRealmList()
+			}
+		}
+	}
+
+	fun reorderBucketItemList(parentId: RealmUUID, idOrderList: List<RealmUUID>) = setObjectFromIdSuspended<BucketObject>(id = parentId) {
+		this.bucketItemOrderList = idOrderList.toRealmList()
+	}
+
+	fun getAllBucketAsFlow(): Flow<List<BucketObject>> = realm.query(BucketObject::class).asFlow().map { it.list }.combine(isUnlocked) { bucketList, isAuthenticated ->
+		if (isAuthenticated) bucketList else bucketList.filter { !it.isLocked }
+	}
+
 	private fun Flow<List<BucketObjectLite>>.mergeBucketSize(): Flow<List<BucketObjectLite>> = this.combine(getAllBucketSizeAsFlow()) { bucketList1, bucketSizeMap1 ->
 		bucketList1.map { it.copy(bucketItemCount = bucketSizeMap1[it.id] ?: 0) }
 	}
-
-	/**
-	 * Order of bucket list as stored in [BaseObject.bucketIdOrderList]
-	 * @author pushpull
-	 * @since 3.0.0
-	 * @return Flow of list of [BucketObject.id] of [BucketObject]
-	 */
-	private fun getBucketOrderAsFlow(): Flow<List<RealmUUID>> = getBaseObjectAsFlow().map { it?.bucketIdOrderList ?: listOf() }
-
-	private fun getBucketItemOrderAsFlow(parentId: RealmUUID): Flow<List<RealmUUID>> = getObjectFromIdAsFlow<BucketObject>(id = parentId).map { it?.bucketItemOrderList ?: listOf() }
 
 	fun getAllBucketSizeAsFlow(): Flow<Map<RealmUUID?, Int>> = realm.query(BucketItemObject::class).asFlow().combine(isUnlocked) { bucketItemList1, isAuthenticated1 ->
 		if (isAuthenticated1) bucketItemList1.list else bucketItemList1.list.filter { !it.isLocked }
 	}.map { it.groupBy { it.parentId }.mapValues { it.value.size } }
 
-	/**
-	 * Returns flow of bucket item with provided parent id as flow.
-	 * @author pushpull
-	 * @since 2.2.0
-	 * @param parentId RealmUUID of the parent bucket.
-	 * @return Flow of RealmResults of BucketItemObject with provided parent id.
-	 */
-	fun getBucketItemListFromParentIdAsFlow(parentId: RealmUUID): Flow<List<BucketItemObject>> = realm
-		.query(BucketItemObject::class, "parentId == $0 ", parentId)
-		.asFlow()
-		.extractList()
-		.filterLocked(isLockedGetter = BucketItemObject::isLocked)
-		.applySortOnBy(
-			idGetter = BucketItemObject::id,
-			titleGetter = BucketItemObject::title,
-			timestampGetter = BucketItemObject::createdTimestamp,
-			modifiedTimestampGetter = BucketItemObject::modifiedTimestamp,
-			customOrderFlow = getBucketItemOrderAsFlow(parentId = parentId),
-		)
-
-
-	fun getBucketItemWithParentId(parentId: RealmUUID?): List<BucketItemObject> = realm.query(BucketItemObject::class, "parentId == $0 ", parentId).find().map { it }
-
-	fun getBucketItemFromId(id: RealmUUID): BucketItemObject? = realm.query(BucketItemObject::class, "id == $0 ", id).first().find()
-
-	fun putTag(tagObject: TagObject, modifyTimestampAuto: Boolean = true) = realm.writeBlocking {
-		val storedTagObject = getTagFromId(tagObject.id)
-		storedTagObject?.let {
-			findLatest(it)?.let { latestTagObject ->
-				latestTagObject.modifiedTimestamp = if (modifyTimestampAuto) Instant.now().toEpochMilli() else latestTagObject.modifiedTimestamp
-				latestTagObject.tag = tagObject.tag
-				latestTagObject.color = tagObject.color
-			} ?: copyToRealm(tagObject)
-		} ?: copyToRealm(tagObject)
-	}
-
-	fun getTagFromId(id: RealmUUID?): TagObject? = realm.query(TagObject::class, "id == $0", id).first().find()
-
 	fun updateTagConnections(objectId: RealmUUID, tagListToAdd: List<RealmUUID>, tagListToRemove: List<RealmUUID>) = CoroutineScope(Dispatchers.Default).launch {
 		realm.write {
 			tagListToRemove.forEach {
-				getTagFromId(it)?.let { tagObject -> findLatest(tagObject)?.objectIdList?.remove(objectId) }
+				getObjectFromId<TagObject>(id = it)?.let { tagObject -> findLatest(tagObject)?.objectIdList?.remove(objectId) }
 			}
 			tagListToAdd.forEach {
-				getTagFromId(it)?.let { tagObject -> findLatest(tagObject)?.objectIdList?.add(objectId) }
+				getObjectFromId<TagObject>(id = it)?.let { tagObject -> findLatest(tagObject)?.objectIdList?.add(objectId) }
 			}
 		}
 	}
 
 	fun deleteFromTags(objectId: RealmUUID) = CoroutineScope(Dispatchers.Default).launch {
-		getAllTag().forEach { tagObject ->
+		getAllObjectOfType<TagObject>(includeLocked = true).forEach { tagObject ->
 			if (objectId in tagObject.objectIdList) setObjectFromId<TagObject>(id = tagObject.id) {
 				this.objectIdList.remove(objectId)
 			}
@@ -579,53 +547,25 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	}
 
 	/**
-	 * Get all tags as a flow list and observe changes
-	 * @author pushpull
-	 * @since 2.0.0
+	 * Deletes attachments and adds them to [BaseObject.deletedAttachmentSet] if [keepHistory] is true
 	 */
-	fun getAllTagAsFlow(): Flow<List<TagObject>> = realm.query(TagObject::class).asFlow().map { it.list }
-
-	/**
-	 * Get all tags as a list
-	 * @author pushpull
-	 * @since 2.0.0
-	 */
-	fun getAllTag(): List<TagObject> = getAllObjectOfType<TagObject>(includeLocked = true)
-
-	fun deleteAttachment(attachmentList: Set<File>, keepHistory: Boolean = true) {
-		if (keepHistory) attachmentList
-			.map {
-				DeletedAttachment()
-					.apply {
-						it.parentFile?.name?.let { it1 -> RealmUUID.Companion.from(it1) }?.let { this.parentId = it }
-						this.fileName = it.name
-					}
-			}.let { deletedFileList ->
-				getBaseObject()?.let { realm.writeBlocking { findLatest(it)?.deletedAttachmentSet?.addAll(deletedFileList) } }
-			}
+	fun deleteAttachment(attachmentList: Collection<File>, keepHistory: Boolean = true) {
+		if (keepHistory) {
+			val deletedFileList = attachmentList
+				.mapNotNull {
+					val parentId = it.parentFile?.name?.let { it1 -> RealmUUID.from(it1) } ?: return@mapNotNull null
+					AttachmentIdentity(parentId = parentId, fileName = it.name)
+				}
+			getBaseObject()?.let { realm.writeBlocking { findLatest(it)?.deletedAttachmentSet?.addAll(deletedFileList) } }
+		}
 		attachmentRepository.delete(attachmentList)
 	}
 
-	/**
-	 * DownSync attachment to delete and preserve history(optional but recommended)
-	 *
-	 * @author pushpull
-	 * @since 2.4.0
-	 * @param id [SyncInatorService.Companion.AttachmentMetadata.Companion.AttachmentIdentity]
-	 * @param keepHistory if true, id will be added to [BaseObject.deletedAttachmentSet]
-	 */
-	fun deleteAttachment(attachmentIdentity: SyncInatorService.Companion.AttachmentMetadata.Companion.AttachmentIdentity, keepHistory: Boolean = true) {
-		if (keepHistory) attachmentIdentity
-			.let {
-				DeletedAttachment()
-					.apply {
-						this.parentId = it.parentId
-						this.fileName = it.fileName
-					}
-			}.let { deletedFile ->
-				getBaseObject()?.let { CoroutineScope(Dispatchers.Default).launch { realm?.write { findLatest(it)?.deletedAttachmentSet?.add(deletedFile) } } }
-			}
-		attachmentRepository.delete(attachmentIdentity.parentId, attachmentIdentity.fileName)
+	fun deleteAttachment(attachmentIdentity: AttachmentIdentity, keepHistory: Boolean) {
+		if (keepHistory) {
+			getBaseObject()?.let { realm.writeBlocking { findLatest(it)?.deletedAttachmentSet?.add(attachmentIdentity) } }
+		}
+		attachmentRepository.delete(attachmentIdentity)
 	}
 
 	/**
@@ -654,8 +594,8 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 			}
 		}
 		getObjectFromId<ChapterObject>(id = id)?.let {
-			delete(getChapterWithParentId(id).map { it.id }, keepHistory)
-			delete(getNoteWithParentId(id).map { it.id }, keepHistory)
+			delete(getObjectWithParentId<ChapterObject>(parentId = id, includeLocked = true).map { it.id }, keepHistory)
+			delete(getObjectWithParentId<NoteObject>(parentId = id, includeLocked = true).map { it.id }, keepHistory)
 			realm.writeBlocking {
 				if (keepHistory) updateDeleteHistory(id, ChapterObject::class.simpleName)
 				findLatest(it)?.let { delete(it) }
@@ -668,7 +608,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 			}
 		}
 		getObjectFromId<BucketObject>(id = id)?.let {
-			delete(getBucketItemWithParentId(id).map { it.id }, keepHistory)
+			delete(getObjectWithParentId<BucketItemObject>(parentId = id, includeLocked = true).map { it.id }, keepHistory)
 			realm.writeBlocking {
 				if (keepHistory) updateDeleteHistory(id, BucketObject::class.simpleName)
 				findLatest(it)?.let { delete(it) }
@@ -682,15 +622,11 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 		}
 	}
 
-	private fun MutableRealm.updateDeleteHistory(id: RealmUUID, objectType: String?) {
-		query(BaseObject::class).first().find()?.deletedObjectMap?.put(
-			key = id.toString(),
-			value = DeletedObject().apply {
-				deletedTimestamp = Instant.now().toEpochMilli()
-				this.objectType = objectType
-			}
-		)
-	}
+	private fun MutableRealm.updateDeleteHistory(id: RealmUUID, objectType: String?) = query(BaseObject::class)
+		.first()
+		.find()
+		?.deletedObjectSet
+		?.add(ObjectIdentity(id = id, deletedTimestamp = Instant.now().toEpochMilli(), objectType = objectType))
 
 	fun delete(idList: Collection<RealmUUID>, keepHistory: Boolean = true) = idList.forEach { delete(it, keepHistory) }
 
@@ -705,7 +641,7 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 	}
 
 	/**
-	 * Clears everything from realm and reinitialize realm with default values. See [initializeRealmSuspended].
+	 * Clears everything from realm and reinitialize realm with default values.
 	 * @author pushpull
 	 * @since 3.0.0
 	 * @return true if successful, false if not
@@ -743,8 +679,8 @@ class Repository(val realm: Realm, private val context: Context, dataStoreInstan
 			BucketObject::class,
 			BucketItemObject::class,
 			TagObject::class,
-			DeletedObject::class,
-			DeletedAttachment::class,
+			ObjectIdentity::class,
+			AttachmentIdentity::class,
 		)
 
 		sealed class RepositoryStatus {

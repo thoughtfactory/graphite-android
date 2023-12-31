@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook
+package com.syncodec.graphite.presentation.main.composable.buildingBlock
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState

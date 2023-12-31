@@ -41,12 +41,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.TagObject
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.dialog.ColorPickerDialog
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.getRandomColor
 import com.syncodec.graphite.utils.toHexString
@@ -82,7 +83,7 @@ fun EditTagBottomSheet(
 		GenericBottomSheetSkeleton2(
 			title = stringResource(id = R.string.edit_tag)
 		) {
-			GenericBottomSheetInfo2(
+			GenericBottomSheetInfo(
 				key = "ID",
 				value = tagObject?.id?.toString() ?: "Not saved",
 			)
@@ -96,6 +97,7 @@ fun EditTagBottomSheet(
 				trailingIcon = { CancelButton { tagText = "" } },
 				maxLines = 1,
 				singleLine = true,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 

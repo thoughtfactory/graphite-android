@@ -105,7 +105,7 @@ class SettingsActivity : ComponentActivity() {
 				NavHost(
 					navController = navController,
 					startDestination = SettingsScreen.Settings.name,
-					modifier = Modifier.background(MaterialTheme.colorScheme.background)
+					modifier = Modifier.background(MaterialTheme.colorScheme.background),
 				) {
 					composable(SettingsScreen.Settings.name) {
 						SettingsScreen(

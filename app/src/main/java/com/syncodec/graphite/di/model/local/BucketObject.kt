@@ -1,8 +1,10 @@
 package com.syncodec.graphite.di.model.local
 
 import androidx.annotation.Keep
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.cloud.dropbox.DropboxObjectMetadata
+import com.syncodec.graphite.di.model.local.ext.Syncable
+import com.syncodec.graphite.utils.toDbxHashString
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmList
@@ -30,8 +32,7 @@ val bucketTypeIconMap = mapOf(
 )
 
 @Keep
-@JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
-class BucketObject() : RealmObject {
+class BucketObject() : RealmObject, Syncable {
 
 	/**
 	 * Uniquely identifies [BucketObject] in realm
@@ -48,24 +49,6 @@ class BucketObject() : RealmObject {
 	var isLocked: Boolean = false
 
 	var bucketItemOrderList: RealmList<RealmUUID> = realmListOf()
-
-	constructor(jsonObject: JSONObject) : this() {
-		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
-		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
-		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
-		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
-		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
-		this.bucketType = jsonObject.optString("bucketType").let { if (it.isNullOrEmpty() || it == "null") BucketType.UNKNOWN.name else it }
-		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
-		this.isLocked = jsonObject.optBoolean("isLocked", false)
-		this.bucketItemOrderList = jsonObject.optJSONArray("bucketItemOrderList")?.let { jsonArray ->
-			val realmList = realmListOf<RealmUUID>()
-			for (i in 0 until jsonArray.length()) {
-				realmList.add(RealmUUID.from(jsonArray.getString(i)))
-			}
-			realmList
-		} ?: realmListOf()
-	}
 
 	fun updateModifyTimestamp() {
 		this.modifiedTimestamp = Instant.now().toEpochMilli()
@@ -94,7 +77,28 @@ class BucketObject() : RealmObject {
 		this.bucketItemOrderList = this@BucketObject.bucketItemOrderList.toRealmList()
 	}
 
-	fun toCloudSnapshot(): String {
+	constructor(byteArray: ByteArray) : this() {
+
+		val jsonObject = JSONObject(byteArray.decodeToString())
+
+		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
+		this.createdTimestamp = jsonObject.getLong("createdTimestamp")
+		this.modifiedTimestamp = jsonObject.getLong("modifiedTimestamp")
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.bucketType = jsonObject.optString("bucketType").let { if (it.isNullOrEmpty() || it == "null") BucketType.UNKNOWN.name else it }
+		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
+		this.isLocked = jsonObject.optBoolean("isLocked", false)
+		this.bucketItemOrderList = jsonObject.optJSONArray("bucketItemOrderList")?.let { jsonArray ->
+			val realmList = realmListOf<RealmUUID>()
+			for (i in 0 until jsonArray.length()) {
+				realmList.add(RealmUUID.from(jsonArray.getString(i)))
+			}
+			realmList
+		} ?: realmListOf()
+	}
+
+	override fun toCloudSnapshot(): String {
 		val jsonObject = JSONObject()
 		jsonObject.put("id", this.id.toString())
 		jsonObject.put("createdTimestamp", this.createdTimestamp)
@@ -108,6 +112,12 @@ class BucketObject() : RealmObject {
 
 		return jsonObject.toString()
 	}
+
+	override fun toObjectMetadata(): DropboxObjectMetadata = DropboxObjectMetadata(
+		modifiedTimestamp = this.modifiedTimestamp,
+		hash = this.toCloudSnapshot().toDbxHashString(),
+		isDeleted = false,
+	)
 
 	override fun hashCode(): Int {
 		var result = id.hashCode()
@@ -137,16 +147,6 @@ class BucketObject() : RealmObject {
 		if (bucketItemOrderList != other.bucketItemOrderList) return false
 
 		return true
-	}
-
-	companion object {
-		fun fromCloudSnapshot(snapshot: ByteArray): BucketObject? {
-			return try {
-				BucketObject(JSONObject(String(snapshot, Charsets.UTF_8)))
-			} catch (e: Exception) {
-				null
-			}
-		}
 	}
 }
 

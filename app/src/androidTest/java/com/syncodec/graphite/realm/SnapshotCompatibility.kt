@@ -91,7 +91,7 @@ class SnapshotCompatibility {
 	fun test_InsertNewNote() {
 		NoteObject.getRandomInstance().apply {
 			repository.putNote(this)
-			repository.getNoteFromId(id = this.id)?.let {
+			repository.getObjectFromId<NoteObject>(id = this.id)?.let {
 				Assert.assertEquals(it, this)
 			}
 		}

@@ -59,7 +59,7 @@ fun AttachmentCarousel(
 				modifier = modifier
 			) {
 				val file = fileList[it]
-				AttachmentPreview(file = file) { file.viewExternally(context = context) }
+				AttachmentPreview(file = file, onClick = { file.viewExternally(context = context) })
 			}
 			Column {
 				Spacer(modifier = Modifier.height(16.dp))

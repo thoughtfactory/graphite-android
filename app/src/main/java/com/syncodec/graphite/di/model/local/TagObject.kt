@@ -2,8 +2,11 @@ package com.syncodec.graphite.di.model.local
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.di.cloud.dropbox.DropboxObjectMetadata
+import com.syncodec.graphite.di.model.local.ext.Syncable
 import com.syncodec.graphite.utils.getRandomColor
+import com.syncodec.graphite.utils.toDbxHashString
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.RealmList
@@ -15,41 +18,19 @@ import java.time.Instant
 
 
 @Keep
-@JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
-class TagObject() : RealmObject {
-	constructor(jsonObject : JSONObject) : this() {
-		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
-		this.tag = jsonObject.optString("tag").let { if (it.isNullOrEmpty() || it == "null") this.id.toString() else it }
-		this.color = jsonObject.optInt("color").let { if (it == 0) getRandomColor().toArgb() else it }
-		this.modifiedTimestamp = jsonObject.optLong("userTimestamp", Instant.now().toEpochMilli())
-		jsonObject.optJSONArray("objectIdList")?.let { jsonArray ->
-			for (i in 0 until jsonArray.length()) {
-				try {
-					RealmUUID.from(jsonArray.optString(i)).let { realmUUID ->
-						this.objectIdList.add(realmUUID)
-					}
-				} catch (e : Exception) {
-//					e.printStackTrace()
-				}
-			}
-		}
-	}
+class TagObject() : RealmObject, Syncable {
 
 	@PrimaryKey
-	var id : RealmUUID = RealmUUID.random()
+	var id: RealmUUID = RealmUUID.random()
 
-	var tag : String = ""
-	var color : Int = getRandomColor().toArgb()
+	var tag: String = ""
+	var color: Int = getRandomColor().toArgb()
 
-	var modifiedTimestamp : Long = Instant.now().toEpochMilli()
+	var modifiedTimestamp: Long = Instant.now().toEpochMilli()
 
-	var objectIdList : RealmList<RealmUUID> = realmListOf()
+	var objectIdList: RealmList<RealmUUID> = realmListOf()
 
-	fun updateModifiedTimestamp() {
-		this.modifiedTimestamp = Instant.now().toEpochMilli()
-	}
-
-	fun toLite() : TagObjectLite {
+	fun toLite(): TagObjectLite {
 		return TagObjectLite(
 			id = id,
 			tag = tag,
@@ -57,14 +38,33 @@ class TagObject() : RealmObject {
 		)
 	}
 
-	fun clone() : TagObject = TagObject().apply {
+	fun clone(): TagObject = TagObject().apply {
 		this.id = this@TagObject.id
 		this.tag = this@TagObject.tag
 		this.color = this@TagObject.color
 		this.objectIdList = this@TagObject.objectIdList.toRealmList()
 	}
 
-	fun toCloudSnapshot() : String {
+	constructor(byteArray: ByteArray) : this() {
+
+		val jsonObject = JSONObject(byteArray.decodeToString())
+
+		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
+		this.tag = jsonObject.optString("tag").let { if (it.isNullOrEmpty() || it == "null") this.id.toString() else it }
+		this.color = jsonObject.optInt("color").let { if (it == 0) getRandomColor().toArgb() else it }
+		this.modifiedTimestamp = jsonObject.optLong("userTimestamp", Instant.now().toEpochMilli())
+		jsonObject.optJSONArray("objectIdList")?.let { jsonArray ->
+			for (i in 0 until jsonArray.length()) {
+				try {
+					RealmUUID.from(jsonArray.optString(i)).let { realmUUID -> this.objectIdList.add(realmUUID) }
+				} catch (e: Exception) {
+					if (BuildConfig.DEBUG) e.printStackTrace()
+				}
+			}
+		}
+	}
+
+	override fun toCloudSnapshot(): String {
 		val jsonObject = JSONObject()
 
 		jsonObject.put("id", id.toString())
@@ -76,7 +76,13 @@ class TagObject() : RealmObject {
 		return jsonObject.toString()
 	}
 
-	override fun hashCode() : Int {
+	override fun toObjectMetadata(): DropboxObjectMetadata = DropboxObjectMetadata(
+		modifiedTimestamp = this.modifiedTimestamp,
+		hash = this.toCloudSnapshot().toDbxHashString(),
+		isDeleted = false,
+	)
+
+	override fun hashCode(): Int {
 		var result = id.hashCode()
 		result = 31 * result + tag.hashCode()
 		result = 31 * result + color
@@ -84,7 +90,7 @@ class TagObject() : RealmObject {
 		return result
 	}
 
-	override fun equals(other : Any?) : Boolean {
+	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (other !is TagObject) return false
 
@@ -97,13 +103,6 @@ class TagObject() : RealmObject {
 	}
 
 	companion object {
-		fun fromCloudSnapshot(snapshot : ByteArray) : TagObject? {
-			return try {
-				TagObject(JSONObject(String(snapshot, Charsets.UTF_8)))
-			} catch (e : Exception) {
-				null
-			}
-		}
 		fun getRandomInstance() = TagObject().apply {
 			tag = "Tag ${Instant.now().toEpochMilli()}"
 			color = getRandomColor().toArgb()
@@ -113,7 +112,7 @@ class TagObject() : RealmObject {
 
 @Keep
 data class TagObjectLite(
-	val id : RealmUUID,
-	val tag : String,
-	val color : Int
+	val id: RealmUUID,
+	val tag: String,
+	val color: Int
 )

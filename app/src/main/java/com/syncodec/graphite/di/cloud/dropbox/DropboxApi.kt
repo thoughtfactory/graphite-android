@@ -189,7 +189,6 @@ class DropboxApi(private val context: Context, private var dbxClientV2: DbxClien
 	@WorkerThread
 	fun uploadFile(path: String, byteArray: ByteArray, modifiedTimestamp: Long = Instant.now().toEpochMilli()): UploadFileResult {
 		try {
-			Log.d("rits", "Dropboxxer.uploadFile: ${Date(modifiedTimestamp)}")
 			byteArray.inputStream().use { inputStream ->
 				val fileMetadata = dbxClientV2
 					.files()
@@ -268,7 +267,7 @@ class DropboxApi(private val context: Context, private var dbxClientV2: DbxClien
 	}
 
 	@WorkerThread
-	fun listFolder(path: String): ListFolderResult {
+	fun listFolder(path: String, withRecursive : Boolean = false): ListFolderResult {
 		val metadataList: MutableList<Metadata> = mutableListOf()
 		var cursor: String?    //  = null
 		var hasMore: Boolean   //  = false
@@ -278,7 +277,7 @@ class DropboxApi(private val context: Context, private var dbxClientV2: DbxClien
 				.files()
 				.listFolderBuilder(path)
 				.withIncludeDeleted(false)
-				.withRecursive(false)
+				.withRecursive(withRecursive)
 				.start()
 
 			cursor = listFolderResult.cursor
@@ -384,10 +383,18 @@ class DropboxApi(private val context: Context, private var dbxClientV2: DbxClien
 			)
 		}
 
-		enum class Path(val path: String) {
+		enum class DropboxPath(val path: String) {
 			Root("/sync"),
 			Lock("/sync/lock.json"),
 			Chapter("/sync/chapter"),
+			Note("/sync/note"),
+			Bucket("/sync/bucket"),
+			BucketItem("/sync/bucketItem"),
+			Tag("/sync/tag"),
+			Attachment("/sync/attachment"),
+			AttachmentMetadata("/sync/attachment/metadata.json"),
 		}
+
+		fun noteAttachmentDirPath(noteId: String) = "${DropboxPath.Attachment.path}/$noteId/"
 	}
 }

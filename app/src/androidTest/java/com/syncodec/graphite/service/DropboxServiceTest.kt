@@ -6,7 +6,7 @@ import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ServiceTestRule
-import com.syncodec.graphite.service.syncInator.DropboxSyncInatorService
+import com.syncodec.graphite.service.syncInator.DyncInator
 import com.syncodec.graphite.service.syncInator.SyncInatorService
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Assert
@@ -30,19 +30,18 @@ class DropboxServiceTest {
 	@JvmField
 	@Rule
 	val serviceTestRule : ServiceTestRule = ServiceTestRule()
-	private var service : DropboxSyncInatorService? = null
+	private var service : DyncInator? = null
 
 	@Test
 	@Throws(TimeoutException::class)
 	fun testWithBoundService() {
 		// Create the service Intent.
-		val serviceIntent = Intent(getApplicationContext(), DropboxSyncInatorService::class.java)
+		val serviceIntent = Intent(getApplicationContext(), DyncInator::class.java)
 
 		val binder : IBinder = serviceTestRule.bindService(serviceIntent)
-		service = (binder as DropboxSyncInatorService.DropboxServiceBinder).service
+		service = (binder as DyncInator.DyncInatorBinder).service
 
 		assert(service != null)
-		assert(service!!.syncStatus.value == SyncInatorService.Companion.SyncStatus.Init)
 	}
 
 	@Test

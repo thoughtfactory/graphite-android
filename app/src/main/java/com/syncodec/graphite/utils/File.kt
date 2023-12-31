@@ -1,27 +1,18 @@
 package com.syncodec.graphite.utils
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import androidx.exifinterface.media.ExifInterface
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
-import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
-import org.apache.commons.compress.archivers.sevenz.SevenZFile
-import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile
 import java.io.*
-import java.time.Instant
-import java.util.zip.ZipFile
 
 
 fun Context.getFileName(uri: Uri): String? {
@@ -136,22 +127,21 @@ fun Context.copyToCache(file: File): File {
 
 fun File.share(context: Context) {
 	try {
-		val sharingIntent = Intent(Intent.ACTION_SEND)
-
-		sharingIntent.type = mimeType() ?: "*/*"
-		sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-		FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", this).let {
-			sharingIntent.putExtra(Intent.EXTRA_STREAM, it)
-
-			Intent.createChooser(sharingIntent, "Share using").apply {
-				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-				context.startActivity(this)
-			}
+		val sendIntent = Intent(Intent.ACTION_SEND).apply {
+			val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", this@share)
+			putExtra(Intent.EXTRA_STREAM, contentUri)
+			clipData = ClipData.newUri(context.contentResolver, "Thumbnail", contentUri)
+			setDataAndType(contentUri, context.contentResolver.getType(contentUri) ?: "*/*")
+			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 		}
+
+		val viewChooser = Intent.createChooser(sendIntent, null)
+		context.startActivity(viewChooser)
+	} catch (e: ActivityNotFoundException) {
+		Toast.makeText(context, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
 	} catch (e: Exception) {
-//		e.printStackTrace()
-		Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
+		e.printStackTrace()
+		Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
 	}
 }
 
@@ -161,21 +151,22 @@ fun Collection<File>.share(context: Context) {
 		return
 	}
 	try {
-		val sharingIntent = Intent(Intent.ACTION_SEND_MULTIPLE)
-
-		sharingIntent.type = "*/*"
-
-		val uris = ArrayList<Uri>()
-		for (file in this) {
-			uris.add(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file))
-		}
-
-		sharingIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
-
-		Intent.createChooser(sharingIntent, "Share using").apply {
+		val sendIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+			val uris = ArrayList<Uri>()
+			forEach { file ->
+				val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+				uris.add(contentUri)
+			}
+			putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+			type = "*/*"
+			clipData = ClipData.newUri(context.contentResolver, "Thumbnail", uris[0])
 			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-			context.startActivity(this)
 		}
+
+		val viewChooser = Intent.createChooser(sendIntent, null).apply {
+			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+		}
+		context.startActivity(viewChooser)
 	} catch (e: Exception) {
 		if (BuildConfig.DEBUG) e.printStackTrace()
 		Toast.makeText(context, "Error sharing file", Toast.LENGTH_SHORT).show()
@@ -184,16 +175,20 @@ fun Collection<File>.share(context: Context) {
 
 fun File.viewExternally(context: Context) {
 	try {
-		Intent(Intent.ACTION_VIEW).apply {
-			setDataAndType(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", this@viewExternally), mimeType() ?: "*/*")
+		val sendIntent = Intent(Intent.ACTION_SEND).apply {
+			val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", this@viewExternally)
+			putExtra(Intent.EXTRA_STREAM, contentUri)
+			clipData = ClipData.newUri(context.contentResolver, "Thumbnail", contentUri)
+			setDataAndType(contentUri, context.contentResolver.getType(contentUri) ?: "*/*")
 			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-			context.startActivity(this)
 		}
+
+		val viewChooser = Intent.createChooser(sendIntent, null)
+		context.startActivity(viewChooser)
 	} catch (e: ActivityNotFoundException) {
 		Toast.makeText(context, "No application found to open this attachment", Toast.LENGTH_SHORT).show()
 	} catch (e: Exception) {
-//		e.printStackTrace()
+		e.printStackTrace()
 		Toast.makeText(context, "Error viewing file", Toast.LENGTH_SHORT).show()
 	}
 }

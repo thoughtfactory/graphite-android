@@ -46,26 +46,33 @@ class DropboxConnector(private val context: Context) {
 
 	/**
 	 * @return Pair of accessToken and expireAt in milliseconds
+	 * @throws com.google.firebase.functions.FirebaseFunctionsException if there is an error while refreshing token
 	 */
 	private suspend fun getAccessToken(refreshToken: String) : Pair<String, Long> {
 		val requestData = hashMapOf("refreshToken" to refreshToken)
-		val exchangeTokenResult = Firebase
-			.functions
-			.getHttpsCallable("dropboxExchangeRefreshTokenForAccessToken")
-			.call(requestData)
-			.await()
 
-		val resultData = (exchangeTokenResult.data as HashMap<*, *>)
-		when(val response = resultData["response"] as String) {
-			"Ok" -> {
-				Log.d("npr71", "DropboxConnector.refreshTokenToAccessToken: ${resultData["result"] as String}")
-				val result = JSONObject(resultData["result"] as String)
-				val expireIn = result.optLong("expires_in")
-				val accessToken = result.optString("access_token")
-				return Pair(accessToken, System.currentTimeMillis() + expireIn * 1000)
+		try {
+			val exchangeTokenResult = Firebase
+				.functions
+				.getHttpsCallable("dropboxExchangeRefreshTokenForAccessToken")
+				.call(requestData)
+				.await()
+
+			val resultData = (exchangeTokenResult.data as HashMap<*, *>)
+			when(val response = resultData["response"] as String) {
+				"Ok" -> {
+					Log.d("npr71", "DropboxConnector.refreshTokenToAccessToken: ${resultData["result"] as String}")
+					val result = JSONObject(resultData["result"] as String)
+					val expireIn = result.optLong("expires_in")
+					val accessToken = result.optString("access_token")
+					return Pair(accessToken, System.currentTimeMillis() + expireIn * 1000)
+				}
+				"Error" -> throw Exception("Error while refreshing token")
+				else -> throw Exception("Unknown response: $response")
 			}
-			"Error" -> throw Exception("Error while refreshing token")
-			else -> throw Exception("Unknown response: $response")
+		} catch (e: Exception) {
+			if (BuildConfig.DEBUG) e.printStackTrace()
+			throw e
 		}
 	}
 
@@ -80,6 +87,9 @@ class DropboxConnector(private val context: Context) {
 		}
 	}
 
+	/**
+	 * Tries to auto connect to dropbox. If not connected, returns null
+	 */
 	suspend fun connect() : DropboxApi? {
 		if (dropboxApi == null) dropboxApi = refreshConnection()
 		return dropboxApi

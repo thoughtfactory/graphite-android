@@ -48,9 +48,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.attachment.AttachmentPreview
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetButton2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.BottomSheetActionButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
 import com.syncodec.graphite.presentation.common.row.SameHeightRowGrid
@@ -105,22 +105,24 @@ fun AttachmentBottomSheet(
 			title = stringResource(R.string.attachments),
 		) {
 			SameHeightRowGrid {
-				GenericBottomSheetButton2(
+				BottomSheetActionButton(
 					icon = R.drawable.ic_fa_camera,
 					text = stringResource(id = R.string.camera),
 					contentDescription = stringResource(id = R.string.camera),
 				) {
-					photoUri = createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first
-					takePicture.launch(photoUri)
+					createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first.let { uri ->
+						photoUri = uri
+						takePicture.launch(uri)
+					}
 				}
-				GenericBottomSheetButton2(
+				BottomSheetActionButton(
 					icon = R.drawable.ic_fa_gallery,
 					text = stringResource(id = R.string.gallery),
 					contentDescription = stringResource(id = R.string.gallery),
 				) {
 					mediaPickerRequest.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
 				}
-				GenericBottomSheetButton2(
+				BottomSheetActionButton(
 					icon = R.drawable.ic_fa_new_file,
 					text = stringResource(id = R.string.file),
 					contentDescription = stringResource(id = R.string.file),

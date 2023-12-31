@@ -43,11 +43,7 @@ fun BackUpAndSyncScreen(
 					title = "Dropbox",
 					subTitle = stringResource(id = R.string.manage),
 					leadingIcon = SettingsButtonDefaults.settingsButtonLeadingIcon(icon = R.drawable.ic_logo_dropbox, color = Color.Unspecified, size = 28.dp),
-					onClick = {
-						Intent(context, DropboxActivity::class.java).apply {
-							context.startActivity(this)
-						}
-					},
+					onClick = { context.startActivity(Intent(context, DropboxActivity::class.java)) },
 				)
 			}
 			item {

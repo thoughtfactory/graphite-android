@@ -73,7 +73,7 @@ abstract class AbstractExploreViewModel(lockableRepo: LockableRepo) : ViewModel(
 //		Observe tags
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
-				repository1?.getAllTagAsFlow()?.collectLatest { tagObjectList ->
+				repository1?.getAllObjectOfTypeAsFlow<TagObject>(includeLocked = true)?.collectLatest { tagObjectList ->
 					this@AbstractExploreViewModel._tagList.tryEmit(tagObjectList)
 				}
 			}

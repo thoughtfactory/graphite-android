@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.main.composable.bar
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
@@ -15,30 +14,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.main.MainComponent
 
-
-sealed class BottomNavigationItem(val route: String, val icon: Int, val iconFilled: Int, val title: String) {
-	data object Home : BottomNavigationItem(route = "home", icon = R.drawable.ic_fa_home, iconFilled = R.drawable.ic_fa_home_solid, title = "Home")
-	data object Calendar : BottomNavigationItem(route = "calendar", icon = R.drawable.ic_fa_calendar, iconFilled = R.drawable.ic_fa_calendar_solid, title = "Calendar")
-	data object Atlas : BottomNavigationItem(route = "atlas", icon = R.drawable.ic_fa_atlas, iconFilled = R.drawable.ic_fa_atlas_solid, title = "Atlas")
-}
 
 @Composable
 fun BottomBar(
-	currentRoute: String?,
-	onNavigation: (BottomNavigationItem) -> Unit
+	currentRoute: MainComponent = MainComponent.Home,
+	onNavigation: (MainComponent) -> Unit = {},
 ) {
-	val screens = listOf(
-		BottomNavigationItem.Home,
-		BottomNavigationItem.Calendar,
-		BottomNavigationItem.Atlas,
-	)
-
+	val screens = remember {
+		listOf(
+			MainComponent.Home,
+			MainComponent.Calendar,
+			MainComponent.Atlas,
+		)
+	}
 	NavigationBar(
 		tonalElevation = 0.dp,
 		containerColor = Color.Black,
@@ -46,11 +41,13 @@ fun BottomBar(
 	) {
 		screens.forEach { screen ->
 			NavigationBarItem(
-				onClick = { onNavigation(screen) },
 				icon = {
+//					https://issuetracker.google.com/issues/316327367
+//					Color should change colors. Remove tint when fixed.
 					Icon(
-						painter = painterResource(id = if (screen.route == currentRoute) screen.iconFilled else screen.icon),
-						contentDescription = screen.title,
+						painter = painterResource(id = if (screen == currentRoute) screen.iconFilled else screen.icon),
+						contentDescription = stringResource(id = screen.title),
+						tint = if (screen == currentRoute) Color.Black else Color.White,
 						modifier = Modifier
 							.requiredSize(22.dp)
 							.padding(2.dp)
@@ -58,7 +55,7 @@ fun BottomBar(
 				},
 				label = {
 					Text(
-						text = screen.title,
+						text = stringResource(id = screen.title),
 						textAlign = TextAlign.Center,
 						style = MaterialTheme.typography.bodyMedium,
 						fontWeight = FontWeight.Bold,
@@ -73,9 +70,8 @@ fun BottomBar(
 					unselectedIconColor = Color.White,
 					unselectedTextColor = Color.White,
 				),
-				selected = currentRoute == screen.route,
-				interactionSource = remember { MutableInteractionSource() },
-				modifier = Modifier,
+				selected = currentRoute == screen,
+				onClick = { onNavigation(screen) },
 			)
 		}
 	}

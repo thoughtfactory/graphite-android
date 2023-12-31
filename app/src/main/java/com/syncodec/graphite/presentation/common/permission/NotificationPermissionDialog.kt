@@ -8,7 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat.startActivity
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 
 
@@ -19,7 +19,7 @@ fun NotificationPermissionDialog(
 ) {
 	val context = LocalContext.current
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		onDismissRequest = onDismissRequest,
 		title = stringResource(R.string.notification_permission_dialog_title),

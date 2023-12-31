@@ -28,12 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.BucketItemScreenSkeleton
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.BucketThumbnail
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.MovieTitleView
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
 import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
 import com.syncodec.graphite.presentation.common.button.OpenExternallyButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
@@ -46,6 +47,7 @@ import com.syncodec.graphite.presentation.common.tab.TabItem
 fun TvBucketItemScreen(
 	isNew: Boolean = false,
 	bucketItemObject: BucketItemObject? = null,
+	tvData: BucketItemData.ShowData.TMDbData.TMDbTvData? = null,
 	onClickSave: () -> Unit = {},
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
@@ -56,7 +58,6 @@ fun TvBucketItemScreen(
 	val context = LocalContext.current
 	val clipboardManager = LocalClipboardManager.current
 
-	val tvData by remember(bucketItemObject?.data) { derivedStateOf { BucketItemObject.Companion.BucketItemData.ShowData(jsonString = bucketItemObject?.data).tvData } }
 	val state by remember(bucketItemObject?.state) { derivedStateOf { bucketItemObject?.state } }
 
 	BucketItemScreenSkeleton(
@@ -78,7 +79,7 @@ fun TvBucketItemScreen(
 		Spacer(modifier = Modifier.height(24.dp))
 
 		MovieTitleView(
-			title = tvData?.name,
+			title = tvData?.title,
 			tagLine = tvData?.tagline,
 		)
 		Spacer(modifier = Modifier.height(8.dp))
@@ -95,32 +96,32 @@ fun TvBucketItemScreen(
 		)
 		Spacer(modifier = Modifier.height(8.dp))
 		tvData?.firstAirDate?.let {
-			GenericBottomSheetInfo2(
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.first_air_date),
 				value = it,
 				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
-		tvData?.overview?.let {
-			GenericBottomSheetInfo2(
+		tvData?.description?.let {
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.overview),
 				value = it,
 				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
 		tvData?.originalName?.let {
-			GenericBottomSheetInfo2(
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.original_title),
 				value = it,
 				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
-		GenericBottomSheetInfo2(
+		GenericBottomSheetInfo(
 			key = "${stringResource(id = R.string.season)} : ${stringResource(id = R.string.episode)}",
 			value = "${tvData?.numberOfSeasons ?: "-"} : ${tvData?.numberOfEpisodes ?: "-"}"
 		)
-		tvData?.id?.let {
-			GenericBottomSheetInfo2(
+		tvData?.key?.let {
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.tmdb_id),
 				value = it,
 				suffix = {
@@ -139,7 +140,7 @@ fun TvBucketItemScreen(
 		}
 		if (!tvData?.homepage.isNullOrEmpty()) {
 			tvData?.homepage?.let {
-				GenericBottomSheetInfo2(
+				GenericBottomSheetInfo(
 					key = stringResource(id = R.string.homepage),
 					value = it,
 					suffix = {
@@ -161,14 +162,12 @@ fun TvBucketItemScreen(
 		Row(
 			modifier = Modifier.fillMaxWidth()
 		) {
-			tvData?.genres?.filterNotNull()?.forEach { genre ->
-				genre.name?.let {
-					SuggestionChip(
-						label = { Text(text = it) },
-						onClick = { },
-					)
-					Spacer(modifier = Modifier.width(4.dp))
-				}
+			tvData?.getGenreList()?.forEach { genre ->
+				SuggestionChip(
+					label = { Text(text = genre) },
+					onClick = { },
+				)
+				Spacer(modifier = Modifier.width(4.dp))
 			}
 		}
 		Spacer(modifier = Modifier.height(12.dp))

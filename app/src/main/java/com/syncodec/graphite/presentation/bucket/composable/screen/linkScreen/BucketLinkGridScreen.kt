@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.di.model.local.BucketType
@@ -115,7 +115,7 @@ fun BucketLinkGridScreen(
 					id = bucketItemObject.id,
 					title = bucketItemObject.title,
 					thumbnail = bucketItemObject.thumbnail,
-					openGraphResult = bucketItemObject.getOpenGraphResult(),
+					linkData = bucketItemObject.getBucketItemData<BucketItemData.LinkData>(),
 					dragHandle = {
 						Box(
 							contentAlignment = Alignment.Center,
@@ -151,7 +151,7 @@ private fun LinkItem(
 	id : RealmUUID = RealmUUID.random(),
 	title: String? = null,
 	thumbnail: String? = null,
-	openGraphResult: OpenGraphResult? = null,
+	linkData: BucketItemData.LinkData? = null,
 	dragHandle: @Composable () -> Unit = {},
 	isLocked: Boolean = false,
 	isFavourite: Boolean = false,
@@ -309,7 +309,7 @@ private fun LinkItem(
 					maxLines = if (isTablet) 3 else 2,
 					modifier = Modifier.fillMaxWidth()
 				)
-				openGraphResult?.url?.let {
+				linkData?.url?.let {
 					Text(
 						text = it,
 						style = MaterialTheme.typography.bodySmall,
@@ -319,7 +319,7 @@ private fun LinkItem(
 					)
 				}
 
-				openGraphResult?.siteName?.let {
+				linkData?.siteName?.let {
 					Text(
 						text = it,
 						style = MaterialTheme.typography.bodySmall,
@@ -330,7 +330,7 @@ private fun LinkItem(
 				}
 
 
-				openGraphResult?.description?.let {
+				linkData?.description?.let {
 					Text(
 						text = it,
 						style = MaterialTheme.typography.bodySmall,

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
 import com.syncodec.graphite.presentation.common.button.VaultButton
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ExportDataViewModel
@@ -78,7 +79,7 @@ fun ExportDataDialog(
 		includeLockedItems = false
 	}
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		icon = GenericDialogDefaults.genericDialogIcon(icon = R.drawable.ic_fa_export),
 		title = stringResource(id = R.string.export_data),

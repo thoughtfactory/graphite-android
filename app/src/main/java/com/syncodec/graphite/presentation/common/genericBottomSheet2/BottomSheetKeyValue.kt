@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
+package com.syncodec.graphite.presentation.common.genericBottomSheet2
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -34,13 +34,13 @@ import androidx.core.graphics.ColorUtils
 @OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
-fun GenericBottomSheetInfo2(
+fun GenericBottomSheetInfo(
 	modifier: Modifier = Modifier,
 	key: String = "Key",
 	value: String = "Value",
 	icon: Int? = null,
-	suffix : (@Composable () -> Unit)? = null,
-	colors: GenericBottomSheetInfo2Colors = GenericBottomSheetInfo2Defaults.infoColors(),
+	suffix: (@Composable () -> Unit)? = null,
+	colors: GenericBottomSheetInfo2Colors = GenericBottomSheetInfoDefaults.infoColors(),
 	enabled: Boolean = true,
 	onClick: (() -> Unit)? = null,
 	onLongClick: (() -> Unit)? = null
@@ -108,34 +108,9 @@ data class GenericBottomSheetInfo2Colors(
 
 	@Composable
 	internal fun iconColor(enabled: Boolean): State<Color?> = rememberUpdatedState(if (enabled) iconColor else disabledIconColor)
-
-	override fun hashCode(): Int {
-		var result = containerColor.hashCode()
-		result = 31 * result + contentColor.hashCode()
-		result = 31 * result + (iconColor?.hashCode() ?: 0)
-		result = 31 * result + disabledContainerColor.hashCode()
-		result = 31 * result + disabledContentColor.hashCode()
-		result = 31 * result + (disabledIconColor?.hashCode() ?: 0)
-		return result
-	}
-
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (javaClass != other?.javaClass) return false
-
-		other as GenericBottomSheetInfo2Colors
-
-		if (containerColor != other.containerColor) return false
-		if (contentColor != other.contentColor) return false
-		if (iconColor != other.iconColor) return false
-		if (disabledContainerColor != other.disabledContainerColor) return false
-		if (disabledContentColor != other.disabledContentColor) return false
-		return disabledIconColor == other.disabledIconColor
-	}
-
 }
 
-object GenericBottomSheetInfo2Defaults {
+object GenericBottomSheetInfoDefaults {
 	@Composable
 	fun infoColors(
 		containerColor: Color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.88f)),
@@ -177,6 +152,57 @@ object GenericBottomSheetInfo2Defaults {
 		iconColor: Color? = null,
 		disabledContainerColor: Color = MaterialTheme.colorScheme.errorContainer,
 		disabledContentColor: Color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.31f),
+		disabledIconColor: Color? = null
+	): GenericBottomSheetInfo2Colors = GenericBottomSheetInfo2Colors(
+		containerColor = containerColor,
+		contentColor = contentColor,
+		iconColor = iconColor,
+		disabledContainerColor = disabledContainerColor,
+		disabledContentColor = disabledContentColor,
+		disabledIconColor = disabledIconColor
+	)
+
+	@Composable
+	fun warningInfoColors(
+		containerColor: Color = Color(0x80F3B664),
+		contentColor: Color = MaterialTheme.colorScheme.onBackground,
+		iconColor: Color? = null,
+		disabledContainerColor: Color = Color(ColorUtils.blendARGB(Color(0xFFF3B664).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.42f)),
+		disabledContentColor: Color = MaterialTheme.colorScheme.onBackground,
+		disabledIconColor: Color? = null
+	): GenericBottomSheetInfo2Colors = GenericBottomSheetInfo2Colors(
+		containerColor = containerColor,
+		contentColor = contentColor,
+		iconColor = iconColor,
+		disabledContainerColor = disabledContainerColor,
+		disabledContentColor = disabledContentColor,
+		disabledIconColor = disabledIconColor
+	)
+
+	@Composable
+	fun pendingColors(
+		containerColor: Color = Color(0x807C93C3),
+		contentColor: Color = MaterialTheme.colorScheme.onBackground,
+		iconColor: Color? = null,
+		disabledContainerColor: Color = Color(ColorUtils.blendARGB(Color(0xFF7C93C3).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.42f)),
+		disabledContentColor: Color = MaterialTheme.colorScheme.onBackground,
+		disabledIconColor: Color? = null
+	): GenericBottomSheetInfo2Colors = GenericBottomSheetInfo2Colors(
+		containerColor = containerColor,
+		contentColor = contentColor,
+		iconColor = iconColor,
+		disabledContainerColor = disabledContainerColor,
+		disabledContentColor = disabledContentColor,
+		disabledIconColor = disabledIconColor
+	)
+
+	@Composable
+	fun successColors(
+		containerColor: Color = Color(0x8089B9AD),
+		contentColor: Color = MaterialTheme.colorScheme.onBackground,
+		iconColor: Color? = null,
+		disabledContainerColor: Color = Color(ColorUtils.blendARGB(Color(0xFF89B9AD).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.42f)),
+		disabledContentColor: Color = MaterialTheme.colorScheme.onBackground,
 		disabledIconColor: Color? = null
 	): GenericBottomSheetInfo2Colors = GenericBottomSheetInfo2Colors(
 		containerColor = containerColor,

@@ -1,11 +1,6 @@
 package com.syncodec.graphite.presentation.sync.dropbox2.composable
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,7 +31,6 @@ import com.syncodec.graphite.di.cloud.dropbox.DropboxApi
 import com.syncodec.graphite.di.cloud.dropbox.DropboxConnector
 import com.syncodec.graphite.di.network.NetworkRequest
 import com.syncodec.graphite.di.snapshot.SnapshotInator
-import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2

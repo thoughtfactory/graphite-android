@@ -13,6 +13,10 @@ import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
 import com.syncodec.graphite.di.cloud.dropbox.DBox
 import com.syncodec.graphite.di.cloud.dropbox.DropboxConnector
 import com.syncodec.graphite.di.locator.GeoLocator
+import com.syncodec.graphite.di.network.Network
+import com.syncodec.graphite.di.network.OpenGraphApi
+import com.syncodec.graphite.di.network.OpenLibraryApi
+import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
@@ -69,6 +73,11 @@ class BaseApplication : Application() {
 
 		val dropboxConnector = DropboxConnector(context = this)
 
+		val network = Network(context = this)
+		val tmDbApi = TMDbApi(context = this)
+		val openLibraryApi = OpenLibraryApi(context = this)
+		val openGraphApi = OpenGraphApi(context = this)
+
 		startKoin {
 			androidLogger()
 			androidContext(this@BaseApplication)
@@ -82,6 +91,10 @@ class BaseApplication : Application() {
 					single { geoLocator }
 					single { DBox(this@BaseApplication) }
 					single { dropboxConnector }
+					single { network }
+					single { tmDbApi }
+					single { openLibraryApi }
+					single { openGraphApi }
 
 					viewModelOf(::MainViewModel)
 					viewModelOf(::NoteScreenViewModel)

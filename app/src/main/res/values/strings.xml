@@ -28,6 +28,7 @@
     <string name="to_do">To do</string>
     <string name="book">Book</string>
     <string name="movies_and_series">Movies &amp; Series</string>
+    <string name="show">Shows</string>
     <string name="doing">Doing</string>
     <string name="done">Done</string>
     <string name="to_read">To read</string>
@@ -106,12 +107,15 @@
     <string name="chapter">Chapter</string>
     <string name="chapters">Chapters</string>
     <string name="notebook">Notebook</string>
+    <string name="note_count">Note count</string>
+    <string name="chapter_count">Chapter count</string>
     <string name="new_notebook">New notebook</string>
     <string name="new_chapter">New chapter</string>
     <string name="edit_chapter">Edit chapter</string>
     <string name="new_note">New note</string>
     <string name="attachment">Attachment</string>
     <string name="attachments">Attachments</string>
+    <string name="home">Home</string>
     <string name="atlas">Atlas</string>
     <string name="calendar">Calendar</string>
     <string name="tags">Tags</string>
@@ -126,6 +130,7 @@
     <string name="as_html">As html</string>
     <string name="as_json">As json</string>
     <string name="as_markdown">As markdown</string>
+    <string name="empty_chapter_message">What story will you tell?</string>
 
     <!--    Note toolbar-->
     <string name="note_metadata">Note metadata</string>
@@ -160,6 +165,7 @@
     <string name="in_visible_region">Everywhere</string>
     <string name="with_attachments">With attachments</string>
     <string name="within_default_chapter">Within default chapter</string>
+    <string name="within_chapter">Within chapter</string>
     <string name="locked">Locked</string>
 
     <!--    Tag-->
@@ -181,6 +187,7 @@
     <string name="url">Url</string>
     <string name="clear">Clear</string>
     <string name="unavailable">Unavailable</string>
+    <string name="unknown">Unknown</string>
     <string name="favourite">Favourite</string>
     <string name="lock">Lock</string>
     <string name="attachment_count">Attachment count</string>
@@ -190,6 +197,7 @@
     <string name="location_marker">Location marker</string>
     <string name="pin">Pin</string>
     <string name="pin_to_notification_bar">Pin to notification bar</string>
+    <string name="back">Back</string>
     <string name="save">Save</string>
     <string name="new_">New</string>
     <string name="create">Create</string>
@@ -231,6 +239,7 @@
     <string name="move">Move</string>
     <string name="metadata">Metadata</string>
     <string name="location">Location</string>
+    <string name="address">Address</string>
     <string name="id">ID</string>
     <string name="parent_id">Parent ID</string>
     <string name="root_element">Root element</string>
@@ -250,8 +259,11 @@
     <string name="reorder_grip">Reorder grip</string>
     <string name="experimental">Experimental</string>
     <string name="manage">Manage</string>
+    <string name="refresh">Refresh</string>
     <string name="restore">Restore</string>
     <string name="coming_soon">Coming soon</string>
+    <string name="status">Status</string>
+    <string name="last_synced_at">Last synced at</string>
 
     <!--   Delete -->
     <string name="delete">Delete</string>
@@ -344,11 +356,19 @@
     <string name="restoring_snapshot">Restoring snapshot</string>
 
     <!--    Dropbox-->
+    <string name="sync">Sync</string>
+    <string name="force_sync">Force sync</string>
+    <string name="sync_now">Sync now</string>
     <string name="connect_with_dropbox">Connect with Dropbox</string>
     <string name="enter_oauth2_code">Enter OAuth2 code</string>
     <string name="test_connection">Test connection</string>
     <string name="disconnect">Disconnect</string>
     <string name="auto_sync">Auto sync</string>
+    <string name="auto_sync_disabled">Auto sync disabled</string>
+    <string name="syncing">Syncing</string>
+    <string name="syncing_network_error">Cannot connect to Dropbox. Check your internet connection or try reconnecting with Dropbox</string>
+    <string name="syncing_credentials_error">Error connecting with Dropbox. It seems like you have revoked Graphite\'s access to Dropbox or credentials have expired. Try reconnecting with Dropbox</string>
+    <string name="syncing_unknown_error">Unknown error occurred while syncing with Dropbox. Try reconnecting with Dropbox</string>
     <string name="space_used">Space used</string>
     <string name="space_available">Available</string>
     <string name="running_out_of_space_message">You are running out of space. Synchronization might fail if no more space is available.</string>
@@ -356,6 +376,10 @@
     <string name="error_connecting_with_dropbox">Error connecting with Dropbox. Check your internet connection or try reconnecting with Dropbox</string>
     <string name="error_retrieving_dropbox_account_info">Error retrieving account information. Check your internet connection or try reconnecting with Dropbox</string>
     <string name="open_in_dropbox">Open in Dropbox</string>
+    <string name="sync_your_data_across_devices">Sync your data across devices</string>
+    <string name="just_now">Just now</string>
+    <string name="minutes_ago">minutes ago</string>
+    <string name="dropbox_locked">It seems like other device is syncing with Dropbox. Please wait while other device finishes syncing or you can force sync</string>
 
     <!--    Toast-->
     <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>

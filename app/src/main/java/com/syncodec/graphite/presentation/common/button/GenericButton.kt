@@ -4,6 +4,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.EaseInOutExpo
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +12,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -21,9 +23,12 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -36,6 +41,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -45,11 +51,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.baec23.ludwig.morpher.component.AnimatedVector
+import com.baec23.ludwig.morpher.model.morpher.VectorSource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.FilterAndViewBottomSheet
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.base.LocalIsPro
@@ -57,6 +65,7 @@ import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.presentation.base.secureComposable.LocalAuthenticatorAction
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.sheets.FilterAndViewBottomSheet
 import com.syncodec.graphite.presentation.common.permission.NotificationPermissionDialog
 
 
@@ -66,6 +75,7 @@ class GenericButtonColors(
 	val iconColor: Color,
 	val checkedContainerColor: Color = containerColor,
 	val checkedIconColor: Color = iconColor,
+	val outlineColor : Color
 ) {
 	@Composable
 	internal fun containerColor(checked: Boolean): State<Color> {
@@ -105,12 +115,30 @@ object GenericButtonDefaults {
 		iconColor: Color = MaterialTheme.colorScheme.onBackground,
 		checkedContainerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f),
 		checkedIconColor: Color = MaterialTheme.colorScheme.onSurface,
+		outlineColor : Color = Color.Transparent
 	): GenericButtonColors = GenericButtonColors(
 		containerColor = containerColor,
 		iconColor = iconColor,
 		checkedContainerColor = checkedContainerColor,
 		checkedIconColor = checkedIconColor,
+		outlineColor = outlineColor
 	)
+
+	@Composable
+	fun outlineButtonColors(
+		containerColor: Color = MaterialTheme.colorScheme.background,
+		iconColor: Color = MaterialTheme.colorScheme.onBackground,
+		checkedContainerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f),
+		checkedIconColor: Color = MaterialTheme.colorScheme.onSurface,
+		outlineColor : Color = MaterialTheme.colorScheme.onBackground
+	): GenericButtonColors = GenericButtonColors(
+		containerColor = containerColor,
+		iconColor = iconColor,
+		checkedContainerColor = checkedContainerColor,
+		checkedIconColor = checkedIconColor,
+		outlineColor = outlineColor
+	)
+
 
 	@Composable
 	fun transparentButtonColors(
@@ -118,11 +146,13 @@ object GenericButtonDefaults {
 		iconColor: Color,
 		checkedContainerColor: Color = Color.Transparent,
 		checkedIconColor: Color = iconColor,
+		outlineColor : Color = Color.Transparent
 	): GenericButtonColors = GenericButtonColors(
 		containerColor = containerColor,
 		iconColor = iconColor,
 		checkedContainerColor = checkedContainerColor,
 		checkedIconColor = checkedIconColor,
+		outlineColor = outlineColor
 	)
 
 	@Composable
@@ -131,11 +161,13 @@ object GenericButtonDefaults {
 		iconColor: Color = Color.White,
 		checkedContainerColor: Color = Color.White,
 		checkedIconColor: Color = Color.Black,
+		outlineColor : Color = Color.Transparent
 	): GenericButtonColors = GenericButtonColors(
 		containerColor = containerColor,
 		iconColor = iconColor,
 		checkedContainerColor = checkedContainerColor,
 		checkedIconColor = checkedIconColor,
+		outlineColor = outlineColor
 	)
 
 	@Composable
@@ -144,11 +176,13 @@ object GenericButtonDefaults {
 		iconColor: Color = Color.Black,
 		checkedContainerColor: Color = Color.Black,
 		checkedIconColor: Color = Color.White,
+		outlineColor : Color = Color.Transparent
 	): GenericButtonColors = GenericButtonColors(
 		containerColor = containerColor,
 		iconColor = iconColor,
 		checkedContainerColor = checkedContainerColor,
 		checkedIconColor = checkedIconColor,
+		outlineColor = outlineColor
 	)
 
 	@Composable
@@ -157,11 +191,13 @@ object GenericButtonDefaults {
 		iconColor: Color = MaterialTheme.colorScheme.onSurface,
 		checkedContainerColor: Color = MaterialTheme.colorScheme.background,
 		checkedIconColor: Color = MaterialTheme.colorScheme.onBackground,
+		outlineColor : Color = Color.Transparent
 	): GenericButtonColors = GenericButtonColors(
 		containerColor = containerColor,
 		iconColor = iconColor,
 		checkedContainerColor = checkedContainerColor,
 		checkedIconColor = checkedIconColor,
+		outlineColor = outlineColor
 	)
 
 	@Composable
@@ -170,11 +206,13 @@ object GenericButtonDefaults {
 		iconColor: Color = MaterialTheme.colorScheme.error,
 		checkedContainerColor: Color = Color.Transparent,
 		checkedIconColor: Color = MaterialTheme.colorScheme.error,
+		outlineColor : Color = Color.Transparent
 	): GenericButtonColors = GenericButtonColors(
 		containerColor = containerColor,
 		iconColor = iconColor,
 		checkedContainerColor = checkedContainerColor,
 		checkedIconColor = checkedIconColor,
+		outlineColor = outlineColor
 	)
 }
 
@@ -203,8 +241,14 @@ fun GenericButton(
 		LocalIndication provides rippleIndication,
 	) {
 		tooltip?.let {
-			PlainTooltipBox(
-				tooltip = { Text(text = tooltip) }
+			TooltipBox(
+				positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+				tooltip = {
+					PlainTooltip {
+						Text(text = it)
+					}
+				},
+				state = rememberTooltipState()
 			) {
 				Box(
 					contentAlignment = Alignment.Center,
@@ -212,6 +256,8 @@ fun GenericButton(
 						.requiredSize((buttonSize * 2) + 2.dp)
 						.padding(2.dp)
 						.background(containerColor, shape)
+						.clip(shape)
+						.border(1.dp, colors.outlineColor, shape)
 						.combinedClickable(
 							enabled = enabled,
 							onClick = { onClick() },
@@ -255,6 +301,8 @@ fun GenericButton(
 				.requiredSize((buttonSize * 2) + 2.dp)
 				.padding(2.dp)
 				.background(containerColor, shape)
+				.clip(shape)
+				.border(1.dp, colors.outlineColor, shape)
 				.combinedClickable(
 					enabled = enabled,
 					onClick = { onClick() },
@@ -262,7 +310,7 @@ fun GenericButton(
 		) {
 			AnimatedContent(
 				targetState = icon,
-				transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) },
+				transitionSpec = { fadeIn(tween(ANIMATION_DURATION_MILLIS)) togetherWith fadeOut(tween(470)) },
 				label = "genericButton"
 			) { icon1 ->
 				badgeCount?.let {
@@ -294,17 +342,98 @@ fun GenericButton(
 	}
 }
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun GenericAnimatedMorphButton(
+	modifier: Modifier = Modifier,
+	vectorSource: VectorSource,
+	tooltip: String? = null,
+	checked: Boolean? = null,
+	enabled: Boolean = true,
+	shape: Shape = MaterialTheme.shapes.medium,
+	colors: GenericButtonColors = GenericButtonDefaults.genericButtonColors(),
+	buttonSize: Dp = ICON_SIZE,
+	onClick: () -> Unit = {},
+) {
+	val containerColor by colors.containerColor(checked = checked == true)
+	val iconColor by colors.contentColor(checked = checked == true)
+
+	val rippleColor = if (checked == true) colors.containerColor else colors.checkedContainerColor
+	val rippleIndication = rememberRipple(color = rippleColor)
+
+	CompositionLocalProvider(
+		LocalIndication provides rippleIndication,
+	) {
+		tooltip?.let {
+			TooltipBox(
+				positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+				tooltip = {
+					PlainTooltip {
+						Text(text = it)
+					}
+				},
+				state = rememberTooltipState()
+			) {
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = modifier
+						.requiredSize((buttonSize * 2) + 2.dp)
+						.padding(2.dp)
+						.background(containerColor, shape)
+						.clip(shape)
+						.border(1.dp, colors.outlineColor, shape)
+						.combinedClickable(
+							enabled = enabled,
+							onClick = { onClick() },
+						)
+				) {
+					AnimatedVector(
+						vectorSource = vectorSource,
+						animationSpec = tween(ANIMATION_DURATION_MILLIS, easing = EaseInOutExpo),
+						strokeColor = iconColor,
+						strokeWidth = 4.2f,
+						modifier = Modifier.requiredSize(ICON_SIZE)
+					)
+				}
+			}
+		} ?: Box(
+			contentAlignment = Alignment.Center,
+			modifier = modifier
+				.requiredSize((buttonSize * 2) + 2.dp)
+				.padding(2.dp)
+				.background(containerColor, shape)
+				.clip(shape)
+				.border(1.dp, colors.outlineColor, shape)
+				.combinedClickable(
+					enabled = enabled,
+					onClick = { onClick() },
+				)
+		) {
+			AnimatedVector(
+				vectorSource = vectorSource,
+				animationSpec = tween(ANIMATION_DURATION_MILLIS, easing = EaseInOutExpo),
+				strokeColor = MaterialTheme.colorScheme.onSurface,
+				strokeWidth = 4.2f,
+				modifier = Modifier.requiredSize(ICON_SIZE)
+			)
+		}
+	}
+}
+
+
 @Preview
 @Composable
 fun BackButton(
 	colors: GenericButtonColors = GenericButtonDefaults.transparentButtonColors(iconColor = MaterialTheme.colorScheme.onBackground),
+	onClick: (() -> Unit)? = null,
 ) {
 	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
 	GenericButton(
 		icon = R.drawable.ic_fa_back,
+		tooltip = stringResource(id = R.string.back),
 		colors = colors,
-		onClick = { onBackPressedDispatcher?.onBackPressed() }
+		onClick = { onClick?.invoke() ?: onBackPressedDispatcher?.onBackPressed() }
 	)
 }
 

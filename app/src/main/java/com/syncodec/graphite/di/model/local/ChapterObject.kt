@@ -2,10 +2,10 @@ package com.syncodec.graphite.di.model.local
 
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.toArgb
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.syncodec.graphite.di.cloud.dropbox.DropboxObjectMetadata
+import com.syncodec.graphite.di.model.local.ext.Syncable
 import com.syncodec.graphite.di.model.serializer.RealmUUIDNullableSerializer
 import com.syncodec.graphite.di.model.serializer.RealmUUIDSerializer
-import com.syncodec.graphite.service.syncInator.DyncInator
 import com.syncodec.graphite.utils.getRandomColor
 import com.syncodec.graphite.utils.toDbxHashString
 import io.realm.kotlin.types.RealmObject
@@ -18,25 +18,8 @@ import kotlin.random.Random
 
 
 @Keep
-@JsonIgnoreProperties(value = ["io_realm_kotlin_objectReference"], ignoreUnknown = true)
 @Serializable
 class ChapterObject() : RealmObject, Syncable {
-	constructor(jsonObject : JSONObject) : this() {
-		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
-		this.createdTimestamp = jsonObject.optLong("createdTimestamp", Instant.now().toEpochMilli())
-		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", Instant.now().toEpochMilli())
-		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
-		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
-		this.color = jsonObject.optInt("color")
-		this.thumbnail = jsonObject.optString("thumbnail")
-		if (this.thumbnail == "null") {
-			this.thumbnail = null
-			if (this.color == null || this.color == 0) this.color = getRandomColor().toArgb()
-		}
-		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
-		this.isLocked = jsonObject.optBoolean("isLocked", false)
-		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
-	}
 
 	@Serializable(with = RealmUUIDSerializer::class)
 	@PrimaryKey
@@ -85,6 +68,26 @@ class ChapterObject() : RealmObject, Syncable {
 		this.parentId = this@ChapterObject.parentId
 	}
 
+	constructor(byteArray: ByteArray) : this() {
+
+		val jsonObject = JSONObject(byteArray.decodeToString())
+
+		this.id = jsonObject.optString("id").let { if (it.isNullOrEmpty() || it == "null") RealmUUID.random() else RealmUUID.from(it) }
+		this.createdTimestamp = jsonObject.optLong("createdTimestamp", Instant.now().toEpochMilli())
+		this.modifiedTimestamp = jsonObject.optLong("modifiedTimestamp", Instant.now().toEpochMilli())
+		this.title = jsonObject.optString("title").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.description = jsonObject.optString("description").let { if (it.isNullOrEmpty() || it == "null") null else it }
+		this.color = jsonObject.optInt("color")
+		this.thumbnail = jsonObject.optString("thumbnail")
+		if (this.thumbnail == "null") {
+			this.thumbnail = null
+			if (this.color == null || this.color == 0) this.color = getRandomColor().toArgb()
+		}
+		this.isFavourite = jsonObject.optBoolean("isFavourite", false)
+		this.isLocked = jsonObject.optBoolean("isLocked", false)
+		this.parentId = jsonObject.optString("parentId").let { if (it.isNullOrEmpty() || it == "null") null else RealmUUID.from(it) }
+	}
+
 	override fun toCloudSnapshot() : String {
 		val jsonObject = JSONObject()
 		jsonObject.put("id", this.id.toString())
@@ -101,7 +104,7 @@ class ChapterObject() : RealmObject, Syncable {
 		return jsonObject.toString()
 	}
 
-	fun toObjectMetaData() : DyncInator.Companion.ObjectMetadata  = DyncInator.Companion.ObjectMetadata(
+	override fun toObjectMetadata() : DropboxObjectMetadata = DropboxObjectMetadata(
 		modifiedTimestamp = this.modifiedTimestamp,
 		hash = this.toCloudSnapshot().toDbxHashString(),
 		isDeleted = false,
@@ -136,16 +139,6 @@ class ChapterObject() : RealmObject, Syncable {
 		if (parentId != other.parentId) return false
 
 		return true
-	}
-
-	companion object {
-		fun fromCloudSnapshot(snapshot : ByteArray) : ChapterObject? {
-			return try {
-				ChapterObject(JSONObject(String(snapshot, Charsets.UTF_8)))
-			} catch (e : Exception) {
-				null
-			}
-		}
 	}
 }
 

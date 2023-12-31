@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.note.composable.buildingBlock
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.InlineTextContent
@@ -26,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.Placeholder
@@ -34,7 +31,6 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,9 +38,10 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.ChapterObjectLite
 import com.syncodec.graphite.di.model.local.LatLng
 import com.syncodec.graphite.di.model.local.TagObject
-import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.base.LocationContainer
+import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.utils.LocationData
+import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.toDate
 import com.syncodec.graphite.utils.toDayTime
 import com.syncodec.graphite.utils.toMonthYear
@@ -63,7 +60,7 @@ fun ViewerHeader(
 	parentChapter: ChapterObjectLite? = null,
 	savedAttachmentList : List<NoteViewModel.Companion.AttachmentState.Saved> = listOf(),
 	connectedTagList: Set<TagObject> = setOf(),
-	onClickChapterSelector : () -> Unit = {},
+	onClickSelectChapter : () -> Unit = {},
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth()
@@ -106,30 +103,23 @@ fun ViewerHeader(
 					) {
 						Text(
 							text = userTimestamp.toDayTime(),
-							style = MaterialTheme.typography.bodySmall,
+							style = MaterialTheme.typography.bodyMedium,
 							color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
 							fontWeight = FontWeight.Bold,
 						)
 						Spacer(modifier = Modifier.height(2.dp))
 						Text(
 							text = userTimestamp.toMonthYear(),
-							style = MaterialTheme.typography.bodySmall,
+							style = MaterialTheme.typography.bodyMedium,
 							color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
 							fontWeight = FontWeight.Bold,
 						)
 					}
 				}
-
-				Spacer(modifier = Modifier.weight(1f))
-				Spacer(modifier = Modifier.width(64.dp))
-
-				ChapterView(parentChapter = parentChapter, onClickChapterSelector = onClickChapterSelector)
 			}
 
 			SelectionContainer {
-				LocationView(
-					locationData = locationData
-				)
+				LocationView(locationData = locationData)
 			}
 
 			if (connectedTagList.isNotEmpty()) {
@@ -138,39 +128,6 @@ fun ViewerHeader(
 				)
 			}
 		}
-	}
-}
-
-@Preview
-@Composable
-private fun ChapterView(
-	parentChapter: ChapterObjectLite? = null,
-	onClickChapterSelector : () -> Unit = {},
-) {
-	Row(
-		verticalAlignment = Alignment.CenterVertically,
-		modifier = Modifier
-			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.71f), MaterialTheme.shapes.small)
-			.clip(MaterialTheme.shapes.small)
-			.clickable {onClickChapterSelector() }
-			.padding(vertical = 8.dp, horizontal = 12.dp)
-	) {
-		Icon(
-			painter = painterResource(id = R.drawable.ic_fa_notebook_duotone),
-			contentDescription = "Parent chapter",
-			tint = MaterialTheme.colorScheme.onSurface,
-			modifier = Modifier.requiredSize(16.dp)
-		)
-		Spacer(modifier = Modifier.width(8.dp))
-		Text(
-			text = parentChapter?.title ?: "",
-			style = MaterialTheme.typography.titleSmall,
-			color = MaterialTheme.colorScheme.onSurface,
-			fontWeight = FontWeight.Bold,
-			maxLines = 1,
-			overflow = TextOverflow.Ellipsis,
-			modifier = Modifier
-		)
 	}
 }
 
@@ -287,8 +244,8 @@ private fun TagView(
 private fun TagItemView(
 	tagObject: TagObject = TagObject.getRandomInstance()
 ) {
-	val containerColor = Color(tagObject.color).copy(alpha = 0.13f)
-	val contentColor = Color(tagObject.color)
+	val containerColor = Color(tagObject.color).copy(alpha = 0.42f)
+	val contentColor = Color(tagObject.color).getInverseBWColor()
 
 	SuggestionChip(
 		onClick = { /*TODO*/ },

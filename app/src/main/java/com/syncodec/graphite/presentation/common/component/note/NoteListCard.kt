@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,6 +57,7 @@ import com.syncodec.graphite.presentation.common.component.composable.StateInfo
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainer
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainerColors
 import com.syncodec.graphite.presentation.common.selectable.SelectableContainerDefaults
+import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.timeStampToTime
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -219,8 +221,8 @@ private fun TagList(
 private fun TagItemView(
 	tagObject: TagObjectLite = TagObject.getRandomInstance().toLite()
 ) {
-	val containerColor by remember(tagObject.color) { derivedStateOf { Color(tagObject.color).copy(alpha = 0.13f) } }
-	val contentColor by remember(tagObject.color) { derivedStateOf { Color(tagObject.color) } }
+	val containerColor by remember(tagObject.color) { derivedStateOf { Color(tagObject.color).copy(alpha = 0.42f) } }
+	val contentColor by remember(tagObject.color) { derivedStateOf { Color(tagObject.color).getInverseBWColor() } }
 
 	Box(
 		modifier = Modifier
@@ -231,6 +233,7 @@ private fun TagItemView(
 			text = tagObject.tag,
 			style = MaterialTheme.typography.bodySmall,
 			color = contentColor,
+			fontWeight = FontWeight.Bold,
 			modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
 		)
 	}

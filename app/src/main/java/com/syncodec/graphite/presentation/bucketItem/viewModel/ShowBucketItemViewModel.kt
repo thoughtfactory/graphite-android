@@ -3,10 +3,10 @@ package com.syncodec.graphite.presentation.bucketItem.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.di.model.local.BucketType
-import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
@@ -22,15 +22,13 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class ShowBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
+class ShowBucketItemViewModel(lockableRepo: LockableRepo, val tmDbApi: TMDbApi) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
 	private val _isNew: MutableStateFlow<Boolean?> = MutableStateFlow(null)
 	val isNew: StateFlow<Boolean?> = _isNew
 
-	private val _showType: MutableStateFlow<ShowType?> = MutableStateFlow(null)
-	val showType: StateFlow<ShowType?> = _showType
 
 	private val _id: MutableStateFlow<RealmUUID?> = MutableStateFlow(null)
 	val id: StateFlow<RealmUUID?> = _id
@@ -52,53 +50,34 @@ class ShowBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 				bucketItemId?.let {
 					repository1?.getObjectFromIdAsFlow<BucketItemObject>(id = bucketItemId)?.collectLatest {
 						this@ShowBucketItemViewModel._bucketItemObject.tryEmit(it)
-						this@ShowBucketItemViewModel._showType.tryEmit((it?.getShowData() as? BucketItemObject.Companion.BucketItemData.ShowData)?.type)
 					}
 				}
 			}
 		}
 	}
 
-	fun initBucketItem(showId: String, parentId: RealmUUID, showType: ShowType) {
+	fun initBucketItem(showId: String, parentId: RealmUUID, tmdbDataType: String?) {
 		viewModelScope.launch(Dispatchers.IO) {
 			this@ShowBucketItemViewModel._isNew.tryEmit(true)
-			this@ShowBucketItemViewModel._showType.tryEmit(showType)
 
-			when (showType) {
-				ShowType.TV -> {
-					val tvData = TMDbApi.retrieveTvDataFromId(id = showId)
-
-					val bucketItemObject = BucketItemObject().apply {
-						this.bucketType = BucketType.SHOW.name
-						this.title = tvData?.name
-						this.parentId = parentId
-						this.data = BucketItemObject.Companion.BucketItemData.ShowData(type = showType, tvData = tvData).toJsonString()
-						this.key = tvData?.id
-					}
-
-					this@ShowBucketItemViewModel._bucketItemObject.tryEmit(bucketItemObject)
-
-//                  retrieveThumbnail and retrieveDescription is called after bucketItemObject is emitted because thumbnail will be updated in object when retrieved
-					retrieveThumbnail(posterPath = tvData?.posterPath)
-				}
-
-				ShowType.MOVIE -> {
-					val movieData = TMDbApi.retrieveMovieDataFromId(id = showId)
-
-					val bucketItemObject = BucketItemObject().apply {
-						this.bucketType = BucketType.SHOW.name
-						this.title = movieData?.title
-						this.parentId = parentId
-						this.data = BucketItemObject.Companion.BucketItemData.ShowData(type = showType, movieData = movieData).toJsonString()
-						this.key = movieData?.id
-					}
-
-					this@ShowBucketItemViewModel._bucketItemObject.tryEmit(bucketItemObject)
-
-//                  retrieveThumbnail and retrieveDescription is called after bucketItemObject is emitted because thumbnail will be updated in object when retrieved
-					retrieveThumbnail(posterPath = movieData?.posterPath)
-				}
+			val bucketItemObject = BucketItemObject().apply {
+				this.bucketType = BucketType.SHOW.name
+				this.parentId = parentId
 			}
+
+			val tmdbData = when (tmdbDataType) {
+				BucketItemData.ShowData.TMDbData.TMDbTvData::class.simpleName -> tmDbApi.retrieveTvDataFromId(id = showId)
+				BucketItemData.ShowData.TMDbData.TMDbMovieData::class.simpleName -> tmDbApi.retrieveMovieDataFromId(id = showId)
+				else -> null
+			}
+
+			bucketItemObject.title = tmdbData?.title
+			bucketItemObject.key = tmdbData?.key
+			bucketItemObject.setBucketItemData(bucketItemData = tmdbData)
+
+
+			this@ShowBucketItemViewModel._bucketItemObject.tryEmit(bucketItemObject)
+			retrieveThumbnail(posterPath = tmdbData?.getThumbnailPath())
 
 			this@ShowBucketItemViewModel._parentId.tryEmit(parentId)
 		}
@@ -120,7 +99,7 @@ class ShowBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	private fun retrieveThumbnail(posterPath: String?) {
-		val thumbnail = TMDbApi.retrieveShowPoster(posterPath = posterPath)
+		val thumbnail = tmDbApi.retrieveShowPoster(posterPath = posterPath)
 		this@ShowBucketItemViewModel.bucketItemObject.value?.clone()?.apply {
 			this.thumbnail = thumbnail?.encodeBase64()
 			this@ShowBucketItemViewModel._bucketItemObject.tryEmit(this)

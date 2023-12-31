@@ -29,12 +29,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.BookTitleView
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.BucketItemScreenSkeleton
 import com.syncodec.graphite.presentation.bucketItem.composable.buildingBlock.BucketThumbnail
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabDefaults
 import com.syncodec.graphite.presentation.common.tab.TabItem
@@ -55,7 +56,7 @@ fun BookBucketItemScreen(
 	val context = LocalContext.current
 	val clipboardManager = LocalClipboardManager.current
 
-	val bookData by remember(bucketItemObject?.data) { derivedStateOf { BucketItemObject.Companion.BucketItemData.BookData(jsonString = bucketItemObject?.data) } }
+	val openLibraryBookData by remember(bucketItemObject?.bucketItemDataJson) { derivedStateOf { bucketItemObject?.getBucketItemData<BucketItemData.BookData.OpenLibraryBookData>() } }
 	val state by remember(bucketItemObject?.state) { derivedStateOf { bucketItemObject?.state } }
 
 	BucketItemScreenSkeleton(
@@ -74,8 +75,8 @@ fun BookBucketItemScreen(
 		)
 		Spacer(modifier = Modifier.height(24.dp))
 		BookTitleView(
-			title = bookData.title,
-			author = bookData.authorList?.firstNotNullOfOrNull { it }
+			title = openLibraryBookData?.title,
+			author = openLibraryBookData?.authorList?.firstNotNullOfOrNull { it }
 		)
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -90,29 +91,27 @@ fun BookBucketItemScreen(
 			colors = TabDefaults.tabColors(containerColor = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).toArgb(), MaterialTheme.colorScheme.background.toArgb(), 0.88f)))
 		)
 		Spacer(modifier = Modifier.height(8.dp))
-		bookData.key?.let {
-			GenericBottomSheetInfo2(
+		openLibraryBookData?.key?.let {
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.open_library_id),
 				value = it,
 				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
 			)
 		}
-		bookData.description?.let {
-			GenericBottomSheetInfo2(
-				key = stringResource(id = R.string.description),
-				value = it,
-				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
-			)
-		}
-		bookData.firstPublishYear?.let {
-			GenericBottomSheetInfo2(
+		GenericBottomSheetInfo(
+			key = stringResource(id = R.string.description),
+			value = openLibraryBookData?.description ?: "",
+			onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(openLibraryBookData?.description ?: "")) }
+		)
+		openLibraryBookData?.firstPublishYear?.let {
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.first_published_year),
-				value = it,
-				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it)) }
+				value = "$it",
+				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString("$it")) }
 			)
 		}
-		bookData.numberOfPages?.let {
-			GenericBottomSheetInfo2(
+		openLibraryBookData?.numberOfPages?.let {
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.page_count),
 				value = it.toString(),
 				onLongClick = { clipboardManager.setText(annotatedString = AnnotatedString(it.toString())) }
@@ -122,7 +121,7 @@ fun BookBucketItemScreen(
 			shape = MaterialTheme.shapes.medium,
 			modifier = Modifier.fillMaxWidth(),
 			onClick = {
-				bookData.key?.let {
+				openLibraryBookData?.key?.let {
 					try {
 						context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://openlibrary.org$it")))
 					} catch (e: Exception) {

@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
 import com.syncodec.graphite.presentation.common.conditional
 
 
@@ -105,7 +106,12 @@ object SelectableContainerDefaults {
 		contentColor: Color = MaterialTheme.colorScheme.onBackground,
 		selectedContainerColor: Color = MaterialTheme.colorScheme.surface,
 		selectedContentColor: Color = MaterialTheme.colorScheme.onSurface,
-	): SelectableContainerColors = SelectableContainerColors(
+	): SelectableContainerColors = if (LocalIsDarkTheme.current) SelectableContainerColors(
+		containerColor = containerColor,
+		contentColor = contentColor.copy(alpha = 0.69f),
+		selectedContainerColor = selectedContainerColor,
+		selectedContentColor = selectedContentColor,
+	) else SelectableContainerColors(
 		containerColor = containerColor,
 		contentColor = contentColor,
 		selectedContainerColor = selectedContainerColor,

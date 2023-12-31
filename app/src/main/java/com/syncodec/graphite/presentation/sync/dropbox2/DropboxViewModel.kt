@@ -3,6 +3,7 @@ package com.syncodec.graphite.presentation.sync.dropbox2
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.di.cloud.dropbox.DropboxApi
 import com.syncodec.graphite.di.cloud.dropbox.DropboxConnector
 import com.syncodec.graphite.di.network.NetworkRequest
@@ -68,12 +69,17 @@ class DropboxViewModel(private val lockableRepo: LockableRepo, private val dropb
 			_dropBoxConnection.tryEmit(DropboxConnector.Companion.DropBoxConnection.Connecting)
 			_dropboxAccountInfo.tryEmit(NetworkRequest.Loading)
 
-			dropboxApi = dropboxConnector.refreshConnection()
-			if (dropboxApi == null) _dropBoxConnection.tryEmit(DropboxConnector.Companion.DropBoxConnection.NotConnected)
-			else _dropBoxConnection.tryEmit(DropboxConnector.Companion.DropBoxConnection.Connected)
+			try {
+				dropboxApi = dropboxConnector.refreshConnection()
+				if (dropboxApi == null) _dropBoxConnection.tryEmit(DropboxConnector.Companion.DropBoxConnection.NotConnected)
+				else _dropBoxConnection.tryEmit(DropboxConnector.Companion.DropBoxConnection.Connected)
 
-			_remoteSnapshotList.tryEmit(dropboxApi?.scanSnapshot() ?: listOf())
-			dropboxApi?.getAccountInfo()?.let { _dropboxAccountInfo.tryEmit(it) } ?: _dropboxAccountInfo.tryEmit(NetworkRequest.Init)
+				_remoteSnapshotList.tryEmit(dropboxApi?.scanSnapshot() ?: listOf())
+				_dropboxAccountInfo.tryEmit(dropboxApi?.getAccountInfo() ?: NetworkRequest.Init)
+			} catch (e: Exception) {
+				if (BuildConfig.DEBUG) e.printStackTrace()
+				_dropBoxConnection.tryEmit(DropboxConnector.Companion.DropBoxConnection.Error(e))
+			}
 		}
 	}
 

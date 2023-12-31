@@ -7,17 +7,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.button.PasteButton
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 
 
 @Preview
@@ -30,7 +29,7 @@ fun DropboxOAuth2CodeDialog(
 
 	var code by rememberSaveable { mutableStateOf("") }
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		onDismissRequest = onDismissRequest,
 		title = "Enter OAuth2 Code",
@@ -45,6 +44,7 @@ fun DropboxOAuth2CodeDialog(
 			trailingIcon = { PasteButton { code = it } },
 			maxLines = 1,
 			singleLine = true,
+			colors = getGraphiteTextFieldColors(),
 			modifier = Modifier.fillMaxWidth()
 		)
 	}

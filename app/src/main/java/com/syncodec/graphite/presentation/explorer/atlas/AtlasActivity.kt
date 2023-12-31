@@ -71,7 +71,7 @@ class AtlasActivity : ComponentActivity() {
 
 				ExplorerScreen(
 					screenTitle = stringResource(id = R.string.atlas),
-					bottomSheetTitle = stringResource(id = R.string.in_visible_region),
+					bottomSheetTitle = if (chapterObject == null) stringResource(id = R.string.everywhere) else stringResource(id = R.string.within_chapter),
 					currentChapter = chapterObject,
 					noteList = contextFilteredNoteList,
 					isSelecting = isSelecting,

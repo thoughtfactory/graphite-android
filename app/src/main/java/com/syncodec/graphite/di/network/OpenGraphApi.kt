@@ -1,77 +1,37 @@
 package com.syncodec.graphite.di.network
 
-import android.graphics.Bitmap
+import android.content.Context
 import android.webkit.URLUtil
 import com.kedia.ogparser.CacheProvider
 import com.kedia.ogparser.OpenGraphCallback
 import com.kedia.ogparser.OpenGraphParser
 import com.kedia.ogparser.OpenGraphResult
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import com.syncodec.graphite.di.model.local.BucketItemData
 
 
-sealed class OpenGraphResponse {
-	object Loading : OpenGraphResponse()
-	data class Success(val openGraphResult: OpenGraphResult, val bitmap: Bitmap? = null) : OpenGraphResponse() {
-		override fun hashCode(): Int {
-			var result = openGraphResult.hashCode()
-			result = 31 * result + (bitmap?.hashCode() ?: 0)
-			return result
-		}
+class OpenGraphApi(context: Context) {
 
-		override fun equals(other: Any?): Boolean {
-			if (this === other) return true
-			if (javaClass != other?.javaClass) return false
-
-			other as Success
-
-			if (openGraphResult != other.openGraphResult) return false
-			return bitmap == other.bitmap
-		}
-	}
-	object InvalidUrl : OpenGraphResponse()
-	data class Error(val message: String) : OpenGraphResponse()
-
-	override fun hashCode(): Int {
-		return javaClass.hashCode()
-	}
-
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		return javaClass == other?.javaClass
-	}
-}
-
-object OpenGraphApi {
 	private val urlOpenGraphResultMap: MutableMap<String, OpenGraphResult> = mutableMapOf()
-	private val urlBitmapMap: MutableMap<String, Bitmap> = mutableMapOf()
 
-	private val getBitmapCoroutineScopeMap: MutableMap<String?, CoroutineScope> = mutableMapOf()
-
-	fun getData(url: String, onResponse: (OpenGraphResponse) -> Unit) {
-		onResponse(OpenGraphResponse.Loading)
+	fun getLinkData(url: String, callback: (NetworkRequest<BucketItemData.LinkData>) -> Unit) {
+		callback(NetworkRequest.Loading)
 		val isUrlValid = URLUtil.isValidUrl(url)
 		if (isUrlValid) {
 			val openGraphParser = OpenGraphParser(
 				listener = object : OpenGraphCallback {
-					override fun onError(error: String) {
-						onResponse(OpenGraphResponse.Error(error))
-					}
+					override fun onError(error: String) = callback(NetworkRequest.Error(Exception(error)))
 
 					override fun onPostResponse(openGraphResult: OpenGraphResult) {
-						onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult.copy(url = url)))
-						CoroutineScope(Dispatchers.IO).launch {
-							getBitmapCoroutineScopeMap[url]?.cancel()
-							getBitmapCoroutineScopeMap[url] = this
-							urlBitmapMap[url]?.let {
-								onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult.copy(url = url), bitmap = it))
-							} ?: Network.retrieveImage(openGraphResult.image) { bitmap ->
-								bitmap?.let { urlBitmapMap[url] = it }
-								onResponse(OpenGraphResponse.Success(openGraphResult = openGraphResult.copy(url = url), bitmap = bitmap))
-							}
-						}
+						val linkData = BucketItemData.LinkData(
+							key = openGraphResult.url,
+							title = openGraphResult.title,
+							description = openGraphResult.description,
+							url = openGraphResult.url,
+							siteName = openGraphResult.siteName,
+							type = openGraphResult.type,
+							imagePath = openGraphResult.image,
+						)
+						callback(NetworkRequest.Success(linkData))
 					}
 				},
 				cacheProvider = object : CacheProvider {
@@ -87,7 +47,7 @@ object OpenGraphApi {
 
 			openGraphParser.parse(url)
 		} else {
-			onResponse(OpenGraphResponse.InvalidUrl)
+			callback(NetworkRequest.Error(Exception("Invalid URL")))
 		}
 	}
 }

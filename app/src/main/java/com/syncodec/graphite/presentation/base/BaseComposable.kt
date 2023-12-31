@@ -27,7 +27,7 @@ import com.syncodec.graphite.presentation.common.component.LocalComponentHeight
 import com.syncodec.graphite.presentation.common.component.LocalComponentWidth
 import com.syncodec.graphite.presentation.common.shape.AbsoluteSmoothCornerShape
 import com.syncodec.graphite.presentation.settings.SettingsActivity
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.dataStore.DataStoreInstance
 
@@ -42,8 +42,8 @@ fun sortOn(): State<SortOn?> {
 }
 
 @Composable
-fun sortBy(): State<SortBy?> {
-	return LocalAppDataStore.current.getSortBy.collectAsState(initial = null)
+fun sortBy(): State<SortOrder?> {
+	return LocalAppDataStore.current.getSortOrder.collectAsState(initial = null)
 }
 
 @SuppressLint("NewApi")

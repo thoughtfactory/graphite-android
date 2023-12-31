@@ -21,69 +21,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 
 
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun AnimatedScrollText(
-	animatedText : String,
-	staticText : String,
-	color : Color
-) {
-	Row(
-		modifier = Modifier,
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		AnimatedContent(
-			targetState = animatedText,
-			transitionSpec = {
-				if (targetState > initialState) {
-					slideInVertically { height -> height } + fadeIn() with
-							slideOutVertically { height -> - height } + fadeOut()
-				} else {
-					slideInVertically { height -> - height } + fadeIn() with
-							slideOutVertically { height -> height } + fadeOut()
-				}.using(
-					SizeTransform(clip = false)
-				)
-			}
-		) {
-			Text(
-				text = it,
-				fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-				fontWeight = FontWeight.Bold,
-				fontSize = 20.sp,
-				lineHeight = 24.sp,
-				letterSpacing = 2.sp,
-				color = color
-			)
-		}
-
-		Text(
-			text = staticText,
-			fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-			fontWeight = FontWeight.Bold,
-			fontSize = 20.sp,
-			lineHeight = 24.sp,
-			letterSpacing = 2.sp,
-			color = color
-		)
-	}
-}
-
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AnimatedText(
-	modifier : Modifier = Modifier,
-	text : String?,
-	style : TextStyle = LocalTextStyle.current,
-	color : Color = Color.Unspecified,
-	fontStyle : FontStyle? = null,
-	fontWeight : FontWeight? = null,
+	modifier: Modifier = Modifier,
+	text: String?,
+	style: TextStyle = LocalTextStyle.current,
+	color: Color = Color.Unspecified,
+	fontStyle: FontStyle? = null,
+	fontWeight: FontWeight? = null,
 	textAlign: TextAlign? = null,
-	maxLines : Int = Int.MAX_VALUE,
-	overflow : TextOverflow = TextOverflow.Clip,
-	transitionSpec : AnimatedContentTransitionScope<String?>.() -> ContentTransform = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+	maxLines: Int = Int.MAX_VALUE,
+	overflow: TextOverflow = TextOverflow.Clip,
+	transitionSpec: AnimatedContentTransitionScope<String?>.() -> ContentTransform = { fadeIn(tween(ANIMATION_DURATION_MILLIS)) togetherWith fadeOut(tween(ANIMATION_DURATION_MILLIS)) }
 ) {
 	AnimatedContent(
 		targetState = text,

@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen.notebookScreen
 
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,7 +40,7 @@ import com.syncodec.graphite.presentation.common.selectionAction.MainSelectionAc
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookFloatingActionButton
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookCard
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.NotebookCard
 import com.syncodec.graphite.presentation.notebook.NotebookActivity
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.SortOn
@@ -68,9 +69,9 @@ fun NotebookScreen(
 
 	val notebookList by viewModel.notebookList.collectAsState()
 	var orderedNotebookList by remember { mutableStateOf<List<ChapterObject>?>(null) }
-	LaunchedEffect(key1 = notebookList) {
-		orderedNotebookList = notebookList
-	}
+	LaunchedEffect(key1 = notebookList) { orderedNotebookList = notebookList }
+
+	BackHandler(enabled = isSelecting) { onUnSelectAll() }
 
 	fun onClickNotebook(id: RealmUUID) {
 		if (isSelecting) onSelect(id)

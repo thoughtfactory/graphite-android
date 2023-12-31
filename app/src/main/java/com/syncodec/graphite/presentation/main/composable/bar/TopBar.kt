@@ -53,24 +53,25 @@ fun TopBar(
 			)
 		},
 		actions = {
-//			CloudButton(
+			CloudButton(
 //				syncStatus = syncStatus,
-//				onClickSync = onClickCloud
-//			)
+				onClickSync = onClickCloud
+			)
 			SearchButton(onClick = onClickSearch)
 		},
 		colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
 	)
 }
 
-//@Composable
-//private fun CloudButton(
+@Composable
+private fun CloudButton(
 //	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
-//	onClickSync: () -> Unit
-//) {
-//	GenericButton(
+	onClickSync: () -> Unit
+) {
+	GenericButton(
 //		icon = SyncState.syncStatusIcon[syncStatus::class] ?: R.drawable.ic_cloud,
+		icon = R.drawable.ic_fa_cloud,
 //		colors = GenericButtonDefaults.genericButtonColors(iconColor = SyncState.getSyncStatusIconColor(syncStatus = syncStatus),),
-//		onClick = onClickSync
-//	)
-//}
+		onClick = onClickSync
+	)
+}

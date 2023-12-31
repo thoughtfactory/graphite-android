@@ -55,6 +55,7 @@ fun BottomSheet(
 	attachmentList: List<NoteViewModel.Companion.AttachmentState> = listOf(),
 	onClickRemoveLocation: () -> Unit = {},
 	onClickReloadLocation: () -> Unit = {},
+	onClinkSetLocation: () -> Unit = {},
 	onAddNewAttachment: (List<Uri>) -> Unit = {},
 	toggleAttachment: (NoteViewModel.Companion.AttachmentState) -> Unit = {},
 	onClickTag: (TagObject) -> Unit = {},
@@ -90,7 +91,7 @@ fun BottomSheet(
 		isBottomSheetVisible = isEditorLocationBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); onDismissRequest(NoteBottomSheet.EditorLocation) } },
 		locationData = locationData,
-		onClickSelectLocation = {
+		onClickSetLocation = {
 			scope.launch {
 				closeLocationPickerDialog()
 				bottomSheetState.hide()

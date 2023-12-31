@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.di.model.local.ChapterObjectLite
 import com.syncodec.graphite.di.model.local.LatLng
 import com.syncodec.graphite.di.model.local.NoteObject
@@ -34,7 +35,7 @@ import java.io.File
 
 
 @KoinViewModel
-class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStoreInstance : DataStoreInstance) : ViewModel() {
+class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStoreInstance: DataStoreInstance) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -92,13 +93,13 @@ class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStor
 
 	@OptIn(ExperimentalCoroutinesApi::class)
 	private suspend fun observeChapter(repository: Repository?) {
-		this._noteObject.transformLatest { emit(repository?.getChapterFromId(it?.parentId)) }.collectLatest {
+		this._noteObject.transformLatest { emit(repository?.getObjectFromId<ChapterObject>(id = it?.parentId)) }.collectLatest {
 			this@NoteViewModel._parentChapter.tryEmit(it?.toLite())
 		}
 	}
 
 	private suspend fun observeAllTags(repository: Repository?) {
-		repository?.getAllTagAsFlow()?.collectLatest { tagList1 ->
+		repository?.getAllObjectOfTypeAsFlow<TagObject>(includeLocked = true)?.collectLatest { tagList1 ->
 			this@NoteViewModel._allTagsList.tryEmit(tagList1)
 		}
 	}
@@ -136,7 +137,7 @@ class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStor
 		}
 	}
 
-	fun setUserTimestamp(timestamp : Long) {
+	fun setUserTimestamp(timestamp: Long) {
 		this@NoteViewModel._noteObject.value?.clone()?.let {
 			it.userTimestamp = timestamp
 			this@NoteViewModel._noteObject.tryEmit(it)
@@ -217,7 +218,7 @@ class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStor
 				)
 
 				repository.attachmentRepository.putAttachment(parentId = noteId1, uriList = this.attachmentList.value.filterIsInstance<AttachmentState.New>().map { it.uri })
-				repository.attachmentRepository.delete(attachmentList = this.attachmentList.value.filterIsInstance<AttachmentState.ToRemove>().map { it.file }.toSet())
+				repository.deleteAttachment(attachmentList = this.attachmentList.value.filterIsInstance<AttachmentState.ToRemove>().map { it.file }, keepHistory = true)
 			}
 		}
 
@@ -248,7 +249,10 @@ class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStor
 	}
 
 	fun updateParent(parentId: RealmUUID) {
-		_repository.value?.setObjectFromIdSuspended<NoteObject>(id = _noteId.value) {
+		if (isEditing.value == true) _noteObject.value?.apply {
+			this.parentId = parentId
+			this@NoteViewModel._noteObject.tryEmit(this)
+		} else _repository.value?.setObjectFromIdSuspended<NoteObject>(id = _noteId.value) {
 			this.updateModifyTimestamp()
 			this.parentId = parentId
 		}
@@ -257,8 +261,7 @@ class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStor
 	fun putTag(tag: String, color: Color): Boolean {
 		return if (allTagsList.value.find { it.tag == tag } != null) {
 			false
-		}
-		else {
+		} else {
 			viewModelScope.launch(Dispatchers.Default) {
 				TagObject().apply {
 					this.tag = tag
@@ -289,7 +292,7 @@ class NoteViewModel(private val lockableRepo: LockableRepo, private val dataStor
 			data object ToRemove : TagObjectState()
 		}
 
-		sealed class AttachmentState(val name : String?) {
+		sealed class AttachmentState(val name: String?) {
 			data class Saved(val file: File) : AttachmentState(name = file.name) {
 				fun toRemove() = ToRemove(file = file)
 			}

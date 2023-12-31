@@ -40,8 +40,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.BucketItemObject
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CheckButton
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
@@ -49,6 +49,7 @@ import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
 import com.syncodec.graphite.presentation.base.secureComposable.LocalIsRepoUnlocked
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 import kotlinx.coroutines.delay
 
 
@@ -111,6 +112,7 @@ fun EditTodoBottomSheet(
 					imeAction = ImeAction.Done,
 				),
 				keyboardActions = KeyboardActions { bucketItemObject?.let { onUpdateTitle(it, todoText) } },
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 

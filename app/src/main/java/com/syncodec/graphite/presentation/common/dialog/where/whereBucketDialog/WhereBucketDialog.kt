@@ -106,7 +106,8 @@ fun WhereBucketDialog2(
 		) {
 			if (bucketList.isEmpty()) EmptyView(
 				image = R.drawable.il_empty_chapter,
-				title = "No buckets found"
+				title = "No buckets found",
+				modifier = Modifier.fillMaxSize()
 			)
 			else LazyVerticalGrid(
 				columns = GridCells.Adaptive(144.dp),

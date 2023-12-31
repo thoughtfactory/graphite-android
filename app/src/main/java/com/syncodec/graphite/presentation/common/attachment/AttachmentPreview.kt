@@ -48,7 +48,7 @@ fun AttachmentPreview(
 		withContext(Dispatchers.IO) {
 			previewData = PreviewData.Loading
 			previewData = FilePreviewer.getPreview(file = file, context = context)
-			Log.d("npr71", "file : ${file.name} : ${previewData::class.simpleName}")
+			Log.d("rits", "file : ${file.name} : ${previewData::class.simpleName}")
 		}
 	}
 

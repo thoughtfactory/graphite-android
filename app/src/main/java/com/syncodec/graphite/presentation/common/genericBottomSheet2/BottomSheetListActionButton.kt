@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
+package com.syncodec.graphite.presentation.common.genericBottomSheet2
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

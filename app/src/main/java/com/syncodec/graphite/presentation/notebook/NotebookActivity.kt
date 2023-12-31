@@ -36,7 +36,7 @@ class NotebookActivity : ComponentActivity() {
 
 				val chapterObject by viewModel.currentChapter.collectAsState()
 				val chapterList by viewModel.chapterList.collectAsState()
-				val noteList by viewModel.noteList.collectAsState()
+				val noteGroupList by viewModel.noteGroupList.collectAsState()
 				val tagList by viewModel.tagList.collectAsState()
 				val chapterNoteItemCount by viewModel.chapterNoteItemCount.collectAsState()
 				val chapterChapterItemCount by viewModel.chapterChapterItemCount.collectAsState()
@@ -46,7 +46,7 @@ class NotebookActivity : ComponentActivity() {
 				NotebookScreen(
 					chapterObject = chapterObject,
 					chapterList = chapterList,
-					noteList = noteList,
+					noteGroupList = noteGroupList,
 					tagList = tagList,
 					chapterNoteItemCount = chapterNoteItemCount,
 					chapterChapterItemCount = chapterChapterItemCount,

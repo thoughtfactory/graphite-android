@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets
+package com.syncodec.graphite.presentation.common.genericBottomSheet2.sheets
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -41,13 +41,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyText
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.BottomSheetKeyText
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.MinusButton
 import com.syncodec.graphite.presentation.common.button.PlusButton
 import com.syncodec.graphite.presentation.base.LocalAppDataStore
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
 
@@ -64,7 +64,7 @@ fun FilterAndViewBottomSheet(
 	val appDataStore = LocalAppDataStore.current
 
 	val sortOn by appDataStore.getSortOn.collectAsState(initial = SortOn.Timestamp)
-	val sortBy by appDataStore.getSortBy.collectAsState(initial = SortBy.Descending)
+	val sortOrder by appDataStore.getSortOrder.collectAsState(initial = SortOrder.Descending)
 	val viewType by appDataStore.getViewType.collectAsState(initial = ViewType.List)
 	val componentHeight by appDataStore.componentHeight.collectAsState(initial = 144)
 	val componentColumnCount by appDataStore.componentColumnCount.collectAsState(initial = 2)
@@ -81,7 +81,7 @@ fun FilterAndViewBottomSheet(
 
 			Spacer(modifier = Modifier.height(12.dp))
 
-			SortByView(sortBy = sortBy) { appDataStore.putSortBy(it) }
+			SortByView(sortOrder = sortOrder) { appDataStore.putSortBy(it) }
 
 			Spacer(modifier = Modifier.height(8.dp))
 
@@ -124,7 +124,7 @@ fun FilterAndViewBottomSheet(
 				modifier = Modifier.fillMaxWidth(),
 				onClick = {
 					appDataStore.putSortOn(SortOn.Timestamp)
-					appDataStore.putSortBy(SortBy.Descending)
+					appDataStore.putSortBy(SortOrder.Descending)
 					appDataStore.putComponentHeight(144)
 				}
 			) {
@@ -182,8 +182,8 @@ private fun SortOnView(
 @Preview
 @Composable
 private fun SortByView(
-	sortBy: SortBy = SortBy.Descending,
-	onClick: (SortBy) -> Unit = {},
+	sortOrder: SortOrder = SortOrder.Descending,
+	onClick: (SortOrder) -> Unit = {},
 ) {
 	BottomSheetKeyText(text = stringResource(id = R.string.sort_by))
 	Spacer(modifier = Modifier.height(8.dp))
@@ -191,11 +191,11 @@ private fun SortByView(
 		modifier = Modifier.fillMaxWidth()
 	) {
 		val ascendingContainerColor by animateColorAsState(
-			targetValue = if (sortBy == SortBy.Ascending) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f),
+			targetValue = if (sortOrder == SortOrder.Ascending) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.47f),
 			label = "ascendingContainerColor_animation"
 		)
 		val ascendingContentColor by animateColorAsState(
-			targetValue = if (sortBy == SortBy.Ascending) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+			targetValue = if (sortOrder == SortOrder.Ascending) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
 			label = "ascendingContentColor_animation"
 		)
 
@@ -204,7 +204,7 @@ private fun SortByView(
 				.weight(1f)
 				.background(ascendingContainerColor, MaterialTheme.shapes.medium)
 				.clip(MaterialTheme.shapes.medium)
-				.clickable { onClick(SortBy.Ascending) },
+				.clickable { onClick(SortOrder.Ascending) },
 		) {
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
@@ -235,9 +235,9 @@ private fun SortByView(
 		FilterButton(
 			text = stringResource(id = R.string.descending),
 			icon = R.drawable.ic_fa_sort_bars,
-			highlight = sortBy == SortBy.Descending,
+			highlight = sortOrder == SortOrder.Descending,
 			modifier = Modifier.weight(1f),
-		) { onClick(SortBy.Descending) }
+		) { onClick(SortOrder.Descending) }
 	}
 }
 

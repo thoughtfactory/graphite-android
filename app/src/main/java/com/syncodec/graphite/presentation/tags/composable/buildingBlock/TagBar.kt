@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.PlusButton
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 
 
 @Preview
@@ -42,6 +43,7 @@ fun TagBar(
 			imeAction = ImeAction.Done,
 		),
 		keyboardActions = KeyboardActions { onClickAddTag() },
+		colors = getGraphiteTextFieldColors(),
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(horizontal = 24.dp)

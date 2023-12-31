@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen.noteScreen
 
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -35,6 +36,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import com.syncodec.graphite.di.repository.group.isAll
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.common.LoadingView
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
@@ -67,10 +69,12 @@ fun NoteScreen(
 	val viewType by dataStoreInstance.getViewType.collectAsState(null)
 
 	val defaultChapterId by viewModel.defaultChapterId.collectAsState()
-	val noteGroupList by viewModel.noteList.collectAsState()
+	val noteGroupList by viewModel.noteGroupList.collectAsState()
 	val tagList by viewModel.tagList.collectAsState()
 
 	var isDeleteDialogVisible by remember { mutableStateOf(false) }
+
+	BackHandler(enabled = isSelecting) { onUnSelectAll() }
 
 	fun onClickNote(id: RealmUUID) {
 		if (isSelecting) {
@@ -89,8 +93,8 @@ fun NoteScreen(
 		floatingActionButton = {
 			AnimatedVisibility(
 				visible = !isSelecting,
-				enter = fadeIn(tween(470)) + scaleIn(tween(470)),
-				exit = fadeOut(tween(470)) + scaleOut(tween(470))
+				enter = fadeIn(tween(ANIMATION_DURATION_MILLIS)) + scaleIn(tween(ANIMATION_DURATION_MILLIS)),
+				exit = fadeOut(tween(ANIMATION_DURATION_MILLIS)) + scaleOut(tween(ANIMATION_DURATION_MILLIS))
 			) {
 				if (BuildConfig.DEBUG) {
 					Column(
@@ -144,15 +148,6 @@ fun NoteScreen(
 							}
 						}
 					}
-
-//					NoteFloatingActionButton(isExpanded = true) {
-//						Intent(context, NoteActivity2::class.java).apply {
-//							putExtra(Extra.Companion.Extra.IsNew.name, true)
-//							putExtra(Extra.Companion.Extra.ParentId.name, defaultChapterId?.bytes)
-//							putExtra(Extra.Companion.Extra.Filter.name, Extra.Companion.Filter.SingleRead.name)
-//							context.startActivity(this)
-//						}
-//					}
 				}
 			}
 		},
@@ -163,11 +158,12 @@ fun NoteScreen(
 				image = remember { if (Random.nextBoolean()) R.drawable.il_writing_b else R.drawable.il_writing_g },
 				title = "The town was paper, but the memories were not.",
 				subTitle = "― John Green, Paper Towns",
+				modifier = Modifier.fillMaxSize()
 			)
 
 			else -> AnimatedContent(
 				targetState = viewType,
-				transitionSpec = { (fadeIn(tween(470)) + scaleIn(tween(470), 0.71f)).togetherWith(fadeOut(tween(470)) + scaleOut(tween(470), 0.71f)) },
+				transitionSpec = { (fadeIn(tween(ANIMATION_DURATION_MILLIS)) + scaleIn(tween(ANIMATION_DURATION_MILLIS), 0.71f)).togetherWith(fadeOut(tween(ANIMATION_DURATION_MILLIS)) + scaleOut(tween(ANIMATION_DURATION_MILLIS), 0.71f)) },
 				modifier = Modifier.fillMaxSize(),
 				label = "viewType_animation"
 			) { viewType1 ->

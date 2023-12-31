@@ -32,8 +32,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,7 +40,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,7 +52,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -75,10 +71,12 @@ import coil.request.ImageRequest
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.ChapterObject
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.dialog.ColorPickerDialog
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -91,7 +89,7 @@ import kotlinx.coroutines.launch
 
 
 @Preview
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChapterBottomSheet(
 	bottomSheetState: SheetState = rememberModalBottomSheetState(),
@@ -167,6 +165,7 @@ fun ChapterBottomSheet(
 				trailingIcon = { CancelButton { bucketTitleText = "" } },
 				maxLines = 1,
 				singleLine = true,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 
@@ -181,6 +180,7 @@ fun ChapterBottomSheet(
 				trailingIcon = { CancelButton { bucketDescriptionText = "" } },
 				maxLines = 1,
 				singleLine = true,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 
@@ -197,20 +197,12 @@ fun ChapterBottomSheet(
 
 			Spacer(modifier = Modifier.height(8.dp))
 
-			Button(
-				shape = MaterialTheme.shapes.medium,
-				colors = ButtonDefaults.buttonColors(
-					containerColor = MaterialTheme.colorScheme.primary,
-					contentColor = MaterialTheme.colorScheme.onPrimary,
-					disabledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp).copy(alpha = 0.31f),
-					disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.71f),
-				),
+			GenericBottomSheetButton(
+				text = stringResource(id = R.string.save),
 				enabled = bucketTitleText.isNotEmpty() && (selectedColor != null || currentImage != null || currentImageUri != null || chapterObject != null),
 				modifier = Modifier.fillMaxWidth(),
 				onClick = { createNotebook() },
-			) {
-				Text(text = stringResource(id = R.string.save))
-			}
+			)
 		}
 	}
 }

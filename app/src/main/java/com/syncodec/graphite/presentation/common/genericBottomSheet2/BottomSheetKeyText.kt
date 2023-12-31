@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.bottomSheet
+package com.syncodec.graphite.presentation.common.genericBottomSheet2
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme

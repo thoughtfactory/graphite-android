@@ -158,7 +158,7 @@ sealed class Exportable {
 		@Serializable(with = RealmUUIDNullableSerializer::class)
 		@SerialName("parent_id") val parentId: RealmUUID? = null,
 		@SerialName("key") val key: String? = null,
-		@SerialName("data") val data: String? = null,
+		@SerialName("bucketItemDataJson") val bucketItemDataJson: String? = null,
 		@SerialName("schema_version") val schemaVersion: Int = SCHEME_VERSION,
 	) : Exportable() {
 		override fun toObject(): BucketItemObject = BucketItemObject().apply {
@@ -173,7 +173,7 @@ sealed class Exportable {
 			this.isLocked = this@ExportBucketItemObject.isLocked
 			this.parentId = this@ExportBucketItemObject.parentId
 			this.key = this@ExportBucketItemObject.key
-			this.data = this@ExportBucketItemObject.data
+			this.bucketItemDataJson = this@ExportBucketItemObject.bucketItemDataJson
 		}
 
 		companion object {
@@ -189,7 +189,7 @@ sealed class Exportable {
 				isLocked = inputObject.isLocked,
 				parentId = inputObject.parentId,
 				key = inputObject.key,
-				data = inputObject.data,
+				bucketItemDataJson = inputObject.bucketItemDataJson,
 			)
 		}
 	}

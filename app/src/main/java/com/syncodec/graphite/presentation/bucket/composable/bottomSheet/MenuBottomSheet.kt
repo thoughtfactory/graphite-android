@@ -7,11 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.DeleteButton
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.ShareButton
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.EditButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.DeleteButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.ShareButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.EditButton
 import com.syncodec.graphite.presentation.common.row.SameHeightRowGrid
 
 

@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2
+package com.syncodec.graphite.presentation.common.genericBottomSheet2
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,7 +35,7 @@ import com.syncodec.graphite.presentation.base.ICON_SIZE
 
 @Preview
 @Composable
-fun GenericBottomSheetButton2(
+fun BottomSheetActionButton(
 	icon : Int = R.drawable.ic_fa_gallery,
 	text : String = "Gallery",
 	contentDescription : String = "Add from gallery",
@@ -157,7 +157,7 @@ object GenericBottomSheetButton2Defaults {
 fun ShareButton(
 	onClick: () -> Unit = {}
 ) {
-	GenericBottomSheetButton2(
+	BottomSheetActionButton(
 		icon = R.drawable.ic_fa_share,
 		text = stringResource(id = R.string.share_all),
 		contentDescription = stringResource(id = R.string.share_all),
@@ -170,7 +170,7 @@ fun ShareButton(
 fun EditButton(
 	onClick: () -> Unit = {}
 ) {
-	GenericBottomSheetButton2(
+	BottomSheetActionButton(
 		icon = R.drawable.ic_fa_pen,
 		text = stringResource(id = R.string.edit),
 		contentDescription = stringResource(id = R.string.edit),
@@ -183,7 +183,7 @@ fun EditButton(
 fun AttachmentButton(
 	onClick: () -> Unit = {}
 ) {
-	GenericBottomSheetButton2(
+	BottomSheetActionButton(
 		icon = R.drawable.ic_fa_gallery,
 		text = stringResource(id = R.string.attachments),
 		contentDescription = stringResource(id = R.string.attachments),
@@ -196,7 +196,7 @@ fun AttachmentButton(
 fun CalendarButton(
 	onClick: () -> Unit = {}
 ) {
-	GenericBottomSheetButton2(
+	BottomSheetActionButton(
 		icon = R.drawable.ic_fa_calendar,
 		text = stringResource(id = R.string.calendar),
 		contentDescription = stringResource(id = R.string.calendar),
@@ -209,7 +209,7 @@ fun CalendarButton(
 fun AtlasButton(
 	onClick: () -> Unit = {}
 ) {
-	GenericBottomSheetButton2(
+	BottomSheetActionButton(
 		icon = R.drawable.ic_fa_atlas,
 		text = stringResource(id = R.string.atlas),
 		contentDescription = stringResource(id = R.string.atlas),
@@ -222,7 +222,7 @@ fun AtlasButton(
 fun DeleteButton(
 	onClick: () -> Unit = {}
 ) {
-	GenericBottomSheetButton2(
+	BottomSheetActionButton(
 		icon = R.drawable.ic_fa_delete,
 		text = stringResource(id = R.string.delete),
 		contentDescription = stringResource(id = R.string.delete),

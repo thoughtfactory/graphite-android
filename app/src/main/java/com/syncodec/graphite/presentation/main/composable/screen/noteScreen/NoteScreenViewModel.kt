@@ -30,8 +30,9 @@ class NoteScreenViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	private val _tagList: MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
 	val tagList: StateFlow<List<TagObject>> = _tagList
-	private val _noteList: MutableStateFlow<RealmObjectGroupList<NoteObjectLite>?> = MutableStateFlow(null)
-	val noteList: StateFlow<RealmObjectGroupList<NoteObjectLite>?> = _noteList
+
+	private val _noteGroupList: MutableStateFlow<RealmObjectGroupList<NoteObjectLite>?> = MutableStateFlow(null)
+	val noteGroupList: StateFlow<RealmObjectGroupList<NoteObjectLite>?> = _noteGroupList
 
 	private var defaultChapterChildObserverJob: Job? = null
 
@@ -63,8 +64,8 @@ class NoteScreenViewModel(lockableRepo: LockableRepo) : ViewModel() {
 			Job(viewModelScope.coroutineContext.job).let { job ->
 				defaultChapterChildObserverJob = job
 				launch(Dispatchers.Default + job) {
-					repository?.getDefaultNoteLiteMapAsFlow2(parentId = chapterId)?.collectLatest { noteList1 ->
-						this@NoteScreenViewModel._noteList.tryEmit(noteList1)
+					repository?.getDefaultNoteLiteMapAsFlow3()?.collectLatest { noteGroupList1 ->
+						this@NoteScreenViewModel._noteGroupList.tryEmit(noteGroupList1)
 					}
 				}
 			}
@@ -72,7 +73,7 @@ class NoteScreenViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	}
 
 	private suspend fun observeTags(repository: Repository?) {
-		repository?.getAllTagAsFlow()?.collectLatest { tagList1 ->
+		repository?.getAllObjectOfTypeAsFlow<TagObject>(includeLocked = true)?.collectLatest { tagList1 ->
 			this@NoteScreenViewModel._tagList.tryEmit(tagList1)
 		}
 	}
@@ -80,7 +81,7 @@ class NoteScreenViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	fun onClickMultiFavourite(idList: Set<RealmUUID>, isAllFavourite: Boolean) {
 		viewModelScope.launch(Dispatchers.Default) {
 			idList.forEach { noteId ->
-				_repository.value?.getNoteFromId(id = noteId)?.clone()?.apply {
+				_repository.value?.getObjectFromId<NoteObject>(id = noteId)?.clone()?.apply {
 					this.isFavourite = !isAllFavourite
 					_repository.value?.putNote(this)
 				}
@@ -91,7 +92,7 @@ class NoteScreenViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	fun onClickMultiLock(idList: Set<RealmUUID>, isAllLocked: Boolean) {
 		viewModelScope.launch(Dispatchers.Default) {
 			idList.forEach { noteId ->
-				_repository.value?.getNoteFromId(id = noteId)?.clone()?.apply {
+				_repository.value?.getObjectFromId<NoteObject>(id = noteId)?.clone()?.apply {
 					this.isLocked = !isAllLocked
 					_repository.value?.putNote(this)
 				}

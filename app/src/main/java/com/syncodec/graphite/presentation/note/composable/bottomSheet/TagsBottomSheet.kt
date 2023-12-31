@@ -56,8 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.TagObject
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.note.NoteViewModel
 import com.syncodec.graphite.presentation.tags.composable.bottomSheet.AddTagBottomSheet

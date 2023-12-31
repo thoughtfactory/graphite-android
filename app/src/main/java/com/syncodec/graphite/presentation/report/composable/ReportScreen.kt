@@ -48,6 +48,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.report.ReportActivity
 import com.syncodec.graphite.presentation.base.ICON_SIZE
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 
 
@@ -105,6 +106,7 @@ fun ReportScreen(
 				label = { Text(text = "Title") },
 				placeholder = { Text(text = "Keep it simple") },
 				shape = MaterialTheme.shapes.medium,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(12.dp, 0.dp),
@@ -117,6 +119,7 @@ fun ReportScreen(
 				label = { Text(text = "Email") },
 				placeholder = { Text(text = "Report is anonymous by default") },
 				shape = MaterialTheme.shapes.medium,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(12.dp, 0.dp),
@@ -129,6 +132,7 @@ fun ReportScreen(
 				label = { Text(text = "Description") },
 				placeholder = { Text(text = "An overview") },
 				shape = MaterialTheme.shapes.medium,
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(12.dp, 0.dp)

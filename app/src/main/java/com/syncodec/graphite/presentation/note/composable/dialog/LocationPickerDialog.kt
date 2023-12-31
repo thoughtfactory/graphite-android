@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.GoogleMapOptions
@@ -44,8 +45,9 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.LatLng
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2Defaults
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfoDefaults
 import com.syncodec.graphite.presentation.common.button.GenericButton
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.base.ICON_SIZE
@@ -101,8 +103,8 @@ fun LocationPickerDialog(
 
 	AnimatedVisibility(
 		visible = isDialogVisible,
-		enter = fadeIn(tween(470)),
-		exit = fadeOut(tween(470)),
+		enter = fadeIn(tween(ANIMATION_DURATION_MILLIS)),
+		exit = fadeOut(tween(ANIMATION_DURATION_MILLIS)),
 		modifier = Modifier.fillMaxSize()
 	) {
 		GenericScaffold2 {
@@ -185,8 +187,8 @@ fun LocationPickerDialog(
 					.padding(16.dp)
 					.align(Alignment.BottomCenter)
 			) {
-				GenericBottomSheetInfo2(
-					key = "Address",
+				GenericBottomSheetInfo(
+					key = stringResource(id = R.string.address),
 					value = when (addressContentStatus) {
 						is ContentStatus.Init -> "Loading..."
 						is ContentStatus.Loading -> "Loading..."
@@ -194,7 +196,7 @@ fun LocationPickerDialog(
 						is ContentStatus.LoadedEmpty -> "No address found"
 						is ContentStatus.Error -> "Error"
 					} ?: "",
-					colors = GenericBottomSheetInfo2Defaults.primaryInfoColors(),
+					colors = GenericBottomSheetInfoDefaults.primaryInfoColors(),
 					modifier = Modifier
 						.weight(1f)
 						.shadow(6.dp, shape = MaterialTheme.shapes.medium)

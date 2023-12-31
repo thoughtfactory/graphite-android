@@ -1,99 +1,105 @@
 package com.syncodec.graphite.presentation.notebook.composable.bar
 
-import android.graphics.Bitmap
+import androidx.annotation.FloatRange
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.ColorUtils
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.util.lerp
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.baec23.ludwig.morpher.model.morpher.VectorSource
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.ChapterObjectLite
-import com.syncodec.graphite.presentation.common.button.BackButton
-import com.syncodec.graphite.presentation.common.button.FavouriteButton
-import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
-import com.syncodec.graphite.presentation.common.button.LockButton
-import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.tab.GenericTabRow
-import com.syncodec.graphite.presentation.common.tab.TabItem
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
 import com.syncodec.graphite.presentation.base.LockClosedContainer
+import com.syncodec.graphite.presentation.common.animation.AnimatedText
+import com.syncodec.graphite.presentation.common.button.BackButton
+import com.syncodec.graphite.presentation.common.button.FavouriteButton
+import com.syncodec.graphite.presentation.common.button.GenericAnimatedMorphButton
+import com.syncodec.graphite.presentation.common.button.GenericButtonDefaults
+import com.syncodec.graphite.presentation.common.button.LockButton
+import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.component.chapter.Navigator
+import com.syncodec.graphite.presentation.common.component.composable.DotSeparator
+import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import com.syncodec.graphite.utils.getInverseBWColor
 import io.realm.kotlin.types.RealmUUID
 
+val COLLAPSED_TOP_BAR_HEIGHT = 64.dp
+val EXPANDED_TOP_BAR_HEIGHT = 260.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun CollapsedTopBar(
+fun TopBar(
 	modifier: Modifier = Modifier,
 	chapterTitle: String? = null,
 	isFavourite: Boolean = false,
 	isLocked: Boolean = false,
+	@FloatRange(from = 0.0, to = 1.0) offset: Float = 0f,
 	chapterColor: Color? = null,
-	chapterPath: List<ChapterObjectLite> = listOf(),
-	defaultChapterId: RealmUUID? = null,
-	selectedTab: Int = 0,
-	isCollapsed: Boolean = false,
-	isSelecting: Boolean = false,
-	onContainerColor: Color = MaterialTheme.colorScheme.onBackground,
 	onClickFavourite: () -> Unit = {},
 	onClickLock: () -> Unit = {},
 	onClickMenuButton: () -> Unit = {},
-	onLoadChapter: (RealmUUID) -> Unit = {},
-	onSelectTab: (Int) -> Unit = {}
 ) {
-
 	val isDarkTheme = LocalIsDarkTheme.current
 
-	@Suppress("KotlinConstantConditions")
-	val containerColor = when {
-		(chapterColor == null) && isCollapsed && isDarkTheme -> MaterialTheme.colorScheme.background
-		(chapterColor == null) && isCollapsed && !isDarkTheme -> MaterialTheme.colorScheme.background
-		(chapterColor == null) && !isCollapsed && !isDarkTheme -> Color.Transparent
-		(chapterColor == null) && !isCollapsed && isDarkTheme -> Color.Transparent
-		(chapterColor != null) && isCollapsed && isDarkTheme -> MaterialTheme.colorScheme.background
-		(chapterColor != null) && isCollapsed && !isDarkTheme -> MaterialTheme.colorScheme.background
-		(chapterColor != null) && !isCollapsed && !isDarkTheme -> chapterColor
-		(chapterColor != null) && !isCollapsed && isDarkTheme -> Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), chapterColor.toArgb(), 0.47f))
-		else -> Color.Transparent
-	}
-
-	val contentColor = when {
-		isCollapsed -> MaterialTheme.colorScheme.onBackground
-		chapterColor == null -> Color.White
-		isDarkTheme -> Color.White
-		else -> chapterColor.getInverseBWColor()
-	}
+	val contentColor by animateColorAsState(
+		targetValue = when {
+			isDarkTheme -> MaterialTheme.colorScheme.onBackground
+			chapterColor == null -> MaterialTheme.colorScheme.onBackground
+			else -> chapterColor.getInverseBWColor()
+		},
+		label = "contentColor_animation"
+	)
 
 	Column(
 		modifier = modifier.fillMaxWidth()
@@ -102,7 +108,10 @@ fun CollapsedTopBar(
 			navigationIcon = { BackButton(colors = GenericButtonDefaults.transparentButtonColors(iconColor = contentColor)) },
 			title = {
 				AnimatedVisibility(
-					visible = isCollapsed
+					visible = offset > 0.5f,
+					enter = fadeIn() + slideInVertically { it / 2 },
+					exit = fadeOut() + slideOutVertically { it / 2 },
+					label = "title_visibility"
 				) {
 					Text(
 						text = chapterTitle ?: stringResource(id = R.string.untitled),
@@ -136,179 +145,11 @@ fun CollapsedTopBar(
 				)
 			},
 			colors = TopAppBarDefaults.topAppBarColors(
-				containerColor = containerColor,
+				containerColor = Color.Transparent,
 				navigationIconContentColor = contentColor,
 				titleContentColor = contentColor,
 				actionIconContentColor = contentColor,
 			),
 		)
-
-		if (isCollapsed) {
-			AnimatedVisibility(
-				visible = !isSelecting,
-				enter = expandVertically(tween(470)),
-				exit = shrinkVertically(tween(470))
-			) {
-				Column(
-					modifier = Modifier
-						.fillMaxWidth()
-						.background(MaterialTheme.colorScheme.background)
-				) {
-					Navigator(
-						chapterPath = chapterPath.reversed(),
-						defaultChapterId = defaultChapterId,
-						showRoot = false,
-						isVisible = true,
-						onClickNavigatorChapter = { it?.also(onLoadChapter) },
-					)
-
-					GenericTabRow(
-						tabItemList = listOf(
-							TabItem(text = stringResource(id = R.string.notes), icon = R.drawable.ic_fa_note_duotone) { onSelectTab(0) },
-							TabItem(text = stringResource(id = R.string.chapters), icon = R.drawable.ic_fa_notebook_duotone) { onSelectTab(1) },
-						),
-						selectedTabIndex = selectedTab,
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(horizontal = 12.dp)
-					)
-
-					Spacer(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(12.dp)
-					)
-				}
-			}
-		}
 	}
 }
-
-@Preview
-@Composable
-fun ExpandedTopBar(
-	chapterTitle: String? = null,
-	chapterDescription: String? = null,
-	chapterColor: Color? = null,
-	bitmap: Bitmap? = null,
-	defaultChapterId: RealmUUID? = null,
-	chapterPath: List<ChapterObjectLite> = listOf(),
-	selectedTab: Int = 0,
-	isSelecting: Boolean = false,
-	onLoadChapter: (RealmUUID) -> Unit = {},
-	onSelectTab: (Int) -> Unit = {}
-) {
-	val context = LocalContext.current
-
-	val isDarkTheme = LocalIsDarkTheme.current
-
-	val containerColor by animateColorAsState(
-		targetValue = (if (isDarkTheme) chapterColor?.copy(alpha = 0.47f) else chapterColor) ?: MaterialTheme.colorScheme.background,
-		label = "containerColor_animation"
-	)
-	val contentColor by animateColorAsState(
-		targetValue = when {
-			isDarkTheme -> Color.White
-			// If thumbnail is available
-			chapterColor == null -> Color.White
-			else -> chapterColor.getInverseBWColor()
-		},
-		label = "contentColor_animation"
-	)
-
-	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.background)
-	) {
-		Box(
-			modifier = Modifier
-				.background(MaterialTheme.colorScheme.background)
-				.fillMaxWidth()
-				.height(EXPANDED_TOP_BAR_HEIGHT),
-			contentAlignment = Alignment.BottomStart
-		) {
-			SubcomposeAsyncImage(
-				model = ImageRequest.Builder(context)
-					.data(bitmap)
-					.crossfade(470)
-					.build(),
-				error = {
-					Box(
-						modifier = Modifier
-							.fillMaxSize()
-							.background(containerColor)
-					)
-				},
-				contentDescription = null,
-				contentScale = ContentScale.Crop,
-				modifier = Modifier.fillMaxSize()
-			)
-			if (bitmap != null) {
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.background(Color.Black.copy(alpha = 0.17f))
-				)
-			}
-
-			Column(
-				modifier = Modifier.padding(16.dp)
-			) {
-				Text(
-					text = chapterTitle ?: stringResource(id = R.string.untitled),
-					style = MaterialTheme.typography.headlineLarge,
-					fontStyle = if (chapterTitle.isNullOrEmpty()) FontStyle.Italic else FontStyle.Normal,
-					color = contentColor,
-				)
-
-				chapterDescription?.let {
-					Spacer(modifier = Modifier.height(4.dp))
-					Text(
-						text = it,
-						style = MaterialTheme.typography.bodySmall,
-						color = contentColor,
-						modifier = Modifier.padding(start = 2.dp)
-					)
-				}
-			}
-		}
-
-		AnimatedVisibility(
-			visible = !isSelecting,
-			enter = expandVertically(tween(470)),
-			exit = shrinkVertically(tween(470))
-		) {
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.background(MaterialTheme.colorScheme.background)
-			) {
-
-				Navigator(
-					chapterPath = chapterPath.reversed(),
-					defaultChapterId = defaultChapterId,
-					showRoot = false,
-					isVisible = true,
-					onClickNavigatorChapter = { it?.let(onLoadChapter) },
-				)
-
-				GenericTabRow(
-					tabItemList = listOf(
-						TabItem(text = stringResource(id = R.string.notes), icon = R.drawable.ic_fa_note_duotone) { onSelectTab(0) },
-						TabItem(text = stringResource(id = R.string.chapters), icon = R.drawable.ic_fa_notebook_duotone) { onSelectTab(1) },
-					),
-					selectedTabIndex = selectedTab,
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(horizontal = 12.dp)
-				)
-
-				Spacer(modifier = Modifier.height(4.dp))
-			}
-		}
-	}
-}
-
-val COLLAPSED_TOP_BAR_HEIGHT = 64.dp
-val EXPANDED_TOP_BAR_HEIGHT = 256.dp

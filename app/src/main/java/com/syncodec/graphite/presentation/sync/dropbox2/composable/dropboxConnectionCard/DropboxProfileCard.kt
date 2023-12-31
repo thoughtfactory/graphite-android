@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.sync.dropbox2.composable.dropboxConnectionCard
 
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -53,8 +52,8 @@ import com.syncodec.graphite.presentation.common.info.InfoCardType
 fun DropboxProfileCard(
 	modifier: Modifier = Modifier,
 	dropboxAccountInfo: NetworkRequest<DropboxApi.Companion.DropboxAccountInfo> = NetworkRequest.Init,
+	hideOnError: Boolean = false,
 ) {
-	Log.d("npr71", "DropboxProfileCard: $dropboxAccountInfo")
 	AnimatedContent(
 		targetState = dropboxAccountInfo,
 		transitionSpec = { fadeIn(tween(ANIMATION_DURATION_MILLIS)) togetherWith fadeOut(tween(ANIMATION_DURATION_MILLIS)) },
@@ -83,11 +82,12 @@ fun DropboxProfileCard(
 					DropboxSpaceView(dropboxSpaceUsage = it.data.spaceUsage)
 				}
 			}
-			is NetworkRequest.Error -> InfoCardType.Error(
+
+			is NetworkRequest.Error -> if (!hideOnError) InfoCardType.Error(
 				modifier = modifier,
 				title = stringResource(R.string.connection_Error),
 				description = stringResource(R.string.error_retrieving_dropbox_account_info),
-			)
+			) else Unit
 		}
 	}
 }
@@ -153,7 +153,6 @@ private fun DropboxAccountView(
 private fun DropboxSpaceView(
 	dropboxSpaceUsage: DropboxApi.Companion.DropboxSpaceUsage = DropboxApi.Companion.DropboxSpaceUsage(used = 71, allocated = 100)
 ) {
-
 	val spaceUsedMb by remember(dropboxSpaceUsage.used) { derivedStateOf { dropboxSpaceUsage.used / 1024 / 1024 } }
 	val spaceTotalMb by remember(dropboxSpaceUsage.allocated) { derivedStateOf { dropboxSpaceUsage.allocated / 1024 / 1024 } }
 	val spaceUsedPercent by remember(dropboxSpaceUsage.allocated, dropboxSpaceUsage.used) { derivedStateOf { (dropboxSpaceUsage.used.toFloat() / dropboxSpaceUsage.allocated.toFloat()) } }
@@ -162,12 +161,12 @@ private fun DropboxSpaceView(
 		modifier = Modifier.fillMaxWidth()
 	) {
 		LinearProgressIndicator(
-			progress = spaceUsedPercent,
-			trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
+			progress = { spaceUsedPercent },
 			color = if (spaceUsedPercent > 0.8f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f),
+			trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.71f),
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(8.dp)
+				.height(8.dp),
 		)
 
 		Spacer(modifier = Modifier.height(12.dp))

@@ -46,7 +46,6 @@
 
 -keep class com.syncodec.graphite.database.** { *; }
 -keep class com.kedia.ogparser.OpenGraphResult
--keep class com.syncodec.graphite.di.model.KitKatFormatKt
 # Change here com.yourcompany.yourpackage
 -keep,includedescriptorclasses class com.syncodec.graphite.**$$serializer { *; }
 -keepclassmembers class com.syncodec.graphite.** {
@@ -67,7 +66,7 @@
 -keep class com.revenuecat.purchases.** { *; }
 
 -keep class com.google.api.services.drive.** { *;}
--keep class com.google.api.client.googleapis.json.GoogleJsonError.ErrorInfo
+#-keep class com.google.api.client.googleapis.json.GoogleJsonError.ErrorInfo
 -keep class com.google.api.client.googleapis.json.** { *; }
 -keep class * implements com.google.gson.TypeAdapterFactory
 -keep class * implements com.google.gson.JsonSerializer

@@ -61,8 +61,8 @@ fun BucketCard(
 	val contentColor by colors.contentColor(selected = selected)
 
 	SelectableContainer(
-		shape = MaterialTheme.shapes.small,
-		border = BorderStroke(1.dp, contentColor.copy(alpha = 0.31f)),
+		shape = MaterialTheme.shapes.medium,
+		border = BorderStroke(1.dp, contentColor.copy(alpha = 0.42f)),
 		selected = selected,
 		colors = colors,
 		onClick = onClick,

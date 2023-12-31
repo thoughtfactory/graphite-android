@@ -6,15 +6,16 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketType
-import com.syncodec.graphite.di.network.ShowType
+import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.MovieBucketItemScreen
 import com.syncodec.graphite.presentation.bucketItem.composable.screen.TvBucketItemScreen
 import com.syncodec.graphite.presentation.bucketItem.viewModel.ShowBucketItemViewModel
-import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.base.BaseComposable
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.shareUtil.ShareBucketItemUtil
 import io.realm.kotlin.types.RealmUUID
@@ -34,33 +35,35 @@ class ShowBucketItemActivity : ComponentActivity() {
 			BaseComposable {
 
 				val isNew by viewModel.isNew.collectAsState()
-				val showType by viewModel.showType.collectAsState()
 				val bucketItemObject by viewModel.bucketItemObject.collectAsState()
+				val tmdbData by remember(bucketItemObject?.bucketItemDataJson) { derivedStateOf { bucketItemObject?.getBucketItemData<BucketItemData.ShowData.TMDbData>() } }
 
-				when (showType) {
-					ShowType.MOVIE -> MovieBucketItemScreen(
-						isNew = isNew == true,
-						bucketItemObject = bucketItemObject,
-						onClickSave = viewModel::putBucketItem,
-						onClickFavourite = viewModel::onClickFavourite,
-						onClickLock = viewModel::onClickLock,
-						onUpdateState = viewModel::onChangeState,
-						onClickShare = { bucketItemObject?.let { share(ShareBucketItemUtil.getShowItemShareText(bucketItemList = listOf(it))) } },
-						onConfirmDelete = { viewModel.delete(); finish() },
-					)
+				tmdbData?.let { tmdbData1 ->
+					when (tmdbData1) {
+						is BucketItemData.ShowData.TMDbData.TMDbMovieData -> MovieBucketItemScreen(
+							isNew = isNew == true,
+							bucketItemObject = bucketItemObject,
+							movieData = tmdbData1,
+							onClickSave = viewModel::putBucketItem,
+							onClickFavourite = viewModel::onClickFavourite,
+							onClickLock = viewModel::onClickLock,
+							onUpdateState = viewModel::onChangeState,
+							onClickShare = { bucketItemObject?.let { share(ShareBucketItemUtil.getShowItemShareText(bucketItemList = listOf(it))) } },
+							onConfirmDelete = { viewModel.delete(); finish() },
+						)
 
-					ShowType.TV -> TvBucketItemScreen(
-						isNew = isNew == true,
-						bucketItemObject = bucketItemObject,
-						onClickSave = viewModel::putBucketItem,
-						onClickFavourite = viewModel::onClickFavourite,
-						onClickLock = viewModel::onClickLock,
-						onUpdateState = viewModel::onChangeState,
-						onClickShare = { bucketItemObject?.let { share(ShareBucketItemUtil.getShowItemShareText(bucketItemList = listOf(it))) } },
-						onConfirmDelete = { viewModel.delete(); finish() },
-					)
-
-					else -> LoadingView()
+						is BucketItemData.ShowData.TMDbData.TMDbTvData -> TvBucketItemScreen(
+							isNew = isNew == true,
+							bucketItemObject = bucketItemObject,
+							tvData = tmdbData1,
+							onClickSave = viewModel::putBucketItem,
+							onClickFavourite = viewModel::onClickFavourite,
+							onClickLock = viewModel::onClickLock,
+							onUpdateState = viewModel::onChangeState,
+							onClickShare = { bucketItemObject?.let { share(ShareBucketItemUtil.getShowItemShareText(bucketItemList = listOf(it))) } },
+							onConfirmDelete = { viewModel.delete(); finish() },
+						)
+					}
 				}
 			}
 		}
@@ -95,8 +98,8 @@ class ShowBucketItemActivity : ComponentActivity() {
 			when {
 				bucketId == null -> errorReadingData()
 				bucketType != BucketType.SHOW.name -> errorReadingData()
-				tvId != null -> viewModel.initBucketItem(showId = tvId, parentId = bucketId, showType = ShowType.TV)
-				movieId != null -> viewModel.initBucketItem(showId = movieId, parentId = bucketId, showType = ShowType.MOVIE)
+				tvId != null -> viewModel.initBucketItem(showId = tvId, parentId = bucketId, tmdbDataType = BucketItemData.ShowData.TMDbData.TMDbTvData::class.simpleName)
+				movieId != null -> viewModel.initBucketItem(showId = movieId, parentId = bucketId, tmdbDataType = BucketItemData.ShowData.TMDbData.TMDbMovieData::class.simpleName)
 				(bucketItemId != null) -> viewModel.readBucketItem(bucketItemId, parentId = bucketId)
 				else -> errorReadingData()
 			}

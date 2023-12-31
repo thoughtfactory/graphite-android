@@ -68,7 +68,7 @@ class NotebookScreenViewModel(
 			this.thumbnail = bitmap?.encodeBase64()
 		}
 		viewModelScope.launch(Dispatchers.Default) {
-			_repository.value?.getChapterWithParentId(parentChapterId = null)?.let {
+			_repository.value?.getObjectWithParentId<ChapterObject>(parentId = null, includeLocked = true)?.let {
 				if (it.size < 4) _repository.value?.putChapterSuspended(chapterObject)
 			}
 		}
@@ -80,22 +80,16 @@ class NotebookScreenViewModel(
 
 	fun onClickMultiFavourite(idList: Set<RealmUUID>, isAllFavourite: Boolean) {
 		viewModelScope.launch(Dispatchers.Default) {
-			idList.forEach { chapterId ->
-				_repository.value?.getChapterFromId(id = chapterId)?.clone()?.apply {
-					this.isFavourite = !isAllFavourite
-					_repository.value?.putChapter(this)
-				}
+			_repository.value?.setMultiObjectFromIdSuspended<ChapterObject>(idList = idList) {
+				this.isFavourite = !isAllFavourite
 			}
 		}
 	}
 
 	fun onClickMultiLock(idList: Set<RealmUUID>, isAllLocked: Boolean) {
 		viewModelScope.launch(Dispatchers.Default) {
-			idList.filter { it != _defaultChapterId.value }.forEach { chapterId ->
-				_repository.value?.getChapterFromId(id = chapterId)?.clone()?.apply {
-					this.isLocked = !isAllLocked
-					_repository.value?.putChapter(this)
-				}
+			_repository.value?.setMultiObjectFromIdSuspended<ChapterObject>(idList = idList.filter { it != _defaultChapterId.value }.toSet()) {
+				this.isLocked = !isAllLocked
 			}
 		}
 	}

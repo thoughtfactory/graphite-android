@@ -2,58 +2,70 @@ package com.syncodec.graphite.presentation.main.composable.screen
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.syncodec.graphite.di.cloud.dropbox.DBox
-import com.syncodec.graphite.di.model.local.NoteObjectLite
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.syncodec.graphite.di.cloud.dropbox.DropboxApi
+import com.syncodec.graphite.di.network.NetworkRequest
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
+import com.syncodec.graphite.presentation.common.biometric.BiometricComposable
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
+import com.syncodec.graphite.presentation.main.HomeComponent
+import com.syncodec.graphite.presentation.main.MainComponent
 import com.syncodec.graphite.presentation.main.composable.bar.BottomBar
-import com.syncodec.graphite.presentation.main.composable.bar.BottomNavigationItem
 import com.syncodec.graphite.presentation.main.composable.bar.TopBar
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MenuBottomSheet
+import com.syncodec.graphite.presentation.main.composable.bottomSheet.syncBottomSheet2.SyncBottomSheet2
+import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreen
 import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.AtlasScreen
 import com.syncodec.graphite.presentation.main.composable.screen.explorerScreen.CalendarScreen
+import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreen
+import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreen
 import com.syncodec.graphite.presentation.search.SearchActivity
+import com.syncodec.graphite.service.syncInator.SyncStat
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 
 
-enum class ComponentType {
-	Note,
-	Bucket,
-	Notebook
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
+@Preview
 @Composable
 fun MainScreen(
-//	syncStatus: SyncInatorService.Companion.SyncStatus = SyncInatorService.Companion.SyncStatus.Init,
-	testConnectionResponse: DBox.Companion.TestConnectionResponse? = null,
-	testDropboxConnection: () -> Unit = {},
-	locationFilteredNoteList: List<NoteObjectLite> = listOf(),
-	onClickSyncNow: () -> Unit = {},
+	syncStat: SyncStat = SyncStat.Init,
+	dropboxAccountInfo: NetworkRequest<DropboxApi.Companion.DropboxAccountInfo> = NetworkRequest.Init,
+	onClickTestConnection: () -> Unit = {},
 	onClickForceSync: () -> Unit = {},
+	onClickSyncNow: () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
-	var currentRoute by remember { mutableStateOf<BottomNavigationItem>(BottomNavigationItem.Home) }
-	var currentScreen by rememberSaveable { mutableIntStateOf(0) }
-	var currentComponentType: ComponentType by remember { mutableStateOf(ComponentType.Note) }
-
 	val bottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by remember { mutableStateOf(false) }
+	var isSyncBottomSheetVisible by remember { mutableStateOf(false) }
 
 	var isSelecting: Boolean by remember { mutableStateOf(false) }
 	var selectedIdList: Set<RealmUUID> by remember { mutableStateOf(setOf()) }
@@ -65,81 +77,117 @@ fun MainScreen(
 		}
 	}
 
-	BackHandler(enabled = currentScreen != 0) { currentScreen = 0 }
-	BackHandler(enabled = currentRoute != BottomNavigationItem.Home) { currentRoute = BottomNavigationItem.Home }
-	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = setOf() }
+	var currentMainRoute by remember { mutableStateOf<MainComponent>(MainComponent.Home) }
+	val homeNavController = rememberNavController()
+	val homeNavBackStackEntry by homeNavController.currentBackStackEntryAsState()
+	val currentHomeRoute by remember(homeNavBackStackEntry?.destination?.route) { derivedStateOf { HomeComponent.fromRoute(homeNavBackStackEntry?.destination?.route) ?: HomeComponent.Note } }
+
+	BackHandler(enabled = !isSelecting && homeNavController.currentBackStackEntry?.destination?.route != HomeComponent.Note.route && currentMainRoute != MainComponent.Home) {
+		homeNavController.popBackStack(route = HomeComponent.Note.route, inclusive = false, saveState = true)
+	}
+	BackHandler(enabled = currentMainRoute != MainComponent.Home) {
+		currentMainRoute = MainComponent.Home
+	}
 
 	GenericScaffold2(
 		topBar = {
-			TopBar(
-				onClickMenu = { isMenuBottomSheetVisible = true },
-				onClickCloud = {
-//					if (syncStatus is SyncInatorService.Companion.SyncStatus.Init
-//						|| syncStatus is SyncInatorService.Companion.SyncStatus.AutoSyncDisabled
-//						|| syncStatus is SyncInatorService.Companion.SyncStatus.Locked
-//						|| syncStatus is SyncInatorService.Companion.SyncStatus.CredentialError
-//						|| syncStatus is SyncInatorService.Companion.SyncStatus.Idle
-//						|| syncStatus is SyncInatorService.Companion.SyncStatus.Failed
-//					) {
-//						testDropboxConnection()
-//					}
-				},
-				onClickSearch = {
-					Intent(context, SearchActivity::class.java).apply {
-						context.startActivity(this)
-					}
-				}
-			)
+			Column {
+				TopBar(
+					onClickMenu = { isMenuBottomSheetVisible = true },
+					onClickCloud = { isSyncBottomSheetVisible = true },
+					onClickSearch = { context.startActivity(Intent(context, SearchActivity::class.java)) }
+				)
+			}
 		},
 		bottomBar = {
 			BottomBar(
-				currentRoute = currentRoute.route,
-				onNavigation = {
-					when {
-						currentRoute == BottomNavigationItem.Home && it == BottomNavigationItem.Home -> currentComponentType = ComponentType.values()[(currentComponentType.ordinal + 1) % 3]
-						currentRoute != it -> currentRoute = it
-					}
-				}
+				currentRoute = currentMainRoute,
+				onNavigation = { currentMainRoute = it }
 			)
 		},
 		isTopBarVisible = !isSelecting,
 		isBottomBarVisible = !isSelecting
 	) {
-		Crossfade(
-			targetState = currentRoute,
-			label = "currentRoute_animation",
-		) {
-			when (it) {
-				BottomNavigationItem.Home -> HomeScreen(
-					currentScreen = currentScreen,
-					isSelecting = isSelecting,
-					selectedIdList = selectedIdList,
-					onChangeScreen = { currentScreen = it },
-					onSelect = ::onSelect,
-					onUnSelectAll = { selectedIdList = setOf() },
-				)
+		BiometricComposable {
+			AnimatedContent(
+				targetState = currentMainRoute,
+				transitionSpec = { fadeIn(tween(ANIMATION_DURATION_MILLIS)) + scaleIn(tween(ANIMATION_DURATION_MILLIS), 0.80f) togetherWith fadeOut(tween(ANIMATION_DURATION_MILLIS)) + scaleOut(tween(ANIMATION_DURATION_MILLIS), 0.80f) },
+				label = "currentMainRoute_animation"
+			) { currentMainRoute1 ->
+				when (currentMainRoute1) {
+					is MainComponent.Home -> Column {
+						HomeTabNavigator(
+							currentRoute = currentHomeRoute,
+							isVisible = !isSelecting,
+							onNavigate = { homeNavController.navigate(route = it.route) { this.popUpTo(HomeComponent.Note.route) } }
+						)
 
-				BottomNavigationItem.Calendar -> CalendarScreen(
-					isSelecting = isSelecting,
-					selectedIdList = selectedIdList,
-					onSelect = ::onSelect,
-					onUnSelectAll = { selectedIdList = setOf() },
-				)
+						NavHost(
+							navController = homeNavController,
+							startDestination = HomeComponent.Note.route,
+							enterTransition = { scaleIn(tween(ANIMATION_DURATION_MILLIS), 0.69f) + fadeIn(tween(ANIMATION_DURATION_MILLIS)) },
+							exitTransition = { scaleOut(tween(ANIMATION_DURATION_MILLIS), 0.69f) + fadeOut(tween(ANIMATION_DURATION_MILLIS)) },
+							modifier = Modifier.fillMaxSize(),
+						) {
+							composable(HomeComponent.Note.route) {
+								NoteScreen(
+									isSelecting = isSelecting,
+									selectedIdList = selectedIdList,
+									onSelect = ::onSelect,
+									onUnSelectAll = { selectedIdList = setOf(); isSelecting = false },
+								)
+							}
+							composable(HomeComponent.Bucket.route) {
+								BucketScreen(
+									isSelecting = isSelecting,
+									selectedIdList = selectedIdList,
+									onSelect = ::onSelect,
+									onUnSelectAll = { selectedIdList = setOf(); isSelecting = false },
+								)
+							}
+							composable(HomeComponent.Notebook.route) {
+								NotebookScreen(
+									isSelecting = isSelecting,
+									selectedIdList = selectedIdList,
+									onSelect = ::onSelect,
+									onUnSelectAll = { selectedIdList = setOf(); isSelecting = false },
+								)
+							}
+						}
+					}
 
-				BottomNavigationItem.Atlas -> AtlasScreen(
-					isSelecting = isSelecting,
-					selectedIdList = selectedIdList,
-					onSelect = ::onSelect,
-					onUnSelectAll = { selectedIdList = setOf() },
-				)
+					is MainComponent.Calendar -> CalendarScreen(
+						isSelecting = isSelecting,
+						selectedIdList = selectedIdList,
+						onSelect = ::onSelect,
+						onUnSelectAll = { selectedIdList = setOf(); isSelecting = false },
+					)
+
+					is MainComponent.Atlas -> AtlasScreen(
+						isSelecting = isSelecting,
+						selectedIdList = selectedIdList,
+						onSelect = ::onSelect,
+						onUnSelectAll = { selectedIdList = setOf(); isSelecting = false },
+					)
+				}
 			}
 		}
-
 	}
 
 	MenuBottomSheet(
 		bottomSheetState = bottomSheetState,
 		isBottomSheetVisible = isMenuBottomSheetVisible,
 		onDismissRequest = { scope.launch { bottomSheetState.hide(); isMenuBottomSheetVisible = false } },
+	)
+
+	SyncBottomSheet2(
+		bottomSheetState = bottomSheetState,
+		isBottomSheetVisible = isSyncBottomSheetVisible,
+		onDismissRequest = { scope.launch { bottomSheetState.hide(); isSyncBottomSheetVisible = false } },
+		syncStat = syncStat,
+		dropboxAccountInfo = dropboxAccountInfo,
+		onClickTestConnection = onClickTestConnection,
+		onClickForceSync = onClickForceSync,
+		onClickSyncNow = onClickSyncNow,
 	)
 }

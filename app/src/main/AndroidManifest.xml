@@ -34,6 +34,7 @@
         android:resizeableActivity="true"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="false"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.Graphite">
 
         <meta-data

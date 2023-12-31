@@ -3,6 +3,8 @@ package com.syncodec.graphite.presentation.note.composable.bottomSheet
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,9 +48,9 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.LatLng
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.base.LocalIsDarkTheme
 import com.syncodec.graphite.utils.Location
 import com.syncodec.graphite.utils.LocationData
@@ -62,29 +64,28 @@ fun EditorLocationBottomSheet(
 	isBottomSheetVisible: Boolean = false,
 	onDismissRequest: () -> Unit = { },
 	locationData: LocationData = LocationData.Init,
-	onClickSelectLocation: () -> Unit = {},
+	onClickSetLocation: () -> Unit = {},
 	onClickRemoveLocation: () -> Unit = {},
 	onClickReloadLocation: () -> Unit = {},
 ) {
-
 	GenericBottomSheet2(
 		bottomSheetState = bottomSheetState,
 		isBottomSheetVisible = isBottomSheetVisible,
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Location",
+			title = stringResource(id = R.string.location),
 		) {
 			when (locationData) {
-				is LocationData.Init -> ElseLocationDataView(text = stringResource(id = R.string.location_initializing), onClickSelectLocation = onClickSelectLocation, onClickReloadLocation = onClickReloadLocation)
-				is LocationData.Loading -> ElseLocationDataView(text = stringResource(id = R.string.location_loading), onClickSelectLocation = onClickSelectLocation, onClickReloadLocation = onClickReloadLocation)
-				is LocationData.SuccessOnlyLatLng -> LocationSuccess(latLng = locationData.latLng, onClickRemoveLocation = onClickRemoveLocation, onClickSelectLocation = onClickSelectLocation)
-				is LocationData.SuccessOnlyAddress -> LocationSuccess(address = locationData.address, onClickRemoveLocation = onClickRemoveLocation, onClickSelectLocation = onClickSelectLocation)
-				is LocationData.Success -> LocationSuccess(latLng = locationData.latLng, address = locationData.address, onClickRemoveLocation = onClickRemoveLocation, onClickSelectLocation = onClickSelectLocation)
-				is LocationData.Removed -> ElseLocationDataView(text = stringResource(id = R.string.location_removed), onClickSelectLocation = onClickSelectLocation, onClickReloadLocation = onClickReloadLocation)
-				is LocationData.NoPermission -> NoPermissionView(onClickSelectLocation = onClickSelectLocation)
-				is LocationData.AutoFetchDisabled -> ElseLocationDataView(text = stringResource(id = R.string.location_auto_fetch_disabled), onClickSelectLocation = onClickSelectLocation, onClickReloadLocation = onClickReloadLocation)
-				is LocationData.Error -> LocationErrorView(onClickSelectLocation = onClickSelectLocation, onClickReloadLocation = onClickReloadLocation)
+				is LocationData.Init -> ElseLocationDataView(text = stringResource(id = R.string.location_initializing), onClickSelectLocation = onClickSetLocation, onClickReloadLocation = onClickReloadLocation)
+				is LocationData.Loading -> ElseLocationDataView(text = stringResource(id = R.string.location_loading), onClickSelectLocation = onClickSetLocation, onClickReloadLocation = onClickReloadLocation)
+				is LocationData.SuccessOnlyLatLng -> LocationSuccess(latLng = locationData.latLng, onClickRemoveLocation = onClickRemoveLocation, onClickSelectLocation = onClickSetLocation)
+				is LocationData.SuccessOnlyAddress -> LocationSuccess(address = locationData.address, onClickRemoveLocation = onClickRemoveLocation, onClickSelectLocation = onClickSetLocation)
+				is LocationData.Success -> LocationSuccess(latLng = locationData.latLng, address = locationData.address, onClickRemoveLocation = onClickRemoveLocation, onClickSelectLocation = onClickSetLocation)
+				is LocationData.Removed -> ElseLocationDataView(text = stringResource(id = R.string.location_removed), onClickSelectLocation = onClickSetLocation, onClickReloadLocation = onClickReloadLocation)
+				is LocationData.NoPermission -> NoPermissionView(onClickSelectLocation = onClickSetLocation, onClickReloadLocation = onClickReloadLocation)
+				is LocationData.AutoFetchDisabled -> ElseLocationDataView(text = stringResource(id = R.string.location_auto_fetch_disabled), onClickSelectLocation = onClickSetLocation, onClickReloadLocation = onClickReloadLocation)
+				is LocationData.Error -> LocationErrorView(onClickSelectLocation = onClickSetLocation, onClickReloadLocation = onClickReloadLocation)
 			}
 		}
 	}
@@ -109,7 +110,7 @@ fun ViewerLocationBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Location",
+			title = stringResource(id = R.string.location),
 		) {
 			val mapProperties = remember {
 				MapProperties(
@@ -162,9 +163,9 @@ fun ViewerLocationBottomSheet(
 
 				Spacer(modifier = Modifier.height(8.dp))
 
-				GenericBottomSheetInfo2(
+				GenericBottomSheetInfo(
 					key = "LatLng",
-					value = locationData.getLatLngOrNull()?.toString() ?: "Unavailable",
+					value = locationData.getLatLngOrNull()?.toString() ?: stringResource(id = R.string.unavailable),
 					onLongClick = {
 						locationData.getLatLngOrNull()?.let {
 							val annotatedString = buildAnnotatedString { append("geo: ${it.latitude}, ${it.longitude}") }
@@ -173,9 +174,9 @@ fun ViewerLocationBottomSheet(
 					},
 				)
 
-				GenericBottomSheetInfo2(
+				GenericBottomSheetInfo(
 					key = "Address",
-					value = locationData.getAddressOrNull() ?: "Unavailable",
+					value = locationData.getAddressOrNull() ?: stringResource(id = R.string.unavailable),
 					onLongClick = {
 						locationData.getAddressOrNull()?.let {
 							val annotatedString = buildAnnotatedString { append(it) }
@@ -297,9 +298,9 @@ private fun LocationSuccess(
 
 		Spacer(modifier = Modifier.height(8.dp))
 
-		GenericBottomSheetInfo2(
+		GenericBottomSheetInfo(
 			key = "LatLng",
-			value = latLng?.toString() ?: "Unavailable",
+			value = latLng?.toString() ?: stringResource(id = R.string.unavailable),
 			onLongClick = {
 				latLng?.let {
 					val annotatedString = buildAnnotatedString { append("geo: ${it.latitude}, ${it.longitude}") }
@@ -308,7 +309,7 @@ private fun LocationSuccess(
 			},
 		)
 
-		GenericBottomSheetInfo2(
+		GenericBottomSheetInfo(
 			key = "Address",
 			value = address ?: "Unavailable",
 			onLongClick = {
@@ -347,11 +348,14 @@ private fun LocationSuccess(
 @Composable
 private fun NoPermissionView(
 	onClickSelectLocation: () -> Unit = {},
+	onClickReloadLocation: () -> Unit = {},
 ) {
 	val context = LocalContext.current
 
 	val containerColor = MaterialTheme.colorScheme.surface
 	val contentColor = MaterialTheme.colorScheme.onSurface
+
+	val permissionLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { onClickReloadLocation() }
 
 	Column(
 		modifier = Modifier
@@ -397,7 +401,7 @@ private fun NoPermissionView(
 					Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
 						addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 						this.data = Uri.fromParts("package", context.packageName, null)
-						ContextCompat.startActivity(context, this, null)
+						permissionLauncher.launch(this)
 					}
 				},
 			) {

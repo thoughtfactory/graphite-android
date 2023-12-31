@@ -1,8 +1,28 @@
 package com.syncodec.graphite.service.syncInator
 
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.datetime.Instant
 
 
+/**
+ * [Init]: Initial state
+ *
+ * [Connecting]: When  trying to connect with dropbox
+ *
+ * [NotConnected]: When not connected to dropbox. Not authenticated
+ *
+ * [Idle]: When there is no sync going on but connected to dropbox
+ *
+ * [Locked]: When the sync is locked by another process. Try again after 30 seconds
+ *
+ * [Syncing]: When the sync is going on
+ *
+ * [Error.NetworkError]: When there is a network error
+ *
+ * [Error.CredentialsError]: When there is a credentials error
+ *
+ * [Error.UnknownError]: When there is an unknown error
+ */
 sealed class SyncStat {
 	/**
 	 * [Init]: Initial state
@@ -23,7 +43,7 @@ sealed class SyncStat {
 	 * [Idle]: When there is no sync going on but connected to dropbox
 	 * @param isAutoSyncEnabled : Whether auto sync is enabled or not. If enabled, sync will start automatically after 30 seconds
 	 */
-	data class Idle(val isAutoSyncEnabled : Boolean) : SyncStat()
+	data class Idle(val isAutoSyncEnabled : Boolean, val lastSyncedAt : Instant?) : SyncStat()
 
 	/**
 	 * [Locked]: When the sync is locked by another process. Try again after 30 seconds
@@ -58,5 +78,12 @@ sealed class SyncStat {
 data class ObjectStatus(
 	val toUpSync: Int = 0,
 	val toDownSync: Int = 0,
-	val isSynced: Boolean = false,
+	val objectSyncStatus: ObjectSyncStatus = ObjectSyncStatus.Waiting,
 )
+
+enum class ObjectSyncStatus {
+	Waiting,
+	Syncing,
+	Success,
+	Error,
+}

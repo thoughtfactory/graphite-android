@@ -21,9 +21,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,7 +64,7 @@ fun EditorBottomBar(
 	kitKatFormat: KitKatFormat = KitKatFormat(),
 	userTimestamp: Long = Instant.now().toEpochMilli(),
 	locationData: LocationData = LocationData.Init,
-	onClickDatePicker : () -> Unit = {},
+	onClickDatePicker: () -> Unit = {},
 	onClickMetadata: () -> Unit = {},
 	noClickLocation: () -> Unit = {},
 	onClickAttachments: () -> Unit = {},
@@ -481,80 +484,86 @@ private fun BlockAction(
 				.height(40.dp)
 				.padding(2.dp)
 		) {
-			PlainTooltipBox(
-				tooltip = { Text(text = stringResource(R.string.note_format_alignment)) }
-			) {
-				Box(
-					modifier = Modifier.menuAnchor()
-				) {
-					Row(
-						verticalAlignment = Alignment.CenterVertically,
-						modifier = Modifier
-							.fillMaxHeight()
-							.clip(MaterialTheme.shapes.small)
-							.clickable(onClickLabel = stringResource(R.string.note_format_alignment), role = Role.Button) {
-								if (isPro) isAlignmentMenuVisible = true
-								else Toast
-									.makeText(context, "Join Graphite pro to unlock full potential of editor", Toast.LENGTH_SHORT)
-									.show()
-							}
-					) {
-						Spacer(modifier = Modifier.width(8.dp))
-						Icon(
-							painter = painterResource(
-								id = when {
-									kitKatFormat.alignLeft -> R.drawable.ic_fa_format_align_left
-									kitKatFormat.alignCenter -> R.drawable.ic_fa_format_align_center
-									kitKatFormat.alignRight -> R.drawable.ic_fa_format_align_right
-									kitKatFormat.alignJustify -> R.drawable.ic_fa_format_align_justify
-									else -> R.drawable.ic_fa_format_align_left
-								}
-							),
-							contentDescription = stringResource(R.string.note_format_alignment),
-							modifier = Modifier.requiredSize(ICON_SIZE)
-						)
-
-						Spacer(modifier = Modifier.width(4.dp))
-
-						Text(
-							text = when {
-								kitKatFormat.alignLeft -> stringResource(R.string.note_format_alignment_left)
-								kitKatFormat.alignCenter -> stringResource(R.string.note_format_alignment_center)
-								kitKatFormat.alignRight -> stringResource(R.string.note_format_alignment_right)
-								kitKatFormat.alignJustify -> stringResource(R.string.note_format_alignment_justify)
-								else -> "Unknown"
-							},
-							style = MaterialTheme.typography.bodyMedium,
-							fontWeight = FontWeight.Bold,
-							modifier = Modifier.padding(horizontal = 8.dp)
-						)
-						Spacer(modifier = Modifier.width(8.dp))
-					}
-
-					if (!isPro) {
-						Box(
-							modifier = Modifier
-								.matchParentSize()
-								.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), MaterialTheme.shapes.small)
-						)
-
-						Icon(
-							painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
-							contentDescription = null,
-							tint = MaterialTheme.colorScheme.onBackground,
-							modifier = Modifier
-								.requiredSize(20.dp)
-								.padding(4.dp)
-								.align(Alignment.BottomEnd)
-						)
-					}
-				}
-			}
 			ExposedDropdownMenu(
 				expanded = isAlignmentMenuVisible,
 				onDismissRequest = { isAlignmentMenuVisible = false },
 				modifier = Modifier.widthIn(128.dp)
 			) {
+				TooltipBox(
+					positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+					state = rememberTooltipState(),
+					tooltip = {
+						PlainTooltip {
+							Text(text = stringResource(R.string.note_format_alignment))
+						}
+					}
+				) {
+					Box(
+						modifier = Modifier.menuAnchor()
+					) {
+						Row(
+							verticalAlignment = Alignment.CenterVertically,
+							modifier = Modifier
+								.fillMaxHeight()
+								.clip(MaterialTheme.shapes.small)
+								.clickable(onClickLabel = stringResource(R.string.note_format_alignment), role = Role.Button) {
+									if (isPro) isAlignmentMenuVisible = true
+									else Toast
+										.makeText(context, "Join Graphite pro to unlock full potential of editor", Toast.LENGTH_SHORT)
+										.show()
+								}
+						) {
+							Spacer(modifier = Modifier.width(8.dp))
+							Icon(
+								painter = painterResource(
+									id = when {
+										kitKatFormat.alignLeft -> R.drawable.ic_fa_format_align_left
+										kitKatFormat.alignCenter -> R.drawable.ic_fa_format_align_center
+										kitKatFormat.alignRight -> R.drawable.ic_fa_format_align_right
+										kitKatFormat.alignJustify -> R.drawable.ic_fa_format_align_justify
+										else -> R.drawable.ic_fa_format_align_left
+									}
+								),
+								contentDescription = stringResource(R.string.note_format_alignment),
+								modifier = Modifier.requiredSize(ICON_SIZE)
+							)
+
+							Spacer(modifier = Modifier.width(4.dp))
+
+							Text(
+								text = when {
+									kitKatFormat.alignLeft -> stringResource(R.string.note_format_alignment_left)
+									kitKatFormat.alignCenter -> stringResource(R.string.note_format_alignment_center)
+									kitKatFormat.alignRight -> stringResource(R.string.note_format_alignment_right)
+									kitKatFormat.alignJustify -> stringResource(R.string.note_format_alignment_justify)
+									else -> "Unknown"
+								},
+								style = MaterialTheme.typography.bodyMedium,
+								fontWeight = FontWeight.Bold,
+								modifier = Modifier.padding(horizontal = 8.dp)
+							)
+							Spacer(modifier = Modifier.width(8.dp))
+						}
+
+						if (!isPro) {
+							Box(
+								modifier = Modifier
+									.matchParentSize()
+									.background(MaterialTheme.colorScheme.background.copy(alpha = 0.71f), MaterialTheme.shapes.small)
+							)
+
+							Icon(
+								painter = painterResource(id = R.drawable.ic_fa_lock_close_solid),
+								contentDescription = null,
+								tint = MaterialTheme.colorScheme.onBackground,
+								modifier = Modifier
+									.requiredSize(20.dp)
+									.padding(4.dp)
+									.align(Alignment.BottomEnd)
+							)
+						}
+					}
+				}
 				DropdownMenuItem(
 					leadingIcon = { Icon(painter = painterResource(id = R.drawable.ic_fa_format_align_left), contentDescription = "Left align", modifier = Modifier.requiredSize(ICON_SIZE)) },
 					text = { Text(text = stringResource(R.string.note_format_alignment_left)) },

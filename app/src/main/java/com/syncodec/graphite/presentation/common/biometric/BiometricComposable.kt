@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.fragment.app.FragmentActivity
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.common.LoadingView
 import org.koin.compose.koinInject
@@ -53,7 +54,7 @@ fun BiometricComposable(
 
 	AnimatedContent(
 		targetState = repositoryStatus,
-		transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) },
+		transitionSpec = { fadeIn(tween(ANIMATION_DURATION_MILLIS)) togetherWith fadeOut(tween(ANIMATION_DURATION_MILLIS)) },
 		label = "repositoryStatus_animation"
 	) {
 		when (it) {

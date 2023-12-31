@@ -19,12 +19,13 @@ import androidx.compose.ui.unit.dp
 @Preview
 @Composable
 fun NoteGroupHeader(
+	modifier: Modifier = Modifier,
 	text : String = "",
 	subText : String? = null
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
-		modifier = Modifier
+		modifier = modifier
 			.fillMaxWidth()
 			.background(color = MaterialTheme.colorScheme.background)
 			.padding(top = 12.dp, bottom = 4.dp)

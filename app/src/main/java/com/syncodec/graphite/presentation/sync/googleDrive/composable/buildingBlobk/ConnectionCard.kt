@@ -152,13 +152,13 @@ private fun AboutSuccessCard(
 				LaunchedEffect(key1 = startAnimation) { startAnimation = true }
 
 				LinearProgressIndicator(
-					progress = progress,
-					trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.31f),
+					progress = { progress },
 					color = if (spaceUsedPercent > 0.9) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+					trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.31f),
 					strokeCap = StrokeCap.Round,
 					modifier = Modifier
 						.fillMaxWidth()
-						.height(4.dp)
+						.height(4.dp),
 				)
 			}
 		}

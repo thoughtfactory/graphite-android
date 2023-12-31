@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ClearDataViewModel
@@ -49,7 +50,7 @@ fun ClearDataDialog(
 		}
 	}
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		icon = GenericDialogDefaults.genericDialogWarningIcon(),
 		title = stringResource(id = R.string.clear_data),

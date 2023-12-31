@@ -4,10 +4,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.realm.kotlin.types.RealmUUID
 
@@ -30,23 +32,23 @@ fun ViewerMetadataBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Metadata",
+			title = stringResource(id = R.string.metadata),
 		) {
-			GenericBottomSheetInfo2(
-				key = "ID",
-				value = noteId?.toString() ?: "Not saved",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.id),
+				value = noteId?.toString() ?: stringResource(id = R.string.not_saved),
 			)
-			GenericBottomSheetInfo2(
-				key = "Created on",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.created_on),
 				value = createdTimestamp?.timeStampToPrettyFull() ?: "",
 			)
-			GenericBottomSheetInfo2(
-				key = "Modified on",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.modified_on),
 				value = modifiedTimestamp?.timeStampToPrettyFull() ?: "",
 			)
-			GenericBottomSheetInfo2(
-				key = "Parent ID",
-				value = parentId?.toString() ?: "null",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.parent_id),
+				value = parentId?.toString() ?: stringResource(id = R.string.unknown),
 			)
 		}
 	}
@@ -70,23 +72,23 @@ fun EditorMetadataBottomSheet(
 		onDismissRequest = onDismissRequest,
 	) {
 		GenericBottomSheetSkeleton2(
-			title = "Metadata",
+			title = stringResource(id = R.string.metadata),
 		) {
-			GenericBottomSheetInfo2(
-				key = "ID",
-				value = noteId?.toString() ?: "Not saved",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.id),
+				value = noteId?.toString() ?: stringResource(id = R.string.not_saved),
 			)
-			GenericBottomSheetInfo2(
-				key = "Created on",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.created_on),
 				value = createdTimestamp?.timeStampToPrettyFull() ?: "",
 			)
-			GenericBottomSheetInfo2(
-				key = "Modified on",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.modified_on),
 				value = modifiedTimestamp?.timeStampToPrettyFull() ?: "",
 			)
-			GenericBottomSheetInfo2(
-				key = "Parent ID",
-				value = parentId?.toString() ?: "null",
+			GenericBottomSheetInfo(
+				key = stringResource(id = R.string.parent_id),
+				value = parentId?.toString() ?: stringResource(id = R.string.unknown),
 			)
 		}
 	}

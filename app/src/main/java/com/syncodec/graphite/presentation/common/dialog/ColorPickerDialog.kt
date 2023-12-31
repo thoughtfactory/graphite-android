@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 import com.syncodec.graphite.utils.getInverseBWColor
 import com.syncodec.graphite.utils.getRandomColor
@@ -32,7 +32,7 @@ fun ColorPickerDialog(
 
 	var selectedColor by remember { mutableStateOf(getRandomColor()) }
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		title = stringResource(id = R.string.color_picker),
 		primaryButton = GenericDialogDefaults.genericDialogButton(

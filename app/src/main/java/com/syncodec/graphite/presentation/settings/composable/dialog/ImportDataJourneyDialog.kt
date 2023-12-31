@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 import com.syncodec.graphite.presentation.settings.composable.viewModel.ImportDataViewModel
@@ -58,7 +59,7 @@ fun ImportDataJourneyDialog(
 		}
 	}
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		icon = GenericDialogDefaults.genericDialogIcon(icon = R.drawable.ic_fa_import),
 		title = stringResource(id = R.string.import_data_from) + " Journey",

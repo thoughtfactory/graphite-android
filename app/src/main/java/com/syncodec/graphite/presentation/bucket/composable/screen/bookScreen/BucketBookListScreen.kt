@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.di.model.local.BucketType
@@ -90,7 +91,7 @@ fun BucketBookListScreen(
 					id = bucketItemObject.id,
 					title = bucketItemObject.title,
 					bucketType = BucketType.SHOW,
-					description = bucketItemObject.getBookDescription(),
+					description = bucketItemObject.getBucketItemData<BucketItemData.BookData.OpenLibraryBookData>()?.description,
 					thumbnail = bucketItemObject.thumbnail,
 					dragHandle = {
 						Box(

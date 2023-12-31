@@ -121,9 +121,12 @@ fun KitKatScreen(
 	GenericScaffold2(
 		topBar = {
 			if (isEditing == true) EditorTopBar(
+				parentChapter = parentChapter,
 				onClickBack = onClickSave,
 				onClickSave = onClickSave,
+				onClickSelectChapter = { isWhereDialogVisible = true },
 			) else ViewerTopBar(
+				parentChapter = parentChapter,
 				isFavourite = isFavourite == true,
 				isLocked = isLocked == true,
 				onClickLocalOnly = {},
@@ -141,6 +144,7 @@ fun KitKatScreen(
 				},
 				onClickDelete = { isDeleteDialogVisible = true },
 				onClickBack = onClickBack,
+				onClickSelectChapter = { isWhereDialogVisible = true },
 			)
 		},
 		bottomBar = {
@@ -174,12 +178,12 @@ fun KitKatScreen(
 					parentChapter = parentChapter,
 					savedAttachmentList = attachmentList.filterIsInstance<NoteViewModel.Companion.AttachmentState.Saved>(),
 					connectedTagList = tagStateMap.filterValues { it == NoteViewModel.Companion.TagObjectState.Saved }.keys,
+					onClickSelectChapter = { isWhereDialogVisible = true },
 					modifier = Modifier
 						.fillMaxWidth()
 						.background(MaterialTheme.colorScheme.background)
 						.height(screenHeight / 3)
-						.graphicsLayer { translationY = 0.71f * scrollState.value },
-					onClickChapterSelector = { isWhereDialogVisible = true }
+						.graphicsLayer { translationY = 0.71f * scrollState.value }
 				)
 
 				KitKatView(

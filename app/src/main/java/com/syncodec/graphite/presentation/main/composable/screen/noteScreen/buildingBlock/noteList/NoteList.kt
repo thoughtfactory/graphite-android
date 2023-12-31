@@ -1,6 +1,9 @@
 package com.syncodec.graphite.presentation.main.composable.screen.noteScreen.buildingBlock.noteList
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
+import com.syncodec.graphite.presentation.base.LocalAppDataStore
 import com.syncodec.graphite.presentation.base.sortOn
 import com.syncodec.graphite.presentation.common.component.note.NoteGroupHeader
 import com.syncodec.graphite.presentation.common.component.note.NoteListCard2
@@ -37,7 +43,7 @@ import io.realm.kotlin.types.RealmUUID
 @Composable
 fun NoteList(
 	modifier: Modifier = Modifier,
-	lazyListState : LazyListState = rememberLazyListState(),
+	lazyListState: LazyListState = rememberLazyListState(),
 	noteGroupList: RealmObjectGroupList<NoteObjectLite> = RealmObjectGroupList(),
 	tagList: List<TagObject> = listOf(),
 	isSelecting: Boolean = false,
@@ -45,6 +51,8 @@ fun NoteList(
 	onClickNote: (RealmUUID) -> Unit = {},
 	onLongClickNote: (RealmUUID) -> Unit = {},
 ) {
+	val dataStoreInstance = LocalAppDataStore.current
+	val isYearProgressEnabled by dataStoreInstance.getYearProgress.collectAsState(initial = null)
 	val sortOn1 by sortOn()
 
 	LazyColumn(
@@ -60,17 +68,29 @@ fun NoteList(
 				trackColor = Color.Transparent,
 			)
 	) {
-		item { YearProgressBar(showCard = !isSelecting) }
+		if (isYearProgressEnabled == true) stickyHeader(
+			key = "yearProgressBar",
+			contentType = { 0 }
+		) {
+			AnimatedVisibility(
+				visible = !isSelecting,
+				enter = expandVertically(tween(ANIMATION_DURATION_MILLIS)),
+				exit = shrinkVertically(tween(ANIMATION_DURATION_MILLIS)),
+			) {
+				YearProgressBar()
+			}
+		}
 
 		noteGroupList
 			.groupList
 			.forEach { (title, noteList) ->
 				stickyHeader(
-					key = title
+					key = "$title${noteList.hashCode()}",
+					contentType = { 1 }
 				) {
 					if (noteList.isNotEmpty()) {
 						Box(
-							modifier = Modifier.animateItemPlacement(tween(470))
+							modifier = Modifier.animateItemPlacement(tween(ANIMATION_DURATION_MILLIS))
 						) {
 							NoteGroupHeader(
 								text = title,
@@ -81,16 +101,9 @@ fun NoteList(
 				}
 
 				items(
-					items = noteList.sortedBy {
-						when (sortOn1) {
-							SortOn.Title -> it.title?.lowercase() ?: "."
-							SortOn.Timestamp -> it.userTimestamp.timeStampToPrettyFull()
-							SortOn.Modified -> it.modifiedTimestamp.timeStampToPrettyFull()
-							else -> it.userTimestamp.timeStampToPrettyFull()
-						}
-					},
+					items = noteList,
 					key = { it.id.toString() },
-					contentType = { NoteObjectLite::class }
+					contentType = { 2 }
 				) { noteObjectLite ->
 					NoteListCard2(
 						id = noteObjectLite.id,
@@ -111,13 +124,13 @@ fun NoteList(
 						onClick = { onClickNote(noteObjectLite.id) },
 						onLongClick = { onLongClickNote(noteObjectLite.id) },
 						modifier = Modifier
-							.animateItemPlacement(tween(470))
+							.animateItemPlacement(tween(ANIMATION_DURATION_MILLIS))
 							.padding(2.dp)
 					)
 				}
 			}
 
-		item { Spacer(modifier = Modifier.height(96.dp)) }
+		item { Spacer(modifier = Modifier.height(194.dp)) }
 	}
 }
 
@@ -126,7 +139,7 @@ fun NoteList(
 @Composable
 fun NoteList(
 	modifier: Modifier = Modifier,
-	lazyListState : LazyListState = rememberLazyListState(),
+	lazyListState: LazyListState = rememberLazyListState(),
 	noteList: List<NoteObjectLite> = listOf(),
 	tagList: List<TagObject> = listOf(),
 	isSelecting: Boolean = false,

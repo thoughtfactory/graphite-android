@@ -12,11 +12,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 
 
 @Preview
@@ -29,7 +31,7 @@ fun HeaderText(
 	AnimatedContent(
 		targetState = text,
 		label = "headerText_animation",
-		transitionSpec = { scaleIn(tween(470)) + fadeIn(tween(470)) togetherWith scaleOut(tween(470)) + fadeOut(tween(470)) },
+		transitionSpec = { scaleIn(tween(ANIMATION_DURATION_MILLIS)) + fadeIn(tween(ANIMATION_DURATION_MILLIS)) togetherWith scaleOut(tween(ANIMATION_DURATION_MILLIS)) + fadeOut(tween(ANIMATION_DURATION_MILLIS)) },
 		modifier = modifier
 	) {
 		Text(

@@ -1,87 +1,120 @@
 package com.syncodec.graphite.di.network
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.annotation.Keep
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.jsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
-import com.syncodec.graphite.di.model.local.BucketItemObject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.di.model.local.BucketItemData
+import com.syncodec.graphite.di.network.OpenLibraryApi.OpenLibraryApiRequestType.ISBN
+import com.syncodec.graphite.di.network.OpenLibraryApi.OpenLibraryApiRequestType.QUERY
+import com.syncodec.graphite.di.network.OpenLibraryApi.OpenLibraryApiRequestType.TITLE
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okhttp3.Cache
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
+import okio.IOException
 import org.json.JSONObject
-import java.net.URLEncoder
 
 
-sealed class OpenLibraryResponse {
-	data object Loading : OpenLibraryResponse()
-	data class Success(val data: OpenLibraryTitleSearchResult) : OpenLibraryResponse()
-	data class Error(val message: String = "Unknown error") : OpenLibraryResponse()
-}
+class OpenLibraryApi(context: Context) {
+	private val json = Json { ignoreUnknownKeys = true }
 
-object OpenLibraryApi {
-	private val objectMapper = jsonMapper { addModule(kotlinModule()) }.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-
-	private val bookKeyCoverMap: MutableMap<String, Bitmap> = mutableMapOf()
-	private val bookKeyDataMap: MutableMap<String?, BucketItemObject.Companion.BucketItemData.BookData> = mutableMapOf()
+	private val bookKeyCoverMap: MutableMap<Int, Bitmap> = mutableMapOf()
+	private val bookKeyDataMap: MutableMap<String?, BucketItemData.BookData.OpenLibraryBookData> = mutableMapOf()
 	private val bookKeyDescriptionMap: MutableMap<String?, String> = mutableMapOf()
 
-	private val client = OkHttpClient.Builder().build()
+	private val client = OkHttpClient.Builder()
+		.cache(Cache(context.cacheDir,  50 * 1024 * 1024))
+		.build()
 
+	/**
+	 * [QUERY] Search for a book by openLibrary query
+	 *
+	 * [TITLE] Search for a book by title
+	 *
+	 * [ISBN] Search for a book by ISBN
+	 */
 	enum class OpenLibraryApiRequestType {
 		QUERY,
 		TITLE,
 		ISBN
 	}
 
-	private var searchForBookCoroutine: CoroutineScope? = null
-
 	/**
 	 * Search for a book by title on OpenLibrary
 	 * @author pushpull
 	 * @since 2.2.0
 	 * @param query Query to search for
-	 * @param requestType Type of request QUERY, TITLE, ISBN
-	 * @param onResponse Callback for the result in form of OpenLibraryTitleSearchResult
+	 * @param requestType Type of request [OpenLibraryApiRequestType]
+	 * @param callback Callback for the result in form of OpenLibraryTitleSearchResult
+	 * @sample https://openlibrary.org/search.json?title=the%20book%20thief&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median&limit=9&offset=0
 	 */
-	fun searchForBook(query: String, requestType: OpenLibraryApiRequestType = OpenLibraryApiRequestType.TITLE, onResponse: (OpenLibraryResponse) -> Unit) {
-		CoroutineScope(Dispatchers.IO).launch {
-			searchForBookCoroutine?.cancel()
-			searchForBookCoroutine = this
-			onResponse(OpenLibraryResponse.Loading)
-			try {
-				val url = "https://openlibrary.org/search.json?title=${URLEncoder.encode(query, "utf-8")}&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median&limit=9&offset=0"
-				val request = Request.Builder()
-					.url(url)
-					.build()
+	fun searchForBook(query: String, requestType: OpenLibraryApiRequestType = OpenLibraryApiRequestType.TITLE, callback: (NetworkRequest<OpenLibraryTitleSearchResult>) -> Unit) {
+		callback(NetworkRequest.Loading)
+		try {
 
-				val response = client.newCall(request).execute()
-				val openLibraryTitleSearchResult = objectMapper.readValue(response.body?.string(), OpenLibraryTitleSearchResult::class.java)
-				openLibraryTitleSearchResult.docs?.filterNotNull()?.associateBy { it.key }?.let { bookKeyDataMap.putAll(it) }
-				onResponse(OpenLibraryResponse.Success(openLibraryTitleSearchResult))
-			} catch (e: Exception) {
-				onResponse(OpenLibraryResponse.Error())
-			}
+			val httpUrl = HttpUrl.Builder()
+				.scheme("https")
+				.host("openlibrary.org")
+				.addPathSegment("search.json")
+				.addQueryParameter("title", query)
+				.addQueryParameter("fields", "key,title,author_name,cover_i,first_publish_year,number_of_pages_median")
+				.addQueryParameter("limit", "9")
+				.addQueryParameter("offset", "0")
+				.build()
+
+			val request = Request.Builder()
+				.url(httpUrl)
+				.build()
+
+			client.newCall(request).enqueue(
+				responseCallback = object  : Callback {
+					override fun onFailure(call: Call, e: IOException) {
+						if (BuildConfig.DEBUG) e.printStackTrace()
+						callback(NetworkRequest.Error(e))
+					}
+
+					override fun onResponse(call: Call, response: Response) {
+						try {
+							val openLibraryTitleSearchResult : OpenLibraryTitleSearchResult = json.decodeFromString(response.body.string())
+							openLibraryTitleSearchResult.docs?.filterNotNull()?.associateBy { it.key }?.let { bookKeyDataMap.putAll(it) }
+							callback(NetworkRequest.Success(openLibraryTitleSearchResult))
+						} catch (e: Exception) {
+							if (BuildConfig.DEBUG) e.printStackTrace()
+							callback(NetworkRequest.Error(e))
+						}
+					}
+				}
+			)
+		} catch (e: Exception) {
+			if (BuildConfig.DEBUG) e.printStackTrace()
+			callback(NetworkRequest.Error(e))
 		}
 	}
 
-	fun getBookDataFromCache(bookKey: String?): BucketItemObject.Companion.BucketItemData.BookData? = bookKeyDataMap[bookKey]
+	fun getBookDataFromCache(bookKey: String?): BucketItemData.BookData.OpenLibraryBookData? = bookKeyDataMap[bookKey]
 
-	fun retrieveBookCover(coverI: String?): Bitmap? {
+	fun retrieveBookCover(coverI: Int?): Bitmap? {
 		return bookKeyCoverMap[coverI] ?: try {
 			if (coverI == null) return null
 			else {
-				val url = "https://covers.openlibrary.org/b/id/${coverI}-M.jpg"
+				val httpUrl = HttpUrl.Builder()
+					.scheme("https")
+					.host("covers.openlibrary.org")
+					.addPathSegment("b")
+					.addPathSegment("id")
+					.addPathSegment("${coverI}-M.jpg")
+					.build()
 
 				val request = Request.Builder()
-					.url(url)
+					.url(httpUrl)
 					.build()
 
 				try {
@@ -100,29 +133,28 @@ object OpenLibraryApi {
 		}
 	}
 
-	fun retrieveDescriptionFromKey(bookKey: String?): String? {
-		val cachedDescription = bookKeyDescriptionMap[bookKey]
-		return if (cachedDescription == null) {
-			try {
-				val url = "https://openlibrary.org/$bookKey.json"
+	fun retrieveDescriptionFromKey(bookKey: String?): String? = bookKeyDescriptionMap[bookKey]
+		?: try {
+			val httpUrl = HttpUrl.Builder()
+				.scheme("https")
+				.host("openlibrary.org")
+				.addPathSegment("$bookKey.json")
+				.build()
 
-				val request = Request.Builder()
-					.url(url)
-					.build()
+			val request = Request.Builder()
+				.url(httpUrl)
+				.build()
 
-				client.newCall(request).execute().body.let {
-					val jsonObject = JSONObject(it.string())
-					val description = jsonObject.optJSONObject("description")?.optString("value")
-					Log.d("npr71", "retrieveDescriptionFromKey : network : $description")
-					description?.let { bookKeyDescriptionMap[bookKey] = it }
-					description
-				}
-			} catch (_: Exception) {
-				null
+			client.newCall(request).execute().body.let {
+				val jsonObject = JSONObject(it.string())
+				val description = jsonObject.optJSONObject("description")?.optString("value")
+				description?.let { bookKeyDescriptionMap[bookKey] = it }
+				description
 			}
-		} else cachedDescription
-	}
-
+		} catch (e: Exception) {
+			if (BuildConfig.DEBUG) e.printStackTrace()
+			null
+		}
 
 	/**
 	 * [Keep an eye at this commit](https://github.com/internetarchive/openlibrary/blob/abd73aa37ea27b4e7d70f521bfd1e30b7dc1dc6e/openlibrary/plugins/worksearch/schemes/works.py#L113-L132)
@@ -153,12 +185,9 @@ object OpenLibraryApi {
 }
 
 @Keep
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class OpenLibraryTitleSearchResult(
-	@JsonProperty("numFound")
-	val numFound: Int?,
-	@JsonProperty("start")
-	val start: Int?,
-	@JsonProperty("docs")
-	val docs: List<BucketItemObject.Companion.BucketItemData.BookData?>?
+	@SerialName("numFound") val numFound: Int?,
+	@SerialName("start") val start: Int?,
+	@SerialName("docs") val docs: List<BucketItemData.BookData.OpenLibraryBookData?>? = null,
 )

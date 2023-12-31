@@ -40,11 +40,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -58,30 +58,31 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketType
-import com.syncodec.graphite.di.network.TMDBResponse
-import com.syncodec.graphite.di.network.TMDBSearchResult
+import com.syncodec.graphite.di.network.NetworkRequest
 import com.syncodec.graphite.di.network.TMDbApi
 import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.bucketItem.activity.ShowBucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.button.SearchButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
 import com.syncodec.graphite.presentation.common.tab.GenericTabRow
 import com.syncodec.graphite.presentation.common.tab.TabItem
-import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun AddShowBottomSheet(
@@ -92,30 +93,18 @@ fun AddShowBottomSheet(
 ) {
 	val scope = rememberCoroutineScope()
 	val keyboardController = LocalSoftwareKeyboardController.current
-
-	var queryText by rememberSaveable { mutableStateOf("") }
+	val focusManager = LocalFocusManager.current
+	val tmDbApi = koinInject<TMDbApi>()
 
 	var showSearchType by rememberSaveable { mutableIntStateOf(0) }
+	var queryText by rememberSaveable { mutableStateOf("") }
 
-	var contentStatus by remember { mutableStateOf<ContentStatus<TMDBSearchResult>>(ContentStatus.Init) }
+	var tmdbSearchResult by remember { mutableStateOf<NetworkRequest<TMDbApi.Companion.TMDBSearchResult2<BucketItemData.ShowData.TMDbData>>>(NetworkRequest.Init) }
 	fun searchForShow(title: String) {
 		scope.launch(Dispatchers.IO) {
 			when (showSearchType) {
-				0 -> TMDbApi.searchForMovieTitle(title = title) { tmdbResponse ->
-					contentStatus = when (tmdbResponse) {
-						is TMDBResponse.Loading -> ContentStatus.Loading
-						is TMDBResponse.Success -> ContentStatus.Loaded(tmdbResponse.data)
-						is TMDBResponse.Error -> ContentStatus.Error(tmdbResponse.message)
-					}
-				}
-
-				1 -> TMDbApi.searchForTvTitle(title = title) { tmdbResponse ->
-					contentStatus = when (tmdbResponse) {
-						is TMDBResponse.Loading -> ContentStatus.Loading
-						is TMDBResponse.Success -> ContentStatus.Loaded(tmdbResponse.data)
-						is TMDBResponse.Error -> ContentStatus.Error(tmdbResponse.message)
-					}
-				}
+				0 -> tmDbApi.searchForMovieTitle(title = title) {  tmdbSearchResult = it }
+				1 -> tmDbApi.searchForTvTitle(title = title) {  tmdbSearchResult = it }
 			}
 		}
 	}
@@ -153,6 +142,7 @@ fun AddShowBottomSheet(
 					keyboardController?.hide()
 					searchForShow(queryText)
 				},
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 
@@ -168,27 +158,26 @@ fun AddShowBottomSheet(
 			Spacer(modifier = Modifier.height(4.dp))
 
 			AnimatedContent(
-				targetState = contentStatus,
+				targetState = tmdbSearchResult,
 				label = "showSearchPreview_animation",
 				modifier = Modifier.fillMaxWidth()
-			) { contentStatus1 ->
+			) { tmdbSearchResult1 ->
 				Column {
 					Spacer(modifier = Modifier.height(8.dp))
-					when (contentStatus1) {
-						is ContentStatus.Init -> Unit
-						is ContentStatus.Loading -> LoadingView(
+					when (tmdbSearchResult1) {
+						is NetworkRequest.Init -> Unit
+						is NetworkRequest.Loading -> LoadingView(
 							modifier = Modifier
 								.fillMaxWidth()
 								.padding(vertical = 12.dp)
 						)
 
-						is ContentStatus.LoadedEmpty -> Unit
-						is ContentStatus.Loaded -> ShowGrid(
-							tmdbSearchResult = contentStatus1.data,
+						is NetworkRequest.Success -> ShowGrid(
+							tmdbSearchResult = tmdbSearchResult1.data,
 							parentId = parentId
 						)
 
-						is ContentStatus.Error -> InfoCard(
+						is NetworkRequest.Error -> InfoCard(
 							title = stringResource(id = R.string.link_preview_error_title),
 							description = stringResource(id = R.string.link_preview_error_description),
 							icon = R.drawable.ic_fa_warning,
@@ -206,7 +195,7 @@ fun AddShowBottomSheet(
 @Preview
 @Composable
 private fun ShowGrid(
-	tmdbSearchResult: TMDBSearchResult = TMDBSearchResult.TMDbTvSearchResult(),
+	tmdbSearchResult: TMDbApi.Companion.TMDBSearchResult2<BucketItemData.ShowData.TMDbData> = TMDbApi.Companion.TMDBSearchResult2(),
 	parentId: RealmUUID? = null,
 ) {
 	val context = LocalContext.current
@@ -215,50 +204,29 @@ private fun ShowGrid(
 		columns = GridCells.Fixed(3),
 		modifier = Modifier
 	) {
-		when (tmdbSearchResult) {
-			is TMDBSearchResult.TMDbTvSearchResult -> {
-				tmdbSearchResult.results?.filterNotNull()?.let { tvDataList ->
-					items(tvDataList) { tvData ->
-						ShowCard(
-							title = tvData.name,
-							posterPath = tvData.posterPath,
-							releaseDate = tvData.firstAirDate,
-							onClick = {
-								Intent(context, ShowBucketItemActivity::class.java).apply {
-									putExtra(Extra.Companion.Extra.IsNew.name, true)
-									putExtra(Extra.Companion.Extra.BUCKET_ID.name, parentId?.bytes)
-									putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
-									putExtra(Extra.Companion.Extra.TV_ID.name, tvData.id)
+		items(
+			items = tmdbSearchResult.results,
+			key = { it.hashCode() },
+			contentType = { 0 }
+		) { tmdbData ->
+			ShowCard(
+				title = tmdbData.title,
+				posterPath = tmdbData.getThumbnailPath(),
+				releaseDate = tmdbData.getYear(),
+				onClick = {
+					Intent(context, ShowBucketItemActivity::class.java).apply {
+						putExtra(Extra.Companion.Extra.IsNew.name, true)
+						putExtra(Extra.Companion.Extra.BUCKET_ID.name, parentId?.bytes)
+						putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
+						when (tmdbData) {
+							is BucketItemData.ShowData.TMDbData.TMDbTvData -> putExtra(Extra.Companion.Extra.TV_ID.name, tmdbData.key)
+							is BucketItemData.ShowData.TMDbData.TMDbMovieData -> putExtra(Extra.Companion.Extra.MOVIE_ID.name, tmdbData.key)
+						}
 
-									context.startActivity(this)
-								}
-							},
-						)
+						context.startActivity(this)
 					}
-				}
-			}
-
-			is TMDBSearchResult.TMDbMovieSearchResult -> {
-				tmdbSearchResult.results?.filterNotNull()?.let { movieDataList ->
-					items(movieDataList) { movieData ->
-						ShowCard(
-							title = movieData.title,
-							posterPath = movieData.posterPath,
-							releaseDate = movieData.releaseDate,
-							onClick = {
-								Intent(context, ShowBucketItemActivity::class.java).apply {
-									putExtra(Extra.Companion.Extra.IsNew.name, true)
-									putExtra(Extra.Companion.Extra.BUCKET_ID.name, parentId?.bytes)
-									putExtra(Extra.Companion.Extra.BUCKET_TYPE.name, BucketType.SHOW.name)
-									putExtra(Extra.Companion.Extra.MOVIE_ID.name, movieData.id)
-
-									context.startActivity(this)
-								}
-							},
-						)
-					}
-				}
-			}
+				},
+			)
 		}
 	}
 }
@@ -271,13 +239,14 @@ private fun ShowCard(
 	onClick: () -> Unit = {}
 ) {
 	val context = LocalContext.current
+	val tmDbApi = koinInject<TMDbApi>()
 
 	var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
 	LaunchedEffect(key1 = posterPath) {
 		Log.d("npr71", "posterPath : $posterPath")
 		withContext(Dispatchers.IO) {
 			thumbnail = null
-			thumbnail = TMDbApi.retrieveShowPoster(posterPath = posterPath)
+			thumbnail = tmDbApi.retrieveShowPoster(posterPath = posterPath)
 		}
 	}
 

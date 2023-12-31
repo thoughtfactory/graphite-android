@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.kedia.ogparser.OpenGraphResult
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
 import com.syncodec.graphite.di.model.local.BucketItemState
 import com.syncodec.graphite.di.model.local.BucketType
@@ -109,7 +109,7 @@ fun BucketLinkListScreen(
 				LinkItem(
 					title = bucketItemObject.title,
 					thumbnail = bucketItemObject.thumbnail,
-					openGraphResult = bucketItemObject.getOpenGraphResult(),
+					openGraphResult = bucketItemObject.getBucketItemData<BucketItemData.LinkData>(),
 					dragHandle = {
 						Box(
 							modifier = Modifier
@@ -163,7 +163,7 @@ fun BucketLinkListScreen(
 private fun LinkItem(
 	title: String? = null,
 	thumbnail: String? = null,
-	openGraphResult: OpenGraphResult? = null,
+	openGraphResult: BucketItemData.LinkData? = null,
 	dragHandle: @Composable () -> Unit = {},
 	isLocked: Boolean = false,
 	isFavourite: Boolean = false,

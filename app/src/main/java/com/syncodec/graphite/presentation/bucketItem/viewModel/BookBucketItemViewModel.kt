@@ -21,7 +21,7 @@ import org.koin.android.annotation.KoinViewModel
 
 
 @KoinViewModel
-class BookBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
+class BookBucketItemViewModel(lockableRepo: LockableRepo, private val openLibraryApi: OpenLibraryApi) : ViewModel() {
 
 	private val _repository: MutableStateFlow<Repository?> = MutableStateFlow(null)
 
@@ -43,6 +43,7 @@ class BookBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 				if (repositoryStatus is Repository.Companion.RepositoryStatus.Success) _repository.tryEmit(repositoryStatus.repository)
 			}
 		}
+
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(_repository, id) { repository1, id1 -> Pair(repository1, id1) }.collect { (repository1, bucketItemId) ->
 				bucketItemId?.let {
@@ -58,21 +59,27 @@ class BookBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	fun initBucketItem(bookId: String, parentId: RealmUUID) {
 		viewModelScope.launch(Dispatchers.IO) {
-			this@BookBucketItemViewModel._isNew.tryEmit(true)
-			val bookData = OpenLibraryApi.getBookDataFromCache(bookKey = bookId)
+			val bookData = openLibraryApi.getBookDataFromCache(bookKey = bookId)?.apply {
+				this.description = retrieveDescription(bookKey = this.key)
+			}
 
 			val bucketItemObject = BucketItemObject().apply {
 				this.bucketType = BucketType.BOOK.name
 				this.title = bookData?.title
 				this.parentId = parentId
-				this.data = bookData?.toJsonString()
+				this.setBucketItemData(bucketItemData = bookData)
 				this.key = bookData?.key
 			}
+
+			this@BookBucketItemViewModel._isNew.tryEmit(true)
 			this@BookBucketItemViewModel._bucketItemObject.tryEmit(bucketItemObject)
 
-//		    retrieveThumbnail and retrieveDescription is called after bucketItemObject is emitted because thumbnail will be updated in object when retrieved
-			retrieveThumbnail(coverI = bookData?.coverI)
-			retrieveDescription(bookData = bookData)
+			retrieveThumbnail(coverI = bookData?.coverI)?.let { thumbnail ->
+				this@BookBucketItemViewModel._bucketItemObject.value?.clone()?.apply {
+					this.thumbnail = thumbnail
+					this@BookBucketItemViewModel._bucketItemObject.tryEmit(this)
+				}
+			}
 
 			this@BookBucketItemViewModel._parentId.tryEmit(parentId)
 		}
@@ -93,21 +100,9 @@ class BookBucketItemViewModel(lockableRepo: LockableRepo) : ViewModel() {
 		}
 	}
 
-	private fun retrieveDescription(bookData: BucketItemObject.Companion.BucketItemData.BookData?) {
-		this@BookBucketItemViewModel.bucketItemObject.value?.clone()?.apply {
-			val description = OpenLibraryApi.retrieveDescriptionFromKey(bookKey = bookData?.key)
-			this.data = bookData?.copy(description = description)?.toJsonString()
-			this@BookBucketItemViewModel._bucketItemObject.tryEmit(this)
-		}
-	}
+	private fun retrieveThumbnail(coverI: Int?) = openLibraryApi.retrieveBookCover(coverI = coverI)?.encodeBase64()
 
-	private fun retrieveThumbnail(coverI: String?) {
-		val thumbnail = OpenLibraryApi.retrieveBookCover(coverI = coverI)
-		this@BookBucketItemViewModel.bucketItemObject.value?.clone()?.apply {
-			this.thumbnail = thumbnail?.encodeBase64()
-			this@BookBucketItemViewModel._bucketItemObject.tryEmit(this)
-		}
-	}
+	private fun retrieveDescription(bookKey : String) : String? = openLibraryApi.retrieveDescriptionFromKey(bookKey = bookKey)
 
 	fun onClickFavourite() {
 		this.bucketItemObject.value?.clone()?.apply {

@@ -10,7 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.presentation.settings.SettingsActivity
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.alice.Alice
@@ -150,16 +150,16 @@ class DataStoreInstance(private val context: Context) {
 		context.dataStore.edit { pref -> pref[PREFERENCE_SORT_ON] = sortOn.ordinal }
 	}
 
-	val getSortBy: Flow<SortBy> = context.dataStore.data.map { preferences ->
+	val getSortOrder: Flow<SortOrder> = context.dataStore.data.map { preferences ->
 		when (preferences[PREFERENCE_SORT_BY] ?: 1) {
-			0 -> SortBy.Ascending
-			1 -> SortBy.Descending
-			else -> SortBy.Descending
+			0 -> SortOrder.Ascending
+			1 -> SortOrder.Descending
+			else -> SortOrder.Descending
 		}
 	}
 
-	fun putSortBy(sortBy: SortBy) = CoroutineScope(Dispatchers.IO).launch {
-		context.dataStore.edit { pref -> pref[PREFERENCE_SORT_BY] = sortBy.ordinal }
+	fun putSortBy(sortOrder: SortOrder) = CoroutineScope(Dispatchers.IO).launch {
+		context.dataStore.edit { pref -> pref[PREFERENCE_SORT_BY] = sortOrder.ordinal }
 	}
 
 	val getViewType: Flow<ViewType> = context.dataStore.data.map { preferences ->

@@ -16,7 +16,7 @@ fun DeleteDialog(
 	contentText: String = "Are you sure?",
 	onConfirmDelete: () -> Unit = {}
 ) {
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		onDismissRequest = onDismissRequest,
 		icon = GenericDialogIcon(icon = R.drawable.ic_fa_delete, tint = MaterialTheme.colorScheme.error),

@@ -90,9 +90,9 @@ class AttachmentScreenViewModel(private val lockableRepo: LockableRepo) : ViewMo
 		viewModelScope.launch(Dispatchers.Default) {
 			loadChapterCoroutine?.cancel()
 			loadChapterCoroutine = this
-			repository.getNoteWithParentIdAsFlow(parentId = id).collect {
+			repository.getNoteLiteWithParentIdAsFlow(parentId = id, sort = true).collect {
 				val noteAttachmentListMap = mutableMapOf<NoteObjectLite, Set<File>>()
-				it.forEach { note ->
+				it.forEachObject { note ->
 					repository.attachmentRepository.getAttachmentFromNote(note.id).let { attachmentList ->
 						if (attachmentList.isNotEmpty()) noteAttachmentListMap[note] = attachmentList
 					}

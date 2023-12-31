@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import com.syncodec.graphite.utils.SortOrder
 import io.realm.kotlin.types.RealmUUID
 import kotlin.reflect.KProperty1
 
@@ -12,7 +13,19 @@ data class RealmObjectGroup<T>(
 	val title: String,
 	val objectList: List<T>,
 ) {
+	inline fun <R : Comparable<R>> sortedBy(sortOrder: SortOrder?, crossinline selector: (T) -> R?): RealmObjectGroup<T> {
+		return RealmObjectGroup(
+			title = title,
+			objectList = when (sortOrder) {
+				SortOrder.Ascending -> objectList.sortedWith(compareBy(selector))
+				SortOrder.Descending -> objectList.sortedWith(compareByDescending(selector))
+				else -> objectList
+			}
+		)
+	}
+
 	override fun hashCode(): Int {
+
 		var result = title.hashCode()
 		result = 31 * result + objectList.hashCode()
 		return result
@@ -31,11 +44,29 @@ data class RealmObjectGroup<T>(
 	}
 }
 
-data class RealmObjectGroupList<T> (
+data class RealmObjectGroupList<T>(
 	val groupList: List<RealmObjectGroup<T>> = listOf(),
-	val totalSize : Int = 0,
+	val totalSize: Int = 0,
 ) {
-	fun flatten() : List<T> = groupList.flatMap { it.objectList }
+	fun flatten(): List<T> = groupList.flatMap { it.objectList }
+
+	fun forEachObject(action: (T) -> Unit) = groupList.forEach{it.objectList.forEach{action(it)}}
+
+	fun filterObject(predicate: (T) -> Boolean): List<T> = groupList.flatMap { it.objectList.filter(predicate) }
+
+	fun isEmpty(): Boolean = groupList.all { it.objectList.isEmpty() }
+
+	inline fun <R : Comparable<R>> sortedBy(sortOrder: SortOrder?, crossinline selector: (T) -> R?): RealmObjectGroupList<T> {
+		return RealmObjectGroupList(
+			groupList = when (sortOrder) {
+				SortOrder.Ascending -> groupList.sortedBy { it.title }
+				SortOrder.Descending -> groupList.sortedByDescending { it.title }
+				else -> groupList
+			}.map { it.sortedBy(sortOrder = sortOrder, selector = selector) },
+			totalSize = totalSize
+		)
+	}
+
 	override fun hashCode(): Int {
 		var result = groupList.hashCode()
 		result = 31 * result + totalSize
@@ -57,12 +88,12 @@ data class RealmObjectGroupList<T> (
 
 @Composable
 fun <T> isAll(
-	isSelecting : Boolean,
-	selectedIdList : Set<RealmUUID>,
+	isSelecting: Boolean,
+	selectedIdList: Set<RealmUUID>,
 	realmObjectGroupList: RealmObjectGroupList<T>?,
-	idGetter : KProperty1<T, RealmUUID>,
-	propGetter : KProperty1<T, Boolean>
-) : State<Boolean> {
+	idGetter: KProperty1<T, RealmUUID>,
+	propGetter: KProperty1<T, Boolean>
+): State<Boolean> {
 	return remember(isSelecting, selectedIdList, realmObjectGroupList?.groupList) {
 		derivedStateOf {
 			when {
@@ -76,12 +107,12 @@ fun <T> isAll(
 
 @Composable
 fun <T> isAll(
-	isSelecting : Boolean,
-	selectedIdList : Set<RealmUUID>,
+	isSelecting: Boolean,
+	selectedIdList: Set<RealmUUID>,
 	objectList: List<T>?,
-	idGetter : KProperty1<T, RealmUUID>,
-	propGetter : KProperty1<T, Boolean>
-) : State<Boolean> {
+	idGetter: KProperty1<T, RealmUUID>,
+	propGetter: KProperty1<T, Boolean>
+): State<Boolean> {
 	return remember(isSelecting, selectedIdList, objectList) {
 		derivedStateOf {
 			when {

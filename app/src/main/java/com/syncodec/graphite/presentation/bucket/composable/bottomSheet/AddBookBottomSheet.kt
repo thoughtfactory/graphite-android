@@ -34,14 +34,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -55,28 +56,30 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.model.local.BucketItemObject
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketType
+import com.syncodec.graphite.di.network.NetworkRequest
 import com.syncodec.graphite.di.network.OpenLibraryApi
-import com.syncodec.graphite.di.network.OpenLibraryResponse
 import com.syncodec.graphite.di.network.OpenLibraryTitleSearchResult
 import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import com.syncodec.graphite.presentation.bucketItem.activity.BookBucketItemActivity
 import com.syncodec.graphite.presentation.common.LoadingView
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.button.CancelButton
 import com.syncodec.graphite.presentation.common.button.SearchButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.getGraphiteTextFieldColors
 import com.syncodec.graphite.presentation.common.info.InfoCard
 import com.syncodec.graphite.presentation.common.info.InfoCardDefaults
-import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.Extra
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun AddBookBottomSheet(
@@ -86,18 +89,18 @@ fun AddBookBottomSheet(
 	parentId: RealmUUID? = null,
 ) {
 	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
 	val keyboardController = LocalSoftwareKeyboardController.current
+	val focusManager = LocalFocusManager.current
+
+	val openLibraryApi : OpenLibraryApi = koinInject()
 
 	var queryText by rememberSaveable { mutableStateOf("") }
 
-	var contentStatus by remember { mutableStateOf<ContentStatus<OpenLibraryTitleSearchResult>>(ContentStatus.Init) }
+	var openLibraryNetworkRequest by remember { mutableStateOf<NetworkRequest<OpenLibraryTitleSearchResult>>(NetworkRequest.Init) }
 	fun searchForBook(title: String) {
-		OpenLibraryApi.searchForBook(query = title) { openLibraryResponse ->
-			contentStatus = when (openLibraryResponse) {
-				is OpenLibraryResponse.Loading -> ContentStatus.Loading
-				is OpenLibraryResponse.Success -> ContentStatus.Loaded(openLibraryResponse.data)
-				is OpenLibraryResponse.Error -> ContentStatus.Error(openLibraryResponse.message)
-			}
+		scope.launch(Dispatchers.IO) {
+			openLibraryApi.searchForBook(query = title) { openLibraryResponse -> openLibraryNetworkRequest = openLibraryResponse }
 		}
 	}
 
@@ -118,7 +121,11 @@ fun AddBookBottomSheet(
 				trailingIcon = {
 					Row {
 						CancelButton { queryText = "" }
-						SearchButton { searchForBook(queryText) }
+						SearchButton {
+							focusManager.clearFocus()
+							keyboardController?.hide()
+							searchForBook(queryText)
+						}
 						Spacer(modifier = Modifier.width(4.dp))
 					}
 				},
@@ -130,32 +137,35 @@ fun AddBookBottomSheet(
 					keyboardType = KeyboardType.Text,
 					imeAction = ImeAction.Search,
 				),
-				keyboardActions = KeyboardActions {
-					keyboardController?.hide()
-					searchForBook(queryText)
-				},
+				keyboardActions = KeyboardActions(
+					onSearch = {
+						focusManager.clearFocus()
+						keyboardController?.hide()
+						searchForBook(queryText)
+					}
+				),
+				colors = getGraphiteTextFieldColors(),
 				modifier = Modifier.fillMaxWidth()
 			)
 
 			AnimatedContent(
-				targetState = contentStatus,
+				targetState = openLibraryNetworkRequest,
 				label = "bookSearchPreview_animation",
 				modifier = Modifier.fillMaxWidth()
-			) {
+			) { openLibraryRequest1 ->
 				Column {
 					Spacer(modifier = Modifier.height(8.dp))
-					when (it) {
-						is ContentStatus.Init -> Unit
-						is ContentStatus.Loading -> LoadingView(
+					when (openLibraryRequest1) {
+						is NetworkRequest.Init -> Unit
+						is NetworkRequest.Loading -> LoadingView(
 							modifier = Modifier
 								.fillMaxWidth()
 								.padding(vertical = 12.dp)
 						)
 
-						is ContentStatus.LoadedEmpty -> Unit
-						is ContentStatus.Loaded -> it.data.docs?.filterNotNull()?.let {
+						is NetworkRequest.Success -> openLibraryRequest1.data.docs?.filterNotNull()?.let {
 							BookGrid(
-								bookDataList = it
+								bookDataList = openLibraryRequest1.data.docs.filterNotNull(),
 							) {
 								Intent(context, BookBucketItemActivity::class.java).apply {
 									putExtra(Extra.Companion.Extra.IsNew.name, true)
@@ -168,7 +178,7 @@ fun AddBookBottomSheet(
 							}
 						} ?: Unit
 
-						is ContentStatus.Error -> InfoCard(
+						is NetworkRequest.Error -> InfoCard(
 							title = stringResource(id = R.string.link_preview_error_title),
 							description = stringResource(id = R.string.link_preview_error_description),
 							icon = R.drawable.ic_fa_warning,
@@ -185,8 +195,8 @@ fun AddBookBottomSheet(
 @Preview
 @Composable
 private fun BookGrid(
-	bookDataList: List<BucketItemObject.Companion.BucketItemData.BookData> = listOf(),
-	onClick: (BucketItemObject.Companion.BucketItemData.BookData) -> Unit = {}
+	bookDataList: List<BucketItemData.BookData.OpenLibraryBookData> = listOf(),
+	onClick: (BucketItemData.BookData.OpenLibraryBookData) -> Unit = {}
 ) {
 	LazyVerticalGrid(
 		columns = GridCells.Fixed(3),
@@ -203,16 +213,17 @@ private fun BookGrid(
 
 @Composable
 private fun BookCard(
-	bookData: BucketItemObject.Companion.BucketItemData.BookData,
+	bookData: BucketItemData.BookData.OpenLibraryBookData,
 	onClick: () -> Unit
 ) {
 	val context = LocalContext.current
+	val openLibraryApi : OpenLibraryApi = koinInject()
 
 	var thumbnail by remember { mutableStateOf<Bitmap?>(null) }
 	LaunchedEffect(key1 = bookData.coverI) {
 		withContext(Dispatchers.IO) {
 			thumbnail = null
-			thumbnail = OpenLibraryApi.retrieveBookCover(bookData.coverI)
+			thumbnail = openLibraryApi.retrieveBookCover(bookData.coverI)
 		}
 	}
 
@@ -265,17 +276,17 @@ private fun BookCard(
 		Spacer(modifier = Modifier.height(4.dp))
 		var author = ""
 
-		bookData.authorList?.forEachIndexed { index, s -> author += if (index == 0) s else ", $s" }
+		bookData.authorList.forEachIndexed { index, s -> author += if (index == 0) s else ", $s" }
 		Text(
 			text = "~ $author",
 			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onBackground,
 		)
 
-		bookData.firstPublishYear?.take(4)?.let {
+		bookData.firstPublishYear?.let {
 			Spacer(modifier = Modifier.height(4.dp))
 			Text(
-				text = it,
+				text = "$it",
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onBackground,
 				fontStyle = FontStyle.Italic,

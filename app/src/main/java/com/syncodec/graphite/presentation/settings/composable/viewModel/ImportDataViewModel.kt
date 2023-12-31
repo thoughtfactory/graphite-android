@@ -91,7 +91,7 @@ class ImportDataViewModel(private val lockableRepo: LockableRepo) : ViewModel() 
 		_repository.value?.let { repository1 ->
 
 			val defaultChapterId = repository1.getDefaultChapterId()
-			val tagList = repository1.getAllTag()
+			val tagList = repository1.getAllObjectOfType<TagObject>(includeLocked = true)
 
 			lockableRepo.context.contentResolver.openInputStream(inputUri)?.use { inputStream ->
 				val inMemoryByteChannel = SeekableInMemoryByteChannel(inputStream.readBytes())
@@ -142,7 +142,7 @@ class ImportDataViewModel(private val lockableRepo: LockableRepo) : ViewModel() 
 		_repository.value?.let { repository1 ->
 
 			val defaultChapterId = repository1.getDefaultChapterId()
-			val tagList = repository1.getAllTag()
+			val tagList = repository1.getAllObjectOfType<TagObject>(includeLocked = true)
 
 			lockableRepo.context.contentResolver.openInputStream(inputUri)?.use { inputStream ->
 				val inMemoryByteChannel = SeekableInMemoryByteChannel(inputStream.readBytes())

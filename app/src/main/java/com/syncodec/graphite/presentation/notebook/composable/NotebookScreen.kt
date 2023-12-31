@@ -3,25 +3,27 @@ package com.syncodec.graphite.presentation.notebook.composable
 import android.content.Intent
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,34 +43,35 @@ import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.di.model.local.ChapterObjectLite
 import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.model.local.TagObject
-import com.syncodec.graphite.presentation.common.component.LocalComponentColumnCount
+import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
+import com.syncodec.graphite.presentation.base.sortOn
 import com.syncodec.graphite.presentation.common.component.chapter.chapterList
 import com.syncodec.graphite.presentation.common.component.note.noteList
 import com.syncodec.graphite.presentation.common.dialog.dialog2.DeleteDialog
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold2
 import com.syncodec.graphite.presentation.common.selectionAction.NotebookSelectionActionView
+import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.note.NoteActivity
 import com.syncodec.graphite.presentation.notebook.composable.bar.BottomBar
-import com.syncodec.graphite.presentation.notebook.composable.bar.COLLAPSED_TOP_BAR_HEIGHT
-import com.syncodec.graphite.presentation.notebook.composable.bar.CollapsedTopBar
-import com.syncodec.graphite.presentation.notebook.composable.bar.EXPANDED_TOP_BAR_HEIGHT
-import com.syncodec.graphite.presentation.notebook.composable.bar.ExpandedTopBar
+import com.syncodec.graphite.presentation.notebook.composable.bar.TopBar
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.BottomSheet
 import com.syncodec.graphite.presentation.notebook.composable.bottomSheet.NotebookBottomSheet
+import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.Backdrop
+import com.syncodec.graphite.presentation.notebook.composable.buildingBlock.ChapterNavigator
 import com.syncodec.graphite.utils.Extra
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.xor
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun NotebookScreen(
 	chapterObject: ChapterObject? = null,
 	chapterList: List<ChapterObject> = listOf(),
-	noteList: List<NoteObjectLite> = listOf(),
+	noteGroupList: RealmObjectGroupList<NoteObjectLite> = RealmObjectGroupList(),
 	tagList: List<TagObject> = listOf(),
 	chapterNoteItemCount: Map<RealmUUID?, Int> = mapOf(),
 	chapterChapterItemCount: Map<RealmUUID?, Int> = mapOf(),
@@ -87,19 +89,16 @@ fun NotebookScreen(
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 
-	val density = LocalDensity.current
-
-	var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-	val componentColumnCount = LocalComponentColumnCount.current
-
-	val bitmap by remember(chapterObject?.thumbnail) { derivedStateOf { chapterObject?.thumbnail?.decodeBase64ToBitmap() } }
-
 	val bottomSheetState = rememberModalBottomSheetState()
 	val editChapterBottomSheetState = rememberModalBottomSheetState()
 	var isMenuBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isMetadataBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isNewChapterBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 	var isEditChapterBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+
+	val sortOn by sortOn()
+
+	var isChapterListVisible by remember { mutableStateOf(true) }
 
 	var isDeleteDialogVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -127,33 +126,14 @@ fun NotebookScreen(
 		if (isSelecting) onSelect(id) else onLoadChapter(id)
 	}
 
+	val lazyListState = rememberLazyListState()
+	val firstItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
+	val firstItemScrollOffset by remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
+	val firstItemHeight by remember { derivedStateOf { maxOf((lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 0), 1) } }
+	val offset by remember { derivedStateOf { if (firstItemIndex > 0) 1f else (firstItemScrollOffset.toFloat() / firstItemHeight).coerceIn(0f, 1f) } }
+
 	BackHandler(enabled = chapterPath.size > 1) { onLoadChapter(chapterPath[1].id) }
 	BackHandler(enabled = isSelecting) { isSelecting = false; selectedIdList = setOf() }
-
-	val staggeredGridState = rememberLazyStaggeredGridState()
-	val overlapHeightPx = remember { with(density) { EXPANDED_TOP_BAR_HEIGHT.toPx() - COLLAPSED_TOP_BAR_HEIGHT.toPx() } }
-	val isCollapsed: Boolean by remember { derivedStateOf { (staggeredGridState.firstVisibleItemScrollOffset > overlapHeightPx) || staggeredGridState.firstVisibleItemIndex > 0 } }
-
-//	val firstVisibleItemScrollOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
-
-	var noteScrollState by rememberSaveable { mutableStateOf(Pair(0, 0)) }
-	var chapterScrollState by rememberSaveable { mutableStateOf(Pair(0, 0)) }
-	fun onSelectTab(newTab: Int) {
-		if (newTab == selectedTab) return
-		else {
-			scope.launch {
-				if (newTab == 0) {
-					chapterScrollState = Pair(staggeredGridState.firstVisibleItemIndex, staggeredGridState.firstVisibleItemScrollOffset)
-					selectedTab = 0
-					staggeredGridState.scrollToItem(noteScrollState.first, noteScrollState.second)
-				} else {
-					noteScrollState = Pair(staggeredGridState.firstVisibleItemIndex, staggeredGridState.firstVisibleItemScrollOffset)
-					selectedTab = 1
-					staggeredGridState.scrollToItem(chapterScrollState.first, chapterScrollState.second)
-				}
-			}
-		}
-	}
 
 	GenericScaffold2(
 		bottomBar = { BottomBar(onClickMetadata = { isMetadataBottomSheetVisible = true }) },
@@ -205,80 +185,96 @@ fun NotebookScreen(
 		},
 		modifier = Modifier.fillMaxSize()
 	) {
-		CollapsedTopBar(
-			modifier = Modifier.zIndex(2f),
-			chapterTitle = chapterObject?.title,
-			isFavourite = chapterObject?.isFavourite == true,
-			isLocked = chapterObject?.isLocked == true,
-			chapterColor = chapterObject?.color?.let { Color(it) },
-			chapterPath = chapterPath,
-			defaultChapterId = defaultChapterId,
-			selectedTab = selectedTab,
-			isCollapsed = isCollapsed,
-			isSelecting = isSelecting,
-			onClickFavourite = { chapterObject?.let(onClickFavourite) },
-			onClickLock = { chapterObject?.let(onClickLock) },
-			onClickMenuButton = { isMenuBottomSheetVisible = true },
-			onLoadChapter = onLoadChapter,
-			onSelectTab = ::onSelectTab
-		)
+		Column {
+			Backdrop(
+				id = chapterObject?.id,
+				chapterTitle = chapterObject?.title,
+				chapterDescription = chapterObject?.description,
+				thumbnail = chapterObject?.thumbnail,
+				chapterColor = chapterObject?.color?.let { Color(it) },
+				isSelecting = isSelecting,
+				offset = if (firstItemIndex > 0) 1f else offset,
+			)
+			Spacer(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(32.dp)
+					.background(MaterialTheme.colorScheme.background)
+			)
+		}
 
-		LazyVerticalStaggeredGrid(
-			state = staggeredGridState,
-			columns = StaggeredGridCells.Fixed(componentColumnCount),
+		Column(
 			modifier = Modifier.fillMaxSize()
 		) {
-			item(
-				key = 0,
-				contentType = { 0 },
-				span = StaggeredGridItemSpan.FullLine
-			) {
-				ExpandedTopBar(
-					chapterTitle = chapterObject?.title,
-					chapterDescription = chapterObject?.description,
-					bitmap = bitmap,
-					chapterColor = chapterObject?.color?.let { Color(it) },
-					defaultChapterId = defaultChapterId,
-					chapterPath = chapterPath,
-					selectedTab = selectedTab,
-					isSelecting = isSelecting,
-					onLoadChapter = onLoadChapter,
-					onSelectTab = ::onSelectTab
+			TopBar(
+				modifier = Modifier.zIndex(2f),
+				chapterTitle = chapterObject?.title,
+				isFavourite = chapterObject?.isFavourite == true,
+				isLocked = chapterObject?.isLocked == true,
+				offset = offset,
+				chapterColor = chapterObject?.color?.let { Color(it) },
+				onClickFavourite = { chapterObject?.let(onClickFavourite) },
+				onClickLock = { chapterObject?.let(onClickLock) },
+			) { isMenuBottomSheetVisible = true }
+
+			if (noteGroupList.isEmpty() && chapterList.isEmpty()) {
+				Spacer(modifier = Modifier.height(196.dp))
+				EmptyView(
+					image = R.drawable.il_chapter_empty,
+					title = stringResource(id = R.string.empty_chapter_message),
+					modifier = Modifier
+						.fillMaxWidth()
+						.weight(1f)
 				)
+				Spacer(modifier = Modifier.height(32.dp))
+			} else {
+				LazyColumn(
+					state = lazyListState,
+					modifier = Modifier.fillMaxSize(),
+				) {
+					item(
+						contentType = { 0 },
+					) {
+						Spacer(modifier = Modifier.height(196.dp))
+					}
+					stickyHeader(
+						contentType = { 1 },
+					) {
+						ChapterNavigator(
+							defaultChapterId = defaultChapterId,
+							chapterPath = chapterPath,
+							isChapterListVisible = isChapterListVisible,
+							onLoadChapter = onLoadChapter,
+							onToggleChapterList = { isChapterListVisible = !isChapterListVisible },
+						)
+					}
+
+					chapterList(
+						chapterList = if (isChapterListVisible) chapterList else listOf(),
+						chapterNoteItemCount = chapterNoteItemCount,
+						chapterChapterItemCount = chapterChapterItemCount,
+						selectedIdList = selectedIdList,
+						componentColumnCount = 2,
+						onClick = { onClickChapter(it.id) },
+						onLongClick = { onSelect(it.id) },
+					)
+
+					noteList(
+						noteGroupList = noteGroupList,
+						tagList = tagList,
+						sortOn = sortOn ?: SortOn.Timestamp,
+						selectedIdList = selectedIdList,
+						onClick = { onClickNote(it.id) },
+						onLongClick = { onSelect(it.id) },
+					)
+
+					item(
+						contentType = { 0 },
+					) {
+						Spacer(modifier = Modifier.height(194.dp))
+					}
+				}
 			}
-
-			item(
-				key = 1,
-				contentType = 1,
-				span = StaggeredGridItemSpan.FullLine
-			) {
-				Spacer(modifier = Modifier.height(8.dp))
-			}
-
-			when {
-				selectedTab == 0 && noteList.isEmpty() -> Unit
-				selectedTab == 0 -> noteList(
-					noteList = noteList,
-					tagList = tagList,
-					selectedIdList = selectedIdList,
-					onClick = { onClickNote(it.id) },
-					onLongClick = { onSelect(it.id) }
-				)
-
-				chapterList.isEmpty() -> Unit
-				else -> chapterList(
-					chapterList = chapterList,
-					chapterNoteItemCount = chapterNoteItemCount,
-					chapterChapterItemCount = chapterChapterItemCount,
-					selectedIdList = selectedIdList,
-					componentColumnCount = componentColumnCount,
-					onClick = { onClickChapter(it.id) },
-					onLongClick = { onSelect(it.id) }
-				)
-
-			}
-
-			item(key = 3, contentType = 1) { Spacer(modifier = Modifier.height(128.dp)) }
 		}
 
 		NotebookSelectionActionView(
@@ -286,8 +282,8 @@ fun NotebookScreen(
 				.padding(start = 24.dp, top = 0.dp, end = 24.dp, bottom = 32.dp)
 				.align(Alignment.BottomCenter),
 			isSelecting = isSelecting,
-			isAllItemFavourite = selectedIdList.isNotEmpty() && noteList.filter { it.id in selectedIdList }.all { it.isFavourite } && chapterList.filter { it.id in selectedIdList }.all { it.isFavourite },
-			isAllItemLocked = selectedIdList.isNotEmpty() && noteList.filter { it.id in selectedIdList }.all { it.isLocked } && chapterList.filter { it.id in selectedIdList }.all { it.isLocked },
+			isAllItemFavourite = selectedIdList.isNotEmpty() && noteGroupList.filterObject { it.id in selectedIdList }.all { it.isFavourite } && chapterList.filter { it.id in selectedIdList }.all { it.isFavourite },
+			isAllItemLocked = selectedIdList.isNotEmpty() && noteGroupList.filterObject { it.id in selectedIdList }.all { it.isLocked } && chapterList.filter { it.id in selectedIdList }.all { it.isLocked },
 			selectedItemCount = selectedIdList.size,
 			onClickDelete = { isDeleteDialogVisible = true },
 			onClickFavourite = { onClickMultiFavourite(selectedIdList) },

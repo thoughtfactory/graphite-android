@@ -4,6 +4,7 @@ import android.text.Html
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.BuildConfig
+import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.di.model.local.ChapterObjectLite
 import com.syncodec.graphite.di.model.local.NoteObject
 import com.syncodec.graphite.di.model.local.NoteObjectLite
@@ -56,7 +57,7 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 					}
 				}
 				launch {
-					repository1?.getAllTagAsFlow()?.collectLatest { tagList ->
+					repository1?.getAllObjectOfTypeAsFlow<TagObject>(includeLocked = true)?.collectLatest { tagList ->
 						this@SearchViewModel._tagList.tryEmit(tagList.toSet())
 					}
 				}
@@ -134,7 +135,7 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 	fun searchAndAddTagFilter(id: RealmUUID) {
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
-				repository1?.getTagFromId(id = id)?.let { tagObject ->
+				repository1?.getObjectFromId<TagObject>(id = id)?.let { tagObject ->
 					this@SearchViewModel.addFilter(noteFilter = NoteFilter.Tag(tagObject = tagObject))
 				}
 			}
@@ -143,7 +144,7 @@ class SearchViewModel(lockableRepo: LockableRepo) : ViewModel() {
 
 	fun loadChapter(chapterId: RealmUUID?) {
 		viewModelScope.launch(Dispatchers.Default) {
-			_repository.value?.getChapterFromId(id = chapterId).let { chapterObject ->
+			_repository.value?.getObjectFromId<ChapterObject>(id = chapterId).let { chapterObject ->
 				this@SearchViewModel._filterChapterObject.tryEmit(chapterObject?.toLite())
 			}
 		}

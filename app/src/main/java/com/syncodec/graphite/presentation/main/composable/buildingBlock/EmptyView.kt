@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +25,7 @@ import com.syncodec.graphite.R
 
 @Composable
 fun EmptyView(
+	modifier: Modifier = Modifier,
 	image: Int,
 	title: String,
 	subTitle: String? = null,
@@ -36,7 +36,7 @@ fun EmptyView(
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.Center,
-		modifier = Modifier.fillMaxSize()
+		modifier = modifier
 	) {
 		Spacer(modifier = Modifier.weight(1f))
 		Image(

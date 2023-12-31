@@ -20,15 +20,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,8 +43,6 @@ fun GenericScaffold2(
 	overlayContent: @Composable () -> Unit = { },
 	content: @Composable (BoxScope.() -> Unit) = { },
 ) {
-	var bottomBarHeight by remember { mutableStateOf<Float?>(null) }
-
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
@@ -56,8 +50,8 @@ fun GenericScaffold2(
 			topBar = {
 				AnimatedVisibility(
 					visible = isTopBarVisible,
-					enter = expandVertically(tween(470)),
-					exit = shrinkVertically(tween(470)),
+					enter = expandVertically(tween(ANIMATION_DURATION_MILLIS)),
+					exit = shrinkVertically(tween(ANIMATION_DURATION_MILLIS)),
 					label = "topBar_visibility_animation"
 				) {
 					topBar()
@@ -81,8 +75,8 @@ fun GenericScaffold2(
 						content()
 						androidx.compose.animation.AnimatedVisibility(
 							visible = isFloatingActionButtonVisible,
-							enter = fadeIn(tween(470)) + scaleIn(tween(470)),
-							exit = fadeOut(tween(470)) + scaleOut(tween(470)),
+							enter = fadeIn(tween(ANIMATION_DURATION_MILLIS)) + scaleIn(tween(ANIMATION_DURATION_MILLIS)),
+							exit = fadeOut(tween(ANIMATION_DURATION_MILLIS)) + scaleOut(tween(ANIMATION_DURATION_MILLIS)),
 							modifier = Modifier
 								.padding(16.dp)
 								.align(Alignment.BottomEnd)
@@ -97,17 +91,14 @@ fun GenericScaffold2(
 					bottomBar?.let {
 						androidx.compose.animation.AnimatedVisibility(
 							visible = isBottomBarVisible,
-							enter = expandVertically(tween(470)),
-							exit = shrinkVertically(tween(470)),
-							modifier = Modifier
-								.onGloballyPositioned { coordinates ->
-									bottomBarHeight = coordinates.size.height.toFloat()
-								},
+							enter = expandVertically(tween(ANIMATION_DURATION_MILLIS)),
+							exit = shrinkVertically(tween(ANIMATION_DURATION_MILLIS)),
 						) { it() }
 					}
 				}
 			}
 		}
+
 		dialogContent()
 		overlayContent()
 	}

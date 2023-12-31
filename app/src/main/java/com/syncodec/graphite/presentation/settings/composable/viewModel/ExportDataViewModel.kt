@@ -13,6 +13,7 @@ import com.syncodec.graphite.di.model.dataExchanger.Exportable.ExportBucketObjec
 import com.syncodec.graphite.di.model.dataExchanger.Exportable.ExportChapterObject
 import com.syncodec.graphite.di.model.dataExchanger.Exportable.ExportNoteObject
 import com.syncodec.graphite.di.model.dataExchanger.Exportable.ExportTagObject
+import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
 import com.syncodec.graphite.utils.archiveUtil.CompressUtil
@@ -97,7 +98,7 @@ class ExportDataViewModel(private val lockableRepo: LockableRepo) : ViewModel() 
 				val parentDir = File(exportDir, "tag")
 				parentDir.mkdirs()
 				repository1
-					.getAllTag()
+					.getAllObjectOfType<TagObject>(includeLocked = true)
 					.map { ExportTagObject.fromObject(inputObject = it) }
 					.forEach { writeFile(parentDir = parentDir, fileName = it.id.toString(), data = json.encodeToString(it)) }
 			}

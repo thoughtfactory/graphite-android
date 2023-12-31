@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.ChapterObjectLite
+import com.syncodec.graphite.presentation.base.ANIMATION_DURATION_MILLIS
 import io.realm.kotlin.types.RealmUUID
 
 
@@ -42,8 +43,8 @@ fun Navigator(
 	onClickNavigatorChapter: (RealmUUID?) -> Unit = {},
 ) {
 	AnimatedVisibility(
-		visible = isVisible, enter = expandVertically(tween(470)),
-		exit = shrinkVertically(tween(470)),
+		visible = isVisible, enter = expandVertically(tween(ANIMATION_DURATION_MILLIS)),
+		exit = shrinkVertically(tween(ANIMATION_DURATION_MILLIS)),
 		label = "navigatorVisibility_animation",
 		modifier = modifier,
 	) {

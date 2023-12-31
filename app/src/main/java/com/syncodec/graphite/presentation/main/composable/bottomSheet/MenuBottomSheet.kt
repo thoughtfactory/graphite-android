@@ -10,9 +10,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetButton2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.BottomSheetActionButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.row.SameHeightRowGrid
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.tags.TagsActivity
@@ -38,7 +38,7 @@ fun MenuBottomSheet(
 			title = stringResource(id = R.string.menu),
 		) {
 			SameHeightRowGrid {
-				GenericBottomSheetButton2(
+				BottomSheetActionButton(
 					icon = R.drawable.ic_fa_gallery,
 					text = stringResource(id = R.string.attachments),
 					contentDescription = stringResource(id = R.string.attachments),
@@ -49,7 +49,7 @@ fun MenuBottomSheet(
 					}
 					onDismissRequest()
 				}
-				GenericBottomSheetButton2(
+				BottomSheetActionButton(
 					icon = R.drawable.ic_fa_tag,
 					text = stringResource(id = R.string.tags),
 					contentDescription = stringResource(id = R.string.tags),
@@ -59,7 +59,7 @@ fun MenuBottomSheet(
 					}
 					onDismissRequest()
 				}
-				GenericBottomSheetButton2(
+				BottomSheetActionButton(
 					icon = R.drawable.ic_fa_settings,
 					text = stringResource(id = R.string.settings),
 					contentDescription = stringResource(id = R.string.settings),

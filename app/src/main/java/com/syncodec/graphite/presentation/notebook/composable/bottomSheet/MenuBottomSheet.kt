@@ -7,14 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.AtlasButton
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.AttachmentButton
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.CalendarButton
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.DeleteButton
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.EditButton
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetButton2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.AtlasButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.AttachmentButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.CalendarButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.DeleteButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.EditButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.BottomSheetActionButton
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.row.SameHeightRowGrid
 
 
@@ -45,7 +45,7 @@ fun MenuBottomSheet(
 				AttachmentButton(onClick = onClickAttachments)
 				AtlasButton(onClick = onClickAtlas)
 				CalendarButton(onClick = onClickCalendar)
-				GenericBottomSheetButton2(
+				BottomSheetActionButton(
 					icon = R.drawable.ic_fa_sparkles,
 					text = stringResource(id = R.string.set_as_default),
 					contentDescription = stringResource(id = R.string.set_as_default),

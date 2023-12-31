@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.main.composable.screen.bucketScreen
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -27,6 +28,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,6 +44,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -98,6 +101,8 @@ fun BucketScreen(
 	var orderedBucketList by remember { mutableStateOf<List<BucketObjectLite>?>(null) }
 	LaunchedEffect(key1 = bucketList) { orderedBucketList = bucketList?.toList() }
 
+	BackHandler(enabled = isSelecting) { onUnSelectAll() }
+
 	fun onClickBucket(id: RealmUUID) {
 		if (isSelecting) onSelect(id)
 		else Intent(context, BucketActivity::class.java).apply {
@@ -141,6 +146,7 @@ fun BucketScreen(
 				image = remember { if (Random.nextBoolean()) R.drawable.il_bucket_list_b else R.drawable.il_bucket_list_g },
 				title = "I think, therefore, I am",
 				subTitle = "― René Descartes",
+				modifier = Modifier.fillMaxSize()
 			)
 
 			else -> Column(
@@ -242,7 +248,6 @@ fun BucketScreen(
 	)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun BucketListFilter(
@@ -263,68 +268,79 @@ private fun BucketListFilter(
 		) {
 			Spacer(modifier = Modifier.width(12.dp))
 
-			FilterChip(
-				leadingIcon = {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_fa_bucket_todo),
-						contentDescription = stringResource(id = R.string.todo_list),
-						modifier = Modifier.requiredSize(16.dp)
-					)
-				},
-				label = { Text(text = stringResource(id = R.string.todo)) },
-				trailingIcon = { Text(text = bucketList.count { it.bucketType == BucketType.TODO }.toString()) },
-				selected = BucketType.TODO in bucketFilter,
+			BucketFilterChip(
+				icon = R.drawable.ic_fa_bucket_todo,
+				text = stringResource(id = R.string.todo),
+				bucketCount = bucketList.count { it.bucketType == BucketType.TODO },
+				isSelected = BucketType.TODO in bucketFilter,
 				onClick = { onClickFilterChip(BucketType.TODO) }
 			)
 
 			Spacer(modifier = Modifier.width(8.dp))
 
-			FilterChip(
-				leadingIcon = {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_fa_bucket_book),
-						contentDescription = stringResource(id = R.string.book_list),
-						modifier = Modifier.requiredSize(16.dp)
-					)
-				},
-				label = { Text(text = stringResource(id = R.string.book)) },
-				trailingIcon = { Text(text = bucketList.count { it.bucketType == BucketType.BOOK }.toString()) },
-				selected = BucketType.BOOK in bucketFilter,
+			BucketFilterChip(
+				icon = R.drawable.ic_fa_bucket_book,
+				text = stringResource(id = R.string.book),
+				bucketCount = bucketList.count { it.bucketType == BucketType.BOOK },
+				isSelected = BucketType.BOOK in bucketFilter,
 				onClick = { onClickFilterChip(BucketType.BOOK) }
 			)
 
 			Spacer(modifier = Modifier.width(8.dp))
 
-			FilterChip(
-				leadingIcon = {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_fa_bucket_show),
-						contentDescription = stringResource(id = R.string.show_list),
-						modifier = Modifier.requiredSize(16.dp)
-					)
-				},
-				label = { Text(text = stringResource(id = R.string.movies_and_series)) },
-				trailingIcon = { Text(text = bucketList.count { it.bucketType == BucketType.SHOW }.toString()) },
-				selected = BucketType.SHOW in bucketFilter,
+			BucketFilterChip(
+				icon = R.drawable.ic_fa_bucket_show,
+				text = stringResource(id = R.string.show),
+				bucketCount = bucketList.count { it.bucketType == BucketType.SHOW },
+				isSelected = BucketType.SHOW in bucketFilter,
 				onClick = { onClickFilterChip(BucketType.SHOW) }
 			)
 
 			Spacer(modifier = Modifier.width(8.dp))
-			FilterChip(
-				leadingIcon = {
-					Icon(
-						painter = painterResource(id = R.drawable.ic_fa_bucket_link),
-						contentDescription = stringResource(id = R.string.link),
-						modifier = Modifier.requiredSize(16.dp)
-					)
-				},
-				label = { Text(text = stringResource(id = R.string.link)) },
-				trailingIcon = { Text(text = bucketList.count { it.bucketType == BucketType.LINK }.toString()) },
-				selected = BucketType.LINK in bucketFilter,
+
+			BucketFilterChip(
+				icon = R.drawable.ic_fa_bucket_link,
+				text = stringResource(id = R.string.link),
+				bucketCount = bucketList.count { it.bucketType == BucketType.LINK },
+				isSelected = BucketType.LINK in bucketFilter,
 				onClick = { onClickFilterChip(BucketType.LINK) }
 			)
 
 			Spacer(modifier = Modifier.width(12.dp))
 		}
 	}
+}
+
+@Composable
+@Preview
+private fun BucketFilterChip(
+	icon: Int = R.drawable.ic_fa_bucket_link,
+	text: String = stringResource(id = R.string.link),
+	bucketCount: Int = 0,
+	isSelected: Boolean = false,
+	onClick: () -> Unit = {},
+) {
+	FilterChip(
+		leadingIcon = {
+			Icon(
+				painter = painterResource(id = icon),
+				contentDescription = text,
+				tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.69f),
+				modifier = Modifier.requiredSize(16.dp)
+			)
+		},
+		label = { Text(text = text) },
+		trailingIcon = { Text(text = "$bucketCount") },
+		selected = isSelected,
+		colors = FilterChipDefaults.filterChipColors(
+			containerColor = Color.Transparent,
+			labelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.69f),
+			iconColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.69f),
+			selectedContainerColor = MaterialTheme.colorScheme.primary,
+			selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+			selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+			selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimary,
+		),
+		onClick = onClick
+	)
 }

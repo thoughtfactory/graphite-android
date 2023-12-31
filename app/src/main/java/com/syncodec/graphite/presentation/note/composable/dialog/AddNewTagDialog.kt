@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 import io.mhssn.colorpicker.ColorPicker
 import io.mhssn.colorpicker.ColorPickerType
@@ -29,7 +29,7 @@ fun AddNewTagDialog(
 ////			color = it
 //		},
 //	)
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		title = "New tag",
 		primaryButton = GenericDialogDefaults.genericDialogButtonWarning(text = "Delete", onClick = onConfirmDelete),

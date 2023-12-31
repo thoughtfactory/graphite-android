@@ -38,7 +38,7 @@ class TagsViewModel(lockableRepo: LockableRepo) : ViewModel() {
 		viewModelScope.launch(Dispatchers.Default) {
 			_repository.collectLatest { repository1 ->
 				launch {
-					repository1?.getAllTagAsFlow()?.collectLatest { tagList1 ->
+					repository1?.getAllObjectOfTypeAsFlow<TagObject>(includeLocked = true)?.collectLatest { tagList1 ->
 						this@TagsViewModel._tagList.tryEmit(tagList1)
 					}
 				}

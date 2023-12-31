@@ -28,7 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -121,7 +121,7 @@ fun DateTimePickerDialog(
 		}
 	}
 
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isTimePickerDialogVisible,
 		onDismissRequest = { isTimePickerDialogVisible = false },
 		primaryButton = GenericDialogDefaults.genericDialogButtonPrimary(text = stringResource(R.string.select), onClick = ::onSelectTime),

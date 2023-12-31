@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.main.composable.screen.explorerScreen
 
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,6 +33,8 @@ fun CalendarScreen(
 	val selectedDate by explorerViewModel.selectedDate.collectAsState()
 	val noteListDateCountMap by explorerViewModel.noteListDateCountMap.collectAsState()
 	val dateFilteredNoteList by explorerViewModel.dateFilteredNoteList.collectAsState()
+
+	BackHandler(enabled = isSelecting) { onUnSelectAll() }
 
 	fun onClickNote(id: RealmUUID) {
 		if (isSelecting) {

@@ -3,7 +3,6 @@ package com.syncodec.graphite.presentation.search.composable
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -124,7 +123,6 @@ fun SearchScreen(
 			} else {
 				LazyColumn(
 					modifier = Modifier.fillMaxSize(),
-					contentPadding = PaddingValues(horizontal = 8.dp),
 				) {
 					item { Spacer(modifier = Modifier.height(8.dp)) }
 					noteList(

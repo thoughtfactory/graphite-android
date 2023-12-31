@@ -92,7 +92,7 @@ class WhereChapterDialogViewModel2(lockableRepo: LockableRepo) : ViewModel() {
 			this.parentId = this@WhereChapterDialogViewModel2._currentChapterId.value
 		}
 		viewModelScope.launch(Dispatchers.Default) {
-			_repository.value?.getChapterWithParentId(parentChapterId = this@WhereChapterDialogViewModel2._currentChapterId.value)?.let {
+			_repository.value?.getObjectWithParentId<ChapterObject>(parentId = this@WhereChapterDialogViewModel2._currentChapterId.value, includeLocked = true)?.let {
 				if (it.size < 4) _repository.value?.putChapterSuspended(chapterObject)
 			}
 		}

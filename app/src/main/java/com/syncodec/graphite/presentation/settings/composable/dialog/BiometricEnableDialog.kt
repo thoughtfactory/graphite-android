@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 
 
@@ -15,7 +15,7 @@ fun BiometricEnableDialog(
 	onDismissRequest: () -> Unit = {},
 	onClickEnable: () -> Unit = {},
 ) {
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = isDialogVisible,
 		icon = GenericDialogDefaults.genericDialogIcon(icon = R.drawable.ic_fa_fingerprint),
 		title = stringResource(id = R.string.biometric_authentication),

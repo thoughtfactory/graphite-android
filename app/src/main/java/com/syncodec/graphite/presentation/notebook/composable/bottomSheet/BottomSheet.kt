@@ -13,8 +13,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.local.ChapterObject
 import com.syncodec.graphite.presentation.attachment.AttachmentActivity
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.sheets.MetadataBottomSheet
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.sheets.MetadataBottomSheet
 import com.syncodec.graphite.presentation.explorer.atlas.AtlasActivity
 import com.syncodec.graphite.presentation.explorer.calendar.CalendarActivity
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.ChapterBottomSheet
@@ -85,7 +85,7 @@ fun BottomSheet(
 		createdTimestamp = chapterObject?.createdTimestamp,
 		modifiedTimestamp = chapterObject?.modifiedTimestamp,
 		extraContent = {
-			GenericBottomSheetInfo2(
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.parent_id),
 				value = chapterObject?.parentId?.toString() ?: stringResource(id = R.string.root_element),
 			)

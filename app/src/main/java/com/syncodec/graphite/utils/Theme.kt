@@ -29,3 +29,7 @@ fun String.toColor(fallbackColor: Color? = null): Color? {
 fun getRandomColor(): Color {
 	return Color(Random.nextInt(256), Random.nextInt(256), Random.nextInt(256), 255)
 }
+
+fun Color.Companion.random() : Color {
+	return Color(Random.nextInt(256), Random.nextInt(256), Random.nextInt(256), 255)
+}

@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
 import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
 
 
@@ -15,7 +15,7 @@ fun DeleteAccountDialog(
 	onConfirmDelete: () -> Unit = {},
 	onDismiss: () -> Unit = {},
 ) {
-	GenericDialog2(
+	GenericAlertDialog2(
 		isDialogVisible = showDialog,
 		icon = GenericDialogDefaults.genericDialogIcon(icon = R.drawable.ic_flat_delete_account, tint = MaterialTheme.colorScheme.error),
 		title = "Delete account",

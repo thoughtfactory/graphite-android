@@ -13,6 +13,7 @@ import com.syncodec.graphite.di.model.local.NoteObjectLite
 import com.syncodec.graphite.di.model.local.TagObject
 import com.syncodec.graphite.di.repository.LockableRepo
 import com.syncodec.graphite.di.repository.Repository
+import com.syncodec.graphite.di.repository.group.RealmObjectGroupList
 import com.syncodec.graphite.utils.encodeBase64
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -47,8 +48,8 @@ class NotebookScreenViewModel2(
 	private val _chapterList: MutableStateFlow<List<ChapterObject>> = MutableStateFlow(listOf())
 	val chapterList: StateFlow<List<ChapterObject>> = _chapterList
 
-	private val _noteList: MutableStateFlow<List<NoteObjectLite>> = MutableStateFlow(listOf())
-	val noteList: StateFlow<List<NoteObjectLite>> = _noteList
+	private val _noteGroupList: MutableStateFlow<RealmObjectGroupList<NoteObjectLite>> = MutableStateFlow(RealmObjectGroupList())
+	val noteGroupList: StateFlow<RealmObjectGroupList<NoteObjectLite>> = _noteGroupList
 
 	private val _tagList: MutableStateFlow<List<TagObject>> = MutableStateFlow(listOf())
 	val tagList: StateFlow<List<TagObject>> = _tagList
@@ -71,8 +72,8 @@ class NotebookScreenViewModel2(
 
 		viewModelScope.launch(Dispatchers.Default) {
 			combine(_repository, _currentChapterId) { repository1, currentChapterId1 -> Pair(repository1, currentChapterId1) }.collectLatest { (repository1, currentChapterId1) ->
-				Log.d("npr71", "currentChapterId1 : $currentChapterId1 ${repository1!=null}")
-				if (repository1 != null && currentChapterId1!=null) {
+				Log.d("npr71", "currentChapterId1 : $currentChapterId1 ${repository1 != null}")
+				if (repository1 != null && currentChapterId1 != null) {
 					launch { observeDefaultChapter(repository = repository1) }
 					launch { observeTags(repository = repository1) }
 					launch { observeNoteCount(repository = repository1) }
@@ -109,8 +110,7 @@ class NotebookScreenViewModel2(
 			Job(viewModelScope.coroutineContext.job).let { job ->
 				observeChildChapterJob = job
 				launch(Dispatchers.Default + job) {
-					repository.getChapterWithParentIdAsFlow(parentId = currentChapterId).collectLatest { chapterList ->
-						Log.d("npr71", "found ${chapterList.size} chapters")
+					repository.getObjectWithParentIdAsFlow<ChapterObject>(parentId = currentChapterId).collectLatest { chapterList ->
 						this@NotebookScreenViewModel2._chapterList.tryEmit(chapterList)
 					}
 				}
@@ -124,9 +124,8 @@ class NotebookScreenViewModel2(
 			Job(viewModelScope.coroutineContext.job).let { job ->
 				observeChildNoteJob = job
 				launch(Dispatchers.Default + job) {
-					repository.getNoteWithParentIdAsFlow(parentId = currentChapterId).collectLatest { noteList ->
-						Log.d("npr71", "found ${noteList.size} notes")
-						this@NotebookScreenViewModel2._noteList.tryEmit(noteList)
+					repository.getNoteLiteWithParentIdAsFlow(parentId = currentChapterId, sort = true).collectLatest { noteGroupList1 ->
+						this@NotebookScreenViewModel2._noteGroupList.tryEmit(noteGroupList1)
 					}
 				}
 			}
@@ -134,19 +133,19 @@ class NotebookScreenViewModel2(
 	}
 
 	private suspend fun observeTags(repository: Repository) {
-		repository.getAllTagAsFlow().collectLatest {
+		repository.getAllObjectOfTypeAsFlow<TagObject>(includeLocked = true).collectLatest {
 			this._tagList.tryEmit(it)
 		}
 	}
 
 	private suspend fun observeNoteCount(repository: Repository) {
-		repository.getAllNoteAsFlow().collectLatest { noteObjectList ->
+		repository.getAllObjectOfTypeAsFlow<NoteObject>(includeLocked = true).collectLatest { noteObjectList ->
 			noteObjectList.groupingBy { it.parentId }.eachCount().let { _chapterNoteItemCount.tryEmit(it) }
 		}
 	}
 
 	private suspend fun observeChapterCount(repository: Repository) {
-		repository.getAllChapterAsFlow().collectLatest {
+		repository.getAllObjectOfTypeAsFlow<ChapterObject>(includeLocked = true).collectLatest {
 			it.groupingBy { it.parentId }.eachCount().let { _chapterChapterItemCount.tryEmit(it) }
 		}
 	}
@@ -175,7 +174,7 @@ class NotebookScreenViewModel2(
 				}
 			} else {
 //				Edit chapter
-				_repository.value?.getChapterFromId(id = chapterId)?.clone()?.apply {
+				_repository.value?.getObjectFromId<ChapterObject>(id = chapterId)?.clone()?.apply {
 					apply {
 						this.title = title
 						this.description = description
@@ -212,7 +211,7 @@ class NotebookScreenViewModel2(
 	}
 
 	fun toggleFavourite(idList: Set<RealmUUID>) {
-		val areAllFavourite = noteList.value.filter { it.id in idList }.all { it.isFavourite } && chapterList.value.filter { it.id in idList }.all { it.isFavourite }
+		val areAllFavourite = noteGroupList.value.filterObject { it.id in idList }.all { it.isFavourite } && chapterList.value.filter { it.id in idList }.all { it.isFavourite }
 		_repository.value?.setMultiObjectFromIdSuspended<ChapterObject>(idList = idList) {
 			this.updateModifyTimestamp()
 			this.isFavourite = !areAllFavourite
@@ -224,7 +223,7 @@ class NotebookScreenViewModel2(
 	}
 
 	fun toggleLock(idList: Set<RealmUUID>) {
-		val areAllLocked = noteList.value.filter { it.id in idList }.all { it.isLocked } && chapterList.value.filter { it.id in idList }.all { it.isLocked }
+		val areAllLocked = noteGroupList.value.filterObject { it.id in idList }.all { it.isLocked } && chapterList.value.filter { it.id in idList }.all { it.isLocked }
 		_repository.value?.setMultiObjectFromIdSuspended<ChapterObject>(idList = idList) {
 			this.updateModifyTimestamp()
 			this.isLocked = !areAllLocked

@@ -30,6 +30,7 @@ import com.syncodec.graphite.presentation.base.LockClosedContainer
 @Preview
 @Composable
 fun StateInfo(
+	modifier: Modifier = Modifier,
 	isFavourite: Boolean = true,
 	isLocked: Boolean = true,
 	attachmentCount: Int = 0,
@@ -38,8 +39,9 @@ fun StateInfo(
 ) {
 	if (isLocked || isFavourite || attachmentCount > 0 || extra != null) {
 		Surface(
+			modifier = modifier,
 			shape = MaterialTheme.shapes.extraSmall,
-			color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), MaterialTheme.colorScheme.surface.toArgb(), 0.47f)).copy(alpha = containerAlpha),
+			color = Color(ColorUtils.blendARGB(MaterialTheme.colorScheme.background.toArgb(), MaterialTheme.colorScheme.surface.toArgb(), 0.42f)).copy(alpha = containerAlpha),
 			contentColor = MaterialTheme.colorScheme.onSurface
 		) {
 			Row(
@@ -50,7 +52,7 @@ fun StateInfo(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_lock_close_duotone),
 						contentDescription = stringResource(id = R.string.locked),
-						tint = Color.LockClosedContainer,
+						tint = Color.LockClosedContainer.copy(alpha = 0.88f),
 						modifier = Modifier.requiredSize(14.dp)
 					)
 					if (isFavourite || attachmentCount > 0) DotSeparator()
@@ -59,7 +61,7 @@ fun StateInfo(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_fa_heart_solid),
 						contentDescription = stringResource(id = R.string.favourite),
-						tint = Color.FavouriteContainer.copy(alpha = 0.47f),
+						tint = Color.FavouriteContainer.copy(alpha = 0.88f),
 						modifier = Modifier.requiredSize(14.dp)
 					)
 					if (attachmentCount > 0) DotSeparator()

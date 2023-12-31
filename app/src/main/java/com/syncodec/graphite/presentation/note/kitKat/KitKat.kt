@@ -18,9 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 
-class KitKat(
-	context: Context
-) : WebView(context) {
+class KitKat(context: Context) : WebView(context) {
 
 	private val json = Json {
 		ignoreUnknownKeys = true

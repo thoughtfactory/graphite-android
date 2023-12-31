@@ -40,10 +40,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.model.local.BucketItemData
 import com.syncodec.graphite.di.model.local.BucketItemObject
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheet2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetInfo2
-import com.syncodec.graphite.presentation.common.bottomSheet.genericBottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheet2
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetInfo
+import com.syncodec.graphite.presentation.common.genericBottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.base.FavouriteContainer
 import com.syncodec.graphite.presentation.base.ICON_SIZE
 import com.syncodec.graphite.presentation.base.LockClosedContainer
@@ -68,7 +69,7 @@ fun PreviewLinkBottomSheet(
 
 	val isAuthenticated = LocalIsRepoUnlocked.current
 
-	val openGraphResult by remember(bucketItemObject) { derivedStateOf { bucketItemObject?.getOpenGraphResult() } }
+	val openGraphResult by remember(bucketItemObject) { derivedStateOf { bucketItemObject?.getBucketItemData<BucketItemData.LinkData>() } }
 	val thumbnail by remember(bucketItemObject) { derivedStateOf { bucketItemObject?.thumbnail?.decodeBase64ToBitmap() } }
 	val isFavourite by remember(bucketItemObject) { derivedStateOf { bucketItemObject?.isFavourite == true } }
 	val isLocked by remember(bucketItemObject) { derivedStateOf { bucketItemObject?.isLocked == true } }
@@ -122,7 +123,7 @@ fun PreviewLinkBottomSheet(
 
 			Spacer(modifier = Modifier.height(4.dp))
 
-			GenericBottomSheetInfo2(
+			GenericBottomSheetInfo(
 				key = stringResource(id = R.string.url),
 				value = openGraphResult?.url ?: bucketItemObject?.key ?: stringResource(id = R.string.unavailable),
 				onClick = {
@@ -136,14 +137,14 @@ fun PreviewLinkBottomSheet(
 				onLongClick = { openGraphResult?.url?.let { clipboardManager.setText(AnnotatedString(it)) } }
 			)
 			openGraphResult?.title?.let {
-				GenericBottomSheetInfo2(
+				GenericBottomSheetInfo(
 					key = stringResource(id = R.string.title),
 					value = it,
 					onLongClick = { clipboardManager.setText(AnnotatedString(it)) }
 				)
 			}
 			openGraphResult?.description?.let {
-				GenericBottomSheetInfo2(
+				GenericBottomSheetInfo(
 					key = stringResource(id = R.string.description),
 					value = it,
 					onLongClick = { clipboardManager.setText(AnnotatedString(it)) }
