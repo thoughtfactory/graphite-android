@@ -86,7 +86,7 @@ fun AnimatedText(
 	textAlign: TextAlign? = null,
 	maxLines : Int = Int.MAX_VALUE,
 	overflow : TextOverflow = TextOverflow.Clip,
-	transitionSpec : AnimatedContentScope<String?>.() -> ContentTransform = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+	transitionSpec : AnimatedContentTransitionScope<String?>.() -> ContentTransform = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) }
 ) {
 	AnimatedContent(
 		targetState = text,

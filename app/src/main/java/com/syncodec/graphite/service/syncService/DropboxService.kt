@@ -974,11 +974,11 @@ class DropboxService : SyncerService() {
 						hasMore = listFolderResult.hasMore
 
 						listFolderResult.entries
-							.filter { it.pathLower.split("/").size == 5 }
+							.filter { it.pathLower?.split("/")?.size == 5 }
 							.forEach {
 								val filePath = it.pathLower
 								try {
-									val parentId = RealmUUID.from(filePath.split("/")[3])
+									val parentId = RealmUUID.from(filePath!!.split("/")[3])
 									val attachmentMetadata = AttachmentMetadata(
 										fileName = it.name,
 										parentId = parentId,
@@ -1007,11 +1007,11 @@ class DropboxService : SyncerService() {
 							hasMore = listFolderResult.hasMore
 
 							listFolderResult.entries
-								.filter { it.pathLower.split("/").size == 5 }
+								.filter { it.pathLower?.split("/")?.size == 5 }
 								.forEach {
 									val filePath = it.pathLower
 									try {
-										val parentId = RealmUUID.from(filePath.split("/")[3])
+										val parentId = RealmUUID.from(filePath!!.split("/")[3])
 										val attachmentMetadata = AttachmentMetadata(
 											fileName = it.name,
 											parentId = parentId,

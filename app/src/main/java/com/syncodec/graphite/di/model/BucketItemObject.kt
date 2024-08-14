@@ -15,6 +15,7 @@ import com.syncodec.graphite.di.network.ShowType
 import com.syncodec.graphite.di.network.TvData
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.decodeFromString
@@ -64,6 +65,7 @@ class BucketItemObject() : RealmObject {
 	var key : String? = null
 	var data : String? = null
 
+	@Ignore
 	private val json = Json { ignoreUnknownKeys = true }
 
 	fun getData() : BucketItemData? {

@@ -38,6 +38,7 @@ class AtlasClusterItem(
 	override fun getPosition() : LatLng = latLng
 	override fun getTitle() : String? = itemTitle
 	override fun getSnippet() : String? = null
+	override fun getZIndex(): Float? = 1f
 }
 
 class AtlasNoteClusterItem(
@@ -48,6 +49,7 @@ class AtlasNoteClusterItem(
 	override fun getPosition() : LatLng = latLng
 	override fun getTitle() : String? = itemTitle
 	override fun getSnippet() : String? = null
+	override fun getZIndex(): Float? = 1f
 }
 
 

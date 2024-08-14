@@ -26,43 +26,42 @@ import org.koin.androidx.compose.koinViewModel
 @Preview
 @Composable
 fun BucketShowScreen(
-	pagerState : PagerState = rememberPagerState(),
-	isSelecting : Boolean = false,
-	onSelect : (RealmUUID) -> Unit = {},
-	selectedIdList : List<RealmUUID> = listOf(),
+    pagerState: PagerState = rememberPagerState(initialPage = 0) { 4 },
+    isSelecting: Boolean = false,
+    onSelect: (RealmUUID) -> Unit = {},
+    selectedIdList: List<RealmUUID> = listOf(),
 ) {
-	val context = LocalContext.current
-	val viewModel : BucketScreenCommonViewModel = koinViewModel()
+    val context = LocalContext.current
+    val viewModel: BucketScreenCommonViewModel = koinViewModel()
 
-	val isAuthenticated = LocalIsAuthenticated.current
+    val isAuthenticated = LocalIsAuthenticated.current
 
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+    val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
-	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
+    val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
+    val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
+    val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
 
-	val bucketId by viewModel.id.collectAsState()
-	val bucketItemList by viewModel.bucketItemList.collectAsState()
+    val bucketId by viewModel.id.collectAsState()
+    val bucketItemList by viewModel.bucketItemList.collectAsState()
 
-	HorizontalPager(
-		pageCount = 4,
-		state = pagerState,
-		userScrollEnabled = ! isSelecting,
-	) { pageIndex ->
-		val filteredBucketItemList = when (pageIndex) {
-			0 -> bucketItemList
-			1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
-			2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }
-			3 -> bucketItemList.filter { it.state == BucketItemState.GAMMA.name }
-			else -> bucketItemList
-		}.filter { !it.isLocked || isAuthenticated }
-		BucketShowGridScreen(
-			bucketId = bucketId,
-			bucketItemList = filteredBucketItemList,
-			isSelecting = isSelecting,
-			onSelect = onSelect,
-			selectedIdList = selectedIdList,
-		)
-	}
+    HorizontalPager(
+        state = pagerState,
+        userScrollEnabled = !isSelecting,
+    ) { pageIndex ->
+        val filteredBucketItemList = when (pageIndex) {
+            0 -> bucketItemList
+            1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
+            2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }
+            3 -> bucketItemList.filter { it.state == BucketItemState.GAMMA.name }
+            else -> bucketItemList
+        }.filter { !it.isLocked || isAuthenticated }
+        BucketShowGridScreen(
+            bucketId = bucketId,
+            bucketItemList = filteredBucketItemList,
+            isSelecting = isSelecting,
+            onSelect = onSelect,
+            selectedIdList = selectedIdList,
+        )
+    }
 }

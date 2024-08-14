@@ -28,54 +28,53 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BucketBookScreen(
-	pagerState : PagerState = rememberPagerState(),
-	isSelecting : Boolean = false,
-	selectedIdList : List<RealmUUID> = listOf(),
-	onSelect : (RealmUUID) -> Unit = {},
+    pagerState: PagerState = rememberPagerState(initialPage = 0) { 1 },
+    isSelecting: Boolean = false,
+    selectedIdList: List<RealmUUID> = listOf(),
+    onSelect: (RealmUUID) -> Unit = {},
 ) {
-	val context = LocalContext.current
-	val viewModel : BucketScreenCommonViewModel = koinViewModel()
+    val context = LocalContext.current
+    val viewModel: BucketScreenCommonViewModel = koinViewModel()
 
-	val isAuthenticated = LocalIsAuthenticated.current
+    val isAuthenticated = LocalIsAuthenticated.current
 
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+    val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
-	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
+    val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
+    val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
+    val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
 
-	val bucketId by viewModel.id.collectAsState()
-	val bucketItemList by viewModel.bucketItemList.collectAsState()
-	val isLoadedFirstTime by viewModel.isLoadedFirstTime.collectAsState()
+    val bucketId by viewModel.id.collectAsState()
+    val bucketItemList by viewModel.bucketItemList.collectAsState()
+    val isLoadedFirstTime by viewModel.isLoadedFirstTime.collectAsState()
 
-	Crossfade(
-		targetState = isLoadedFirstTime,
-		animationSpec = tween(300),
-		label = "bookScreenPager_animation"
-	) {
-		if (it) {
-			HorizontalPager(
-				pageCount = 4,
-				state = pagerState,
-				userScrollEnabled = ! isSelecting,
-			) {
-				val filteredBucketItemList = when (it) {
-					0 -> bucketItemList
-					1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
-					2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }
-					3 -> bucketItemList.filter { it.state == BucketItemState.GAMMA.name }
-					else -> bucketItemList
-				}.filter { !it.isLocked || isAuthenticated }
-				BucketBookGridScreen(
-					bucketId = bucketId,
-					bucketItemList = filteredBucketItemList,
-					isSelecting = isSelecting,
-					selectedIdList = selectedIdList,
-					onSelect = onSelect,
-				)
-			}
-		} else {
-			LoadingView()
-		}
-	}
+    Crossfade(
+        targetState = isLoadedFirstTime,
+        animationSpec = tween(300),
+        label = "bookScreenPager_animation"
+    ) {
+        if (it) {
+            HorizontalPager(
+                state = pagerState,
+                userScrollEnabled = !isSelecting,
+            ) {
+                val filteredBucketItemList = when (it) {
+                    0 -> bucketItemList
+                    1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
+                    2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }
+                    3 -> bucketItemList.filter { it.state == BucketItemState.GAMMA.name }
+                    else -> bucketItemList
+                }.filter { !it.isLocked || isAuthenticated }
+                BucketBookGridScreen(
+                    bucketId = bucketId,
+                    bucketItemList = filteredBucketItemList,
+                    isSelecting = isSelecting,
+                    selectedIdList = selectedIdList,
+                    onSelect = onSelect,
+                )
+            }
+        } else {
+            LoadingView()
+        }
+    }
 }

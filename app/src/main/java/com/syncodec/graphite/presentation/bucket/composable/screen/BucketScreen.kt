@@ -59,7 +59,7 @@ fun BucketScreen(
 	val isAuthenticated = LocalIsAuthenticated.current
 	val onAuthenticationAction = LocalAuthenticatorAction.current
 
-	val pagerState = rememberPagerState(0)
+	val pagerState = rememberPagerState(initialPage = 0){ 4 }
 	var currentPage = pagerState.currentPage
 	LaunchedEffect(key1 = pagerState.currentPage) {
 		currentPage = pagerState.currentPage

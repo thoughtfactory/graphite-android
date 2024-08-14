@@ -32,60 +32,59 @@ import org.koin.androidx.compose.koinViewModel
 @Preview
 @Composable
 fun BucketTodoScreen(
-	pagerState : PagerState = rememberPagerState(),
-	isSelecting : Boolean = false,
-	selectedIdList : List<RealmUUID> = listOf(),
-	onSelect : (RealmUUID) -> Unit = {},
-	onClickBucketItem : (RealmUUID) -> Unit = {},
+    pagerState: PagerState = rememberPagerState(initialPage = 0) { 1 },
+    isSelecting: Boolean = false,
+    selectedIdList: List<RealmUUID> = listOf(),
+    onSelect: (RealmUUID) -> Unit = {},
+    onClickBucketItem: (RealmUUID) -> Unit = {},
 ) {
-	val context = LocalContext.current
-	val viewModel : BucketScreenCommonViewModel = koinViewModel()
+    val context = LocalContext.current
+    val viewModel: BucketScreenCommonViewModel = koinViewModel()
 
-	val isAuthenticated = LocalIsAuthenticated.current
-	val onAuthenticationAction = LocalAuthenticatorAction.current
+    val isAuthenticated = LocalIsAuthenticated.current
+    val onAuthenticationAction = LocalAuthenticatorAction.current
 
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+    val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
-	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
+    val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
+    val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
+    val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
 
-	val bucketId by viewModel.id.collectAsState()
-	val bucketItemList by viewModel.bucketItemList.collectAsState()
-	val isLoadedFirstTime by viewModel.isLoadedFirstTime.collectAsState()
+    val bucketId by viewModel.id.collectAsState()
+    val bucketItemList by viewModel.bucketItemList.collectAsState()
+    val isLoadedFirstTime by viewModel.isLoadedFirstTime.collectAsState()
 
-	Crossfade(
-		targetState = isLoadedFirstTime,
-		animationSpec = tween(300),
-		modifier = Modifier.fillMaxSize(),
-		label = "bucketTodoScreen_animation"
-	) { isLoaded ->
-		if (isLoaded) {
-			HorizontalPager(
-				pageCount = 4,
-				state = pagerState,
-				userScrollEnabled = ! isSelecting,
-			) { pageIndex ->
-				val filteredBucketItemList = when (pageIndex) {
-					0 -> bucketItemList
-					1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
-					2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }
-					3 -> bucketItemList.filter { it.state == BucketItemState.GAMMA.name }
-					else -> bucketItemList
-				}.filter { ! it.isLocked || isAuthenticated }
-				BucketTodoListScreen(
-					bucketItemList = filteredBucketItemList,
-					isSelecting = isSelecting,
-					selectedIdList = selectedIdList,
-					onSelect = onSelect,
-					onClickBucketItem = onClickBucketItem,
-					onClickFavourite = viewModel::toggleFavourite,
-					onClickLock = { if (isAuthenticated) viewModel.toggleLock(it) else onAuthenticationAction(AuthenticatorScreen.Authenticate) },
-					onCheckedChange = viewModel::toggleBucketItemState,
-				)
-			}
-		} else {
-			LoadingView()
-		}
-	}
+    Crossfade(
+        targetState = isLoadedFirstTime,
+        animationSpec = tween(300),
+        modifier = Modifier.fillMaxSize(),
+        label = "bucketTodoScreen_animation"
+    ) { isLoaded ->
+        if (isLoaded) {
+            HorizontalPager(
+                state = pagerState,
+                userScrollEnabled = !isSelecting,
+            ) { pageIndex ->
+                val filteredBucketItemList = when (pageIndex) {
+                    0 -> bucketItemList
+                    1 -> bucketItemList.filter { it.state == BucketItemState.ALPHA.name }
+                    2 -> bucketItemList.filter { it.state == BucketItemState.BETA.name }
+                    3 -> bucketItemList.filter { it.state == BucketItemState.GAMMA.name }
+                    else -> bucketItemList
+                }.filter { !it.isLocked || isAuthenticated }
+                BucketTodoListScreen(
+                    bucketItemList = filteredBucketItemList,
+                    isSelecting = isSelecting,
+                    selectedIdList = selectedIdList,
+                    onSelect = onSelect,
+                    onClickBucketItem = onClickBucketItem,
+                    onClickFavourite = viewModel::toggleFavourite,
+                    onClickLock = { if (isAuthenticated) viewModel.toggleLock(it) else onAuthenticationAction(AuthenticatorScreen.Authenticate) },
+                    onCheckedChange = viewModel::toggleBucketItemState,
+                )
+            }
+        } else {
+            LoadingView()
+        }
+    }
 }

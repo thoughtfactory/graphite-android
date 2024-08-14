@@ -102,7 +102,7 @@ fun AttachmentBottomSheet(
 				{
 					BottomSheetButton(title = "Camera", icon = R.drawable.ic_camera) {
 						photoUri = createTempAttachmentFileToExpose(context = context, name = "${RealmUUID.random()}.jpg").first
-						if (attachmentListSaved.size + attachmentListToAdd.size < 8) takePicture.launch(photoUri)
+						if (attachmentListSaved.size + attachmentListToAdd.size < 8) takePicture.launch(photoUri!!)
 						else Toast.makeText(context, "Join Graphite Pro to add more attachments", Toast.LENGTH_SHORT).show()
 					}
 				},

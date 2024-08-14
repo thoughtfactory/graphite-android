@@ -30,75 +30,74 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProFeaturesView() {
 
-	val pagerState = androidx.compose.foundation.pager.rememberPagerState(initialPage = 3132)
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(initialPage = 3132) { 50000 }
 
-	LaunchedEffect(key1 = null) {
-		launch {
-			while (true) {
-				delay(3000)
-				pagerState.animateScrollToPage(pagerState.currentPage + 1)
-			}
-		}
-	}
+    LaunchedEffect(key1 = null) {
+        launch {
+            while (true) {
+                delay(3000)
+                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+            }
+        }
+    }
 
-	Column(
-		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = Modifier.fillMaxWidth()
-	) {
-		HorizontalPager(
-			pageCount = 7171,
-			state = pagerState,
-		) {
-			when (it % 7) {
-				0 -> Pair(R.drawable.il_pro_rich_text, "Unleash the power of rich text editing")
-				1 -> Pair(R.drawable.il_pro_attachment, "No limit on the number of attachments you store locally")
-				2 -> Pair(R.drawable.il_pro_geo_tagging, "Automatically geo tag your notes")
-				3 -> Pair(R.drawable.il_pro_notification, "Pin your notes to the notification bar")
-				4 -> Pair(R.drawable.il_pro_bucket_list, "Create multiple buckets of similar types")
-				5 -> Pair(R.drawable.il_pro_chapter, "Add chapters in your notebooks")
-				6 -> Pair(R.drawable.il_pro_tag, "Tag your notes for easy search")
-				else -> Pair(R.drawable.il_pro_rich_text, "Unleash the power of rich text editing")
-			}.let {
-				ProFeatureItemView(imageId = it.first, text = it.second)
-			}
-		}
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        HorizontalPager(
+            state = pagerState,
+        ) {
+            when (it % 7) {
+                0 -> Pair(R.drawable.il_pro_rich_text, "Unleash the power of rich text editing")
+                1 -> Pair(R.drawable.il_pro_attachment, "No limit on the number of attachments you store locally")
+                2 -> Pair(R.drawable.il_pro_geo_tagging, "Automatically geo tag your notes")
+                3 -> Pair(R.drawable.il_pro_notification, "Pin your notes to the notification bar")
+                4 -> Pair(R.drawable.il_pro_bucket_list, "Create multiple buckets of similar types")
+                5 -> Pair(R.drawable.il_pro_chapter, "Add chapters in your notebooks")
+                6 -> Pair(R.drawable.il_pro_tag, "Tag your notes for easy search")
+                else -> Pair(R.drawable.il_pro_rich_text, "Unleash the power of rich text editing")
+            }.let {
+                ProFeatureItemView(imageId = it.first, text = it.second)
+            }
+        }
 
-		Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-		HorizontalPagerIndicator(
-			pagerState = pagerState,
-			pageCount = 7,
-			pageIndexMapping = { it % 7 },
-		)
-	}
+        HorizontalPagerIndicator(
+            pagerState = pagerState,
+            pageCount = 7,
+            pageIndexMapping = { it % 7 },
+        )
+    }
 }
 
 @Composable
 private fun ProFeatureItemView(
-	imageId : Int,
-	text : String,
+    imageId: Int,
+    text: String,
 ) {
-	val configuration = LocalConfiguration.current
-	val screenHeight = configuration.screenHeightDp.dp
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
 
-	Column(
-		modifier = Modifier.fillMaxWidth(),
-		horizontalAlignment = Alignment.CenterHorizontally
-	) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
-		Image(
-			painter = painterResource(id = imageId),
-			contentDescription = null,
-			modifier = Modifier.height(screenHeight / 3)
-		)
+        Image(
+            painter = painterResource(id = imageId),
+            contentDescription = null,
+            modifier = Modifier.height(screenHeight / 3)
+        )
 
-		Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-		Text(
-			text = text,
-			style = MaterialTheme.typography.bodyMedium,
-			fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
-			modifier = Modifier.padding(24.dp, 0.dp)
-		)
-	}
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = FontFamily(Font(R.font.graduate_regular, FontWeight.Normal)),
+            modifier = Modifier.padding(24.dp, 0.dp)
+        )
+    }
 }

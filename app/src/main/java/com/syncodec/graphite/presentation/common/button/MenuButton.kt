@@ -18,9 +18,6 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltipBox
-import androidx.compose.material3.Text
-import androidx.compose.material3.PlainTooltipState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -150,7 +147,7 @@ fun MenuButton(
 	val rippleColor = if (checked == true) colors.containerColor else colors.checkedContainerColor
 	val rippleIndication = rememberRipple(color = rippleColor)
 
-	val tooltipState = remember { PlainTooltipState() }
+//	val tooltipState = remember { PlainTooltipState() }
 
 	CompositionLocalProvider(
 		LocalIndication provides rippleIndication,
@@ -172,9 +169,9 @@ fun MenuButton(
 						enabled = enabled,
 						onClick = {
 							onClick()
-							if (showTooltipOnClick) scope.launch { tooltipState.show() }
+//							if (showTooltipOnClick) scope.launch { tooltipState.show() }
 						},
-						onLongClick = { scope.launch { tooltipState.show() } },
+//						onLongClick = { scope.launch { tooltipState.show() } },
 					)
 			) {
 				AnimatedContent(
