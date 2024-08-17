@@ -37,7 +37,7 @@ import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +67,7 @@ fun BucketScreen(
 	val isAuthenticated = LocalIsAuthenticated.current
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = null)
+	val sortBy by dataStoreInstance.getSortOrder.collectAsState(initial = null)
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = null)
 
 	val bucketListStatus by viewModel.bucketListStatus.collectAsState()
@@ -77,11 +77,11 @@ fun BucketScreen(
 	LaunchedEffect(bucketListStatus, sortBy, sortOn, isAuthenticated) {
 		scope.launch(Dispatchers.Default) {
 			(when (sortOn) {
-				SortOn.Title -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.title } else bucketListStatus.dataOrNull?.sortedByDescending { it.title }
-				SortOn.Timestamp -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.createdTimestamp } else bucketListStatus.dataOrNull?.sortedByDescending { it.createdTimestamp }
-				SortOn.Modified -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.modifiedTimestamp } else bucketListStatus.dataOrNull?.sortedByDescending { it.modifiedTimestamp }
+				SortOn.Title -> if (sortBy == SortOrder.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.title } else bucketListStatus.dataOrNull?.sortedByDescending { it.title }
+				SortOn.CreatedTimestamp -> if (sortBy == SortOrder.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.createdTimestamp } else bucketListStatus.dataOrNull?.sortedByDescending { it.createdTimestamp }
+				SortOn.ModifiedTimestamp -> if (sortBy == SortOrder.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.modifiedTimestamp } else bucketListStatus.dataOrNull?.sortedByDescending { it.modifiedTimestamp }
 				SortOn.Custom -> bucketListStatus.dataOrNull
-				else -> if (sortBy == SortBy.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.title } else bucketListStatus.dataOrNull?.sortedByDescending { it.title }
+				else -> if (sortBy == SortOrder.Ascending) bucketListStatus.dataOrNull?.sortedBy { it.title } else bucketListStatus.dataOrNull?.sortedByDescending { it.title }
 			} ?: listOf()).filter { if (it.isLocked) isAuthenticated else true }.let { withContext(Dispatchers.Main) { bucketList = it } }
 		}
 	}

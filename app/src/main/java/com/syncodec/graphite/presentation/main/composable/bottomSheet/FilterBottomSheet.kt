@@ -34,7 +34,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyText
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
 
@@ -47,8 +47,8 @@ fun FilterBottomSheet(
 	val context = LocalContext.current
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
+	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.CreatedTimestamp)
+	val sortOrder by dataStoreInstance.getSortOrder.collectAsState(initial = SortOrder.Descending)
 	val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
 
 	GenericBottomSheet(
@@ -60,7 +60,7 @@ fun FilterBottomSheet(
 
 		Spacer(modifier = Modifier.height(12.dp))
 
-		SortByView(sortBy = sortBy) { dataStoreInstance.putSortBy(it) }
+		SortByView(sortOrder = sortOrder) { dataStoreInstance.putSortBy(it) }
 
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -78,8 +78,8 @@ fun FilterBottomSheet(
 			),
 			modifier = Modifier.fillMaxWidth(),
 			onClick = {
-				dataStoreInstance.putSortOn(SortOn.Timestamp)
-				dataStoreInstance.putSortBy(SortBy.Descending)
+				dataStoreInstance.putSortOn(SortOn.CreatedTimestamp)
+				dataStoreInstance.putSortBy(SortOrder.Descending)
 			}
 		) {
 			Text(text = "Default")
@@ -90,7 +90,7 @@ fun FilterBottomSheet(
 @Preview
 @Composable
 private fun ColumnScope.SortOnView(
-	sortOn : SortOn = SortOn.Timestamp,
+	sortOn : SortOn = SortOn.CreatedTimestamp,
 	onClick : (SortOn) -> Unit = {},
 ) {
 	BottomSheetKeyText(text = "Sort On")
@@ -108,9 +108,9 @@ private fun ColumnScope.SortOnView(
 		FilterButton(
 			text = "Timestamp",
 			icon = R.drawable.ic_clock,
-			highlight = sortOn == SortOn.Timestamp,
+			highlight = sortOn == SortOn.CreatedTimestamp,
 			modifier = Modifier.weight(1f),
-		) { onClick(SortOn.Timestamp) }
+		) { onClick(SortOn.CreatedTimestamp) }
 	}
 	Spacer(modifier = Modifier.height(6.dp))
 	Row(
@@ -119,9 +119,9 @@ private fun ColumnScope.SortOnView(
 		FilterButton(
 			text = "Modified",
 			icon = R.drawable.ic_clock_transparent,
-			highlight = sortOn == SortOn.Modified,
+			highlight = sortOn == SortOn.ModifiedTimestamp,
 			modifier = Modifier.weight(1f),
-		) { onClick(SortOn.Modified) }
+		) { onClick(SortOn.ModifiedTimestamp) }
 		Spacer(modifier = Modifier.width(8.dp))
 		FilterButton(
 			text = "Custom",
@@ -135,8 +135,8 @@ private fun ColumnScope.SortOnView(
 @Preview
 @Composable
 private fun ColumnScope.SortByView(
-	sortBy : SortBy = SortBy.Descending,
-	onClick : (SortBy) -> Unit = {},
+	sortOrder : SortOrder = SortOrder.Descending,
+	onClick : (SortOrder) -> Unit = {},
 ) {
 	BottomSheetKeyText(text = "Sort By")
 	Spacer(modifier = Modifier.height(8.dp))
@@ -146,16 +146,16 @@ private fun ColumnScope.SortByView(
 		FilterButton(
 			text = "Ascending",
 			icon = R.drawable.ic_sort_ascending,
-			highlight = sortBy == SortBy.Ascending,
+			highlight = sortOrder == SortOrder.Ascending,
 			modifier = Modifier.weight(1f),
-		) { onClick(SortBy.Ascending) }
+		) { onClick(SortOrder.Ascending) }
 		Spacer(modifier = Modifier.width(8.dp))
 		FilterButton(
 			text = "Descending",
 			icon = R.drawable.ic_sort_descending,
-			highlight = sortBy == SortBy.Descending,
+			highlight = sortOrder == SortOrder.Descending,
 			modifier = Modifier.weight(1f),
-		) { onClick(SortBy.Descending) }
+		) { onClick(SortOrder.Descending) }
 	}
 }
 

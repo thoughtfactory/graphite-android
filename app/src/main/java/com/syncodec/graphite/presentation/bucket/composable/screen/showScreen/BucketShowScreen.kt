@@ -13,9 +13,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.di.model.BucketItemState
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.utils.DataStoreInstance
-import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
 import io.realm.kotlin.types.RealmUUID
@@ -38,8 +37,8 @@ fun BucketShowScreen(
 
     val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-    val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.Timestamp)
-    val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = SortBy.Descending)
+    val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = SortOn.CreatedTimestamp)
+    val sortOrder by dataStoreInstance.getSortOrder.collectAsState(initial = SortOrder.Descending)
     val viewType by dataStoreInstance.getViewType.collectAsState(initial = ViewType.List)
 
     val bucketId by viewModel.id.collectAsState()

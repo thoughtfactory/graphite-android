@@ -59,7 +59,7 @@
         </provider>
 
         <activity
-            android:name="com.syncodec.graphite.presentation.main.MainActivity"
+            android:name="com.syncodec.graphite.presentation.main2.MainActivity2"
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:usesCleartextTraffic="true"
@@ -81,6 +81,13 @@
             <!--				<data android:mimeType="video/*" />-->
             <!--			</intent-filter>-->
         </activity>
+
+        <activity
+            android:name=".presentation.note2.NoteActivity2"
+            android:exported="false"
+            android:parentActivityName=".presentation.main.MainActivity"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".presentation.note.NoteActivity"

@@ -53,22 +53,20 @@ val bucketItemNameMap : Map<BucketType, String> = mapOf(
 	BucketType.LINK to "Link",
 )
 
-enum class SortOn {
-	Title,
-	Timestamp,
-	Modified,
-	PRIORITY,
-	COMPLETED,
-	DUE,
-	CREATED,
-	DONE,
-	Custom
-}
 
-enum class SortBy {
+enum class SortOrder {
 	Ascending,
 	Descending,
 }
+
+enum class SortOn {
+	Title,
+	CreatedTimestamp,
+	ModifiedTimestamp,
+	UserTimestamp,
+	Custom
+}
+
 
 enum class ViewType {
 	List,

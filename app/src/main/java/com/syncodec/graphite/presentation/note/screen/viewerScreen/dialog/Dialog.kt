@@ -165,8 +165,6 @@ fun Dialog(
 	)
 
 	NotificationPermissionDialog(
-		showDialog = isNotificationPermissionDialogVisible,
-		onDismiss = { closeDialog(ViewerDialogType.NotificationPermission) }
 	) {
 		closeDialog(ViewerDialogType.NotificationPermission)
 		onNotificationPermissionAvailable()

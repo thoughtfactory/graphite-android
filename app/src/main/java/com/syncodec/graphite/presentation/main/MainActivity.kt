@@ -102,7 +102,7 @@ class MainActivity : ComponentActivity() {
 		setContent {
 			BaseContent {
 				val isFirstTime by dataStoreInstance.getIsFirstTime.collectAsState(initial = null)
-				val isBiometricsEnabled by dataStoreInstance.getUseBiometric().collectAsState(initial = null)
+				val isBiometricsEnabled = false
 				var isBiometricUsed by remember { mutableStateOf(false) }
 
 				val systemUiController = rememberSystemUiController()

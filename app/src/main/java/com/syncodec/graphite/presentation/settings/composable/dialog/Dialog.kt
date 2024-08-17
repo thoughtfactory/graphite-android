@@ -37,9 +37,6 @@ fun SettingsDialog(
 	ExportDataDialog(showDialog = showExportDataDialog) { closeDialog(SettingsDialogType.ExportData) }
 	ClearDataDialog(showDialog = showClearDataDialog) { closeDialog(SettingsDialogType.ClearData) }
 	NotificationPermissionDialog(
-		showDialog = showNotificationPermissionDialog,
-		onDismiss = { closeDialog(SettingsDialogType.NotificationPermission) },
-		onPermissionAvailable = onNotificationPermissionAvailable
 	)
 	DeleteAccountDialog(
 		showDialog = showDeleteAccountDialog,

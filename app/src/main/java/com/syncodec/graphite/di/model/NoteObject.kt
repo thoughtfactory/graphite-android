@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
+import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 
 
@@ -49,6 +50,10 @@ class NoteObject() : RealmObject {
 	var createdTimestamp : Long = System.currentTimeMillis()
 	var modifiedTimestamp : Long = System.currentTimeMillis()
 	var userTimestamp : Long = System.currentTimeMillis()
+
+	var createdTimestampObject: TimestampObject = TimestampObject()
+	var modifiedTimestampObject: TimestampObject = TimestampObject()
+	var userTimestampObject: TimestampObject = TimestampObject()
 	var title : String? = null
 	var color : Int? = null
 	var latLng : String? = null

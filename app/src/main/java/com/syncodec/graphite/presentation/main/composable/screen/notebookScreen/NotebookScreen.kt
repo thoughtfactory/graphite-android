@@ -40,7 +40,7 @@ import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +70,7 @@ fun NotebookScreen(
 	val isAuthenticated = LocalIsAuthenticated.current
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(null)
+	val sortBy by dataStoreInstance.getSortOrder.collectAsState(null)
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(null)
 
 	val notebookListStatus by viewModel.notebookListStatus.collectAsState()
@@ -79,11 +79,11 @@ fun NotebookScreen(
 	LaunchedEffect(notebookListStatus, sortBy, sortOn, isAuthenticated) {
 		scope.launch(Dispatchers.Default) {
 			(when (sortOn) {
-				SortOn.Title -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.title } else notebookListStatus.dataOrNull?.sortedByDescending { it.title }
-				SortOn.Timestamp -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.createdTimestamp } else notebookListStatus.dataOrNull?.sortedByDescending { it.createdTimestamp }
-				SortOn.Modified -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.modifiedTimestamp } else notebookListStatus.dataOrNull?.sortedByDescending { it.modifiedTimestamp }
+				SortOn.Title -> if (sortBy == SortOrder.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.title } else notebookListStatus.dataOrNull?.sortedByDescending { it.title }
+				SortOn.CreatedTimestamp -> if (sortBy == SortOrder.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.createdTimestamp } else notebookListStatus.dataOrNull?.sortedByDescending { it.createdTimestamp }
+				SortOn.ModifiedTimestamp -> if (sortBy == SortOrder.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.modifiedTimestamp } else notebookListStatus.dataOrNull?.sortedByDescending { it.modifiedTimestamp }
 				SortOn.Custom -> notebookListStatus.dataOrNull
-				else -> if (sortBy == SortBy.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.title } else notebookListStatus.dataOrNull?.sortedByDescending { it.title }
+				else -> if (sortBy == SortOrder.Ascending) notebookListStatus.dataOrNull?.sortedBy { it.title } else notebookListStatus.dataOrNull?.sortedByDescending { it.title }
 			} ?: listOf()).filter { if (it.isLocked) isAuthenticated else true }.let { withContext(Dispatchers.Main) { notebookList = it } }
 		}
 	}

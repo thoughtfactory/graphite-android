@@ -11,9 +11,11 @@ import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.interfaces.ReceiveCustomerInfoCallback
+import com.syncodec.graphite.di.repo.WrappedRepo
 import com.syncodec.graphite.di.repository.repository.Repository
 import com.syncodec.graphite.di.sync.dropbox.DBox
 import com.syncodec.graphite.presentation.attachment.composable.screen.AttachmentScreenViewModel
+import com.syncodec.graphite.presentation.base.secureComposable.AuthenticationState
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
@@ -26,8 +28,11 @@ import com.syncodec.graphite.presentation.main.MainViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.bucketScreen.BucketScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.noteScreen.NoteScreenViewModel
 import com.syncodec.graphite.presentation.main.composable.screen.notebookScreen.NotebookScreenViewModel
+import com.syncodec.graphite.presentation.main2.model.MainViewModel2
+import com.syncodec.graphite.presentation.main2.model.NoteScreenViewModel2
 import com.syncodec.graphite.presentation.note.screen.editorScreen.EditorScreenViewModel
 import com.syncodec.graphite.presentation.note.screen.viewerScreen.ViewerScreenViewModel
+import com.syncodec.graphite.presentation.note2.model.NoteViewModel2
 import com.syncodec.graphite.presentation.settings.composable.dialog.clearData.ClearDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.dialog.exportData.ExportDataViewModel
 import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.googleKeep.ImportDataGoogleKeepViewModel
@@ -35,7 +40,6 @@ import com.syncodec.graphite.presentation.settings.composable.screen.importDataS
 import com.syncodec.graphite.presentation.settings.composable.screen.importDataScreen.dialog.journey.ImportDataJourneyViewModel
 import com.syncodec.graphite.presentation.settings.composable.screen.localBackupScreen.LocalBackupViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
-import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.CoroutineScope
@@ -53,109 +57,113 @@ import com.syncodec.graphite.presentation.notebook.screen.NotebookScreenViewMode
 
 class BaseApplication : Application() {
 
-	private lateinit var dataStore : DataStoreInstance
-
-	override fun onCreate() {
-		super.onCreate()
-		FirebaseApp.initializeApp(this)
+    override fun onCreate() {
+        super.onCreate()
+        FirebaseApp.initializeApp(this)
 
 //		LeakCanary.config = LeakCanary.config.copy(dumpHeap = false)
 
-		initDirectory()
+        initDirectory()
 
-		startKoin {
-			androidLogger()
-			androidContext(this@BaseApplication)
-			modules(
-				module {
-					single { Repository() }
-					single { DBox(this@BaseApplication) }
+        val dataStoreInstance = DataStoreInstance(this@BaseApplication)
 
-					viewModelOf(::MainViewModel)
-					viewModelOf(::NoteScreenViewModel)
-					viewModelOf(::BucketScreenViewModel)
-					viewModelOf(::NotebookScreenViewModel)
-					viewModelOf(::EditorScreenViewModel)
-					viewModelOf(::ViewerScreenViewModel)
-					viewModelOf(::BucketViewModel)
-					viewModelOf(::BucketScreenCommonViewModel)
-					viewModelOf(::BucketBottomSheetViewModel)
-					viewModelOf(::BucketItemViewModel)
-					viewModelOf(::NotebookScreenViewModel2)
-					viewModelOf(::SearchScreenViewModel)
-					viewModelOf(::TagsViewModel)
-					viewModelOf(::AttachmentScreenViewModel)
-					viewModelOf(::ExportDataViewModel)
-					viewModelOf(::ImportDataGraphiteViewModel)
-					viewModelOf(::ImportDataJourneyViewModel)
-					viewModelOf(::ImportDataGoogleKeepViewModel)
-					viewModelOf(::ClearDataViewModel)
-					viewModelOf(::LocalBackupViewModel)
-					viewModelOf(::LocalBackupViewModel)
-					viewModelOf(::WhereDialogViewModel)
-					viewModelOf(::ExplorerScreenViewModel)
-					viewModelOf(::DropboxSyncViewModel)
-				}
-			)
-		}
+        startKoin {
+            androidLogger()
+            androidContext(this@BaseApplication)
+            modules(
+                module {
+                    single { Repository() }
+                    single { WrappedRepo(context = this@BaseApplication, dataStoreInstance = dataStoreInstance) }
+                    single { DataStoreInstance(context = this@BaseApplication) }
+                    single { DBox(this@BaseApplication) }
 
-		dataStore = DataStoreInstance(this)
-		Purchases.debugLogsEnabled = false
-		val auth = Firebase.auth
+                    viewModelOf(::MainViewModel)
+                    viewModelOf(::MainViewModel2)
+                    viewModelOf(::NoteScreenViewModel2)
 
-		val purchasesConfiguration = PurchasesConfiguration
-			.Builder(this, Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
-			.appUserID(auth.currentUser?.uid)
-			.build()
-		Purchases.configure(purchasesConfiguration)
+                    viewModelOf(::NoteViewModel2)
 
-		auth.currentUser?.uid?.let { uid ->
-			CoroutineScope(Dispatchers.Default).launch {
-				dataStore.getSuperExpiryTime.collect { superExpiryTimeString ->
-					try {
-						val currentTimestamp = System.currentTimeMillis()
-						when {
-							superExpiryTimeString == "" -> getRevenueCatInfo(auth)
-							superExpiryTimeString.toLong() > currentTimestamp -> isPro.tryEmit(true)
-							else -> getRevenueCatInfo(auth)
-						}
-					} catch (e : Exception) {
-						getRevenueCatInfo(auth)
-					}
-				}
-			}
-		}
-	}
+                    viewModelOf(::NoteScreenViewModel)
+                    viewModelOf(::BucketScreenViewModel)
+                    viewModelOf(::NotebookScreenViewModel)
+                    viewModelOf(::EditorScreenViewModel)
+                    viewModelOf(::ViewerScreenViewModel)
+                    viewModelOf(::BucketViewModel)
+                    viewModelOf(::BucketScreenCommonViewModel)
+                    viewModelOf(::BucketBottomSheetViewModel)
+                    viewModelOf(::BucketItemViewModel)
+                    viewModelOf(::NotebookScreenViewModel2)
+                    viewModelOf(::SearchScreenViewModel)
+                    viewModelOf(::TagsViewModel)
+                    viewModelOf(::AttachmentScreenViewModel)
+                    viewModelOf(::ExportDataViewModel)
+                    viewModelOf(::ImportDataGraphiteViewModel)
+                    viewModelOf(::ImportDataJourneyViewModel)
+                    viewModelOf(::ImportDataGoogleKeepViewModel)
+                    viewModelOf(::ClearDataViewModel)
+                    viewModelOf(::LocalBackupViewModel)
+                    viewModelOf(::LocalBackupViewModel)
+                    viewModelOf(::WhereDialogViewModel)
+                    viewModelOf(::ExplorerScreenViewModel)
+                    viewModelOf(::DropboxSyncViewModel)
+                }
+            )
+        }
 
-	private fun initDirectory() {
-		val filesDir = this.filesDir
-		val dataDir = File(filesDir, "data").also { it.mkdirs() }
-		val attachmentDir = File(dataDir, "attachment").also { it.mkdirs() }
-	}
+        Purchases.debugLogsEnabled = false
+        val auth = Firebase.auth
 
-	private fun getRevenueCatInfo(auth : FirebaseAuth) {
-		Purchases
-			.sharedInstance
-			.apply {
-				setAttributes(mapOf("\$email" to auth.currentUser?.email))
-				getCustomerInfo(
-					fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
-					callback = object : ReceiveCustomerInfoCallback {
-						override fun onError(error : PurchasesError) {
-						}
+        val purchasesConfiguration = PurchasesConfiguration
+            .Builder(this, Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+            .appUserID(auth.currentUser?.uid)
+            .build()
+        Purchases.configure(purchasesConfiguration)
 
-						override fun onReceived(customerInfo : CustomerInfo) {
-							isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
-						}
-					}
-				)
-			}
-	}
+        auth.currentUser?.uid?.let { uid ->
+            CoroutineScope(Dispatchers.Default).launch {
+                dataStoreInstance.getSuperExpiryTime.collect { superExpiryTimeString ->
+                    try {
+                        val currentTimestamp = System.currentTimeMillis()
+                        when {
+                            superExpiryTimeString == "" -> getRevenueCatInfo(auth)
+                            superExpiryTimeString.toLong() > currentTimestamp -> isPro.tryEmit(true)
+                            else -> getRevenueCatInfo(auth)
+                        }
+                    } catch (e: Exception) {
+                        getRevenueCatInfo(auth)
+                    }
+                }
+            }
+        }
+    }
 
-	companion object {
-		val isPro : MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private fun initDirectory() {
+        val filesDir = this.filesDir
+        val dataDir = File(filesDir, "data").also { it.mkdirs() }
+        val attachmentDir = File(dataDir, "attachment").also { it.mkdirs() }
+    }
 
-		val isAuthenticated : MutableStateFlow<Boolean> = MutableStateFlow(false)
-		val authenticatorScreen : MutableStateFlow<AuthenticatorScreen> = MutableStateFlow(AuthenticatorScreen.None)
-	}
+    private fun getRevenueCatInfo(auth: FirebaseAuth) {
+        Purchases
+            .sharedInstance
+            .apply {
+                setAttributes(mapOf("\$email" to auth.currentUser?.email))
+                getCustomerInfo(
+                    fetchPolicy = CacheFetchPolicy.NOT_STALE_CACHED_OR_CURRENT,
+                    callback = object : ReceiveCustomerInfoCallback {
+                        override fun onError(error: PurchasesError) {
+                        }
+
+                        override fun onReceived(customerInfo: CustomerInfo) {
+                            isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
+                        }
+                    }
+                )
+            }
+    }
+
+    companion object {
+        val isPro: MutableStateFlow<Boolean> = MutableStateFlow(false)
+        val authenticationState: MutableStateFlow<AuthenticationState> = MutableStateFlow(AuthenticationState.None)
+    }
 }

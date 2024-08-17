@@ -127,6 +127,11 @@ class ChapterObject() : RealmObject {
 				null
 			}
 		}
+
+		fun getRandomInstance() = ChapterObject().apply {
+			this.title = Random.nextInt().toString()
+			this.isFavourite = Random.nextBoolean()
+		}
 	}
 }
 

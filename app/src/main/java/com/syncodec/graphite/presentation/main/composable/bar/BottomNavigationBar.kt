@@ -33,7 +33,7 @@ import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.RealmUUID
 
 
-open class BottomNavigationItem(val route : String, val icon : Int, val title : String) {
+sealed class BottomNavigationItem(val route : String, val icon : Int, val title : String) {
 	object Home : BottomNavigationItem("home", R.drawable.ic_home, "Home")
 	object Calendar : BottomNavigationItem("calendar", R.drawable.ic_calendar, "Calendar")
 	object Atlas : BottomNavigationItem("atlas", R.drawable.ic_atlas, "Atlas")

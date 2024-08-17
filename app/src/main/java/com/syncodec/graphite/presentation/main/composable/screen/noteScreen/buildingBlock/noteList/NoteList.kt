@@ -19,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.main.composable.buildingBlock.WhatsNewCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.YearProgressBar
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookHeaderCard
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.notebook.NotebookTimelineSpacer
@@ -82,10 +81,10 @@ fun NoteList(
 					key = note.id.toString(),
 					contentType = note
 				) {
-					val timestamp = when (sortOn) {
+					val createdTimestamp = when (sortOn) {
 						SortOn.Title -> note.userTimestamp.timeStampToPrettyFull()
-						SortOn.Timestamp -> note.userTimestamp.timeStampToTime()
-						SortOn.Modified -> note.modifiedTimestamp.timeStampToTime()
+						SortOn.CreatedTimestamp -> note.userTimestamp.timeStampToTime()
+						SortOn.ModifiedTimestamp -> note.modifiedTimestamp.timeStampToTime()
 						else -> note.userTimestamp.timeStampToPrettyFull()
 					}
 
@@ -94,7 +93,7 @@ fun NoteList(
 					) {
 						NoteListCard(
 							id = note.id,
-							timestamp = timestamp,
+							timestamp = createdTimestamp,
 							title = note.title,
 							isFavourite = note.isFavourite,
 							isLocked = note.isLocked,

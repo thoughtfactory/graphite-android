@@ -49,129 +49,129 @@ fun BaseContent(
 	isDynamicColor : Boolean = false,
 	content : @Composable () -> Unit
 ) {
-	val context = LocalContext.current
-
-	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-
-	val darkTheme by dataStoreInstance.getDarkTheme.collectAsState(initial = null)
-	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
-
-	val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-	val appColorScheme = when (darkTheme) {
-		SettingsActivity.Companion.DarkTheme.SyncWithSystem -> if (isDarkTheme) darkColorScheme0 else lightColorScheme0
-		SettingsActivity.Companion.DarkTheme.AlwaysOn -> darkColorScheme0
-		SettingsActivity.Companion.DarkTheme.AlwaysOff -> lightColorScheme0
-		else -> null
-	}
-	val appTypography = when (typography) {
-		"PT Mono" -> PTMonoTypography
-		"Ubuntu" -> UbuntuTypography
-		"Montserrat" -> MontserratTypography
-		"Roboto" -> RobotoTypography
-		"Tilt Neon" -> TiltNeonTypography
-		else -> PTMonoTypography
-	}
-
-	val isAuthenticated by BaseApplication.isAuthenticated.collectAsState(initial = false)
-	val authenticatorState by BaseApplication.authenticatorScreen.collectAsState()
-
-	fun onClose() = BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-
-	var noTry by remember { mutableStateOf(0) }
-
-	val isPro by BaseApplication.isPro.collectAsState()
-
-	BackHandler(enabled = authenticatorState != AuthenticatorScreen.None) {
-		BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-	}
-
-	appColorScheme?.let { colorScheme ->
-		MaterialTheme(
-			colorScheme = colorScheme,
-			typography = appTypography
-		) {
-			val systemUiController = rememberSystemUiController()
-			systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-			systemUiController.setNavigationBarColor(Color.Black)
-
-			// TODO (M3): MaterialTheme doesn't provide LocalIndication, remove when it does
-			val rippleIndication = rememberRipple()
-
-			CompositionLocalProvider(
-				LocalIndication provides rippleIndication,
-				LocalIsPro provides isPro,
-				LocalIsAuthenticated provides isAuthenticated,
-				LocalAuthenticatorAction provides { newAuthenticatorState ->
-					if (isAuthenticated) {
-						BaseApplication.isAuthenticated.tryEmit(false)
-						noTry = 0
-						Toast.makeText(context, "Vault closed", Toast.LENGTH_SHORT).show()
-					} else {
-						val alice = context.getSecretData("passcode")
-
-						when (newAuthenticatorState) {
-							AuthenticatorScreen.Authenticate -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.Authenticate else AuthenticatorScreen.AddPasscode
-							AuthenticatorScreen.AddPasscode -> newAuthenticatorState
-							AuthenticatorScreen.ChangePasscode -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.ChangePasscode else AuthenticatorScreen.AddPasscode
-							AuthenticatorScreen.RemovePasscode -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.ChangePasscode else AuthenticatorScreen.AddPasscode
-							AuthenticatorScreen.None -> newAuthenticatorState
-						}.let { BaseApplication.authenticatorScreen.tryEmit(it) }
-					}
-				}
-			) {
-				content()
-
-				AnimatedContent(
-					targetState = authenticatorState,
-					transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
-				) {
-					when (it) {
-						AuthenticatorScreen.Authenticate -> AuthenticatorScreen(
-							noTry = noTry,
-							onAuthenticate = {
-								val passcode = context.getSecretData("passcode").data?.decodeToString()
-
-								if (passcode == it) {
-									BaseApplication.isAuthenticated.tryEmit(true)
-									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-									noTry = 0
-									Toast.makeText(context, "Vault opened", Toast.LENGTH_SHORT).show()
-								} else {
-									Toast.makeText(context, "Wrong passcode", Toast.LENGTH_SHORT).show()
-									noTry ++
-								}
-
-								if (noTry >= 3) {
-									noTry = 0
-									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-								}
-							},
-							onClose = ::onClose
-						)
-
-						AuthenticatorScreen.AddPasscode -> AddPasscodeScreen(
-							onPasscodeAdded = {
-								context.putSecretData("passcode", it.toByteArray())
-								BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-								Toast.makeText(context, "Passcode added", Toast.LENGTH_SHORT).show()
-							},
-							onClose = ::onClose
-						)
-
-						AuthenticatorScreen.ChangePasscode -> ChangePasscode(
-							onPasscodeAdded = {
-								context.putSecretData("passcode", it.toByteArray())
-								BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
-								Toast.makeText(context, "Passcode updated", Toast.LENGTH_SHORT).show()
-							},
-							onClose = ::onClose
-						)
-
-						AuthenticatorScreen.RemovePasscode -> null
-						AuthenticatorScreen.None -> null
-					}
-				}
-			}
-		}
-	}
+//	val context = LocalContext.current
+//
+//	val dataStoreInstance = remember { DataStoreInstance(context = context) }
+//
+//	val darkTheme by dataStoreInstance.getDarkTheme.collectAsState(initial = null)
+//	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
+//
+//	val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+//	val appColorScheme = when (darkTheme) {
+//		SettingsActivity.Companion.DarkTheme.SyncWithSystem -> if (isDarkTheme) darkColorScheme0 else lightColorScheme0
+//		SettingsActivity.Companion.DarkTheme.AlwaysOn -> darkColorScheme0
+//		SettingsActivity.Companion.DarkTheme.AlwaysOff -> lightColorScheme0
+//		else -> null
+//	}
+//	val appTypography = when (typography) {
+//		"PT Mono" -> PTMonoTypography
+//		"Ubuntu" -> UbuntuTypography
+//		"Montserrat" -> MontserratTypography
+//		"Roboto" -> RobotoTypography
+//		"Tilt Neon" -> TiltNeonTypography
+//		else -> PTMonoTypography
+//	}
+//
+//	val isAuthenticated by BaseApplication.isAuthenticated.collectAsState(initial = false)
+//	val authenticatorState by BaseApplication.authenticatorScreen.collectAsState()
+//
+//	fun onClose() = BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+//
+//	var noTry by remember { mutableStateOf(0) }
+//
+//	val isPro by BaseApplication.isPro.collectAsState()
+//
+//	BackHandler(enabled = authenticatorState != AuthenticatorScreen.None) {
+//		BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+//	}
+//
+//	appColorScheme?.let { colorScheme ->
+//		MaterialTheme(
+//			colorScheme = colorScheme,
+//			typography = appTypography
+//		) {
+//			val systemUiController = rememberSystemUiController()
+//			systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
+//			systemUiController.setNavigationBarColor(Color.Black)
+//
+//			// TODO (M3): MaterialTheme doesn't provide LocalIndication, remove when it does
+//			val rippleIndication = rememberRipple()
+//
+//			CompositionLocalProvider(
+//				LocalIndication provides rippleIndication,
+//				LocalIsPro provides isPro,
+//				LocalIsAuthenticated provides isAuthenticated,
+//				LocalAuthenticatorAction provides { newAuthenticatorState ->
+//					if (isAuthenticated) {
+//						BaseApplication.isAuthenticated.tryEmit(false)
+//						noTry = 0
+//						Toast.makeText(context, "Vault closed", Toast.LENGTH_SHORT).show()
+//					} else {
+//						val alice = context.getSecretData("passcode")
+//
+//						when (newAuthenticatorState) {
+//							AuthenticatorScreen.Authenticate -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.Authenticate else AuthenticatorScreen.AddPasscode
+//							AuthenticatorScreen.AddPasscode -> newAuthenticatorState
+//							AuthenticatorScreen.ChangePasscode -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.ChangePasscode else AuthenticatorScreen.AddPasscode
+//							AuthenticatorScreen.RemovePasscode -> if (alice.result == AliceRequestResult.SUCCESS) AuthenticatorScreen.ChangePasscode else AuthenticatorScreen.AddPasscode
+//							AuthenticatorScreen.None -> newAuthenticatorState
+//						}.let { BaseApplication.authenticatorScreen.tryEmit(it) }
+//					}
+//				}
+//			) {
+//				content()
+//
+//				AnimatedContent(
+//					targetState = authenticatorState,
+//					transitionSpec = { fadeIn(tween(300)) with fadeOut(tween(300)) }
+//				) {
+//					when (it) {
+//						AuthenticatorScreen.Authenticate -> AuthenticatorScreen(
+//							noTry = noTry,
+//							onAuthenticate = {
+//								val passcode = context.getSecretData("passcode").data?.decodeToString()
+//
+//								if (passcode == it) {
+//									BaseApplication.isAuthenticated.tryEmit(true)
+//									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+//									noTry = 0
+//									Toast.makeText(context, "Vault opened", Toast.LENGTH_SHORT).show()
+//								} else {
+//									Toast.makeText(context, "Wrong passcode", Toast.LENGTH_SHORT).show()
+//									noTry ++
+//								}
+//
+//								if (noTry >= 3) {
+//									noTry = 0
+//									BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+//								}
+//							},
+//							onClose = ::onClose
+//						)
+//
+//						AuthenticatorScreen.AddPasscode -> AddPasscodeScreen(
+//							onPasscodeAdded = {
+//								context.putSecretData("passcode", it.toByteArray())
+//								BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+//								Toast.makeText(context, "Passcode added", Toast.LENGTH_SHORT).show()
+//							},
+//							onClose = ::onClose
+//						)
+//
+//						AuthenticatorScreen.ChangePasscode -> ChangePasscode(
+//							onPasscodeAdded = {
+//								context.putSecretData("passcode", it.toByteArray())
+//								BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
+//								Toast.makeText(context, "Passcode updated", Toast.LENGTH_SHORT).show()
+//							},
+//							onClose = ::onClose
+//						)
+//
+//						AuthenticatorScreen.RemovePasscode -> null
+//						AuthenticatorScreen.None -> null
+//					}
+//				}
+//			}
+//		}
+//	}
 }

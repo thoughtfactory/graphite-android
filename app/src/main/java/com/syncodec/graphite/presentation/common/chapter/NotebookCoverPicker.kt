@@ -161,12 +161,12 @@ private fun ColorPicker(
 	}
 
 	var showColorPickerDialog by remember { mutableStateOf(false) }
-	ColorPickerDialog(
-		color = coverColor,
-		showDialog = showColorPickerDialog,
-		onSelectColor = { onPickColor(it); showColorPickerDialog = false },
-		onDismiss = { showColorPickerDialog = false },
-	)
+//	ColorPickerDialog(
+//		color = coverColor,
+//		showDialog = showColorPickerDialog,
+//		onSelectColor = { onPickColor(it); showColorPickerDialog = false },
+//		onDismiss = { showColorPickerDialog = false },
+//	)
 
 	Column(
 		modifier = Modifier.fillMaxWidth()

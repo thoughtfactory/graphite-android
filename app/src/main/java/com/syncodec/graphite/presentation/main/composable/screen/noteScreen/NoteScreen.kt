@@ -52,7 +52,7 @@ import com.syncodec.graphite.utils.ContentStatus
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.LocalIsAuthenticated
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import com.syncodec.graphite.utils.ViewType
 import com.syncodec.graphite.utils.timeStampToPrettyDay
@@ -74,7 +74,7 @@ fun NoteScreen(
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 	val isAuthenticated = LocalIsAuthenticated.current
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(null)
+	val sortBy by dataStoreInstance.getSortOrder.collectAsState(null)
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(null)
 	val viewType by dataStoreInstance.getViewType.collectAsState(null)
 
@@ -89,26 +89,26 @@ fun NoteScreen(
 	LaunchedEffect(noteList, isAuthenticated, sortBy, sortOn) {
 		noteList.filter { if (it.isLocked) isAuthenticated else true }.let { noteList ->
 			noteMap = when (sortOn) {
-				SortOn.Title -> (if (sortBy == SortBy.Ascending) noteList.sortedBy { it.title } else noteList.sortedByDescending { it.title }).let {
+				SortOn.Title -> (if (sortBy == SortOrder.Ascending) noteList.sortedBy { it.title } else noteList.sortedByDescending { it.title }).let {
 					it.groupBy { it.title?.firstOrNull()?.lowercase() ?: "." }
 						.toSortedMap { o1, o2 ->
 							when {
-								o1 == "." -> if (sortBy == SortBy.Ascending) 1 else - 1
-								o2 == "." -> if (sortBy == SortBy.Ascending) - 1 else 1
+								o1 == "." -> if (sortBy == SortOrder.Ascending) 1 else - 1
+								o2 == "." -> if (sortBy == SortOrder.Ascending) - 1 else 1
 								else -> o1.compareTo(o2)
 							}
 						}
 				}
 
-				SortOn.Timestamp -> (if (sortBy == SortBy.Ascending) noteList.sortedBy { it.userTimestamp } else noteList.sortedByDescending { it.userTimestamp }).let {
+				SortOn.CreatedTimestamp -> (if (sortBy == SortOrder.Ascending) noteList.sortedBy { it.userTimestamp } else noteList.sortedByDescending { it.userTimestamp }).let {
 					it.groupBy { timestampToCalendarDay(it.userTimestamp).timeStampToPrettyDay() }
 				}
 
-				SortOn.Modified -> (if (sortBy == SortBy.Ascending) noteList.sortedBy { it.modifiedTimestamp } else noteList.sortedByDescending { it.modifiedTimestamp }).let {
+				SortOn.ModifiedTimestamp -> (if (sortBy == SortOrder.Ascending) noteList.sortedBy { it.modifiedTimestamp } else noteList.sortedByDescending { it.modifiedTimestamp }).let {
 					it.groupBy { timestampToCalendarDay(it.modifiedTimestamp).timeStampToPrettyDay() }
 				}
 
-				else -> (if (sortBy == SortBy.Ascending) noteList.sortedBy { it.userTimestamp } else noteList.sortedByDescending { it.userTimestamp }).let {
+				else -> (if (sortBy == SortOrder.Ascending) noteList.sortedBy { it.userTimestamp } else noteList.sortedByDescending { it.userTimestamp }).let {
 					it.groupBy { timestampToCalendarDay(it.userTimestamp).timeStampToPrettyDay() }
 				}
 			}

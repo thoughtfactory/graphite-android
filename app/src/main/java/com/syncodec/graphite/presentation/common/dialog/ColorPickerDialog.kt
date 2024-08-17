@@ -1,61 +1,53 @@
 package com.syncodec.graphite.presentation.common.dialog
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.godaddy.android.colorpicker.ClassicColorPicker
-import com.godaddy.android.colorpicker.HsvColor
-import com.syncodec.graphite.presentation.common.dialog.buildingBlock.DualActionButtons
-import com.syncodec.graphite.utils.toHexString
+import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericAlertDialog2
+import com.syncodec.graphite.presentation.common.dialog.dialog2.GenericDialogDefaults
+import com.syncodec.graphite.utils.getInverseBWColor
+import com.syncodec.graphite.utils.getRandomColor
 
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Preview
 @Composable
 fun ColorPickerDialog(
-	color : Color = MaterialTheme.colorScheme.primary,
-	showDialog : Boolean = true,
-	onSelectColor : (Color) -> Unit = {},
-	onDismiss : () -> Unit = {}
+	isDialogVisible: Boolean = true,
+	onDismissRequest: () -> Unit = {},
+	onSelectColor: (Color) -> Unit = {}
 ) {
-	var _color by remember { mutableStateOf(color) }
-	var hexColorString by remember { mutableStateOf(color.toHexString().substring(1)) }
 
-	LaunchedEffect(key1 = color) {
-		_color = color
-	}
+	var selectedColor by remember { mutableStateOf(getRandomColor()) }
 
-	GenericDialog(
-		showDialog = showDialog,
-		title = "Color Picker",
-		dualActionButton = {
-			DualActionButtons(
-				primaryText = "Select",
-				secondaryText = "Cancel",
-				onClickPrimary = { onSelectColor(_color) },
-				onClickSecondary = onDismiss,
-				primaryColor = _color,
-				secondaryColor = color
-			)
-		},
-		onDismissRequest = onDismiss
+	GenericAlertDialog2(
+		isDialogVisible = isDialogVisible,
+		title = stringResource(id = R.string.color_picker),
+		primaryButton = GenericDialogDefaults.genericDialogButton(
+			text = stringResource(id = R.string.select),
+			buttonColors = ButtonDefaults.buttonColors(
+				containerColor = selectedColor,
+				contentColor = selectedColor.getInverseBWColor()
+			),
+			onClick = { onSelectColor(selectedColor) }
+		),
+		secondaryButton = GenericDialogDefaults.genericDialogButtonDismiss(onClick = onDismissRequest),
+		onDismissRequest = onDismissRequest,
 	) {
-		Spacer(modifier = Modifier.height(12.dp))
-
-		ClassicColorPicker(
-			color = HsvColor.from(color = _color), showAlphaBar = false,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(256.dp),
-			onColorChanged = {
-				_color = it.toColor()
-				hexColorString = _color.toHexString().substring(1)
-			}
-		)
+//		ColorPicker(
+//			type = ColorPickerType.Classic(showAlphaBar = false),
+//			modifier = Modifier.align(Alignment.CenterHorizontally),
+//			onPickedColor = { selectedColor = it }
+//		)
 	}
 }

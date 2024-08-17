@@ -27,7 +27,5 @@ fun MainDialog(
 	}
 
 	NotificationPermissionDialog(
-		showDialog = showNotificationPermissionDialog,
-		onDismiss = { closeDialog(MainDialogType.NotificationPermission) },
 	) { closeDialog(MainDialogType.NotificationPermission) }
 }

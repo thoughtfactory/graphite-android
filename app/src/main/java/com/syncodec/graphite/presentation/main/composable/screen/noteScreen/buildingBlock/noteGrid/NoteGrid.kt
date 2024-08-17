@@ -71,16 +71,16 @@ fun NoteGrid(
 					key = note.id.toString(),
 					contentType = note
 				) {
-					val timestamp = when (sortOn) {
+					val createdTimestamp = when (sortOn) {
 						SortOn.Title -> note.userTimestamp.timeStampToPrettyFull()
-						SortOn.Timestamp -> note.userTimestamp.timeStampToTime()
-						SortOn.Modified -> note.modifiedTimestamp.timeStampToTime()
+						SortOn.CreatedTimestamp -> note.userTimestamp.timeStampToTime()
+						SortOn.ModifiedTimestamp -> note.modifiedTimestamp.timeStampToTime()
 						else -> note.userTimestamp.timeStampToPrettyFull()
 					}
 
 					NoteGridCard(
 						id = note.id,
-						timestamp = timestamp,
+						timestamp = createdTimestamp,
 						title = note.title,
 						isFavourite = note.isFavourite,
 						isLocked = note.isLocked,

@@ -1,0 +1,122 @@
+package com.syncodec.graphite.presentation.base.secureComposable
+
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import com.syncodec.graphite.BaseApplication
+import com.syncodec.graphite.di.repo.Repo
+import com.syncodec.graphite.di.repo.WrappedRepo
+import com.syncodec.graphite.utils.alice.AliceRequest2
+import com.syncodec.graphite.utils.alice.AliceRequestResult
+import com.syncodec.graphite.utils.alice.getSecretData2
+import com.syncodec.graphite.utils.alice.putSecretData
+import kotlinx.serialization.Serializable
+import org.koin.compose.koinInject
+
+
+@Composable
+fun SecureComposable(
+	repo: Repo.DecryptedRepo,
+	content: @Composable () -> Unit = {}
+) {
+	val context = LocalContext.current
+
+	val authenticationState by BaseApplication.authenticationState.collectAsState()
+	val isRepoOpen by repo.isRepoOpen.collectAsState()
+
+	LaunchedEffect(authenticationState) {
+		Log.d("npr71", "authenticationState : $authenticationState")
+	}
+
+	BackHandler(enabled = authenticationState != AuthenticationState.None) { BaseApplication.authenticationState.tryEmit(AuthenticationState.None) }
+
+	CompositionLocalProvider(
+		LocalIsRepoUnlocked provides isRepoOpen,
+		LocalAuthenticatorAction provides { newAuthenticatorState ->
+			val aliceRequest2 = context.getSecretData2("passcode")
+
+			when {
+				newAuthenticatorState == AuthenticationState.Authenticate && isRepoOpen -> {
+					repo.lockRepo()
+					AuthenticationState.None
+				}
+
+				newAuthenticatorState == AuthenticationState.Authenticate && !isRepoOpen && aliceRequest2 is AliceRequest2.Success -> AuthenticationState.Authenticate
+				newAuthenticatorState == AuthenticationState.Authenticate && !isRepoOpen && aliceRequest2 !is AliceRequest2.Success -> AuthenticationState.AddChangePasscode
+				newAuthenticatorState == AuthenticationState.AddChangePasscode -> AuthenticationState.AddChangePasscode
+				newAuthenticatorState == AuthenticationState.RemovePasscode && aliceRequest2 is AliceRequest2.KeyNotFound -> {
+					Toast.makeText(context, "No passcode set", Toast.LENGTH_SHORT).show()
+					AuthenticationState.None
+				}
+
+				newAuthenticatorState == AuthenticationState.RemovePasscode && aliceRequest2 is AliceRequest2.KeyNotFound -> AuthenticationState.RemovePasscode
+				newAuthenticatorState == AuthenticationState.None -> AuthenticationState.None
+				else -> AuthenticationState.None
+			}.let {
+				BaseApplication.authenticationState.tryEmit(it)
+			}
+		}
+	) {
+		content()
+		AnimatedVisibility(
+			visible = authenticationState == AuthenticationState.AddChangePasscode,
+			enter = slideInVertically(tween(470)) { it / 2 } + fadeIn(tween(470)),
+			exit = slideOutVertically(tween(470)) { it / 2 } + fadeOut(tween(470))
+		) {
+
+			val aliceRequest2 = context.getSecretData2("passcode")
+
+			if (aliceRequest2 is AliceRequest2.Success) {
+				ChangePasscode(
+					onUpdatePasscode = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None); repo.unlockRepo(); context.putSecretData("passcode", it.toByteArray()) },
+					onClose = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None) }
+				)
+			} else {
+				AddPasscodeScreen(
+					onAddPasscode = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None); repo.unlockRepo(); context.putSecretData("passcode", it.toByteArray()) },
+					onClose = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None) }
+				)
+			}
+		}
+
+		AnimatedVisibility(
+			visible = authenticationState == AuthenticationState.RemovePasscode,
+			enter = slideInVertically(tween(470)) { it / 2 } + fadeIn(tween(470)),
+			exit = slideOutVertically(tween(470)) { it / 2 } + fadeOut(tween(470))
+		) {
+			RemovePasscode(
+				onClose = { repo.lockRepo(); BaseApplication.authenticationState.tryEmit(AuthenticationState.None) }
+			)
+		}
+
+		AnimatedVisibility(
+			visible = authenticationState == AuthenticationState.Authenticate,
+			enter = slideInVertically(tween(470)) { it / 2 } + fadeIn(tween(470)),
+			exit = slideOutVertically(tween(470)) { it / 2 } + fadeOut(tween(470))
+		) {
+			AuthenticatorScreen(
+				onAuthenticate = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None); repo.unlockRepo() },
+				onClose = { BaseApplication.authenticationState.tryEmit(AuthenticationState.None) }
+			)
+		}
+	}
+}
+
+@Serializable
+data class LastFailedAttempt(
+	val nextAttemptAt: Long,
+	val attemptCount: Int,
+)

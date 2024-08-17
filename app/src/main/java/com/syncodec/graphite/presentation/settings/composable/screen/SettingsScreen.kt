@@ -91,7 +91,7 @@ fun SettingsScreen(
 
 	val darkTheme by dataStoreInstance.getDarkTheme.collectAsState(null)
 	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
-	val useBiometric = dataStoreInstance.getUseBiometric().collectAsState(initial = null).value
+	val useBiometric = false
 	val isGeolocationEnabled by dataStoreInstance.getGeolocation.collectAsState(initial = null)
 	val isYearProgressEnabled by dataStoreInstance.getYearProgress.collectAsState(initial = null)
 	val isNoteNotificationEnabled by dataStoreInstance.getNoteFromNotification.collectAsState(initial = null)

@@ -1,4 +1,407 @@
 <resources>
-    <string name="app_name">Graphite</string>
+    <string name="app_name">Graphite Debug</string>
     <string name="app_description">Graphite</string>
+
+    <!--    Location-->
+    <string name="get_location_permission_message">Grant location permission to automatically fetch location on new note.\nOr you can set location manually.</string>
+    <string name="set_location_manually">Set</string>
+    <string name="remove_location">Remove</string>
+    <string name="reload_location">Reload</string>
+    <string name="request_permission">Request</string>
+    <string name="location_initializing">Initializing</string>
+    <string name="location_removed">Reload or set location manually</string>
+    <string name="location_loading">Loading</string>
+    <string name="location_auto_fetch_disabled">Auto fetching location is disabled. You can reload or set location manually</string>
+    <string name="error_fetching_location_content_description">Error fetching location</string>
+    <string name="error_fetching_location">Error fetching location. Try reloading or set location manually. Check if GPS is enabled.</string>
+
+    <!--    Notification-->
+    <string name="notification_permission_unavailable">Notification permission unavailable</string>
+    <string name="notification_permission_dialog_title">Notification permission</string>
+    <string name="get_notification_permission_message">Grant notification permission to pin item to notification bar.</string>
+
+    <!--    Bucket-->
+    <string name="bucket">Bucket</string>
+    <string name="bucket_item">Bucket item</string>
+    <string name="new_list">New list</string>
+    <string name="todo">Todo</string>
+    <string name="to_do">To do</string>
+    <string name="book">Book</string>
+    <string name="movies_and_series">Movies &amp; Series</string>
+    <string name="show">Shows</string>
+    <string name="doing">Doing</string>
+    <string name="done">Done</string>
+    <string name="to_read">To read</string>
+    <string name="to_watch">To watch</string>
+    <string name="to_visit">To visit</string>
+    <string name="reading">Reading</string>
+    <string name="watching">Watching</string>
+    <string name="read">Read</string>
+    <string name="watched">Watched</string>
+    <string name="add_todo">Add todo</string>
+    <string name="add_book">Add book</string>
+    <string name="add_show">Add show</string>
+    <string name="add_link">Add link</string>
+    <string name="movie">Movie</string>
+    <string name="tv_show">Tv show</string>
+    <string name="link">Link</string>
+    <string name="link_example">https://www.example.com</string>
+    <string name="preview">Preview</string>
+    <string name="search_for_book">Search for book</string>
+    <string name="search_for_movie">Search for movie</string>
+    <string name="search_for_tv_show">Search for tv show</string>
+    <string name="query">Query</string>
+    <string name="todo_list">Todo list</string>
+    <string name="show_list">Show list</string>
+    <string name="book_list">Book list</string>
+    <string name="link_preview_error_title">Error fetching data</string>
+    <string name="link_preview_error_description">Check if the url is valid. Also check if network connection is available. Or maybe it\'s a server error, you can click add link to save current url</string>
+    <string name="set_as">Set as</string>
+    <string name="select_bucket">Select bucket</string>
+    <string name="new_bucket">New bucket</string>
+
+    <!--    Bucket description-->
+    <string name="bucket_title_placeholder">Name your list</string>
+    <string name="bucket_description_placeholder">What is it about?</string>
+
+    <!--    Bucket type-->
+    <string name="bucket_type_todo">Todo</string>
+    <string name="bucket_type_book">Book</string>
+    <string name="bucket_type_show">Movies &amp; Shows</string>
+    <string name="bucket_type_link">Link</string>
+
+    <!--    Bucket description-->
+    <string name="bucket_description_todo">Have any pending tasks?</string>
+    <string name="bucket_description_book">A little fiction here, and a little fantasy there</string>
+    <string name="bucket_description_show">Aren\'t those characters real!?</string>
+    <string name="bucket_description_link">Maybe I will visit this someday</string>
+    <string name="bucket_description_coming_soon">More lists coming soon… Stay tuned… Or maybe you suggest us…</string>
+
+    <!--    Book data-->
+    <string name="untitled">No title data</string>
+    <string name="unauthored">No author data</string>
+    <string name="page_count">Page count</string>
+    <string name="first_published_year">First published year</string>
+    <string name="open_library_id">OpenLibrary ID</string>
+    <string name="open_in_open_library">"Open in OpenLibrary"</string>
+    <string name="thumbnail_not_found">Thumbnail not found</string>
+
+    <!--    Movie data-->
+    <string name="overview">Overview</string>
+    <string name="original_title">Original title</string>
+    <string name="tmdb_id">TMDb ID</string>
+    <string name="imdb_id">IMDb ID</string>
+    <string name="homepage">Homepage</string>
+    <string name="released_on">Released on</string>
+    <string name="runtime">Runtime</string>
+
+    <!--    Tv data-->
+    <string name="first_air_date">First air date</string>
+    <string name="original_name">Original name</string>
+    <string name="season">Season</string>
+    <string name="episode">Episode</string>
+
+    <!--    Notebook-->
+    <string name="note">Note</string>
+    <string name="notes">Notes</string>
+    <string name="chapter">Chapter</string>
+    <string name="chapters">Chapters</string>
+    <string name="notebook">Notebook</string>
+    <string name="note_count">Note count</string>
+    <string name="chapter_count">Chapter count</string>
+    <string name="new_notebook">New notebook</string>
+    <string name="new_chapter">New chapter</string>
+    <string name="edit_chapter">Edit chapter</string>
+    <string name="new_note">New note</string>
+    <string name="attachment">Attachment</string>
+    <string name="attachments">Attachments</string>
+    <string name="home">Home</string>
+    <string name="atlas">Atlas</string>
+    <string name="calendar">Calendar</string>
+    <string name="tags">Tags</string>
+    <string name="set_as_default">Set as default</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="file">File</string>
+    <string name="select_chapter">Select chapter</string>
+    <string name="export_note">Export note</string>
+    <string name="as_txt">As txt</string>
+    <string name="as_pdf">As pdf</string>
+    <string name="as_html">As html</string>
+    <string name="as_json">As json</string>
+    <string name="as_markdown">As markdown</string>
+    <string name="empty_chapter_message">What story will you tell?</string>
+
+    <!--    Note toolbar-->
+    <string name="note_metadata">Note metadata</string>
+    <string name="note_format_redo">Redo</string>
+    <string name="note_format_undo">Undo</string>
+    <string name="note_format_toggle_bold">Toggle bold</string>
+    <string name="note_format_toggle_italic">Toggle italic</string>
+    <string name="note_format_toggle_underline">Toggle underline</string>
+    <string name="note_format_toggle_strikethrough">Toggle strikethrough</string>
+    <string name="note_format_toggle_superscript">Toggle superscript</string>
+    <string name="note_format_toggle_subscript">Toggle subscript</string>
+    <string name="note_format_toggle_link">Toggle link</string>
+    <string name="note_format_hard_break">Hard break</string>
+    <string name="note_format_horizontal_rule">Horizontal rule</string>
+    <string name="note_format_unordered_list">Unordered list</string>
+    <string name="note_format_ordered_list">Ordered list</string>
+    <string name="note_format_check_list">Check list</string>
+    <string name="note_format_blockquote">Blockquote</string>
+    <string name="note_format_heading">Heading</string>
+    <string name="note_format_paragraph">Paragraph</string>
+    <string name="note_format_alignment">Alignment</string>
+    <string name="note_format_alignment_left">Left</string>
+    <string name="note_format_alignment_center">Center</string>
+    <string name="note_format_alignment_right">Right</string>
+    <string name="note_format_alignment_justify">Justify</string>
+    <string name="note_format_indent">Indent</string>
+    <string name="note_format_outdent">Outdent</string>
+    <string name="note_format_text_color">Text color</string>
+    <string name="note_format_highlight_color">Highlight color</string>
+
+    <!--    Explorer-->
+    <string name="in_visible_region">Everywhere</string>
+    <string name="with_attachments">With attachments</string>
+    <string name="within_default_chapter">Within default chapter</string>
+    <string name="within_chapter">Within chapter</string>
+    <string name="locked">Locked</string>
+
+    <!--    Tag-->
+    <string name="tag">Tag</string>
+    <string name="new_tag">New tag</string>
+    <string name="edit_tag">Edit tag</string>
+    <string name="add_tag">Add tag</string>
+    <string name="search_or_add_tag">Search or add tag</string>
+    <string name="delete_tag">Delete tag</string>
+    <string name="delete_tag_message">Are you sure you want to delete this tag? Deleting tag will not delete associated notes</string>
+    <string name="tag_info_title">Tag your notes</string>
+    <string name="tag_info_message">Is it a recipe? Or did you just described a beautiful scenery? Add tags to search and filter through your notes easily</string>
+
+    <!--    Generic-->
+    <string name="stay_tuned">Stay tuned</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="no_description">No description</string>
+    <string name="url">Url</string>
+    <string name="clear">Clear</string>
+    <string name="unavailable">Unavailable</string>
+    <string name="unknown">Unknown</string>
+    <string name="favourite">Favourite</string>
+    <string name="lock">Lock</string>
+    <string name="attachment_count">Attachment count</string>
+    <string name="toggle_favourite">Toggle favourite</string>
+    <string name="toggle_lock">Toggle lock</string>
+    <string name="thumbnail">Thumbnail</string>
+    <string name="location_marker">Location marker</string>
+    <string name="pin">Pin</string>
+    <string name="pin_to_notification_bar">Pin to notification bar</string>
+    <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="new_">New</string>
+    <string name="create">Create</string>
+    <string name="update">Update</string>
+    <string name="search">Search</string>
+    <string name="edit">Edit</string>
+    <string name="copy">Copy</string>
+    <string name="paste">Paste</string>
+    <string name="vault">Vault</string>
+    <string name="info">Info</string>
+    <string name="restore_default">Default</string>
+    <string name="open_externally">Open externally</string>
+    <string name="color">Color</string>
+    <string name="image">Image</string>
+    <string name="select_from_gallery">Select from gallery</string>
+    <string name="modified">Modified</string>
+    <string name="custom">Custom</string>
+    <string name="date">Date</string>
+    <string name="created_time_unknown">Created time unknown</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort_on">Sort on</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
+    <string name="timestamp">Timestamp</string>
+    <string name="filter_and_view">Filter &amp; View</string>
+    <string name="view_type">View type</string>
+    <string name="list">List</string>
+    <string name="grid">Grid</string>
+    <string name="component_height">Component height</string>
+    <string name="component_width">Component width</string>
+    <string name="component_column_count">Component column count</string>
+    <string name="share">Share</string>
+    <string name="share_using">Share using</string>
+    <string name="share_all">Share all</string>
+    <string name="enable">Enable</string>
+    <string name="cancel">Cancel</string>
+    <string name="menu">Menu</string>
+    <string name="select_all">Select all</string>
+    <string name="move">Move</string>
+    <string name="metadata">Metadata</string>
+    <string name="location">Location</string>
+    <string name="address">Address</string>
+    <string name="id">ID</string>
+    <string name="parent_id">Parent ID</string>
+    <string name="root_element">Root element</string>
+    <string name="default_chapter">Default chapter</string>
+    <string name="not_saved">Not saved</string>
+    <string name="created_on">Created on</string>
+    <string name="modified_on">Modified on</string>
+    <string name="settings">Settings</string>
+    <string name="export">Export</string>
+    <string name="select">Select</string>
+    <string name="everywhere">Everywhere</string>
+    <string name="add">Add</string>
+    <string name="remove">Remove</string>
+    <string name="custom_color">Custom color</string>
+    <string name="color_picker">Color picker</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="reorder_grip">Reorder grip</string>
+    <string name="experimental">Experimental</string>
+    <string name="manage">Manage</string>
+    <string name="refresh">Refresh</string>
+    <string name="restore">Restore</string>
+    <string name="coming_soon">Coming soon</string>
+    <string name="status">Status</string>
+    <string name="last_synced_at">Last synced at</string>
+
+    <!--   Delete -->
+    <string name="delete">Delete</string>
+    <string name="delete_item">Delete item</string>
+    <string name="delete_bucket">Delete bucket</string>
+    <string name="delete_items_multiple">Delete selected items</string>
+    <string name="are_you_sure_delete">Are you sure you want to delete this item?</string>
+    <string name="are_you_sure_delete_multiple">Are you sure you want to delete selected items?</string>
+    <string name="are_you_sure_delete_bucket">Are you sure you want to delete this bucket? This will also delete bucket items too</string>
+    <string name="are_you_sure_delete_selected_bucket">Are you sure you want to delete selected buckets? This will also delete bucket items too</string>
+
+    <!--    Time-->
+    <string name="minute">Minute</string>
+    <string name="minutes">Minutes</string>
+
+    <!--    Settings-->
+    <string name="account">Account</string>
+    <string name="graphite_pro">Graphite Pro</string>
+    <string name="unleash_the_full_potential_of_graphite">Unleash the full potential of Graphite</string>
+    <string name="preferences">Preferences</string>
+    <string name="security">Security</string>
+    <string name="data">Data</string>
+    <string name="backup_and_sync">Backup &amp; Sync</string>
+    <string name="local_backup">Local backup</string>
+    <string name="extensions">Extensions</string>
+    <string name="knowledge_base">Knowledge Base</string>
+    <string name="knowledge_base_sub">Learn how everything works</string>
+    <string name="feedback">Feedback</string>
+    <string name="feedback_sub">Report a bug or suggest a feature, or just say hi!</string>
+    <string name="graphite_progress">Graphite Progress</string>
+    <string name="graphite_progress_sub">Look what are we working on</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="about">About</string>
+    <string name="typography">Typography</string>
+    <string name="dark_light_theme">Which side are you on?</string>
+    <string name="theme_dark">Dark side</string>
+    <string name="theme_light">Light side</string>
+    <string name="theme_same_as_system">Same as system</string>
+    <string name="language">Language</string>
+    <string name="language_sub">We are working on more languages</string>
+    <string name="add_change_passcode">Add/Change passcode</string>
+    <string name="remove_passcode">Remove passcode</string>
+    <string name="biometric_authentication">Biometric authentication</string>
+    <string name="biometric_authentication_sub">Enable biometric authentication on launch</string>
+    <string name="backspace">Backspace</string>
+    <string name="biometric_authentication_dialog_context">Ask for biometric authentication when opening Graphite.\n\nBiometric will only prompt if you have enabled in your device or else authentication will be skipped. </string>
+    <string name="open_source_licenses">Open source licenses</string>
+    <string name="rate_us">Rate us</string>
+    <string name="spread_a_word">Spread a word</string>
+    <string name="join_us_on_instagram">Join us on Instagram</string>
+    <string name="year_progress_bar">Year progress bar</string>
+    <string name="geo_tag_notes_automatically">Geotag notes automatically</string>
+    <string name="add_note_from_notification">Add note from notification</string>
+
+    <!--    Data exchanger-->
+    <string name="import_data">Import data</string>
+    <string name="importing_data">Importing data</string>
+    <string name="importing_data_dialog_content">Please wait while data is being imported</string>
+    <string name="export_data">Export data</string>
+    <string name="exporting">Exporting</string>
+    <string name="clear_data">Clear data</string>
+    <string name="clear_data_sub">Clear all local data from this device</string>
+    <string name="import_data_from">Import data from</string>
+    <string name="select_items_to_export">Select items to export</string>
+    <string name="notes_and_notebooks">Notes and notebooks</string>
+    <string name="buckets_and_bucket_items">Buckets and bucket items</string>
+    <string name="please_wait_while_your_data_is_being_processed">Please wait while your data is being processed</string>
+    <string name="include_locked_items">Include locked items</string>
+    <string name="import_journey_message">Select an exported Journey data file to import. It will a zip file. The data will be imported in the default notebook.</string>
+    <string name="import_graphite_message">Select an exported Graphite data file to import. It will a zip file (7z file if exported from older version).</string>
+    <string name="import_google_keep_message">Select an exported Google Keep data file to import. The data will be imported in the default notebook..</string>
+    <string name="clear_data_dialog_content">Clear data is a destructive and non recoverable action. It is advised to back up your data before clearing</string>
+    <string name="clearing_data">Clearing data</string>
+    <string name="clearing_data_dialog_content">Please wait while data is being cleared</string>
+    <string name="clear_data_successful">Data cleared</string>
+    <string name="clear_data_failure">Error clearing data</string>
+
+    <!--    Backup and sync-->
+    <string name="automatic_backup">Automatic backup </string>
+    <string name="setup_backup_folder">Setup backup folder</string>
+    <string name="setup_backup_folder_sub">Backup folder not set</string>
+    <string name="remove_backup_folder">Remove backup folder</string>
+    <string name="remove_backup_folder_sub">Content of the folder will not be removed</string>
+    <string name="take_snapshot">Take snapshot</string>
+    <string name="snapshot_warehouse">Snapshot warehouse</string>
+    <string name="snapshots_are_not_encrypted">Snapshots are not encrypted</string>
+    <string name="restore_snapshot">Restore snapshot</string>
+    <string name="restore_snapshot_content">Restoring snapshot will override current data with snapshot. This action is a non recoverable action</string>
+    <string name="restoring_snapshot">Restoring snapshot</string>
+
+    <!--    Dropbox-->
+    <string name="sync">Sync</string>
+    <string name="force_sync">Force sync</string>
+    <string name="sync_now">Sync now</string>
+    <string name="connect_with_dropbox">Connect with Dropbox</string>
+    <string name="enter_oauth2_code">Enter OAuth2 code</string>
+    <string name="test_connection">Test connection</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="auto_sync">Auto sync</string>
+    <string name="auto_sync_disabled">Auto sync disabled</string>
+    <string name="syncing">Syncing</string>
+    <string name="syncing_network_error">Cannot connect to Dropbox. Check your internet connection or try reconnecting with Dropbox</string>
+    <string name="syncing_credentials_error">Error connecting with Dropbox. It seems like you have revoked Graphite\'s access to Dropbox or credentials have expired. Try reconnecting with Dropbox</string>
+    <string name="syncing_unknown_error">Unknown error occurred while syncing with Dropbox. Try reconnecting with Dropbox</string>
+    <string name="space_used">Space used</string>
+    <string name="space_available">Available</string>
+    <string name="running_out_of_space_message">You are running out of space. Synchronization might fail if no more space is available.</string>
+    <string name="connection_Error">Connection error</string>
+    <string name="error_connecting_with_dropbox">Error connecting with Dropbox. Check your internet connection or try reconnecting with Dropbox</string>
+    <string name="error_retrieving_dropbox_account_info">Error retrieving account information. Check your internet connection or try reconnecting with Dropbox</string>
+    <string name="open_in_dropbox">Open in Dropbox</string>
+    <string name="sync_your_data_across_devices">Sync your data across devices</string>
+    <string name="just_now">Just now</string>
+    <string name="minutes_ago">minutes ago</string>
+    <string name="dropbox_locked">It seems like other device is syncing with Dropbox. Please wait while other device finishes syncing or you can force sync</string>
+
+    <!--    Toast-->
+    <string name="toast_suggest_bucket_list">Stay tuned while we work on other types. Or maybe suggest us…</string>
+    <string name="toast_chapter_cover_pro">"Join Graphite Pro to add custom cover in notebooks and chapters"</string>
+    <string name="toast_not_authenticated">Open vault to toggle lock</string>
+    <string name="toast_clipboard_is_empty">Clipboard is empty</string>
+    <string name="toast_error_loading_data">Error loading data</string>
+    <string name="toast_error_opening_link">Error opening link</string>
+    <string name="toast_duplicate_tag">Tag is already present</string>
+    <string name="toast_items_updated">Items updated</string>
+    <string name="toast_no_bucket_selected">No bucket selected</string>
+    <string name="toast_no_file_selected">No file selected</string>
+    <string name="toast_open_vault_to_include_selected">Open vault to include selected</string>
+    <string name="toast_back_folder_set_to">Backup folder set to</string>
+    <string name="toast_error_setting_backup_folder">Error setting backup folder</string>
+    <string name="toast_backup_folder_removed">Backup folder removed</string>
+    <string name="toast_error_removing_backup_folder">Backup folder removed</string>
+    <string name="toast_error_restoring_snapshot">Error restoring snapshot</string>
+    <string name="toast_pin_to_notification">Join Graphite Pro to pin items to notification</string>
+    <string name="toast_write_from_notification">Join Graphite Pro to write note from notification</string>
+    <string name="toast_error_opening_externally">Error opening externally</string>
+    <string name="toast_error_connecting_with_dropbox">Error connecting with Dropbox</string>
+    <string name="toast_parent_id_not_available">Parent Id not available</string>
+
 </resources>

@@ -17,7 +17,7 @@ import com.syncodec.graphite.di.model.NoteObjectLite
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.LocalIsAuthenticated
-import com.syncodec.graphite.utils.SortBy
+import com.syncodec.graphite.utils.SortOrder
 import com.syncodec.graphite.utils.SortOn
 import io.realm.kotlin.types.RealmUUID
 
@@ -45,7 +45,7 @@ fun Explorer(
 	val isAuthenticated = LocalIsAuthenticated.current
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
-	val sortBy by dataStoreInstance.getSortBy.collectAsState(initial = null)
+	val sortBy by dataStoreInstance.getSortOrder.collectAsState(initial = null)
 	val sortOn by dataStoreInstance.getSortOn.collectAsState(initial = null)
 
 	LazyColumn(
@@ -56,9 +56,9 @@ fun Explorer(
 				.filter { if (it.isLocked) isAuthenticated else true }
 				.sortedWith(
 					when (sortOn) {
-						SortOn.Title -> if (sortBy == SortBy.Ascending) compareBy { it.title } else compareByDescending { it.title }
-						SortOn.Timestamp -> if (sortBy == SortBy.Ascending) compareBy { it.userTimestamp } else compareByDescending { it.userTimestamp }
-						SortOn.Modified -> if (sortBy == SortBy.Ascending) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
+						SortOn.Title -> if (sortBy == SortOrder.Ascending) compareBy { it.title } else compareByDescending { it.title }
+						SortOn.CreatedTimestamp -> if (sortBy == SortOrder.Ascending) compareBy { it.userTimestamp } else compareByDescending { it.userTimestamp }
+						SortOn.ModifiedTimestamp -> if (sortBy == SortOrder.Ascending) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
 						else -> compareBy { it.title }
 					}
 				),
@@ -74,9 +74,9 @@ fun Explorer(
 				.filter { isChapterListVisible && (if (it.isLocked) isAuthenticated else true) }
 				.sortedWith(
 					when (sortOn) {
-						SortOn.Title -> if (sortBy == SortBy.Ascending) compareBy { it.title } else compareByDescending { it.title }
-						SortOn.Timestamp -> if (sortBy == SortBy.Ascending) compareBy { it.createdTimestamp } else compareByDescending { it.createdTimestamp }
-						SortOn.Modified -> if (sortBy == SortBy.Ascending) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
+						SortOn.Title -> if (sortBy == SortOrder.Ascending) compareBy { it.title } else compareByDescending { it.title }
+						SortOn.CreatedTimestamp -> if (sortBy == SortOrder.Ascending) compareBy { it.createdTimestamp } else compareByDescending { it.createdTimestamp }
+						SortOn.ModifiedTimestamp -> if (sortBy == SortOrder.Ascending) compareBy { it.modifiedTimestamp } else compareByDescending { it.modifiedTimestamp }
 						else -> compareBy { it.title }
 					}
 				),

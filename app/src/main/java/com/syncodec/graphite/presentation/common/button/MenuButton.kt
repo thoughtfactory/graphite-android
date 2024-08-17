@@ -24,7 +24,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -36,11 +35,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.presentation.ui.IconButtonSize
-import kotlinx.coroutines.launch
 
 
 @Immutable
-class MenuButtonColors constructor(
+data class MenuButtonColors(
 	val containerColor : Color,
 	val iconColor : Color,
 	val checkedContainerColor : Color = containerColor,
