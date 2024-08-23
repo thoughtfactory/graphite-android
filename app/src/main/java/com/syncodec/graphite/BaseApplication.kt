@@ -104,7 +104,8 @@ class BaseApplication : Application() {
 		val auth = Firebase.auth
 
 		val purchasesConfiguration = PurchasesConfiguration
-			.Builder(this, Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+//			.Builder(this, Alice.decrypt(BuildConfig.REVENUE_CAT_API_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+			.Builder(this, "goog_XBisvPpghYpVZbPweBjCOmhLvbI")
 			.appUserID(auth.currentUser?.uid)
 			.build()
 		Purchases.configure(purchasesConfiguration)

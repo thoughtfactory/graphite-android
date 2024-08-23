@@ -12,6 +12,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Package
+import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesError
 import com.revenuecat.purchases.getOfferingsWith
@@ -19,6 +20,7 @@ import com.revenuecat.purchases.interfaces.LogInCallback
 import com.revenuecat.purchases.interfaces.PurchaseCallback
 import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 import com.revenuecat.purchases.models.StoreTransaction
+import com.revenuecat.purchases.purchaseWith
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.presentation.pro.composable.screen.SubscriptionScreen
 import com.syncodec.graphite.presentation.ui.BaseContent
@@ -29,7 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 
-class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
+class ProActivity : ComponentActivity() {
 
 	private val auth = Firebase.auth
 	private val productPackage = MutableStateFlow<ContentStatus<ProductPackage>>(ContentStatus.Init)
@@ -55,6 +57,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 
 	private fun getProducts() {
 		productPackage.tryEmit(ContentStatus.Loading)
+
 		try {
 			Purchases.sharedInstance.getOfferingsWith(
 				onError = { error ->
@@ -74,6 +77,7 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 				}
 			}
 		} catch (e : Exception) {
+			e.printStackTrace()
 			Toast.makeText(this, "Error retrieving data. Please try again later.", Toast.LENGTH_SHORT).show()
 		}
 	}
@@ -90,35 +94,24 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		}
 
 		try {
-			Purchases
-				.sharedInstance
-				.apply {
-					logIn(auth.currentUser !!.uid, null)
-					setAttributes(mapOf("\$email" to auth.currentUser?.email))
-					purchasePackage(
-						activity = this@ProActivity,
-						packageToPurchase = toPurchasePackage,
-						listener = object : PurchaseCallback {
-							override fun onCompleted(storeTransaction : StoreTransaction, customerInfo : CustomerInfo) {
-								BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
-								if (BaseApplication.isPro.value) {
-									lifecycleScope.launch(Dispatchers.Main) {
-										Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
-										this@ProActivity.finish()
-									}
-								} else {
-									lifecycleScope.launch(Dispatchers.Main) {
-										Toast.makeText(this@ProActivity, "Purchase failed", Toast.LENGTH_SHORT).show()
-									}
-								}
-							}
-
-							override fun onError(error : PurchasesError, userCancelled : Boolean) {
-								Toast.makeText(this@ProActivity, "Error purchasing product. Please try again later.", Toast.LENGTH_SHORT).show()
-							}
+			Purchases.sharedInstance.purchaseWith(
+				PurchaseParams.Builder(this, toPurchasePackage).build(),
+				onError = { error, userCancelled -> /* No purchase */
+					lifecycleScope.launch(Dispatchers.Main) {
+						Toast.makeText(this@ProActivity, "Purchase failed", Toast.LENGTH_SHORT).show()
+					}
+				},
+				onSuccess = { storeTransaction, customerInfo ->
+					if (customerInfo.entitlements["pro"]?.isActive == true) {
+						// Unlock that great "pro" content
+						BaseApplication.isPro.tryEmit(customerInfo.entitlements["pro"]?.isActive == true)
+						lifecycleScope.launch(Dispatchers.Main) {
+							Toast.makeText(this@ProActivity, "Purchase completed", Toast.LENGTH_SHORT).show()
+							this@ProActivity.finish()
 						}
-					)
+					}
 				}
+			)
 		} catch (e : Exception) {
 			Toast.makeText(this, "Error making purchase. Please try again later.", Toast.LENGTH_SHORT).show()
 		}
@@ -197,10 +190,6 @@ class ProActivity : ComponentActivity(), UpdatedCustomerInfoListener {
 		} catch (e : Exception) {
 			onFailure()
 		}
-	}
-
-	override fun onReceived(customerInfo : CustomerInfo) {
-
 	}
 
 	companion object {

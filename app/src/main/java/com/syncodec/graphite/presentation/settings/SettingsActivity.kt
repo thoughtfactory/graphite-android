@@ -2,6 +2,7 @@ package com.syncodec.graphite.presentation.settings
 
 import android.content.IntentSender
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -25,12 +26,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
+//import com.google.android.gms.auth.api.identity.BeginSignInRequest
+//import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -47,6 +56,7 @@ import com.syncodec.graphite.BuildConfig
 import com.syncodec.graphite.notification.WriteNoteNotification
 import com.syncodec.graphite.presentation.common.bar.GenericTopBar
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
+import com.syncodec.graphite.presentation.main.MainActivity.Companion.TAG
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SettingsBottomSheetType
 import com.syncodec.graphite.presentation.settings.composable.bottomSheet.SheetLayout
 import com.syncodec.graphite.presentation.settings.composable.dialog.SettingsDialog
@@ -66,8 +76,6 @@ import kotlinx.coroutines.launch
 class SettingsActivity : ComponentActivity() {
 
 	private lateinit var auth : FirebaseAuth
-	private lateinit var oneTapClient : SignInClient
-	private lateinit var signInRequest : BeginSignInRequest
 
 	private var firebaseUser : MutableState<FirebaseUser?> = mutableStateOf(null)
 
@@ -78,26 +86,6 @@ class SettingsActivity : ComponentActivity() {
 		auth = Firebase.auth
 
 		this.firebaseUser.value = auth.currentUser
-		oneTapClient = Identity.getSignInClient(this)
-		signInRequest = BeginSignInRequest
-			.builder()
-			.setPasswordRequestOptions(
-				BeginSignInRequest
-					.PasswordRequestOptions
-					.builder()
-					.setSupported(true)
-					.build()
-			)
-			.setGoogleIdTokenRequestOptions(
-				GoogleIdTokenRequestOptions
-					.builder()
-					.setSupported(true)
-					.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
-					.setFilterByAuthorizedAccounts(false)
-					.build()
-			)
-			.setAutoSelectEnabled(false)
-			.build()
 
 		var authenticatorScreen by mutableStateOf(AuthenticatorScreen.None)
 
@@ -240,21 +228,50 @@ class SettingsActivity : ComponentActivity() {
 		}
 	}
 
-	private val signInIntentResultLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-		if (result.data != null) {
-			try {
-				val googleCredential = oneTapClient.getSignInCredentialFromIntent(result.data)
-				val displayName = googleCredential.displayName
-				val idToken = googleCredential.googleIdToken
+	private fun onClickSignIn() {
+		Toast.makeText(this, "Signing in...", Toast.LENGTH_SHORT).show()
 
-				if (idToken == null) {
-					Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-				} else {
-					val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-					auth.signInWithCredential(firebaseCredential)
+		val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+			.setFilterByAuthorizedAccounts(true)
+			.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+			.setAutoSelectEnabled(true)
+//			.setNonce(<nonce string to use when generating a Google ID token>)
+			.build()
+
+		val request: GetCredentialRequest = GetCredentialRequest.Builder()
+			.addCredentialOption(googleIdOption)
+			.build()
+
+		lifecycleScope.launch {
+			try {
+				val credentialManager = CredentialManager.create(this@SettingsActivity)
+
+				val result = credentialManager.getCredential(
+					request = request,
+					context = this@SettingsActivity,
+				)
+				handleSignIn(result)
+			} catch (e: GetCredentialException) {
+//				handleFailure(e)
+				e.printStackTrace()
+			}
+		}
+	}
+
+	fun handleSignIn(result: GetCredentialResponse) {
+		val credential = result.credential
+		if(credential is CustomCredential) {
+			if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+				try {
+
+					val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+					val authCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+
+					auth.signInWithCredential(authCredential)
 						.addOnSuccessListener {
 							this.firebaseUser.value = auth.currentUser
-							Toast.makeText(this, "Signed in as $displayName", Toast.LENGTH_SHORT).show()
+							val user = auth.currentUser
+							Toast.makeText(this, "Signed in as ${user?.displayName}", Toast.LENGTH_SHORT).show()
 
 							Purchases
 								.sharedInstance
@@ -276,31 +293,17 @@ class SettingsActivity : ComponentActivity() {
 						.addOnFailureListener {
 							Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
 						}
+				} catch (e: GoogleIdTokenParsingException) {
+					e.printStackTrace()
 				}
-			} catch (e : ApiException) {
-//				e.printStackTrace()
-				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
+			} else {
+				Log.e(TAG, "Unexpected type of credential")
 			}
+		} else {
+			Log.e(TAG, "Unexpected type of credential")
 		}
 	}
 
-	private fun onClickSignIn() {
-		Toast.makeText(this, "Signing in...", Toast.LENGTH_SHORT).show()
-		oneTapClient.beginSignIn(signInRequest)
-			.addOnSuccessListener(this) { result ->
-				try {
-					IntentSenderRequest.Builder(result.pendingIntent.intentSender).build().let {
-						signInIntentResultLauncher.launch(it)
-					}
-				} catch (e : IntentSender.SendIntentException) {
-//					e.printStackTrace()
-				}
-			}
-			.addOnFailureListener(this) { e ->
-//				e.printStackTrace()
-				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-			}
-	}
 
 	private fun onClickSignOut() {
 		val dataStoreInstance = DataStoreInstance(this)

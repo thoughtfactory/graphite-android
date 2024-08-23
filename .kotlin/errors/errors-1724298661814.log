@@ -1,0 +1,1976 @@
+kotlin version: 2.0.10
+error message: org.jetbrains.kotlin.codegen.CompilationException: Back-end (JVM) Internal error: Couldn't transform method node:
+BucketScreen (Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V:
+  @Landroidx/compose/runtime/Composable;() // invisible
+  @Landroidx/compose/runtime/ComposableTarget;(applier="androidx.compose.ui.UiComposable") // invisible
+    // annotable parameter count: 4 (visible)
+    // annotable parameter count: 4 (invisible)
+    @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 0
+    @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 1
+   L0
+    LINENUMBER 54 L0
+    ALOAD 1
+    LDC 860852328
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startRestartGroup (I)Landroidx/compose/runtime/Composer; (itf)
+    ASTORE 1
+    ALOAD 1
+    LDC "C(BucketScreen)52@2646L2,54@2682L7,55@2703L24,56@2763L15,58@2824L7,59@2887L7,61@2949L5,61@2914L40,63@2998L89,68@3188L55,78@3454L34,79@3530L37,88@3809L34,89@3880L34,90@3946L34,103@4565L16,104@4612L16,105@4669L16,106@4720L47,108@4805L50,108@4770L85,269@10091L13:BucketScreen.kt#880zke"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ILOAD 2
+    ISTORE 4
+   L1
+    ILOAD 3
+    ICONST_1
+    IAND
+    IFEQ L2
+    ILOAD 4
+    BIPUSH 6
+    IOR
+    ISTORE 4
+    GOTO L3
+   L2
+    ILOAD 2
+    BIPUSH 14
+    IAND
+    IFNE L3
+    ILOAD 4
+    ALOAD 1
+    ALOAD 0
+    INVOKEINTERFACE androidx/compose/runtime/Composer.changedInstance (Ljava/lang/Object;)Z (itf)
+    IFEQ L4
+    ICONST_4
+    GOTO L5
+   L4
+    ICONST_2
+   L5
+    IOR
+    ISTORE 4
+   L3
+    ILOAD 4
+    BIPUSH 11
+    IAND
+    ICONST_2
+    IF_ICMPNE L6
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.getSkipping ()Z (itf)
+    IFNE L7
+   L6
+    ILOAD 3
+    ICONST_1
+    IAND
+    IFEQ L8
+   L9
+    LINENUMBER 53 L9
+    ALOAD 1
+    LDC 1842966072
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 6
+    NOP
+    ICONST_0
+    ISTORE 7
+    NOP
+   L10
+    ICONST_0
+    ISTORE 8
+   L11
+    LINENUMBER 273 L11
+    ALOAD 6
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 9
+   L12
+    ICONST_0
+    ISTORE 10
+   L13
+    LINENUMBER 274 L13
+    ILOAD 7
+    IFNE L14
+    ALOAD 9
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L15
+   L14
+    LINENUMBER 275 L14
+    NOP
+   L16
+    ICONST_0
+    ISTORE 11
+   L17
+    INVOKEDYNAMIC invoke()Lkotlin/jvm/functions/Function0; [
+      // handle kind 0x6 : INVOKESTATIC
+      java/lang/invoke/LambdaMetafactory.metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+      // arguments:
+      ()Ljava/lang/Object;, 
+      // handle kind 0x6 : INVOKESTATIC
+      com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$1$lambda$0()Lkotlin/Unit;, 
+      ()Lkotlin/Unit;
+    ]
+    NOP
+    GOTO L18
+   L18
+   L19
+    LINENUMBER 275 L19
+    ASTORE 11
+   L20
+    LINENUMBER 276 L20
+    ALOAD 6
+    ALOAD 11
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L21
+    LINENUMBER 277 L21
+    ALOAD 11
+   L22
+    GOTO L23
+   L15
+    LINENUMBER 278 L15
+    ALOAD 9
+   L23
+    LINENUMBER 274 L23
+    NOP
+   L24
+    LINENUMBER 273 L24
+    NOP
+   L25
+    LINENUMBER 273 L25
+    NOP
+    GOTO L26
+   L26
+    LINENUMBER 53 L26
+    CHECKCAST kotlin/jvm/functions/Function0
+    ASTORE 5
+   L27
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 5
+   L28
+    ASTORE 0
+   L8
+    LINENUMBER 55 L8
+    INVOKESTATIC androidx/compose/ui/platform/AndroidCompositionLocals_androidKt.getLocalContext ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+    CHECKCAST androidx/compose/runtime/CompositionLocal
+    ASTORE 6
+    ICONST_0
+    ISTORE 7
+    NOP
+   L29
+    ICONST_0
+    ISTORE 8
+   L30
+    ALOAD 1
+    LDC 2023513938
+    LDC "CC:CompositionLocal.kt#9igjgp"
+   L31
+    LINENUMBER 279 L31
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart (Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+    ALOAD 1
+    ALOAD 6
+    INVOKEINTERFACE androidx/compose/runtime/Composer.consume (Landroidx/compose/runtime/CompositionLocal;)Ljava/lang/Object; (itf)
+    ASTORE 9
+    ALOAD 1
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd (Landroidx/compose/runtime/Composer;)V
+    ALOAD 9
+    NOP
+    GOTO L32
+   L32
+    LINENUMBER 55 L32
+    CHECKCAST android/content/Context
+    ASTORE 5
+   L33
+    ICONST_0
+    ISTORE 8
+   L34
+    LINENUMBER 56 L34
+    NOP
+   L35
+    ICONST_0
+    ISTORE 9
+   L36
+    ALOAD 1
+    LDC 773894976
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(rememberCoroutineScope)489@20472L144:Effects.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+   L37
+    LINENUMBER 280 L37
+    ALOAD 1
+   L38
+    LINENUMBER 282 L38
+    ASTORE 10
+   L39
+    ICONST_0
+    ISTORE 11
+   L40
+    LINENUMBER 283 L40
+    NOP
+   L41
+    ICONST_0
+    ISTORE 12
+   L42
+    ALOAD 1
+    LDC -492369756
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):Composables.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 13
+   L43
+    LINENUMBER 284 L43
+    ICONST_0
+    ISTORE 14
+   L44
+    ICONST_0
+    ISTORE 15
+   L45
+    LINENUMBER 285 L45
+    ALOAD 13
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 16
+   L46
+    ICONST_0
+    ISTORE 17
+   L47
+    LINENUMBER 286 L47
+    ALOAD 16
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L48
+   L49
+    LINENUMBER 287 L49
+    ICONST_0
+    ISTORE 18
+   L50
+    LINENUMBER 288 L50
+   L51
+    LINENUMBER 289 L51
+    NOP
+    ICONST_0
+    ISTORE 19
+   L52
+    NOP
+   L53
+    LINENUMBER 290 L53
+    GETSTATIC kotlin/coroutines/EmptyCoroutineContext.INSTANCE : Lkotlin/coroutines/EmptyCoroutineContext;
+    GOTO L54
+   L54
+    NOP
+    GOTO L55
+   L55
+    ASTORE 33
+    ALOAD 33
+   L56
+    LINENUMBER 289 L56
+    CHECKCAST kotlin/coroutines/CoroutineContext
+    ALOAD 10
+    INVOKESTATIC androidx/compose/runtime/EffectsKt.createCompositionCoroutineScope (Lkotlin/coroutines/CoroutineContext;Landroidx/compose/runtime/Composer;)Lkotlinx/coroutines/CoroutineScope;
+   L57
+    LINENUMBER 288 L57
+    ASTORE 34
+    NEW androidx/compose/runtime/CompositionScopedCoroutineScopeCanceller
+    DUP
+    ALOAD 34
+    INVOKESPECIAL androidx/compose/runtime/CompositionScopedCoroutineScopeCanceller.<init> (Lkotlinx/coroutines/CoroutineScope;)V
+   L58
+    LINENUMBER 287 L58
+    ASTORE 19
+   L59
+    LINENUMBER 291 L59
+    ALOAD 13
+    ALOAD 19
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L60
+    LINENUMBER 292 L60
+    ALOAD 19
+   L61
+    GOTO L62
+   L48
+    LINENUMBER 293 L48
+    ALOAD 16
+   L62
+    LINENUMBER 286 L62
+    NOP
+   L63
+    LINENUMBER 285 L63
+    NOP
+   L64
+    LINENUMBER 285 L64
+    NOP
+   L65
+    LINENUMBER 284 L65
+    ASTORE 20
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 20
+   L66
+    LINENUMBER 283 L66
+    CHECKCAST androidx/compose/runtime/CompositionScopedCoroutineScopeCanceller
+    ASTORE 21
+   L67
+    LINENUMBER 294 L67
+    ALOAD 21
+    INVOKEVIRTUAL androidx/compose/runtime/CompositionScopedCoroutineScopeCanceller.getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
+    ASTORE 11
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 11
+    NOP
+    GOTO L68
+   L68
+    LINENUMBER 56 L68
+    ASTORE 6
+   L69
+    ICONST_0
+    ISTORE 14
+   L70
+    LINENUMBER 57 L70
+    NOP
+   L71
+    ICONST_0
+    ISTORE 15
+   L72
+    ALOAD 1
+    LDC -1614864554
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+   L73
+    LINENUMBER 295 L73
+    ACONST_NULL
+    ASTORE 8
+   L74
+    LINENUMBER 296 L74
+    GETSTATIC androidx/lifecycle/viewmodel/compose/LocalViewModelStoreOwner.INSTANCE : Landroidx/lifecycle/viewmodel/compose/LocalViewModelStoreOwner;
+    ALOAD 1
+    GETSTATIC androidx/lifecycle/viewmodel/compose/LocalViewModelStoreOwner.$stable : I
+    INVOKEVIRTUAL androidx/lifecycle/viewmodel/compose/LocalViewModelStoreOwner.getCurrent (Landroidx/compose/runtime/Composer;I)Landroidx/lifecycle/ViewModelStoreOwner;
+    DUP
+    IFNONNULL L75
+    POP
+    ICONST_0
+    ISTORE 16
+   L76
+    LDC "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+   L77
+    LINENUMBER 297 L77
+    NOP
+   L78
+    LINENUMBER 296 L78
+    ASTORE 16
+    NEW java/lang/IllegalStateException
+    DUP
+    ALOAD 16
+    INVOKEVIRTUAL java/lang/Object.toString ()Ljava/lang/String;
+    INVOKESPECIAL java/lang/IllegalStateException.<init> (Ljava/lang/String;)V
+    ATHROW
+   L75
+    CHECKCAST androidx/lifecycle/ViewModelStoreOwner
+    ASTORE 9
+   L79
+    LINENUMBER 299 L79
+    ACONST_NULL
+    ASTORE 10
+   L80
+    LINENUMBER 300 L80
+    ALOAD 9
+    ALOAD 1
+    BIPUSH 8
+    INVOKESTATIC org/koin/androidx/compose/ViewModelInternalsKt.defaultExtras (Landroidx/lifecycle/ViewModelStoreOwner;Landroidx/compose/runtime/Composer;I)Landroidx/lifecycle/viewmodel/CreationExtras;
+    ASTORE 11
+   L81
+    LINENUMBER 301 L81
+    ALOAD 1
+    ICONST_0
+    INVOKESTATIC org/koin/compose/KoinApplicationKt.currentKoinScope (Landroidx/compose/runtime/Composer;I)Lorg/koin/core/scope/Scope;
+    ASTORE 12
+   L82
+    LINENUMBER 302 L82
+    ACONST_NULL
+    ASTORE 13
+   L83
+    LDC Lcom/syncodec/graphite/presentation/bucket/BucketViewModel;.class
+    INVOKESTATIC kotlin/jvm/internal/Reflection.getOrCreateKotlinClass (Ljava/lang/Class;)Lkotlin/reflect/KClass;
+   L84
+    LINENUMBER 305 L84
+    ALOAD 9
+    INVOKEINTERFACE androidx/lifecycle/ViewModelStoreOwner.getViewModelStore ()Landroidx/lifecycle/ViewModelStore; (itf)
+    ALOAD 10
+    ALOAD 11
+    ALOAD 8
+    ALOAD 12
+    ALOAD 13
+   L85
+    LINENUMBER 304 L85
+    INVOKESTATIC org/koin/androidx/viewmodel/GetViewModelKt.resolveViewModel (Lkotlin/reflect/KClass;Landroidx/lifecycle/ViewModelStore;Ljava/lang/String;Landroidx/lifecycle/viewmodel/CreationExtras;Lorg/koin/core/qualifier/Qualifier;Lorg/koin/core/scope/Scope;Lkotlin/jvm/functions/Function0;)Landroidx/lifecycle/ViewModel;
+    ASTORE 17
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 17
+    NOP
+    GOTO L86
+   L86
+    LINENUMBER 57 L86
+    CHECKCAST com/syncodec/graphite/presentation/bucket/BucketViewModel
+    ASTORE 7
+   L87
+    LINENUMBER 59 L87
+    INVOKESTATIC com/syncodec/graphite/utils/SecurityKt.getLocalIsAuthenticated ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+    CHECKCAST androidx/compose/runtime/CompositionLocal
+    ASTORE 9
+    BIPUSH 6
+    ISTORE 10
+    NOP
+   L88
+    ICONST_0
+    ISTORE 11
+   L89
+    ALOAD 1
+    LDC 2023513938
+    LDC "CC:CompositionLocal.kt#9igjgp"
+   L90
+    LINENUMBER 306 L90
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart (Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+    ALOAD 1
+    ALOAD 9
+    INVOKEINTERFACE androidx/compose/runtime/Composer.consume (Landroidx/compose/runtime/CompositionLocal;)Ljava/lang/Object; (itf)
+    ASTORE 12
+    ALOAD 1
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd (Landroidx/compose/runtime/Composer;)V
+    ALOAD 12
+    NOP
+    GOTO L91
+   L91
+    LINENUMBER 59 L91
+    CHECKCAST java/lang/Boolean
+    INVOKEVIRTUAL java/lang/Boolean.booleanValue ()Z
+    ISTORE 8
+   L92
+    LINENUMBER 60 L92
+    INVOKESTATIC com/syncodec/graphite/utils/SecurityKt.getLocalAuthenticatorAction ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+    CHECKCAST androidx/compose/runtime/CompositionLocal
+    ASTORE 10
+    BIPUSH 6
+    ISTORE 11
+    NOP
+   L93
+    ICONST_0
+    ISTORE 12
+   L94
+    ALOAD 1
+    LDC 2023513938
+    LDC "CC:CompositionLocal.kt#9igjgp"
+   L95
+    LINENUMBER 307 L95
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart (Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+    ALOAD 1
+    ALOAD 10
+    INVOKEINTERFACE androidx/compose/runtime/Composer.consume (Landroidx/compose/runtime/CompositionLocal;)Ljava/lang/Object; (itf)
+    ASTORE 13
+    ALOAD 1
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd (Landroidx/compose/runtime/Composer;)V
+    ALOAD 13
+    NOP
+    GOTO L96
+   L96
+    LINENUMBER 60 L96
+    CHECKCAST kotlin/jvm/functions/Function1
+    ASTORE 9
+   L97
+    LINENUMBER 62 L97
+    ICONST_0
+    FCONST_0
+    ALOAD 1
+    LDC 1842975771
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 12
+    NOP
+    ICONST_0
+    ISTORE 13
+    NOP
+   L98
+    ICONST_0
+    ISTORE 14
+   L99
+    LINENUMBER 308 L99
+    ALOAD 12
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 15
+   L100
+    ICONST_0
+    ISTORE 16
+   L101
+    LINENUMBER 309 L101
+    ILOAD 13
+    IFNE L102
+    ALOAD 15
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L103
+   L102
+    LINENUMBER 310 L102
+    NOP
+    FSTORE 32
+    ISTORE 31
+   L104
+    ICONST_0
+    ISTORE 17
+   L105
+    INVOKEDYNAMIC invoke()Lkotlin/jvm/functions/Function0; [
+      // handle kind 0x6 : INVOKESTATIC
+      java/lang/invoke/LambdaMetafactory.metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+      // arguments:
+      ()Ljava/lang/Object;, 
+      // handle kind 0x6 : INVOKESTATIC
+      com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$3$lambda$2()I, 
+      ()Ljava/lang/Integer;
+    ]
+    NOP
+    GOTO L106
+   L106
+    ASTORE 33
+    ILOAD 31
+    FLOAD 32
+    ALOAD 33
+   L107
+    LINENUMBER 310 L107
+    ASTORE 17
+   L108
+    LINENUMBER 311 L108
+    ALOAD 12
+    ALOAD 17
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L109
+    LINENUMBER 312 L109
+    ALOAD 17
+   L110
+    GOTO L111
+   L103
+    LINENUMBER 313 L103
+    ALOAD 15
+   L111
+    LINENUMBER 309 L111
+    NOP
+   L112
+    LINENUMBER 308 L112
+    NOP
+   L113
+    LINENUMBER 308 L113
+    NOP
+    GOTO L114
+   L114
+    LINENUMBER 62 L114
+    CHECKCAST kotlin/jvm/functions/Function0
+    ASTORE 11
+   L115
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 11
+   L116
+    ALOAD 1
+    SIPUSH 390
+    ICONST_2
+    INVOKESTATIC androidx/compose/foundation/pager/PagerStateKt.rememberPagerState (IFLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)Landroidx/compose/foundation/pager/PagerState;
+    ASTORE 10
+   L117
+    LINENUMBER 63 L117
+    NEW kotlin/jvm/internal/Ref$IntRef
+    DUP
+    INVOKESPECIAL kotlin/jvm/internal/Ref$IntRef.<init> ()V
+    ASTORE 11
+   L118
+    ALOAD 11
+    ALOAD 10
+    INVOKEVIRTUAL androidx/compose/foundation/pager/PagerState.getCurrentPage ()I
+    PUTFIELD kotlin/jvm/internal/Ref$IntRef.element : I
+   L119
+    LINENUMBER 64 L119
+    ALOAD 10
+    INVOKEVIRTUAL androidx/compose/foundation/pager/PagerState.getCurrentPage ()I
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    NEW com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$2
+    DUP
+    ALOAD 11
+    ALOAD 10
+    ACONST_NULL
+    INVOKESPECIAL com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$2.<init> (Lkotlin/jvm/internal/Ref$IntRef;Landroidx/compose/foundation/pager/PagerState;Lkotlin/coroutines/Continuation;)V
+    CHECKCAST kotlin/jvm/functions/Function2
+    ALOAD 1
+    BIPUSH 64
+    INVOKESTATIC androidx/compose/runtime/EffectsKt.LaunchedEffect (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+   L120
+    LINENUMBER 68 L120
+    GETSTATIC androidx/compose/material/ModalBottomSheetValue.Hidden : Landroidx/compose/material/ModalBottomSheetValue;
+    ACONST_NULL
+    ACONST_NULL
+    NOP
+    ICONST_0
+    BIPUSH 14
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/material/ModalBottomSheetKt.ModalBottomSheetState$default (Landroidx/compose/material/ModalBottomSheetValue;Landroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;ZILjava/lang/Object;)Landroidx/compose/material/ModalBottomSheetState;
+    ASTORE 12
+   L121
+    ALOAD 1
+    LDC 1842983469
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 15
+    NOP
+    ICONST_0
+    ISTORE 16
+   L122
+    LINENUMBER 69 L122
+    NOP
+   L123
+    ICONST_0
+    ISTORE 17
+   L124
+    LINENUMBER 314 L124
+    ALOAD 15
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 18
+   L125
+    ICONST_0
+    ISTORE 19
+   L126
+    LINENUMBER 315 L126
+    ILOAD 16
+    IFNE L127
+    ALOAD 18
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L128
+   L127
+    LINENUMBER 316 L127
+    NOP
+   L129
+    ICONST_0
+    ISTORE 20
+   L130
+    LINENUMBER 69 L130
+    GETSTATIC com/syncodec/graphite/presentation/bucket/composable/bottomSheet/BucketBottomSheetType.MENU : Lcom/syncodec/graphite/presentation/bucket/composable/bottomSheet/BucketBottomSheetType;
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.mutableStateOf$default (Ljava/lang/Object;Landroidx/compose/runtime/SnapshotMutationPolicy;ILjava/lang/Object;)Landroidx/compose/runtime/MutableState;
+    NOP
+    GOTO L131
+   L131
+   L132
+    LINENUMBER 316 L132
+    ASTORE 20
+   L133
+    LINENUMBER 317 L133
+    ALOAD 15
+    ALOAD 20
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L134
+    LINENUMBER 318 L134
+    ALOAD 20
+   L135
+    GOTO L136
+   L128
+    LINENUMBER 319 L128
+    ALOAD 18
+   L136
+    LINENUMBER 315 L136
+    NOP
+   L137
+    LINENUMBER 314 L137
+    NOP
+   L138
+    LINENUMBER 314 L138
+    NOP
+    GOTO L139
+   L139
+    LINENUMBER 69 L139
+    CHECKCAST androidx/compose/runtime/MutableState
+    ASTORE 14
+   L140
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 14
+   L141
+    ASTORE 13
+   L142
+    ALOAD 1
+    LDC 1842991960
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 16
+    NOP
+    ICONST_0
+    ISTORE 17
+   L143
+    LINENUMBER 79 L143
+    NOP
+   L144
+    ICONST_0
+    ISTORE 18
+   L145
+    LINENUMBER 320 L145
+    ALOAD 16
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 19
+   L146
+    ICONST_0
+    ISTORE 20
+   L147
+    LINENUMBER 321 L147
+    ILOAD 17
+    IFNE L148
+    ALOAD 19
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L149
+   L148
+    LINENUMBER 322 L148
+    NOP
+   L150
+    ICONST_0
+    ISTORE 21
+   L151
+    LINENUMBER 79 L151
+    ICONST_0
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.mutableStateOf$default (Ljava/lang/Object;Landroidx/compose/runtime/SnapshotMutationPolicy;ILjava/lang/Object;)Landroidx/compose/runtime/MutableState;
+    NOP
+    GOTO L152
+   L152
+   L153
+    LINENUMBER 322 L153
+    ASTORE 21
+   L154
+    LINENUMBER 323 L154
+    ALOAD 16
+    ALOAD 21
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L155
+    LINENUMBER 324 L155
+    ALOAD 21
+   L156
+    GOTO L157
+   L149
+    LINENUMBER 325 L149
+    ALOAD 19
+   L157
+    LINENUMBER 321 L157
+    NOP
+   L158
+    LINENUMBER 320 L158
+    NOP
+   L159
+    LINENUMBER 320 L159
+    NOP
+    GOTO L160
+   L160
+    LINENUMBER 79 L160
+    CHECKCAST androidx/compose/runtime/MutableState
+    ASTORE 15
+   L161
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 15
+   L162
+    ASTORE 14
+   L163
+    ALOAD 1
+    LDC 1842994395
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 17
+    NOP
+    ICONST_0
+    ISTORE 18
+   L164
+    LINENUMBER 80 L164
+    NOP
+   L165
+    ICONST_0
+    ISTORE 19
+   L166
+    LINENUMBER 326 L166
+    ALOAD 17
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 20
+   L167
+    ICONST_0
+    ISTORE 21
+   L168
+    LINENUMBER 327 L168
+    ILOAD 18
+    IFNE L169
+    ALOAD 20
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L170
+   L169
+    LINENUMBER 328 L169
+    NOP
+   L171
+    ICONST_0
+    ISTORE 22
+   L172
+    LINENUMBER 80 L172
+    NOP
+    INVOKESTATIC kotlin/collections/CollectionsKt.emptyList ()Ljava/util/List;
+    GOTO L173
+   L173
+    LINENUMBER 80 L173
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.mutableStateOf$default (Ljava/lang/Object;Landroidx/compose/runtime/SnapshotMutationPolicy;ILjava/lang/Object;)Landroidx/compose/runtime/MutableState;
+    NOP
+    GOTO L174
+   L174
+   L175
+    LINENUMBER 328 L175
+    ASTORE 22
+   L176
+    LINENUMBER 329 L176
+    ALOAD 17
+    ALOAD 22
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L177
+    LINENUMBER 330 L177
+    ALOAD 22
+   L178
+    GOTO L179
+   L170
+    LINENUMBER 331 L170
+    ALOAD 20
+   L179
+    LINENUMBER 327 L179
+    NOP
+   L180
+    LINENUMBER 326 L180
+    NOP
+   L181
+    LINENUMBER 326 L181
+    NOP
+    GOTO L182
+   L182
+    LINENUMBER 80 L182
+    CHECKCAST androidx/compose/runtime/MutableState
+    ASTORE 16
+   L183
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 16
+   L184
+    ASTORE 15
+   L185
+    ALOAD 1
+    LDC 1843003320
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 18
+    NOP
+    ICONST_0
+    ISTORE 19
+   L186
+    LINENUMBER 89 L186
+    NOP
+   L187
+    ICONST_0
+    ISTORE 20
+   L188
+    LINENUMBER 332 L188
+    ALOAD 18
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 21
+   L189
+    ICONST_0
+    ISTORE 22
+   L190
+    LINENUMBER 333 L190
+    ILOAD 19
+    IFNE L191
+    ALOAD 21
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L192
+   L191
+    LINENUMBER 334 L191
+    NOP
+   L193
+    ICONST_0
+    ISTORE 23
+   L194
+    LINENUMBER 89 L194
+    ICONST_0
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.mutableStateOf$default (Ljava/lang/Object;Landroidx/compose/runtime/SnapshotMutationPolicy;ILjava/lang/Object;)Landroidx/compose/runtime/MutableState;
+    NOP
+    GOTO L195
+   L195
+   L196
+    LINENUMBER 334 L196
+    ASTORE 23
+   L197
+    LINENUMBER 335 L197
+    ALOAD 18
+    ALOAD 23
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L198
+    LINENUMBER 336 L198
+    ALOAD 23
+   L199
+    GOTO L200
+   L192
+    LINENUMBER 337 L192
+    ALOAD 21
+   L200
+    LINENUMBER 333 L200
+    NOP
+   L201
+    LINENUMBER 332 L201
+    NOP
+   L202
+    LINENUMBER 332 L202
+    NOP
+    GOTO L203
+   L203
+    LINENUMBER 89 L203
+    CHECKCAST androidx/compose/runtime/MutableState
+    ASTORE 17
+   L204
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 17
+   L205
+    ASTORE 16
+   L206
+    ALOAD 1
+    LDC 1843005592
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 19
+    NOP
+    ICONST_0
+    ISTORE 20
+   L207
+    LINENUMBER 90 L207
+    NOP
+   L208
+    ICONST_0
+    ISTORE 21
+   L209
+    LINENUMBER 338 L209
+    ALOAD 19
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 22
+   L210
+    ICONST_0
+    ISTORE 23
+   L211
+    LINENUMBER 339 L211
+    ILOAD 20
+    IFNE L212
+    ALOAD 22
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L213
+   L212
+    LINENUMBER 340 L212
+    NOP
+   L214
+    ICONST_0
+    ISTORE 24
+   L215
+    LINENUMBER 90 L215
+    ICONST_0
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.mutableStateOf$default (Ljava/lang/Object;Landroidx/compose/runtime/SnapshotMutationPolicy;ILjava/lang/Object;)Landroidx/compose/runtime/MutableState;
+    NOP
+    GOTO L216
+   L216
+   L217
+    LINENUMBER 340 L217
+    ASTORE 24
+   L218
+    LINENUMBER 341 L218
+    ALOAD 19
+    ALOAD 24
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L219
+    LINENUMBER 342 L219
+    ALOAD 24
+   L220
+    GOTO L221
+   L213
+    LINENUMBER 343 L213
+    ALOAD 22
+   L221
+    LINENUMBER 339 L221
+    NOP
+   L222
+    LINENUMBER 338 L222
+    NOP
+   L223
+    LINENUMBER 338 L223
+    NOP
+    GOTO L224
+   L224
+    LINENUMBER 90 L224
+    CHECKCAST androidx/compose/runtime/MutableState
+    ASTORE 18
+   L225
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 18
+   L226
+    ASTORE 17
+   L227
+    ALOAD 1
+    LDC 1843007704
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 20
+    NOP
+    ICONST_0
+    ISTORE 21
+   L228
+    LINENUMBER 91 L228
+    NOP
+   L229
+    ICONST_0
+    ISTORE 22
+   L230
+    LINENUMBER 344 L230
+    ALOAD 20
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 23
+   L231
+    ICONST_0
+    ISTORE 24
+   L232
+    LINENUMBER 345 L232
+    ILOAD 21
+    IFNE L233
+    ALOAD 23
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L234
+   L233
+    LINENUMBER 346 L233
+    NOP
+   L235
+    ICONST_0
+    ISTORE 25
+   L236
+    LINENUMBER 91 L236
+    ICONST_0
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.mutableStateOf$default (Ljava/lang/Object;Landroidx/compose/runtime/SnapshotMutationPolicy;ILjava/lang/Object;)Landroidx/compose/runtime/MutableState;
+    NOP
+    GOTO L237
+   L237
+   L238
+    LINENUMBER 346 L238
+    ASTORE 25
+   L239
+    LINENUMBER 347 L239
+    ALOAD 20
+    ALOAD 25
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L240
+    LINENUMBER 348 L240
+    ALOAD 25
+   L241
+    GOTO L242
+   L234
+    LINENUMBER 349 L234
+    ALOAD 23
+   L242
+    LINENUMBER 345 L242
+    NOP
+   L243
+    LINENUMBER 344 L243
+    NOP
+   L244
+    LINENUMBER 344 L244
+    NOP
+    GOTO L245
+   L245
+    LINENUMBER 91 L245
+    CHECKCAST androidx/compose/runtime/MutableState
+    ASTORE 19
+   L246
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 19
+   L247
+    ASTORE 18
+   L248
+    LINENUMBER 104 L248
+    ALOAD 7
+    INVOKEVIRTUAL com/syncodec/graphite/presentation/bucket/BucketViewModel.getBucketObject ()Lkotlinx/coroutines/flow/MutableStateFlow;
+    CHECKCAST kotlinx/coroutines/flow/StateFlow
+    ACONST_NULL
+    ALOAD 1
+    BIPUSH 8
+    ICONST_1
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.collectAsState (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/coroutines/CoroutineContext;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+    ASTORE 19
+   L249
+    LINENUMBER 105 L249
+    ALOAD 7
+    INVOKEVIRTUAL com/syncodec/graphite/presentation/bucket/BucketViewModel.getTitle ()Lkotlinx/coroutines/flow/MutableStateFlow;
+    CHECKCAST kotlinx/coroutines/flow/StateFlow
+    ACONST_NULL
+    ALOAD 1
+    BIPUSH 8
+    ICONST_1
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.collectAsState (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/coroutines/CoroutineContext;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+    ASTORE 20
+   L250
+    LINENUMBER 106 L250
+    ALOAD 7
+    INVOKEVIRTUAL com/syncodec/graphite/presentation/bucket/BucketViewModel.getBucketType ()Lkotlinx/coroutines/flow/MutableStateFlow;
+    CHECKCAST kotlinx/coroutines/flow/StateFlow
+    ACONST_NULL
+    ALOAD 1
+    BIPUSH 8
+    ICONST_1
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.collectAsState (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/coroutines/CoroutineContext;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+    ASTORE 21
+   L251
+    ALOAD 1
+    LDC 1843032485
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 24
+    NOP
+    ICONST_0
+    ISTORE 25
+   L252
+    LINENUMBER 107 L252
+    NOP
+   L253
+    ICONST_0
+    ISTORE 26
+   L254
+    LINENUMBER 350 L254
+    ALOAD 24
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 27
+   L255
+    ICONST_0
+    ISTORE 28
+   L256
+    LINENUMBER 351 L256
+    ILOAD 25
+    IFNE L257
+    ALOAD 27
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L258
+   L257
+    LINENUMBER 352 L257
+    NOP
+   L259
+    ICONST_0
+    ISTORE 29
+   L260
+    LINENUMBER 107 L260
+    ACONST_NULL
+    CHECKCAST io/realm/kotlin/types/RealmUUID
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESTATIC androidx/compose/runtime/SnapshotStateKt.mutableStateOf$default (Ljava/lang/Object;Landroidx/compose/runtime/SnapshotMutationPolicy;ILjava/lang/Object;)Landroidx/compose/runtime/MutableState;
+    NOP
+    GOTO L261
+   L261
+   L262
+    LINENUMBER 352 L262
+    ASTORE 29
+   L263
+    LINENUMBER 353 L263
+    ALOAD 24
+    ALOAD 29
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L264
+    LINENUMBER 354 L264
+    ALOAD 29
+   L265
+    GOTO L266
+   L258
+    LINENUMBER 355 L258
+    ALOAD 27
+   L266
+    LINENUMBER 351 L266
+    NOP
+   L267
+    LINENUMBER 350 L267
+    NOP
+   L268
+    LINENUMBER 350 L268
+    NOP
+    GOTO L269
+   L269
+    LINENUMBER 107 L269
+    CHECKCAST androidx/compose/runtime/MutableState
+    ASTORE 23
+   L270
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 23
+   L271
+    ASTORE 22
+   L272
+    LINENUMBER 109 L272
+    ALOAD 14
+    INVOKESTATIC com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$8 (Landroidx/compose/runtime/MutableState;)Z
+    ALOAD 1
+    LDC 1843035208
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "CC(remember):BucketScreen.kt#9igjgp"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 1
+    ASTORE 24
+    NOP
+    ICONST_0
+    ISTORE 25
+    NOP
+   L273
+    ICONST_0
+    ISTORE 26
+   L274
+    LINENUMBER 356 L274
+    ALOAD 24
+    INVOKEINTERFACE androidx/compose/runtime/Composer.rememberedValue ()Ljava/lang/Object; (itf)
+    ASTORE 27
+   L275
+    ICONST_0
+    ISTORE 28
+   L276
+    LINENUMBER 357 L276
+    ILOAD 25
+    IFNE L277
+    ALOAD 27
+    GETSTATIC androidx/compose/runtime/Composer.Companion : Landroidx/compose/runtime/Composer$Companion;
+    INVOKEVIRTUAL androidx/compose/runtime/Composer$Companion.getEmpty ()Ljava/lang/Object;
+    IF_ACMPNE L278
+   L277
+    LINENUMBER 358 L277
+    NOP
+    ISTORE 31
+   L279
+    ICONST_0
+    ISTORE 29
+   L280
+    LINENUMBER 109 L280
+    ALOAD 14
+    ALOAD 15
+    INVOKEDYNAMIC invoke(Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;)Lkotlin/jvm/functions/Function0; [
+      // handle kind 0x6 : INVOKESTATIC
+      java/lang/invoke/LambdaMetafactory.metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+      // arguments:
+      ()Ljava/lang/Object;, 
+      // handle kind 0x6 : INVOKESTATIC
+      com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$31$lambda$30(Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;)Lkotlin/Unit;, 
+      ()Lkotlin/Unit;
+    ]
+    NOP
+    GOTO L281
+   L281
+    ASTORE 32
+    ILOAD 31
+    ALOAD 32
+   L282
+    LINENUMBER 358 L282
+    ASTORE 30
+   L283
+    LINENUMBER 359 L283
+    ALOAD 24
+    ALOAD 30
+    INVOKEINTERFACE androidx/compose/runtime/Composer.updateRememberedValue (Ljava/lang/Object;)V (itf)
+   L284
+    LINENUMBER 360 L284
+    ALOAD 30
+   L285
+    GOTO L286
+   L278
+    LINENUMBER 361 L278
+    ALOAD 27
+   L286
+    LINENUMBER 357 L286
+    NOP
+   L287
+    LINENUMBER 356 L287
+    NOP
+   L288
+    LINENUMBER 356 L288
+    NOP
+    GOTO L289
+   L289
+    LINENUMBER 109 L289
+    CHECKCAST kotlin/jvm/functions/Function0
+    ASTORE 23
+   L290
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 23
+   L291
+    ALOAD 1
+    BIPUSH 48
+    ICONST_0
+    INVOKESTATIC androidx/activity/compose/BackHandlerKt.BackHandler (ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+   L292
+    LINENUMBER 128 L292
+    ALOAD 19
+    INVOKESTATIC com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$24 (Landroidx/compose/runtime/State;)Lcom/syncodec/graphite/di/model/BucketObject;
+    ASTORE 24
+   L293
+    ALOAD 1
+    LDC 1843062388
+    INVOKEINTERFACE androidx/compose/runtime/Composer.startReplaceableGroup (I)V (itf)
+    ALOAD 1
+    LDC "*128@5538L4546"
+    INVOKESTATIC androidx/compose/runtime/ComposerKt.sourceInformation (Landroidx/compose/runtime/Composer;Ljava/lang/String;)V
+    ALOAD 24
+    IFNONNULL L294
+    ACONST_NULL
+    GOTO L295
+   L294
+    ALOAD 24
+    ASTORE 26
+    NOP
+   L296
+    NOP
+    ALOAD 26
+    CHECKCAST com/syncodec/graphite/di/model/BucketObject
+    ASTORE 27
+   L297
+    ICONST_0
+    ISTORE 28
+   L298
+    ACONST_NULL
+    ALOAD 1
+   L299
+    LINENUMBER 130 L299
+    LDC -1813872711
+    ICONST_1
+    NEW com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$1
+    DUP
+    ALOAD 27
+    ALOAD 11
+    ALOAD 7
+    ALOAD 14
+    ALOAD 15
+    ILOAD 8
+    ALOAD 9
+    ALOAD 6
+    ALOAD 10
+    ALOAD 5
+    ALOAD 20
+    ALOAD 21
+    ALOAD 12
+    ALOAD 16
+    ALOAD 17
+    ALOAD 18
+    INVOKESPECIAL com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$1.<init> (Lcom/syncodec/graphite/di/model/BucketObject;Lkotlin/jvm/internal/Ref$IntRef;Lcom/syncodec/graphite/presentation/bucket/BucketViewModel;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;ZLkotlin/jvm/functions/Function1;Lkotlinx/coroutines/CoroutineScope;Landroidx/compose/foundation/pager/PagerState;Landroid/content/Context;Landroidx/compose/runtime/State;Landroidx/compose/runtime/State;Landroidx/compose/material/ModalBottomSheetState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;)V
+    INVOKESTATIC androidx/compose/runtime/internal/ComposableLambdaKt.composableLambda (Landroidx/compose/runtime/Composer;IZLjava/lang/Object;)Landroidx/compose/runtime/internal/ComposableLambda;
+    CHECKCAST kotlin/jvm/functions/Function2
+    ALOAD 1
+   L300
+    LINENUMBER 153 L300
+    LDC -547801926
+    ICONST_1
+    NEW com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$2
+    DUP
+    ALOAD 6
+    ALOAD 12
+    ALOAD 13
+    INVOKESPECIAL com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$2.<init> (Lkotlinx/coroutines/CoroutineScope;Landroidx/compose/material/ModalBottomSheetState;Landroidx/compose/runtime/MutableState;)V
+    INVOKESTATIC androidx/compose/runtime/internal/ComposableLambdaKt.composableLambda (Landroidx/compose/runtime/Composer;IZLjava/lang/Object;)Landroidx/compose/runtime/internal/ComposableLambda;
+    CHECKCAST kotlin/jvm/functions/Function2
+   L301
+    LINENUMBER 154 L301
+    ALOAD 14
+    INVOKESTATIC com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$8 (Landroidx/compose/runtime/MutableState;)Z
+    IFNE L302
+    ICONST_1
+    GOTO L303
+   L302
+    ICONST_0
+   L303
+    ACONST_NULL
+    ICONST_0
+   L304
+    LINENUMBER 155 L304
+    ALOAD 12
+    ALOAD 1
+   L305
+    LINENUMBER 156 L305
+    LDC 1199566159
+    ICONST_1
+    NEW com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$3
+    DUP
+    ALOAD 27
+    ALOAD 13
+    ALOAD 22
+    ALOAD 16
+    ALOAD 17
+    ALOAD 18
+    ALOAD 6
+    ALOAD 12
+    ALOAD 7
+    ALOAD 15
+    ALOAD 5
+    ALOAD 20
+    ALOAD 21
+    ALOAD 14
+    INVOKESPECIAL com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$3.<init> (Lcom/syncodec/graphite/di/model/BucketObject;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Lkotlinx/coroutines/CoroutineScope;Landroidx/compose/material/ModalBottomSheetState;Lcom/syncodec/graphite/presentation/bucket/BucketViewModel;Landroidx/compose/runtime/MutableState;Landroid/content/Context;Landroidx/compose/runtime/State;Landroidx/compose/runtime/State;Landroidx/compose/runtime/MutableState;)V
+    INVOKESTATIC androidx/compose/runtime/internal/ComposableLambdaKt.composableLambda (Landroidx/compose/runtime/Composer;IZLjava/lang/Object;)Landroidx/compose/runtime/internal/ComposableLambda;
+    CHECKCAST kotlin/jvm/functions/Function3
+    ALOAD 1
+   L306
+    LINENUMBER 176 L306
+    LDC -1541311808
+    ICONST_1
+    NEW com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$4
+    DUP
+    ALOAD 27
+    ALOAD 7
+    ALOAD 16
+    ALOAD 17
+    ALOAD 18
+    ALOAD 15
+    ALOAD 14
+    ALOAD 0
+    ALOAD 5
+    INVOKESPECIAL com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$4.<init> (Lcom/syncodec/graphite/di/model/BucketObject;Lcom/syncodec/graphite/presentation/bucket/BucketViewModel;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Lkotlin/jvm/functions/Function0;Landroid/content/Context;)V
+    INVOKESTATIC androidx/compose/runtime/internal/ComposableLambdaKt.composableLambda (Landroidx/compose/runtime/Composer;IZLjava/lang/Object;)Landroidx/compose/runtime/internal/ComposableLambda;
+    CHECKCAST kotlin/jvm/functions/Function2
+   L307
+    LINENUMBER 198 L307
+    NEW com/syncodec/graphite/presentation/common/scaffold/GenericButton
+    DUP
+   L308
+    LINENUMBER 199 L308
+    ALOAD 27
+    INVOKEVIRTUAL com/syncodec/graphite/di/model/BucketObject.getBucketType ()Ljava/lang/String;
+    ASTORE 29
+    ALOAD 29
+    INVOKEVIRTUAL java/lang/String.hashCode ()I
+    LOOKUPSWITCH
+      2044649: L309
+      2336762: L310
+      2544381: L311
+      2580550: L312
+      433141802: L313
+      default: L314
+   L312
+    ALOAD 29
+    LDC "TODO"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L315
+    GOTO L314
+   L309
+    ALOAD 29
+    LDC "BOOK"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L316
+    GOTO L314
+   L310
+    ALOAD 29
+    LDC "LINK"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L317
+    GOTO L314
+   L311
+    ALOAD 29
+    LDC "SHOW"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L318
+    GOTO L314
+   L313
+    ALOAD 29
+    LDC "UNKNOWN"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L319
+    GOTO L314
+   L315
+    LINENUMBER 200 L315
+    LDC "Add Todo"
+    GOTO L320
+   L316
+    LINENUMBER 201 L316
+    LDC "Add Book"
+    GOTO L320
+   L318
+    LINENUMBER 202 L318
+    LDC "Add Show"
+    GOTO L320
+   L317
+    LINENUMBER 203 L317
+    LDC "Add Link"
+    GOTO L320
+   L319
+    LINENUMBER 204 L319
+    LDC "ERROR"
+    GOTO L320
+   L314
+    LINENUMBER 205 L314
+    LDC "ERROR"
+   L320
+    LINENUMBER 207 L320
+    ALOAD 27
+    INVOKEVIRTUAL com/syncodec/graphite/di/model/BucketObject.getBucketType ()Ljava/lang/String;
+    ASTORE 29
+    ALOAD 29
+    INVOKEVIRTUAL java/lang/String.hashCode ()I
+    LOOKUPSWITCH
+      2044649: L321
+      2336762: L322
+      2544381: L323
+      2580550: L324
+      433141802: L325
+      default: L326
+   L324
+    ALOAD 29
+    LDC "TODO"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L327
+    GOTO L326
+   L321
+    ALOAD 29
+    LDC "BOOK"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L328
+    GOTO L326
+   L322
+    ALOAD 29
+    LDC "LINK"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L329
+    GOTO L326
+   L323
+    ALOAD 29
+    LDC "SHOW"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L330
+    GOTO L326
+   L325
+    ALOAD 29
+    LDC "UNKNOWN"
+    INVOKEVIRTUAL java/lang/String.equals (Ljava/lang/Object;)Z
+    IFNE L331
+    GOTO L326
+   L327
+    LINENUMBER 208 L327
+    LDC 2131231080
+    GOTO L332
+   L328
+    LINENUMBER 209 L328
+    LDC 2131230905
+    GOTO L332
+   L330
+    LINENUMBER 210 L330
+    LDC 2131231059
+    GOTO L332
+   L329
+    LINENUMBER 211 L329
+    LDC 2131231010
+    GOTO L332
+   L331
+    LINENUMBER 212 L331
+    LDC 2131231089
+    GOTO L332
+   L326
+    LINENUMBER 213 L326
+    LDC 2131231089
+   L332
+    LINENUMBER 129 L332
+    ALOAD 27
+    ALOAD 6
+    ALOAD 12
+    ALOAD 13
+    INVOKEDYNAMIC invoke(Lcom/syncodec/graphite/di/model/BucketObject;Lkotlinx/coroutines/CoroutineScope;Landroidx/compose/material/ModalBottomSheetState;Landroidx/compose/runtime/MutableState;)Lkotlin/jvm/functions/Function0; [
+      // handle kind 0x6 : INVOKESTATIC
+      java/lang/invoke/LambdaMetafactory.metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+      // arguments:
+      ()Ljava/lang/Object;, 
+      // handle kind 0x6 : INVOKESTATIC
+      com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$34$lambda$33(Lcom/syncodec/graphite/di/model/BucketObject;Lkotlinx/coroutines/CoroutineScope;Landroidx/compose/material/ModalBottomSheetState;Landroidx/compose/runtime/MutableState;)Lkotlin/Unit;, 
+      ()Lkotlin/Unit;
+    ]
+   L333
+    LINENUMBER 198 L333
+    INVOKESPECIAL com/syncodec/graphite/presentation/common/scaffold/GenericButton.<init> (Ljava/lang/String;ILkotlin/jvm/functions/Function0;)V
+    ACONST_NULL
+   L334
+    LINENUMBER 228 L334
+    ALOAD 14
+    INVOKESTATIC com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$8 (Landroidx/compose/runtime/MutableState;)Z
+    IFNE L335
+    ICONST_1
+    GOTO L336
+   L335
+    ICONST_0
+   L336
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    ACONST_NULL
+    ALOAD 1
+   L337
+    LINENUMBER 229 L337
+    LDC 1196453138
+    ICONST_1
+    NEW com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$6
+    DUP
+    ALOAD 27
+    ALOAD 10
+    ALOAD 14
+    ALOAD 15
+    ALOAD 6
+    ALOAD 12
+    ALOAD 13
+    ALOAD 22
+    INVOKESPECIAL com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt$BucketScreen$4$6.<init> (Lcom/syncodec/graphite/di/model/BucketObject;Landroidx/compose/foundation/pager/PagerState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;Lkotlinx/coroutines/CoroutineScope;Landroidx/compose/material/ModalBottomSheetState;Landroidx/compose/runtime/MutableState;Landroidx/compose/runtime/MutableState;)V
+    INVOKESTATIC androidx/compose/runtime/internal/ComposableLambdaKt.composableLambda (Landroidx/compose/runtime/Composer;IZLjava/lang/Object;)Landroidx/compose/runtime/internal/ComposableLambda;
+    CHECKCAST kotlin/jvm/functions/Function2
+    ALOAD 1
+    LDC 113246640
+    GETSTATIC androidx/compose/material/ModalBottomSheetState.$stable : I
+    BIPUSH 18
+    ISHL
+    IOR
+    SIPUSH 3072
+    SIPUSH 5169
+   L338
+    LINENUMBER 129 L338
+    INVOKESTATIC com/syncodec/graphite/presentation/common/scaffold/GenericScaffoldKt.GenericScaffold (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function2;ZLandroidx/compose/material/ModalBottomSheetState;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lcom/syncodec/graphite/presentation/common/scaffold/GenericButton;Lcom/syncodec/graphite/presentation/common/scaffold/GenericButton;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+   L339
+    LINENUMBER 270 L339
+    NOP
+    GOTO L340
+   L340
+    GETSTATIC kotlin/Unit.INSTANCE : Lkotlin/Unit;
+   L341
+    LINENUMBER 128 L341
+    NOP
+    GOTO L342
+   L342
+    POP
+    GETSTATIC kotlin/Unit.INSTANCE : Lkotlin/Unit;
+   L295
+    LINENUMBER 128 L295
+    ASTORE 25
+   L343
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endReplaceableGroup ()V (itf)
+    ALOAD 25
+   L344
+    ASTORE 23
+   L345
+    ALOAD 23
+    IFNONNULL L346
+    ACONST_NULL
+    LCONST_0
+    ALOAD 1
+    ICONST_0
+    ICONST_3
+   L347
+    LINENUMBER 270 L347
+    INVOKESTATIC com/syncodec/graphite/presentation/common/LoadingViewKt.LoadingView-iJQMabo (Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;II)V
+    GOTO L348
+   L346
+    LINENUMBER 128 L346
+    ALOAD 23
+    POP
+   L348
+    GOTO L349
+   L7
+    LINENUMBER 271 L7
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.skipToGroupEnd ()V (itf)
+   L349
+    ALOAD 1
+    INVOKEINTERFACE androidx/compose/runtime/Composer.endRestartGroup ()Landroidx/compose/runtime/ScopeUpdateScope; (itf)
+    ASTORE 5
+   L350
+    ALOAD 5
+    IFNULL L351
+    ALOAD 5
+    ALOAD 0
+    ILOAD 2
+    ILOAD 3
+    INVOKEDYNAMIC invoke(Lkotlin/jvm/functions/Function0;II)Lkotlin/jvm/functions/Function2; [
+      // handle kind 0x6 : INVOKESTATIC
+      java/lang/invoke/LambdaMetafactory.metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+      // arguments:
+      (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;, 
+      // handle kind 0x6 : INVOKESTATIC
+      com/syncodec/graphite/presentation/bucket/composable/screen/BucketScreenKt.BucketScreen$lambda$35(Lkotlin/jvm/functions/Function0;IILandroidx/compose/runtime/Composer;I)Lkotlin/Unit;, 
+      (Landroidx/compose/runtime/Composer;Ljava/lang/Integer;)Lkotlin/Unit;
+    ]
+    INVOKEINTERFACE androidx/compose/runtime/ScopeUpdateScope.updateScope (Lkotlin/jvm/functions/Function2;)V (itf)
+    GOTO L352
+   L351
+    NOP
+   L352
+    NOP
+    RETURN
+   L353
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$1 I L17 L18 11
+    LOCALVARIABLE value$iv Ljava/lang/Object; L20 L22 11
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L13 L24 10
+    LOCALVARIABLE it$iv Ljava/lang/Object; L12 L24 9
+    LOCALVARIABLE $i$f$cache I L11 L26 8
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L10 L26 6
+    LOCALVARIABLE invalid$iv Z L10 L26 7
+    LOCALVARIABLE $i$f$getCurrent I L30 L32 8
+    LOCALVARIABLE this_$iv Landroidx/compose/runtime/CompositionLocal; L29 L32 6
+    LOCALVARIABLE $changed$iv I L29 L32 7
+    LOCALVARIABLE $i$a$-rememberCoroutineScope-EffectsKt$rememberCoroutineScope$1 I L52 L55 19
+    LOCALVARIABLE $i$a$-remember-EffectsKt$rememberCoroutineScope$wrapper$1$iv I L50 L58 18
+    LOCALVARIABLE value$iv$iv$iv Ljava/lang/Object; L59 L61 19
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv$iv$iv I L47 L63 17
+    LOCALVARIABLE it$iv$iv$iv Ljava/lang/Object; L46 L63 16
+    LOCALVARIABLE $i$f$cache I L45 L65 15
+    LOCALVARIABLE $this$cache$iv$iv$iv Landroidx/compose/runtime/Composer; L44 L65 13
+    LOCALVARIABLE invalid$iv$iv$iv Z L44 L65 14
+    LOCALVARIABLE $i$f$remember I L42 L66 12
+    LOCALVARIABLE $changed$iv$iv I L41 L66 11
+    LOCALVARIABLE $i$f$rememberCoroutineScope I L36 L68 9
+    LOCALVARIABLE composer$iv Landroidx/compose/runtime/Composer; L39 L68 10
+    LOCALVARIABLE wrapper$iv Landroidx/compose/runtime/CompositionScopedCoroutineScopeCanceller; L67 L68 21
+    LOCALVARIABLE $changed$iv I L35 L68 8
+    LOCALVARIABLE $i$a$-checkNotNull-ViewModelKt$koinViewModel$1$iv I L76 L78 16
+    LOCALVARIABLE $i$f$koinViewModel I L72 L86 15
+    LOCALVARIABLE qualifier$iv Lorg/koin/core/qualifier/Qualifier; L74 L86 8
+    LOCALVARIABLE viewModelStoreOwner$iv Landroidx/lifecycle/ViewModelStoreOwner; L79 L86 9
+    LOCALVARIABLE key$iv Ljava/lang/String; L80 L86 10
+    LOCALVARIABLE extras$iv Landroidx/lifecycle/viewmodel/CreationExtras; L81 L86 11
+    LOCALVARIABLE scope$iv Lorg/koin/core/scope/Scope; L82 L86 12
+    LOCALVARIABLE parameters$iv Lkotlin/jvm/functions/Function0; L83 L86 13
+    LOCALVARIABLE $changed$iv I L71 L86 14
+    LOCALVARIABLE $i$f$getCurrent I L89 L91 11
+    LOCALVARIABLE this_$iv Landroidx/compose/runtime/CompositionLocal; L88 L91 9
+    LOCALVARIABLE $changed$iv I L88 L91 10
+    LOCALVARIABLE $i$f$getCurrent I L94 L96 12
+    LOCALVARIABLE this_$iv Landroidx/compose/runtime/CompositionLocal; L93 L96 10
+    LOCALVARIABLE $changed$iv I L93 L96 11
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$pagerState$1 I L105 L106 17
+    LOCALVARIABLE value$iv Ljava/lang/Object; L108 L110 17
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L101 L112 16
+    LOCALVARIABLE it$iv Ljava/lang/Object; L100 L112 15
+    LOCALVARIABLE $i$f$cache I L99 L114 14
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L98 L114 12
+    LOCALVARIABLE invalid$iv Z L98 L114 13
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$sheetType$2 I L130 L131 20
+    LOCALVARIABLE value$iv Ljava/lang/Object; L133 L135 20
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L126 L137 19
+    LOCALVARIABLE it$iv Ljava/lang/Object; L125 L137 18
+    LOCALVARIABLE $i$f$cache I L124 L139 17
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L123 L139 15
+    LOCALVARIABLE invalid$iv Z L123 L139 16
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$isSelecting$2 I L151 L152 21
+    LOCALVARIABLE value$iv Ljava/lang/Object; L154 L156 21
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L147 L158 20
+    LOCALVARIABLE it$iv Ljava/lang/Object; L146 L158 19
+    LOCALVARIABLE $i$f$cache I L145 L160 18
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L144 L160 16
+    LOCALVARIABLE invalid$iv Z L144 L160 17
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$selectedIdList$2 I L172 L174 22
+    LOCALVARIABLE value$iv Ljava/lang/Object; L176 L178 22
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L168 L180 21
+    LOCALVARIABLE it$iv Ljava/lang/Object; L167 L180 20
+    LOCALVARIABLE $i$f$cache I L166 L182 19
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L165 L182 17
+    LOCALVARIABLE invalid$iv Z L165 L182 18
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$showEditBucketDialog$2 I L194 L195 23
+    LOCALVARIABLE value$iv Ljava/lang/Object; L197 L199 23
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L190 L201 22
+    LOCALVARIABLE it$iv Ljava/lang/Object; L189 L201 21
+    LOCALVARIABLE $i$f$cache I L188 L203 20
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L187 L203 18
+    LOCALVARIABLE invalid$iv Z L187 L203 19
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$showDeleteBucketItemsDialog$2 I L215 L216 24
+    LOCALVARIABLE value$iv Ljava/lang/Object; L218 L220 24
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L211 L222 23
+    LOCALVARIABLE it$iv Ljava/lang/Object; L210 L222 22
+    LOCALVARIABLE $i$f$cache I L209 L224 21
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L208 L224 19
+    LOCALVARIABLE invalid$iv Z L208 L224 20
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$showDeleteBucketDialog$2 I L236 L237 25
+    LOCALVARIABLE value$iv Ljava/lang/Object; L239 L241 25
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L232 L243 24
+    LOCALVARIABLE it$iv Ljava/lang/Object; L231 L243 23
+    LOCALVARIABLE $i$f$cache I L230 L245 22
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L229 L245 20
+    LOCALVARIABLE invalid$iv Z L229 L245 21
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$previewBucketItemObjectId$2 I L260 L261 29
+    LOCALVARIABLE value$iv Ljava/lang/Object; L263 L265 29
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L256 L267 28
+    LOCALVARIABLE it$iv Ljava/lang/Object; L255 L267 27
+    LOCALVARIABLE $i$f$cache I L254 L269 26
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L253 L269 24
+    LOCALVARIABLE invalid$iv Z L253 L269 25
+    LOCALVARIABLE $i$a$-cache-BucketScreenKt$BucketScreen$3 I L280 L281 29
+    LOCALVARIABLE value$iv Ljava/lang/Object; L283 L285 30
+    LOCALVARIABLE $i$a$-let-ComposerKt$cache$1$iv I L276 L287 28
+    LOCALVARIABLE it$iv Ljava/lang/Object; L275 L287 27
+    LOCALVARIABLE $i$f$cache I L274 L289 26
+    LOCALVARIABLE $this$cache$iv Landroidx/compose/runtime/Composer; L273 L289 24
+    LOCALVARIABLE invalid$iv Z L273 L289 25
+    LOCALVARIABLE $i$a$-let-BucketScreenKt$BucketScreen$4 I L298 L340 28
+    LOCALVARIABLE bucketObject1 Lcom/syncodec/graphite/di/model/BucketObject; L297 L340 27
+    LOCALVARIABLE context Landroid/content/Context; L33 L348 5
+    LOCALVARIABLE scope Lkotlinx/coroutines/CoroutineScope; L69 L348 6
+    LOCALVARIABLE viewModel Lcom/syncodec/graphite/presentation/bucket/BucketViewModel; L87 L348 7
+    LOCALVARIABLE isAuthenticated Z L92 L348 8
+    LOCALVARIABLE onAuthenticationAction Lkotlin/jvm/functions/Function1; L97 L348 9
+    LOCALVARIABLE pagerState Landroidx/compose/foundation/pager/PagerState; L117 L348 10
+    LOCALVARIABLE currentPage Lkotlin/jvm/internal/Ref$IntRef; L118 L348 11
+    LOCALVARIABLE modalBottomSheetState Landroidx/compose/material/ModalBottomSheetState; L121 L348 12
+    LOCALVARIABLE sheetType$delegate Landroidx/compose/runtime/MutableState; L142 L348 13
+    LOCALVARIABLE isSelecting$delegate Landroidx/compose/runtime/MutableState; L163 L348 14
+    LOCALVARIABLE selectedIdList$delegate Landroidx/compose/runtime/MutableState; L185 L348 15
+    LOCALVARIABLE showEditBucketDialog$delegate Landroidx/compose/runtime/MutableState; L206 L348 16
+    LOCALVARIABLE showDeleteBucketItemsDialog$delegate Landroidx/compose/runtime/MutableState; L227 L348 17
+    LOCALVARIABLE showDeleteBucketDialog$delegate Landroidx/compose/runtime/MutableState; L248 L348 18
+    LOCALVARIABLE bucketObject$delegate Landroidx/compose/runtime/State; L249 L348 19
+    LOCALVARIABLE title$delegate Landroidx/compose/runtime/State; L250 L348 20
+    LOCALVARIABLE bucketType$delegate Landroidx/compose/runtime/State; L251 L348 21
+    LOCALVARIABLE previewBucketItemObjectId$delegate Landroidx/compose/runtime/MutableState; L272 L348 22
+    LOCALVARIABLE $dirty I L1 L353 4
+    LOCALVARIABLE afterDeleteBucket Lkotlin/jvm/functions/Function0; L0 L353 0
+    LOCALVARIABLE $composer Landroidx/compose/runtime/Composer; L0 L353 1
+    LOCALVARIABLE $changed I L0 L353 2
+    MAXSTACK = 26
+    MAXLOCALS = 35
+
+File is unknown
+The root cause java.lang.OutOfMemoryError was thrown at: org.jetbrains.org.objectweb.asm.tree.InsnList.toArray(InsnList.java:178)
+	at org.jetbrains.kotlin.codegen.TransformationMethodVisitor.visitEnd(TransformationMethodVisitor.kt:89)
+	at org.jetbrains.org.objectweb.asm.MethodVisitor.visitEnd(MethodVisitor.java:783)
+	at org.jetbrains.org.objectweb.asm.tree.MethodNode.accept(MethodNode.java:772)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethod(ClassCodegen.kt:432)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generate(ClassCodegen.kt:169)
+	at org.jetbrains.kotlin.backend.jvm.FileCodegen.lower(JvmPhases.kt:41)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseBuildersKt.makeIrFilePhase$lambda$5(PhaseBuilders.kt:114)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseBuildersKt$createSimpleNamedCompilerPhase$1.phaseBody(PhaseBuilders.kt:71)
+	at org.jetbrains.kotlin.backend.common.phaser.SimpleNamedCompilerPhase.phaseBody(CompilerPhase.kt:226)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invokeSequential(performByIrFile.kt:62)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:52)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:38)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:29)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:16)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:62)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeCodegen(JvmIrCodegenFactory.kt:371)
+	at org.jetbrains.kotlin.codegen.CodegenFactory.generateModule(CodegenFactory.kt:47)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.generateModuleInFrontendIRMode(JvmIrCodegenFactory.kt:433)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.generateCodeFromIr(jvmCompilerPipeline.kt:240)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.compileModulesUsingFrontendIrAndLightTree(jvmCompilerPipeline.kt:139)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:155)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:50)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:104)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:48)
+	at org.jetbrains.kotlin.cli.common.CLITool.exec(CLITool.kt:101)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:453)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:62)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:506)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:423)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:301)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:129)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:676)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:92)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1661)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:360)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:200)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:197)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:712)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:196)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:598)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:844)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(TCPTransport.java:721)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:399)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:720)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1589)
+Caused by: java.lang.OutOfMemoryError: GC overhead limit exceeded
+	at org.jetbrains.org.objectweb.asm.tree.InsnList.toArray(InsnList.java:178)
+	at org.jetbrains.org.objectweb.asm.tree.InsnList.indexOf(InsnList.java:131)
+	at org.jetbrains.kotlin.codegen.optimization.common.FastAnalyzer$Companion.findMergeNodes(FastAnalyzer.kt:355)
+	at org.jetbrains.kotlin.codegen.optimization.common.FastAnalyzer.<init>(FastAnalyzer.kt:32)
+	at org.jetbrains.kotlin.codegen.optimization.common.FastMethodAnalyzer.<init>(FastMethodAnalyzer.kt:48)
+	at org.jetbrains.kotlin.codegen.optimization.common.FastMethodAnalyzer.<init>(FastMethodAnalyzer.kt:42)
+	at org.jetbrains.kotlin.codegen.optimization.common.FastMethodAnalyzer.<init>(FastMethodAnalyzer.kt)
+	at org.jetbrains.kotlin.codegen.optimization.transformer.MethodTransformer.analyze(MethodTransformer.java:48)
+	at org.jetbrains.kotlin.codegen.optimization.CapturedVarsOptimizationMethodTransformer$Transformer.run(CapturedVarsOptimizationMethodTransformer.kt:60)
+	at org.jetbrains.kotlin.codegen.optimization.CapturedVarsOptimizationMethodTransformer.transform(CapturedVarsOptimizationMethodTransformer.kt:23)
+	at org.jetbrains.kotlin.codegen.optimization.transformer.CompositeMethodTransformer.transform(CompositeMethodTransformer.kt:25)
+	at org.jetbrains.kotlin.codegen.optimization.OptimizationMethodVisitor.performTransformations(OptimizationMethodVisitor.kt:74)
+	at org.jetbrains.kotlin.codegen.TransformationMethodVisitor.visitEnd(TransformationMethodVisitor.kt:67)
+	at org.jetbrains.org.objectweb.asm.MethodVisitor.visitEnd(MethodVisitor.java:783)
+	at org.jetbrains.org.objectweb.asm.tree.MethodNode.accept(MethodNode.java:772)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethod(ClassCodegen.kt:432)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generate(ClassCodegen.kt:169)
+	at org.jetbrains.kotlin.backend.jvm.FileCodegen.lower(JvmPhases.kt:41)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseBuildersKt.makeIrFilePhase$lambda$5(PhaseBuilders.kt:114)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseBuildersKt$$Lambda$173/0x000000080112fde8.invoke(Unknown Source)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseBuildersKt$createSimpleNamedCompilerPhase$1.phaseBody(PhaseBuilders.kt:71)
+	at org.jetbrains.kotlin.backend.common.phaser.SimpleNamedCompilerPhase.phaseBody(CompilerPhase.kt:226)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invokeSequential(performByIrFile.kt:62)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:52)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:38)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:29)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:16)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+
+

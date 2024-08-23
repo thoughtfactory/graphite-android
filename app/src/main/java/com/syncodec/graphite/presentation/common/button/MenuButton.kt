@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 
 
 @Immutable
-class MenuButtonColors constructor(
+class MenuButtonColors(
 	val containerColor : Color,
 	val iconColor : Color,
 	val checkedContainerColor : Color = containerColor,

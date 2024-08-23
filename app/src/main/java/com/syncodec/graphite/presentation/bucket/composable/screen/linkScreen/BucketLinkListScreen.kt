@@ -146,7 +146,7 @@ fun BucketLinkListScreen(
 @Preview
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun LinkItem(
+fun LinkItem(
 	handleModifier : Modifier = Modifier,
 	title : String? = null,
 	thumbnail : String? = null,

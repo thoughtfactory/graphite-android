@@ -2,15 +2,14 @@ package com.syncodec.graphite.presentation.main
 
 import android.app.KeyguardManager
 import android.content.Context
-import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -31,12 +30,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.PasswordCredential
+import androidx.credentials.PublicKeyCredential
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -57,6 +65,7 @@ import com.syncodec.graphite.utils.alice.Alice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -66,7 +75,6 @@ class MainActivity : ComponentActivity() {
 
 	private lateinit var auth : FirebaseAuth
 	private lateinit var oneTapClient : SignInClient
-	private lateinit var signInRequest : BeginSignInRequest
 
 	private var cancellationSignal : CancellationSignal? = null
 
@@ -83,21 +91,6 @@ class MainActivity : ComponentActivity() {
 
 		auth = Firebase.auth
 		oneTapClient = Identity.getSignInClient(this)
-		signInRequest = BeginSignInRequest.builder()
-			.setPasswordRequestOptions(
-				BeginSignInRequest.PasswordRequestOptions.builder()
-					.setSupported(true)
-					.build()
-			)
-			.setGoogleIdTokenRequestOptions(
-				BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-					.setSupported(true)
-					.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
-					.setFilterByAuthorizedAccounts(false)
-					.build()
-			)
-			.setAutoSelectEnabled(false)
-			.build()
 
 		setContent {
 			BaseContent {
@@ -272,23 +265,45 @@ class MainActivity : ComponentActivity() {
 		return cancellationSignal as CancellationSignal
 	}
 
+	private fun signIn() {
+		val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+			.setFilterByAuthorizedAccounts(true)
+			.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+			.setAutoSelectEnabled(true)
+//			.setNonce(<nonce string to use when generating a Google ID token>)
+			.build()
 
-	private val signInIntentResultLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-		if (result.data != null) {
+		val request: GetCredentialRequest = GetCredentialRequest.Builder()
+			.addCredentialOption(googleIdOption)
+			.build()
+
+		lifecycleScope.launch {
 			try {
+				val credentialManager = CredentialManager.create(this@MainActivity)
 
-				val googleCredential = oneTapClient.getSignInCredentialFromIntent(result.data)
-//				val displayName = googleCredential.displayName
-//				val username = googleCredential.id
-//				val password = googleCredential.password
-				val idToken = googleCredential.googleIdToken
-//				val profilePictureUri = googleCredential.profilePictureUri
+				val result = credentialManager.getCredential(
+					request = request,
+					context = this@MainActivity,
+				)
+				handleSignIn(result)
+			} catch (e: GetCredentialException) {
+//				handleFailure(e)
+				e.printStackTrace()
+			}
+		}
+	}
 
-				if (idToken == null) {
-					Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-				} else {
-					val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-					auth.signInWithCredential(firebaseCredential)
+
+	fun handleSignIn(result: GetCredentialResponse) {
+		val credential = result.credential
+		if(credential is CustomCredential) {
+			if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+				try {
+
+					val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+					val authCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+
+					auth.signInWithCredential(authCredential)
 						.addOnCompleteListener(this) { task ->
 							if (task.isSuccessful) {
 								val user = auth.currentUser
@@ -297,27 +312,15 @@ class MainActivity : ComponentActivity() {
 								updateUI(null)
 							}
 						}
+				} catch (e: GoogleIdTokenParsingException) {
+					e.printStackTrace()
 				}
-			} catch (e : ApiException) {
-//					e.printStackTrace()
-				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
+			} else {
+				Log.e(TAG, "Unexpected type of credential")
 			}
+		} else {
+			Log.e(TAG, "Unexpected type of credential")
 		}
-	}
-
-	private fun signIn() {
-		oneTapClient.beginSignIn(signInRequest)
-			.addOnSuccessListener(this) { result ->
-				try {
-					IntentSenderRequest.Builder(result.pendingIntent.intentSender).build().let {
-						signInIntentResultLauncher.launch(it)
-					}
-				} catch (e : IntentSender.SendIntentException) {
-				}
-			}
-			.addOnFailureListener(this) { e ->
-				Toast.makeText(this, "Error signing in. Please try again later.", Toast.LENGTH_SHORT).show()
-			}
 	}
 
 	private fun updateUI(user : FirebaseUser?) {
@@ -349,6 +352,7 @@ class MainActivity : ComponentActivity() {
 	}
 
 	companion object {
+		const val TAG = "MainActivity"
 		var isInStack = false
 	}
 }

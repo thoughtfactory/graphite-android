@@ -19,11 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.revenuecat.purchases.Package
 import com.syncodec.graphite.presentation.ui.montserratFontFamily
 
 
+@Preview
 @Composable
 fun LifetimePackageView(
     lifetimePackage: Package? = null,
@@ -42,9 +44,7 @@ fun LifetimePackageView(
             .clickable { onClickPackage(lifetimePackage) }
     ) {
         Crossfade(targetState = lifetimePackage) { _package ->
-            if (_package == null) {
-
-            } else {
+            if (_package != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -72,12 +72,12 @@ fun LifetimePackageView(
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Text(
-                        text = _package.product.price.toString(),
+                        text = _package.product.price.formatted,
                         style = MaterialTheme.typography.titleLarge.copy(fontFamily = montserratFontFamily),
                         fontWeight = FontWeight.Bold
                     )
                 }
-            }
+            } else Unit
         }
     }
 }
