@@ -43,6 +43,7 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
@@ -266,15 +267,20 @@ class MainActivity : ComponentActivity() {
 	}
 
 	private fun signIn() {
-		val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
-			.setFilterByAuthorizedAccounts(true)
-			.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
-			.setAutoSelectEnabled(true)
-//			.setNonce(<nonce string to use when generating a Google ID token>)
-			.build()
+
+		val signInWithGoogleOption: GetSignInWithGoogleOption = GetSignInWithGoogleOption
+			.Builder(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+		.build()
+
+//		val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+//			.setFilterByAuthorizedAccounts(true)
+//			.setServerClientId(Alice.decrypt(BuildConfig.CLIENT_KEY, "lt3(3x4R7M^107!&4E74Z%*o8cp2i7y@") ?: "")
+//			.setAutoSelectEnabled(true)
+////			.setNonce(<nonce string to use when generating a Google ID token>)
+//			.build()
 
 		val request: GetCredentialRequest = GetCredentialRequest.Builder()
-			.addCredentialOption(googleIdOption)
+			.addCredentialOption(signInWithGoogleOption)
 			.build()
 
 		lifecycleScope.launch {
