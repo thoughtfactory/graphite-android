@@ -40,7 +40,7 @@ import com.syncodec.graphite.presentation.common.dialog.whereDialog.composable.b
 import com.syncodec.graphite.presentation.common.scaffold.GenericScaffold
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.EmptyView
 import com.syncodec.graphite.presentation.notebook.screen.buildingBlock.chapterList
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -116,7 +116,7 @@ fun WhereDialog(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_notebook),
 						contentDescription = "New Notebook",
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_SIZE)
 					)
 				}
 			},

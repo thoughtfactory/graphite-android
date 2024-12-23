@@ -32,7 +32,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.richText.RichTextEditor
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.bottomBar.buildingBlock.ToolbarButton
 import com.syncodec.graphite.presentation.note.screen.editorScreen.bar.bottomBar.buildingBlock.ToolbarSpacer
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Composable
@@ -205,7 +205,7 @@ private fun FreeToolbarButton(
 			contentDescription = contentDescription,
 			tint = contentColor,
 			modifier = Modifier
-				.requiredSize(IconButtonSize)
+				.requiredSize(ICON_SIZE)
 				.padding(2.dp)
 		)
 

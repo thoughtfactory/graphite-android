@@ -3,7 +3,9 @@ buildscript {
 	ext {
 		compose_version = '1.5.15'
 		kotlinVersion = '2.0.0'
-	}
+        agp_version = '8.9.0-alpha06'
+		objectboxVersion = "4.0.3"
+    }
 	repositories {
 		google()
 		mavenCentral()
@@ -11,12 +13,14 @@ buildscript {
 		maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
 	}
 	dependencies {
-		classpath 'com.android.tools.build:gradle:8.7.2'
+		classpath "com.android.tools.build:gradle:$agp_version"
 		classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.10'
 		classpath 'com.google.gms:google-services:4.4.2'
 		classpath 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1'
 		classpath 'com.google.android.gms:oss-licenses-plugin:0.10.6'
+//		classpath "io.objectbox:objectbox-gradle-plugin:$objectboxVersion"
 	}
+
 }
 
 plugins {
@@ -24,7 +28,10 @@ plugins {
 	id 'io.realm.kotlin' version '2.1.0' apply false
 	id 'com.google.devtools.ksp' version '2.0.10-1.0.24' apply false
 	id 'org.jetbrains.kotlin.plugin.compose' version '2.0.0' apply false
+	id 'project-report'
+//	id 'objectbox-gradle-plugin' version '1.0.0' apply false
 }
+
 
 tasks.register('clean') {
 	delete rootProject.buildDir

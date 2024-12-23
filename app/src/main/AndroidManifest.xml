@@ -59,7 +59,7 @@
         </provider>
 
         <activity
-            android:name="com.syncodec.graphite.presentation.main.MainActivity"
+            android:name="com.syncodec.graphite.presentation.main2.MainActivity2"
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:usesCleartextTraffic="true"

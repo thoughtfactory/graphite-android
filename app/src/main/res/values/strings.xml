@@ -1,4 +1,27 @@
 <resources>
     <string name="app_name">Graphite</string>
     <string name="app_description">Graphite</string>
+
+    <string name="vault">Vault</string>
+    <string name="back">Back</string>
+    <string name="search">Search</string>
+    <string name="menu">Menu</string>
+    <string name="home">Home</string>
+    <string name="calendar">Calendar</string>
+    <string name="atlas">Atlas</string>
+    <string name="new_note">New note</string>
+    <string name="note">Note</string>
+    <string name="notebook">Notebook</string>
+    <string name="new_bucket">New bucket</string>
+    <string name="new_notebook">New notebook</string>
+    <string name="new_list">New list</string>
+    <string name="bucket">Bucket</string>
+    <string name="clear_text">Clear text</string>
+    <string name="notebook_title">Notebook title</string>
+    <string name="notebook_title_placeholder">Writing a new book?</string>
+    <string name="notebook_description">Notebook description</string>
+    <string name="notebook_description_optional">Notebook description (optional)</string>
+    <string name="description_optional">Description (optional)</string>
+    <string name="notebook_description_placeholder">What is it about?</string>
+
 </resources>

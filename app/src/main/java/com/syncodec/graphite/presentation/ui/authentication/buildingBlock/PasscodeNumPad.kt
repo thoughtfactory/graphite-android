@@ -226,7 +226,6 @@ private fun NumPadButton(
 			modifier = Modifier
 				.requiredSize(64.dp)
 				.clip(CircleShape)
-				.indication(interactionSource, rememberRipple(color = MaterialTheme.colorScheme.onBackground))
 		) {
 			Text(
 				text = text,
@@ -259,7 +258,6 @@ private fun NumPadBackspaceButton(
 			modifier = Modifier
 				.requiredSize(64.dp)
 				.clip(CircleShape)
-				.indication(interactionSource, rememberRipple(color = MaterialTheme.colorScheme.onBackground))
 		) {
 			Icon(
 				painter = painterResource(id = R.drawable.ic_backspace),

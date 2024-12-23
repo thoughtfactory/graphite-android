@@ -8,13 +8,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +22,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -35,8 +32,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.presentation.ui.IconButtonSize
-import kotlinx.coroutines.launch
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Immutable
@@ -129,7 +125,7 @@ fun MenuButton(
 	enabled : Boolean = true,
 	shape : Shape = MaterialTheme.shapes.medium,
 	colors : MenuButtonColors = MenuButtonDefaults.menuButtonColors(),
-	buttonSize : Dp = IconButtonSize,
+	buttonSize : Dp = ICON_SIZE,
 	showTooltipOnClick : Boolean = false,
 	onClick : () -> Unit = {},
 ) {
@@ -145,12 +141,12 @@ fun MenuButton(
 	)
 
 	val rippleColor = if (checked == true) colors.containerColor else colors.checkedContainerColor
-	val rippleIndication = rememberRipple(color = rippleColor)
+//	val rippleIndication = rememberRipple(color = rippleColor)
 
 //	val tooltipState = remember { PlainTooltipState() }
 
 	CompositionLocalProvider(
-		LocalIndication provides rippleIndication,
+//		LocalIndication provides rippleIndication,
 	) {
 //		PlainTooltipBox(
 //			tooltip = {

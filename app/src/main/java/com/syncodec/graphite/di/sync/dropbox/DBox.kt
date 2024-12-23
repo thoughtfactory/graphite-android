@@ -42,7 +42,7 @@ class DBox(private val context : Context) {
 				.call(data)
 				.addOnSuccessListener {
 					try {
-						((it.data as HashMap<*, *>)["data"] as HashMap<*, *>)
+						((it.getData() as HashMap<*, *>)["data"] as HashMap<*, *>)
 							.let { data ->
 								val refreshToken = data["refresh_token"] as String
 								val accessToken = data["access_token"] as String
@@ -112,7 +112,7 @@ class DBox(private val context : Context) {
 					.getHttpsCallable("dropboxExchangeRefreshTokenForAccessToken")
 					.call(data)
 					.addOnSuccessListener {
-						val data = it.data as HashMap<*, *>
+						val data = it.getData() as HashMap<*, *>
 						try {
 							when (data["response"]) {
 								"Ok" -> {

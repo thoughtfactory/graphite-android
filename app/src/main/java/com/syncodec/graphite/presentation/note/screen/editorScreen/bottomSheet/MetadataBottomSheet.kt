@@ -29,7 +29,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.ChapterObject
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetKeyValueCard
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.timeStampToPrettyFull
 import io.github.esentsov.PackagePrivate
 import io.realm.kotlin.types.RealmUUID
@@ -126,7 +126,7 @@ private fun ParentCard(
 				painter = painterResource(id = R.drawable.ic_notebook),
 				contentDescription = "Parent chapter",
 				tint = MaterialTheme.colorScheme.onSurface,
-				modifier = Modifier.requiredSize(IconButtonSize),
+				modifier = Modifier.requiredSize(ICON_SIZE),
 			)
 			Spacer(modifier = Modifier.width(8.dp))
 		}

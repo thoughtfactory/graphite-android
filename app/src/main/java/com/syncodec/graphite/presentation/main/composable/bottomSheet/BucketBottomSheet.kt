@@ -46,7 +46,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.common.bottomSheet.BottomSheetTextField
 import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.bucketItemNameMap
 import com.syncodec.graphite.utils.bucketTypeToIcon
 
@@ -207,7 +207,7 @@ private fun BucketButton(
 					),
 					contentDescription = null,
 					tint = contentColor,
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 
 				Text(

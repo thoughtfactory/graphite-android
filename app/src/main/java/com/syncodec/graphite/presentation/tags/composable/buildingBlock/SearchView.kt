@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Preview
@@ -55,7 +55,7 @@ fun SearchView(
 				contentAlignment = Alignment.CenterStart,
 				modifier = Modifier
 					.fillMaxWidth()
-					.height((IconButtonSize * 2) + 2.dp)
+					.height((ICON_SIZE * 2) + 2.dp)
 					.background(
 						MaterialTheme.colorScheme
 							.surfaceColorAtElevation(8.dp)

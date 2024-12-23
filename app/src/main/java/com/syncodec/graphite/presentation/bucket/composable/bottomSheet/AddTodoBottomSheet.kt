@@ -80,7 +80,6 @@ fun AddTodoBottomSheet(
 			},
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
-				autoCorrect = true,
 				keyboardType = KeyboardType.Text,
 				imeAction = ImeAction.Go
 			),

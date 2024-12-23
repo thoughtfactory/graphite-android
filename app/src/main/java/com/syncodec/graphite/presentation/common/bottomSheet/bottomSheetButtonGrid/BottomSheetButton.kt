@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Preview
@@ -50,7 +50,7 @@ fun BottomSheetButton(
 			painter = painterResource(id = icon),
 			contentDescription = title,
 			tint = contentColor,
-			modifier = Modifier.requiredSize(IconButtonSize)
+			modifier = Modifier.requiredSize(ICON_SIZE)
 		)
 		Spacer(modifier = Modifier.height(4.dp))
 		Text(

@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 
-@KoinViewModel
 class NotebookScreenViewModel(private val repository : Repository) : ViewModel() {
 
 	val repositoryState = repository.repositoryState

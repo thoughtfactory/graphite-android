@@ -29,9 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
-import com.syncodec.graphite.presentation.common.button.MenuButtonColors
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Preview
@@ -64,7 +63,7 @@ fun BottomSheetTextField(
 				contentAlignment = Alignment.CenterStart,
 				modifier = Modifier
 					.fillMaxWidth()
-					.height((IconButtonSize * 2) + 2.dp)
+					.height((ICON_SIZE * 2) + 2.dp)
 					.background(colors.containerColor, MaterialTheme.shapes.medium)
 					.padding(12.dp, 0.dp),
 			) {

@@ -42,7 +42,7 @@ import com.syncodec.graphite.presentation.common.bottomSheet.GenericBottomSheet
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.text.KeyValueText
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -137,7 +137,7 @@ fun LinkPreviewBottomSheet(
 				Icon(
 					painter = painterResource(id = R.drawable.ic_lock_close),
 					contentDescription = "Lock",
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 				Text(text = "Lock")
@@ -154,7 +154,7 @@ fun LinkPreviewBottomSheet(
 				Icon(
 					painter = painterResource(id = R.drawable.ic_favourite),
 					contentDescription = "Favorite",
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 				Text(text = "Favourite")

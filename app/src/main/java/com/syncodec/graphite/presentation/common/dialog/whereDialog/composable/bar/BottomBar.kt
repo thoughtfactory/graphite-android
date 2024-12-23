@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.LocalAuthenticatorAction
 import com.syncodec.graphite.utils.LocalIsAuthenticated
@@ -49,7 +49,7 @@ fun BottomBar(
 				.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
 				.clip(MaterialTheme.shapes.medium)
 				.clickable(onClick = onClickSelect)
-				.height((IconButtonSize * 2) - 2.dp),
+				.height((ICON_SIZE * 2) - 2.dp),
 		) {
 			Text(
 				text = "Select",
@@ -68,7 +68,7 @@ fun BottomBar(
 				.background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
 				.clip(MaterialTheme.shapes.medium)
 				.clickable(onClick = onClickEverywhere)
-				.height((IconButtonSize * 2) - 2.dp),
+				.height((ICON_SIZE * 2) - 2.dp),
 		) {
 			Text(
 				text = "Everywhere",

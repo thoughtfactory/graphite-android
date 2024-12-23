@@ -30,7 +30,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
 import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
@@ -72,7 +72,7 @@ fun TagItem(
 			verticalAlignment = Alignment.CenterVertically,
 			modifier = Modifier
 				.weight(1f)
-				.height(IconButtonSize * 2)
+				.height(ICON_SIZE * 2)
 				.background(containerColor, MaterialTheme.shapes.medium)
 				.clip(MaterialTheme.shapes.medium)
 				.clickable { onClick() },

@@ -54,14 +54,14 @@ fun SearchBar(
 				query = ""
 			}
 		},
-		colors = TextFieldDefaults.textFieldColors(
-			focusedTextColor = MaterialTheme.colorScheme.onBackground,
-			unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-			containerColor = MaterialTheme.colorScheme.background,
-			cursorColor = MaterialTheme.colorScheme.onBackground,
-			focusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f),
-			unfocusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f),
-		),
+//		colors = TextFieldDefaults.colors(
+//			focusedTextColor = MaterialTheme.colorScheme.onBackground,
+//			unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+//			containerColor = MaterialTheme.colorScheme.background,
+//			cursorColor = MaterialTheme.colorScheme.onBackground,
+//			focusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f),
+//			unfocusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.31f),
+//		),
 		modifier = Modifier.fillMaxWidth()
 	)
 }

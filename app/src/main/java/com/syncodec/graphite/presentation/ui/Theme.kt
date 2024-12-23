@@ -109,4 +109,6 @@ val Color.Companion.PositiveContainer:Color
 val Color.Companion.PositiveContent:Color
 	get() = Color.White
 
-val IconButtonSize = 20.dp
+val ICON_SIZE = 20.dp
+
+val ANIMATION_TIME = 470

@@ -30,7 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.TagObject
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.LocalIsAuthenticated
 import com.syncodec.graphite.utils.getInverseBWColor
 
@@ -137,7 +137,7 @@ private fun ListItem(
 				painter = painterResource(id = icon),
 				contentDescription = text,
 				tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 
 			Spacer(modifier = Modifier.width(16.dp))

@@ -1,175 +1,176 @@
 plugins {
-	id 'com.android.application'
-	id 'org.jetbrains.kotlin.android'
-	id 'org.jetbrains.kotlin.plugin.compose'
-	id 'kotlin-android'
-	id 'kotlin-kapt'
-	id 'io.realm.kotlin'
-	id 'com.google.devtools.ksp'
-	id 'com.google.gms.google-services'
-	id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
-	id 'com.google.android.gms.oss-licenses-plugin'
-	id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.25'
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'io.realm.kotlin'
+    id 'com.google.devtools.ksp'
+    id 'com.google.gms.google-services'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+    id 'com.google.android.gms.oss-licenses-plugin'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.20'
+    id 'project-report'
 }
 
 android {
-	compileSdk 34
+    compileSdk 35
 
-	defaultConfig {
-		applicationId 'com.syncodec.graphite'
-		minSdk 29
-		targetSdk 34
-		versionCode 45
+    defaultConfig {
+        applicationId 'com.syncodec.graphite'
+        minSdk 29
+        targetSdk 35
+        versionCode 45
 
-		versionName '2.5.0'
+        versionName '2.5.0'
 
-		testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-		vectorDrawables {
-			useSupportLibrary true
-		}
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        vectorDrawables {
+            useSupportLibrary true
+        }
 
-		Properties properties = new Properties()
-		if (rootProject.file('local.properties').exists()) {
-			properties.load(rootProject.file('local.properties').newDataInputStream())
-		}
+        Properties properties = new Properties()
+        if (rootProject.file('local.properties').exists()) {
+            properties.load(rootProject.file('local.properties').newDataInputStream())
+        }
 
-		manifestPlaceholders.clientKey = properties.getProperty('CLIENT_KEY', '')
-		manifestPlaceholders.mapsApiKey = properties.getProperty('MAPS_API_KEY', '')
-		manifestPlaceholders.tmdbApiKey = properties.getProperty('TMDB_API_KEY', '')
-		manifestPlaceholders.revenueCatApiKey = properties.getProperty('REVENUE_CAT_API_KEY', '')
+        manifestPlaceholders.clientKey = properties.getProperty('CLIENT_KEY', '')
+        manifestPlaceholders.mapsApiKey = properties.getProperty('MAPS_API_KEY', '')
+        manifestPlaceholders.tmdbApiKey = properties.getProperty('TMDB_API_KEY', '')
+        manifestPlaceholders.revenueCatApiKey = properties.getProperty('REVENUE_CAT_API_KEY', '')
 
-		javaCompileOptions {
-			annotationProcessorOptions {
-			}
-		}
-	}
+        javaCompileOptions {
+            annotationProcessorOptions {
+            }
+        }
+    }
 
-	sourceSets {
-		androidTest {
-			assets.srcDirs = ['src/androidTest/assets/']
-		}
-	}
+    sourceSets {
+        androidTest {
+            assets.srcDirs = ['src/androidTest/assets/']
+        }
+    }
 
-	buildTypes {
-		release {
-			minifyEnabled true
-			shrinkResources true
-			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-		}
-		debug {
-			applicationIdSuffix '.debug'
-		}
-	}
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix '.debug'
+        }
+    }
 
-	compileOptions {
-		sourceCompatibility JavaVersion.VERSION_19
-		targetCompatibility JavaVersion.VERSION_19
-	}
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_19
+        targetCompatibility JavaVersion.VERSION_19
+    }
 
-	kotlinOptions {
-		jvmTarget = '19'
+    kotlinOptions {
+        jvmTarget = '19'
 
-		freeCompilerArgs += ["-Xjvm-default=all"]
-	}
+        freeCompilerArgs += ["-Xjvm-default=all"]
+    }
 
-	buildFeatures {
-		compose true
-		buildConfig true
-	}
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
 
-	composeOptions {
-		kotlinCompilerExtensionVersion compose_version
-	}
-	packagingOptions {
-		resources {
-			excludes += ['/META-INF/{AL2.0,LGPL2.1}', 'META-INF/DEPENDENCIES', 'META-INF/LICENSE.md', 'META-INF/LICENSE-notice.md']
-		}
-	}
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_version
+    }
+    packagingOptions {
+        resources {
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}', 'META-INF/DEPENDENCIES', 'META-INF/LICENSE.md', 'META-INF/LICENSE-notice.md']
+        }
+    }
 
-	kapt {
-		correctErrorTypes true
-	}
+    kapt {
+        correctErrorTypes true
+    }
 
-	applicationVariants.configureEach { variant ->
-		variant.sourceSets.java.each {
-			it.srcDirs += "build/generated/ksp/${variant.name}/kotlin"
-		}
-	}
+    applicationVariants.configureEach { variant ->
+        variant.sourceSets.java.each {
+            it.srcDirs += "build/generated/ksp/${variant.name}/kotlin"
+        }
+    }
 
-	namespace 'com.syncodec.graphite'
+    namespace 'com.syncodec.graphite'
 }
 
 dependencies {
 
-	implementation 'com.jakewharton:process-phoenix:3.0.0'
+    implementation 'com.jakewharton:process-phoenix:3.0.0'
 
-	implementation 'androidx.work:work-runtime-ktx:2.9.1'
-	implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.work:work-runtime-ktx:2.10.0'
+    implementation 'androidx.core:core-ktx:1.15.0'
 
-	implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-ktx:1.15.0'
 
-	implementation 'androidx.activity:activity-compose:1.9.1'   //  Dont use alpha release until UpsideDownCake is released
-	implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
 
-	implementation 'androidx.compose.material:material:1.6.8'
-	implementation 'androidx.compose.material3:material3:1.2.1'
-	implementation 'androidx.compose.ui:ui:1.6.8'
-	implementation 'androidx.compose.foundation:foundation:1.6.8'
-	implementation 'androidx.compose.ui:ui-tooling-preview:1.6.8'
-	implementation 'androidx.compose.ui:ui-util:1.6.8'
+    implementation 'androidx.compose.material:material:1.7.6'
+    implementation 'androidx.compose.material3:material3:1.3.1'
+    implementation 'androidx.compose.ui:ui:1.7.6'
+    implementation 'androidx.compose.foundation:foundation:1.7.6'
+    implementation 'androidx.compose.ui:ui-tooling-preview:1.7.6'
+    implementation 'androidx.compose.ui:ui-util:1.7.6'
 
-	implementation 'androidx.work:work-runtime-ktx:2.9.1'
-	implementation "androidx.glance:glance-appwidget:1.1.0"
+    implementation 'androidx.work:work-runtime-ktx:2.10.0'
+    implementation "androidx.glance:glance-appwidget:1.1.1"
 
-	implementation 'androidx.navigation:navigation-compose:2.7.7'
-	implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.1'
+    implementation 'androidx.navigation:navigation-compose:2.8.5'
+    implementation 'androidx.constraintlayout:constraintlayout-compose:1.1.0'
 
-	implementation 'androidx.core:core-animation:1.0.0'
+    implementation 'androidx.core:core-animation:1.0.0'
 
-	implementation 'com.google.accompanist:accompanist-insets:0.30.1'
-	implementation 'com.google.accompanist:accompanist-flowlayout:0.34.0'
-	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.34.0'
-	implementation 'com.google.accompanist:accompanist-permissions:0.34.0'
-	implementation 'com.google.accompanist:accompanist-webview:0.34.0'
-	implementation 'com.google.accompanist:accompanist-navigation-animation:0.34.0'
+    implementation 'com.google.accompanist:accompanist-insets:0.30.1'
+    implementation 'com.google.accompanist:accompanist-flowlayout:0.36.0'
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.36.0'
+    implementation 'com.google.accompanist:accompanist-permissions:0.36.0'
+    implementation 'com.google.accompanist:accompanist-webview:0.36.0'
+    implementation 'com.google.accompanist:accompanist-navigation-animation:0.36.0'
 
-	implementation 'org.burnoutcrew.composereorderable:reorderable:0.9.6'
-	implementation 'com.kizitonwose.calendar:compose:2.5.4'
+    implementation 'org.burnoutcrew.composereorderable:reorderable:0.9.6'
+    implementation 'com.kizitonwose.calendar:compose:2.6.0'
 
-	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.4'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.4'
-	implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4'
-	implementation 'androidx.lifecycle:lifecycle-service:2.8.4'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-service:2.8.7'
 
-	implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
+    implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
 
-	implementation 'androidx.compose.runtime:runtime:1.6.8'
+    implementation 'androidx.compose.runtime:runtime:1.7.6'
 
-	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1'
-	implementation 'io.realm.kotlin:library-base:2.1.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0'
+    implementation 'io.realm.kotlin:library-base:3.0.0'
 
-	implementation 'io.insert-koin:koin-android:3.5.6'
-	implementation 'io.insert-koin:koin-android-compat:3.5.6'
-	implementation 'io.insert-koin:koin-androidx-workmanager:3.5.6'
-	implementation 'io.insert-koin:koin-androidx-navigation:3.5.6'
-	implementation 'io.insert-koin:koin-androidx-compose:3.5.6'
-	implementation 'io.insert-koin:koin-android:3.5.6'
-	implementation 'io.insert-koin:koin-annotations:1.3.1'
-	ksp 'io.insert-koin:koin-ksp-compiler:1.3.1'
+    implementation 'io.insert-koin:koin-android:4.0.0'
+    implementation 'io.insert-koin:koin-android-compat:4.0.0'
+    implementation 'io.insert-koin:koin-androidx-workmanager:4.0.0'
+    implementation 'io.insert-koin:koin-androidx-navigation:4.0.0'
+    implementation 'io.insert-koin:koin-androidx-compose:4.0.0'
+    implementation 'io.insert-koin:koin-android:4.0.0'
+    implementation 'io.insert-koin:koin-annotations:1.4.0'
+    ksp 'io.insert-koin:koin-ksp-compiler:1.4.0'
 
 //	Serialization
-	implementation('org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1')
-	implementation 'com.fasterxml.jackson.core:jackson-core:2.17.2'
-	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.2'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
-	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.17.2'
+    implementation('org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3')
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.18.2'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.18.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2'
 //	implementation 'com.google.api-client:google-api-client-jackson2:2.1.1'
 
-	implementation 'io.coil-kt:coil:2.7.0'
-	implementation 'io.coil-kt:coil-compose:2.7.0'
-	implementation 'io.coil-kt:coil-gif:2.7.0'
-	implementation 'io.coil-kt:coil-video:2.7.0'
+    implementation 'io.coil-kt:coil:2.7.0'
+    implementation 'io.coil-kt:coil-compose:2.7.0'
+    implementation 'io.coil-kt:coil-gif:2.7.0'
+    implementation 'io.coil-kt:coil-video:2.7.0'
 
 //	Google drive
 //	implementation 'com.google.api-client:google-api-client:2.0.0'
@@ -180,46 +181,48 @@ dependencies {
 //		exclude group: 'org.apache.httpcomponents'
 //	}
 
-	implementation "androidx.exifinterface:exifinterface:1.3.7"
+    implementation "androidx.exifinterface:exifinterface:1.3.7"
 
-	implementation 'com.revenuecat.purchases:purchases:8.4.0'
+    implementation('com.revenuecat.purchases:purchases:8.10.3') {
+        exclude(group: "com.google.crypto.tink", module: "tink-android")
+    }
 
-	implementation platform('com.google.firebase:firebase-bom:33.1.2')
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
 //	implementation 'com.google.android.gms:play-services-auth:21.2.0'
-	implementation 'com.google.firebase:firebase-analytics'
-	implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
-	implementation 'com.google.firebase:firebase-auth-ktx'
-	implementation 'com.google.firebase:firebase-storage-ktx'
-	implementation 'com.google.firebase:firebase-firestore-ktx'
-	implementation 'com.google.firebase:firebase-functions-ktx'
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-storage-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+    implementation 'com.google.firebase:firebase-functions-ktx'
 
-	implementation "androidx.credentials:credentials:1.3.0"
-	implementation "androidx.credentials:credentials-play-services-auth:1.3.0"
-	implementation "com.google.android.libraries.identity.googleid:googleid:1.1.1"
+    implementation "androidx.credentials:credentials:1.3.0"
+    implementation "androidx.credentials:credentials-play-services-auth:1.3.0"
+    implementation "com.google.android.libraries.identity.googleid:googleid:1.1.1"
 
 //	Google drive
 //	implementation 'com.google.oauth-client:google-oauth-client-jetty:1.34.1'
 //	implementation 'com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0'
 //	implementation 'com.google.api-client:google-api-client-android:1.20.0'
 
-	implementation "androidx.javascriptengine:javascriptengine:1.0.0-beta01"
+    implementation "androidx.javascriptengine:javascriptengine:1.0.0-beta01"
 
 //	Dropbox
-	implementation 'com.dropbox.core:dropbox-core-sdk:7.0.0'
+    implementation 'com.dropbox.core:dropbox-core-sdk:7.0.0'
 
-	implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
+    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
 
-	implementation 'joda-time:joda-time:2.12.7'
+    implementation 'joda-time:joda-time:2.13.0'
 
-	implementation 'me.jorgecastillo:androidcolorx:0.2.0'
-	implementation 'com.godaddy.android.colorpicker:compose-color-picker-android:0.7.0'
+    implementation 'me.jorgecastillo:androidcolorx:0.2.0'
+    implementation 'com.godaddy.android.colorpicker:compose-color-picker-android:0.7.0'
 
-	implementation 'com.tobianoapps:bulletin:1.0.3'
-	implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.3.0'
-	implementation 'com.maxkeppeler.sheets-compose-dialogs:color:1.3.0'
+    implementation 'com.tobianoapps:bulletin:1.0.3'
+    implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.3.0'
+    implementation 'com.maxkeppeler.sheets-compose-dialogs:color:1.3.0'
 
-	implementation 'org.apache.commons:commons-compress:1.27.0'
-	implementation 'org.tukaani:xz:1.10'
+    implementation 'org.apache.commons:commons-compress:1.27.1'
+    implementation 'org.tukaani:xz:1.10'
 
 //	implementation 'org.openjdk.nashorn:nashorn-core:15.4'
 //	implementation 'javax.script:script:1.0'
@@ -227,86 +230,105 @@ dependencies {
 //	implementation 'org.mozilla:rhino:1.7.14'
 //	implementation 'io.apisense:rhino-android:1.1.1'
 
+//	ObjectBox
+//    implementation "com.android.tools.build:gradle:8.1.4"
+    implementation("io.objectbox:objectbox-gradle-plugin:4.0.3") {
+        exclude(group: "com.google.protobuf", module: "protobuf-java")
+    }
+    implementation("io.objectbox:objectbox-kotlin:4.0.3") {
+        exclude(group: "com.google.protobuf", module: "protobuf-java")
+        exclude(group: 'io.objectbox', module: 'objectbox-android-objectbrowser')
+    }
+    kapt("io.objectbox:objectbox-processor:4.0.3")
+    releaseImplementation("io.objectbox:objectbox-android:4.0.3") {
+        exclude(group: "com.google.protobuf", module: "protobuf-java")
+    }
+    debugImplementation("io.objectbox:objectbox-android-objectbrowser:4.0.3")
+//    releaseImplementation("io.objectbox:objectbox-android:4.0.3")
 
-	implementation 'com.google.android.gms:play-services-location:21.3.0'
-	implementation 'com.google.maps.android:maps-utils-ktx:5.1.1'
-	implementation 'com.google.maps.android:maps-compose:6.1.1'
-	implementation 'com.google.maps.android:maps-compose-utils:6.1.1'
-	implementation 'com.google.android.gms:play-services-maps:19.0.0'
 
-	implementation 'androidx.datastore:datastore-preferences-core:1.1.1'
-	implementation 'androidx.datastore:datastore-preferences:1.1.1'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'com.google.maps.android:maps-utils-ktx:5.1.1'
+    implementation 'com.google.maps.android:maps-compose:6.2.1'
+    implementation 'com.google.maps.android:maps-compose-utils:6.2.1'
+    implementation 'com.google.android.gms:play-services-maps:19.0.0'
 
-	implementation "androidx.security:security-crypto:1.0.0"
-	implementation "androidx.security:security-identity-credential:1.0.0-alpha03"
+    implementation 'androidx.datastore:datastore-preferences-core:1.1.1'
+    implementation 'androidx.datastore:datastore-preferences:1.1.1'
+
+//    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+//    implementation "androidx.security:security-identity-credential:1.0.0-alpha03"
 //	implementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
 //	androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
-//	implementation 'com.google.crypto.tink:tink-android:1.6.1'
+//	implementation 'com.google.crypto.tink:tink-android:1.12.0'
 
-	implementation 'com.valentinilk.shimmer:compose-shimmer:1.3.0'
-	implementation 'io.github.vanpra.compose-material-dialogs:datetime:0.9.0'
+    implementation 'com.valentinilk.shimmer:compose-shimmer:1.3.1'
+    implementation 'io.github.vanpra.compose-material-dialogs:datetime:0.9.0'
 
-	implementation 'com.github.skydoves:colorpicker-compose:1.1.2'
-	implementation 'io.noties.markwon:core:4.6.2'
+    implementation 'com.github.skydoves:colorpicker-compose:1.1.2'
+    implementation 'io.noties.markwon:core:4.6.2'
 
-	implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.5'
+    implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.6'
 
-	implementation "com.google.android.gms:play-services-oss-licenses:17.1.0"
+    implementation "com.google.android.gms:play-services-oss-licenses:17.1.0"
 
 //	For PackagePrivate modifier
-	implementation 'io.github.esentsov:kotlin-visibility:1.1.0'
+    implementation 'io.github.esentsov:kotlin-visibility:1.1.0'
 
 //	Test
-	// Core library
-	androidTestImplementation "androidx.test:core-ktx:1.6.1"
+    // Core library
+    androidTestImplementation "androidx.test:core-ktx:1.6.1"
 
-	// Reflection
-	implementation 'org.jetbrains.kotlin:kotlin-reflect:2.0.10'
+    // Reflection
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:2.1.0'
 
-	// AndroidJUnitRunner and JUnit Rules
-	androidTestImplementation "androidx.test:runner:1.6.2"
-	androidTestImplementation "androidx.test:rules:1.6.1"
+    implementation("dev.chrisbanes.haze:haze:1.1.1")
 
-	androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.3'
-	androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.3'
+    // AndroidJUnitRunner and JUnit Rules
+    androidTestImplementation "androidx.test:runner:1.6.2"
+    androidTestImplementation "androidx.test:rules:1.6.1"
 
-	// Assertions
-	androidTestImplementation "androidx.test.ext:junit-ktx:1.2.1"
-	androidTestImplementation "androidx.test.ext:truth:1.6.0"
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+    androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
 
-	// Mock
-	androidTestImplementation 'org.mockito:mockito-core:5.12.0'
-	androidTestImplementation 'org.mockito.kotlin:mockito-kotlin:5.4.0'
+    // Assertions
+    androidTestImplementation "androidx.test.ext:junit-ktx:1.2.1"
+    androidTestImplementation "androidx.test.ext:truth:1.6.0"
 
-	// Mockk
+    // Mock
+    androidTestImplementation 'org.mockito:mockito-core:5.14.2'
+    androidTestImplementation 'org.mockito.kotlin:mockito-kotlin:5.4.0'
+
+    // Mockk
 //	testImplementation "io.mockk:mockk:1.13.5"
 //	androidTestImplementation "io.mockk:mockk-android:1.13.5"
 //	androidTestImplementation "io.mockk:mockk-agent:1.13.5"
 
-	// Espresso dependencies
-	androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
-	androidTestImplementation "androidx.test.espresso:espresso-contrib:3.6.1"
-	androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
-	androidTestImplementation "androidx.test.espresso:espresso-accessibility:3.6.1"
-	androidTestImplementation "androidx.test.espresso:espresso-web:3.6.1"
-	androidTestImplementation "androidx.test.espresso.idling:idling-concurrent:3.6.1"
+    // Espresso dependencies
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:3.6.1"
+    androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
+    androidTestImplementation "androidx.test.espresso:espresso-accessibility:3.6.1"
+    androidTestImplementation "androidx.test.espresso:espresso-web:3.6.1"
+    androidTestImplementation "androidx.test.espresso.idling:idling-concurrent:3.6.1"
 
-	// Compose dependencies
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.6.8'
-	androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.6.8'
+    // Compose dependencies
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.7.5'
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.7.5'
 
-	debugImplementation 'androidx.compose.ui:ui-tooling:1.6.8'
-	debugImplementation 'androidx.compose.ui:ui-tooling-data:1.6.8'
-	debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
-	debugImplementation 'androidx.compose.ui:ui-test-manifest:1.6.8'
+    debugImplementation 'androidx.compose.ui:ui-tooling:1.7.5'
+    debugImplementation 'androidx.compose.ui:ui-tooling-data:1.7.5'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest:1.7.5'
 
-	// The following Espresso dependency can be either "implementation",
-	// or "androidTestImplementation", depending on whether you want the
-	// dependency to appear on your APK’"s compile classpath or the test APK
-	// classpath.
-	androidTestImplementation "androidx.test.espresso:espresso-idling-resource:3.6.1"
+    // The following Espresso dependency can be either "implementation",
+    // or "androidTestImplementation", depending on whether you want the
+    // dependency to appear on your APK’"s compile classpath or the test APK
+    // classpath.
+    androidTestImplementation "androidx.test.espresso:espresso-idling-resource:3.6.1"
 
 
-	testImplementation 'junit:junit:4.13.2'
-	testImplementation 'org.json:json:20240303'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
 }
+

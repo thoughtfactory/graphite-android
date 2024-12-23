@@ -27,7 +27,7 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenu
 import com.syncodec.graphite.presentation.main.composable.buildingBlock.DropdownMenuItem
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -56,7 +56,7 @@ fun SettingButton(
 				painter = painterResource(id = icon),
 				contentDescription = text,
 				tint = tint,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 			Spacer(modifier = Modifier.width(24.dp))
 			Column(
@@ -90,7 +90,7 @@ fun SettingButton(
 					painter = painterResource(id = it),
 					contentDescription = text,
 					tint = subIconTint,
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 			}
@@ -99,7 +99,7 @@ fun SettingButton(
 				contentDescription = text,
 				tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
 				modifier = Modifier
-					.requiredSize(IconButtonSize)
+					.requiredSize(ICON_SIZE)
 					.graphicsLayer { rotationZ = 90f }
 			)
 			Spacer(modifier = Modifier.width(16.dp))
@@ -131,7 +131,7 @@ fun SettingButtonWithDropdown(
 				painter = painterResource(id = icon),
 				contentDescription = text,
 				tint = tint,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 			Spacer(modifier = Modifier.width(24.dp))
 			Text(
@@ -153,7 +153,7 @@ fun SettingButtonWithDropdown(
 				contentDescription = text,
 				tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
 				modifier = Modifier
-					.requiredSize(IconButtonSize)
+					.requiredSize(ICON_SIZE)
 					.graphicsLayer { rotationZ = 90f }
 			)
 			Spacer(modifier = Modifier.width(16.dp))

@@ -48,7 +48,7 @@ import androidx.core.graphics.ColorUtils
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.BucketType
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import com.syncodec.graphite.utils.bucketTypeToIcon
 
@@ -128,7 +128,7 @@ fun BucketCard(
 							painter = painterResource(id = bucketTypeToIcon.getOrElse(bucketType) { R.drawable.ic_bucket }),
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onSurface,
-							modifier = Modifier.requiredSize(IconButtonSize)
+							modifier = Modifier.requiredSize(ICON_SIZE)
 						)
 						Spacer(modifier = Modifier.weight(1f))
 

@@ -160,7 +160,6 @@ fun AddShowBottomSheet() {
 			},
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
-				autoCorrect = true,
 				keyboardType = KeyboardType.Text,
 				imeAction = ImeAction.Search
 			),

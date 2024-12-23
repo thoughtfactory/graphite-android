@@ -20,7 +20,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Preview
@@ -56,7 +56,7 @@ fun ToolbarButton(
 			contentDescription = contentDescription,
 			tint = contentColor,
 			modifier = Modifier
-				.requiredSize(IconButtonSize)
+				.requiredSize(ICON_SIZE)
 				.padding(padding.dp)
 		)
 	}

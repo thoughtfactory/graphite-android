@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 data class StateData(
@@ -104,7 +104,7 @@ fun StateButton(
 							painter = painterResource(id = it),
 							contentDescription = null,
 							tint = textColor,
-							modifier = Modifier.requiredSize(IconButtonSize)
+							modifier = Modifier.requiredSize(ICON_SIZE)
 						)
 						Spacer(modifier = Modifier.width(6.dp))
 					}

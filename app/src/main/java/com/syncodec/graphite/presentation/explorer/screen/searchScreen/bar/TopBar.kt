@@ -34,7 +34,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.buildingBlock.SearchBar
 import com.syncodec.graphite.presentation.explorer.screen.searchScreen.SearchScreenViewModel
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.getInverseBWColor
 
 
@@ -140,7 +140,7 @@ fun TopBar(
 							labelColor = if (searchFilterType is SearchScreenViewModel.Companion.SearchFilterType.Tag) Color(searchFilterType.tag.color).getInverseBWColor() else MaterialTheme.colorScheme.onPrimary,
 						),
 						border = null,
-						modifier = Modifier.height((IconButtonSize * 2) - 2.dp),
+						modifier = Modifier.height((ICON_SIZE * 2) - 2.dp),
 						onClick = { /*TODO*/ }
 					)
 

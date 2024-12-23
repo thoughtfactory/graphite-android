@@ -53,7 +53,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import kotlinx.coroutines.launch
 
 
@@ -209,7 +209,7 @@ private fun PrimaryButton(
 					painter = painterResource(id = primaryIcon),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onPrimary,
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 
 				Spacer(modifier = Modifier.width(12.dp))
@@ -244,7 +244,7 @@ private fun PrimaryButton(
 						contentDescription = it.text,
 						tint = MaterialTheme.colorScheme.onPrimary,
 						modifier = Modifier
-							.requiredSize(IconButtonSize)
+							.requiredSize(ICON_SIZE)
 							.padding(2.dp)
 					)
 					Spacer(modifier = Modifier.width(16.dp))

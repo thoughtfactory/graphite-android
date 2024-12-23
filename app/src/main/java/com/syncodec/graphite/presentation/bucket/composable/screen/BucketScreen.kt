@@ -8,6 +8,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,7 +66,7 @@ fun BucketScreen(
 		currentPage = pagerState.currentPage
 	}
 
-	val modalBottomSheetState = ModalBottomSheetState(ModalBottomSheetValue.Hidden)
+	val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 	var sheetType by remember { mutableStateOf(BucketBottomSheetType.MENU) }
 
 	fun openSheet(type : BucketBottomSheetType) {

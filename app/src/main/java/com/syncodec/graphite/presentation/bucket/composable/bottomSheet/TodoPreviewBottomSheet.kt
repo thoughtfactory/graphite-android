@@ -47,7 +47,7 @@ import com.syncodec.graphite.presentation.common.button.MenuButton
 import com.syncodec.graphite.presentation.common.button.MenuButtonDefaults
 import com.syncodec.graphite.presentation.common.button.stateButton.StateButton
 import com.syncodec.graphite.presentation.common.button.stateButton.StateData
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import io.realm.kotlin.types.RealmUUID
 import org.koin.androidx.compose.koinViewModel
 
@@ -120,7 +120,6 @@ fun TodoPreviewBottomSheet(
 			},
 			keyboardOptions = KeyboardOptions.Default.copy(
 				capitalization = KeyboardCapitalization.None,
-				autoCorrect = true,
 				keyboardType = KeyboardType.Text,
 				imeAction = ImeAction.Go
 			),
@@ -169,7 +168,7 @@ fun TodoPreviewBottomSheet(
 				Icon(
 					painter = painterResource(id = R.drawable.ic_lock_close),
 					contentDescription = "Lock",
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 				Text(text = "Lock")
@@ -186,7 +185,7 @@ fun TodoPreviewBottomSheet(
 				Icon(
 					painter = painterResource(id = R.drawable.ic_favourite),
 					contentDescription = "Favorite",
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 				Text(text = "Favourite")

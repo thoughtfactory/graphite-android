@@ -340,7 +340,7 @@ class SettingsActivity : ComponentActivity() {
 			.call(data)
 			.addOnSuccessListener {
 				lifecycleScope.launch(Dispatchers.Main) {
-					val data = it.data as String
+					val data = it.getData() as String
 					if (data == "Ok") {
 						Toast.makeText(this@SettingsActivity, "Your account is scheduled for deletion.", Toast.LENGTH_SHORT).show()
 						onClickSignOut()

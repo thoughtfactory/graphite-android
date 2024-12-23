@@ -27,7 +27,7 @@ import com.syncodec.graphite.presentation.explorer.screen.explorerScreen.Explore
 import com.syncodec.graphite.presentation.main.composable.bottomSheet.MainBottomSheetType
 import com.syncodec.graphite.presentation.main.composable.screen.ComponentType
 import com.syncodec.graphite.presentation.main.composable.screen.HomeScreen
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.Extra
 import com.syncodec.graphite.utils.tone
 import io.realm.kotlin.types.RealmUUID
@@ -61,7 +61,7 @@ fun BottomNavigationBar(
 					Icon(
 						painter = painterResource(id = screen.icon),
 						contentDescription = screen.title,
-						modifier = Modifier.requiredSize(IconButtonSize)
+						modifier = Modifier.requiredSize(ICON_SIZE)
 					)
 				},
 				label = {

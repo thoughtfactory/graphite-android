@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.ui.IconButtonSize
+import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -53,7 +53,7 @@ fun SettingSwitch(
 			Icon(
 				painter = painterResource(id = icon),
 				contentDescription = text,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 			Spacer(modifier = Modifier.width(24.dp))
 			Text(
@@ -128,7 +128,7 @@ fun SettingSwitchWithPro(
 			Icon(
 				painter = painterResource(id = icon),
 				contentDescription = text,
-				modifier = Modifier.requiredSize(IconButtonSize)
+				modifier = Modifier.requiredSize(ICON_SIZE)
 			)
 			Spacer(modifier = Modifier.width(24.dp))
 			Text(
@@ -145,7 +145,7 @@ fun SettingSwitchWithPro(
 					painter = painterResource(id = R.drawable.ic_lock_close),
 					contentDescription = "Pro",
 					tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-					modifier = Modifier.requiredSize(IconButtonSize)
+					modifier = Modifier.requiredSize(ICON_SIZE)
 				)
 				Spacer(modifier = Modifier.width(8.dp))
 			}
