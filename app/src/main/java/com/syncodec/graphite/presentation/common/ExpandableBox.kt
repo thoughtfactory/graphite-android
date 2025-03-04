@@ -6,22 +6,23 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.syncodec.graphite.presentation.ui.AnimationDefaults
 
 enum class ExpandableBoxOrientation {
-	HORIZONTAL,
-	VERTICAL
+	Horizontal,
+	Vertical
 }
 
 @Composable
 fun ExpandableBox(
 	isVisible: Boolean = true,
-	orientation: ExpandableBoxOrientation = ExpandableBoxOrientation.VERTICAL,
-	durationMillis: Int = 300,
+	orientation: ExpandableBoxOrientation = ExpandableBoxOrientation.Vertical,
+	durationMillis: Int = AnimationDefaults.ANIMATION_TIME,
 	content: @Composable () -> Unit
 ) {
 	val enterFadeIn = remember { fadeIn(animationSpec = TweenSpec(durationMillis = durationMillis, easing = FastOutLinearInEasing)) }
 	val enterExpand = remember {
-		if (orientation == ExpandableBoxOrientation.VERTICAL) {
+		if (orientation == ExpandableBoxOrientation.Vertical) {
 			expandVertically(animationSpec = TweenSpec(durationMillis = durationMillis, easing = FastOutLinearInEasing))
 		} else {
 			expandHorizontally(animationSpec = TweenSpec(durationMillis = durationMillis, easing = FastOutLinearInEasing))
@@ -29,7 +30,7 @@ fun ExpandableBox(
 	}
 	val exitFadeOut = remember { fadeOut(animationSpec = TweenSpec(durationMillis = durationMillis, easing = LinearOutSlowInEasing)) }
 	val exitCollapse = remember {
-		if (orientation == ExpandableBoxOrientation.VERTICAL) {
+		if (orientation == ExpandableBoxOrientation.Vertical) {
 			shrinkVertically(animationSpec = TweenSpec(durationMillis = durationMillis, easing = LinearOutSlowInEasing))
 		} else {
 			shrinkHorizontally(animationSpec = TweenSpec(durationMillis = durationMillis, easing = LinearOutSlowInEasing))

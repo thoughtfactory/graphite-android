@@ -3,7 +3,6 @@ package com.syncodec.graphite.di.modelObjectBox.customObject
 import io.objectbox.converter.PropertyConverter
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 

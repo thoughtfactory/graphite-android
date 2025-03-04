@@ -22,7 +22,6 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
-        android:resizeableActivity="true"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="false"
         android:theme="@style/Theme.Graphite">
@@ -63,6 +62,7 @@
             android:exported="true"
             android:theme="@style/Theme.Graphite.NoActionBar"
             android:usesCleartextTraffic="true"
+            android:launchMode="standard"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -80,6 +80,22 @@
             <!--				<data android:mimeType="text/*" />-->
             <!--				<data android:mimeType="video/*" />-->
             <!--			</intent-filter>-->
+        </activity>
+
+        <activity
+            android:name=".presentation.bucket2.BucketActivity2"
+            android:exported="false"
+            android:parentActivityName=".presentation.main.MainActivity"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+
+        <activity
+            android:name=".presentation.bucketItem2.BucketItemActivity2"
+            android:exported="false"
+            android:parentActivityName=".presentation.bucket2.BucketActivity2"
+            android:theme="@style/Theme.Graphite.NoActionBar"
+            android:windowSoftInputMode="adjustResize">
         </activity>
 
         <activity

@@ -1,0 +1,26 @@
+meta {
+  name: Search movie
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://api.trakt.tv/search/movie?query=tamasha&extended=images&page=1&extended=full,images&limit=1
+  body: none
+  auth: none
+}
+
+params:query {
+  query: tamasha
+  extended: images
+  page: 1
+  extended: full,images
+  limit: 1
+  ~fields: title
+}
+
+headers {
+  Content-Type: application/json
+  trakt-api-version: 2
+  trakt-api-key: 23069a6f5a678d96fb2035b0ffced3afa492ac9011d0e9e954e6f2043b35de7f
+}

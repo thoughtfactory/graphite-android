@@ -1,0 +1,20 @@
+meta {
+  name: Book Search - Title
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://openlibrary.org/search.json?q=the stranger&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,editions,editions.language,editions.title,editions.key,editions.cover_i&limit=9
+  body: none
+  auth: none
+}
+
+params:query {
+  q: the stranger
+  fields: key,title,author_name,cover_i,first_publish_year,number_of_pages_median,editions,editions.language,editions.title,editions.key,editions.cover_i
+  limit: 9
+  ~page: 1
+  ~offset: 0
+  ~editions.sort: old
+}

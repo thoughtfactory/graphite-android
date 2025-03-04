@@ -85,12 +85,9 @@ sealed class HomeScreenData {
 
 @Composable
 fun BottomBar(
-    mainScreenData: MainScreenData,
+    currentBackStackRoute: String? = null,
     onClickNavigationButton: (MainScreenData) -> Unit
 ) {
-
-    val screenList = remember { listOf(MainScreenData.HomeScreenData, MainScreenData.CalendarScreenData, MainScreenData.AtlasScreenData) }
-
     Column {
         HorizontalDivider()
 
@@ -98,15 +95,30 @@ fun BottomBar(
             containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onBackground
         ) {
-            screenList.forEach { screenData ->
-                val selected by remember(mainScreenData) { derivedStateOf { mainScreenData == screenData } }
-                NavigationBarItem(
-                    selected = selected,
-                    icon = { Icon(painter = painterResource(if (selected) screenData.iconFilled else screenData.icon), contentDescription = null, modifier = Modifier.size(18.dp)) },
-                    label = { Text(text = stringResource(screenData.label)) },
-                    onClick = { onClickNavigationButton(screenData) }
-                )
-            }
+            val isAtlasScreen by remember(key1 = currentBackStackRoute) { derivedStateOf { currentBackStackRoute == MainScreenData.AtlasScreenData.route } }
+            val isCalendarScreen by remember(key1 = currentBackStackRoute) { derivedStateOf { currentBackStackRoute == MainScreenData.CalendarScreenData.route } }
+            val isHomeScreen by remember(key1 = isAtlasScreen, key2 = isCalendarScreen) { derivedStateOf { !isAtlasScreen && !isCalendarScreen } }
+
+            NavigationBarItem(
+                selected = isHomeScreen,
+                icon = { Icon(painter = painterResource(id = if (isHomeScreen) MainScreenData.HomeScreenData.iconFilled else MainScreenData.HomeScreenData.icon), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                label = { Text(text = stringResource(id = MainScreenData.HomeScreenData.label)) },
+                onClick = { onClickNavigationButton(MainScreenData.HomeScreenData) }
+            )
+
+            NavigationBarItem(
+                selected = isCalendarScreen,
+                icon = { Icon(painter = painterResource(id = if (isCalendarScreen) MainScreenData.CalendarScreenData.iconFilled else MainScreenData.CalendarScreenData.icon), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                label = { Text(text = stringResource(id = MainScreenData.CalendarScreenData.label)) },
+                onClick = { onClickNavigationButton(MainScreenData.CalendarScreenData) }
+            )
+
+            NavigationBarItem(
+                selected = isAtlasScreen,
+                icon = { Icon(painter = painterResource(id = if (isAtlasScreen) MainScreenData.AtlasScreenData.iconFilled else MainScreenData.AtlasScreenData.icon), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                label = { Text(text = stringResource(id = MainScreenData.AtlasScreenData.label)) },
+                onClick = { onClickNavigationButton(MainScreenData.AtlasScreenData) }
+            )
         }
     }
 }

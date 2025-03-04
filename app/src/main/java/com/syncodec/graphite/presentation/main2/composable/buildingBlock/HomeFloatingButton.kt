@@ -12,25 +12,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.main2.composable.bar.HomeScreenData
-import com.syncodec.graphite.presentation.main2.composable.bar.MainScreenData
+import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Composable
 fun HomeFloatingActionButton(
-    homeScreenData: HomeScreenData,
+    currentBackStackRoute: String?,
     isExpanded: Boolean = true,
     onClickNewNote: () -> Unit = {},
     onClickNewBucket: () -> Unit = {},
     onClickNewNotebook: () -> Unit = {},
 ) {
     AnimatedContent(
-        targetState = homeScreenData
+        targetState = currentBackStackRoute,
+        transitionSpec = { AnimationDefaults.ScaleAndFade }
     ) {
         when(it) {
-            HomeScreenData.NoteScreenData -> NoteFloatingActionButton(isExpanded = isExpanded, onClick = onClickNewNote)
-            HomeScreenData.BucketScreenData -> BucketFloatingActionButton(isExpanded = isExpanded, onClick = onClickNewBucket)
-            HomeScreenData.NotebookScreenData -> NotebookFloatingActionButton(isExpanded = isExpanded, onClick = onClickNewNotebook)
+            HomeScreenData.NoteScreenData.route -> NoteFloatingActionButton(isExpanded = isExpanded, onClick = onClickNewNote)
+            HomeScreenData.BucketScreenData.route -> BucketFloatingActionButton(isExpanded = isExpanded, onClick = onClickNewBucket)
+            HomeScreenData.NotebookScreenData.route -> NotebookFloatingActionButton(isExpanded = isExpanded, onClick = onClickNewNotebook)
         }
     }
 }
@@ -42,14 +43,12 @@ private fun NoteFloatingActionButton(
     onClick: () -> Unit = {},
 ) {
     ExtendedFloatingActionButton(
-        text = {
-            Text(text = stringResource(R.string.new_note))
-        },
+        text = { Text(text = stringResource(id = R.string.new_note)) },
         icon = {
             Icon(
                 painter = painterResource(id = R.drawable.ic_fa_pencil),
-                contentDescription = stringResource(R.string.new_note),
-                modifier = Modifier.requiredSize(ICON_SIZE)
+                contentDescription = stringResource(id = R.string.new_note),
+                modifier = Modifier.requiredSize(size = ICON_SIZE)
             )
         },
         expanded = isExpanded,
@@ -64,14 +63,12 @@ private fun BucketFloatingActionButton(
     onClick: () -> Unit = {},
 ) {
     ExtendedFloatingActionButton(
-        text = {
-            Text(text = stringResource(R.string.new_list))
-        },
+        text = { Text(text = stringResource(id = R.string.new_list)) },
         icon = {
             Icon(
                 painter = painterResource(id = R.drawable.ic_fa_bucket),
-                contentDescription = stringResource(R.string.new_bucket),
-                modifier = Modifier.requiredSize(ICON_SIZE)
+                contentDescription = stringResource(id = R.string.new_bucket),
+                modifier = Modifier.requiredSize(size = ICON_SIZE)
             )
         },
         expanded = isExpanded,
@@ -86,14 +83,12 @@ private fun NotebookFloatingActionButton(
     onClick: () -> Unit = {},
 ) {
     ExtendedFloatingActionButton(
-        text = {
-            Text(text = stringResource(R.string.new_notebook))
-        },
+        text = { Text(text = stringResource(id = R.string.new_notebook)) },
         icon = {
             Icon(
                 painter = painterResource(id = R.drawable.ic_fa_notebook),
-                contentDescription = stringResource(R.string.new_notebook),
-                modifier = Modifier.requiredSize(ICON_SIZE)
+                contentDescription = stringResource(id = R.string.new_notebook),
+                modifier = Modifier.requiredSize(size = ICON_SIZE)
             )
         },
         expanded = isExpanded,

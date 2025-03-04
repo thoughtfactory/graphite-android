@@ -10,10 +10,11 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.encoding.encodeStructure
-import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 
-object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
+object ZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("date") {
         element("year", PrimitiveSerialDescriptor("year", PrimitiveKind.INT))
         element("month", PrimitiveSerialDescriptor("month", PrimitiveKind.INT))
@@ -22,9 +23,10 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
         element("minute", PrimitiveSerialDescriptor("minute", PrimitiveKind.INT))
         element("second", PrimitiveSerialDescriptor("second", PrimitiveKind.INT))
         element("nanosecond", PrimitiveSerialDescriptor("nanosecond", PrimitiveKind.INT))
+        element("zoneId", PrimitiveSerialDescriptor("zoneId", PrimitiveKind.STRING))
     }
 
-    override fun serialize(encoder: Encoder, value: LocalDateTime) {
+    override fun serialize(encoder: Encoder, value: ZonedDateTime) {
         encoder.encodeStructure(descriptor) {
             encodeIntElement(descriptor, 0, value.year)
             encodeIntElement(descriptor, 1, value.monthValue)
@@ -33,10 +35,11 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
             encodeIntElement(descriptor, 4, value.minute)
             encodeIntElement(descriptor, 5, value.second)
             encodeIntElement(descriptor, 6, value.nano)
+            encodeStringElement(descriptor, 7, value.zone.id)
         }
     }
 
-    override fun deserialize(decoder: Decoder): LocalDateTime {
+    override fun deserialize(decoder: Decoder): ZonedDateTime {
         var year: Int? = null
         var month: Int? = null
         var day: Int? = null
@@ -44,6 +47,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
         var minute: Int? = null
         var second: Int? = null
         var nanoSecond: Int? = null
+        var zoneId: String? = null
 
         try {
             decoder.decodeStructure(descriptor) {
@@ -56,6 +60,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
                         4 -> minute = decodeIntElement(descriptor, 4)
                         5 -> second = decodeIntElement(descriptor, 5)
                         6 -> nanoSecond = decodeIntElement(descriptor, 6)
+                        7 -> zoneId = decodeStringElement(descriptor, 7)
                         CompositeDecoder.DECODE_DONE -> break
                         else -> error("Unexpected index: $index")
                     }
@@ -65,7 +70,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
             e.printStackTrace()
         }
 
-        return LocalDateTime.of(year!!, month!!, day!!, hour!!, minute!!, second!!, nanoSecond!!)
+        return ZonedDateTime.of(year!!, month!!, day!!, hour!!, minute!!, second!!, nanoSecond!!, ZoneId.of(zoneId))
     }
 }
 

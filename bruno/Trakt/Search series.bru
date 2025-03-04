@@ -1,0 +1,26 @@
+meta {
+  name: Search series
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://api.trakt.tv/search/show?query=stranger things&extended=images&page=1&extended=full,images
+  body: none
+  auth: none
+}
+
+params:query {
+  query: stranger things
+  extended: images
+  page: 1
+  extended: full,images
+  ~fields: title
+  ~limit: 9
+}
+
+headers {
+  Content-Type: application/json
+  trakt-api-version: 2
+  trakt-api-key: 23069a6f5a678d96fb2035b0ffced3afa492ac9011d0e9e954e6f2043b35de7f
+}

@@ -1,25 +1,33 @@
 package com.syncodec.graphite.presentation.main2.composable.screen
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.ChapterBox
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.scaffold2.GenericScaffold2
+import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
+import com.syncodec.graphite.presentation.common.v2.selectable2.SelectionContainerActor
 import com.syncodec.graphite.presentation.main2.MainViewModel2
 import com.syncodec.graphite.presentation.main2.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.main2.composable.bar.HomeScreenData
 import com.syncodec.graphite.presentation.main2.composable.bar.MainScreenData
 import com.syncodec.graphite.presentation.main2.composable.bar.TopBar
+import com.syncodec.graphite.presentation.main2.composable.bottomSheet.NewBucketBottomSheet
 import com.syncodec.graphite.presentation.main2.composable.bottomSheet.NewNotebookBottomSheet
 import com.syncodec.graphite.presentation.main2.composable.buildingBlock.HomeFloatingActionButton
+import com.syncodec.graphite.presentation.ui.AnimationDefaults
+import dev.chrisbanes.haze.HazeState
+import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -29,54 +37,69 @@ fun MainScreen(
     mainViewModel2: MainViewModel2 = koinViewModel()
 ) {
 
-    var mainScreenData: MainScreenData by remember { mutableStateOf(MainScreenData.HomeScreenData) }
-    var homeScreenData: HomeScreenData by remember { mutableStateOf(HomeScreenData.NoteScreenData) }
-
     val navController: NavHostController = rememberNavController()
 
-    var isBottomSheetVisible by remember { mutableStateOf(false) }
-    val newNotebookBottomSheet = GenericBottomSheet2State.initialize()
-    val newBucketListBottomSheet = GenericBottomSheet2State.initialize()
+    val selectionContainerActor = remember { SelectionContainerActor() }
+    val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
+    val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
 
-    val allChapterBoxListFlow = mainViewModel2.allChapterBoxListFlow
+    val hazeState = remember { HazeState() }
+
+    val newNotebookBottomSheet = GenericBottomSheet2State.rememberGenericBottomSheet2State(skipPartiallyExpanded = true)
+    val newBucketListBottomSheet = GenericBottomSheet2State.rememberGenericBottomSheet2State(skipPartiallyExpanded = true)
+
+    val allChapterBoxListFlow: Flow<List<ChapterBox>> = mainViewModel2.allChapterBoxListFlow
+    val allBucketBoxListFlow: Flow<List<BucketBox>> = mainViewModel2.allBucketBoxListFlow
+
+    val currentBackStackList by navController.currentBackStack.collectAsState()
 
     GenericScaffold2(
         topBar = {
             TopBar(
-                homeScreenData = homeScreenData,
-                selecting = false,
-                selectedSize = 0,
+                currentBackStackRoute = currentBackStackList.lastOrNull()?.destination?.route,
                 onClickSearch = {},
                 onClickMenu = {},
-                onClickNavigationButton = { homeScreenData = it; navController.navigate(it.route) }
+                onClickNavigationButton = { navController.navigate(route = it.route) { launchSingleTop = true; popUpTo("note_screen") { inclusive = false } } }
             )
         },
         bottomBar = {
             BottomBar(
-                mainScreenData = mainScreenData,
-                onClickNavigationButton = { mainScreenData = it; navController.navigate(it.route) }
+                currentBackStackRoute = currentBackStackList.lastOrNull()?.destination?.route,
+                onClickNavigationButton = { navController.navigate(route = it.route) { launchSingleTop = true; popUpTo("note_screen") { inclusive = false } } }
             )
         },
         floatingActionButton = {
             HomeFloatingActionButton(
-                homeScreenData = homeScreenData,
+                currentBackStackRoute = currentBackStackList.lastOrNull()?.destination?.route,
                 isExpanded = true,
                 onClickNewNote = {},
-                onClickNewBucket = {},
+                onClickNewBucket = { newBucketListBottomSheet.openSheet() },
                 onClickNewNotebook = { newNotebookBottomSheet.openSheet() },
             )
         },
         bottomSheetContent = {
+            NewBucketBottomSheet(
+                bottomSheet2State = newBucketListBottomSheet,
+                outerHazeState = hazeState,
+                onCreateNewBucket = { mainViewModel2.putBucketBox(bucketBox = it) }
+            )
             NewNotebookBottomSheet(
                 bottomSheet2State = newNotebookBottomSheet,
-                onCreateNewNotebook = { mainViewModel2.putChapter(it) }
+                outerHazeState = hazeState,
+                onCreateNewNotebook = { mainViewModel2.putChapterBox(chapterBox = it) }
             )
-        }
+        },
+        hazeState = hazeState,
+        compositionLocalValues = listOf(
+            LocalSelectionContainerActor provides selectionContainerActor
+        )
     ) {
 
         NavHost(
             navController = navController,
-            startDestination = MainScreenData.HomeScreenData.route
+            startDestination = MainScreenData.HomeScreenData.route,
+            enterTransition = { slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Up, animationSpec = AnimationDefaults.stateAnimationSpec(), initialOffset = { it / 4 }) + AnimationDefaults.FadeEnter },
+            exitTransition = { slideOutOfContainer(towards = AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = AnimationDefaults.stateAnimationSpec(), targetOffset = { it / 4 }) + AnimationDefaults.FadeExit }
         ) {
 
             navigation(route = MainScreenData.HomeScreenData.route, startDestination = HomeScreenData.NoteScreenData.route) {
@@ -84,7 +107,7 @@ fun MainScreen(
                     NoteScreen()
                 }
                 composable(route = HomeScreenData.BucketScreenData.route) {
-                    BucketScreen()
+                    BucketScreen(allBucketBoxListFlow = allBucketBoxListFlow)
                 }
                 composable(route = HomeScreenData.NotebookScreenData.route) {
                     NotebookScreen(allChapterBoxListFlow = allChapterBoxListFlow)

@@ -10,22 +10,21 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
+import com.syncodec.graphite.presentation.common.shape.AbsoluteSmoothCornerShape
 import com.syncodec.graphite.presentation.settings.SettingsActivity
 import com.syncodec.graphite.presentation.ui.authentication.AddPasscodeScreen
 import com.syncodec.graphite.presentation.ui.authentication.AuthenticatorScreen
@@ -40,6 +39,7 @@ import com.syncodec.graphite.utils.alice.putSecretData
 
 
 val LocalIsPro = compositionLocalOf { false }
+val LocalIsDarkTheme = compositionLocalOf { false }
 
 @OptIn(ExperimentalAnimationApi::class)
 @SuppressLint("NewApi")
@@ -53,11 +53,11 @@ fun BaseContent(
 
 	val dataStoreInstance = remember { DataStoreInstance(context = context) }
 
-	val darkTheme by dataStoreInstance.getDarkTheme.collectAsState(initial = null)
+	val systemTheme by dataStoreInstance.getDarkTheme.collectAsState(initial = null)
 	val typography by dataStoreInstance.getTypography.collectAsState(initial = null)
 
 	val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-	val appColorScheme = when (darkTheme) {
+	val appColorScheme = when (systemTheme) {
 		SettingsActivity.Companion.DarkTheme.SyncWithSystem -> if (isDarkTheme) darkColorScheme0 else lightColorScheme0
 		SettingsActivity.Companion.DarkTheme.AlwaysOn -> darkColorScheme0
 		SettingsActivity.Companion.DarkTheme.AlwaysOff -> lightColorScheme0
@@ -77,7 +77,7 @@ fun BaseContent(
 
 	fun onClose() = BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 
-	var noTry by remember { mutableStateOf(0) }
+	var noTry by remember { mutableIntStateOf(0) }
 
 	val isPro by BaseApplication.isPro.collectAsState()
 
@@ -85,21 +85,27 @@ fun BaseContent(
 		BaseApplication.authenticatorScreen.tryEmit(AuthenticatorScreen.None)
 	}
 
+	val appShapes = Shapes(
+		extraSmall = AbsoluteSmoothCornerShape(4.dp, 100),
+		small = AbsoluteSmoothCornerShape(8.dp, 100),
+		medium = AbsoluteSmoothCornerShape(12.dp, 100),
+		large = AbsoluteSmoothCornerShape(16.dp, 100),
+		extraLarge = AbsoluteSmoothCornerShape(28.dp, 100)
+	)
+
 	appColorScheme?.let { colorScheme ->
 		MaterialTheme(
 			colorScheme = colorScheme,
+			shapes = appShapes,
 			typography = appTypography
 		) {
-			val systemUiController = rememberSystemUiController()
-			systemUiController.setStatusBarColor(MaterialTheme.colorScheme.background)
-			systemUiController.setNavigationBarColor(Color.Black)
-
 			// TODO (M3): MaterialTheme doesn't provide LocalIndication, remove when it does
 //			val rippleIndication = rememberRipple()
 
 			CompositionLocalProvider(
 //				LocalIndication provides rippleIndication,
 				LocalIsPro provides isPro,
+				LocalIsDarkTheme provides (((systemTheme == SettingsActivity.Companion.DarkTheme.SyncWithSystem) && isDarkTheme) ||systemTheme == SettingsActivity.Companion.DarkTheme.AlwaysOn),
 				LocalIsAuthenticated provides isAuthenticated,
 				LocalAuthenticatorAction provides { newAuthenticatorState ->
 					if (isAuthenticated) {

@@ -70,7 +70,7 @@ fun ExpandableStateButton(
 
 					ExpandableBox(
 						isVisible = index == currentState,
-						orientation = ExpandableBoxOrientation.HORIZONTAL,
+						orientation = ExpandableBoxOrientation.Horizontal,
 					) {
 						Row(
 							modifier = Modifier

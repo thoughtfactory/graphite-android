@@ -1,0 +1,21 @@
+meta {
+  name: Series summary
+  type: http
+  seq: 5
+}
+
+get {
+  url: https://api.trakt.tv/shows/104439?extended=full
+  body: none
+  auth: none
+}
+
+params:query {
+  extended: full
+}
+
+headers {
+  Content-Type: application/json
+  trakt-api-version: 2
+  trakt-api-key: 23069a6f5a678d96fb2035b0ffced3afa492ac9011d0e9e954e6f2043b35de7f
+}

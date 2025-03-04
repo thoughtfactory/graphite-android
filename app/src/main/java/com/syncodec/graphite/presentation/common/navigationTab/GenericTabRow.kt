@@ -32,10 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
+import com.syncodec.graphite.presentation.ui.AnimationDefaults
 
 
 @Preview
@@ -44,7 +46,11 @@ fun GenericTabRow(
     modifier: Modifier = Modifier,
     tabItemList: List<TabItem> = listOf(),
     selectedTabIndex: Int = 0,
+    hideUnselectedText: Boolean = false,
+    hideUnselectedIcon: Boolean = false,
     colors: TabColors = TabDefaults.tabColors(),
+    textStyle: TextStyle = MaterialTheme.typography.bodySmall,
+    fontWeight: FontWeight = FontWeight.Bold
 ) {
     val indicator = @Composable { tabPositions: List<TabPosition> ->
         TabIndicator(
@@ -52,6 +58,8 @@ fun GenericTabRow(
             tabItem = tabItemList[selectedTabIndex],
             containerColor = colors.selectedContainerColor,
             contentColor = colors.selectedContentColor,
+            textStyle = textStyle,
+            fontWeight = fontWeight
         )
     }
 
@@ -61,17 +69,17 @@ fun GenericTabRow(
         contentColor = colors.contentColor,
         indicator = indicator,
         divider = {},
-        modifier = modifier.clip(MaterialTheme.shapes.small)
+        modifier = modifier.clip(shape = MaterialTheme.shapes.small)
     ) {
         tabItemList.forEachIndexed { index, tabItem ->
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .height(40.dp)
+                    .height(height = 40.dp)
                     .clickable { tabItem.onClick() }
             ) {
-                tabItem.icon?.let {
+                if (!hideUnselectedIcon) tabItem.icon?.let {
                     Icon(
                         painter = painterResource(id = it),
                         contentDescription = tabItem.text,
@@ -80,11 +88,11 @@ fun GenericTabRow(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(
+                if (!hideUnselectedText) Text(
                     text = tabItem.text,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = textStyle,
                     color = colors.contentColor,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = fontWeight,
                 )
             }
         }
@@ -98,37 +106,39 @@ fun TabIndicator(
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     tabItem: TabItem = TabItem(text = "text", icon = R.drawable.ic_fa_note) {},
+    textStyle: TextStyle = MaterialTheme.typography.bodySmall,
+    fontWeight: FontWeight = FontWeight.Bold
 ) {
     Box(
         modifier
-            .padding(4.dp)
+            .padding(all = 4.dp)
             .fillMaxSize()
-            .background(containerColor, MaterialTheme.shapes.small),
+            .background(color = containerColor, shape = MaterialTheme.shapes.small),
         contentAlignment = Alignment.Center,
     ) {
         AnimatedContent(
             targetState = tabItem,
-            transitionSpec = { fadeIn(tween(470)) togetherWith fadeOut(tween(470)) },
+            transitionSpec = { AnimationDefaults.Fade },
             label = "text_animation",
         ) { tabItem1 ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
-                tabItem1.icon?.let {
+                tabItem1.selectedIcon?.let {
                     Icon(
                         painter = painterResource(id = it),
                         contentDescription = tabItem1.text,
                         tint = contentColor,
-                        modifier = Modifier.requiredSize(16.dp),
+                        modifier = Modifier.requiredSize(size = 16.dp),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(width = 8.dp))
                 }
                 Text(
                     text = tabItem1.text,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = textStyle,
                     color = contentColor,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = fontWeight,
                 )
             }
         }
@@ -138,6 +148,7 @@ fun TabIndicator(
 data class TabItem(
     val text: String,
     val icon: Int? = null,
+    val selectedIcon: Int? = icon,
     val onClick: () -> Unit = {},
 )
 

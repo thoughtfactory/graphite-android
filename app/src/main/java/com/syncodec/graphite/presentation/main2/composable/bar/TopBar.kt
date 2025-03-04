@@ -1,19 +1,22 @@
 package com.syncodec.graphite.presentation.main2.composable.bar
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,48 +30,76 @@ import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.button.GraIconButton
 import com.syncodec.graphite.presentation.common.navigationTab.GenericTabRow
 import com.syncodec.graphite.presentation.common.navigationTab.TabItem
-import com.syncodec.graphite.presentation.ui.ANIMATION_TIME
+import com.syncodec.graphite.presentation.ui.AnimationDefaults
+import androidx.compose.runtime.getValue
+import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
-    homeScreenData: HomeScreenData = HomeScreenData.NoteScreenData,
-    selecting: Boolean = false,
-    selectedSize: Int = 0,
+    currentBackStackRoute: String?,
     onClickSearch: () -> Unit = {},
     onClickMenu: () -> Unit = {},
     onClickNavigationButton: (HomeScreenData) -> Unit = {}
 ) {
     val context = LocalContext.current
 
+    val selectionContainerActor = LocalSelectionContainerActor.current
+    val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
+    val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
+
     val tabItemList = remember {
         listOf(
-            TabItem(text = context.getString(R.string.note), icon = R.drawable.ic_fa_note) { onClickNavigationButton(HomeScreenData.NoteScreenData) },
-            TabItem(text = context.getString(R.string.bucket), icon = R.drawable.ic_fa_bucket) { onClickNavigationButton(HomeScreenData.BucketScreenData) },
-            TabItem(text = context.getString(R.string.notebook), icon = R.drawable.ic_fa_notebook) { onClickNavigationButton(HomeScreenData.NotebookScreenData) },
+            TabItem(text = context.getString(R.string.note), icon = R.drawable.ic_fa_note, selectedIcon = R.drawable.ic_fa_note_duotone) { onClickNavigationButton(HomeScreenData.NoteScreenData) },
+            TabItem(text = context.getString(R.string.bucket), icon = R.drawable.ic_fa_bucket, selectedIcon = R.drawable.ic_fa_bucket_duotone) { onClickNavigationButton(HomeScreenData.BucketScreenData) },
+            TabItem(text = context.getString(R.string.notebook), icon = R.drawable.ic_fa_notebook, selectedIcon = R.drawable.ic_fa_notebook_duotone) { onClickNavigationButton(HomeScreenData.NotebookScreenData) },
         )
     }
 
     Column {
         Crossfade(
-            targetState = selecting,
-            animationSpec = tween(ANIMATION_TIME)
+            targetState = isSelecting,
+            animationSpec = AnimationDefaults.stateAnimationSpec()
         ) {
-            if (it) SelectingTopBar(selectedSize = selectedSize)
+            if (it) SelectingTopBar(selectedSize = selectedItemIdList.size)
             else NormalTopBar(
                 onClickSearch = onClickSearch,
                 onClickMenu = onClickMenu
             )
         }
 
-        GenericTabRow(
-            tabItemList = tabItemList,
-            selectedTabIndex = homeScreenData.index,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp)
-        )
+        AnimatedVisibility(
+            visible = currentBackStackRoute != MainScreenData.CalendarScreenData.route && currentBackStackRoute != MainScreenData.AtlasScreenData.route,
+            enter = AnimationDefaults.ExpandVerticallyEnter,
+            exit = AnimationDefaults.ShrinkVerticallyExit
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            ) {
+
+                val selectedTabIndex by remember(key1 = currentBackStackRoute) {
+                    derivedStateOf {
+                        when (currentBackStackRoute) {
+                            HomeScreenData.NoteScreenData.route -> 0
+                            HomeScreenData.BucketScreenData.route -> 1
+                            HomeScreenData.NotebookScreenData.route -> 2
+                            else -> 0
+                        }
+                    }
+                }
+
+                GenericTabRow(
+                    tabItemList = tabItemList,
+                    selectedTabIndex = selectedTabIndex,
+                    modifier = Modifier.weight(weight = 1f)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                GraIconButton.FilterAndSortTextButton()
+            }
+        }
     }
 }
 
