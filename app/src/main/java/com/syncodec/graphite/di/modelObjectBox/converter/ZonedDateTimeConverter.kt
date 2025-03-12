@@ -7,11 +7,9 @@ import kotlinx.serialization.json.Json
 import java.time.ZonedDateTime
 
 
-@OptIn(InternalSerializationApi::class)
 class ZonedDateTimeConverter : PropertyConverter<ZonedDateTime, String> {
     private val json = Json
 
-    @OptIn(InternalSerializationApi::class)
     override fun convertToEntityProperty(databaseValue: String?): ZonedDateTime? {
         try {
             databaseValue ?: return null
@@ -22,7 +20,6 @@ class ZonedDateTimeConverter : PropertyConverter<ZonedDateTime, String> {
         }
     }
 
-    @OptIn(InternalSerializationApi::class)
     override fun convertToDatabaseValue(entityProperty: ZonedDateTime?): String? {
         try {
             entityProperty ?: return null

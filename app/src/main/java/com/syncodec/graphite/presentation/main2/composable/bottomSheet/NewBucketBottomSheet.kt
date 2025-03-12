@@ -48,9 +48,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
+import kotlin.uuid.ExperimentalUuidApi
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 fun NewBucketBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),

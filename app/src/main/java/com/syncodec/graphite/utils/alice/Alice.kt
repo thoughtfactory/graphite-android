@@ -20,6 +20,7 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
+import androidx.core.content.edit
 
 
 enum class AliceRequestResult {
@@ -54,9 +55,9 @@ fun Context.putSecretData(key : String, value : ByteArray) {
 		buffer.putInt(initializationVector.size)
 		buffer.put(initializationVector)
 		buffer.put(encryptedKeyForRealm)
-		getSharedPreferences("alice", Context.MODE_PRIVATE).edit()
-			.putString("${key}_iv_and_encrypted_key", Base64.encodeToString(initializationVectorAndEncryptedKey, Base64.NO_WRAP))
-			.apply()
+		getSharedPreferences("alice", Context.MODE_PRIVATE).edit {
+            putString("${key}_iv_and_encrypted_key", Base64.encodeToString(initializationVectorAndEncryptedKey, Base64.NO_WRAP))
+        }
 	}
 }
 
@@ -100,7 +101,7 @@ fun Context.getSecretData(key : String) : AliceRequest {
 }
 
 fun Context.deleteSecretData(key : String) {
-	getSharedPreferences("alice", Context.MODE_PRIVATE).edit().remove("${key}_iv_and_encrypted_key").apply()
+	getSharedPreferences("alice", Context.MODE_PRIVATE).edit { remove("${key}_iv_and_encrypted_key") }
 }
 
 fun generateSecretKey() {

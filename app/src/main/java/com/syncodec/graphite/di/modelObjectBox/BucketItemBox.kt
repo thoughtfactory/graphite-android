@@ -29,7 +29,7 @@ data class BucketItemBox(
     var isFavourite: Boolean = false,
     var isLocked: Boolean = false,
 ) {
-    lateinit var parent: ToOne<BucketBox>
+    lateinit var parent: ToOne<BucketBoxEnc>
 
     companion object {
         val randomTodo

@@ -14,7 +14,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 
-object ZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
+object ZonedDateTimeSerializer : KSerializer<ZonedDateTime?> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("date") {
         element("year", PrimitiveSerialDescriptor("year", PrimitiveKind.INT))
         element("month", PrimitiveSerialDescriptor("month", PrimitiveKind.INT))
@@ -26,7 +26,8 @@ object ZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
         element("zoneId", PrimitiveSerialDescriptor("zoneId", PrimitiveKind.STRING))
     }
 
-    override fun serialize(encoder: Encoder, value: ZonedDateTime) {
+    override fun serialize(encoder: Encoder, value: ZonedDateTime?) {
+        value ?: return
         encoder.encodeStructure(descriptor) {
             encodeIntElement(descriptor, 0, value.year)
             encodeIntElement(descriptor, 1, value.monthValue)
@@ -39,7 +40,7 @@ object ZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
         }
     }
 
-    override fun deserialize(decoder: Decoder): ZonedDateTime {
+    override fun deserialize(decoder: Decoder): ZonedDateTime? {
         var year: Int? = null
         var month: Int? = null
         var day: Int? = null
@@ -70,7 +71,12 @@ object ZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
             e.printStackTrace()
         }
 
-        return ZonedDateTime.of(year!!, month!!, day!!, hour!!, minute!!, second!!, nanoSecond!!, ZoneId.of(zoneId))
+        try {
+            return ZonedDateTime.of(year ?: ZonedDateTime.now().year, month ?: 1, day ?: 1, hour ?: 0, minute ?: 0, second ?: 0, nanoSecond ?: 0, ZoneId.of(zoneId))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
     }
 }
 

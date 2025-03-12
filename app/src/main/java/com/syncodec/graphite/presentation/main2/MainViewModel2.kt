@@ -4,7 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEnc
 import com.syncodec.graphite.di.modelObjectBox.ChapterBox
+import com.syncodec.graphite.di.modelObjectBox.DecryptedBox
 import com.syncodec.graphite.di.secureRepository.BoxRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -16,7 +18,7 @@ import org.koin.android.annotation.KoinViewModel
 class MainViewModel2(private val boxRepository: BoxRepository) : ViewModel() {
 
     val allChapterBoxListFlow: Flow<List<ChapterBox>> = boxRepository.getAllChapterBoxAsFlow()
-    val allBucketBoxListFlow: Flow<List<BucketBox>> = boxRepository.getAllBucketBoxAsFlow()
+    val allBucketBoxListFlow: Flow<List<suspend () -> DecryptedBox?>> = boxRepository.getAllBucketBoxAsFlow()
 
     init {
         viewModelScope.launch(context = Dispatchers.Default) {

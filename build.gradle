@@ -3,7 +3,7 @@ buildscript {
 	ext {
 		compose_version = '1.5.15'
 		kotlinVersion = '2.0.0'
-        agp_version = '8.10.0-alpha07'
+        agp_version = '8.10.0-alpha08'
 		objectboxVersion = "4.0.3"
     }
 	repositories {

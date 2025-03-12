@@ -27,8 +27,8 @@ import com.syncodec.graphite.presentation.attachment.composable.screen.Attachmen
 import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
-import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
 import com.syncodec.graphite.presentation.bucket2.BucketViewModel2
+import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem2.BucketItemViewModel2
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
 import com.syncodec.graphite.presentation.explorer.ExplorerScreenViewModel
@@ -49,6 +49,7 @@ import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,8 +72,9 @@ class BaseApplication : Application() {
 
 //		LeakCanary.config = LeakCanary.config.copy(dumpHeap = false)
 
-        initDirectory()
+        val alice2 = Alice2(context = this)
 
+        initDirectory()
         setupImageLoader()
 
         startKoin {
@@ -80,11 +82,12 @@ class BaseApplication : Application() {
             androidContext(this@BaseApplication)
             modules(
                 module {
+                    single { alice2 }
                     single { Repository() }
                     single { DBox(this@BaseApplication) }
 
                     single { this@BaseApplication }
-                    single { BoxRepository(context = this@BaseApplication) }
+                    single { BoxRepository(context = this@BaseApplication, alice2 = alice2) }
                     single { OpenLibraryApi2(context = this@BaseApplication) }
                     single { TraktApi(context = this@BaseApplication) }
                     single { OpenGraphApi(context = this@BaseApplication) }
@@ -162,13 +165,13 @@ class BaseApplication : Application() {
                 .crossfade(durationMillis = AnimationDefaults.ANIMATION_TIME)
                 .memoryCache {
                     MemoryCache.Builder()
-                        .maxSizeBytes(size = 1024*1024*64)              //  64 Mb
+                        .maxSizeBytes(size = 1024 * 1024 * 64)              //  64 Mb
                         .build()
                 }
                 .diskCache {
                     DiskCache.Builder()
                         .directory(directory = applicationContext.cacheDir.resolve("image_cache"))
-                        .maxSizeBytes(size = 1024*1024*64)              //  64 Mb
+                        .maxSizeBytes(size = 1024 * 1024 * 64)              //  64 Mb
                         .build()
                 }
                 .build()

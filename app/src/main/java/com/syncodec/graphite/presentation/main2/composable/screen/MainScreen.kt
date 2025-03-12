@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.syncodec.graphite.di.modelObjectBox.BucketBox
 import com.syncodec.graphite.di.modelObjectBox.ChapterBox
+import com.syncodec.graphite.di.modelObjectBox.DecryptedBox
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.scaffold2.GenericScaffold2
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
@@ -49,7 +50,7 @@ fun MainScreen(
     val newBucketListBottomSheet = GenericBottomSheet2State.rememberGenericBottomSheet2State(skipPartiallyExpanded = true)
 
     val allChapterBoxListFlow: Flow<List<ChapterBox>> = mainViewModel2.allChapterBoxListFlow
-    val allBucketBoxListFlow: Flow<List<BucketBox>> = mainViewModel2.allBucketBoxListFlow
+    val allBucketBoxListFlow: Flow<List<suspend () -> DecryptedBox?>> = mainViewModel2.allBucketBoxListFlow
 
     val currentBackStackList by navController.currentBackStack.collectAsState()
 
