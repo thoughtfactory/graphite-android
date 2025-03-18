@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxPlain
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyGridState
@@ -56,8 +57,8 @@ fun BucketItemListContainer(
 fun BucketItemGridContainer(
     lazyGridState: LazyGridState,
     reorderableGridState: ReorderableLazyGridState,
-    bucketItemBoxListOrdered: List<BucketItemBox>,
-    content: @Composable ReorderableCollectionItemScope.(isDragging: Boolean, index: Int,  data: BucketItemBox) -> Unit,
+    bucketItemBoxListOrdered: List<BucketItemBoxPlain>,
+    content: @Composable ReorderableCollectionItemScope.(isDragging: Boolean, index: Int,  data: BucketItemBoxPlain) -> Unit,
 ) {
     LazyVerticalGrid(
         state = lazyGridState,

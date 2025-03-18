@@ -46,11 +46,12 @@ import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.T
 import com.syncodec.graphite.presentation.common.v2.SurfaceVariantButton
 import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MovieTraktScreenCompact(
     bucketItemBox: BucketItemBox? = null,
@@ -58,12 +59,14 @@ fun MovieTraktScreenCompact(
     isEditing: Boolean = false,
     onToggleBucketItemState: (BucketItemData.State) -> Unit = {},
 ) {
+    val alice2: Alice2 = koinInject()
+
     val isDarkTheme = LocalIsDarkTheme.current
 
     val uriHandler = LocalUriHandler.current
     val traktApi: TraktApi = koinInject()
 
-    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData } }
+    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData?.decrypt(alice2) } }
     val movieData by remember(key1 = bucketItemData) { derivedStateOf { bucketItemData as? BucketItemShow.TraktMovie } }
 
     Column(

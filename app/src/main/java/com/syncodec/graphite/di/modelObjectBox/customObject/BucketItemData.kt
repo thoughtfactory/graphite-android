@@ -1,12 +1,12 @@
 package com.syncodec.graphite.di.modelObjectBox.customObject
 
 import android.content.Context
-import android.graphics.Bitmap
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketItemData
 import com.syncodec.graphite.di.network.openGraph.LinkData
 import com.syncodec.graphite.di.network.trakt.TraktIDs
+import com.syncodec.graphite.utils.alice2.Alice2
 import io.objectbox.converter.PropertyConverter
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -42,6 +42,8 @@ sealed class BucketItemData {
         is BucketItemLink -> null
         is BucketItemLocation -> this.title
     }
+
+    fun encrypt(alice2: Alice2) = EncryptedBucketItemData.fromBucketItemData(this, alice2)
 
     @Serializable
     enum class State { Alpha, Beta, Gamma }

@@ -10,20 +10,20 @@ interface Encryptable<T> {
 }
 
 interface Decryptable<T> {
-    fun decrypt(alice2: Alice2): T
+    fun decrypt(alice2: Alice2, default: T? = null): T?
 }
 
-@BaseEntity
-abstract class EncryptedBox : Decryptable<DecryptedBox> {
-    @Id
-    var id: Long = 0
-    abstract val decryptedBox: DecryptedBox?
-
-    abstract override fun decrypt(alice2: Alice2): DecryptedBox
-}
-
-@BaseEntity
-abstract class DecryptedBox : Encryptable<EncryptedBox> {
-    abstract val encryptedBox: EncryptedBox?
-    abstract override fun encrypt(alice2: Alice2): EncryptedBox
-}
+//@BaseEntity
+//abstract class EncryptedBox : Decryptable<DecryptedBox> {
+//    @Id
+//    var id: Long = 0
+//    abstract val decryptedBox: DecryptedBox?
+//
+//    abstract override fun decrypt(alice2: Alice2): DecryptedBox
+//}
+//
+//@BaseEntity
+//abstract class DecryptedBox : Encryptable<EncryptedBox> {
+//    abstract val encryptedBox: EncryptedBox?
+//    abstract override fun encrypt(alice2: Alice2): EncryptedBox
+//}

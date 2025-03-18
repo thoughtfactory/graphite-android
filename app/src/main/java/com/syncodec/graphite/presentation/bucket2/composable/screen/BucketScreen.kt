@@ -53,9 +53,11 @@ import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.DataLoader
 import com.syncodec.graphite.utils.IntentUtil
 import com.syncodec.graphite.utils.IntentUtil.BucketItemActivityData
+import com.syncodec.graphite.utils.alice2.Alice2
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,10 +66,12 @@ fun BucketScreen(
     viewModel: BucketViewModel2 = koinViewModel()
 ) {
     val context = LocalContext.current
+    val alice2: Alice2 = koinInject()
     val scope = rememberCoroutineScope()
 
     val bucketBoxData by viewModel.bucketBoxDataFlow.collectAsState()
     val bucketItemBoxGroupDataFlow = viewModel.bucketItemBoxGroupDataFlow
+    val bucketItemBoxOrderedDataFlow = viewModel.bucketItemBoxOrderedDataFlow
 
     val selectionContainerActor = remember { SelectionContainerActor() }
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
@@ -89,8 +93,9 @@ fun BucketScreen(
 
     val bucketBox by remember(key1 = bucketBoxData) { derivedStateOf { (bucketBoxData as? DataLoader.Loaded)?.data } }
     val bucketBoxId by remember(key1 = bucketBox) { derivedStateOf { bucketBox?.id } }
-    val title by remember(key1 = bucketBox) { derivedStateOf { bucketBox?.title } }
-    val bucketType by remember(key1 = bucketBox) { derivedStateOf { bucketBox?.bucketType } }
+    val title by remember(key1 = bucketBox) { derivedStateOf { bucketBox?.title?.decrypt(alice2) } }
+    val bucketType by remember(key1 = bucketBox) { derivedStateOf { bucketBox?.bucketType?.decrypt(alice2) } }
+
 
     GenericScaffold2(
         topBar = {
@@ -98,8 +103,8 @@ fun BucketScreen(
                 title = title,
                 bucketType = bucketType ?: BucketBox.BucketType.Unknown,
                 stateFilterInt = pagerState.currentPage,
-                isLocked = bucketBox?.isLocked != false,
-                isFavourite = bucketBox?.isFavourite != false,
+                isLocked = bucketBox?.isLocked?.decrypt(alice2, false) == true,
+                isFavourite = bucketBox?.isFavourite?.decrypt(alice2, false) == true,
                 onUpdateFilterInt = { scope.launch { pagerState.animateScrollToPage(page = it) } },
                 onClickLock = viewModel::onToggleLock,
                 onClickFavourite = viewModel::onToggleFavourite
@@ -199,7 +204,7 @@ fun BucketScreen(
                         bucketBoxDataFlow = viewModel.bucketBoxDataFlow,
                         pagerState = pagerState,
                         bucketItemBoxGroupDataFlow = bucketItemBoxGroupDataFlow,
-                        onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
+//                        onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
                         onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder
                     )
 
@@ -207,6 +212,7 @@ fun BucketScreen(
                         bucketBoxDataFlow = viewModel.bucketBoxDataFlow,
                         pagerState = pagerState,
                         bucketItemBoxGroupDataFlow = bucketItemBoxGroupDataFlow,
+                        bucketItemBoxOrderedDataFlow = bucketItemBoxOrderedDataFlow,
                         onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
                         onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
                         onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@BookScreen, bucketItemId = it.id)) }
@@ -216,7 +222,7 @@ fun BucketScreen(
                         bucketBoxDataFlow = viewModel.bucketBoxDataFlow,
                         pagerState = pagerState,
                         bucketItemBoxGroupDataFlow = bucketItemBoxGroupDataFlow,
-                        onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
+//                        onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
                         onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
                         onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@ShowScreen, bucketItemId = it.id)) }
                     )
@@ -225,7 +231,7 @@ fun BucketScreen(
                         bucketBoxDataFlow = viewModel.bucketBoxDataFlow,
                         pagerState = pagerState,
                         bucketItemBoxGroupDataFlow = bucketItemBoxGroupDataFlow,
-                        onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
+//                        onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
                         onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
                         onClickBucketItem = { viewLinkBottomSheet.openSheet(data = it) }
                     )

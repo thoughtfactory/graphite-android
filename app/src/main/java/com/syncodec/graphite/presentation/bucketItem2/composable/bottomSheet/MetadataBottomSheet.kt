@@ -18,11 +18,13 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.BottomSheetKeyV
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.utils.alice2.Alice2
 import dev.chrisbanes.haze.HazeState
 import kotlinx.serialization.InternalSerializationApi
+import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun MetadataBottomSheet(
@@ -31,6 +33,8 @@ fun MetadataBottomSheet(
     bucketItemBox: BucketItemBox? = null,
     onClickEdit: () -> Unit = {}
 ) {
+    val alice2: Alice2 = koinInject()
+
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
         outerHazeState = outerHazeState
@@ -47,11 +51,11 @@ fun MetadataBottomSheet(
             )
             BottomSheetKeyValue.Composable(
                 key = stringResource(id = R.string.created_on),
-                value = bucketItemBox?.createdTimestamp?.toPretty() ?: "-"
+                value = bucketItemBox?.createdTimestamp?.decrypt(alice2 = alice2)?.toPretty() ?: "-"
             )
             BottomSheetKeyValue.Composable(
                 key = stringResource(id = R.string.modified_on),
-                value = bucketItemBox?.modifiedTimestamp?.toPretty() ?: "-"
+                value = bucketItemBox?.modifiedTimestamp?.decrypt(alice2 = alice2)?.toPretty() ?: "-"
             )
 
 

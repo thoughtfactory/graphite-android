@@ -118,6 +118,8 @@ class OpenLibraryApi2(private val context: Context) {
                 .url(url = httpUrl)
                 .build()
 
+            Log.d(TAG, httpUrl.toString())
+
             client
                 .newCall(request = request)
                 .enqueue(
@@ -146,7 +148,6 @@ class OpenLibraryApi2(private val context: Context) {
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @WorkerThread
     suspend fun getBookCoverImage(
         coverI: Int,
@@ -177,5 +178,9 @@ class OpenLibraryApi2(private val context: Context) {
             e.printStackTrace()
             callback(NetworkResponse.Error(exception = e))
         }
+    }
+
+    companion object {
+        const val TAG = "OpenLibraryApi2"
     }
 }

@@ -45,8 +45,10 @@ import com.syncodec.graphite.presentation.common.v2.scaffold2.GenericScaffold2
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
 import dev.chrisbanes.haze.HazeState
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import kotlin.Unit
 
 
@@ -55,6 +57,7 @@ import kotlin.Unit
 fun BucketItemScreen(
     viewModel: BucketItemViewModel2 = koinViewModel()
 ) {
+    val alice2: Alice2 = koinInject()
 
     val isDataSaved by viewModel.isDataSaved.collectAsState()
     val bucketType by viewModel.bucketType.collectAsState()
@@ -141,7 +144,7 @@ fun BucketItemScreen(
                         onUpdateThumbnail = viewModel::onUpdateThumbnail
                     )
 
-                    BucketBox.BucketType.Show -> when (bucketItemBox?.bucketItemData) {
+                    BucketBox.BucketType.Show -> when (bucketItemBox?.bucketItemData?.decrypt(alice2 = alice2)) {
                         is BucketItemShow.TraktMovie -> MovieScreen(bucketItemBox = bucketItemBox, thumbnailDataFlow = viewModel.thumbnailDataFlow, onToggleBucketItemState = viewModel::onToggleBucketItemState)
                         is BucketItemShow.TraktSeries -> SeriesScreen(bucketItemBox = bucketItemBox, thumbnailDataFlow = viewModel.thumbnailDataFlow, onToggleBucketItemState = viewModel::onToggleBucketItemState)
                         else -> Unit

@@ -39,6 +39,8 @@ import com.syncodec.graphite.di.modelObjectBox.BucketBox
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBoolean
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketItemData
 import com.syncodec.graphite.di.network.openGraph.LinkData
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.FavouriteButton
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.LockButton
@@ -47,34 +49,38 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.buildingBlock.KeyValueCard
+import com.syncodec.graphite.utils.alice2.Alice2
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
+import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LinkBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<BucketItemBox> = GenericBottomSheet2State.rememberGenericBottomSheet2StateT(),
     outerHazeState: HazeState = remember { HazeState() },
     onUpdateBucketItemBox: (BucketItemBox) -> Unit = {}
 ) {
+    val alice2: Alice2 = koinInject()
+
     val bucketItemBox by bottomSheet2State.dataFlow.collectAsState()
 
-    val linkData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData as? BucketItemLink } }
+    val linkData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData?.decrypt(alice2 = alice2) as? BucketItemLink } }
 
     var bucketItemState: BucketItemData.State by remember(key1 = linkData?.state) { mutableStateOf(value = linkData?.state ?: BucketItemData.State.Alpha) }
-    var isFavourite by remember(key1 = bucketItemBox?.isFavourite) { mutableStateOf(value = bucketItemBox?.isFavourite == true) }
-    var isLocked by remember(key1 = bucketItemBox?.isLocked) { mutableStateOf(value = bucketItemBox?.isLocked == true) }
+    var isFavourite by remember(key1 = bucketItemBox?.isFavourite) { mutableStateOf(value = bucketItemBox?.isFavourite?.decrypt(alice2) == true) }
+    var isLocked by remember(key1 = bucketItemBox?.isLocked) { mutableStateOf(value = bucketItemBox?.isLocked?.decrypt(alice2) == true) }
 
     fun updateBucketItemObject() {
         val updatedBucketItemBox = bucketItemBox ?: return
         updatedBucketItemBox.apply {
-            this.isFavourite = isFavourite
-            this.isLocked = isLocked
-            this.bucketItemData = linkData?.copy(state = bucketItemState)
+            this.isFavourite = EncryptedBoolean.fromBoolean(isFavourite, alice2)
+            this.isLocked = EncryptedBoolean.fromBoolean(isLocked, alice2)
+            this.bucketItemData = EncryptedBucketItemData.fromBucketItemData(linkData?.copy(state = bucketItemState), alice2)
         }
 
         onUpdateBucketItemBox(updatedBucketItemBox)

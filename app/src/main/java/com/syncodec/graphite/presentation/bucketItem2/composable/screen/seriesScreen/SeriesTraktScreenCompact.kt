@@ -47,6 +47,7 @@ import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.T
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.TitleView
 import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.koinInject
 
@@ -59,12 +60,14 @@ fun SeriesTraktScreenCompact(
     isEditing: Boolean = false,
     onToggleBucketItemState: (BucketItemData.State) -> Unit = {},
 ) {
+    val alice2: Alice2 = koinInject()
+
     val isDarkTheme = LocalIsDarkTheme.current
 
     val uriHandler = LocalUriHandler.current
     val traktApi: TraktApi = koinInject()
 
-    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData } }
+    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData?.decrypt(alice2) } }
     val seriesData by remember(key1 = bucketItemData) { derivedStateOf { bucketItemData as? BucketItemShow.TraktSeries } }
 
     Column(

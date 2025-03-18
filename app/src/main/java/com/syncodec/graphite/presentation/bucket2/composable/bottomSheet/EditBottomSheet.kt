@@ -20,14 +20,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedString
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
+import com.syncodec.graphite.utils.alice2.Alice2
 import dev.chrisbanes.haze.HazeState
 import kotlinx.serialization.InternalSerializationApi
+import org.koin.compose.koinInject
 
 
 @OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class, ExperimentalLayoutApi::class)
@@ -40,14 +43,15 @@ fun EditBottomSheet(
     onUpdateBucket: (BucketBox) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val alice2: Alice2 = koinInject()
     val isBottomSheetVisible by bottomSheet2State.isBottomSheetVisibleFlow.collectAsState()
 
     val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
     val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
 
     LaunchedEffect(key1 = bucketBox, key2 = isBottomSheetVisible) {
-        titleTextFieldController.onValueChange(value = bucketBox?.title ?: "")
-        descriptionTextFieldController.onValueChange(value = bucketBox?.description ?: "")
+        titleTextFieldController.onValueChange(value = bucketBox?.title?.decrypt(alice2) ?: "")
+        descriptionTextFieldController.onValueChange(value = bucketBox?.description?.decrypt(alice2) ?: "")
     }
 
     fun updateBucket() {
@@ -55,10 +59,10 @@ fun EditBottomSheet(
         val descriptionValidationResult = descriptionTextFieldController.validate { true }
 
         if (titleValidationResult.isValidated && descriptionValidationResult.isValidated && bucketBox!=null) {
-            
+
             bucketBox.apply {
-                this.title = titleValidationResult.text
-                this.description = descriptionValidationResult.text
+                this.title = EncryptedString.fromString(string = titleValidationResult.text, alice2 = alice2)
+                this.description = EncryptedString.fromString(string = descriptionValidationResult.text, alice2 = alice2)
             }
             onUpdateBucket(bucketBox)
 

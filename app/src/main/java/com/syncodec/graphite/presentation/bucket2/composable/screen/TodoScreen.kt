@@ -3,6 +3,8 @@ package com.syncodec.graphite.presentation.bucket2.composable.screen
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -22,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -39,8 +42,10 @@ import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionCo
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -53,6 +58,7 @@ fun TodoScreen(
     onUpdateBucketItemBoxState: (BucketItemBox, BucketItemData.State) -> Unit = { _, _ -> },
     onUpdateBucketItemOrder: (BucketBox, List<Long>) -> Unit = { _, _ -> },
 ) {
+    val alice2: Alice2 = koinInject()
 
     val view = LocalView.current
     val bucketItemBoxListData by bucketItemBoxGroupDataFlow.collectAsState()
@@ -65,11 +71,11 @@ fun TodoScreen(
     AnimatedContent(
         targetState = bucketItemBoxListData::class.simpleName,
         transitionSpec = { AnimationDefaults.Fade }
-    ) { bucketItemBoxListData1 ->
-        when (bucketItemBoxListData1) {
+    ) { bucketItemBoxListDataString ->
+        when (bucketItemBoxListDataString) {
             DataLoader.Init::class.simpleName -> Unit
             DataLoader.Loading::class.simpleName -> Unit
-            DataLoader.NoData::class.simpleName -> Unit
+            DataLoader.NoData::class.simpleName -> NoDataView()
             DataLoader.Error::class.simpleName -> Unit
             DataLoader.Loaded::class.simpleName -> HorizontalPager(
                 state = pagerState,
@@ -112,11 +118,10 @@ fun TodoScreen(
                         key = { _, bucketItemBox -> bucketItemBox.id },
                         contentType = { _, _ -> 1 }
                     ) { index, bucketItemBox ->
-                        val data = bucketItemBox.bucketItemData as? BucketItemTodo
+                        val data = bucketItemBox.bucketItemData?.decrypt(alice2 = alice2) as? BucketItemTodo
                         data ?: return@itemsIndexed
 
                         ReorderableItem(reorderableLazyListState, key = bucketItemBox.id) { isDragging ->
-
                             TodoCard(
                                 text = data.title,
                                 state = data.state,
@@ -152,5 +157,19 @@ fun TodoScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NoDataView() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.il_mj_todo),
+            contentDescription = null,
+            modifier = Modifier.requiredSize(360.dp)
+        )
     }
 }

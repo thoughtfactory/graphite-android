@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,8 @@ import com.syncodec.graphite.di.modelObjectBox.BucketBox
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBoolean
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketItemData
 import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.openGraph.LinkData
 import com.syncodec.graphite.di.network.openGraph.OpenGraphApi
@@ -56,15 +59,15 @@ import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
+import com.syncodec.graphite.utils.alice2.Alice2
 import com.syncodec.graphite.utils.encodeBase64
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.InternalSerializationApi
 import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddLinkBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
@@ -72,6 +75,7 @@ fun AddLinkBottomSheet(
     onAddLink: (bucketItemBox: BucketItemBox) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val alice2: Alice2 = koinInject()
     val openGraphApi: OpenGraphApi = koinInject()
 
     val linkTextFieldController = rememberTextField2Controller(initialFocus = true)
@@ -99,9 +103,9 @@ fun AddLinkBottomSheet(
         val linkValidationResult = linkTextFieldController.validate { it.isNotBlank() }
         if (linkValidationResult.isValidated) {
             val bucketItemData = BucketItemLink(state = bucketItemState, linkData = toSaveLinkData ?: return)
-            val bucketItemBox = BucketItemBox(bucketItemData = bucketItemData).apply {
-                this.isFavourite = isFavourite
-                this.isLocked = isLocked
+            val bucketItemBox = BucketItemBox(bucketItemData = EncryptedBucketItemData.fromBucketItemData(bucketItemData, alice2)).apply {
+                this.isFavourite = EncryptedBoolean.fromBoolean(isFavourite, alice2)
+                this.isLocked = EncryptedBoolean.fromBoolean(isLocked, alice2)
             }
             onAddLink(bucketItemBox)
 
@@ -204,6 +208,7 @@ private fun SuccessView(
     onClickFavourite: (Boolean) -> Unit = {},
     onClickLock: (Boolean) -> Unit = {},
 ) {
+    val alice2: Alice2 = koinInject()
     val uriHandler = LocalUriHandler.current
     val clipboardManager = LocalClipboardManager.current
 

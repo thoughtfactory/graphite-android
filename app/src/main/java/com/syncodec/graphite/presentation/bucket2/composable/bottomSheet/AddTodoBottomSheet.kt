@@ -21,6 +21,7 @@ import com.syncodec.graphite.di.modelObjectBox.BucketBox
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemTodo
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketItemData
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemStateView
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
@@ -28,17 +29,19 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
+import com.syncodec.graphite.utils.alice2.Alice2
 import dev.chrisbanes.haze.HazeState
-import kotlinx.serialization.InternalSerializationApi
+import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTodoBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
     outerHazeState: HazeState = remember { HazeState() },
     onAddTodo: (bucketItemBox: BucketItemBox) -> Unit = {}
 ) {
+    val alice2: Alice2 = koinInject()
     val scope = rememberCoroutineScope()
 
     val todoTitleTextFieldController = rememberTextField2Controller(initialFocus = false)
@@ -48,7 +51,7 @@ fun AddTodoBottomSheet(
         val todoTitleValidationResult = todoTitleTextFieldController.validate { it.isNotBlank() }
         if (todoTitleValidationResult.isValidated) {
             val bucketItemData = BucketItemTodo(title = todoTitleValidationResult.text, state = bucketItemState)
-            val bucketItemBox = BucketItemBox(bucketItemData = bucketItemData)
+            val bucketItemBox = BucketItemBox(bucketItemData = EncryptedBucketItemData.fromBucketItemData(bucketItemData, alice2))
             onAddTodo(bucketItemBox)
 
             todoTitleTextFieldController.reset()

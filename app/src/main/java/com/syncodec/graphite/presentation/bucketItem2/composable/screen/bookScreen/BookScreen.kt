@@ -14,7 +14,9 @@ import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.flow.StateFlow
+import org.koin.compose.koinInject
 
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -30,9 +32,11 @@ fun BookScreen(
 ) {
     Log.d("BookScreen", "BookScreen")
 
+    val alice2: Alice2 = koinInject()
+
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
 
-    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData } }
+    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData?.decrypt(alice2 = alice2) } }
     val bookData by remember(key1 = bucketItemData) { derivedStateOf { bucketItemData as? BucketItemBook } }
 
     bookData?.let { bookData1 ->

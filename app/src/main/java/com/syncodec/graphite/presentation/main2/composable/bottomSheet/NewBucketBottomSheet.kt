@@ -36,6 +36,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketType
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedString
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
@@ -43,11 +45,12 @@ import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
+import com.syncodec.graphite.utils.alice2.Alice2
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.InternalSerializationApi
+import org.koin.compose.koinInject
 import kotlin.uuid.ExperimentalUuidApi
 
 
@@ -58,6 +61,7 @@ fun NewBucketBottomSheet(
     outerHazeState: HazeState = remember { HazeState() },
     onCreateNewBucket: (BucketBox) -> Unit
 ) {
+    val alice2: Alice2 = koinInject()
     val scope = rememberCoroutineScope()
 
     val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
@@ -73,7 +77,7 @@ fun NewBucketBottomSheet(
         isSelectedBucketTypeValidationError = bucketType == null
 
         if (titleValidationResult.isValidated && descriptionValidationResult.isValidated && bucketType != null) {
-            val bucketBox = BucketBox(title = titleValidationResult.text, description = descriptionValidationResult.text, bucketType = bucketType)
+            val bucketBox = BucketBox(title = EncryptedString.fromString(titleValidationResult.text, alice2), description = EncryptedString.fromString(descriptionValidationResult.text, alice2), bucketType = EncryptedBucketType.fromBucketType(bucketType, alice2))
             onCreateNewBucket(bucketBox)
 
             titleTextFieldController.reset()

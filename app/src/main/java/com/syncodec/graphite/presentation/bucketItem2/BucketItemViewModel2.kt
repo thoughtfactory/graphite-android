@@ -14,6 +14,8 @@ import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLocation
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemTodo
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBoolean
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketItemData
 import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.openLibrary.OLBookSearchResult
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryApi2
@@ -24,6 +26,7 @@ import com.syncodec.graphite.utils.BitmapUtil.compress
 import com.syncodec.graphite.utils.DataLoader
 import com.syncodec.graphite.utils.FileUtil.toBitmap
 import com.syncodec.graphite.utils.FileUtil.toByteArray
+import com.syncodec.graphite.utils.alice2.Alice2
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +44,7 @@ class BucketItemViewModel2(
     private val boxRepository: BoxRepository,
     private val openLibraryApi2: OpenLibraryApi2,
     private val traktApi: TraktApi,
+    private val alice2: Alice2,
 ) : ViewModel() {
 
     private var _isDataFetched = false
@@ -71,19 +75,12 @@ class BucketItemViewModel2(
                     else {
                         this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
 
-                        val thumbnail = bucketItemBox.bucketItemData?.thumbnail(context = baseApplication)
-                        val a = when (thumbnail) {
-                            is BucketItemData.Companion.Thumbnail.Base64 -> thumbnail.data.decodeBase64ToBitmap()
-                            is BucketItemData.Companion.Thumbnail.File -> boxRepository.getBucketItemBoxThumbnail(bucketItemBoxId = bucketItemBox.id)
-                            else -> null
-                        }
+                        val bucketItemDataDec = bucketItemBox.bucketItemData?.decrypt(alice2)
 
-
-
-                        when (bucketItemBox.bucketItemData) {
+                        when (bucketItemDataDec) {
                             is BucketItemTodo -> Unit
                             is BucketItemBook -> {
-                                val thumbnail = bucketItemBox.bucketItemData?.thumbnail(context = baseApplication)
+                                val thumbnail = bucketItemDataDec.thumbnail(context = baseApplication)
                                 val thumbnailData = when (thumbnail) {
                                     is BucketItemData.Companion.Thumbnail.Base64 -> thumbnail.data.decodeBase64ToBitmap()?.let { ThumbnailData.Bitmap(data = it) }
                                     is BucketItemData.Companion.Thumbnail.File -> boxRepository.getBucketItemBoxThumbnail(bucketItemBoxId = bucketItemBox.id)?.let { ThumbnailData.File(data = it) }
@@ -118,7 +115,7 @@ class BucketItemViewModel2(
                 if (it == null) this@BucketItemViewModel2._parent.tryEmit(value = DataLoader.NoData)
                 else this@BucketItemViewModel2._parent.tryEmit(value = DataLoader.Loaded(data = it))
 
-                this@BucketItemViewModel2._bucketType.tryEmit(value = it?.bucketType)
+                this@BucketItemViewModel2._bucketType.tryEmit(value = it?.bucketType?.decrypt(alice2 = alice2))
             }
         }
     }
@@ -150,7 +147,7 @@ class BucketItemViewModel2(
                                     firstPublishYear = olBookSearchResult.firstPublishedYear,
                                     numberOfPages = olBookSearchResult.numberOfPages,
                                 )
-                                val bucketItemBox = BucketItemBox(bucketItemData = bucketItemData)
+                                val bucketItemBox = BucketItemBox(bucketItemData = EncryptedBucketItemData.fromBucketItemData(bucketItemData, alice2))
                                 this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
                                 this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
                             }
@@ -208,7 +205,7 @@ class BucketItemViewModel2(
                                     homepage = traktMovieData.homepage,
                                     genres = traktMovieData.genres,
                                 )
-                                val bucketItemBox = BucketItemBox(bucketItemData = bucketItemData)
+                                val bucketItemBox = BucketItemBox(bucketItemData = EncryptedBucketItemData.fromBucketItemData(bucketItemData, alice2))
                                 this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
                                 this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
                             }
@@ -238,7 +235,7 @@ class BucketItemViewModel2(
                                     homepage = traktSeriesData.homepage,
                                     genres = traktSeriesData.genres,
                                 )
-                                val bucketItemBox = BucketItemBox(bucketItemData = bucketItemData)
+                                val bucketItemBox = BucketItemBox(bucketItemData = EncryptedBucketItemData.fromBucketItemData(bucketItemData, alice2))
                                 this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
                                 this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
                             }
@@ -262,17 +259,18 @@ class BucketItemViewModel2(
         }
     }
 
-    @OptIn(InternalSerializationApi::class)
     fun putBucketItemBox() {
         val parent = (this.parent.value as? DataLoader.Loaded)?.data ?: return
         val thumbnailBase64 = (this.thumbnailDataFlow.value as? DataLoader.Loaded)?.data?.getAsBase64()?.let { BucketItemData.Companion.Thumbnail.Base64(data = it) }
         val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data ?: return
 
-        bucketItemBox.bucketItemData = when (bucketItemBox.bucketItemData) {
-            is BucketItemBook.OpenLibrary -> (bucketItemBox.bucketItemData as? BucketItemBook.OpenLibrary)?.copy(thumbnail = thumbnailBase64)
-            is BucketItemShow.TraktMovie -> (bucketItemBox.bucketItemData as? BucketItemShow.TraktMovie)?.copy(thumbnail = if (thumbnailBase64 == null) null else BucketItemData.Companion.Thumbnail.File)
-            else -> bucketItemBox.bucketItemData
+        val newBucketItemDataDec = when (val bucketItemDataDec = bucketItemBox.bucketItemData?.decrypt(alice2)) {
+            is BucketItemBook.OpenLibrary -> (bucketItemDataDec as? BucketItemBook.OpenLibrary)?.copy(thumbnail = thumbnailBase64)
+            is BucketItemShow.TraktMovie -> (bucketItemDataDec as? BucketItemShow.TraktMovie)?.copy(thumbnail = if (thumbnailBase64 == null) null else BucketItemData.Companion.Thumbnail.File)
+            else -> bucketItemDataDec
         }
+
+        bucketItemBox.bucketItemData = EncryptedBucketItemData.fromBucketItemData(newBucketItemDataDec, alice2)
 
         boxRepository.putBucketItemBox(bucketItemBox = bucketItemBox, parent = parent) { bucketItemBoxId ->
             if (bucketItemBoxId != null && thumbnailBase64 != null) boxRepository.putBucketItemBoxThumbnail(bucketItemBoxId = bucketItemBoxId, thumbnail = (this@BucketItemViewModel2.thumbnailDataFlow.value as? DataLoader.Loaded)?.data?.getAsBitmap())
@@ -289,7 +287,7 @@ class BucketItemViewModel2(
 
     fun updateBucketItemData(bucketItemData: BucketItemData) {
         val parent = (this.parent.value as? DataLoader.Loaded)?.data ?: return
-        val bucketItemBox = (this.bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data?.copy(bucketItemData = bucketItemData) ?: return
+        val bucketItemBox = (this.bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data?.copy(bucketItemData = EncryptedBucketItemData.fromBucketItemData(bucketItemData, alice2)) ?: return
         boxRepository.putBucketItemBox(bucketItemBox = bucketItemBox, parent = parent) {
             this@BucketItemViewModel2._isDataSaved.tryEmit(value = true)
         }
@@ -297,7 +295,14 @@ class BucketItemViewModel2(
 
     fun onToggleBucketItemState(newState: BucketItemData.State) {
         val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data
-        val newBucketItemBox = bucketItemBox?.copy(bucketItemData = bucketItemBox.bucketItemData?.copyWithState(newState = newState))
+
+        val newBucketItemData = bucketItemBox
+            ?.bucketItemData
+            ?.decrypt(alice2)
+            ?.copyWithState(newState = newState)
+            ?.encrypt(alice2)
+
+        val newBucketItemBox = bucketItemBox?.copy(bucketItemData = newBucketItemData)
         val newData = DataLoader.Loaded(data = newBucketItemBox ?: return)
 
         if (isDataSaved.value == false) this._bucketItemBoxDataFlow.tryEmit(value = newData)
@@ -306,7 +311,7 @@ class BucketItemViewModel2(
 
     fun onToggleLock(newState: Boolean) {
         val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data
-        val newBucketItemBox = bucketItemBox?.copy(isLocked = newState)
+        val newBucketItemBox = bucketItemBox?.copy(isLocked = EncryptedBoolean.fromBoolean(newState, alice2))
         val newData = DataLoader.Loaded(data = newBucketItemBox ?: return)
 
         if (isDataSaved.value == false) this._bucketItemBoxDataFlow.tryEmit(value = newData)
@@ -315,7 +320,7 @@ class BucketItemViewModel2(
 
     fun onToggleFavourite(newState: Boolean) {
         val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data
-        val newBucketItemBox = bucketItemBox?.copy(isFavourite = newState)
+        val newBucketItemBox = bucketItemBox?.copy(isFavourite = EncryptedBoolean.fromBoolean(newState, alice2))
         val newData = DataLoader.Loaded(data = newBucketItemBox ?: return)
 
         if (isDataSaved.value == false) this._bucketItemBoxDataFlow.tryEmit(value = newData)

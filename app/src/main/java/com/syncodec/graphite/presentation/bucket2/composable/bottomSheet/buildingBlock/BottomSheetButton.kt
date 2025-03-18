@@ -26,7 +26,6 @@ import com.syncodec.graphite.presentation.ui.LockClosedContainer
 import io.github.esentsov.PackagePrivate
 
 
-@PackagePrivate
 @Composable
 fun RowScope.FavouriteButton(
     isFavourite: Boolean = true,
@@ -58,7 +57,6 @@ fun RowScope.FavouriteButton(
     }
 }
 
-@PackagePrivate
 @Composable
 fun RowScope.LockButton(
     isLocked: Boolean = false,

@@ -1,45 +1,88 @@
 package com.syncodec.graphite.di.modelObjectBox
 
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.converter.ZonedDateTimeConverter
+import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemDataConverter
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemTodo
-import com.syncodec.graphite.di.network.openGraph.LinkData
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBoolean
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBooleanConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketItemData
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketItemDataConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedUuid
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedUuidConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedZonedDateTime
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedZonedDateTimeConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.encrypt
+import com.syncodec.graphite.utils.alice2.Alice2
 import io.objectbox.annotation.Convert
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
 import io.objectbox.relation.ToOne
-import kotlinx.serialization.InternalSerializationApi
 import java.time.ZonedDateTime
-import kotlin.random.Random
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 
-@OptIn(InternalSerializationApi::class)
 @Entity
 data class BucketItemBox(
     @Id var id: Long = 0,
 
-    @Convert(converter = ZonedDateTimeConverter::class, dbType = String::class) var createdTimestamp: ZonedDateTime? = ZonedDateTime.now(),
-    @Convert(converter = ZonedDateTimeConverter::class, dbType = String::class) var modifiedTimestamp: ZonedDateTime? = ZonedDateTime.now(),
+    @Convert(converter = EncryptedUuidConverter::class, dbType = String::class) var uuid: EncryptedUuid? = null,
 
-    @Convert(converter = BucketItemDataConverter::class, dbType = String::class) var bucketItemData: BucketItemData? = null,
+    @Convert(converter = EncryptedZonedDateTimeConverter::class, dbType = String::class) var createdTimestamp: EncryptedZonedDateTime? = null,
+    @Convert(converter = EncryptedZonedDateTimeConverter::class, dbType = String::class) var modifiedTimestamp: EncryptedZonedDateTime? = null,
 
-    var isFavourite: Boolean = false,
-    var isLocked: Boolean = false,
+    @Convert(converter = EncryptedBucketItemDataConverter::class, dbType = String::class) var bucketItemData: EncryptedBucketItemData? = null,
+
+    @Convert(converter = EncryptedBooleanConverter::class, dbType = String::class) var isFavourite: EncryptedBoolean? = null,
+    @Convert(converter = EncryptedBooleanConverter::class, dbType = String::class) var isLocked: EncryptedBoolean? = null,
 ) {
-    lateinit var parent: ToOne<BucketBoxEnc>
+    lateinit var parent: ToOne<BucketBox>
+
+    @OptIn(ExperimentalUuidApi::class)
+    fun decrypt(alice2: Alice2) = BucketItemBoxPlain(
+        id = id,
+        uuid = uuid?.decrypt(alice2),
+        createdTimestamp = createdTimestamp?.decrypt(alice2),
+        modifiedTimestamp = modifiedTimestamp?.decrypt(alice2),
+        bucketItemData = bucketItemData?.decrypt(alice2),
+        isFavourite = isFavourite?.decrypt(alice2),
+        isLocked = isLocked?.decrypt(alice2)
+    )
 
     companion object {
         val randomTodo
-            get() = BucketItemBox(bucketItemData = BucketItemTodo(title = "title_${Random.nextInt(10)}", state = BucketItemData.State.Alpha))
+            get() = BucketItemBox()
 
         val randomLink
-            get() = BucketItemBox(bucketItemData = BucketItemLink(state = BucketItemData.State.Alpha, linkData = LinkData(title = "title_${Random.nextInt(10)}")))
+            get() = BucketItemBox()
+
+        fun randomBook(alice2: Alice2) = BucketItemBox(bucketItemData = BucketItemBook.OpenLibrary(state = BucketItemData.State.Alpha).encrypt(alice2 = alice2))
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
+data class BucketItemBoxPlain(
+    var id: Long = 0,
+    var uuid: Uuid? = null,
+
+    var createdTimestamp: ZonedDateTime? = null,
+    var modifiedTimestamp: ZonedDateTime? = null,
+
+    var bucketItemData: BucketItemData? = null,
+
+    var isFavourite: Boolean? = null,
+    var isLocked: Boolean? = null,
+) {
+    fun encrypt(alice2: Alice2) = BucketItemBox(
+        id = id,
+        uuid = uuid?.encrypt(alice2),
+        createdTimestamp = createdTimestamp?.encrypt(alice2),
+        modifiedTimestamp = modifiedTimestamp?.encrypt(alice2),
+        bucketItemData = bucketItemData?.encrypt(alice2),
+        isFavourite = isFavourite?.encrypt(alice2),
+        isLocked = isLocked?.encrypt(alice2),
+    )
+}
 
 fun BucketBox.BucketType.bucketTypeToAlphaText(): Int = when (this) {
     BucketBox.BucketType.Todo -> R.string.to_do

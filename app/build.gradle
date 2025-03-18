@@ -11,7 +11,6 @@ plugins {
     id 'com.google.android.gms.oss-licenses-plugin'
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.20'
     id 'project-report'
-    id "app.cash.sqldelight" version "2.0.2"
 }
 
 android {
@@ -101,26 +100,6 @@ android {
     namespace 'com.syncodec.graphite'
 }
 
-//sqldelight {
-//    databases {
-//        register("AppDatabase") {
-//            it.setProperty("packageName", "com.syncodec.graphite.delight")
-//        }
-////        create("AppDatabase") {
-////            packageName.set("com.syncodec.graphite")
-////        }
-//    }
-//}
-
-sqldelight {
-    databases {
-        create("DelightDb") {
-            packageName.set("com.syncodec.graphite.database")
-        }
-    }
-    linkSqlite = false
-}
-
 dependencies {
 
     implementation 'com.jakewharton:process-phoenix:3.0.0'
@@ -146,7 +125,7 @@ dependencies {
     implementation 'androidx.work:work-runtime-ktx:2.10.0'
     implementation "androidx.glance:glance-appwidget:1.1.1"
 
-    implementation 'androidx.navigation:navigation-compose:2.8.8'
+    implementation 'androidx.navigation:navigation-compose:2.8.9'
     implementation 'androidx.constraintlayout:constraintlayout-compose:1.1.1'
 
     implementation 'androidx.core:core-animation:1.0.0'
@@ -211,7 +190,7 @@ dependencies {
 
     implementation "androidx.exifinterface:exifinterface:1.4.0"
 
-    implementation('com.revenuecat.purchases:purchases:8.14.0') {
+    implementation('com.revenuecat.purchases:purchases:8.14.2') {
 //        exclude(group: "com.google.crypto.tink", module: "tink-android")
     }
 
@@ -224,8 +203,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore-ktx'
     implementation 'com.google.firebase:firebase-functions-ktx'
 
-    implementation "androidx.credentials:credentials:1.3.0"
-    implementation "androidx.credentials:credentials-play-services-auth:1.3.0"
+    implementation "androidx.credentials:credentials:1.5.0"
+    implementation "androidx.credentials:credentials-play-services-auth:1.5.0"
     implementation "com.google.android.libraries.identity.googleid:googleid:1.1.1"
 
 //	Google drive

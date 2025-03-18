@@ -53,6 +53,7 @@ import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContai
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.utils.alice2.Alice2
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -73,6 +74,7 @@ fun ShowGridCard(
     onLongClick: () -> Unit = {}
 ) {
     val boxRepository: BoxRepository = koinInject()
+    val alice2: Alice2 = koinInject()
 
     val selectionContainerActor = LocalSelectionContainerActor.current
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
@@ -109,7 +111,7 @@ fun ShowGridCard(
                         content = { dragHandle() }
                     )
                     Spacer(modifier = Modifier.weight(weight = 1f))
-                    StatusContainer(isFavourite = bucketItemBox.isFavourite, isLocked = bucketItemBox.isLocked)
+                    StatusContainer(isFavourite = bucketItemBox.isFavourite?.decrypt(alice2 = alice2) ?: false, isLocked = bucketItemBox.isLocked?.decrypt(alice2 = alice2) ?: false)
                 }
             }
             Column(

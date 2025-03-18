@@ -42,10 +42,12 @@ import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.D
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.ThumbnailView
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.flow.StateFlow
+import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BookOpenLibraryScreenCompact(
     bucketItemBox: BucketItemBox? = null,
@@ -57,8 +59,9 @@ fun BookOpenLibraryScreenCompact(
     onUpdateThumbnail: (Uri) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val alice2: Alice2 = koinInject()
 
-    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData } }
+    val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData?.decrypt(alice2) } }
     val bookData by remember(key1 = bucketItemData) { derivedStateOf { bucketItemData as? BucketItemBook } }
 
     Column(

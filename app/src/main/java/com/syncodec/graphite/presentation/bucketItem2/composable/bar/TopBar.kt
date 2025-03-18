@@ -26,10 +26,11 @@ import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
 import com.syncodec.graphite.presentation.common.button.GraIconButton
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.flow.StateFlow
+import org.koin.compose.koinInject
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
     bucketItemBoxDataFlow: StateFlow<DataLoader<BucketItemBox>>,
@@ -63,7 +64,7 @@ private fun NormalTopBar(
     onToggleLock: (Boolean) -> Unit = {},
     onToggleFavourite: (Boolean) -> Unit = {},
 ) {
-
+    val alice2: Alice2 = koinInject()
     val bucketItemBoxData by bucketItemBoxDataFlow.collectAsState()
 
     TopAppBar(
@@ -71,8 +72,8 @@ private fun NormalTopBar(
         title = { },
         actions = {
             val bucketItemBox by remember(key1 = bucketItemBoxData) { derivedStateOf { (bucketItemBoxData as? DataLoader.Loaded)?.data } }
-            val isLocked by remember(key1 = bucketItemBox) { derivedStateOf { bucketItemBox?.isLocked } }
-            val isFavourite by remember(key1 = bucketItemBox) { derivedStateOf { bucketItemBox?.isFavourite } }
+            val isLocked by remember(key1 = bucketItemBox) { derivedStateOf { bucketItemBox?.isLocked?.decrypt(alice2 = alice2) ?: false } }
+            val isFavourite by remember(key1 = bucketItemBox) { derivedStateOf { bucketItemBox?.isFavourite?.decrypt(alice2 = alice2) ?: false } }
 
             AnimatedVisibility(
                 visible = isDataSaved,
@@ -81,8 +82,8 @@ private fun NormalTopBar(
             ) {
                 GraIconButton.EditButton(onClick = onClickEdit)
             }
-            isLocked?.let { GraIconButton.LockButton(isLocked = it) { onToggleLock(!it) } }
-            isFavourite?.let { GraIconButton.FavouriteButton(isFavourite = it) { onToggleFavourite(!it) } }
+            GraIconButton.LockButton(isLocked = isLocked) { onToggleLock(!isLocked) }
+            GraIconButton.FavouriteButton(isFavourite = isFavourite) { onToggleFavourite(!isFavourite) }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background, titleContentColor = MaterialTheme.colorScheme.onBackground),
         modifier = Modifier.fillMaxWidth()
