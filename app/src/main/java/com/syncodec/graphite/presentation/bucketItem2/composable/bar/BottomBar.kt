@@ -8,7 +8,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.syncodec.graphite.presentation.common.button.GraIconButton
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 
 
@@ -29,7 +29,7 @@ fun BottomBar(
                 contentColor = MaterialTheme.colorScheme.onBackground
             ) {
                 Spacer(modifier = Modifier.weight(weight = 1f))
-                GraIconButton.VaultButton(checked = false)
+                GraIconButton.VaultButton()
                 GraIconButton.MenuButton(onClick = onClickMetadata)
             }
         }

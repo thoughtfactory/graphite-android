@@ -28,6 +28,7 @@ import com.syncodec.graphite.presentation.bucket.BucketViewModel
 import com.syncodec.graphite.presentation.bucket.composable.bottomSheet.BucketBottomSheetViewModel
 import com.syncodec.graphite.presentation.bucket.composable.screen.BucketScreenCommonViewModel
 import com.syncodec.graphite.presentation.bucket2.BucketViewModel2
+import com.syncodec.graphite.presentation.bucket2.moveBucketItemScaffold.MoveBucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem.BucketItemViewModel
 import com.syncodec.graphite.presentation.bucketItem2.BucketItemViewModel2
 import com.syncodec.graphite.presentation.common.dialog.whereDialog.WhereDialogViewModel
@@ -47,6 +48,7 @@ import com.syncodec.graphite.presentation.settings.composable.screen.localBackup
 import com.syncodec.graphite.presentation.sync.dropbox.DropboxSyncViewModel
 import com.syncodec.graphite.presentation.tags.TagsViewModel
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
+import com.syncodec.graphite.presentation.ui.authenticator2.AuthController
 import com.syncodec.graphite.utils.AuthenticatorScreen
 import com.syncodec.graphite.utils.DataStoreInstance
 import com.syncodec.graphite.utils.alice2.Alice2
@@ -73,6 +75,7 @@ class BaseApplication : Application() {
 //		LeakCanary.config = LeakCanary.config.copy(dumpHeap = false)
 
         val alice2 = Alice2(context = this)
+        val authController = AuthController()
 
         initDirectory()
         setupImageLoader()
@@ -82,12 +85,13 @@ class BaseApplication : Application() {
             androidContext(this@BaseApplication)
             modules(
                 module {
+                    single { authController }
                     single { alice2 }
                     single { Repository() }
                     single { DBox(this@BaseApplication) }
 
                     single { this@BaseApplication }
-                    single { BoxRepository(context = this@BaseApplication, alice2 = alice2) }
+                    single { BoxRepository(context = this@BaseApplication, alice2 = alice2, authController = authController) }
                     single { OpenLibraryApi2(context = this@BaseApplication) }
                     single { TraktApi(context = this@BaseApplication) }
                     single { OpenGraphApi(context = this@BaseApplication) }
@@ -95,6 +99,7 @@ class BaseApplication : Application() {
                     viewModelOf(::MainViewModel2)
                     viewModelOf(::BucketViewModel2)
                     viewModelOf(::BucketItemViewModel2)
+                    viewModelOf(::MoveBucketItemViewModel)
 
 //					viewModelOf(::MainViewModel)
                     viewModelOf(::NoteScreenViewModel)

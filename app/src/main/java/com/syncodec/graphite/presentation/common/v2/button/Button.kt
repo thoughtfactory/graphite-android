@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.v2
+package com.syncodec.graphite.presentation.common.v2.button
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource

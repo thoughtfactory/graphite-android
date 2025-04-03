@@ -64,4 +64,15 @@ object IntentUtil {
         @kotlinx.serialization.Serializable
         data class LocalItem(override val parentId: Long, val bucketItemId: Long) : BucketItemActivityData()
     }
+
+    fun shareText(context: Context, text: String) {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, text)
+            type = "text/plain"
+        }
+        val shareIntent = Intent.createChooser(sendIntent, null)
+
+        context.startActivity(shareIntent)
+    }
 }

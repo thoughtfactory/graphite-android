@@ -28,7 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.presentation.bucketItem2.BucketItemViewModel2
@@ -67,12 +67,10 @@ fun BucketItemScreen(
 
     var isEditing by remember { mutableStateOf(value = false) }
 
-    val hazeState = remember { HazeState() }
 
     BackHandler(enabled = isEditing) { isEditing = false }
 
     GenericScaffold2(
-        hazeState = hazeState,
         topBar = {
             TopBar(
                 bucketItemBoxDataFlow = bucketItemBoxDataFlow,
@@ -94,18 +92,15 @@ fun BucketItemScreen(
             val bucketItemBoxData by bucketItemBoxDataFlow.collectAsState()
             MetadataBottomSheet(
                 bottomSheet2State = metadataBottomSheetState,
-                outerHazeState = hazeState,
                 bucketItemBox = (bucketItemBoxData as? DataLoader.Loaded)?.data,
                 onClickEdit = {},
             )
             EditBookTitleAuthorBottomSheet(
                 bottomSheet2State = editBookTitleAuthorBottomSheetState,
-                outerHazeState = hazeState,
                 onUpdateBucketItemData = { viewModel.updateBucketItemData(bucketItemData = it) }
             )
             EditBookDescriptionBottomSheet(
                 bottomSheet2State = editBookDescriptionBottomSheetState,
-                outerHazeState = hazeState,
                 onUpdateBucketItemData = { viewModel.updateBucketItemData(bucketItemData = it) }
             )
         }
@@ -130,8 +125,8 @@ fun BucketItemScreen(
                 DataLoader.NoData::class.simpleName -> Unit
                 DataLoader.Error::class.simpleName -> Unit
                 DataLoader.Loaded::class.simpleName -> when (bucketType) {
-                    BucketBox.BucketType.Todo -> Unit
-                    BucketBox.BucketType.Book -> BookScreen(
+                    BucketBoxEncrypted.BucketType.Todo -> Unit
+                    BucketBoxEncrypted.BucketType.Book -> BookScreen(
                         bucketItemBox = bucketItemBox,
                         thumbnailDataFlow = viewModel.thumbnailDataFlow,
                         isEditing = isEditing,
@@ -141,15 +136,15 @@ fun BucketItemScreen(
                         onUpdateThumbnail = viewModel::onUpdateThumbnail
                     )
 
-                    BucketBox.BucketType.Show -> when (bucketItemBox?.bucketItemData) {
+                    BucketBoxEncrypted.BucketType.Show -> when (bucketItemBox?.bucketItemData) {
                         is BucketItemShow.TraktMovie -> MovieScreen(bucketItemBox = bucketItemBox, thumbnailDataFlow = viewModel.thumbnailDataFlow, onToggleBucketItemState = viewModel::onToggleBucketItemState)
                         is BucketItemShow.TraktSeries -> SeriesScreen(bucketItemBox = bucketItemBox, thumbnailDataFlow = viewModel.thumbnailDataFlow, onToggleBucketItemState = viewModel::onToggleBucketItemState)
                         else -> Unit
                     }
 
-                    BucketBox.BucketType.Link -> Unit
-                    BucketBox.BucketType.Location -> Unit
-                    BucketBox.BucketType.Unknown -> Unit
+                    BucketBoxEncrypted.BucketType.Link -> Unit
+                    BucketBoxEncrypted.BucketType.Location -> Unit
+                    BucketBoxEncrypted.BucketType.Unknown -> Unit
                     null -> Unit
                 }
             }

@@ -13,15 +13,12 @@ object BitmapUtil {
      */
     fun Bitmap.compress(maxSize: Int, outputStream: OutputStream) {
         val currentSize = this.width * this.height
-        Log.d(TAG, "currentSize : $currentSize : $width : $height")
         if (currentSize > maxSize) {
             val scalingFactor = sqrt(maxSize.toFloat() / currentSize)
             this.reconfigure((width * scalingFactor).toInt(), (height * scalingFactor).toInt(), Bitmap.Config.ARGB_8888)
         }
 
-        Log.d(TAG, "currentSize : ${this.width * this.height}")
-
-        compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        this.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
     }
 
     const val TAG = "BitmapUtil"

@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.GraIconButton
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.navigationTab.GenericTabRow
 import com.syncodec.graphite.presentation.common.navigationTab.TabItem
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
@@ -41,6 +41,7 @@ fun TopBar(
     currentBackStackRoute: String?,
     onClickSearch: () -> Unit = {},
     onClickMenu: () -> Unit = {},
+    onClickFilterAndSort: () -> Unit = {},
     onClickNavigationButton: (HomeScreenData) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -97,7 +98,7 @@ fun TopBar(
                     modifier = Modifier.weight(weight = 1f)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                GraIconButton.FilterAndSortTextButton()
+                GraIconButton.FilterAndSortTextButton(onClick = onClickFilterAndSort)
             }
         }
     }
@@ -115,7 +116,7 @@ private fun NormalTopBar(
                 modifier = Modifier
             ) {
                 GraIconButton.MenuButton(onClick = onClickMenu)
-                GraIconButton.VaultButton(checked = false, onClick = {})
+                GraIconButton.VaultButton()
             }
         },
         title = {

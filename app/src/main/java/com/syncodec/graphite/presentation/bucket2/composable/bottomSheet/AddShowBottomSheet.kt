@@ -53,7 +53,7 @@ import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.trakt.TraktApi
 import com.syncodec.graphite.di.network.trakt.TraktShowSearchResult
-import com.syncodec.graphite.presentation.common.button.GraIconButton
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
@@ -61,7 +61,6 @@ import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
@@ -72,7 +71,6 @@ import org.koin.compose.koinInject
 @Composable
 fun AddShowBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
-    outerHazeState: HazeState = remember { HazeState() },
     onClickShow: (TraktShowSearchResult) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
@@ -85,7 +83,6 @@ fun AddShowBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
 
 //        Hiding keyboard doesn't work if controller is initialized outside bottom sheet scope

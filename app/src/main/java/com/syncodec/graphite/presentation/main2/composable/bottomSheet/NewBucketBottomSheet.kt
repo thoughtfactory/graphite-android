@@ -35,7 +35,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
@@ -43,11 +44,9 @@ import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.InternalSerializationApi
 import kotlin.uuid.ExperimentalUuidApi
 
 
@@ -55,14 +54,13 @@ import kotlin.uuid.ExperimentalUuidApi
 @Composable
 fun NewBucketBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
-    outerHazeState: HazeState = remember { HazeState() },
-    onCreateNewBucket: (BucketBox) -> Unit
+    onCreateNewBucket: (BucketBoxDecrypted) -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
     val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
     val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
-    var selectedBucketType: BucketBox.BucketType? by remember { mutableStateOf(value = null) }
+    var selectedBucketType: BucketBoxEncrypted.BucketType? by remember { mutableStateOf(value = null) }
     var isSelectedBucketTypeValidationError by remember { mutableStateOf(value = false) }
 
     fun saveBucket() {
@@ -73,7 +71,7 @@ fun NewBucketBottomSheet(
         isSelectedBucketTypeValidationError = bucketType == null
 
         if (titleValidationResult.isValidated && descriptionValidationResult.isValidated && bucketType != null) {
-            val bucketBox = BucketBox(title = titleValidationResult.text, description = descriptionValidationResult.text, bucketType = bucketType)
+            val bucketBox = BucketBoxDecrypted.newInstance.copy(title = titleValidationResult.text, description = descriptionValidationResult.text, bucketType = bucketType)
             onCreateNewBucket(bucketBox)
 
             titleTextFieldController.reset()
@@ -85,7 +83,6 @@ fun NewBucketBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.new_list),
@@ -146,8 +143,8 @@ fun NewBucketBottomSheet(
 
 @Composable
 private fun BucketListRow(
-    bucketType: BucketBox.BucketType? = null,
-    onClickBucketCard: (BucketBox.BucketType) -> Unit = {}
+    bucketType: BucketBoxEncrypted.BucketType? = null,
+    onClickBucketCard: (BucketBoxEncrypted.BucketType) -> Unit = {}
 ) {
 
     val scrollState = rememberScrollState()
@@ -170,40 +167,40 @@ private fun BucketListRow(
             icon = R.drawable.ic_fa_todo,
             typeText = stringResource(R.string.todo),
             typeDescriptionText = stringResource(R.string.list_todo_description),
-            selected = bucketType == BucketBox.BucketType.Todo,
-            onClick = { onClickBucketCard(BucketBox.BucketType.Todo) },
+            selected = bucketType == BucketBoxEncrypted.BucketType.Todo,
+            onClick = { onClickBucketCard(BucketBoxEncrypted.BucketType.Todo) },
         )
         Spacer(modifier = Modifier.width(width = 12.dp))
         BucketCard(
             icon = R.drawable.ic_fa_books,
             typeText = stringResource(R.string.books),
             typeDescriptionText = stringResource(R.string.list_book_description),
-            selected = bucketType == BucketBox.BucketType.Book,
-            onClick = { onClickBucketCard(BucketBox.BucketType.Book) },
+            selected = bucketType == BucketBoxEncrypted.BucketType.Book,
+            onClick = { onClickBucketCard(BucketBoxEncrypted.BucketType.Book) },
         )
         Spacer(modifier = Modifier.width(width = 12.dp))
         BucketCard(
             icon = R.drawable.ic_fa_film,
             typeText = stringResource(R.string.movies_shows),
             typeDescriptionText = stringResource(R.string.list_show_description),
-            selected = bucketType == BucketBox.BucketType.Show,
-            onClick = { onClickBucketCard(BucketBox.BucketType.Show) },
+            selected = bucketType == BucketBoxEncrypted.BucketType.Show,
+            onClick = { onClickBucketCard(BucketBoxEncrypted.BucketType.Show) },
         )
         Spacer(modifier = Modifier.width(width = 12.dp))
         BucketCard(
             icon = R.drawable.ic_fa_link,
             typeText = stringResource(R.string.link),
             typeDescriptionText = stringResource(R.string.list_url_description),
-            selected = bucketType == BucketBox.BucketType.Link,
-            onClick = { onClickBucketCard(BucketBox.BucketType.Link) },
+            selected = bucketType == BucketBoxEncrypted.BucketType.Link,
+            onClick = { onClickBucketCard(BucketBoxEncrypted.BucketType.Link) },
         )
         Spacer(modifier = Modifier.width(width = 12.dp))
         BucketCard(
             icon = R.drawable.ic_fa_map_pin,
             typeText = stringResource(R.string.location),
             typeDescriptionText = stringResource(R.string.list_location_description),
-            selected = bucketType == BucketBox.BucketType.Location,
-            onClick = { onClickBucketCard(BucketBox.BucketType.Location) },
+            selected = bucketType == BucketBoxEncrypted.BucketType.Location,
+            onClick = { onClickBucketCard(BucketBoxEncrypted.BucketType.Location) },
         )
     }
 }

@@ -20,10 +20,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,7 +43,11 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.importer.ThumbnailData
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.alice2.Alice2
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 
 
 @Composable
@@ -104,18 +111,26 @@ private fun NoCoverView() {
 private fun ThumbnailLoadedView(
     thumbnailData: ThumbnailData
 ) {
-    Log.d("ThumbnailLoadedView", "ThumbnailLoadedView")
     val context = LocalContext.current
+    val alice2: Alice2 = koinInject()
+
+    var data: Any? by remember { mutableStateOf(null) }
+    LaunchedEffect(key1 = thumbnailData) {
+        withContext(context = Dispatchers.Default) {
+            data = when (thumbnailData) {
+                is ThumbnailData.Bitmap -> thumbnailData.data
+                is ThumbnailData.Base64 -> thumbnailData.getAsBitmap()
+                is ThumbnailData.File -> thumbnailData.data
+                is ThumbnailData.EncryptedFile -> thumbnailData.getAndDecryptFile(context, alice2)
+            }
+        }
+
+        Log.d("npr71", "thumbnailData : ${thumbnailData::class.simpleName}")
+    }
 
     SubcomposeAsyncImage(
         model = ImageRequest.Builder(context = context)
-            .data(
-                data = when (thumbnailData) {
-                    is ThumbnailData.Bitmap -> thumbnailData.data
-                    is ThumbnailData.Base64 -> thumbnailData.getAsBitmap()
-                    is ThumbnailData.File -> thumbnailData.data
-                }
-            )
+            .data(data = data)
             .crossfade(durationMillis = AnimationDefaults.ANIMATION_TIME)
             .build(),
         contentDescription = null,

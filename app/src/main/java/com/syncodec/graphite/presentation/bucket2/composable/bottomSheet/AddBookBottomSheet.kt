@@ -44,7 +44,7 @@ import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.openLibrary.OLBookSearchResult
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryApi2
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryTitleSearchResult2
-import com.syncodec.graphite.presentation.common.button.GraIconButton
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
@@ -63,7 +63,6 @@ import org.koin.compose.koinInject
 @Composable
 fun AddBookBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
-    outerHazeState: HazeState = remember { HazeState() },
     onAddBook: (OLBookSearchResult) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
@@ -87,7 +86,6 @@ fun AddBookBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.add_book),

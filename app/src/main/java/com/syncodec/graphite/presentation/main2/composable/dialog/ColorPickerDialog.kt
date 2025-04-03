@@ -22,17 +22,17 @@ import com.github.skydoves.colorpicker.compose.AlphaTile
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
-import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialog2
-import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialog2State
 import com.syncodec.graphite.R
-import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialogActionButton
+import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialogActionButton.PrimaryButton
+import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialogActionButton.SecondaryButton
 import com.syncodec.graphite.utils.getRandomColor
 import com.syncodec.graphite.utils.toHexString
 
 
 @Composable
 fun ColorPickerDialog(
-    state: GenericDialog2State = GenericDialog2State.initialize(),
+    state: GenericDialog2.State<Nothing> = GenericDialog2.State.rememberDialogState(),
     selectedColor: Color? = null,
     onSelectColor: (Color) -> Unit = {}
 ) {
@@ -40,11 +40,11 @@ fun ColorPickerDialog(
     val colorPickerController = rememberColorPickerController()
     LaunchedEffect(selectedColor) { colorPickerController.selectByColor(color = selectedColor ?: getRandomColor(), fromUser = true) }
 
-    GenericDialog2(
+    GenericDialog2.Composable(
         state = state,
         title = stringResource(R.string.color_picker),
-        secondaryButton = { GenericDialogActionButton.SecondaryButton(modifier = Modifier.weight(1f), text = stringResource(R.string.cancel)) { state.closeDialog() } },
-        primaryButton = { GenericDialogActionButton.PrimaryButton(modifier = Modifier.weight(1f), text = stringResource(R.string.okay)) { onSelectColor(colorPickerController.selectedColor.value); state.closeDialog() } },
+        secondaryButton = { SecondaryButton(modifier = Modifier.weight(1f), text = stringResource(R.string.cancel)) { state.closeDialog() } },
+        primaryButton = { PrimaryButton(modifier = Modifier.weight(1f), text = stringResource(R.string.okay)) { onSelectColor(colorPickerController.selectedColor.value); state.closeDialog() } },
     ) {
         Spacer(modifier = Modifier.height(12.dp))
         Row(

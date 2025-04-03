@@ -1,6 +1,6 @@
 package com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.linkCard
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,9 +35,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
-import com.syncodec.graphite.di.network.openGraph.LinkData
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
+import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.StatusContainer
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2Defaults
@@ -45,31 +47,31 @@ import com.syncodec.graphite.utils.decodeBase64ToBitmap
 
 @Composable
 fun LinkListCard(
-    bucketItemBox: BucketItemBox,
-    linkData: LinkData? = null,
-    state: BucketItemData.State,
+    bucketItemBox: BucketItemBoxDecrypted?,
+    bucketItemLink: BucketItemLink? = null,
     isReorderable: Boolean = false,
     isLast: Boolean = false,
     dragHandle: @Composable () -> Unit = {},
-    onClickTriStateButton: () -> Unit = {},
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onClick: (Long) -> Unit = {},
+    onLongClick: (Long) -> Unit = {}
 ) {
     val selectionContainerActor = LocalSelectionContainerActor.current
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
 
+    val linkData by remember(key1 = bucketItemLink) { derivedStateOf { bucketItemLink?.linkData } }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SelectableContainer2(
-            selected = bucketItemBox.id in selectedItemIdList,
+            selected = bucketItemBox?.id in selectedItemIdList,
             enabled = true,
             shape = RectangleShape,
             border = null,
             color = SelectableContainer2Defaults.backgroundColors(),
-            onClick = onClick,
-            onLongClick = onLongClick,
+            onClick = { bucketItemBox?.id?.let(onClick) },
+            onLongClick = { bucketItemBox?.id?.let(onLongClick) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -92,38 +94,60 @@ fun LinkListCard(
                         .height(height = 108.dp)
                         .padding(vertical = 4.dp)
                 ) {
-                    Text(
-                        text = linkData?.title ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(weight = 1f)
+                        ) {
+                            Text(
+                                text = linkData?.title ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(height = 2.dp))
+                            Text(
+                                text = linkData?.url ?: "",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(width = 4.dp))
 
-                    Text(
-                        text = linkData?.url ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-                        modifier = Modifier.padding(vertical = 2.dp)
-                    )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            StatusContainer(
+                                isFavourite = bucketItemBox?.isFavourite == true,
+                                isLocked = bucketItemBox?.isLocked == true,
+                            )
+
+                            AnimatedContent(
+                                modifier = Modifier,
+                                targetState = isReorderable && !isSelecting,
+                                transitionSpec = { AnimationDefaults.ScaleAndFade }
+                            ) {
+                                if (it) dragHandle() else Unit
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(height = 4.dp))
 
                     Text(
                         text = linkData?.description ?: "",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelMedium,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+                        modifier = Modifier.weight(weight = 1f)
                     )
                 }
-
-                AnimatedVisibility(
-                    visible = isReorderable && !isSelecting,
-                    enter = AnimationDefaults.ScaleAndFadeEnter,
-                    exit = AnimationDefaults.ScaleAndFadeExit,
-                    content = { dragHandle() }
-                )
             }
         }
 

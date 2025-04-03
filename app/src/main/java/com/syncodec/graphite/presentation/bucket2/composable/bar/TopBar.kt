@@ -19,16 +19,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToAlphaText
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaIcon
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaSelectedIcon
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaText
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToGammaText
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
-import com.syncodec.graphite.presentation.common.button.GraIconButton
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.navigationTab.GenericTabRow
 import com.syncodec.graphite.presentation.common.navigationTab.TabItem
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
@@ -37,7 +38,7 @@ import com.syncodec.graphite.presentation.ui.AnimationDefaults
 @Composable
 fun TopBar(
     title: String? = null,
-    bucketType: BucketBox.BucketType = BucketBox.BucketType.Unknown,
+    bucketType: BucketBoxEncrypted.BucketType = BucketBoxEncrypted.BucketType.Unknown,
     stateFilterInt: Int = 0,
     isLocked: Boolean = false,
     isFavourite: Boolean = false,
@@ -87,7 +88,7 @@ private fun NormalTopBar(
 ) {
     TopAppBar(
         navigationIcon = { GraIconButton.BackButton() },
-        title = { Text(text = title ?: "") },
+        title = { Text(text = title ?: "-") },
         actions = {
             GraIconButton.LockButton(isLocked = isLocked) { onClickLock(!isLocked) }
             GraIconButton.FavouriteButton(isFavourite = isFavourite) { onClickFavourite(!isFavourite) }
@@ -105,22 +106,21 @@ private fun SelectingTopBar(
     TopAppBar(
         title = {
             AnimatedText(
-                text = if (selectedSize == 0) "No items selected" else if (selectedSize == 1) "1 item selected" else "$selectedSize items selected",
-                color = MaterialTheme.colorScheme.onBackground,
+                text = if (selectedSize == 0) stringResource(id = R.string.no_items_selected) else if (selectedSize == 1) "1 ${stringResource(id = R.string.item_selected)}" else "$selectedSize ${stringResource(id = R.string.items_selected)}",
+                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         navigationIcon = { GraIconButton.BackButton() },
         actions = {},
         modifier = Modifier.fillMaxWidth(),
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceBright, titleContentColor = MaterialTheme.colorScheme.onSurface),
-
-        )
+    )
 }
 
 @Composable
 private fun BucketItemStateFilter(
     visible: Boolean = true,
-    bucketType: BucketBox.BucketType = BucketBox.BucketType.Unknown,
+    bucketType: BucketBoxEncrypted.BucketType = BucketBoxEncrypted.BucketType.Unknown,
     stateFilterInt: Int = 0,
     onUpdateFilterInt: (Int) -> Unit = {}
 ) {

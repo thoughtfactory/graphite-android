@@ -34,7 +34,7 @@ import com.syncodec.graphite.presentation.common.navigationTab.TabItem
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialog2State
+import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialog2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
@@ -44,7 +44,6 @@ import com.syncodec.graphite.presentation.main2.composable.dialog.ColorPickerDia
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.encodeBase64
 import com.syncodec.graphite.utils.getRandomColor
-import dev.chrisbanes.haze.HazeState
 import kotlinx.serialization.InternalSerializationApi
 
 
@@ -97,13 +96,12 @@ sealed class SelectedThumbnail {
 @Composable
 fun NewNotebookBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
-    outerHazeState: HazeState = remember { HazeState() },
     onCreateNewNotebook: (ChapterBox) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val colorPickerDialogState = GenericDialog2State.initialize()
+    val colorPickerDialogState = GenericDialog2.State.rememberDialogState()
 
     val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
     val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
@@ -133,7 +131,6 @@ fun NewNotebookBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(R.string.new_notebook),

@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.bucketItem2.composable.screen.BucketItemScreen
+import com.syncodec.graphite.presentation.ui.BaseComposable2
 import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.IntentUtil.BucketItemActivityData
 import com.syncodec.graphite.utils.IntentUtil.IntentData
@@ -34,7 +35,7 @@ class BucketItemActivity2 : ComponentActivity() {
 
         setContent {
 
-            BaseContent {
+            BaseComposable2 {
                 BucketItemScreen()
             }
 

@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyGridState
@@ -25,8 +24,8 @@ import sh.calvin.reorderable.ReorderableLazyListState
 fun BucketItemListContainer(
     lazyListState: LazyListState,
     reorderableLazyListState: ReorderableLazyListState,
-    bucketItemBoxListOrdered: List<BucketItemBox>,
-    content: @Composable ReorderableCollectionItemScope.(isDragging: Boolean, index: Int,  data: BucketItemBox) -> Unit,
+    bucketItemBoxIdListOrdered: List<Long>,
+    content: @Composable ReorderableCollectionItemScope.(isDragging: Boolean, index: Int, id: Long) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -36,15 +35,15 @@ fun BucketItemListContainer(
         item(key = "top_spacer", contentType = { 0 }) { Spacer(modifier = Modifier.height(height = 8.dp)) }
 
         itemsIndexed(
-            items = bucketItemBoxListOrdered,
-            key = { _, bucketItemBox -> bucketItemBox.id },
+            items = bucketItemBoxIdListOrdered,
+            key = { _, bucketItemBoxId -> bucketItemBoxId },
             contentType = { _, _ -> 1 }
-        ) { index, bucketItemBox ->
+        ) { index, bucketItemBoxId ->
             ReorderableItem(
                 state = reorderableLazyListState,
-                key = bucketItemBox.id,
+                key = bucketItemBoxId,
             ) { isDragging ->
-                content(isDragging, index, bucketItemBox)
+                content(isDragging, index, bucketItemBoxId)
             }
         }
 
@@ -56,25 +55,25 @@ fun BucketItemListContainer(
 fun BucketItemGridContainer(
     lazyGridState: LazyGridState,
     reorderableGridState: ReorderableLazyGridState,
-    bucketItemBoxListOrdered: List<BucketItemBox>,
-    content: @Composable ReorderableCollectionItemScope.(isDragging: Boolean, index: Int,  data: BucketItemBox) -> Unit,
+    bucketItemBoxIdListOrdered: List<Long>,
+    content: @Composable ReorderableCollectionItemScope.(isDragging: Boolean, index: Int, id: Long) -> Unit,
 ) {
     LazyVerticalGrid(
         state = lazyGridState,
-        columns = GridCells.Adaptive(minSize = 108.dp),
+        columns = GridCells.Adaptive(minSize = 128.dp),
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
         modifier = Modifier.fillMaxSize()
     ) {
         itemsIndexed(
-            items = bucketItemBoxListOrdered,
-            key = { _, bucketItemBox -> bucketItemBox.id },
+            items = bucketItemBoxIdListOrdered,
+            key = { _, bucketItemBoxId -> bucketItemBoxId },
             contentType = { _, _ -> 1 }
-        ) { index, bucketItemBox ->
+        ) { index, bucketItemBoxId ->
             ReorderableItem(
                 state = reorderableGridState,
-                key = bucketItemBox.id,
+                key = bucketItemBoxId,
             ) { isDragging ->
-                content(isDragging, index, bucketItemBox)
+                content(isDragging, index, bucketItemBoxId)
             }
         }
     }

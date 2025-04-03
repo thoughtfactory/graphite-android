@@ -1,9 +1,9 @@
 package com.syncodec.graphite.presentation.bucket2.composable.screen
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -12,28 +12,34 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.HapticFeedbackConstantsCompat
 import androidx.core.view.ViewCompat
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.presentation.bucket2.BucketViewModel2
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemGridContainer
+import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemListContainer
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.DragHandle
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.showCard.ShowGridCard
+import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.showCard.ShowListCard
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.DataLoader
+import com.syncodec.graphite.utils.SharedPref
+import com.syncodec.graphite.utils.alice2.Alice2
+import ir.amirreza.composepreferences.state.rememberPreferenceStateOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
+import org.koin.compose.koinInject
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -41,29 +47,21 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 fun ShowScreen(
     pagerState: PagerState = rememberPagerState { 4 },
-    bucketBoxDataFlow: StateFlow<DataLoader<BucketBox>> = MutableStateFlow(value = DataLoader.Init),
-    bucketItemBoxGroupDataFlow: StateFlow<DataLoader<BucketViewModel2.BucketItemBoxGroup>>,
-    onUpdateBucketItemBoxState: (BucketItemBox, BucketItemData.State) -> Unit = { _, _ -> },
-    onUpdateBucketItemOrder: (BucketBox, List<Long>) -> Unit = { _, _ -> },
-    onClickBucketItem: (BucketItemBox) -> Unit = {},
+    bucketBoxDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init()),
+    bucketItemBoxOrderedDataFlow: StateFlow<DataLoader<BucketViewModel2.BucketItemBoxOrderedData>>,
+    onUpdateBucketItemOrder: (BucketBoxDecrypted, List<Long>) -> Unit = { _, _ -> },
+    onClickBucketItem: (BucketItemBoxDecrypted) -> Unit = {},
 ) {
-    val view = LocalView.current
-
-    val bucketItemBoxListData by bucketItemBoxGroupDataFlow.collectAsState()
-
-    LaunchedEffect(Unit) {
-        bucketItemBoxGroupDataFlow.collectLatest {
-            Log.d("ShowScreen", "")
-        }
-    }
+    val bucketItemBoxOrderedData by bucketItemBoxOrderedDataFlow.collectAsState()
 
     val selectionContainerActor = LocalSelectionContainerActor.current
-    val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
     BackHandler(enabled = isSelecting) { selectionContainerActor.unselect() }
 
+    var viewType by rememberPreferenceStateOf(key = SharedPref.Key.ViewType.name, defaultValue = SharedPref.ViewType.List.name)
+
     AnimatedContent(
-        targetState = bucketItemBoxListData::class.simpleName,
+        targetState = bucketItemBoxOrderedData::class.simpleName,
         transitionSpec = { AnimationDefaults.Fade }
     ) { bucketItemBoxListData1 ->
         when (bucketItemBoxListData1) {
@@ -78,82 +76,147 @@ fun ShowScreen(
                 modifier = Modifier.fillMaxSize()
             ) { pageNumber ->
 
-                val bucketItemBoxListData1 = bucketItemBoxListData as? DataLoader.Loaded ?: return@HorizontalPager
+                val bucketItemBoxOrdered = (bucketItemBoxOrderedData as? DataLoader.Loaded)?.data ?: return@HorizontalPager
 
-                val bucketItemBoxListUnOrdered = when (pageNumber) {
-                    0 -> bucketItemBoxListData1.data.allOrdered
-                    1 -> bucketItemBoxListData1.data.alpha
-                    2 -> bucketItemBoxListData1.data.beta
-                    3 -> bucketItemBoxListData1.data.gamma
-                    else -> bucketItemBoxListData1.data.all
-                }
+                AnimatedContent(
+                    targetState = viewType,
+                    transitionSpec = { AnimationDefaults.ScaleAndFade },
+                    modifier = Modifier.fillMaxSize()
+                ) { viewType1 ->
+                    when (viewType1) {
+                        SharedPref.ViewType.List.name -> DataListView(
+                            bucketItemBoxOrdered = bucketItemBoxOrdered,
+                            bucketBoxDataFlow = bucketBoxDataFlow,
+                            pageNumber = pageNumber,
+                            onUpdateBucketItemOrder = onUpdateBucketItemOrder,
+                            onClickBucketItem = onClickBucketItem,
+                        )
 
-                var bucketItemBoxListOrdered: List<BucketItemBox> by remember(key1 = bucketItemBoxListData1.hash) { mutableStateOf(value = bucketItemBoxListUnOrdered) }
-
-                val lazyListState = rememberLazyListState()
-                val lazyGridState = rememberLazyGridState()
-
-                val reorderableLazyListState = rememberReorderableLazyListState(lazyListState = lazyListState) { from, to ->
-                    bucketItemBoxListOrdered = bucketItemBoxListOrdered.toMutableList().apply { add(index = to.index - 1, element = removeAt(index = from.index - 1)) }
-                    ViewCompat.performHapticFeedback(view, HapticFeedbackConstantsCompat.SEGMENT_FREQUENT_TICK)
-                }
-                val reorderableGridState = rememberReorderableLazyGridState(lazyGridState = lazyGridState) { from, to ->
-                    bucketItemBoxListOrdered = bucketItemBoxListOrdered.toMutableList().apply { add(index = to.index, element = removeAt(index = from.index)) }
-                    ViewCompat.performHapticFeedback(view, HapticFeedbackConstantsCompat.SEGMENT_FREQUENT_TICK)
-                }
-
-//                BucketItemListContainer(
-//                    lazyListState = lazyListState,
-//                    bucketItemBoxListOrdered = bucketItemBoxListOrdered,
-//                    reorderableLazyListState = reorderableLazyListState,
-//                ) { isDragging, index, bucketItemBox ->
-//
-//                    val data = bucketItemBox.bucketItemData as? BucketItemData.Link ?: return@BucketItemListContainer
-//
-//                    LinkListCard(
-//                        bucketItemBox = bucketItemBox,
-//                        linkData = data.linkData,
-//                        state = data.state,
-//                        isReorderable = pageNumber == 0,
-//                        isLast = index == bucketItemBoxListOrdered.lastIndex,
-//                        onClickTriStateButton = { if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) else onUpdateBucketItemBoxState(bucketItemBox, data.nextState()) },
-//                        onClick = { if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) },
-//                        onLongClick = { selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) },
-//                        dragHandle = {
-//                            DragHandle {
-//                                val bucketBox = (bucketBoxDataFlow.value as? DataLoader.Loaded)?.data ?: return@DragHandle
-//                                onUpdateBucketItemOrder(bucketBox, bucketItemBoxListOrdered.map { it.id })
-//                            }
-//                        }
-//                    )
-//                }
-
-                BucketItemGridContainer(
-                    lazyGridState = lazyGridState,
-                    bucketItemBoxListOrdered = bucketItemBoxListOrdered,
-                    reorderableGridState = reorderableGridState,
-                ) { isDragging, index, bucketItemBox ->
-
-                    val data = bucketItemBox.bucketItemData as? BucketItemShow ?: return@BucketItemGridContainer
-
-                    ShowGridCard(
-                        bucketItemBox = bucketItemBox,
-                        bucketItemShow = data,
-                        state = data.state,
-                        isReorderable = pageNumber == 0,
-                        isLast = index == bucketItemBoxListOrdered.lastIndex,
-                        onClickTriStateButton = { if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) else onUpdateBucketItemBoxState(bucketItemBox, data.nextState()) },
-                        onClick = { if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) else onClickBucketItem(bucketItemBox) },
-                        onLongClick = { selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) },
-                        dragHandle = {
-                            DragHandle {
-                                val bucketBox = (bucketBoxDataFlow.value as? DataLoader.Loaded)?.data ?: return@DragHandle
-                                onUpdateBucketItemOrder(bucketBox, bucketItemBoxListOrdered.map { it.id })
-                            }
-                        }
-                    )
+                        SharedPref.ViewType.Grid.name -> DataGridView(
+                            bucketItemBoxOrdered = bucketItemBoxOrdered,
+                            bucketBoxDataFlow = bucketBoxDataFlow,
+                            pageNumber = pageNumber,
+                            onUpdateBucketItemOrder = onUpdateBucketItemOrder,
+                            onClickBucketItem = onClickBucketItem,
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DataGridView(
+    bucketItemBoxOrdered: BucketViewModel2.BucketItemBoxOrderedData,
+    bucketBoxDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init()),
+    pageNumber: Int = 0,
+    onUpdateBucketItemOrder: (BucketBoxDecrypted, List<Long>) -> Unit = { _, _ -> },
+    onClickBucketItem: (BucketItemBoxDecrypted) -> Unit = {},
+) {
+    val view = LocalView.current
+    val alice2: Alice2 = koinInject()
+
+    val selectionContainerActor = LocalSelectionContainerActor.current
+    val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
+
+    val idList = when (pageNumber) {
+        0 -> bucketItemBoxOrdered.allOrderedIdList
+        1 -> bucketItemBoxOrdered.alphaOrderedIdList
+        2 -> bucketItemBoxOrdered.betaOrderedIdList
+        3 -> bucketItemBoxOrdered.gammaOrderedIdList
+        else -> bucketItemBoxOrdered.allOrderedIdList
+    }
+
+    var orderedIdList by remember { mutableStateOf(value = idList) }
+    LaunchedEffect(key1 = idList.size, key2 = if (pageNumber == 0) orderedIdList.toSet() != idList.toSet() else idList) { orderedIdList = idList }
+
+    val lazyGridState = rememberLazyGridState()
+
+    val reorderableGridState = rememberReorderableLazyGridState(lazyGridState = lazyGridState) { from, to ->
+        orderedIdList = orderedIdList.toMutableList().apply { add(index = to.index, element = removeAt(index = from.index)) }
+        ViewCompat.performHapticFeedback(view, HapticFeedbackConstantsCompat.SEGMENT_FREQUENT_TICK)
+    }
+
+    BucketItemGridContainer(
+        lazyGridState = lazyGridState,
+        bucketItemBoxIdListOrdered = orderedIdList,
+        reorderableGridState = reorderableGridState,
+    ) { isDragging, index, bucketItemBoxId ->
+
+        val bucketItemBox = bucketItemBoxOrdered.bucketItemBoxMap[bucketItemBoxId]?.decryptBlocking(alice2)
+        val bucketItemShow by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData as? BucketItemShow } }
+
+        ShowGridCard(
+            bucketItemBox = bucketItemBox,
+            bucketItemShow = bucketItemShow,
+            isReorderable = pageNumber == 0,
+            onClick = { bucketItemBox ?: return@ShowGridCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) else onClickBucketItem(bucketItemBox) },
+            onLongClick = { bucketItemBox ?: return@ShowGridCard; selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) },
+            dragHandle = {
+                DragHandle(modifier = Modifier.padding(all = 4.dp)) {
+                    val bucketBox = (bucketBoxDataFlow.value as? DataLoader.Loaded)?.data ?: return@DragHandle
+                    onUpdateBucketItemOrder(bucketBox, orderedIdList)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun DataListView(
+    bucketItemBoxOrdered: BucketViewModel2.BucketItemBoxOrderedData,
+    bucketBoxDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init()),
+    pageNumber: Int = 0,
+    onUpdateBucketItemOrder: (BucketBoxDecrypted, List<Long>) -> Unit = { _, _ -> },
+    onClickBucketItem: (BucketItemBoxDecrypted) -> Unit = {},
+) {
+    val view = LocalView.current
+    val alice2: Alice2 = koinInject()
+
+    val selectionContainerActor = LocalSelectionContainerActor.current
+    val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
+
+    val idList = when (pageNumber) {
+        0 -> bucketItemBoxOrdered.allOrderedIdList
+        1 -> bucketItemBoxOrdered.alphaOrderedIdList
+        2 -> bucketItemBoxOrdered.betaOrderedIdList
+        3 -> bucketItemBoxOrdered.gammaOrderedIdList
+        else -> bucketItemBoxOrdered.allOrderedIdList
+    }
+
+    var orderedIdList by remember { mutableStateOf(value = idList) }
+    LaunchedEffect(key1 = idList.size, key2 = if (pageNumber == 0) orderedIdList.toSet() != idList.toSet() else idList) { orderedIdList = idList }
+
+    val lazyListState = rememberLazyListState()
+
+    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState = lazyListState) { from, to ->
+        orderedIdList = orderedIdList.toMutableList().apply { add(index = to.index - 1, element = removeAt(index = from.index - 1)) }
+        ViewCompat.performHapticFeedback(view, HapticFeedbackConstantsCompat.SEGMENT_FREQUENT_TICK)
+    }
+
+    BucketItemListContainer(
+        lazyListState = lazyListState,
+        bucketItemBoxIdListOrdered = orderedIdList,
+        reorderableLazyListState = reorderableLazyListState,
+    ) { isDragging, index, bucketItemBoxId ->
+
+        val bucketItemBox = bucketItemBoxOrdered.bucketItemBoxMap[bucketItemBoxId]?.decryptBlocking(alice2)
+        val bucketItemShow by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData as? BucketItemShow } }
+
+        ShowListCard(
+            bucketItemBox = bucketItemBox,
+            bucketItemShow = bucketItemShow,
+            isReorderable = pageNumber == 0,
+            isLast = index == orderedIdList.lastIndex,
+            onClick = { bucketItemBox ?: return@ShowListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) else onClickBucketItem(bucketItemBox) },
+            onLongClick = { bucketItemBox ?: return@ShowListCard; selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) },
+            dragHandle = {
+                DragHandle {
+                    val bucketBox = (bucketBoxDataFlow.value as? DataLoader.Loaded)?.data ?: return@DragHandle
+                    onUpdateBucketItemOrder(bucketBox, orderedIdList)
+                }
+            }
+        )
     }
 }

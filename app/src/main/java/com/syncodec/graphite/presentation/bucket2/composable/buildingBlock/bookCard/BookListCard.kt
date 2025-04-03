@@ -1,12 +1,13 @@
 package com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.bookCard
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,8 +19,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,28 +38,32 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
-import com.syncodec.graphite.di.network.openGraph.LinkData
+import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.StatusContainer
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2Defaults
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import com.syncodec.graphite.utils.alice2.Alice2
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 
 
 @Composable
 fun BookListCard(
-    bucketItemBox: BucketItemBox,
-    linkData: LinkData? = null,
-    state: BucketItemData.State,
+    bucketItemBox: BucketItemBoxDecrypted?,
+    bucketItemBook: BucketItemBook? = null,
     isReorderable: Boolean = false,
     isLast: Boolean = false,
     dragHandle: @Composable () -> Unit = {},
-    onClickTriStateButton: () -> Unit = {},
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onClick: (Long) -> Unit = {},
+    onLongClick: (Long) -> Unit = {}
 ) {
+    val context = LocalContext.current
+
     val selectionContainerActor = LocalSelectionContainerActor.current
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
@@ -63,13 +72,13 @@ fun BookListCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SelectableContainer2(
-            selected = bucketItemBox.id in selectedItemIdList,
+            selected = bucketItemBox?.id in selectedItemIdList,
             enabled = true,
             shape = RectangleShape,
             border = null,
             color = SelectableContainer2Defaults.backgroundColors(),
-            onClick = onClick,
-            onLongClick = onLongClick,
+            onClick = { bucketItemBox?.id?.let(onClick) },
+            onLongClick = { bucketItemBox?.id?.let(onLongClick) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -78,9 +87,11 @@ fun BookListCard(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Box(
-                    modifier = Modifier.requiredSize(size = 108.dp)
+                    modifier = Modifier
+                        .height(height = 128.dp)
+                        .aspectRatio(ratio = 0.75f),
                 ) {
-                    ThumbnailPreview(base64String = linkData?.imageBase64)
+                    ThumbnailPreview(thumbnailFile = bucketItemBook?.thumbnail(context = context) as? BucketItemData.Companion.Thumbnail.File)
                 }
 
                 Spacer(modifier = Modifier.width(width = 8.dp))
@@ -89,41 +100,63 @@ fun BookListCard(
                     verticalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .weight(weight = 1f)
-                        .height(height = 108.dp)
+                        .height(height = 128.dp)
                         .padding(vertical = 4.dp)
                 ) {
-                    Text(
-                        text = linkData?.title ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(weight = 1f)
+                        ) {
+                            Text(
+                                text = bucketItemBook?.bookTitle() ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(height = 4.dp))
+                            Text(
+                                text = bucketItemBook?.primaryAuthor() ?: "",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(width = 4.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            StatusContainer(
+                                isFavourite = bucketItemBox?.isFavourite == true,
+                                isLocked = bucketItemBox?.isLocked == true,
+                            )
+
+                            AnimatedContent(
+                                modifier = Modifier,
+                                targetState = isReorderable && !isSelecting,
+                                transitionSpec = { AnimationDefaults.ScaleAndFade }
+                            ) {
+                                if (it) dragHandle() else Unit
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(height = 4.dp))
 
                     Text(
-                        text = linkData?.url ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
+                        text = bucketItemBook?.bookDescription() ?: "",
+                        style = MaterialTheme.typography.labelMedium,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-                        modifier = Modifier.padding(vertical = 2.dp)
-                    )
-
-                    Text(
-                        text = linkData?.description ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.47f),
+                        modifier = Modifier.weight(weight = 1f)
                     )
                 }
-
-                AnimatedVisibility(
-                    visible = isReorderable && !isSelecting,
-                    enter = AnimationDefaults.ScaleAndFadeEnter,
-                    exit = AnimationDefaults.ScaleAndFadeExit,
-                    content = { dragHandle() }
-                )
             }
         }
 
@@ -136,13 +169,17 @@ fun BookListCard(
 
 @Composable
 private fun ThumbnailPreview(
-    base64String: String?,
+    thumbnailFile: BucketItemData.Companion.Thumbnail.File?,
 ) {
     val context = LocalContext.current
+    val alice2: Alice2 = koinInject()
 
-    if (base64String != null) SubcomposeAsyncImage(
+    var bitmapByteArray: ByteArray? by remember { mutableStateOf(value = null) }
+    LaunchedEffect(key1 = thumbnailFile) { withContext(context = Dispatchers.Default) { bitmapByteArray = thumbnailFile?.getAndDecryptFile(context, alice2) } }
+
+    if (thumbnailFile != null) SubcomposeAsyncImage(
         model = ImageRequest.Builder(context)
-            .data(data = base64String.decodeBase64ToBitmap())
+            .data(data = bitmapByteArray)
             .build(),
         contentDescription = null,
         contentScale = ContentScale.Crop,
@@ -150,13 +187,13 @@ private fun ThumbnailPreview(
         loading = { CircularProgressIndicator(modifier = Modifier.requiredSize(size = 32.dp), strokeWidth = 2.dp) },
         modifier = Modifier
             .fillMaxSize()
-            .background(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium)
-            .clip(shape = MaterialTheme.shapes.medium)
+            .background(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.small)
+            .clip(shape = MaterialTheme.shapes.small)
     ) else Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .background(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.large)
+            .background(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.small)
             .clip(shape = MaterialTheme.shapes.large)
     ) {
         Text(

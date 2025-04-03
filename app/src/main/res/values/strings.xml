@@ -55,6 +55,12 @@
     <string name="add_show">Add show</string>
     <string name="add_link">Add link</string>
     <string name="add_location">Add location</string>
+    <string name="edit_todo">Edit todo</string>
+    <string name="update_todo">Update todo</string>
+    <string name="move_selected_items">Move selected items</string>
+    <string name="no_items_selected">No items selected</string>
+    <string name="item_selected">item selected</string>
+    <string name="items_selected">items selected</string>
 
     <string name="all">All</string>
     <string name="to_do">To do</string>
@@ -76,6 +82,8 @@
     <string name="toast_no_bucket_id">Error loading bucket. No id specified.</string>
     <string name="toast_no_book_title">Enter book title</string>
 
+    <string name="dialog_delete_selected_items">Are you sure you want to delete selected items?\nThis action cannot be undone</string>
+
     <string name="book_title">Book title</string>
     <string name="movie_title">Movie title</string>
     <string name="series_title">Series title</string>
@@ -92,11 +100,13 @@
     <string name="locked">Locked</string>
     <string name="not_locked">Not locked</string>
     <string name="loading">Loading</string>
-    <string name="list_title_error">Enter the list title</string>
+    <string name="list_title_error">Enter list title</string>
     <string name="todo_item_title_error">Enter some data</string>
     <string name="selected_bucket_type_validation_error">Select a type of list</string>
     <string name="todo_title">Todo title</string>
-    <string name="add_to_the_list">Add to the list</string>
+    <string name="todo_description">Description</string>
+    <string name="todo_enter_extra_detail">Enter extra detail (optional)</string>
+    <string name="add_to_list">Add to list</string>
 
     <string name="select_all">Select all</string>
     <string name="copy">Copy</string>
@@ -129,10 +139,20 @@
 
     <string name="id">ID</string>
     <string name="created_on">Created on</string>
-    <string name="modified_on">Created on</string>
+    <string name="modified_on">Modified on</string>
     <string name="no_data">No data</string>
     <string name="no_title">No title</string>
     <string name="no_Description">No description</string>
+
+    <string name="view_type">View type</string>
+    <string name="list">List</string>
+    <string name="grid">Grid</string>
+
+    <string name="add_passcode">Add passcode</string>
+    <string name="confirm_passcode">Confirm passcode</string>
+    <string name="error_confirm_passcode">Error confirming passcode. Try again.</string>
+    <string name="enter_passcode">Enter passcode</string>
+    <string name="passcode_incorrect">Passcode incorrect. Try again.</string>
 
     <string name="error_loading_book_data">Error loading book data</string>
 

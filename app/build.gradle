@@ -11,7 +11,6 @@ plugins {
     id 'com.google.android.gms.oss-licenses-plugin'
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.20'
     id 'project-report'
-    id "app.cash.sqldelight" version "2.0.2"
 }
 
 android {
@@ -101,26 +100,6 @@ android {
     namespace 'com.syncodec.graphite'
 }
 
-//sqldelight {
-//    databases {
-//        register("AppDatabase") {
-//            it.setProperty("packageName", "com.syncodec.graphite.delight")
-//        }
-////        create("AppDatabase") {
-////            packageName.set("com.syncodec.graphite")
-////        }
-//    }
-//}
-
-sqldelight {
-    databases {
-        create("DelightDb") {
-            packageName.set("com.syncodec.graphite.database")
-        }
-    }
-    linkSqlite = false
-}
-
 dependencies {
 
     implementation 'com.jakewharton:process-phoenix:3.0.0'
@@ -142,11 +121,9 @@ dependencies {
     implementation 'androidx.compose.material3:material3-window-size-class-android:1.3.1'
     implementation 'androidx.compose.material3:material3-adaptive-android:1.0.0-alpha06'
 
-
-    implementation 'androidx.work:work-runtime-ktx:2.10.0'
     implementation "androidx.glance:glance-appwidget:1.1.1"
 
-    implementation 'androidx.navigation:navigation-compose:2.8.8'
+    implementation 'androidx.navigation:navigation-compose:2.8.9'
     implementation 'androidx.constraintlayout:constraintlayout-compose:1.1.1'
 
     implementation 'androidx.core:core-animation:1.0.0'
@@ -178,12 +155,12 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1'
     implementation 'io.realm.kotlin:library-base:3.0.0'
 
-    implementation 'io.insert-koin:koin-android:4.0.2'
-    implementation 'io.insert-koin:koin-android-compat:4.0.2'
-    implementation 'io.insert-koin:koin-androidx-workmanager:4.0.2'
-    implementation 'io.insert-koin:koin-androidx-navigation:4.0.2'
-    implementation 'io.insert-koin:koin-androidx-compose:4.0.2'
-    implementation 'io.insert-koin:koin-android:4.0.2'
+    implementation 'io.insert-koin:koin-android:4.0.4'
+    implementation 'io.insert-koin:koin-android-compat:4.0.4'
+    implementation 'io.insert-koin:koin-androidx-workmanager:4.0.4'
+    implementation 'io.insert-koin:koin-androidx-navigation:4.0.4'
+    implementation 'io.insert-koin:koin-androidx-compose:4.0.4'
+    implementation 'io.insert-koin:koin-android:4.0.4'
     implementation 'io.insert-koin:koin-annotations:2.0.0'
     ksp 'io.insert-koin:koin-ksp-compiler:2.0.0'
 
@@ -211,36 +188,38 @@ dependencies {
 
     implementation "androidx.exifinterface:exifinterface:1.4.0"
 
-    implementation('com.revenuecat.purchases:purchases:8.14.0') {
+    implementation('com.revenuecat.purchases:purchases:8.15.1') {
 //        exclude(group: "com.google.crypto.tink", module: "tink-android")
     }
 
-    implementation platform('com.google.firebase:firebase-bom:33.10.0')
+    implementation platform('com.google.firebase:firebase-bom:33.12.0')
 //	implementation 'com.google.android.gms:play-services-auth:21.2.0'
     implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
+    implementation 'com.firebaseui:firebase-ui-auth:9.0.0'
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.firebase:firebase-storage-ktx'
     implementation 'com.google.firebase:firebase-firestore-ktx'
     implementation 'com.google.firebase:firebase-functions-ktx'
 
-    implementation "androidx.credentials:credentials:1.3.0"
-    implementation "androidx.credentials:credentials-play-services-auth:1.3.0"
+    implementation "androidx.credentials:credentials:1.5.0"
+    implementation "androidx.credentials:credentials-play-services-auth:1.5.0"
     implementation "com.google.android.libraries.identity.googleid:googleid:1.1.1"
+
+    implementation "com.github.Amirroid:ComposePreferences:1.0.1"
 
 //	Google drive
 //	implementation 'com.google.oauth-client:google-oauth-client-jetty:1.34.1'
 //	implementation 'com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0'
 //	implementation 'com.google.api-client:google-api-client-android:1.20.0'
 
-    implementation "androidx.javascriptengine:javascriptengine:1.0.0-beta01"
+    implementation 'androidx.javascriptengine:javascriptengine:1.0.0-rc01'
 
 //	Dropbox
     implementation 'com.dropbox.core:dropbox-core-sdk:7.0.0'
 
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
 
-    implementation 'joda-time:joda-time:2.13.1'
+    implementation 'joda-time:joda-time:2.14.0'
 
     implementation 'me.jorgecastillo:androidcolorx:0.2.0'
     implementation 'com.godaddy.android.colorpicker:compose-color-picker-android:0.7.0'
@@ -279,12 +258,12 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-location:21.3.0'
     implementation 'com.google.maps.android:maps-utils-ktx:5.1.1'
-    implementation 'com.google.maps.android:maps-compose:6.5.0'
-    implementation 'com.google.maps.android:maps-compose-utils:6.5.0'
+    implementation 'com.google.maps.android:maps-compose:6.5.2'
+    implementation 'com.google.maps.android:maps-compose-utils:6.5.2'
     implementation 'com.google.android.gms:play-services-maps:19.1.0'
 
-    implementation 'androidx.datastore:datastore-preferences-core:1.1.3'
-    implementation 'androidx.datastore:datastore-preferences:1.1.3'
+    implementation 'androidx.datastore:datastore-preferences-core:1.1.4'
+    implementation 'androidx.datastore:datastore-preferences:1.1.4'
 
     implementation("dev.whyoleg.cryptography:cryptography-core:0.4.0")
     implementation("dev.whyoleg.cryptography:cryptography-provider-jdk:0.4.0")
@@ -300,6 +279,7 @@ dependencies {
 
     implementation 'com.github.skydoves:colorpicker-compose:1.1.2'
     implementation 'io.noties.markwon:core:4.6.2'
+    implementation("io.github.devngho:kmarkdown:0.2.4")
 
     implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.6'
 
@@ -316,10 +296,10 @@ dependencies {
     androidTestImplementation "androidx.test:core-ktx:1.6.1"
 
     // Reflection
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:2.1.10'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:2.1.20'
 
-    implementation('dev.chrisbanes.haze:haze:1.5.0')
-    implementation('dev.chrisbanes.haze:haze-materials:1.5.0')
+    implementation('dev.chrisbanes.haze:haze:1.5.2')
+    implementation('dev.chrisbanes.haze:haze-materials:1.5.2')
 
     implementation('com.cheonjaeung.compose.grid:grid:2.2.1')
 
@@ -327,15 +307,15 @@ dependencies {
     androidTestImplementation "androidx.test:runner:1.6.2"
     androidTestImplementation "androidx.test:rules:1.6.1"
 
-    androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.0'
-    androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.12.0'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.1'
+    androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.12.1'
 
     // Assertions
     androidTestImplementation "androidx.test.ext:junit-ktx:1.2.1"
     androidTestImplementation "androidx.test.ext:truth:1.6.0"
 
     // Mock
-    androidTestImplementation 'org.mockito:mockito-core:5.16.0'
+    androidTestImplementation 'org.mockito:mockito-core:5.16.1'
     androidTestImplementation 'org.mockito.kotlin:mockito-kotlin:5.4.0'
 
     // Mockk

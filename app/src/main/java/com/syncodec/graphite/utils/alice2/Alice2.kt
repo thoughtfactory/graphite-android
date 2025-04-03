@@ -26,7 +26,6 @@ class Alice2(
     var key: AES.GCM.Key?
 
     init {
-
         val dbKeyRequest = context.getSecretData(key = "db_key")
         key = when(dbKeyRequest) {
             is AliceRequest.KeyNotFound -> {
@@ -47,9 +46,13 @@ class Alice2(
         return key?.cipher()?.encryptBlocking(data.encodeToByteArray())
     }
 
-    fun decrypt(data: ByteArray?): String? {
+    fun encrypt(data: ByteArray): ByteArray? {
+        return key?.cipher()?.encryptBlocking(data)
+    }
+
+    fun decrypt(data: ByteArray?): ByteArray? {
         data ?: return null
-        return key?.cipher()?.decryptBlocking(data)?.decodeToString()
+        return key?.cipher()?.decryptBlocking(data)
     }
 
     @OptIn(ExperimentalStdlibApi::class)

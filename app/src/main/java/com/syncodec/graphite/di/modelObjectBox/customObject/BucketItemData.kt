@@ -1,37 +1,24 @@
 package com.syncodec.graphite.di.modelObjectBox.customObject
 
 import android.content.Context
-import android.graphics.Bitmap
+import android.util.Log
+import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook.Custom
 import com.syncodec.graphite.di.network.openGraph.LinkData
 import com.syncodec.graphite.di.network.trakt.TraktIDs
+import com.syncodec.graphite.utils.alice2.Alice2
 import io.objectbox.converter.PropertyConverter
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 sealed class BucketItemData {
 
-    abstract val state: State
     open fun thumbnail(context: Context): Thumbnail? = null
-
-    fun nextState(): State = when (state) {
-        State.Alpha -> State.Beta
-        State.Beta -> State.Gamma
-        State.Gamma -> State.Alpha
-    }
-
-    fun copyWithState(newState: State) = when (this) {
-        is BucketItemTodo -> copy(state = newState)
-        is BucketItemBook.OpenLibrary -> copy(state = newState)
-        is BucketItemBook.Custom -> copy(state = newState)
-        is BucketItemShow.TraktMovie -> copy(state = newState)
-        is BucketItemShow.TraktSeries -> copy(state = newState)
-        is BucketItemLink -> copy(state = newState)
-        is BucketItemLocation -> copy(state = newState)
-    }
 
     fun itemTitle() = when (this) {
         is BucketItemTodo -> this.title
@@ -43,16 +30,74 @@ sealed class BucketItemData {
         is BucketItemLocation -> this.title
     }
 
-    @Serializable
-    enum class State { Alpha, Beta, Gamma }
-
     companion object {
 
         @Serializable
         sealed class Thumbnail {
 
             @Serializable
-            data object File : Thumbnail()
+            sealed class File : Thumbnail() {
+                abstract val fileName: String
+
+                abstract fun getFile(context: Context): java.io.File?
+                abstract fun getAndDecryptFile(context: Context, alice2: Alice2): ByteArray?
+
+                @Serializable
+                data class CachedFile(override val fileName: String = Uuid.random().toString()) : File() {
+                    override fun getFile(context: Context): java.io.File? {
+                        try {
+                            val cacheDir = context.cacheDir
+                            val thumbnailDir = java.io.File(cacheDir, "thumbnail")
+                            thumbnailDir.mkdirs()
+                            val cachedFile = java.io.File(thumbnailDir, fileName)
+                            cachedFile.createNewFile()
+                            return cachedFile
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            return null
+                        }
+                    }
+
+                    override fun getAndDecryptFile(context: Context, alice2: Alice2): ByteArray? {
+                        val file = getFile(context)
+                        try {
+                            val encryptedByteArray = file?.readBytes()
+                            return alice2.decrypt(encryptedByteArray)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            return null
+                        }
+                    }
+                }
+
+                @Serializable
+                data class PersistentFile(override val fileName: String = Uuid.random().toString()) : File() {
+                    override fun getFile(context: Context): java.io.File? {
+                        try {
+                            val dataDir = context.dataDir
+                            val thumbnailDir = java.io.File(dataDir, "thumbnail")
+                            thumbnailDir.mkdirs()
+                            val cachedFile = java.io.File(thumbnailDir, fileName)
+                            cachedFile.createNewFile()
+                            return cachedFile
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            return null
+                        }
+                    }
+
+                    override fun getAndDecryptFile(context: Context, alice2: Alice2): ByteArray? {
+                        val file = getFile(context)
+                        try {
+                            val encryptedByteArray = file?.readBytes()
+                            return alice2.decrypt(encryptedByteArray)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            return null
+                        }
+                    }
+                }
+            }
 
             @Serializable
             data class Base64(val data: String) : Thumbnail()
@@ -63,7 +108,7 @@ sealed class BucketItemData {
 @Serializable
 data class BucketItemTodo(
     val title: String,
-    override val state: State,
+    val description: String? = null
 ) : BucketItemData()
 
 @Serializable
@@ -79,7 +124,6 @@ sealed class BucketItemBook : BucketItemData() {
 
     @Serializable
     data class OpenLibrary(
-        override val state: State = State.Alpha,
         val key: String? = null,
         val title: String? = null,
         val description: String? = null,
@@ -87,7 +131,7 @@ sealed class BucketItemBook : BucketItemData() {
         val authorList: List<String> = listOf(),
         val firstPublishYear: Int? = null,
         val numberOfPages: Int? = null,
-        val thumbnail: BucketItemData.Companion.Thumbnail.Base64? = null
+        val thumbnail: BucketItemData.Companion.Thumbnail.File? = null
     ) : BucketItemBook() {
         override fun bookTitle(): String? = title
         override fun bookDescription(): String? = description
@@ -97,7 +141,6 @@ sealed class BucketItemBook : BucketItemData() {
         override fun bookNumberOfPages(): Int? = numberOfPages
         override fun thumbnail(context: Context): BucketItemData.Companion.Thumbnail? = thumbnail
         override fun toCustom(): Custom = Custom(
-            state = state,
             key = key,
             title = title,
             description = description,
@@ -110,14 +153,13 @@ sealed class BucketItemBook : BucketItemData() {
 
     @Serializable
     data class Custom(
-        override val state: State = State.Alpha,
         val key: String? = null,
         val title: String? = null,
         val description: String? = null,
         val authorList: List<String> = listOf(),
         val firstPublishYear: Int? = null,
         val numberOfPages: Int? = null,
-        val thumbnail: BucketItemData.Companion.Thumbnail.Base64? = null
+        val thumbnail: BucketItemData.Companion.Thumbnail.File? = null
     ) : BucketItemBook() {
         override fun bookTitle(): String? = title
         override fun bookDescription(): String? = description
@@ -136,11 +178,13 @@ sealed class BucketItemShow : BucketItemData() {
 
     enum class ShowType { Movie, Series }
 
-    open fun releaseYear(): Int? = null
+    abstract fun showTitle(): String?
+    abstract fun showOverview(): String?
+    abstract fun showTagline(): String?
+    abstract fun releaseYear(): Int?
 
     @Serializable
     data class TraktMovie(
-        override val state: State = State.Alpha,
         val title: String? = null,
         val year: Int? = null,
         val ids: TraktIDs? = null,
@@ -154,13 +198,15 @@ sealed class BucketItemShow : BucketItemData() {
         val genres: List<String> = listOf(),
         val thumbnail: BucketItemData.Companion.Thumbnail? = null
     ) : BucketItemShow() {
+        override fun showTitle(): String? = title
+        override fun showOverview(): String? = overview
+        override fun showTagline(): String? = tagline
         override fun releaseYear(): Int? = year
         override fun thumbnail(context: Context): BucketItemData.Companion.Thumbnail? = thumbnail
     }
 
     @Serializable
     data class TraktSeries(
-        override val state: State = State.Alpha,
         val title: String? = null,
         val year: Int? = null,
         val ids: TraktIDs? = null,
@@ -175,6 +221,9 @@ sealed class BucketItemShow : BucketItemData() {
         val genres: List<String> = listOf(),
         val thumbnail: BucketItemData.Companion.Thumbnail? = null
     ) : BucketItemShow() {
+        override fun showTitle(): String? = title
+        override fun showOverview(): String? = overview
+        override fun showTagline(): String? = tagline
         override fun releaseYear(): Int? = year
         override fun thumbnail(context: Context): BucketItemData.Companion.Thumbnail? = thumbnail
     }
@@ -182,14 +231,12 @@ sealed class BucketItemShow : BucketItemData() {
 
 @Serializable
 data class BucketItemLink(
-    override val state: State,
     val linkData: LinkData
 ) : BucketItemData()
 
 @Serializable
 data class BucketItemLocation(
     val title: String,
-    override val state: State,
 ) : BucketItemData()
 
 

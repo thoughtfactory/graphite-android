@@ -12,32 +12,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
-import dev.chrisbanes.haze.HazeState
 import kotlinx.serialization.InternalSerializationApi
+import kotlin.uuid.ExperimentalUuidApi
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class, ExperimentalLayoutApi::class, ExperimentalUuidApi::class)
 @Preview
 @Composable
 fun EditBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
-    outerHazeState: HazeState = remember { HazeState() },
-    bucketBox: BucketBox? = null,
-    onUpdateBucket: (BucketBox) -> Unit = {}
+    bucketBox: BucketBoxDecrypted? = null,
+    onUpdateBucket: (BucketBoxDecrypted) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val isBottomSheetVisible by bottomSheet2State.isBottomSheetVisibleFlow.collectAsState()
@@ -55,12 +53,12 @@ fun EditBottomSheet(
         val descriptionValidationResult = descriptionTextFieldController.validate { true }
 
         if (titleValidationResult.isValidated && descriptionValidationResult.isValidated && bucketBox!=null) {
-            
-            bucketBox.apply {
-                this.title = titleValidationResult.text
-                this.description = descriptionValidationResult.text
-            }
-            onUpdateBucket(bucketBox)
+
+            val updatedBucketBox = bucketBox.copy(
+                title = titleValidationResult.text,
+                description = descriptionValidationResult.text
+            )
+            onUpdateBucket(updatedBucketBox)
 
             titleTextFieldController.reset()
             descriptionTextFieldController.reset()
@@ -70,7 +68,6 @@ fun EditBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.edit),

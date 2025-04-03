@@ -3,8 +3,8 @@ package com.syncodec.graphite.presentation.main2
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
-import com.syncodec.graphite.di.modelObjectBox.BucketBoxEnc
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.ChapterBox
 import com.syncodec.graphite.di.modelObjectBox.DecryptedBox
 import com.syncodec.graphite.di.secureRepository.BoxRepository
@@ -18,7 +18,7 @@ import org.koin.android.annotation.KoinViewModel
 class MainViewModel2(private val boxRepository: BoxRepository) : ViewModel() {
 
     val allChapterBoxListFlow: Flow<List<ChapterBox>> = boxRepository.getAllChapterBoxAsFlow()
-    val allBucketBoxListFlow: Flow<List<suspend () -> DecryptedBox?>> = boxRepository.getAllBucketBoxAsFlow()
+    val allBucketBoxListFlow: Flow<List<BoxRepository.Companion.CacheValue<BucketBoxEncrypted, BucketBoxDecrypted>>> = boxRepository.getAllBucketBoxAsFlow()
 
     init {
         viewModelScope.launch(context = Dispatchers.Default) {
@@ -31,6 +31,6 @@ class MainViewModel2(private val boxRepository: BoxRepository) : ViewModel() {
 
     fun putChapterBox(chapterBox: ChapterBox) = boxRepository.putChapterBox(chapterBox = chapterBox)
 
-    fun putBucketBox(bucketBox: BucketBox) = boxRepository.putBucketBox(bucketBox = bucketBox)
+    fun putBucketBox(bucketBox: BucketBoxDecrypted) = boxRepository.putBucketBox(bucketBox = bucketBox)
 
 }

@@ -8,33 +8,30 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
-import com.syncodec.graphite.di.modelObjectBox.DecryptedBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.secureRepository.BoxRepository
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.main2.composable.buildingBlock.bucket.BucketCard
 import com.syncodec.graphite.utils.IntentUtil
-import kotlinx.coroutines.Dispatchers
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import org.koin.compose.koinInject
 
 
 @Composable
 fun BucketScreen(
-    allBucketBoxListFlow: Flow<List<suspend () -> DecryptedBox?>>
+    allBucketBoxListFlow: Flow<List<BoxRepository.Companion.CacheValue<BucketBoxEncrypted, BucketBoxDecrypted>>>
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val alice2: Alice2 = koinInject()
 
     val allBucketBoxList by allBucketBoxListFlow.collectAsState(initial = listOf())
     val lazyListState = rememberLazyListState()
@@ -52,24 +49,24 @@ fun BucketScreen(
         items(
             items = allBucketBoxList,
             contentType = { 0 },
-//            key = { it.id },
-        ) { bucketBoxFunc ->
-            var bucketBox: BucketBox? by remember { mutableStateOf(null) }
-            LaunchedEffect(bucketBoxFunc) { withContext(Dispatchers.Default){ bucketBox = bucketBoxFunc.invoke() as? BucketBox? } }
-            bucketBox?.let {bucketBoxLoaded ->
-                BucketCard(
-                    titleText = bucketBoxLoaded.title,
-                    descriptionText = bucketBoxLoaded.description,
-                    bucketType = bucketBoxLoaded.bucketType,
-                    bucketSize = 0,
-                    selected = bucketBoxLoaded.id in selectedItemIdList,
+            key = { it.enc.id },
+        ) { bucketBoxCache ->
+
+            val bucketBox = bucketBoxCache.decryptBlocking(alice2)
+
+            BucketCard(
+                titleText = bucketBox?.title,
+                descriptionText = bucketBox?.description,
+                bucketType = bucketBox?.bucketType ?: BucketBoxEncrypted.BucketType.Unknown,
+                bucketSize = bucketBoxCache.enc.childList.size,
+                selected = bucketBox?.id in selectedItemIdList,
 //                onLongClick = { selectionContainerActor.selectItem(objectBoxId = bucketBox.id) },
-                    onClick = {
-                        if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketBoxLoaded.id)
-                        else IntentUtil.launchBucketActivity(context = context, bucketId = bucketBoxLoaded.id)
-                    }
-                )
-            }
+                onClick = {
+                    bucketBox ?: return@BucketCard
+                    if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketBox.id)
+                    else IntentUtil.launchBucketActivity(context = context, bucketId = bucketBox.id)
+                }
+            )
         }
     }
 }

@@ -10,6 +10,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlin.getValue
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.bucket2.composable.screen.BucketScreen
+import com.syncodec.graphite.presentation.ui.BaseComposable2
 import org.koin.compose.KoinContext
 
 
@@ -25,7 +26,7 @@ class BucketActivity2 : ComponentActivity() {
 
         setContent {
             KoinContext {
-                BaseContent {
+                BaseComposable2 {
                     BucketScreen()
                 }
             }

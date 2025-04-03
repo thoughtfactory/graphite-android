@@ -119,19 +119,29 @@ val LocalSelectionContainerActor = staticCompositionLocalOf<SelectionContainerAc
 
 data class SelectionContainerActor(
     val isSelectingFlow: MutableStateFlow<Boolean> = MutableStateFlow(value = false),
-    val selectedItemIdListFlow: MutableStateFlow<Set<Long>> = MutableStateFlow(value = setOf())
+    val selectedItemIdListFlow: MutableStateFlow<Set<Long>> = MutableStateFlow(value = setOf()),
+    val allItemIdList: MutableList<Long> = mutableListOf(),
 ) {
 
-    fun selectItem(objectBoxId: Long) {
+    fun selectItem(objectBoxId: Long, allItemIdList: List<Long> = listOf()) {
         this.isSelectingFlow.tryEmit(value = true)
+        this.allItemIdList.addAll(allItemIdList)
         val selectedItemIdList = selectedItemIdListFlow.value.toMutableSet()
         if (objectBoxId in selectedItemIdList) selectedItemIdList.remove(element = objectBoxId) else selectedItemIdList.add(element = objectBoxId)
+        this.selectedItemIdListFlow.tryEmit(value = selectedItemIdList.toSet())
+    }
+
+    fun selectAll() {
+        this.isSelectingFlow.tryEmit(value = true)
+        val selectedItemIdList = selectedItemIdListFlow.value.toMutableSet()
+        selectedItemIdList.addAll(elements = allItemIdList)
         this.selectedItemIdListFlow.tryEmit(value = selectedItemIdList.toSet())
     }
 
     fun unselect() {
         this.isSelectingFlow.tryEmit(value = false)
         this.selectedItemIdListFlow.tryEmit(value = setOf())
+        this.allItemIdList.clear()
     }
 
     companion object {

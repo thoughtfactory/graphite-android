@@ -1,24 +1,13 @@
 package com.syncodec.graphite.presentation.bucketItem2.composable.bottomSheet
 
 import android.widget.Toast
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,15 +20,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
-import com.syncodec.graphite.presentation.common.button.GraIconButton
-import com.syncodec.graphite.presentation.common.v2.SurfaceVariantButton
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
+import com.syncodec.graphite.presentation.common.v2.button.SurfaceVariantButton
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
@@ -47,7 +34,6 @@ import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
 import com.syncodec.graphite.presentation.common.v2.textField2.TextField2Controller
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
-import dev.chrisbanes.haze.HazeState
 import kotlinx.serialization.InternalSerializationApi
 
 
@@ -56,7 +42,6 @@ import kotlinx.serialization.InternalSerializationApi
 @Composable
 fun EditBookTitleAuthorBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<BucketItemBook?> = GenericBottomSheet2State.rememberGenericBottomSheet2StateT(),
-    outerHazeState: HazeState = remember { HazeState() },
     onUpdateBucketItemData: (BucketItemBook) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
@@ -94,7 +79,6 @@ fun EditBookTitleAuthorBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.edit),

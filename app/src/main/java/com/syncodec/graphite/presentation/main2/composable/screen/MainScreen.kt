@@ -11,10 +11,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.ChapterBox
-import com.syncodec.graphite.di.modelObjectBox.DecryptedBox
+import com.syncodec.graphite.di.secureRepository.BoxRepository
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
+import com.syncodec.graphite.presentation.common.v2.bottomSheet2.graBottomSheet.FilterAndSortBottomSheet
 import com.syncodec.graphite.presentation.common.v2.scaffold2.GenericScaffold2
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectionContainerActor
@@ -27,7 +29,6 @@ import com.syncodec.graphite.presentation.main2.composable.bottomSheet.NewBucket
 import com.syncodec.graphite.presentation.main2.composable.bottomSheet.NewNotebookBottomSheet
 import com.syncodec.graphite.presentation.main2.composable.buildingBlock.HomeFloatingActionButton
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 
@@ -44,13 +45,13 @@ fun MainScreen(
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
 
-    val hazeState = remember { HazeState() }
+    val filterAndSortBottomSheetState = GenericBottomSheet2State.rememberGenericBottomSheet2State()
 
     val newNotebookBottomSheet = GenericBottomSheet2State.rememberGenericBottomSheet2State(skipPartiallyExpanded = true)
     val newBucketListBottomSheet = GenericBottomSheet2State.rememberGenericBottomSheet2State(skipPartiallyExpanded = true)
 
     val allChapterBoxListFlow: Flow<List<ChapterBox>> = mainViewModel2.allChapterBoxListFlow
-    val allBucketBoxListFlow: Flow<List<suspend () -> DecryptedBox?>> = mainViewModel2.allBucketBoxListFlow
+    val allBucketBoxListFlow: Flow<List<BoxRepository.Companion.CacheValue<BucketBoxEncrypted, BucketBoxDecrypted>>> = mainViewModel2.allBucketBoxListFlow
 
     val currentBackStackList by navController.currentBackStack.collectAsState()
 
@@ -60,6 +61,7 @@ fun MainScreen(
                 currentBackStackRoute = currentBackStackList.lastOrNull()?.destination?.route,
                 onClickSearch = {},
                 onClickMenu = {},
+                onClickFilterAndSort = { filterAndSortBottomSheetState.openSheet() },
                 onClickNavigationButton = { navController.navigate(route = it.route) { launchSingleTop = true; popUpTo("note_screen") { inclusive = false } } }
             )
         },
@@ -81,16 +83,14 @@ fun MainScreen(
         bottomSheetContent = {
             NewBucketBottomSheet(
                 bottomSheet2State = newBucketListBottomSheet,
-                outerHazeState = hazeState,
                 onCreateNewBucket = { mainViewModel2.putBucketBox(bucketBox = it) }
             )
             NewNotebookBottomSheet(
                 bottomSheet2State = newNotebookBottomSheet,
-                outerHazeState = hazeState,
                 onCreateNewNotebook = { mainViewModel2.putChapterBox(chapterBox = it) }
             )
+            FilterAndSortBottomSheet(bottomSheet2State = filterAndSortBottomSheetState)
         },
-        hazeState = hazeState,
         compositionLocalValues = listOf(
             LocalSelectionContainerActor provides selectionContainerActor
         )

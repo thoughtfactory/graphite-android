@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,10 +24,11 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
+import com.syncodec.graphite.presentation.ui.authenticator2.AuthState
+import com.syncodec.graphite.presentation.ui.authenticator2.LocalAuthController
 import io.github.esentsov.PackagePrivate
 
 
-@PackagePrivate
 @Composable
 fun RowScope.FavouriteButton(
     isFavourite: Boolean = true,
@@ -58,22 +60,24 @@ fun RowScope.FavouriteButton(
     }
 }
 
-@PackagePrivate
 @Composable
 fun RowScope.LockButton(
     isLocked: Boolean = false,
     onClick: () -> Unit = {}
 ) {
 
+    val authController = LocalAuthController.current
+    val authState by authController.authStateFlow.collectAsState()
+
     val containerColor by animateColorAsState(targetValue = if (isLocked) Color.LockClosedContainer.copy(alpha = 0.71f) else Color.Transparent, animationSpec = AnimationDefaults.stateAnimationSpec())
     val borderColor by animateColorAsState(targetValue = if (isLocked) Color.Transparent else MaterialTheme.colorScheme.onSurface, animationSpec = AnimationDefaults.stateAnimationSpec())
 
     Button(
-        onClick = onClick,
         shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = MaterialTheme.colorScheme.onSurface),
         border = BorderStroke(width = 1.dp, color = borderColor),
-        modifier = Modifier.weight(weight = 1f)
+        modifier = Modifier.weight(weight = 1f),
+        onClick = { if (authState == AuthState.Authenticated) onClick() else authController.authenticate() }
     ) {
         AnimatedContent(
             targetState = isLocked,

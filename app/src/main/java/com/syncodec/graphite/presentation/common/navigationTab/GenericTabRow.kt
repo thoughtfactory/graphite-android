@@ -1,10 +1,6 @@
 package com.syncodec.graphite.presentation.common.navigationTab
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -69,7 +65,9 @@ fun GenericTabRow(
         contentColor = colors.contentColor,
         indicator = indicator,
         divider = {},
-        modifier = modifier.clip(shape = MaterialTheme.shapes.small)
+        modifier = modifier
+            .height(height = 40.dp)
+            .clip(shape = MaterialTheme.shapes.medium)
     ) {
         tabItemList.forEachIndexed { index, tabItem ->
             Row(
@@ -113,7 +111,7 @@ fun TabIndicator(
         modifier
             .padding(all = 4.dp)
             .fillMaxSize()
-            .background(color = containerColor, shape = MaterialTheme.shapes.small),
+            .background(color = containerColor, shape = MaterialTheme.shapes.medium),
         contentAlignment = Alignment.Center,
     ) {
         AnimatedContent(

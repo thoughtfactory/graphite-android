@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.bookCard
 
-import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -41,7 +40,7 @@ import androidx.core.graphics.ColorUtils
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
@@ -50,22 +49,20 @@ import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContai
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 
 
 @Composable
 fun BookGridCard(
-    bucketItemBox: BucketItemBox,
+    bucketItemBox: BucketItemBoxDecrypted?,
     bucketItemBook: BucketItemBook? = null,
-    state: BucketItemData.State,
     isReorderable: Boolean = false,
-    isLast: Boolean = false,
     dragHandle: @Composable () -> Unit = {},
-    onClickTriStateButton: () -> Unit = {},
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onClick: (Long) -> Unit = {},
+    onLongClick: (Long) -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -74,13 +71,13 @@ fun BookGridCard(
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
 
     SelectableContainer2(
-        selected = bucketItemBox.id in selectedItemIdList,
+        selected = bucketItemBox?.id in selectedItemIdList,
         enabled = true,
         shape = MaterialTheme.shapes.large,
         border = null,
         color = SelectableContainer2Defaults.defaultColors(),
-        onClick = onClick,
-        onLongClick = onLongClick,
+        onClick = { bucketItemBox?.id?.let(onClick) },
+        onLongClick = { bucketItemBox?.id?.let(onLongClick) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(all = 6.dp)
@@ -91,7 +88,7 @@ fun BookGridCard(
                     .fillMaxWidth()
                     .aspectRatio(ratio = 0.875f)
             ) {
-                ThumbnailPreview(thumbnail = bucketItemBook?.thumbnail(context = context) as? BucketItemData.Companion.Thumbnail.Base64)
+                ThumbnailPreview(thumbnailFile = bucketItemBook?.thumbnail(context = context) as? BucketItemData.Companion.Thumbnail.File)
 
                 Column(
                     horizontalAlignment = Alignment.End,
@@ -104,7 +101,7 @@ fun BookGridCard(
                         content = { dragHandle() }
                     )
                     Spacer(modifier = Modifier.weight(weight = 1f))
-                    StatusContainer(isFavourite = bucketItemBox.isFavourite, isLocked = bucketItemBox.isLocked)
+                    StatusContainer(isFavourite = bucketItemBox?.isFavourite == true, isLocked = bucketItemBox?.isLocked == true)
                 }
             }
             Column(
@@ -140,17 +137,18 @@ fun BookGridCard(
 
 @Composable
 private fun ThumbnailPreview(
-    thumbnail: BucketItemData.Companion.Thumbnail.Base64?,
+    thumbnailFile: BucketItemData.Companion.Thumbnail.File?,
 ) {
     val context = LocalContext.current
+    val alice2: Alice2 = koinInject()
 
-    var bitmap: Bitmap? by remember { mutableStateOf(null) }
-    LaunchedEffect(key1 = Unit) { withContext(context = Dispatchers.Default) { thumbnail?.data?.decodeBase64ToBitmap()?.let { withContext(Dispatchers.Main) { bitmap = it } } } }
+    var bitmapByteArray: ByteArray? by remember { mutableStateOf(null) }
+    LaunchedEffect(key1 = thumbnailFile) { withContext(context = Dispatchers.Default) { bitmapByteArray = thumbnailFile?.getAndDecryptFile(context, alice2) } }
 
-    if (thumbnail != null) Box(modifier = Modifier) {
+    if (thumbnailFile != null) Box(modifier = Modifier) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
-                .data(data = bitmap)
+                .data(data = bitmapByteArray)
                 .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,

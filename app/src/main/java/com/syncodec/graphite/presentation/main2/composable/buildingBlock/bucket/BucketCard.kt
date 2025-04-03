@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2
 import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import kotlinx.serialization.InternalSerializationApi
@@ -34,7 +34,7 @@ fun BucketCard(
     titleText: String? = null,
     descriptionText: String? = null,
     bucketSize: Int? = null,
-    bucketType: BucketBox.BucketType = BucketBox.BucketType.Unknown,
+    bucketType: BucketBoxEncrypted.BucketType = BucketBoxEncrypted.BucketType.Unknown,
     selected: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
@@ -84,15 +84,15 @@ fun BucketCard(
 
 @Composable
 private fun BucketIcon(
-    bucketType: BucketBox.BucketType
+    bucketType: BucketBoxEncrypted.BucketType
 ) {
     val icon = when(bucketType) {
-        BucketBox.BucketType.Todo -> R.drawable.ic_fa_todo_duotone
-        BucketBox.BucketType.Book -> R.drawable.ic_fa_books_duotone
-        BucketBox.BucketType.Show -> R.drawable.ic_fa_film_duotone
-        BucketBox.BucketType.Link -> R.drawable.ic_fa_link_duotone
-        BucketBox.BucketType.Location -> R.drawable.ic_fa_map_pin_duotone
-        BucketBox.BucketType.Unknown -> R.drawable.ic_fa_question_mark
+        BucketBoxEncrypted.BucketType.Todo -> R.drawable.ic_fa_todo_duotone
+        BucketBoxEncrypted.BucketType.Book -> R.drawable.ic_fa_books_duotone
+        BucketBoxEncrypted.BucketType.Show -> R.drawable.ic_fa_film_duotone
+        BucketBoxEncrypted.BucketType.Link -> R.drawable.ic_fa_link_duotone
+        BucketBoxEncrypted.BucketType.Location -> R.drawable.ic_fa_map_pin_duotone
+        BucketBoxEncrypted.BucketType.Unknown -> R.drawable.ic_fa_question_mark
     }
 
     Icon(

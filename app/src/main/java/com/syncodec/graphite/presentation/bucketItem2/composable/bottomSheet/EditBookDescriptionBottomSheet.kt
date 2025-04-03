@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.bucketItem2.composable.bottomSheet
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -26,7 +24,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
-import dev.chrisbanes.haze.HazeState
 import kotlinx.serialization.InternalSerializationApi
 
 
@@ -35,7 +32,6 @@ import kotlinx.serialization.InternalSerializationApi
 @Composable
 fun EditBookDescriptionBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<BucketItemBook?> = GenericBottomSheet2State.rememberGenericBottomSheet2StateT(),
-    outerHazeState: HazeState = remember { HazeState() },
     onUpdateBucketItemData: (BucketItemBook) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
@@ -60,7 +56,6 @@ fun EditBookDescriptionBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.edit),

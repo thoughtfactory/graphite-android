@@ -38,9 +38,8 @@ import coil3.BitmapImage
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
 import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.openGraph.LinkData
@@ -57,26 +56,25 @@ import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.encodeBase64
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
 import org.koin.compose.koinInject
+import kotlin.uuid.ExperimentalUuidApi
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class, ExperimentalUuidApi::class)
 @Composable
 fun AddLinkBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
-    outerHazeState: HazeState = remember { HazeState() },
-    onAddLink: (bucketItemBox: BucketItemBox) -> Unit = {}
+    onAddLink: (bucketItemBox: BucketItemBoxDecrypted) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val openGraphApi: OpenGraphApi = koinInject()
 
     val linkTextFieldController = rememberTextField2Controller(initialFocus = true)
 
-    var bucketItemState: BucketItemData.State by remember { mutableStateOf(value = BucketItemData.State.Alpha) }
+    var bucketItemState: BucketItemBoxDecrypted.State by remember { mutableStateOf(value = BucketItemBoxDecrypted.State.Alpha) }
     var isFavourite by remember { mutableStateOf(value = false) }
     var isLocked by remember { mutableStateOf(value = false) }
 
@@ -98,11 +96,14 @@ fun AddLinkBottomSheet(
     fun saveBucketItem() {
         val linkValidationResult = linkTextFieldController.validate { it.isNotBlank() }
         if (linkValidationResult.isValidated) {
-            val bucketItemData = BucketItemLink(state = bucketItemState, linkData = toSaveLinkData ?: return)
-            val bucketItemBox = BucketItemBox(bucketItemData = bucketItemData).apply {
-                this.isFavourite = isFavourite
-                this.isLocked = isLocked
-            }
+            val bucketItemData = BucketItemLink(linkData = toSaveLinkData ?: return)
+            val bucketItemBox = BucketItemBoxDecrypted.newInstance.copy(
+                bucketItemData = bucketItemData,
+                state = bucketItemState,
+                isFavourite = isFavourite,
+                isLocked = isLocked
+            )
+
             onAddLink(bucketItemBox)
 
             linkTextFieldController.reset()
@@ -112,7 +113,6 @@ fun AddLinkBottomSheet(
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.add_link),
@@ -123,7 +123,7 @@ fun AddLinkBottomSheet(
             GenericTextField2(
                 controller = linkTextFieldController,
                 label = stringResource(id = R.string.http_https),
-                placeholder = stringResource(id = R.string.add_to_the_list),
+                placeholder = stringResource(id = R.string.add_to_list),
                 errorMessage = stringResource(id = R.string.todo_item_title_error),
                 keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
             )
@@ -196,11 +196,11 @@ private fun ErrorView() {
 @Composable
 private fun SuccessView(
     linkData: LinkData,
-    bucketItemState: BucketItemData.State = BucketItemData.State.Alpha,
+    bucketItemState: BucketItemBoxDecrypted.State = BucketItemBoxDecrypted.State.Alpha,
     isFavourite: Boolean = false,
     isLocked: Boolean = false,
     onGetThumbnail: (BitmapImage) -> Unit = {},
-    onUpdateBucketItemState: (BucketItemData.State) -> Unit = {},
+    onUpdateBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
     onClickFavourite: (Boolean) -> Unit = {},
     onClickLock: (Boolean) -> Unit = {},
 ) {
@@ -248,9 +248,9 @@ private fun SuccessView(
         Spacer(modifier = Modifier.height(height = 6.dp))
 
         BucketItemStateView(
-            bucketType = BucketBox.BucketType.Link,
+            bucketType = BucketBoxEncrypted.BucketType.Link,
             bucketItemState = bucketItemState.ordinal,
-            onClickBucketItemState = { onUpdateBucketItemState(BucketItemData.State.entries.get(index = it)) }
+            onClickBucketItemState = { onUpdateBucketItemState(BucketItemBoxDecrypted.State.entries.get(index = it)) }
         )
 
         Row(

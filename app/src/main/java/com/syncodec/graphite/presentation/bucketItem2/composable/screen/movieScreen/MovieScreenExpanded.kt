@@ -9,13 +9,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun MovieScreenExpanded(
-    bucketItemBox: BucketItemBox? = null
+    bucketItemBox: BucketItemBoxDecrypted? = null
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current

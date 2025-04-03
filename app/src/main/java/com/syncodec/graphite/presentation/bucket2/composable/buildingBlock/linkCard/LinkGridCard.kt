@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,9 +42,8 @@ import androidx.core.graphics.ColorUtils
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
-import com.syncodec.graphite.di.network.openGraph.LinkData
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2Defaults
@@ -57,31 +57,32 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun LinkGridCard(
-    bucketItemBox: BucketItemBox,
-    linkData: LinkData? = null,
-    state: BucketItemData.State,
+    bucketItemBox: BucketItemBoxDecrypted?,
+    bucketItemLink: BucketItemLink? = null,
     isReorderable: Boolean = false,
-    isLast: Boolean = false,
     dragHandle: @Composable () -> Unit = {},
-    onClickTriStateButton: () -> Unit = {},
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onClick: (Long) -> Unit = {},
+    onLongClick: (Long) -> Unit = {}
 ) {
+    val context = LocalContext.current
+
     val selectionContainerActor = LocalSelectionContainerActor.current
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
 
+    val linkData by remember(key1 = bucketItemLink) { derivedStateOf { bucketItemLink?.linkData } }
+
     SelectableContainer2(
-        selected = bucketItemBox.id in selectedItemIdList,
+        selected = bucketItemBox?.id in selectedItemIdList,
         enabled = true,
         shape = MaterialTheme.shapes.large,
         border = null,
         color = SelectableContainer2Defaults.defaultColors(),
-        onClick = onClick,
-        onLongClick = onLongClick,
+        onClick = { bucketItemBox?.id?.let(onClick) },
+        onLongClick = { bucketItemBox?.id?.let(onLongClick) },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(all = 4.dp)
+            .padding(all = 6.dp)
     ) {
         Column {
             Box(
@@ -102,7 +103,7 @@ fun LinkGridCard(
                         content = { dragHandle() }
                     )
                     Spacer(modifier = Modifier.weight(weight = 1f))
-                    StatusContainer(isFavourite = bucketItemBox.isFavourite, isLocked = bucketItemBox.isLocked)
+                    StatusContainer(isFavourite = bucketItemBox?.isFavourite == true, isLocked = bucketItemBox?.isLocked == true)
                 }
             }
             Column(

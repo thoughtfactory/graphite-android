@@ -12,6 +12,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -27,6 +28,7 @@ val lightColorScheme0 = lightColorScheme(
     secondaryContainer = Color(0xFF1C3648),
     onSecondaryContainer = Color(0xFFCED8DF),
     surface = Color(0xFFEEEEEE),
+    surfaceBright = Color(0xFFE7E7E7),
     onSurface = Color(0xFF131313),
     surfaceVariant = Color(0xFFDEDEDE),
     onSurfaceVariant = Color(0xFF131313),
@@ -45,13 +47,14 @@ val darkColorScheme0 = darkColorScheme(
     secondaryContainer = Color(color = 0xFFCED8DF),
     onSecondaryContainer = Color(color = 0xFF1C3648),
     surface = Color(color = 0xFF131313),
+    surfaceBright = Color(color = 0xFF171717),
     onSurface = Color(color = 0xFFCDC9C3),
     surfaceVariant = Color(color = 0xFF313131),
     onSurfaceVariant = Color(color = 0xFFCDC9C3),
     background = Color(color = 0xFF000000),
     onBackground = Color(color = 0xFFCDC9C3),
-    errorContainer = Color(color = 0xFF561C24),
-    onErrorContainer = Color(color = 0xFFCDC9C3)
+    errorContainer = Color(color = 0xFFBB6464),
+    onErrorContainer = Color(color = 0xFFFFFFFF)
 )
 
 
@@ -121,9 +124,9 @@ object AnimationDefaults {
     fun scaleExit(scale: Float) = scaleOut(animationSpec = stateAnimationSpec(), targetScale = scale)
 
     val ScaleAndFadeEnter = ScaleEnter + FadeEnter
-    fun scaleAndFadeEnter(scale: Float, alpha: Float) = scaleEnter(scale = scale) + fadeEnter(alpha = alpha)
+    fun scaleAndFadeEnter(scale: Float, alpha: Float = 0f) = scaleEnter(scale = scale) + fadeEnter(alpha = alpha)
     val ScaleAndFadeExit = ScaleExit + FadeExit
-    fun scaleAndFadeExit(scale: Float, alpha: Float) = scaleExit(scale = scale) + fadeExit(alpha = alpha)
+    fun scaleAndFadeExit(scale: Float, alpha: Float = 0f) = scaleExit(scale = scale) + fadeExit(alpha = alpha)
 
     val Fade = FadeEnter togetherWith FadeExit
     fun fade(alpha: Float) = fadeEnter(alpha = alpha) togetherWith fadeExit(alpha = alpha)
@@ -149,4 +152,7 @@ object ColorDefaults {
     val Color.Companion.OnLock: Color
         get() = Color.White
 
+    val Color.Companion.BlueColor: Color
+        @Composable
+        get() = if (LocalIsDarkTheme.current) Color(color = 0xFF3E5879) else Color(color = 0xFFC9E6F0)
 }

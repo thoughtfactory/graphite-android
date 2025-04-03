@@ -22,8 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.presentation.common.button.GraIconButton
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
-    bucketItemBoxDataFlow: StateFlow<DataLoader<BucketItemBox>>,
+    bucketItemBoxDataFlow: StateFlow<DataLoader<BucketItemBoxDecrypted>>,
     isDataSaved: Boolean = false,
     isEditing: Boolean = false,
     onClickEdit: () -> Unit = {},
@@ -40,7 +40,7 @@ fun TopBar(
     onToggleFavourite: (Boolean) -> Unit = {},
 ) {
     Crossfade(
-        targetState = isEditing,
+        targetState = false,
         animationSpec = AnimationDefaults.stateAnimationSpec()
     ) {
         if (it) EditingTopBar()
@@ -57,7 +57,7 @@ fun TopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NormalTopBar(
-    bucketItemBoxDataFlow: StateFlow<DataLoader<BucketItemBox>>,
+    bucketItemBoxDataFlow: StateFlow<DataLoader<BucketItemBoxDecrypted>>,
     isDataSaved: Boolean = false,
     onClickEdit: () -> Unit = {},
     onToggleLock: (Boolean) -> Unit = {},
@@ -74,13 +74,13 @@ private fun NormalTopBar(
             val isLocked by remember(key1 = bucketItemBox) { derivedStateOf { bucketItemBox?.isLocked } }
             val isFavourite by remember(key1 = bucketItemBox) { derivedStateOf { bucketItemBox?.isFavourite } }
 
-            AnimatedVisibility(
-                visible = isDataSaved,
-                enter = AnimationDefaults.ScaleEnter,
-                exit = AnimationDefaults.ScaleExit,
-            ) {
-                GraIconButton.EditButton(onClick = onClickEdit)
-            }
+//            AnimatedVisibility(
+//                visible = isDataSaved,
+//                enter = AnimationDefaults.ScaleEnter,
+//                exit = AnimationDefaults.ScaleExit,
+//            ) {
+//                GraIconButton.EditButton(onClick = onClickEdit)
+//            }
             isLocked?.let { GraIconButton.LockButton(isLocked = it) { onToggleLock(!it) } }
             isFavourite?.let { GraIconButton.FavouriteButton(isFavourite = it) { onToggleFavourite(!it) } }
         },

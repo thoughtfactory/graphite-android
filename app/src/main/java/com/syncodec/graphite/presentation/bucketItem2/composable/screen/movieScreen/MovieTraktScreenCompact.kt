@@ -33,9 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.importer.ThumbnailData
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.di.network.trakt.TraktApi
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.BucketItemStateView
@@ -43,7 +42,7 @@ import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.D
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.DescriptionView
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.ThumbnailView
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.TitleView
-import com.syncodec.graphite.presentation.common.v2.SurfaceVariantButton
+import com.syncodec.graphite.presentation.common.v2.button.SurfaceVariantButton
 import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
@@ -53,10 +52,10 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun MovieTraktScreenCompact(
-    bucketItemBox: BucketItemBox? = null,
+    bucketItemBox: BucketItemBoxDecrypted? = null,
     thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>>,
     isEditing: Boolean = false,
-    onToggleBucketItemState: (BucketItemData.State) -> Unit = {},
+    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
 ) {
     val isDarkTheme = LocalIsDarkTheme.current
 
@@ -83,8 +82,8 @@ fun MovieTraktScreenCompact(
         Spacer(modifier = Modifier.height(height = 24.dp))
 
         BucketItemStateView(
-            bucketType = BucketBox.BucketType.Book,
-            bucketItemState = bucketItemData?.state?.ordinal ?: BucketItemData.State.Alpha.ordinal,
+            bucketType = BucketBoxEncrypted.BucketType.Book,
+            bucketItemState = bucketItemBox?.state?.ordinal ?: BucketItemBoxDecrypted.State.Alpha.ordinal,
             modifier = Modifier.padding(horizontal = 20.dp),
             onToggleBucketItemState = onToggleBucketItemState
         )

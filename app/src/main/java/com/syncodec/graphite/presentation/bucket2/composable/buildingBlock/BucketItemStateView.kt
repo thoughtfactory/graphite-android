@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToAlphaText
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaIcon
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaSelectedIcon
@@ -22,7 +22,7 @@ import com.syncodec.graphite.presentation.common.navigationTab.TabItem
 
 @Composable
 fun BucketItemStateView(
-    bucketType: BucketBox.BucketType = BucketBox.BucketType.Unknown,
+    bucketType: BucketBoxEncrypted.BucketType = BucketBoxEncrypted.BucketType.Unknown,
     bucketItemState: Int = 0,
     onClickBucketItemState: (Int) -> Unit = {}
 ) {

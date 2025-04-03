@@ -1,6 +1,5 @@
 package com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.showCard
 
-import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -41,51 +40,44 @@ import androidx.core.graphics.ColorUtils
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
-import com.syncodec.graphite.di.network.trakt.TraktApi
-import com.syncodec.graphite.di.secureRepository.BoxRepository
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2Defaults
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.FavouriteContainer
 import com.syncodec.graphite.presentation.ui.LockClosedContainer
-import com.syncodec.graphite.utils.decodeBase64ToBitmap
+import com.syncodec.graphite.utils.alice2.Alice2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
-import java.io.File
 
 
 @Composable
 fun ShowGridCard(
-    bucketItemBox: BucketItemBox,
+    bucketItemBox: BucketItemBoxDecrypted?,
     bucketItemShow: BucketItemShow? = null,
-    state: BucketItemData.State,
     isReorderable: Boolean = false,
-    isLast: Boolean = false,
     dragHandle: @Composable () -> Unit = {},
-    onClickTriStateButton: () -> Unit = {},
-    onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onClick: (Long) -> Unit = {},
+    onLongClick: (Long) -> Unit = {}
 ) {
-    val boxRepository: BoxRepository = koinInject()
+    val context = LocalContext.current
 
     val selectionContainerActor = LocalSelectionContainerActor.current
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
 
     SelectableContainer2(
-        selected = bucketItemBox.id in selectedItemIdList,
+        selected = bucketItemBox?.id in selectedItemIdList,
         enabled = true,
         shape = MaterialTheme.shapes.large,
         border = null,
         color = SelectableContainer2Defaults.defaultColors(),
-        onClick = onClick,
-        onLongClick = onLongClick,
+        onClick = { bucketItemBox?.id?.let(onClick) },
+        onLongClick = { bucketItemBox?.id?.let(onLongClick) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(all = 6.dp)
@@ -96,7 +88,7 @@ fun ShowGridCard(
                     .fillMaxWidth()
                     .aspectRatio(ratio = 0.875f)
             ) {
-                ThumbnailPreview(thumbnailFile = boxRepository.getBucketItemBoxThumbnail(bucketItemBoxId = bucketItemBox.id))
+                ThumbnailPreview(thumbnailFile = bucketItemShow?.thumbnail(context = context) as? BucketItemData.Companion.Thumbnail.File)
 
                 Column(
                     horizontalAlignment = Alignment.End,
@@ -109,7 +101,7 @@ fun ShowGridCard(
                         content = { dragHandle() }
                     )
                     Spacer(modifier = Modifier.weight(weight = 1f))
-                    StatusContainer(isFavourite = bucketItemBox.isFavourite, isLocked = bucketItemBox.isLocked)
+                    StatusContainer(isFavourite = bucketItemBox?.isFavourite == true, isLocked = bucketItemBox?.isLocked == true)
                 }
             }
             Column(
@@ -137,14 +129,18 @@ fun ShowGridCard(
 
 @Composable
 private fun ThumbnailPreview(
-    thumbnailFile: File? = null,
+    thumbnailFile: BucketItemData.Companion.Thumbnail.File?,
 ) {
     val context = LocalContext.current
+    val alice2: Alice2 = koinInject()
+
+    var bitmapByteArray: ByteArray? by remember { mutableStateOf(null) }
+    LaunchedEffect(key1 = thumbnailFile) { withContext(context = Dispatchers.Default) { bitmapByteArray = thumbnailFile?.getAndDecryptFile(context, alice2) } }
 
     if (thumbnailFile != null) Box(modifier = Modifier) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
-                .data(data = thumbnailFile)
+                .data(data = bitmapByteArray)
                 .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,

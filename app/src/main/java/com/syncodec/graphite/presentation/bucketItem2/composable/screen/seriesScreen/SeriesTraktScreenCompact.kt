@@ -35,8 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.importer.ThumbnailData
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.di.network.trakt.TraktApi
@@ -54,10 +54,10 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun SeriesTraktScreenCompact(
-    bucketItemBox: BucketItemBox? = null,
+    bucketItemBox: BucketItemBoxDecrypted? = null,
     thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>>,
     isEditing: Boolean = false,
-    onToggleBucketItemState: (BucketItemData.State) -> Unit = {},
+    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
 ) {
     val isDarkTheme = LocalIsDarkTheme.current
 
@@ -84,8 +84,8 @@ fun SeriesTraktScreenCompact(
         Spacer(modifier = Modifier.height(height = 24.dp))
 
         BucketItemStateView(
-            bucketType = BucketBox.BucketType.Book,
-            bucketItemState = bucketItemData?.state?.ordinal ?: BucketItemData.State.Alpha.ordinal,
+            bucketType = BucketBoxEncrypted.BucketType.Book,
+            bucketItemState = bucketItemBox?.state?.ordinal ?: BucketItemBoxDecrypted.State.Alpha.ordinal,
             modifier = Modifier.padding(horizontal = 20.dp),
             onToggleBucketItemState = onToggleBucketItemState
         )

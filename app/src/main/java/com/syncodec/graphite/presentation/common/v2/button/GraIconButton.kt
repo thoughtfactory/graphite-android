@@ -1,4 +1,4 @@
-package com.syncodec.graphite.presentation.common.button
+package com.syncodec.graphite.presentation.common.v2.button
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
@@ -20,6 +20,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -29,13 +30,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.ColorDefaults.Favourite
 import com.syncodec.graphite.presentation.ui.ColorDefaults.Lock
 import com.syncodec.graphite.presentation.ui.ICON_SIZE
-
+import com.syncodec.graphite.presentation.ui.authenticator2.AuthState
+import com.syncodec.graphite.presentation.ui.authenticator2.LocalAuthController
 
 object GraIconButton {
     data class Colors(
@@ -43,7 +46,7 @@ object GraIconButton {
         val containerColor: Color,
         val checkedIconColor: Color = iconColor,
         val checkedContainerColor: Color = containerColor,
-        val outlineColor: Color = Color.Transparent
+        val outlineColor: Color = Color.Companion.Transparent
     ) {
         @Composable
         fun containerColor(checked: Boolean): State<Color> {
@@ -63,16 +66,25 @@ object GraIconButton {
             containerColor: Color = MaterialTheme.colorScheme.background,
             checkedIconColor: Color = MaterialTheme.colorScheme.onSurface,
             checkedContainerColor: Color = MaterialTheme.colorScheme.surface,
-            outlineColor: Color = Color.Transparent
+            outlineColor: Color = Color.Companion.Transparent
+        ) = Colors(iconColor = iconColor, containerColor = containerColor, checkedIconColor = checkedIconColor, checkedContainerColor = checkedContainerColor, outlineColor = outlineColor)
+
+        @Composable
+        fun primaryColors(
+            iconColor: Color = MaterialTheme.colorScheme.onPrimary,
+            containerColor: Color = MaterialTheme.colorScheme.primary,
+            checkedIconColor: Color = MaterialTheme.colorScheme.onPrimary,
+            checkedContainerColor: Color = MaterialTheme.colorScheme.primary,
+            outlineColor: Color = Color.Companion.Transparent
         ) = Colors(iconColor = iconColor, containerColor = containerColor, checkedIconColor = checkedIconColor, checkedContainerColor = checkedContainerColor, outlineColor = outlineColor)
 
         @Composable
         fun transparentColors(
             iconColor: Color = MaterialTheme.colorScheme.onBackground,
-            containerColor: Color = Color.Transparent,
+            containerColor: Color = Color.Companion.Transparent,
             checkedIconColor: Color = MaterialTheme.colorScheme.onSurface,
-            checkedContainerColor: Color = Color.Transparent,
-            outlineColor: Color = Color.Transparent
+            checkedContainerColor: Color = Color.Companion.Transparent,
+            outlineColor: Color = Color.Companion.Transparent
         ) = Colors(iconColor = iconColor, containerColor = containerColor, checkedIconColor = checkedIconColor, checkedContainerColor = checkedContainerColor, outlineColor = outlineColor)
 
         @Composable
@@ -81,25 +93,25 @@ object GraIconButton {
             containerColor: Color = MaterialTheme.colorScheme.background,
             checkedIconColor: Color = MaterialTheme.colorScheme.onErrorContainer,
             checkedContainerColor: Color = MaterialTheme.colorScheme.errorContainer,
-            outlineColor: Color = Color.Transparent
+            outlineColor: Color = Color.Companion.Transparent
         ) = Colors(iconColor = iconColor, containerColor = containerColor, checkedIconColor = checkedIconColor, checkedContainerColor = checkedContainerColor, outlineColor = outlineColor)
 
         @Composable
         fun favouriteColors(
             iconColor: Color = MaterialTheme.colorScheme.onBackground,
             containerColor: Color = MaterialTheme.colorScheme.background,
-            checkedIconColor: Color = Color.Favourite,
+            checkedIconColor: Color = Color.Companion.Favourite,
             checkedContainerColor: Color = containerColor,
-            outlineColor: Color = Color.Transparent
+            outlineColor: Color = Color.Companion.Transparent
         ) = Colors(iconColor = iconColor, containerColor = containerColor, checkedIconColor = checkedIconColor, checkedContainerColor = checkedContainerColor, outlineColor = outlineColor)
 
         @Composable
         fun lockColors(
             iconColor: Color = MaterialTheme.colorScheme.onBackground,
             containerColor: Color = MaterialTheme.colorScheme.background,
-            checkedIconColor: Color = Color.Lock,
+            checkedIconColor: Color = Color.Companion.Lock,
             checkedContainerColor: Color = containerColor,
-            outlineColor: Color = Color.Transparent
+            outlineColor: Color = Color.Companion.Transparent
         ) = Colors(iconColor = iconColor, containerColor = containerColor, checkedIconColor = checkedIconColor, checkedContainerColor = checkedContainerColor, outlineColor = outlineColor)
 
     }
@@ -112,6 +124,7 @@ object GraIconButton {
         tooltip: String? = null,
         enabled: Boolean = true,
         checked: Boolean? = null,
+        padding: Dp = 2.dp,
         colors: Colors = Defaults.colors(),
         shape: Shape = MaterialTheme.shapes.medium,
         onClick: () -> Unit = {}
@@ -120,37 +133,37 @@ object GraIconButton {
         val containerColor by animateColorAsState(targetValue = if (checked == true) colors.checkedContainerColor else colors.containerColor, animationSpec = AnimationDefaults.stateAnimationSpec())
         val iconColor by animateColorAsState(targetValue = if (checked == true) colors.checkedIconColor else colors.iconColor, animationSpec = AnimationDefaults.stateAnimationSpec())
 
-        tooltip?.let { tooltipText ->
-            TooltipBox(
-                state = rememberTooltipState(),
-                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                tooltip = { PlainTooltip { Text(text = tooltipText) } },
+        tooltip ?: return
+
+        TooltipBox(
+            state = rememberTooltipState(),
+            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+            tooltip = { PlainTooltip { Text(text = tooltip) } },
+        ) {
+            Box(
+                contentAlignment = Alignment.Companion.Center,
+                modifier = Modifier.Companion
+                    .requiredSize(size = (ICON_SIZE * 2) + 2.dp)
+                    .padding(all = padding)
+                    .background(containerColor, shape)
+                    .clip(shape = shape)
+                    .border(width = 1.dp, colors.outlineColor, shape)
+                    .combinedClickable(
+                        enabled = enabled,
+                        onClick = { onClick() },
+                    )
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .requiredSize((ICON_SIZE * 2) + 2.dp)
-                        .padding(2.dp)
-                        .background(containerColor, shape)
-                        .clip(shape)
-                        .border(1.dp, colors.outlineColor, shape)
-                        .combinedClickable(
-                            enabled = enabled,
-                            onClick = { onClick() },
-                        )
-                ) {
-                    AnimatedContent(
-                        targetState = checked,
-                        transitionSpec = { AnimationDefaults.Fade },
-                        label = "genericButton"
-                    ) { checked1 ->
-                        Icon(
-                            painter = if (checked1==true) painterResource(id = checkedIcon) else painterResource(id = icon),
-                            contentDescription = tooltip,
-                            tint = iconColor.copy(alpha = if (enabled) 1f else 0.31f),
-                            modifier = Modifier.requiredSize(ICON_SIZE)
-                        )
-                    }
+                AnimatedContent(
+                    targetState = checked,
+                    transitionSpec = { AnimationDefaults.Fade },
+                    label = "genericButton"
+                ) { checked1 ->
+                    Icon(
+                        painter = if (checked1 == true) painterResource(id = checkedIcon) else painterResource(id = icon),
+                        contentDescription = tooltip,
+                        tint = iconColor.copy(alpha = if (enabled) 1f else 0.31f),
+                        modifier = Modifier.Companion.requiredSize(size = ICON_SIZE)
+                    )
                 }
             }
         }
@@ -211,17 +224,23 @@ object GraIconButton {
     }
 
     @Composable
-    fun VaultButton(
-        colors: Colors = Defaults.colors(),
-        checked: Boolean,
-        onClick: () -> Unit = {},
-    ) {
+    fun VaultButton() {
+
+        val authController = LocalAuthController.current
+        val authState by authController.authStateFlow.collectAsState()
+
         Composable(
             icon = R.drawable.ic_fa_vault,
             tooltip = stringResource(id = R.string.vault),
-            checked = checked,
-            colors = colors,
-            onClick = onClick,
+            checked = authState == AuthState.Authenticated,
+            colors = Defaults.colors(
+                iconColor = MaterialTheme.colorScheme.onBackground,
+                containerColor = MaterialTheme.colorScheme.background,
+                checkedIconColor = MaterialTheme.colorScheme.onPrimary,
+                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                outlineColor = Color.Companion.Transparent
+            ),
+            onClick = { if (authState == AuthState.Authenticated) authController.unauthenticate() else authController.authenticate() },
         )
     }
 
@@ -239,9 +258,38 @@ object GraIconButton {
     }
 
     @Composable
-    fun FilterAndSortTextButton(
+    fun CancelButton(
         colors: Colors = Defaults.colors(),
         onClick: () -> Unit = {},
+    ) {
+        Composable(
+            icon = R.drawable.ic_fa_x,
+            tooltip = stringResource(id = R.string.cancel),
+            colors = colors,
+            onClick = onClick,
+        )
+    }
+
+    @Composable
+    fun AddButton(
+        padding: Dp = 2.dp,
+        colors: Colors = Defaults.colors(),
+        onClick: () -> Unit = {},
+    ) {
+        Composable(
+            icon = R.drawable.ic_fa_plus,
+            tooltip = stringResource(id = R.string.clear_text),
+            padding = padding,
+            colors = colors,
+            onClick = onClick,
+        )
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun FilterAndSortTextButton(
+        colors: Colors = Defaults.colors(),
+        onClick: () -> Unit = {}
     ) {
         Composable(
             icon = R.drawable.ic_fa_sort,
@@ -257,13 +305,16 @@ object GraIconButton {
         colors: Colors = Defaults.lockColors(),
         onClick: () -> Unit = {},
     ) {
+        val authController = LocalAuthController.current
+        val authState by authController.authStateFlow.collectAsState()
+
         Composable(
             icon = R.drawable.ic_fa_lock_opened,
             checkedIcon = R.drawable.ic_fa_lock_closed_duotone,
             tooltip = if (isLocked) stringResource(id = R.string.entry_locked) else stringResource(id = R.string.entry_not_locked),
             checked = isLocked,
             colors = colors,
-            onClick = onClick,
+            onClick = { if (authState == AuthState.Authenticated) onClick() else authController.authenticate() },
         )
     }
 
@@ -311,15 +362,16 @@ object GraIconButton {
 
     @Composable
     fun EditButton(
+        padding: Dp = 2.dp,
         colors: Colors = Defaults.colors(),
         onClick: () -> Unit = {},
     ) {
         Composable(
             icon = R.drawable.ic_fa_pencil,
             tooltip = stringResource(id = R.string.edit),
+            padding = padding,
             colors = colors,
             onClick = onClick,
         )
     }
-
 }

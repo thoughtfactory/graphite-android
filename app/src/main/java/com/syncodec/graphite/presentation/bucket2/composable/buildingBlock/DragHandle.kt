@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.bucket2.composable.buildingBlock
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -21,14 +20,14 @@ import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @Composable
 fun ReorderableCollectionItemScope.DragHandle(
+    modifier: Modifier = Modifier,
     onDragStopped: () -> Unit
 ) {
     val view = LocalView.current
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .padding(all = 4.dp)
+        modifier = modifier
             .size(size = 32.dp)
             .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.471f), shape = MaterialTheme.shapes.small)
             .draggableHandle(

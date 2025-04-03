@@ -9,7 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToAlphaText
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaIcon
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaSelectedIcon
@@ -24,9 +25,9 @@ import com.syncodec.graphite.presentation.common.navigationTab.TabItem
 @Composable
 fun BucketItemStateView(
     modifier: Modifier = Modifier,
-    bucketType: BucketBox.BucketType = BucketBox.BucketType.Unknown,
+    bucketType: BucketBoxEncrypted.BucketType = BucketBoxEncrypted.BucketType.Unknown,
     bucketItemState: Int = 0,
-    onToggleBucketItemState: (BucketItemData.State) -> Unit = {}
+    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {}
 ) {
 
     val context = LocalContext.current
@@ -37,15 +38,15 @@ fun BucketItemStateView(
                 TabItem(
                     text = context.getString(bucketType.bucketTypeToAlphaText()),
                     icon = R.drawable.ic_fa_clock, selectedIcon = R.drawable.ic_fa_clock_duotone
-                ) { onToggleBucketItemState(BucketItemData.State.Alpha) },
+                ) { onToggleBucketItemState(BucketItemBoxDecrypted.State.Alpha) },
                 TabItem(
                     text = context.getString(bucketType.bucketTypeToBetaText()),
                     icon = bucketType.bucketTypeToBetaIcon(), selectedIcon = bucketType.bucketTypeToBetaSelectedIcon())
-                { onToggleBucketItemState(BucketItemData.State.Beta) },
+                { onToggleBucketItemState(BucketItemBoxDecrypted.State.Beta) },
                 TabItem(
                     text = context.getString(bucketType.bucketTypeToGammaText()),
                     icon = R.drawable.ic_fa_circle_check, selectedIcon = R.drawable.ic_fa_circle_check_duotone
-                ) { onToggleBucketItemState(BucketItemData.State.Gamma) },
+                ) { onToggleBucketItemState(BucketItemBoxDecrypted.State.Gamma) },
             )
         }
     }

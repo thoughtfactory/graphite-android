@@ -1,60 +1,53 @@
 package com.syncodec.graphite.di.modelObjectBox
 
-import android.util.Log
-import com.syncodec.graphite.di.modelObjectBox.serializer.ZonedDateTimeSerializer
+import androidx.annotation.WorkerThread
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted.BucketType
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBoolean
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBooleanConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketType
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketTypeConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedLongList
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedLongListConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedString
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedStringConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedUuid
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedUuidConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedZonedDateTime
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedZonedDateTimeConverter
+import com.syncodec.graphite.di.modelObjectBox.encryptable.encrypt
+import com.syncodec.graphite.di.modelObjectBox.structureExtension.Modifiable
 import com.syncodec.graphite.utils.alice2.Alice2
 import io.objectbox.annotation.Backlink
+import io.objectbox.annotation.Convert
 import io.objectbox.annotation.Entity
-import io.objectbox.annotation.Transient
+import io.objectbox.annotation.Id
 import io.objectbox.relation.ToMany
-import kotlinx.serialization.json.Json
 import java.time.ZonedDateTime
-import kotlin.random.Random
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
-data class BucketBox(
-    var id: Long = 0,
 
-    var uuid: Uuid = Uuid.random(),
+@Entity
+data class BucketBoxEncrypted(
+    @Id override var id: Long = 0,
 
-    var createdTimestamp: ZonedDateTime? = ZonedDateTime.now(),
-    var modifiedTimestamp: ZonedDateTime? = ZonedDateTime.now(),
+    @Convert(converter = EncryptedUuidConverter::class, dbType = String::class) var uuid: EncryptedUuid? = null,
 
-    var title: String? = null,
-    var description: String? = null,
+    @Convert(converter = EncryptedZonedDateTimeConverter::class, dbType = String::class) var createdTimestamp: EncryptedZonedDateTime? = null,
+    @Convert(converter = EncryptedZonedDateTimeConverter::class, dbType = String::class) var modifiedTimestamp: EncryptedZonedDateTime? = null,
 
-    var bucketType: BucketType = BucketType.Unknown,
+    @Convert(converter = EncryptedStringConverter::class, dbType = String::class) var title: EncryptedString? = null,
+    @Convert(converter = EncryptedStringConverter::class, dbType = String::class) var description: EncryptedString? = null,
 
-    var sortedIdList: List<Long> = listOf(),
+    @Convert(converter = EncryptedBucketTypeConverter::class, dbType = String::class) var bucketType: EncryptedBucketType? = null,
 
-    var isFavourite: Boolean = false,
-    var isLocked: Boolean = false,
+    @Convert(converter = EncryptedLongListConverter::class, dbType = String::class) var sortedIdList: EncryptedLongList? = null,
 
-    override var encryptedBox: BucketBoxEnc? = null
-) : DecryptedBox() {
-
-    val childList: List<BucketItemBox>
-        get() = encryptedBox?.childList ?: listOf()
-
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun encrypt(alice2: Alice2): EncryptedBox {
-        val json = Json
-        return BucketBoxEnc(
-            uuid = alice2.encrypt(data = uuid.toHexString())?.toHexString(HexFormat.UpperCase),
-            createdTimestamp = alice2.encrypt(json.encodeToString(ZonedDateTimeSerializer, createdTimestamp))?.toHexString(HexFormat.UpperCase),
-            modifiedTimestamp = alice2.encrypt(json.encodeToString(ZonedDateTimeSerializer, modifiedTimestamp))?.toHexString(HexFormat.UpperCase),
-            title = alice2.encrypt(title ?: "")?.toHexString(HexFormat.UpperCase),
-            description = alice2.encrypt(description ?: "")?.toHexString(HexFormat.UpperCase),
-            bucketType = alice2.encrypt(bucketType.id)?.toHexString(HexFormat.UpperCase),
-            sortedIdList = alice2.encrypt(json.encodeToString(sortedIdList))?.toHexString(HexFormat.UpperCase),
-            isFavourite = alice2.encrypt(json.encodeToString(isFavourite))?.toHexString(HexFormat.UpperCase),
-            isLocked = alice2.encrypt(json.encodeToString(isLocked))?.toHexString(HexFormat.UpperCase),
-        ).apply {
-            this.id = this@BucketBox.id
-        }
-    }
+    @Convert(converter = EncryptedBooleanConverter::class, dbType = String::class) var isFavourite: EncryptedBoolean? = null,
+    @Convert(converter = EncryptedBooleanConverter::class, dbType = String::class) override var isLocked: EncryptedBoolean? = null,
+) : EncryptedBox() {
+    @Backlink(to = "parent")
+    lateinit var childList: ToMany<BucketItemBoxEncrypted>
 
     enum class BucketType(
         val id: String
@@ -67,130 +60,38 @@ data class BucketBox(
         Unknown(id = "unknown")
     }
 
+    @OptIn(ExperimentalUuidApi::class)
+    override fun decrypt(alice2: Alice2, default: DecryptedBox?): BucketBoxDecrypted? = BucketBoxDecrypted(
+        id = id,
+        uuid = uuid?.decrypt(alice2) ?: Uuid.random(),
+        createdTimestamp = createdTimestamp?.decrypt(alice2),
+        modifiedTimestamp = modifiedTimestamp?.decrypt(alice2),
+        title = title?.decrypt(alice2),
+        description = description?.decrypt(alice2),
+        bucketType = bucketType?.decrypt(alice2),
+        sortedIdList = sortedIdList?.decrypt(alice2),
+        isFavourite = isFavourite?.decrypt(alice2),
+        isLocked = isLocked?.decrypt(alice2),
+    )
+
     override fun hashCode(): Int {
         var result = id.hashCode()
-        result = 31 * result + isFavourite.hashCode()
-        result = 31 * result + isLocked.hashCode()
+        result = 31 * result + (uuid?.hashCode() ?: 0)
         result = 31 * result + (createdTimestamp?.hashCode() ?: 0)
         result = 31 * result + (modifiedTimestamp?.hashCode() ?: 0)
         result = 31 * result + (title?.hashCode() ?: 0)
         result = 31 * result + (description?.hashCode() ?: 0)
-        result = 31 * result + bucketType.hashCode()
+        result = 31 * result + (bucketType?.hashCode() ?: 0)
+        result = 31 * result + (sortedIdList?.hashCode() ?: 0)
+        result = 31 * result + (isFavourite?.hashCode() ?: 0)
+        result = 31 * result + (isLocked?.hashCode() ?: 0)
         result = 31 * result + childList.hashCode()
         return result
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is BucketBox) return false
-
-        if (id != other.id) return false
-        if (isFavourite != other.isFavourite) return false
-        if (isLocked != other.isLocked) return false
-        if (createdTimestamp != other.createdTimestamp) return false
-        if (modifiedTimestamp != other.modifiedTimestamp) return false
-        if (title != other.title) return false
-        if (description != other.description) return false
-        if (bucketType != other.bucketType) return false
-        if (childList != other.childList) return false
-
-        return true
-    }
-
-    companion object {
-        val random
-            get() = BucketBox(
-                title = "title_${Random.nextLong()}",
-                description = "description_${Random.nextLong()}",
-            )
-    }
-}
-
-
-@Entity
-data class BucketBoxEnc(
-    var uuid: String? = null,
-    var createdTimestamp: String? = null,
-    var modifiedTimestamp: String? = null,
-
-    var title: String? = null,
-    var description: String? = null,
-
-    var bucketType: String? = null,
-
-    var sortedIdList: String? = null,
-
-    var isFavourite: String? = null,
-    var isLocked: String? = null,
-
-    @Transient override var decryptedBox: BucketBox? = null
-) : EncryptedBox() {
-    @Backlink(to = "parent")
-    lateinit var childList: ToMany<BucketItemBox>
-
-    @OptIn(ExperimentalUuidApi::class)
-    override fun decrypt(alice2: Alice2): BucketBox {
-        val json = Json
-
-        val decUuid = try {
-            alice2.decrypt(uuid)?.let { Uuid.parseHex(it) } ?: Uuid.random()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Uuid.random()
-        }
-        val decCreatedTimestamp = try {
-            json.decodeFromString(ZonedDateTimeSerializer, alice2.decrypt(createdTimestamp) ?: "")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-
-        val decModifiedTimestamp = try {
-            json.decodeFromString(ZonedDateTimeSerializer, alice2.decrypt(modifiedTimestamp) ?: "")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-
-        val decTitle = alice2.decrypt(title)
-        val decDescription = alice2.decrypt(description)
-        val decBucketType = BucketBox.BucketType.entries.find { it.id == alice2.decrypt(bucketType) } ?: BucketBox.BucketType.Unknown
-        val decSortedIdList = try {
-            json.decodeFromString(alice2.decrypt(sortedIdList) ?: "[]")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            listOf<Long>()
-        }
-        val decIsFavourite = try {
-            json.decodeFromString<Boolean>(alice2.decrypt(isFavourite) ?: "")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
-        val decIsLocked = try {
-            json.decodeFromString<Boolean>(alice2.decrypt(isLocked) ?: "")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            true
-        }
-
-        return BucketBox(
-            id = id,
-            uuid = decUuid,
-            createdTimestamp = decCreatedTimestamp,
-            modifiedTimestamp = decModifiedTimestamp,
-            title = decTitle,
-            description = decDescription,
-            bucketType = decBucketType,
-            sortedIdList = decSortedIdList,
-            isFavourite = decIsFavourite,
-            isLocked = decIsLocked,
-        )
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is BucketBoxEnc) return false
+        if (other !is BucketBoxEncrypted) return false
 
         if (id != other.id) return false
         if (uuid != other.uuid) return false
@@ -206,20 +107,85 @@ data class BucketBoxEnc(
 
         return true
     }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+data class BucketBoxDecrypted(
+    override val id: Long = 0,
+
+    val uuid: Uuid = Uuid.random(),
+
+    val createdTimestamp: ZonedDateTime? = null,
+    val modifiedTimestamp: ZonedDateTime? = null,
+
+    val title: String? = null,
+    val description: String? = null,
+
+    val bucketType: BucketType? = null,
+
+    val sortedIdList: List<Long>? = null,
+
+    val isFavourite: Boolean? = null,
+    val isLocked: Boolean? = null,
+) : DecryptedBox(), Modifiable {
+
+    @WorkerThread
+    override fun encrypt(alice2: Alice2): BucketBoxEncrypted? = BucketBoxEncrypted(
+        id = id,
+        uuid = uuid.encrypt(alice2),
+        createdTimestamp = createdTimestamp?.encrypt(alice2),
+        modifiedTimestamp = modifiedTimestamp?.encrypt(alice2),
+        title = title?.encrypt(alice2),
+        description = description?.encrypt(alice2),
+        bucketType = bucketType?.encrypt(alice2),
+        sortedIdList = sortedIdList?.encrypt(alice2),
+        isFavourite = isFavourite?.encrypt(alice2),
+        isLocked = isLocked?.encrypt(alice2)
+    )
+
+    override fun modifyDateTime(): BucketBoxDecrypted = copy(modifiedTimestamp = ZonedDateTime.now())
 
     override fun hashCode(): Int {
         var result = id.hashCode()
-        result = 31 * result + uuid.hashCode()
+        result = 31 * result + (isFavourite?.hashCode() ?: 0)
+        result = 31 * result + (isLocked?.hashCode() ?: 0)
+        result = 31 * result + (uuid?.hashCode() ?: 0)
         result = 31 * result + (createdTimestamp?.hashCode() ?: 0)
         result = 31 * result + (modifiedTimestamp?.hashCode() ?: 0)
         result = 31 * result + (title?.hashCode() ?: 0)
         result = 31 * result + (description?.hashCode() ?: 0)
-        result = 31 * result + bucketType.hashCode()
-        result = 31 * result + sortedIdList.hashCode()
-        result = 31 * result + isFavourite.hashCode()
-        result = 31 * result + isLocked.hashCode()
+        result = 31 * result + (bucketType?.hashCode() ?: 0)
+        result = 31 * result + (sortedIdList?.hashCode() ?: 0)
         return result
     }
 
-}
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BucketBoxDecrypted) return false
 
+        if (id != other.id) return false
+        if (isFavourite != other.isFavourite) return false
+        if (isLocked != other.isLocked) return false
+        if (uuid != other.uuid) return false
+        if (createdTimestamp != other.createdTimestamp) return false
+        if (modifiedTimestamp != other.modifiedTimestamp) return false
+        if (title != other.title) return false
+        if (description != other.description) return false
+        if (bucketType != other.bucketType) return false
+        if (sortedIdList != other.sortedIdList) return false
+
+        return true
+    }
+
+    companion object {
+        val newInstance: BucketBoxDecrypted
+            get() = BucketBoxDecrypted(
+                uuid = Uuid.random(),
+                createdTimestamp = ZonedDateTime.now(),
+                modifiedTimestamp = ZonedDateTime.now(),
+                sortedIdList = listOf(),
+                isFavourite = false,
+                isLocked = false
+            )
+    }
+}

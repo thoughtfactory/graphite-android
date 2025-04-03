@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
@@ -13,6 +14,7 @@ import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.syncodec.graphite.presentation.common.v2.bottomSheet2.LocalOuterHazeState
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 
@@ -25,14 +27,16 @@ fun GenericScaffold2(
     floatingActionButton: @Composable () -> Unit = {},
     floatingActionButtonPosition: FabPosition = FabPosition.End,
     bottomSheetContent: @Composable () -> Unit = {},
-    hazeState: HazeState = remember { HazeState() },
     compositionLocalValues: List<ProvidedValue<*>> = listOf(),
     overlayContent: @Composable BoxScope.() -> Unit = {},
+    overlayScaffold: @Composable () -> Unit = {},
     scaffoldContent: @Composable BoxScope.() -> Unit
 ) {
 
+    val hazeState = remember { HazeState() }
+
     CompositionLocalProvider(
-        values = compositionLocalValues.toTypedArray()
+        values = (compositionLocalValues + (LocalOuterHazeState provides hazeState)).toTypedArray()
     ) {
         Box(
             modifier = Modifier
@@ -59,6 +63,7 @@ fun GenericScaffold2(
                 }
             }
             bottomSheetContent()
+            overlayScaffold()
         }
     }
 }

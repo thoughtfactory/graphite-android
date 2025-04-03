@@ -35,9 +35,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
 import com.syncodec.graphite.di.network.openGraph.LinkData
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.FavouriteButton
@@ -48,41 +47,39 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.buildingBlock.KeyValueCard
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
+import kotlin.uuid.ExperimentalUuidApi
 
 
-@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class, ExperimentalUuidApi::class)
 @Composable
 fun LinkBottomSheet(
-    bottomSheet2State: GenericBottomSheet2State<BucketItemBox> = GenericBottomSheet2State.rememberGenericBottomSheet2StateT(),
-    outerHazeState: HazeState = remember { HazeState() },
-    onUpdateBucketItemBox: (BucketItemBox) -> Unit = {}
+    bottomSheet2State: GenericBottomSheet2State<BucketItemBoxDecrypted> = GenericBottomSheet2State.rememberGenericBottomSheet2StateT(),
+    onUpdateBucketItemBox: (BucketItemBoxDecrypted) -> Unit = {}
 ) {
     val bucketItemBox by bottomSheet2State.dataFlow.collectAsState()
 
     val linkData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData as? BucketItemLink } }
 
-    var bucketItemState: BucketItemData.State by remember(key1 = linkData?.state) { mutableStateOf(value = linkData?.state ?: BucketItemData.State.Alpha) }
+    var bucketItemState: BucketItemBoxDecrypted.State by remember(key1 = bucketItemBox?.state) { mutableStateOf(value = bucketItemBox?.state ?: BucketItemBoxDecrypted.State.Alpha) }
     var isFavourite by remember(key1 = bucketItemBox?.isFavourite) { mutableStateOf(value = bucketItemBox?.isFavourite == true) }
     var isLocked by remember(key1 = bucketItemBox?.isLocked) { mutableStateOf(value = bucketItemBox?.isLocked == true) }
 
     fun updateBucketItemObject() {
-        val updatedBucketItemBox = bucketItemBox ?: return
-        updatedBucketItemBox.apply {
-            this.isFavourite = isFavourite
-            this.isLocked = isLocked
-            this.bucketItemData = linkData?.copy(state = bucketItemState)
-        }
+        val updatedBucketItemBox = bucketItemBox?.copy(
+            state = bucketItemState,
+            isLocked = isLocked,
+            isFavourite = isFavourite,
+            bucketItemData = linkData
+        ) ?: return
 
         onUpdateBucketItemBox(updatedBucketItemBox)
     }
 
-    GenericBottomSheet2<BucketItemBox>(
+    GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
-        outerHazeState = outerHazeState
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.link),
@@ -90,15 +87,15 @@ fun LinkBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 12.dp))
 
-            linkData?.linkData?.let {
+            linkData?.linkData?.let { linkData1 ->
                 SuccessView(
-                    linkData = it,
+                    linkData = linkData1,
                     isFavourite = isFavourite,
                     isLocked = isLocked,
                     bucketItemState = bucketItemState,
-                    onUpdateBucketItemState = { bucketItemState = it },
-                    onClickFavourite = { isFavourite = it },
-                    onClickLock = { isLocked = it }
+                    onUpdateBucketItemState = { bucketItemState = it; updateBucketItemObject() },
+                    onClickFavourite = { isFavourite = it; updateBucketItemObject() },
+                    onClickLock = { isLocked = it; updateBucketItemObject() }
                 )
             }
 
@@ -119,8 +116,8 @@ private fun SuccessView(
     linkData: LinkData,
     isFavourite: Boolean = false,
     isLocked: Boolean = false,
-    bucketItemState: BucketItemData.State = BucketItemData.State.Alpha,
-    onUpdateBucketItemState: (BucketItemData.State) -> Unit = {},
+    bucketItemState: BucketItemBoxDecrypted.State = BucketItemBoxDecrypted.State.Alpha,
+    onUpdateBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
     onClickFavourite: (Boolean) -> Unit = {},
     onClickLock: (Boolean) -> Unit = {},
 ) {
@@ -165,9 +162,9 @@ private fun SuccessView(
         Spacer(modifier = Modifier.height(height = 6.dp))
 
         BucketItemStateView(
-            bucketType = BucketBox.BucketType.Link,
+            bucketType = BucketBoxEncrypted.BucketType.Link,
             bucketItemState = bucketItemState.ordinal,
-            onClickBucketItemState = { onUpdateBucketItemState(BucketItemData.State.entries.get(index = it)) }
+            onClickBucketItemState = { onUpdateBucketItemState(BucketItemBoxDecrypted.State.entries.get(index = it)) }
         )
 
         Spacer(modifier = Modifier.height(height = 4.dp))
@@ -175,9 +172,9 @@ private fun SuccessView(
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
-            FavouriteButton()
+            FavouriteButton(isFavourite = isFavourite) { onClickFavourite(!isFavourite) }
             Spacer(modifier = Modifier.width(width = 6.dp))
-            LockButton()
+            LockButton(isLocked = isLocked) { onClickLock(!isLocked) }
         }
     }
 }

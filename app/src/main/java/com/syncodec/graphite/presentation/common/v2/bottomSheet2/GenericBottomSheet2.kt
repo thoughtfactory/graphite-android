@@ -12,10 +12,12 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -31,18 +33,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 
+val LocalOuterHazeState: ProvidableCompositionLocal<HazeState> = staticCompositionLocalOf { error("no haze state provided") }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> GenericBottomSheet2(
     modifier: Modifier = Modifier,
     bottomSheetState: GenericBottomSheet2State<T>,
-    outerHazeState: HazeState = remember { HazeState() },
     content: @Composable ColumnScope.() -> Unit = { },
 ) {
 
     val isBottomSheetVisible by bottomSheetState.isBottomSheetVisibleFlow.collectAsState()
     val sheetState = bottomSheetState.sheetState
 
+    val outerHazeState = LocalOuterHazeState.current
     val hazeDp by animateDpAsState(targetValue = if (isBottomSheetVisible) 16.dp else 0.dp)
 
     if (isBottomSheetVisible) {
@@ -78,11 +82,11 @@ data class GenericBottomSheet2State<T>(
     val dataFlow = _dataMutableFlow.asStateFlow()
 
     fun openSheet() {
-        isBottomSheetVisibleFlow.tryEmit(value = true)
+        this.isBottomSheetVisibleFlow.tryEmit(value = true)
     }
 
     fun openSheet(data: T?) {
-        isBottomSheetVisibleFlow.tryEmit(value = true)
+        this.isBottomSheetVisibleFlow.tryEmit(value = true)
         this._dataMutableFlow.tryEmit(value = data)
     }
 
@@ -108,7 +112,7 @@ data class GenericBottomSheet2State<T>(
     }
 
     fun dismissSheet() {
-        isBottomSheetVisibleFlow.tryEmit(false)
+        isBottomSheetVisibleFlow.tryEmit(value = false)
     }
 
 //    data class SaveableData<T>(val currentValue: SheetValue, val isBottomSheetVisible: Boolean, val data: T?)
@@ -147,7 +151,7 @@ data class GenericBottomSheet2State<T>(
             return rememberSaveable(
                 skipPartiallyExpanded,
                 confirmValueChange,
-                saver = Saver<T>(
+                saver = Saver(
                     isBottomSheetVisible = false,
                     skipPartiallyExpanded = skipPartiallyExpanded,
                     confirmValueChange = confirmValueChange,
@@ -175,14 +179,14 @@ data class GenericBottomSheet2State<T>(
             return rememberSaveable(
                 skipPartiallyExpanded,
                 confirmValueChange,
-                saver = Saver<Nothing>(
+                saver = Saver(
                     isBottomSheetVisible = false,
                     skipPartiallyExpanded = skipPartiallyExpanded,
                     confirmValueChange = confirmValueChange,
                     density = density,
                 )
             ) {
-                GenericBottomSheet2State<Nothing>(
+                GenericBottomSheet2State(
                     isBottomSheetVisibleFlow = MutableStateFlow(value = false),
                     sheetState = SheetState(
                         skipPartiallyExpanded = skipPartiallyExpanded,

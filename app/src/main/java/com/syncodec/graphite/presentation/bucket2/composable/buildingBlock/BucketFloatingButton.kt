@@ -11,14 +11,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.syncodec.graphite.R
-import com.syncodec.graphite.di.modelObjectBox.BucketBox
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 @Composable
 fun BucketFloatingButton(
-    bucketType: BucketBox.BucketType = BucketBox.BucketType.Unknown,
+    bucketType: BucketBoxEncrypted.BucketType = BucketBoxEncrypted.BucketType.Unknown,
     isSelecting: Boolean = false,
     onClickTodo: () -> Unit = {},
     onClickBook: () -> Unit = {},
@@ -32,12 +32,12 @@ fun BucketFloatingButton(
         exit = AnimationDefaults.ShrinkVerticallyExit
     ) {
         when (bucketType) {
-            BucketBox.BucketType.Todo -> TodoFloatingActionButton(onClick = onClickTodo)
-            BucketBox.BucketType.Book -> BookFloatingActionButton(onClick = onClickBook)
-            BucketBox.BucketType.Show -> ShowFloatingActionButton(onClick = onClickShow)
-            BucketBox.BucketType.Link -> LinkFloatingActionButton(onClick = onClickLink)
-            BucketBox.BucketType.Location -> LocationFloatingActionButton(onClick = onClickLocation)
-            BucketBox.BucketType.Unknown -> Unit
+            BucketBoxEncrypted.BucketType.Todo -> TodoFloatingActionButton(onClick = onClickTodo)
+            BucketBoxEncrypted.BucketType.Book -> BookFloatingActionButton(onClick = onClickBook)
+            BucketBoxEncrypted.BucketType.Show -> ShowFloatingActionButton(onClick = onClickShow)
+            BucketBoxEncrypted.BucketType.Link -> LinkFloatingActionButton(onClick = onClickLink)
+            BucketBoxEncrypted.BucketType.Location -> LocationFloatingActionButton(onClick = onClickLocation)
+            BucketBoxEncrypted.BucketType.Unknown -> Unit
         }
     }
 }

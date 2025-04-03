@@ -10,7 +10,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.syncodec.graphite.di.model.importer.ThumbnailData
-import com.syncodec.graphite.di.modelObjectBox.BucketItemBox
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.utils.DataLoader
@@ -20,10 +20,10 @@ import kotlinx.coroutines.flow.StateFlow
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun BookScreen(
-    bucketItemBox: BucketItemBox? = null,
+    bucketItemBox: BucketItemBoxDecrypted? = null,
     thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>>,
     isEditing: Boolean = false,
-    onToggleBucketItemState: (BucketItemData.State) -> Unit = {},
+    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
     onClickEditBookTitleAuthor: (BucketItemBook?) -> Unit = {},
     onClickEditBookDescription: (BucketItemBook?) -> Unit = {},
     onUpdateThumbnail: (Uri) -> Unit = {}
