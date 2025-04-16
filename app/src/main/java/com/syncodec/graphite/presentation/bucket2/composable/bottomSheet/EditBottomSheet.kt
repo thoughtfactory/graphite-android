@@ -23,8 +23,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import kotlinx.serialization.InternalSerializationApi
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -40,8 +38,8 @@ fun EditBottomSheet(
     val scope = rememberCoroutineScope()
     val isBottomSheetVisible by bottomSheet2State.isBottomSheetVisibleFlow.collectAsState()
 
-    val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
-    val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
+    val titleTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
+    val descriptionTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
 
     LaunchedEffect(key1 = bucketBox, key2 = isBottomSheetVisible) {
         titleTextFieldController.onValueChange(value = bucketBox?.title ?: "")
@@ -75,17 +73,17 @@ fun EditBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 8.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = titleTextFieldController,
                 label = stringResource(id = R.string.list_title),
                 placeholder = stringResource(id = R.string.name_your_bucket_list),
                 errorMessage = stringResource(id = R.string.list_title_error),
-                keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
+                keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault()
             )
 
             Spacer(modifier = Modifier.height(height = 8.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = descriptionTextFieldController,
                 label = stringResource(R.string.description_optional),
                 placeholder = stringResource(R.string.notebook_description_placeholder),

@@ -39,7 +39,7 @@ class BucketViewModel2(
     fun loadData(bucketId: Long) {
         viewModelScope.launch(context = Dispatchers.Default) {
             try {
-                boxRepository.getBucketBoxAsFlow(id = bucketId).collectLatest { bucketBoxCache ->
+                boxRepository.bucketBoxRepository.getBucketBoxAsFlow(id = bucketId).collectLatest { bucketBoxCache ->
                     val bucketBox = bucketBoxCache?.decrypt(alice2)
                     if (bucketBox == null) this@BucketViewModel2._bucketBoxDataFlow.tryEmit(value = DataLoader.NoData())
                     else this@BucketViewModel2._bucketBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketBox))

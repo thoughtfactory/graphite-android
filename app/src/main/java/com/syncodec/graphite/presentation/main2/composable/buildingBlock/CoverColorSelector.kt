@@ -10,13 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,8 +32,6 @@ import com.cheonjaeung.compose.grid.SimpleGridCells
 import com.cheonjaeung.compose.grid.VerticalGrid
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.main2.composable.bottomSheet.SelectedThumbnail
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.getInverseBWColor
@@ -119,7 +113,7 @@ private fun ColorPreview(
     selectedThumbnail: SelectedThumbnail,
     onClickCustomColorPicker: () -> Unit = {}
 ) {
-    val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
+    val descriptionTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
     LaunchedEffect(key1 = selectedThumbnail) { if (selectedThumbnail is SelectedThumbnail.Color) descriptionTextFieldController.onValueChange(selectedThumbnail.value.toHexString()) }
 
     Row(

@@ -61,6 +61,36 @@ data class BucketItemBoxEncrypted(
         isLocked = isLocked?.decrypt(alice2),
         parent = parent.target?.decrypt(alice2)
     )
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + (uuid?.hashCode() ?: 0)
+        result = 31 * result + (createdTimestamp?.hashCode() ?: 0)
+        result = 31 * result + (modifiedTimestamp?.hashCode() ?: 0)
+        result = 31 * result + (bucketItemData?.hashCode() ?: 0)
+        result = 31 * result + (state?.hashCode() ?: 0)
+        result = 31 * result + (isFavourite?.hashCode() ?: 0)
+        result = 31 * result + (isLocked?.hashCode() ?: 0)
+        result = 31 * result + parent.hashCode()
+        return result
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BucketItemBoxEncrypted) return false
+
+        if (id != other.id) return false
+        if (uuid != other.uuid) return false
+        if (createdTimestamp != other.createdTimestamp) return false
+        if (modifiedTimestamp != other.modifiedTimestamp) return false
+        if (bucketItemData != other.bucketItemData) return false
+        if (state != other.state) return false
+        if (isFavourite != other.isFavourite) return false
+        if (isLocked != other.isLocked) return false
+        if (parent != other.parent) return false
+
+        return true
+    }
 }
 
 @OptIn(ExperimentalUuidApi::class)

@@ -52,8 +52,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.buildingBlock.KeyValueCard
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.encodeBase64
 import kotlinx.coroutines.Dispatchers
@@ -72,7 +70,7 @@ fun AddLinkBottomSheet(
     val scope = rememberCoroutineScope()
     val openGraphApi: OpenGraphApi = koinInject()
 
-    val linkTextFieldController = rememberTextField2Controller(initialFocus = true)
+    val linkTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = true)
 
     var bucketItemState: BucketItemBoxDecrypted.State by remember { mutableStateOf(value = BucketItemBoxDecrypted.State.Alpha) }
     var isFavourite by remember { mutableStateOf(value = false) }
@@ -120,12 +118,12 @@ fun AddLinkBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 12.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = linkTextFieldController,
                 label = stringResource(id = R.string.http_https),
                 placeholder = stringResource(id = R.string.add_to_list),
                 errorMessage = stringResource(id = R.string.todo_item_title_error),
-                keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
+                keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault()
             )
 
             Spacer(modifier = Modifier.height(height = 8.dp))

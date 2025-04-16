@@ -1,8 +1,6 @@
 package com.syncodec.graphite.di.modelObjectBox.customObject
 
 import android.content.Context
-import android.util.Log
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook.Custom
 import com.syncodec.graphite.di.network.openGraph.LinkData
 import com.syncodec.graphite.di.network.trakt.TraktIDs
 import com.syncodec.graphite.utils.alice2.Alice2
@@ -122,6 +120,8 @@ sealed class BucketItemBook : BucketItemData() {
     abstract fun bookNumberOfPages(): Int?
     abstract fun toCustom(): Custom
 
+    abstract fun getUrl(): String?
+
     @Serializable
     data class OpenLibrary(
         val key: String? = null,
@@ -149,6 +149,8 @@ sealed class BucketItemBook : BucketItemData() {
             numberOfPages = numberOfPages,
             thumbnail = thumbnail,
         )
+
+        override fun getUrl() = key?.let { "https://openlibrary.org$it" }
     }
 
     @Serializable
@@ -170,6 +172,8 @@ sealed class BucketItemBook : BucketItemData() {
         override fun thumbnail(context: Context): BucketItemData.Companion.Thumbnail? = thumbnail
 
         override fun toCustom(): Custom = this
+
+        override fun getUrl() = null
     }
 }
 
@@ -182,6 +186,8 @@ sealed class BucketItemShow : BucketItemData() {
     abstract fun showOverview(): String?
     abstract fun showTagline(): String?
     abstract fun releaseYear(): Int?
+
+    abstract fun getUrl(): String?
 
     @Serializable
     data class TraktMovie(
@@ -203,6 +209,8 @@ sealed class BucketItemShow : BucketItemData() {
         override fun showTagline(): String? = tagline
         override fun releaseYear(): Int? = year
         override fun thumbnail(context: Context): BucketItemData.Companion.Thumbnail? = thumbnail
+
+        override fun getUrl() = ids?.trakt?.let { "https://trakt.tv/movies/$it" }
     }
 
     @Serializable
@@ -226,6 +234,8 @@ sealed class BucketItemShow : BucketItemData() {
         override fun showTagline(): String? = tagline
         override fun releaseYear(): Int? = year
         override fun thumbnail(context: Context): BucketItemData.Companion.Thumbnail? = thumbnail
+
+        override fun getUrl() = ids?.trakt?.let { "https://trakt.tv/shows/$it" }
     }
 }
 

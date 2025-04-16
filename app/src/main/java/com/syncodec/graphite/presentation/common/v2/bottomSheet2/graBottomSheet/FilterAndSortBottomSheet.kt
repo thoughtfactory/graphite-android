@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,8 +38,6 @@ import kotlinx.serialization.InternalSerializationApi
 fun FilterAndSortBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<Nothing> = GenericBottomSheet2State.rememberGenericBottomSheet2State(),
 ) {
-    val scope = rememberCoroutineScope()
-
     var viewType by rememberPreferenceStateOf(key = SharedPref.Key.ViewType.name, defaultValue = SharedPref.ViewType.List.name)
 
     GenericBottomSheet2(
@@ -83,6 +82,7 @@ private fun ColumnScope.ViewType(
                 onCheckedChange = { actionUpdateViewType(SharedPref.ViewType.List) },
                 shape = AbsoluteSmoothCornerShape(cornerRadiusTL = 16.dp, smoothnessAsPercentTL = 100, cornerRadiusBL = 16.dp, smoothnessAsPercentBL = 100),
                 modifier = Modifier.weight(weight = 1f),
+                colors = SegmentedButtonDefaults.colors(),
                 icon = { Icon(painter = painterResource(id = R.drawable.ic_fa_list), contentDescription = stringResource(id = R.string.list), modifier = Modifier.requiredSize(size = 18.dp)) },
                 label = { Text(text = stringResource(id = R.string.list)) }
             )

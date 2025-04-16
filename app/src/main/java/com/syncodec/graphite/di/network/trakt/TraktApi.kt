@@ -39,8 +39,6 @@ class TraktApi(private val context: Context) {
         .cache(cache = cache)
         .build()
 
-    fun getMovieUrlFromId(id: Int?): String? = id?.let { "https://trakt.tv/movies/$it" }
-
     fun searchForShow(
         query: String,
         showType: BucketItemShow.ShowType,
@@ -102,7 +100,8 @@ class TraktApi(private val context: Context) {
 
     }
 
-    fun getMovieSummary(
+    @WorkerThread
+    suspend fun getMovieSummary(
         traktId: Int,
         callback: (networkResponse: NetworkResponse<TraktMovieData>) -> Unit
     ) {
@@ -156,7 +155,8 @@ class TraktApi(private val context: Context) {
         }
     }
 
-    fun getSeriesSummary(
+    @WorkerThread
+    suspend fun getSeriesSummary(
         traktId: Int,
         callback: (networkResponse: NetworkResponse<TraktSeriesData>) -> Unit
     ) {

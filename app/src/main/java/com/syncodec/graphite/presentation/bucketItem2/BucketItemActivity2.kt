@@ -5,9 +5,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.presentation.bucketItem2.composable.screen.BucketItemScreen
 import com.syncodec.graphite.presentation.ui.BaseComposable2
-import com.syncodec.graphite.presentation.ui.BaseContent
 import com.syncodec.graphite.utils.IntentUtil.BucketItemActivityData
 import com.syncodec.graphite.utils.IntentUtil.IntentData
 import kotlinx.serialization.json.Json
@@ -31,18 +31,16 @@ class BucketItemActivity2 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        getIntentData()
+        val bucketType = getIntentData()
 
         setContent {
-
             BaseComposable2 {
-                BucketItemScreen()
+                BucketItemScreen(bucketType = bucketType)
             }
-
         }
     }
 
-    private fun getIntentData() {
+    private fun getIntentData(): BucketBoxEncrypted.BucketType {
 //        val bucketItemActivityData = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) intent.getSerializableExtra(IntentData.BucketItemActivityData.name, BucketItemActivityData::class.java)
 //        else intent.getSerializableExtra(IntentData.BucketItemActivityData.name)) as? BucketItemActivityData
 
@@ -56,14 +54,24 @@ class BucketItemActivity2 : ComponentActivity() {
         if (bucketItemActivityData == null) {
             Toast.makeText(this, getString(R.string.toast_no_bucket_id), Toast.LENGTH_SHORT).show()
             finish()
+            return BucketBoxEncrypted.BucketType.Unknown
         } else {
             when (bucketItemActivityData) {
-                is BucketItemActivityData.NewItem.BookItem -> viewModel.fetchBookData(parentId = bucketItemActivityData.parentId, olBookSearchResult = bucketItemActivityData.olBookSearchResult)
-                is BucketItemActivityData.NewItem.ShowItem -> viewModel.fetchShowData(parentId = bucketItemActivityData.parentId, traktShowSearchResult = bucketItemActivityData.traktShowSearchResult)
-                is BucketItemActivityData.LocalItem -> viewModel.loadData(bucketItemId = bucketItemActivityData.bucketItemId, parentId = bucketItemActivityData.parentId)
-                else -> Unit
+                is BucketItemActivityData.NewItem.BookItem -> {
+                    viewModel.fetchBookData(parentId = bucketItemActivityData.parentId, olBookSearchResult = bucketItemActivityData.olBookSearchResult)
+                    return BucketBoxEncrypted.BucketType.Book
+                }
+
+                is BucketItemActivityData.NewItem.ShowItem -> {
+                    viewModel.fetchShowData(parentId = bucketItemActivityData.parentId, traktShowSearchResult = bucketItemActivityData.traktShowSearchResult)
+                    return BucketBoxEncrypted.BucketType.Show
+                }
+
+                is BucketItemActivityData.LocalItem -> {
+                    viewModel.loadData(bucketItemId = bucketItemActivityData.bucketItemId, parentId = bucketItemActivityData.parentId)
+                    return bucketItemActivityData.bucketType
+                }
             }
-//            viewModel.loadData(bucketItemId = bucketItemId)
         }
     }
 }

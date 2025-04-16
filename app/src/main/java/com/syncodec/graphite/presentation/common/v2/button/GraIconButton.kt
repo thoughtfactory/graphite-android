@@ -2,6 +2,8 @@ package com.syncodec.graphite.presentation.common.v2.button
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -167,6 +169,19 @@ object GraIconButton {
                 }
             }
         }
+    }
+
+    @Composable
+    fun WrapAnimated(
+        visible: Boolean,
+        content: @Composable AnimatedVisibilityScope.() -> Unit
+    ) {
+        AnimatedVisibility(
+            visible = visible,
+            enter = AnimationDefaults.ScaleEnter,
+            exit = AnimationDefaults.ScaleExit,
+            content = content
+        )
     }
 
     @Composable

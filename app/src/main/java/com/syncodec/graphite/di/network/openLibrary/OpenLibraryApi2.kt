@@ -92,7 +92,7 @@ class OpenLibraryApi2(private val context: Context) {
     }
 
     @WorkerThread
-    fun getBookData(
+    suspend fun getBookData(
         bookKey: String,
         callback: (networkResponse: NetworkResponse<OLBookData>) -> Unit
     ) {

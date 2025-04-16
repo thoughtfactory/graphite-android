@@ -35,14 +35,14 @@ fun RowScope.FavouriteButton(
     onClick: () -> Unit = {}
 ) {
 
-    val containerColor by animateColorAsState(targetValue = if (isFavourite) Color.FavouriteContainer.copy(alpha = 0.47f) else Color.Transparent, animationSpec = AnimationDefaults.stateAnimationSpec())
-    val borderColor by animateColorAsState(targetValue = if (isFavourite) Color.Transparent else MaterialTheme.colorScheme.onSurface, animationSpec = AnimationDefaults.stateAnimationSpec())
+    val containerColor by animateColorAsState(targetValue = if (isFavourite) Color.FavouriteContainer.copy(alpha = 0.47f) else MaterialTheme.colorScheme.background, animationSpec = AnimationDefaults.stateAnimationSpec())
+    val borderColor by animateColorAsState(targetValue = if (isFavourite) Color.Transparent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f), animationSpec = AnimationDefaults.stateAnimationSpec())
 
     Button(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
-        colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = MaterialTheme.colorScheme.onSurface),
         border = BorderStroke(width = 1.dp, color = borderColor),
+        colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = MaterialTheme.colorScheme.onSurface),
         modifier = Modifier.weight(weight = 1f)
     ) {
         AnimatedContent(
@@ -69,8 +69,8 @@ fun RowScope.LockButton(
     val authController = LocalAuthController.current
     val authState by authController.authStateFlow.collectAsState()
 
-    val containerColor by animateColorAsState(targetValue = if (isLocked) Color.LockClosedContainer.copy(alpha = 0.71f) else Color.Transparent, animationSpec = AnimationDefaults.stateAnimationSpec())
-    val borderColor by animateColorAsState(targetValue = if (isLocked) Color.Transparent else MaterialTheme.colorScheme.onSurface, animationSpec = AnimationDefaults.stateAnimationSpec())
+    val containerColor by animateColorAsState(targetValue = if (isLocked) Color.LockClosedContainer.copy(alpha = 0.71f) else MaterialTheme.colorScheme.background, animationSpec = AnimationDefaults.stateAnimationSpec())
+    val borderColor by animateColorAsState(targetValue = if (isLocked) Color.Transparent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f), animationSpec = AnimationDefaults.stateAnimationSpec())
 
     Button(
         shape = MaterialTheme.shapes.medium,

@@ -13,11 +13,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -27,36 +31,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.importer.ThumbnailData
 import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.TitleView
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.BucketItemStateView
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.DataChip
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.DescriptionView
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.ThumbnailView
+import com.syncodec.graphite.presentation.common.v2.button.SurfaceVariantButton
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.uuid.ExperimentalUuidApi
 
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class, ExperimentalUuidApi::class)
 @Composable
 fun BookOpenLibraryScreenCompact(
     bucketItemBox: BucketItemBoxDecrypted? = null,
     thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>>,
     isEditing: Boolean = false,
-    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
+    onUpdateBucketItemBox: (bucketItemBoxDecrypted: BucketItemBoxDecrypted) -> Unit = {},
     onClickEditBookTitleAuthor: (BucketItemBook?) -> Unit = {},
     onClickEditBookDescription: (BucketItemBook?) -> Unit = {},
     onUpdateThumbnail: (Uri) -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    val uriHandler = LocalUriHandler.current
 
     val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData } }
     val bookData by remember(key1 = bucketItemData) { derivedStateOf { bucketItemData as? BucketItemBook } }
@@ -87,7 +96,7 @@ fun BookOpenLibraryScreenCompact(
                     bucketType = BucketBoxEncrypted.BucketType.Book,
                     bucketItemState = bucketItemBox?.state?.ordinal ?: BucketItemBoxDecrypted.State.Alpha.ordinal,
                     modifier = Modifier.padding(horizontal = 20.dp),
-                    onToggleBucketItemState = onToggleBucketItemState
+                    onToggleBucketItemState = { onUpdateBucketItemBox(bucketItemBox?.copy(state = it) ?: return@BucketItemStateView) }
                 )
                 Spacer(modifier = Modifier.height(height = 12.dp))
             }
@@ -118,7 +127,24 @@ fun BookOpenLibraryScreenCompact(
             bookData?.bookPublicationYear()?.let { DataChip(text = "$it") }
         }
 
-        Spacer(modifier = Modifier.height(height = 8.dp))
+        Spacer(modifier = Modifier.height(height = 4.dp))
+        SurfaceVariantButton(
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            onClick = { uriHandler.openUri(uri = bookData?.getUrl() ?: return@SurfaceVariantButton) }
+        ) {
+            Text(text = stringResource(id = R.string.open_in_open_library))
+            Spacer(modifier = Modifier.width(width = 12.dp))
+            Icon(
+                painter = painterResource(id = R.drawable.ic_fa_launch),
+                contentDescription = null,
+                modifier = Modifier.size(size = 18.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(height = 10.dp))
 
         AnimatedVisibility(
             visible = !isEditing,

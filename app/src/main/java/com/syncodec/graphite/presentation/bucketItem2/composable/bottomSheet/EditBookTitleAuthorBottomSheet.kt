@@ -31,9 +31,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.TextField2Controller
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import kotlinx.serialization.InternalSerializationApi
 
 
@@ -50,12 +47,12 @@ fun EditBookTitleAuthorBottomSheet(
     val isBottomSheetVisible by bottomSheet2State.isBottomSheetVisibleFlow.collectAsState()
     val bucketItemBook by bottomSheet2State.dataFlow.collectAsState()
 
-    val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
-    var authorTextFieldControllerList: List<TextField2Controller> by remember { mutableStateOf(value = listOf()) }
+    val titleTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
+    var authorTextFieldControllerList: List<GenericTextField2.TextField2Controller> by remember { mutableStateOf(value = listOf()) }
 
     LaunchedEffect(key1 = isBottomSheetVisible, key2 = bucketItemBook) {
         titleTextFieldController.onValueChange(value = bucketItemBook?.bookTitle() ?: "")
-        authorTextFieldControllerList = bucketItemBook?.allBookAuthor()?.map { TextField2Controller.initialize(initialText = it, initialFocus = false) } ?: listOf()
+        authorTextFieldControllerList = bucketItemBook?.allBookAuthor()?.map { GenericTextField2.TextField2Controller.initialize(initialText = it, initialFocus = false) } ?: listOf()
     }
 
     fun update() {
@@ -86,20 +83,20 @@ fun EditBookTitleAuthorBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 8.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = titleTextFieldController,
                 label = stringResource(id = R.string.book_title),
                 errorMessage = stringResource(id = R.string.title_error),
-                keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
+                keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault()
             )
 
             Spacer(modifier = Modifier.height(height = 4.dp))
 
             authorTextFieldControllerList.forEachIndexed { index, textFieldController ->
-                GenericTextField2(
+                GenericTextField2.BottomSheetTextField(
                     controller = textFieldController,
                     label = stringResource(id = R.string.author) + " ${index + 1}",
-                    keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault(),
+                    keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault(),
                     suffixIcon = { GraIconButton.ClearTextButton { authorTextFieldControllerList = authorTextFieldControllerList.toMutableList().apply { removeAt(index) } } }
                 )
                 Spacer(modifier = Modifier.height(height = 4.dp))
@@ -108,7 +105,7 @@ fun EditBookTitleAuthorBottomSheet(
             SurfaceVariantButton(
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { if (authorTextFieldControllerList.isEmpty() || authorTextFieldControllerList.lastOrNull()?.textFlow?.value?.isNotBlank() == true) authorTextFieldControllerList = authorTextFieldControllerList + TextField2Controller.initialize(initialText = "", initialFocus = true) },
+                onClick = { if (authorTextFieldControllerList.isEmpty() || authorTextFieldControllerList.lastOrNull()?.textFlow?.value?.isNotBlank() == true) authorTextFieldControllerList = authorTextFieldControllerList + GenericTextField2.TextField2Controller.initialize(initialText = "", initialFocus = true) },
                 content = { Text(text = stringResource(id = R.string.add_author)) }
             )
 

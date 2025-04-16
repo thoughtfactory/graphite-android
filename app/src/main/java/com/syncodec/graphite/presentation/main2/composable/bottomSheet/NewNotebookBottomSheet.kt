@@ -36,8 +36,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialog2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.main2.composable.buildingBlock.CoverColorSelector
 import com.syncodec.graphite.presentation.main2.composable.buildingBlock.CoverImageSelector
 import com.syncodec.graphite.presentation.main2.composable.dialog.ColorPickerDialog
@@ -103,8 +101,8 @@ fun NewNotebookBottomSheet(
 
     val colorPickerDialogState = GenericDialog2.State.rememberDialogState()
 
-    val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
-    val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
+    val titleTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
+    val descriptionTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
     var selectedThumbnail: SelectedThumbnail by remember { mutableStateOf(SelectedThumbnail.Color(value = getRandomColor())) }
 
     var selectedCoverType by remember { mutableIntStateOf(0) }
@@ -138,17 +136,17 @@ fun NewNotebookBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = titleTextFieldController,
                 label = stringResource(R.string.notebook_title),
                 placeholder = stringResource(R.string.notebook_title_placeholder),
                 errorMessage = "error1",
-                keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
+                keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = descriptionTextFieldController,
                 label = stringResource(R.string.description_optional),
                 placeholder = stringResource(R.string.notebook_description_placeholder),

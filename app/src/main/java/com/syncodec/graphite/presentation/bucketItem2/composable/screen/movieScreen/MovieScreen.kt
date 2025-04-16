@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.syncodec.graphite.di.model.importer.ThumbnailData
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 fun MovieScreen(
     bucketItemBox: BucketItemBoxDecrypted? = null,
     thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>>,
-    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
+    onUpdateBucketItemBox: (bucketItemBoxDecrypted: BucketItemBoxDecrypted) -> Unit = {},
 ) {
     Log.d("MovieScreen", "MovieScreen")
 
@@ -36,7 +35,7 @@ fun MovieScreen(
                 BucketItemShow.TraktMovie::class.simpleName -> MovieTraktScreenCompact(
                     bucketItemBox = bucketItemBox,
                     thumbnailDataFlow = thumbnailDataFlow,
-                    onToggleBucketItemState = onToggleBucketItemState,
+                    onUpdateBucketItemBox = onUpdateBucketItemBox,
                 )
 
                 else -> TODO()

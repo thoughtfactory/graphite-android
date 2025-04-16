@@ -2,7 +2,6 @@ package com.syncodec.graphite.presentation.bucketItem2
 
 import android.net.Uri
 import android.util.Log
-import androidx.annotation.WorkerThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syncodec.graphite.BaseApplication
@@ -13,7 +12,6 @@ import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
-import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.openLibrary.OLBookSearchResult
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryApi2
 import com.syncodec.graphite.di.network.trakt.TraktApi
@@ -43,16 +41,22 @@ class BucketItemViewModel2(
     private val traktApi: TraktApi,
 ) : ViewModel() {
 
+    private val bookFetcher = BookFetcher(openLibraryApi2 = openLibraryApi2)
+    private val showFetcher = ShowFetcher(traktApi = traktApi)
+
     private var _isDataFetched = false
 
     private val _isDataSaved: MutableStateFlow<Boolean?> = MutableStateFlow(value = null)
     val isDataSaved: StateFlow<Boolean?> = _isDataSaved.asStateFlow()
 
-    private val _parent: MutableStateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init())
-    val parent: StateFlow<DataLoader<BucketBoxDecrypted>> = _parent.asStateFlow()
+    private val _parentIdDataFlow: MutableStateFlow<DataLoader<Long>> = MutableStateFlow(value = DataLoader.Init())
+    val parentIdDataFlow: StateFlow<DataLoader<Long>> = this._parentIdDataFlow.asStateFlow()
+
+    private val _parentDataFlow: MutableStateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init())
+    val parentDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = this._parentDataFlow.asStateFlow()
 
     private val _bucketType: MutableStateFlow<BucketBoxEncrypted.BucketType?> = MutableStateFlow(value = null)
-    val bucketType: StateFlow<BucketBoxEncrypted.BucketType?> = _bucketType.asStateFlow()
+    val bucketType: StateFlow<BucketBoxEncrypted.BucketType?> = this._bucketType.asStateFlow()
 
     private val _bucketItemBoxDataFlow: MutableStateFlow<DataLoader<BucketItemBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init())
     val bucketItemBoxDataFlow: StateFlow<DataLoader<BucketItemBoxDecrypted>> = this._bucketItemBoxDataFlow.asStateFlow()
@@ -60,8 +64,24 @@ class BucketItemViewModel2(
     private val _thumbnailDataFlow: MutableStateFlow<DataLoader<ThumbnailData>> = MutableStateFlow(value = DataLoader.Init())
     val thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>> = this._thumbnailDataFlow.asStateFlow()
 
+    init {
+        viewModelScope.launch(context = Dispatchers.Default) {
+            this@BucketItemViewModel2.parentIdDataFlow.collectLatest { parentIdData ->
+                if (parentIdData !is DataLoader.Loaded) this@BucketItemViewModel2._parentDataFlow.tryEmit(value = DataLoader.Loading())
+                else {
+                    boxRepository.bucketBoxRepository.getBucketBoxAsFlow(id = parentIdData.data).collectLatest { bucketBoxCache ->
+                        val bucketBox = bucketBoxCache?.decrypt(alice2 = alice2)
+                        if (bucketBox == null) this@BucketItemViewModel2._parentDataFlow.tryEmit(value = DataLoader.NoData())
+                        else this@BucketItemViewModel2._parentDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketBox))
+
+                        this@BucketItemViewModel2._bucketType.tryEmit(value = bucketBox?.bucketType)
+                    }
+                }
+            }
+        }
+    }
+
     fun loadData(bucketItemId: Long, parentId: Long) {
-        loadParent(parentId = parentId)
         this._isDataSaved.tryEmit(value = true)
 
         viewModelScope.launch(context = Dispatchers.Default) {
@@ -70,6 +90,8 @@ class BucketItemViewModel2(
                     val bucketItemBox = bucketItemBoxCache?.decrypt(alice2 = alice2)
                     if (bucketItemBox == null) this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.NoData())
                     else {
+                        bucketItemBox.parent?.id?.let { loadParentId(parentId = it) }
+
                         this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
 
                         val thumbnail = bucketItemBox.bucketItemData?.thumbnail(context = baseApplication) as? BucketItemData.Companion.Thumbnail.File
@@ -84,68 +106,26 @@ class BucketItemViewModel2(
         }
     }
 
-    private fun loadParent(parentId: Long) {
-        viewModelScope.launch(context = Dispatchers.Default) {
-            boxRepository.getBucketBoxAsFlow(id = parentId).collectLatest { bucketBoxCache ->
-                val bucketBox = bucketBoxCache?.decrypt(alice2 = alice2)
-                if (bucketBox == null) this@BucketItemViewModel2._parent.tryEmit(value = DataLoader.NoData())
-                else this@BucketItemViewModel2._parent.tryEmit(value = DataLoader.Loaded(data = bucketBox))
-
-                this@BucketItemViewModel2._bucketType.tryEmit(value = bucketBox?.bucketType)
-            }
-        }
+    fun loadParentId(parentId: Long) {
+        Log.d(TAG, "parentId : $parentId")
+        this._parentIdDataFlow.tryEmit(value = DataLoader.Loaded(data = parentId))
     }
 
     fun fetchBookData(parentId: Long, olBookSearchResult: OLBookSearchResult) {
-        Log.d(TAG, "fetchBookData")
+        Log.d(TAG, "bookData")
 
         if (!_isDataFetched) {
-            loadParent(parentId = parentId)
+            loadParentId(parentId = parentId)
 
             viewModelScope.launch(context = Dispatchers.IO) {
-                if (olBookSearchResult.key == null) this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.NoData())
-                else {
-                    openLibraryApi2.getBookData(bookKey = olBookSearchResult.key) { networkResponse ->
-                        this@BucketItemViewModel2._isDataFetched = true
-                        when (networkResponse) {
-                            is NetworkResponse.Init -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Init())
-                            is NetworkResponse.Loading -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loading())
-                            is NetworkResponse.Error -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Error(exception = networkResponse.exception, message = networkResponse.message))
-                            is NetworkResponse.Success -> {
-                                val olBookData = networkResponse.data
-                                val bucketItemData = BucketItemBook.OpenLibrary(
-                                    key = olBookData.key,
-                                    title = olBookData.title,
-                                    description = olBookData.description,
-                                    coverI = olBookSearchResult.coverI,
-                                    authorList = olBookSearchResult.authorName,
-                                    firstPublishYear = olBookSearchResult.firstPublishedYear,
-                                    numberOfPages = olBookSearchResult.numberOfPages,
-                                )
-                                val bucketItemBox = BucketItemBoxDecrypted.newInstance.copy(bucketItemData = bucketItemData)
-                                this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
-                                this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
-                            }
-                        }
-                    }
+                bookFetcher.fetchBookData(olBookSearchResult = olBookSearchResult) {
+                    this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = it)
+                    if (it is DataLoader.Loaded) this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
                 }
             }
 
-            fetchBookCover(olBookSearchResult)
-        }
-    }
-
-    private fun fetchBookCover(olBookSearchResult: OLBookSearchResult) {
-        viewModelScope.launch(context = Dispatchers.IO) {
-            val coverI = olBookSearchResult.coverI
-            if (coverI == null) this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.NoData())
-            else openLibraryApi2.getBookCoverImage(coverI = olBookSearchResult.coverI) { networkResponse ->
-                when (networkResponse) {
-                    is NetworkResponse.Init -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Init())
-                    is NetworkResponse.Loading -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Loading())
-                    is NetworkResponse.Error -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Error(exception = networkResponse.exception, message = networkResponse.message))
-                    is NetworkResponse.Success -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Loaded(data = ThumbnailData.Bitmap(data = networkResponse.data)))
-                }
+            viewModelScope.launch(context = Dispatchers.IO) {
+                bookFetcher.fetchBookCover(olBookSearchResult = olBookSearchResult) { this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = it) }
             }
         }
     }
@@ -154,90 +134,24 @@ class BucketItemViewModel2(
         Log.d(TAG, "fetchShowData")
 
         if (!_isDataFetched) {
-            loadParent(parentId = parentId)
+            loadParentId(parentId = parentId)
 
             viewModelScope.launch(context = Dispatchers.IO) {
-                val traktId = traktShowSearchResult.showSearchResult?.ids?.trakt
-                if (traktId == null) {
-                    this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.NoData())
-                    this@BucketItemViewModel2._isDataFetched = true
-                } else when (traktShowSearchResult) {
-                    is TraktShowSearchResult.TraktMovieSearchResult -> fetchMovieSummary(traktId)
-                    is TraktShowSearchResult.TraktSeriesSearchResult -> fetchSeriesSummary(traktId)
+                showFetcher.fetchShowData(traktShowSearchResult = traktShowSearchResult) {
+                    this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = it)
+                    if (it is DataLoader.Loaded) this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
                 }
             }
 
-            fetchShowPoster(traktShowSearchResult)
-        }
-    }
-
-    @WorkerThread
-    private suspend fun fetchMovieSummary(traktId: Int) {
-        traktApi.getMovieSummary(traktId = traktId) { networkResponse ->
-            this@BucketItemViewModel2._isDataFetched = true
-            when (networkResponse) {
-                is NetworkResponse.Init -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Init())
-                is NetworkResponse.Loading -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loading())
-                is NetworkResponse.Error -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Error(exception = networkResponse.exception, message = networkResponse.message))
-                is NetworkResponse.Success -> {
-                    val traktMovieData = networkResponse.data
-                    val bucketItemData = BucketItemShow.TraktMovie(
-                        title = traktMovieData.title,
-                        year = traktMovieData.year,
-                        ids = traktMovieData.ids,
-                        tagline = traktMovieData.tagline,
-                        overview = traktMovieData.overview,
-                        released = traktMovieData.released,
-                        runtime = traktMovieData.runtime,
-                        country = traktMovieData.country,
-                        trailer = traktMovieData.trailer,
-                        homepage = traktMovieData.homepage,
-                        genres = traktMovieData.genres,
-                    )
-                    val bucketItemBox = BucketItemBoxDecrypted.newInstance.copy(bucketItemData = bucketItemData)
-                    this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
-                    this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
-                }
+            viewModelScope.launch(context = Dispatchers.IO) {
+                showFetcher.fetchShowPoster(traktShowSearchResult = traktShowSearchResult) { this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = it) }
             }
         }
-    }
-
-    @WorkerThread
-    private suspend fun fetchSeriesSummary(traktId: Int) {
-        traktApi.getSeriesSummary(traktId = traktId) { networkResponse ->
-            this@BucketItemViewModel2._isDataFetched = true
-            when (networkResponse) {
-                is NetworkResponse.Init -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Init())
-                is NetworkResponse.Loading -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loading())
-                is NetworkResponse.Error -> this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Error(exception = networkResponse.exception, message = networkResponse.message))
-                is NetworkResponse.Success -> {
-                    val traktSeriesData = networkResponse.data
-                    val bucketItemData = BucketItemShow.TraktSeries(
-                        title = traktSeriesData.title,
-                        year = traktSeriesData.year,
-                        ids = traktSeriesData.ids,
-                        tagline = traktSeriesData.tagline,
-                        overview = traktSeriesData.overview,
-                        firstAired = traktSeriesData.firstAired,
-                        runtime = traktSeriesData.runtime,
-                        certification = traktSeriesData.certification,
-                        country = traktSeriesData.country,
-                        trailer = traktSeriesData.trailer,
-                        homepage = traktSeriesData.homepage,
-                        genres = traktSeriesData.genres,
-                    )
-                    val bucketItemBox = BucketItemBoxDecrypted.newInstance.copy(bucketItemData = bucketItemData)
-                    this@BucketItemViewModel2._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBox))
-                    this@BucketItemViewModel2._isDataSaved.tryEmit(value = false)
-                }
-            }
-        }
-
     }
 
     @OptIn(InternalSerializationApi::class)
     fun putBucketItemBox() {
-        val parent = (this.parent.value as? DataLoader.Loaded)?.data ?: return
+        val parent = (this.parentDataFlow.value as? DataLoader.Loaded)?.data ?: return
         val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data ?: return
 
         val thumbnailPlainByteArray = (this.thumbnailDataFlow.value as? DataLoader.Loaded)?.data?.getAsByteArray()
@@ -259,22 +173,6 @@ class BucketItemViewModel2(
         }
     }
 
-    private fun fetchShowPoster(traktShowSearchResult: TraktShowSearchResult) {
-        viewModelScope.launch(context = Dispatchers.IO) {
-            val posterPath = traktShowSearchResult.showSearchResult?.traktImages?.poster?.firstOrNull()
-            if (posterPath == null) this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.NoData())
-            else traktApi.getShowCoverImage(posterPath = posterPath) { networkResponse ->
-                when (networkResponse) {
-                    is NetworkResponse.Init -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Init())
-                    is NetworkResponse.Loading -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Loading())
-                    is NetworkResponse.Error -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Error(exception = networkResponse.exception, message = networkResponse.message))
-                    is NetworkResponse.Success -> this@BucketItemViewModel2._thumbnailDataFlow.tryEmit(value = DataLoader.Loaded(data = ThumbnailData.Bitmap(data = networkResponse.data)))
-                }
-            }
-        }
-    }
-
-
     fun updateBucketItemBox(bucketItemBox: BucketItemBoxDecrypted) {
         boxRepository.putBucketItemBox(bucketItemBox = bucketItemBox) {
             this@BucketItemViewModel2._isDataSaved.tryEmit(value = true)
@@ -288,31 +186,9 @@ class BucketItemViewModel2(
         }
     }
 
-    fun onToggleBucketItemState(newState: BucketItemBoxDecrypted.State) {
-        val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data
-        val newBucketItemBox = bucketItemBox?.copy(state = newState)
-        val newData = DataLoader.Loaded(data = newBucketItemBox ?: return)
-
-        if (isDataSaved.value == false) this._bucketItemBoxDataFlow.tryEmit(value = newData)
-        else updateBucketItemBox(bucketItemBox = newBucketItemBox)
-    }
-
-    fun onToggleLock(newState: Boolean) {
-        val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data
-        val newBucketItemBox = bucketItemBox?.copy(isLocked = newState)
-        val newData = DataLoader.Loaded(data = newBucketItemBox ?: return)
-
-        if (isDataSaved.value == false) this._bucketItemBoxDataFlow.tryEmit(value = newData)
-        else updateBucketItemBox(bucketItemBox = newBucketItemBox)
-    }
-
-    fun onToggleFavourite(newState: Boolean) {
-        val bucketItemBox = (this._bucketItemBoxDataFlow.value as? DataLoader.Loaded)?.data
-        val newBucketItemBox = bucketItemBox?.copy(isFavourite = newState)
-        val newData = DataLoader.Loaded(data = newBucketItemBox ?: return)
-
-        if (isDataSaved.value == false) this._bucketItemBoxDataFlow.tryEmit(value = newData)
-        else updateBucketItemBox(bucketItemBox = newBucketItemBox)
+    fun onUpdateBucketItemBox(bucketItemBoxDecrypted: BucketItemBoxDecrypted) {
+        if (isDataSaved.value == false) this._bucketItemBoxDataFlow.tryEmit(value = DataLoader.Loaded(data = bucketItemBoxDecrypted))
+        else updateBucketItemBox(bucketItemBox = bucketItemBoxDecrypted)
     }
 
     fun onUpdateThumbnail(uri: Uri) {
@@ -339,6 +215,8 @@ class BucketItemViewModel2(
             }
         }
     }
+
+    fun deleteBucketItemBox(id: Long) = boxRepository.deleteBucketItemBox(idList = listOf(id))
 
     companion object {
         val TAG = BucketItemViewModel2::class.simpleName!!

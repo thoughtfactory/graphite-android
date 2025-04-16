@@ -58,8 +58,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -77,7 +75,7 @@ fun AddShowBottomSheet(
 
     val traktApi: TraktApi = koinInject()
 
-    val showTitleTextFieldController = rememberTextField2Controller(initialFocus = true)
+    val showTitleTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = true)
     var traktSearchResultNetworkResponse: NetworkResponse<List<TraktShowSearchResult>> by remember { mutableStateOf(value = NetworkResponse.Init) }
     var currentPage by remember { mutableStateOf(value = 1) }
 
@@ -111,13 +109,13 @@ fun AddShowBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 12.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = showTitleTextFieldController,
                 label = stringResource(id = R.string.search_on_trakt_tv),
                 placeholder = stringResource(id = R.string.search_for_title),
                 errorMessage = stringResource(id = R.string.book_item_title_error),
-                keyboardOptions = GenericTextField2Defaults.Options.getTextSearchKeyboardOptionsDefault(),
-                keyboardActions = GenericTextField2Defaults.Actions.getKeyboardActions { searchForShowUsingTitle(showType = showType, page = 1) },
+                keyboardOptions = GenericTextField2.Options.getTextSearchKeyboardOptionsDefault(),
+                keyboardActions = GenericTextField2.Actions.getKeyboardActions { searchForShowUsingTitle(showType = showType, page = 1) },
                 suffixIcon = {
                     GraIconButton.ClearTextButton { showTitleTextFieldController.reset() }
                     GraIconButton.SearchButton { searchForShowUsingTitle(showType = showType, page = 1) }

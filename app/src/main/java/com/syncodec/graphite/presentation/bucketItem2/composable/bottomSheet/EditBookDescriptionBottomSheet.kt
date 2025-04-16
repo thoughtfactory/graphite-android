@@ -23,7 +23,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import kotlinx.serialization.InternalSerializationApi
 
 
@@ -38,7 +37,7 @@ fun EditBookDescriptionBottomSheet(
 
     val bucketItemBook by bottomSheet2State.dataFlow.collectAsState()
 
-    val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
+    val descriptionTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
 
     LaunchedEffect(key1 = bucketItemBook) {
         descriptionTextFieldController.onValueChange(value = bucketItemBook?.bookDescription() ?: "")
@@ -63,7 +62,7 @@ fun EditBookDescriptionBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 8.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = descriptionTextFieldController,
                 label = stringResource(R.string.description_optional),
                 placeholder = stringResource(R.string.book_description),

@@ -33,7 +33,9 @@ import kotlinx.coroutines.flow.asStateFlow
 
 object OverlayScaffold {
     @OptIn(ExperimentalMaterial3Api::class)
-    class State<T> {
+    class State<T>(
+        val onCloseOverlay: () -> Unit = {}
+    ) {
 
         private val _isOverlayVisible: MutableStateFlow<Boolean> = MutableStateFlow(value = false)
         val isOverlayVisible: StateFlow<Boolean> = this._isOverlayVisible.asStateFlow()
@@ -63,6 +65,7 @@ object OverlayScaffold {
         fun closeOverlay() {
             this._isOverlayVisible.tryEmit(value = false)
             this._dataMutableFlow.tryEmit(value = null)
+            this.onCloseOverlay()
         }
 
         /**
@@ -72,16 +75,16 @@ object OverlayScaffold {
         fun closeOverlay(data: T?) {
             this._isOverlayVisible.tryEmit(value = false)
             this._dataMutableFlow.tryEmit(value = data)
+            this.onCloseOverlay()
         }
 
         companion object {
 
             @Composable
-            fun rememberOverlayState(): State<Nothing> = remember { State() }
+            fun rememberOverlayState(onCloseOverlay: () -> Unit = {}): State<Nothing> = remember { State(onCloseOverlay = onCloseOverlay) }
 
             @Composable
-            fun <T> rememberOverlayStateT(): State<T> = remember { State() }
-
+            fun <T> rememberOverlayStateT(onCloseOverlay: () -> Unit = {}): State<T> = remember { State(onCloseOverlay = onCloseOverlay) }
         }
     }
 

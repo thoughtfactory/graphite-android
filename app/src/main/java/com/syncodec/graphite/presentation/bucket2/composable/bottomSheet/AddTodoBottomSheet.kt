@@ -26,13 +26,11 @@ import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemTodo
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.FavouriteButton
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.LockButton
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemStateView
-import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import kotlinx.serialization.InternalSerializationApi
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -45,8 +43,8 @@ fun AddTodoBottomSheet(
 ) {
     val scope = rememberCoroutineScope()
 
-    val todoTitleTextFieldController = rememberTextField2Controller(initialFocus = true)
-    val todoDescriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
+    val todoTitleTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = true)
+    val todoDescriptionTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
     var isFavourite by remember { mutableStateOf(value = false) }
     var isLocked by remember { mutableStateOf(value = false) }
     var bucketItemState: BucketItemBoxDecrypted.State by remember { mutableStateOf(value = BucketItemBoxDecrypted.State.Alpha) }
@@ -84,24 +82,24 @@ fun AddTodoBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 12.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = todoTitleTextFieldController,
                 label = stringResource(id = R.string.todo_title),
                 placeholder = stringResource(id = R.string.add_to_list),
                 errorMessage = stringResource(id = R.string.todo_item_title_error),
-                keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
+                keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault()
             )
 
             Spacer(modifier = Modifier.height(height = 8.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = todoDescriptionTextFieldController,
                 label = stringResource(id = R.string.todo_description),
                 placeholder = stringResource(id = R.string.todo_enter_extra_detail),
                 minLines = 4,
                 maxLines = Int.MAX_VALUE,
                 singleLine = false,
-                keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
+                keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault()
             )
 
             Spacer(modifier = Modifier.height(height = 4.dp))
@@ -114,6 +112,8 @@ fun AddTodoBottomSheet(
                 Spacer(modifier = Modifier.width(width = 6.dp))
                 LockButton(isLocked = isLocked) { isLocked = !isLocked }
             }
+
+            Spacer(modifier = Modifier.height(height = 2.dp))
 
             BucketItemStateView(
                 bucketType = BucketBoxEncrypted.BucketType.Todo,

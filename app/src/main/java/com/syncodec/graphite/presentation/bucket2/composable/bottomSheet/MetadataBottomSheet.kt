@@ -57,10 +57,9 @@ fun MetadataBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 4.dp))
 
-            BottomSheetActionButton.BottomSheetActionGrid(itemInRow = 3) {
-                BottomSheetActionButton.EditButton(itemInRow = 3, onClick = onClickEdit)
-                BottomSheetActionButton.ShareButton(itemInRow = 3) {}
-                BottomSheetActionButton.DeleteButton(itemInRow = 3) {}
+            BottomSheetActionButton.BottomSheetActionGrid(itemInRow = 2) {
+                BottomSheetActionButton.EditButton(itemInRow = 2, onClick = onClickEdit)
+                BottomSheetActionButton.DeleteButton(itemInRow = 2) {}
             }
 
             Spacer(modifier = Modifier.height(height = 8.dp))

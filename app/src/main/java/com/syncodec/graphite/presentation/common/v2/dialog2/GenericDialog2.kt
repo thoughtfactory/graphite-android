@@ -221,7 +221,7 @@ object GenericDialog2 {
     }
 
     @Composable
-    fun DeleteDialog(
+    fun DeleteMultipleItemsDialog(
         state: State<List<Long>> = State.rememberDialogStateT(),
         onClickDelete: (List<Long>) -> Unit,
         onClickCancel: () -> Unit
@@ -231,10 +231,29 @@ object GenericDialog2 {
             state = state,
             icon = R.drawable.ic_fa_delete,
             title = stringResource(id = R.string.delete),
-            contentText = stringResource(id = R.string.dialog_delete_selected_items),
+            contentText = stringResource(id = R.string.dialog_delete_multiple_selected_items),
             dualActionButton = {
                 SecondaryButton(text = stringResource(id = R.string.cancel), onClick = onClickCancel)
                 RedButton(text = stringResource(id = R.string.delete)) { onClickDelete(selectedItemList ?: return@RedButton) }
+            },
+        )
+    }
+
+    @Composable
+    fun DeleteItemDialog(
+        state: State<Long> = State.rememberDialogStateT(),
+        onClickDelete: (Long) -> Unit,
+        onClickCancel: () -> Unit
+    ) {
+        val selectedItem by state.dataFlow.collectAsState()
+        Composable(
+            state = state,
+            icon = R.drawable.ic_fa_delete,
+            title = stringResource(id = R.string.delete),
+            contentText = stringResource(id = R.string.dialog_delete_item),
+            dualActionButton = {
+                SecondaryButton(text = stringResource(id = R.string.cancel), onClick = onClickCancel)
+                RedButton(text = stringResource(id = R.string.delete)) { onClickDelete(selectedItem ?: return@RedButton) }
             },
         )
     }

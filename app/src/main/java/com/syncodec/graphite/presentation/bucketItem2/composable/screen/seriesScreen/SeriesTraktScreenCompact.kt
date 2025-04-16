@@ -37,7 +37,6 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.model.importer.ThumbnailData
 import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.di.network.trakt.TraktApi
 import com.syncodec.graphite.presentation.bucketItem2.composable.buildingBlock.BucketItemStateView
@@ -49,20 +48,20 @@ import com.syncodec.graphite.presentation.ui.LocalIsDarkTheme
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.koinInject
+import kotlin.uuid.ExperimentalUuidApi
 
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalLayoutApi::class, ExperimentalUuidApi::class)
 @Composable
 fun SeriesTraktScreenCompact(
     bucketItemBox: BucketItemBoxDecrypted? = null,
     thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>>,
     isEditing: Boolean = false,
-    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
+    onUpdateBucketItemBox: (bucketItemBoxDecrypted: BucketItemBoxDecrypted) -> Unit = {},
 ) {
     val isDarkTheme = LocalIsDarkTheme.current
 
     val uriHandler = LocalUriHandler.current
-    val traktApi: TraktApi = koinInject()
 
     val bucketItemData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData } }
     val seriesData by remember(key1 = bucketItemData) { derivedStateOf { bucketItemData as? BucketItemShow.TraktSeries } }
@@ -84,10 +83,10 @@ fun SeriesTraktScreenCompact(
         Spacer(modifier = Modifier.height(height = 24.dp))
 
         BucketItemStateView(
-            bucketType = BucketBoxEncrypted.BucketType.Book,
+            bucketType = BucketBoxEncrypted.BucketType.Show,
             bucketItemState = bucketItemBox?.state?.ordinal ?: BucketItemBoxDecrypted.State.Alpha.ordinal,
             modifier = Modifier.padding(horizontal = 20.dp),
-            onToggleBucketItemState = onToggleBucketItemState
+            onToggleBucketItemState = { onUpdateBucketItemBox(bucketItemBox?.copy(state = it) ?: return@BucketItemStateView) }
         )
         Spacer(modifier = Modifier.height(height = 12.dp))
 
@@ -127,7 +126,7 @@ fun SeriesTraktScreenCompact(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp),
-            onClick = { uriHandler.openUri(uri = traktApi.getMovieUrlFromId(id = seriesData?.ids?.trakt) ?: return@Button) }
+            onClick = { uriHandler.openUri(uri = seriesData?.getUrl() ?: return@Button) }
         ) {
             Text(text = stringResource(id = R.string.open_in_trakt_tv))
             Spacer(modifier = Modifier.width(width = 12.dp))

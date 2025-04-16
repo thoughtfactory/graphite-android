@@ -1,5 +1,6 @@
 package com.syncodec.graphite.presentation.bucket2.moveBucketItemScaffold
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +14,9 @@ import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
@@ -28,6 +31,8 @@ import com.syncodec.graphite.presentation.common.v2.overlayScaffold.OverlayScaff
 import com.syncodec.graphite.presentation.main2.composable.bottomSheet.NewBucketBottomSheet
 import com.syncodec.graphite.presentation.main2.composable.buildingBlock.bucket.BucketCard
 import com.syncodec.graphite.utils.alice2.Alice2
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -43,6 +48,8 @@ data class MoveBucketItemData(
 fun MoveBucketItemScaffold(
     state: State<MoveBucketItemData> = State.rememberOverlayStateT(),
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val alice2: Alice2 = koinInject()
 
     val viewModel: MoveBucketItemViewModel = koinViewModel()
@@ -100,6 +107,7 @@ fun MoveBucketItemScaffold(
                         onClick = {
                             viewModel.moveBucketItemBox(bucketBox = bucketBoxCache.enc, bucketItemIdList = moveBucketItemData?.selectedItemIdList ?: return@BucketCard) {
                                 state.closeOverlay(data = null)
+                                scope.launch(context = Dispatchers.Main) { Toast.makeText(context, context.getString(R.string.toast_item_moved), Toast.LENGTH_SHORT).show() }
                             }
                         }
                     )

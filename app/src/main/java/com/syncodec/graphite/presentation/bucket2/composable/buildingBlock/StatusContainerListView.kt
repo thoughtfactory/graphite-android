@@ -1,6 +1,7 @@
 package com.syncodec.graphite.presentation.bucket2.composable.buildingBlock
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -35,7 +36,8 @@ fun StatusContainer(
     if (isFavourite || isLocked) Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .background(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.small)
+            .background(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.small)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f), shape = MaterialTheme.shapes.small)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         if (isFavourite) Icon(

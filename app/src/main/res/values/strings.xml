@@ -81,8 +81,11 @@
     <string name="toast_no_image_selected">No image selected</string>
     <string name="toast_no_bucket_id">Error loading bucket. No id specified.</string>
     <string name="toast_no_book_title">Enter book title</string>
+    <string name="toast_item_moved">Item moved successfully</string>
+    <string name="toast_items_moved">Items moved successfully</string>
 
-    <string name="dialog_delete_selected_items">Are you sure you want to delete selected items?\nThis action cannot be undone</string>
+    <string name="dialog_delete_multiple_selected_items">Are you sure you want to delete selected items?\nThis action cannot be undone</string>
+    <string name="dialog_delete_item">Are you sure you want to delete this item?\nThis action cannot be undone</string>
 
     <string name="book_title">Book title</string>
     <string name="movie_title">Movie title</string>
@@ -120,6 +123,7 @@
     <string name="metadata">Metadata</string>
     <string name="open_externally">Open Externally</string>
     <string name="open_in_trakt_tv">Open in trakt.tv</string>
+    <string name="open_in_open_library">Open in OpenLibrary</string>
     <string name="select_data_to_edit">Select data to edit</string>
 
     <string name="search_on_open_library">Search on Open Library</string>
@@ -140,6 +144,7 @@
     <string name="id">ID</string>
     <string name="created_on">Created on</string>
     <string name="modified_on">Modified on</string>
+    <string name="parent">Parent</string>
     <string name="no_data">No data</string>
     <string name="no_title">No title</string>
     <string name="no_Description">No description</string>

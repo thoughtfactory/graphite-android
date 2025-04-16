@@ -2,6 +2,11 @@ package com.syncodec.graphite.utils
 
 import android.content.Context
 import android.content.Intent
+import androidx.activity.ComponentActivity
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
+import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.di.network.openLibrary.OLBookSearchResult
 import com.syncodec.graphite.di.network.trakt.TraktShowSearchResult
 import com.syncodec.graphite.presentation.bucket2.BucketActivity2
@@ -46,6 +51,20 @@ object IntentUtil {
 
     }
 
+    fun finishActivity(context: Context) {
+        (context as? ComponentActivity)?.finishAfterTransition()
+    }
+
+    fun shareText(context: Context, text: String) {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, text)
+            type = "text/plain"
+        }
+        val shareIntent = Intent.createChooser(sendIntent, null)
+
+        context.startActivity(shareIntent)
+    }
 
     @kotlinx.serialization.Serializable
     sealed class BucketItemActivityData {
@@ -62,17 +81,6 @@ object IntentUtil {
         }
 
         @kotlinx.serialization.Serializable
-        data class LocalItem(override val parentId: Long, val bucketItemId: Long) : BucketItemActivityData()
-    }
-
-    fun shareText(context: Context, text: String) {
-        val sendIntent: Intent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, text)
-            type = "text/plain"
-        }
-        val shareIntent = Intent.createChooser(sendIntent, null)
-
-        context.startActivity(shareIntent)
+        data class LocalItem(override val parentId: Long, val bucketItemId: Long, val bucketType: BucketBoxEncrypted.BucketType) : BucketItemActivityData()
     }
 }

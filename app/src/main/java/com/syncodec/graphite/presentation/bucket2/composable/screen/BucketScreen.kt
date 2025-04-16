@@ -107,7 +107,7 @@ fun BucketScreen(
     val editTodoBottomSheetState = GenericBottomSheet2State.rememberGenericBottomSheet2StateT<BucketItemBoxDecrypted>(skipPartiallyExpanded = true)
     val viewLinkBottomSheet = GenericBottomSheet2State.rememberGenericBottomSheet2StateT<BucketItemBoxDecrypted>(skipPartiallyExpanded = true)
 
-    val moveBucketItemState = OverlayScaffold.State.rememberOverlayStateT<MoveBucketItemData>()
+    val moveBucketItemOverlayScaffoldState = OverlayScaffold.State.rememberOverlayStateT<MoveBucketItemData>()
 
     val deleteDialogState: GenericDialog2.State<List<Long>> = GenericDialog2.State.rememberDialogStateT()
 
@@ -212,7 +212,7 @@ fun BucketScreen(
                     areAllSelectedFavourite = areAllSelectedFavourite,
                     areAllSelectedLocked = areAllSelectedLocked,
                     onClickSelectAll = { selectionContainerActor.selectAll() },
-                    onClickMove = { moveBucketItemState.openOverlay(data = MoveBucketItemData(bucketType = bucketType ?: return@TodoBucketScreenSelectionActionCard, selectedItemIdList = selectedItemIdList.toList())); selectionContainerActor.unselect() },
+                    onClickMove = { moveBucketItemOverlayScaffoldState.openOverlay(data = MoveBucketItemData(bucketType = bucketType ?: return@TodoBucketScreenSelectionActionCard, selectedItemIdList = selectedItemIdList.toList())); selectionContainerActor.unselect() },
                     onClickFavourite = { viewModel.onToggleFavouriteBucketItemBox(itemIdList = selectedItemIdList.toList()) },
                     onClickLock = { viewModel.onToggleLockBucketItemBox(itemIdList = selectedItemIdList.toList()) },
                     onClickShare = {
@@ -227,14 +227,14 @@ fun BucketScreen(
                 )
             }
 
-            GenericDialog2.DeleteDialog(
+            GenericDialog2.DeleteMultipleItemsDialog(
                 state = deleteDialogState,
                 onClickDelete = { deleteDialogState.closeDialog(data = null); selectionContainerActor.unselect(); viewModel.deleteBucketItemBox(idList = it) },
                 onClickCancel = { deleteDialogState.closeDialog(data = null) }
             )
         },
         overlayScaffold = {
-            MoveBucketItemScaffold(state = moveBucketItemState)
+            MoveBucketItemScaffold(state = moveBucketItemOverlayScaffoldState)
         },
     ) {
         BucketScreenContent(
@@ -287,7 +287,7 @@ private fun BucketScreenContent(
                     pagerState = pagerState,
                     bucketItemBoxOrderedDataFlow = bucketItemBoxOrderedDataFlow,
                     onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
-                    onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@BookScreen, bucketItemId = it.id)) }
+                    onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@BookScreen, bucketItemId = it.id, bucketType = BucketBoxEncrypted.BucketType.Book)) }
                 )
 
                 BucketBoxEncrypted.BucketType.Show -> ShowScreen(
@@ -295,7 +295,7 @@ private fun BucketScreenContent(
                     pagerState = pagerState,
                     bucketItemBoxOrderedDataFlow = bucketItemBoxOrderedDataFlow,
                     onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
-                    onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@ShowScreen, bucketItemId = it.id)) }
+                    onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@ShowScreen, bucketItemId = it.id, bucketType = BucketBoxEncrypted.BucketType.Show)) }
                 )
 //
                 BucketBoxEncrypted.BucketType.Link -> LinkScreen(

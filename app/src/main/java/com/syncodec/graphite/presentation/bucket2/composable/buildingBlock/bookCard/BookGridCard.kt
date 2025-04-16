@@ -84,15 +84,21 @@ fun BookGridCard(
     ) {
         Column {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(ratio = 0.875f)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                ThumbnailPreview(thumbnailFile = bucketItemBook?.thumbnail(context = context) as? BucketItemData.Companion.Thumbnail.File)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(ratio = 0.675f)
+                ) {
+                    ThumbnailPreview(thumbnailFile = bucketItemBook?.thumbnail(context = context) as? BucketItemData.Companion.Thumbnail.File)
+                }
 
                 Column(
                     horizontalAlignment = Alignment.End,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(all = 4.dp)
                 ) {
                     AnimatedVisibility(
                         visible = isReorderable && !isSelecting,
@@ -105,7 +111,7 @@ fun BookGridCard(
                 }
             }
             Column(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
                 Text(
                     text = bucketItemBook?.bookTitle() ?: "-",

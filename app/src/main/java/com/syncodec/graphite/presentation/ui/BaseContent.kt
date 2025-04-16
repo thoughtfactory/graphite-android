@@ -1,9 +1,14 @@
 package com.syncodec.graphite.presentation.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -23,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.BaseApplication
@@ -189,6 +195,12 @@ fun BaseContent(
     }
 }
 
+fun Context.getActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.getActivity()
+    else -> null
+}
+
 
 @Composable
 fun BaseComposable2(
@@ -243,6 +255,17 @@ fun BaseComposable2(
                 LocalAuthController provides authController
             ),
         ) {
+
+            context
+                .getActivity()
+                ?.enableEdgeToEdge(
+                statusBarStyle = SystemBarStyle.auto(
+                    lightScrim = MaterialTheme.colorScheme.onBackground.toArgb(),
+                    darkScrim = MaterialTheme.colorScheme.onBackground.toArgb(),
+                    detectDarkMode = { isDarkTheme }
+                ),
+            )
+
             content()
             AnimatedVisibility(
                 visible = authState == AuthState.Authenticate,

@@ -152,6 +152,19 @@ object BottomSheetActionButton {
     }
 
     @Composable
+    fun MoveButton(
+        itemInRow: Int = 4,
+        onClick: () -> Unit
+    ) {
+        Composable(
+            icon = R.drawable.ic_fa_move,
+            text = stringResource(id = R.string.move),
+            itemInRow = itemInRow,
+            onClick = onClick
+        )
+    }
+
+    @Composable
     fun ShareButton(
         itemInRow: Int = 4,
         onClick: () -> Unit

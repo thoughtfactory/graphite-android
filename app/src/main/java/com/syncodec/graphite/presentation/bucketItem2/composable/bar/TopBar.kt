@@ -27,6 +27,7 @@ import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.uuid.ExperimentalUuidApi
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,8 +37,8 @@ fun TopBar(
     isDataSaved: Boolean = false,
     isEditing: Boolean = false,
     onClickEdit: () -> Unit = {},
-    onToggleLock: (Boolean) -> Unit = {},
-    onToggleFavourite: (Boolean) -> Unit = {},
+    onToggleLock: (BucketItemBoxDecrypted) -> Unit = {},
+    onToggleFavourite: (BucketItemBoxDecrypted) -> Unit = {},
 ) {
     Crossfade(
         targetState = false,
@@ -54,14 +55,14 @@ fun TopBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 private fun NormalTopBar(
     bucketItemBoxDataFlow: StateFlow<DataLoader<BucketItemBoxDecrypted>>,
     isDataSaved: Boolean = false,
     onClickEdit: () -> Unit = {},
-    onToggleLock: (Boolean) -> Unit = {},
-    onToggleFavourite: (Boolean) -> Unit = {},
+    onToggleLock: (BucketItemBoxDecrypted) -> Unit = {},
+    onToggleFavourite: (BucketItemBoxDecrypted) -> Unit = {},
 ) {
 
     val bucketItemBoxData by bucketItemBoxDataFlow.collectAsState()
@@ -81,8 +82,8 @@ private fun NormalTopBar(
 //            ) {
 //                GraIconButton.EditButton(onClick = onClickEdit)
 //            }
-            isLocked?.let { GraIconButton.LockButton(isLocked = it) { onToggleLock(!it) } }
-            isFavourite?.let { GraIconButton.FavouriteButton(isFavourite = it) { onToggleFavourite(!it) } }
+            isLocked?.let { GraIconButton.LockButton(isLocked = it) { onToggleLock(bucketItemBox?.copy(isLocked = !it) ?: return@LockButton) } }
+            isFavourite?.let { GraIconButton.FavouriteButton(isFavourite = it) { onToggleFavourite(bucketItemBox?.copy(isFavourite = !it) ?: return@FavouriteButton) } }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background, titleContentColor = MaterialTheme.colorScheme.onBackground),
         modifier = Modifier.fillMaxWidth()

@@ -44,15 +44,13 @@ import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.openLibrary.OLBookSearchResult
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryApi2
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryTitleSearchResult2
-import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchInitView
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
@@ -66,46 +64,47 @@ fun AddBookBottomSheet(
     onAddBook: (OLBookSearchResult) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     val openLibraryApi2: OpenLibraryApi2 = koinInject()
 
-    val bookTitleTextFieldController = rememberTextField2Controller(initialFocus = true)
+    val bookTitleTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = true)
 
     var olTitleSearchResultNetworkResponse: NetworkResponse<OpenLibraryTitleSearchResult2> by remember { mutableStateOf(value = NetworkResponse.Init) }
-
-    fun searchForBookUsingTitle(page: Int) {
-        keyboardController?.hide()
-        val bookTitleValidationResult = bookTitleTextFieldController.validate { it.isNotBlank() }
-        if (bookTitleValidationResult.isValidated) {
-            scope.launch(context = Dispatchers.IO) {
-                openLibraryApi2.searchForBook(query = bookTitleValidationResult.text, page = page) { networkResponse -> olTitleSearchResultNetworkResponse = networkResponse }
-            }
-        }
-    }
 
     GenericBottomSheet2(
         bottomSheetState = bottomSheet2State,
     ) {
         GenericBottomSheetSkeleton2(
             title = stringResource(id = R.string.add_book),
-            scrollable = false
+            scrollable = olTitleSearchResultNetworkResponse is NetworkResponse.Init,
         ) {
+            val keyboardController = LocalSoftwareKeyboardController.current
+            fun searchForBookUsingTitle(page: Int) {
+                keyboardController?.hide()
+                val bookTitleValidationResult = bookTitleTextFieldController.validate { it.isNotBlank() }
+                if (bookTitleValidationResult.isValidated) {
+                    scope.launch(context = Dispatchers.IO) {
+                        openLibraryApi2.searchForBook(query = bookTitleValidationResult.text, page = page) { networkResponse -> olTitleSearchResultNetworkResponse = networkResponse }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(height = 12.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = bookTitleTextFieldController,
                 label = stringResource(id = R.string.search_on_open_library),
                 placeholder = stringResource(id = R.string.search_for_title),
                 errorMessage = stringResource(id = R.string.book_item_title_error),
-                keyboardOptions = GenericTextField2Defaults.Options.getTextSearchKeyboardOptionsDefault(),
-                keyboardActions = GenericTextField2Defaults.Actions.getKeyboardActions { searchForBookUsingTitle(page = 1) },
+                keyboardOptions = GenericTextField2.Options.getTextSearchKeyboardOptionsDefault(),
+                keyboardActions = GenericTextField2.Actions.getKeyboardActions { searchForBookUsingTitle(page = 1) },
                 suffixIcon = {
                     GraIconButton.ClearTextButton { bookTitleTextFieldController.reset() }
                     GraIconButton.SearchButton { searchForBookUsingTitle(page = 1) }
                 },
             )
+
+            Spacer(modifier = Modifier.height(height = 4.dp))
 
             AnimatedContent(
                 targetState = olTitleSearchResultNetworkResponse,
@@ -113,7 +112,7 @@ fun AddBookBottomSheet(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 when (it) {
-                    is NetworkResponse.Init -> InitView()
+                    is NetworkResponse.Init -> SearchInitView()
                     is NetworkResponse.Loading -> LoadingView()
                     is NetworkResponse.Error -> ErrorView()
                     is NetworkResponse.Success -> SuccessView(
@@ -128,11 +127,6 @@ fun AddBookBottomSheet(
             Spacer(modifier = Modifier.height(height = 8.dp))
         }
     }
-}
-
-@Composable
-private fun InitView() {
-    Text("init view")
 }
 
 @Composable

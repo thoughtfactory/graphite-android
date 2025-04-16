@@ -41,8 +41,6 @@ import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSh
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
-import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2Defaults
-import com.syncodec.graphite.presentation.common.v2.textField2.rememberTextField2Controller
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -58,8 +56,8 @@ fun NewBucketBottomSheet(
 ) {
     val scope = rememberCoroutineScope()
 
-    val titleTextFieldController = rememberTextField2Controller(initialFocus = false)
-    val descriptionTextFieldController = rememberTextField2Controller(initialFocus = false)
+    val titleTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
+    val descriptionTextFieldController = GenericTextField2.rememberTextField2Controller(initialFocus = false)
     var selectedBucketType: BucketBoxEncrypted.BucketType? by remember { mutableStateOf(value = null) }
     var isSelectedBucketTypeValidationError by remember { mutableStateOf(value = false) }
 
@@ -110,17 +108,17 @@ fun NewBucketBottomSheet(
                 } else Spacer(modifier = Modifier.height(height = 24.dp))
             }
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = titleTextFieldController,
                 label = stringResource(id = R.string.list_title),
                 placeholder = stringResource(id = R.string.name_your_bucket_list),
                 errorMessage = stringResource(id = R.string.list_title_error),
-                keyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault()
+                keyboardOptions = GenericTextField2.Options.getTextNextKeyboardOptionsDefault()
             )
 
             Spacer(modifier = Modifier.height(height = 4.dp))
 
-            GenericTextField2(
+            GenericTextField2.BottomSheetTextField(
                 controller = descriptionTextFieldController,
                 label = stringResource(R.string.description_optional),
                 placeholder = stringResource(R.string.notebook_description_placeholder),

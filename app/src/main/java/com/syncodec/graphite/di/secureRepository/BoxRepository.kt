@@ -73,6 +73,8 @@ class BoxRepository(
         strategy = KacheStrategy.LRU
     }
 
+    val bucketBoxRepository = BucketBoxRepository()
+
     private fun initializeThumbnailDirectory() {
         val filesDir = context.filesDir
         val dataDir = File(filesDir, "data").also { it.mkdirs() }
@@ -189,7 +191,15 @@ class BoxRepository(
     //    ////  Bucket Box
     fun getAllBucketBoxAsFlow() = getBoxObjectListAsFlow2<BucketBoxEncrypted, BucketBoxDecrypted>()
 
-    fun getBucketBoxAsFlow(id: Long) = getBoxObjectAsFlow<BucketBoxEncrypted, BucketBoxDecrypted>(id = id, property = BucketBoxEncrypted_.id)
+    inner class BucketBoxRepository {
+        /**
+         * Get [BucketBoxDecrypted] from with [CacheValue] from [BucketBoxDecrypted.id] as flow
+         * @param id Box id of object
+         * @author pushpull
+         * @since 3.0.0
+         */
+        fun getBucketBoxAsFlow(id: Long) = getBoxObjectAsFlow<BucketBoxEncrypted, BucketBoxDecrypted>(id = id, property = BucketBoxEncrypted_.id)
+    }
 
     //    ////  BucketItem Box
     fun getBucketItemBoxListAsFlow(parentId: Long): Flow<List<CacheValue<BucketItemBoxEncrypted, BucketItemBoxDecrypted>>> = getBoxObjectListAsFlow2<BucketItemBoxEncrypted, BucketItemBoxDecrypted> {
@@ -246,7 +256,18 @@ class BoxRepository(
 
     fun onUpdateBucketItemOrder(bucketBox: BucketBoxDecrypted, bucketItemBoxIdOrder: List<Long>) = putBucketBox(bucketBox = bucketBox.copy(sortedIdList = bucketItemBoxIdOrder))
 
-    fun deleteBucketItemBox(idList: List<Long>) { idList.forEach { deleteBoxObject<BucketItemBoxEncrypted>(id = it) } }
+    fun deleteBucketItemBox(idList: List<Long>) {
+        CoroutineScope(context = Dispatchers.Default).launch {
+            val bucketItemBoxList = getBoxObjectList2<BucketItemBoxEncrypted, BucketItemBoxDecrypted> {
+                this.`in`(BucketItemBoxEncrypted_.id, idList.toLongArray())
+            }
+            bucketItemBoxList.forEach {
+                val file = it.enc.bucketItemData?.decrypt(alice2)?.thumbnail(context) as? BucketItemData.Companion.Thumbnail.File
+                file?.getFile(context)?.delete()
+                deleteBoxObject<BucketItemBoxEncrypted>(id = it.enc.id)
+            }
+        }
+    }
 
     companion object {
 

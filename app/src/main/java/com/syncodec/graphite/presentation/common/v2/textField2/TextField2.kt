@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,102 +34,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.ui.ANIMATION_TIME
 import com.syncodec.graphite.utils.onlyIfComposable
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 
-@Composable
-fun GenericTextField2(
-    modifier: Modifier = Modifier,
-    controller: TextField2Controller = rememberTextField2Controller(initialFocus = false),
-    textStyle: TextStyle = LocalTextStyle.current,
-    label: String? = null,
-    placeholder: String? = null,
-    errorMessage: String? = null,
-    mode: GenericTextField2Defaults.Mode = GenericTextField2Defaults.Mode.Edit,
-    minLines: Int = 1,
-    maxLines: Int = 1,
-    singleLine: Boolean = true,
-    prefixIcon: @Composable (() -> Unit)? = null,
-    suffixIcon: @Composable (RowScope.() -> Unit)? = { GraIconButton.ClearTextButton { controller.onValueChange("") } },
-    keyboardOptions: KeyboardOptions = GenericTextField2Defaults.Options.getTextNextKeyboardOptionsDefault(),
-    keyboardActions: KeyboardActions = GenericTextField2Defaults.Actions.getKeyboardActionsDefault(),
-    colors: TextFieldColors = GenericTextField2Defaults.Colors.getDefaultColors(),
-    onClick: () -> Unit = {},
-) {
-
-    val text by controller.textFlow.collectAsState()
-    val isError by controller.isErrorFlow.collectAsState()
-
-    Column {
-        TextField(
-            value = text,
-            shape = MaterialTheme.shapes.medium,
-            onValueChange = controller::onValueChange,
-            textStyle = textStyle,
-            label = label?.let { string -> { Text(string) } },
-            placeholder = placeholder?.let { string -> { Text(string) } },
-            leadingIcon = prefixIcon?.let { function -> { function.invoke() } },
-            trailingIcon = { if (suffixIcon == null) null else Row { suffixIcon(); Spacer(modifier = Modifier.width(width = 6.dp)) } },
-            readOnly = mode != GenericTextField2Defaults.Mode.Edit,
-            enabled = mode != GenericTextField2Defaults.Mode.Clickable,
-            minLines = minLines,
-            maxLines = maxLines,
-            singleLine = singleLine,
-            colors = colors,
-            isError = isError,
-            keyboardOptions = keyboardOptions,
-            keyboardActions = keyboardActions,
-            modifier = modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester = controller.focusRequester)
-                .clip(shape = TextFieldDefaults.shape)
-                .onlyIfComposable(modifier = { clickable(onClick = onClick) }) { true }
-        )
-
-
-        errorMessage?.let { errorMessageText ->
-            AnimatedVisibility(
-                visible = isError,
-                enter = expandVertically(tween(ANIMATION_TIME)),
-                exit = shrinkVertically(tween(ANIMATION_TIME))
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = errorMessageText,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Normal,
-                        modifier = Modifier.padding(start = 20.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = Unit) {
-        if (controller.initialFocus) {
-            delay(timeMillis = 300)               //  300 millisecond
-            controller.requestFocus()
-        }
-    }
-
-}
-
-object GenericTextField2Defaults {
+object GenericTextField2 {
 
     enum class Mode {
         Edit,
@@ -212,50 +135,157 @@ object GenericTextField2Defaults {
 
         fun getKeyboardActionsDefault() = getKeyboardActions(onAction = null)
     }
-}
 
+    data class TextField2Controller(
+        var textFlow: MutableStateFlow<String>,
+        val initialFocus: Boolean
+    ) {
 
-data class TextField2Controller(
-    var textFlow: MutableStateFlow<String>,
-    val initialFocus: Boolean
-) {
+        val key = Random.nextInt()
 
-    val key = Random.nextInt()
+        constructor(initialText: String, initialFocus: Boolean) : this(textFlow = MutableStateFlow(value = initialText), initialFocus)
 
-    constructor(initialText: String, initialFocus: Boolean) : this(textFlow = MutableStateFlow(value = initialText), initialFocus)
+        val focusRequester = FocusRequester()
 
-    val focusRequester = FocusRequester()
+        var isErrorFlow: MutableStateFlow<Boolean> = MutableStateFlow(value = false)
 
-    var isErrorFlow: MutableStateFlow<Boolean> = MutableStateFlow(value = false)
+        fun onValueChange(value: String) {
+            this.textFlow.tryEmit(value)
+        }
 
-    fun onValueChange(value: String) {
-        this.textFlow.tryEmit(value)
+        fun validate(howToValidate: (String) -> Boolean): ValidationResult {
+            val text = textFlow.value
+            val isValidated = howToValidate(text)
+            this.isErrorFlow.tryEmit(!isValidated)
+            return ValidationResult(isValidated = isValidated, text = text)
+        }
+
+        fun reset() {
+            this.textFlow.tryEmit(value = "")
+            this.isErrorFlow.tryEmit(value = false)
+        }
+
+        fun requestFocus() = focusRequester.requestFocus()
+
+        fun removeFocus() = focusRequester.freeFocus()
+
+        data class ValidationResult(val isValidated: Boolean, val text: String)
+
+        companion object {
+            fun initialize(initialText: String, initialFocus: Boolean): TextField2Controller = TextField2Controller(initialText = initialText, initialFocus)
+        }
     }
 
-    fun validate(howToValidate: (String) -> Boolean): ValidationResult {
-        val text = textFlow.value
-        val isValidated = howToValidate(text)
-        this.isErrorFlow.tryEmit(!isValidated)
-        return ValidationResult(isValidated = isValidated, text = text)
+    @Composable
+    fun rememberTextField2Controller(initialText: String = "", initialFocus: Boolean = false): TextField2Controller {
+        return remember { TextField2Controller.initialize(initialText = initialText, initialFocus = initialFocus) }
     }
 
-    fun reset() {
-        this.textFlow.tryEmit(value = "")
-        this.isErrorFlow.tryEmit(value = false)
+    @Composable
+    fun Composable(
+        modifier: Modifier = Modifier,
+        controller: TextField2Controller = rememberTextField2Controller(initialFocus = false),
+        textStyle: TextStyle = LocalTextStyle.current,
+        label: String? = null,
+        placeholder: String? = null,
+        errorMessage: String? = null,
+        mode: Mode = Mode.Edit,
+        minLines: Int = 1,
+        maxLines: Int = 1,
+        singleLine: Boolean = true,
+        prefixIcon: @Composable (() -> Unit)? = null,
+        suffixIcon: @Composable (RowScope.() -> Unit)? = { GraIconButton.ClearTextButton { controller.onValueChange("") } },
+        keyboardOptions: KeyboardOptions = Options.getTextNextKeyboardOptionsDefault(),
+        keyboardActions: KeyboardActions = Actions.getKeyboardActionsDefault(),
+        colors: TextFieldColors = Colors.getDefaultColors(),
+        onClick: () -> Unit = {},
+    ) {
+
+        val text by controller.textFlow.collectAsState()
+        val isError by controller.isErrorFlow.collectAsState()
+
+        Column {
+            TextField(
+                value = text,
+                shape = MaterialTheme.shapes.medium,
+                onValueChange = controller::onValueChange,
+                textStyle = textStyle,
+                label = label?.let { string -> { Text(string) } },
+                placeholder = placeholder?.let { string -> { Text(string) } },
+                leadingIcon = prefixIcon?.let { function -> { function.invoke() } },
+                trailingIcon = { if (suffixIcon == null) null else Row { suffixIcon(); Spacer(modifier = Modifier.width(width = 6.dp)) } },
+                readOnly = mode != Mode.Edit,
+                enabled = mode != Mode.Clickable,
+                minLines = minLines,
+                maxLines = maxLines,
+                singleLine = singleLine,
+                colors = colors,
+                isError = isError,
+                keyboardOptions = keyboardOptions,
+                keyboardActions = keyboardActions,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester = controller.focusRequester)
+                    .clip(shape = MaterialTheme.shapes.medium)
+                    .onlyIfComposable(modifier = { clickable(onClick = onClick) }) { true }
+                    .border(border = BorderStroke(width = 1.dp, color = colors.unfocusedTextColor), shape = MaterialTheme.shapes.medium)
+            )
+
+
+            errorMessage?.let { errorMessageText ->
+                AnimatedVisibility(
+                    visible = isError,
+                    enter = expandVertically(tween(ANIMATION_TIME)),
+                    exit = shrinkVertically(tween(ANIMATION_TIME))
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = errorMessageText,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Normal,
+                            modifier = Modifier.padding(start = 20.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+        }
+
+        LaunchedEffect(key1 = Unit) {
+            if (controller.initialFocus) {
+                delay(timeMillis = 300)               //  300 millisecond
+                controller.requestFocus()
+            }
+        }
     }
 
-    fun requestFocus() = focusRequester.requestFocus()
-
-    fun removeFocus() = focusRequester.freeFocus()
-
-    data class ValidationResult(val isValidated: Boolean, val text: String)
-
-    companion object {
-        fun initialize(initialText: String, initialFocus: Boolean): TextField2Controller = TextField2Controller(initialText = initialText, initialFocus)
+    @Composable
+    fun BottomSheetTextField(
+        controller: TextField2Controller,
+        label: String?,
+        placeholder: String? = null,
+        errorMessage: String? = null,
+        minLines: Int = 1,
+        maxLines: Int = 1,
+        singleLine: Boolean = true,
+        prefixIcon: @Composable (() -> Unit)? = null,
+        suffixIcon: @Composable (RowScope.() -> Unit)? = { GraIconButton.ClearTextButton { controller.onValueChange("") } },
+        keyboardOptions: KeyboardOptions = Options.getTextNextKeyboardOptionsDefault(),
+        keyboardActions: KeyboardActions = Actions.getKeyboardActionsDefault()
+    ) {
+        Composable(
+            controller = controller,
+            label = label,
+            placeholder = placeholder,
+            errorMessage = errorMessage,
+            minLines = minLines,
+            maxLines = maxLines,
+            singleLine = singleLine,
+            prefixIcon = prefixIcon,
+            suffixIcon = suffixIcon,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions
+        )
     }
-}
-
-@Composable
-fun rememberTextField2Controller(initialText: String = "", initialFocus: Boolean = false): TextField2Controller {
-    return remember { TextField2Controller.initialize(initialText = initialText, initialFocus = initialFocus) }
 }

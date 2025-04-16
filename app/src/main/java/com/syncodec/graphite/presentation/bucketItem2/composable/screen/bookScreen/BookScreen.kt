@@ -1,7 +1,6 @@
 package com.syncodec.graphite.presentation.bucketItem2.composable.screen.bookScreen
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -12,7 +11,6 @@ import androidx.compose.runtime.remember
 import com.syncodec.graphite.di.model.importer.ThumbnailData
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
 
@@ -23,12 +21,11 @@ fun BookScreen(
     bucketItemBox: BucketItemBoxDecrypted? = null,
     thumbnailDataFlow: StateFlow<DataLoader<ThumbnailData>>,
     isEditing: Boolean = false,
-    onToggleBucketItemState: (BucketItemBoxDecrypted.State) -> Unit = {},
+    onUpdateBucketItemBox: (bucketItemBoxDecrypted: BucketItemBoxDecrypted) -> Unit = {},
     onClickEditBookTitleAuthor: (BucketItemBook?) -> Unit = {},
     onClickEditBookDescription: (BucketItemBook?) -> Unit = {},
     onUpdateThumbnail: (Uri) -> Unit = {}
 ) {
-    Log.d("BookScreen", "BookScreen")
 
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
 
@@ -42,7 +39,7 @@ fun BookScreen(
                     bucketItemBox = bucketItemBox,
                     thumbnailDataFlow = thumbnailDataFlow,
                     isEditing = isEditing,
-                    onToggleBucketItemState = onToggleBucketItemState,
+                    onUpdateBucketItemBox = onUpdateBucketItemBox,
                     onClickEditBookTitleAuthor = onClickEditBookTitleAuthor,
                     onClickEditBookDescription = onClickEditBookDescription,
                     onUpdateThumbnail = onUpdateThumbnail
@@ -52,7 +49,7 @@ fun BookScreen(
                     bucketItemBox = bucketItemBox,
                     thumbnailDataFlow = thumbnailDataFlow,
                     isEditing = isEditing,
-                    onToggleBucketItemState = onToggleBucketItemState,
+                    onUpdateBucketItemBox = onUpdateBucketItemBox,
                     onClickEditBookTitleAuthor = onClickEditBookTitleAuthor,
                     onClickEditBookDescription = onClickEditBookDescription,
                     onUpdateThumbnail = onUpdateThumbnail

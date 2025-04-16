@@ -97,7 +97,7 @@ fun ShowListCard(
                 Box(
                     modifier = Modifier
                         .height(height = 128.dp)
-                        .aspectRatio(ratio = 0.75f),
+                        .aspectRatio(ratio = 0.675f)
                 ) {
                     ThumbnailPreview(thumbnailFile = bucketItemShow?.thumbnail(context = context) as? BucketItemData.Companion.Thumbnail.File)
                 }

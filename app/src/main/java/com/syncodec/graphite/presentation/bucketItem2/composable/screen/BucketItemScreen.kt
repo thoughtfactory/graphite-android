@@ -21,9 +21,11 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -31,6 +33,8 @@ import com.syncodec.graphite.R
 import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
+import com.syncodec.graphite.presentation.bucket2.moveBucketItemScaffold.MoveBucketItemData
+import com.syncodec.graphite.presentation.bucket2.moveBucketItemScaffold.MoveBucketItemScaffold
 import com.syncodec.graphite.presentation.bucketItem2.BucketItemViewModel2
 import com.syncodec.graphite.presentation.bucketItem2.composable.bar.BottomBar
 import com.syncodec.graphite.presentation.bucketItem2.composable.bar.TopBar
@@ -40,35 +44,48 @@ import com.syncodec.graphite.presentation.bucketItem2.composable.bottomSheet.Met
 import com.syncodec.graphite.presentation.bucketItem2.composable.screen.bookScreen.BookScreen
 import com.syncodec.graphite.presentation.bucketItem2.composable.screen.movieScreen.MovieScreen
 import com.syncodec.graphite.presentation.bucketItem2.composable.screen.seriesScreen.SeriesScreen
+import com.syncodec.graphite.presentation.bucketItem2.utils.BucketItemUtils
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
+import com.syncodec.graphite.presentation.common.v2.dialog2.GenericDialog2
+import com.syncodec.graphite.presentation.common.v2.overlayScaffold.OverlayScaffold
 import com.syncodec.graphite.presentation.common.v2.scaffold2.GenericScaffold2
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.presentation.ui.ICON_SIZE
 import com.syncodec.graphite.utils.DataLoader
-import dev.chrisbanes.haze.HazeState
+import com.syncodec.graphite.utils.IntentUtil
 import org.koin.androidx.compose.koinViewModel
-import kotlin.Unit
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BucketItemScreen(
-    viewModel: BucketItemViewModel2 = koinViewModel()
+    viewModel: BucketItemViewModel2 = koinViewModel(),
+    bucketType: BucketBoxEncrypted.BucketType
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val isDataSaved by viewModel.isDataSaved.collectAsState()
-    val bucketType by viewModel.bucketType.collectAsState()
+
     val bucketItemBoxDataFlow = viewModel.bucketItemBoxDataFlow
+    val bucketBoxDataFlow = viewModel.parentDataFlow
+
+    val bucketItemBoxData by bucketItemBoxDataFlow.collectAsState()
+    val bucketItemBox by remember(key1 = bucketItemBoxData) { derivedStateOf { (bucketItemBoxData as? DataLoader.Loaded)?.data } }
 
     val metadataBottomSheetState = GenericBottomSheet2State.rememberGenericBottomSheet2State(skipPartiallyExpanded = true)
+
+    val deleteDialogState: GenericDialog2.State<Long> = GenericDialog2.State.rememberDialogStateT()
 
     val editBookTitleAuthorBottomSheetState = GenericBottomSheet2State.rememberGenericBottomSheet2StateT<BucketItemBook?>(skipPartiallyExpanded = true)
     val editBookDescriptionBottomSheetState = GenericBottomSheet2State.rememberGenericBottomSheet2StateT<BucketItemBook?>(skipPartiallyExpanded = true)
 
+    val moveBucketItemOverlayScaffoldState = OverlayScaffold.State.rememberOverlayStateT<MoveBucketItemData> { viewModel.loadParentId(parentId = bucketItemBox?.parent?.id ?: return@rememberOverlayStateT) }
+
     var isEditing by remember { mutableStateOf(value = false) }
 
-
     BackHandler(enabled = isEditing) { isEditing = false }
+
 
     GenericScaffold2(
         topBar = {
@@ -77,11 +94,17 @@ fun BucketItemScreen(
                 isDataSaved = isDataSaved == true,
                 isEditing = isEditing,
                 onClickEdit = { isEditing = true },
-                onToggleLock = viewModel::onToggleLock,
-                onToggleFavourite = viewModel::onToggleFavourite
+                onToggleLock = viewModel::onUpdateBucketItemBox,
+                onToggleFavourite = viewModel::onUpdateBucketItemBox
             )
         },
-        bottomBar = { BottomBar(isEditing = isEditing, onClickMetadata = { metadataBottomSheetState.openSheet() }) },
+        bottomBar = {
+            BottomBar(
+                isEditing = isEditing,
+                isDataSaved = isDataSaved == true,
+                onClickMetadata = { metadataBottomSheetState.openSheet() }
+            )
+        },
         floatingActionButton = {
             SaveFAButton(
                 isDataSaved = isDataSaved,
@@ -89,11 +112,16 @@ fun BucketItemScreen(
             )
         },
         bottomSheetContent = {
-            val bucketItemBoxData by bucketItemBoxDataFlow.collectAsState()
             MetadataBottomSheet(
                 bottomSheet2State = metadataBottomSheetState,
-                bucketItemBox = (bucketItemBoxData as? DataLoader.Loaded)?.data,
-                onClickEdit = {},
+                bucketItemBoxDataFlow = bucketItemBoxDataFlow,
+                bucketBoxDataFlow = bucketBoxDataFlow,
+                onClickMove = {
+                    metadataBottomSheetState.dismissSheet()
+                    moveBucketItemOverlayScaffoldState.openOverlay(data = MoveBucketItemData(bucketType = bucketType, selectedItemIdList = listOf(bucketItemBox?.id ?: return@MetadataBottomSheet)))
+                },
+                onClickShare = { BucketItemUtils.toSharableString(bucketItemBoxDecrypted = bucketItemBox ?: return@MetadataBottomSheet); metadataBottomSheetState.hideSheet(scope = scope) },
+                onClickDelete = { metadataBottomSheetState.hideSheet(scope = scope); deleteDialogState.openDialog(data = bucketItemBox?.id) }
             )
             EditBookTitleAuthorBottomSheet(
                 bottomSheet2State = editBookTitleAuthorBottomSheetState,
@@ -103,11 +131,20 @@ fun BucketItemScreen(
                 bottomSheet2State = editBookDescriptionBottomSheetState,
                 onUpdateBucketItemData = { viewModel.updateBucketItemData(bucketItemData = it) }
             )
+        },
+        overlayContent = {
+            GenericDialog2.DeleteItemDialog(
+                state = deleteDialogState,
+                onClickDelete = { deleteDialogState.closeDialog(data = null); viewModel.deleteBucketItemBox(id = it); IntentUtil.finishActivity(context = context) },
+                onClickCancel = { deleteDialogState.closeDialog(data = null) }
+            )
+        },
+        overlayScaffold = {
+            MoveBucketItemScaffold(state = moveBucketItemOverlayScaffoldState)
         }
     ) {
         val bucketItemBoxData by viewModel.bucketItemBoxDataFlow.collectAsState()
         val bucketItemBoxDataString by remember { derivedStateOf { bucketItemBoxData::class.simpleName } }
-        Log.d("bucketItemBoxDataString", "bucketItemBoxDataString")
 
 //        bucketItemBoxData::class.simpleName is used to not reanimate if internal data is changed line favourite, lock
         AnimatedContent(
@@ -129,23 +166,28 @@ fun BucketItemScreen(
                     BucketBoxEncrypted.BucketType.Book -> BookScreen(
                         bucketItemBox = bucketItemBox,
                         thumbnailDataFlow = viewModel.thumbnailDataFlow,
-                        isEditing = isEditing,
-                        onToggleBucketItemState = viewModel::onToggleBucketItemState,
-                        onClickEditBookTitleAuthor = { editBookTitleAuthorBottomSheetState.openSheet(data = it) },
-                        onClickEditBookDescription = { editBookDescriptionBottomSheetState.openSheet(data = it) },
-                        onUpdateThumbnail = viewModel::onUpdateThumbnail
+                        onUpdateBucketItemBox = viewModel::onUpdateBucketItemBox,
                     )
 
                     BucketBoxEncrypted.BucketType.Show -> when (bucketItemBox?.bucketItemData) {
-                        is BucketItemShow.TraktMovie -> MovieScreen(bucketItemBox = bucketItemBox, thumbnailDataFlow = viewModel.thumbnailDataFlow, onToggleBucketItemState = viewModel::onToggleBucketItemState)
-                        is BucketItemShow.TraktSeries -> SeriesScreen(bucketItemBox = bucketItemBox, thumbnailDataFlow = viewModel.thumbnailDataFlow, onToggleBucketItemState = viewModel::onToggleBucketItemState)
+                        is BucketItemShow.TraktMovie -> MovieScreen(
+                            bucketItemBox = bucketItemBox,
+                            thumbnailDataFlow = viewModel.thumbnailDataFlow,
+                            onUpdateBucketItemBox = viewModel::onUpdateBucketItemBox
+                        )
+
+                        is BucketItemShow.TraktSeries -> SeriesScreen(
+                            bucketItemBox = bucketItemBox,
+                            thumbnailDataFlow = viewModel.thumbnailDataFlow,
+                            onUpdateBucketItemBox = viewModel::onUpdateBucketItemBox
+                        )
+
                         else -> Unit
                     }
 
                     BucketBoxEncrypted.BucketType.Link -> Unit
                     BucketBoxEncrypted.BucketType.Location -> Unit
                     BucketBoxEncrypted.BucketType.Unknown -> Unit
-                    null -> Unit
                 }
             }
         }
