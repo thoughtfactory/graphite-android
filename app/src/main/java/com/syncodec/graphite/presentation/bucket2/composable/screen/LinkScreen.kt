@@ -22,18 +22,13 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.HapticFeedbackConstantsCompat
 import androidx.core.view.ViewCompat
-import com.google.android.play.integrity.internal.b
 import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemBook
-import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemData
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
 import com.syncodec.graphite.presentation.bucket2.BucketViewModel2
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemGridContainer
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemListContainer
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.DragHandle
-import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.bookCard.BookGridCard
-import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.bookCard.BookListCard
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.linkCard.LinkGridCard
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.linkCard.LinkListCard
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
@@ -55,6 +50,7 @@ fun LinkScreen(
     bucketBoxDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init()),
     bucketItemBoxOrderedDataFlow: StateFlow<DataLoader<BucketViewModel2.BucketItemBoxOrderedData>>,
     onUpdateBucketItemOrder: (BucketBoxDecrypted, List<Long>) -> Unit = { _, _ -> },
+    onUpdateBucketItemBoxState: (BucketItemBoxDecrypted, BucketItemBoxDecrypted.State) -> Unit = { _, _ -> },
     onClickBucketItem: (BucketItemBoxDecrypted) -> Unit = {},
 ) {
     val bucketItemBoxOrderedData by bucketItemBoxOrderedDataFlow.collectAsState()
@@ -93,6 +89,7 @@ fun LinkScreen(
                             bucketItemBoxOrdered = bucketItemBoxOrdered,
                             bucketBoxDataFlow = bucketBoxDataFlow,
                             pageNumber = pageNumber,
+                            onUpdateBucketItemBoxState = onUpdateBucketItemBoxState,
                             onUpdateBucketItemOrder = onUpdateBucketItemOrder,
                             onClickBucketItem = onClickBucketItem,
                         )
@@ -173,6 +170,7 @@ private fun DataListView(
     bucketItemBoxOrdered: BucketViewModel2.BucketItemBoxOrderedData,
     bucketBoxDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init()),
     pageNumber: Int = 0,
+    onUpdateBucketItemBoxState: (BucketItemBoxDecrypted, BucketItemBoxDecrypted.State) -> Unit = { _, _ -> },
     onUpdateBucketItemOrder: (BucketBoxDecrypted, List<Long>) -> Unit = { _, _ -> },
     onClickBucketItem: (BucketItemBoxDecrypted) -> Unit = {},
 ) {
@@ -214,6 +212,7 @@ private fun DataListView(
             bucketItemLink = bucketItemLink,
             isReorderable = pageNumber == 0,
             isLast = index == orderedIdList.lastIndex,
+            onClickStateButton = { bucketItemBox ?: return@LinkListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id, allItemIdList = orderedIdList) else onUpdateBucketItemBoxState(bucketItemBox, bucketItemBox.nextState()) },
             onClick = { bucketItemBox ?: return@LinkListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) else onClickBucketItem(bucketItemBox) },
             onLongClick = { bucketItemBox ?: return@LinkListCard; selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) },
             dragHandle = {

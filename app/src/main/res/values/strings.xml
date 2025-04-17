@@ -141,6 +141,12 @@
     <string name="url">Url</string>
     <string name="site_name">Site name</string>
 
+    <string name="bucket_book_search">Reading something interesting?</string>
+    <string name="bucket_show_search">What are you watching?</string>
+    <string name="bucket_link_search">Bookmark a link</string>
+    <string name="bucket_search_error">Oops… Error finding data</string>
+    <string name="bucket_search_no_data">Oops… No results found</string>
+
     <string name="id">ID</string>
     <string name="created_on">Created on</string>
     <string name="modified_on">Modified on</string>

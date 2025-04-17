@@ -48,7 +48,7 @@ import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.AddShow
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.AddTodoBottomSheet
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.EditBottomSheet
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.EditTodoBottomSheet
-import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.LinkBottomSheet
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.ViewLinkBottomSheet
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.MetadataBottomSheet
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketFloatingButton
 import com.syncodec.graphite.presentation.bucket2.moveBucketItemScaffold.MoveBucketItemData
@@ -121,6 +121,7 @@ fun BucketScreen(
             TopBar(
                 title = title,
                 bucketType = bucketType ?: BucketBoxEncrypted.BucketType.Unknown,
+                bucketItemBoxOrderedDataFlow = bucketItemBoxOrderedDataFlow,
                 stateFilterInt = pagerState.currentPage,
                 isLocked = bucketBox?.isLocked != false,
                 isFavourite = bucketBox?.isFavourite != false,
@@ -287,6 +288,7 @@ private fun BucketScreenContent(
                     pagerState = pagerState,
                     bucketItemBoxOrderedDataFlow = bucketItemBoxOrderedDataFlow,
                     onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
+                    onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
                     onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@BookScreen, bucketItemId = it.id, bucketType = BucketBoxEncrypted.BucketType.Book)) }
                 )
 
@@ -295,6 +297,7 @@ private fun BucketScreenContent(
                     pagerState = pagerState,
                     bucketItemBoxOrderedDataFlow = bucketItemBoxOrderedDataFlow,
                     onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
+                    onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
                     onClickBucketItem = { IntentUtil.launchBucketItemActivity(context = context, bucketItemActivityData = BucketItemActivityData.LocalItem(parentId = bucketBox?.id ?: return@ShowScreen, bucketItemId = it.id, bucketType = BucketBoxEncrypted.BucketType.Show)) }
                 )
 //
@@ -303,6 +306,7 @@ private fun BucketScreenContent(
                     pagerState = pagerState,
                     bucketItemBoxOrderedDataFlow = bucketItemBoxOrderedDataFlow,
                     onUpdateBucketItemOrder = viewModel::onUpdateBucketItemOrder,
+                    onUpdateBucketItemBoxState = viewModel::updateBucketItemBoxState,
                     onClickBucketItem = { viewLinkBottomSheet.openSheet(data = it) }
                 )
 
@@ -358,7 +362,7 @@ private fun BucketViewDataBottomSheet(
         bottomSheet2State = editTodoBottomSheetState,
         onUpdateBucketItemBox = onUpdateBucketItemBox
     )
-    LinkBottomSheet(
+    ViewLinkBottomSheet(
         bottomSheet2State = viewLinkBottomSheet,
         onUpdateBucketItemBox = onUpdateBucketItemBox
     )

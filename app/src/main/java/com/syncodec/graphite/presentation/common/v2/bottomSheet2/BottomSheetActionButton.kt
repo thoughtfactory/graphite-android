@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,15 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,13 +26,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.cheonjaeung.compose.grid.GridScope
 import com.cheonjaeung.compose.grid.SimpleGridCells
 import com.cheonjaeung.compose.grid.VerticalGrid
-import com.maxkeppeker.sheets.core.views.Grid
 import com.syncodec.graphite.R
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
-import com.syncodec.graphite.presentation.ui.ICON_SIZE
 
 
 object BottomSheetActionButton {
@@ -55,7 +48,7 @@ object BottomSheetActionButton {
             contentColor: Color = MaterialTheme.colorScheme.onBackground,
             checkedContainerColor: Color = MaterialTheme.colorScheme.primaryContainer,
             checkedContentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
-            outlineColor: Color = Color.Transparent
+            outlineColor: Color = MaterialTheme.colorScheme.outline
         ) = Colors(containerColor = containerColor, contentColor = contentColor, checkedContainerColor = checkedContainerColor, checkedContentColor = checkedContentColor, outlineColor = outlineColor)
 
         @Composable
@@ -64,7 +57,7 @@ object BottomSheetActionButton {
             contentColor: Color = MaterialTheme.colorScheme.onErrorContainer,
             checkedContainerColor: Color = containerColor,
             checkedContentColor: Color = contentColor,
-            outlineColor: Color = Color.Transparent
+            outlineColor: Color = MaterialTheme.colorScheme.onErrorContainer
         ) = Colors(containerColor = containerColor, contentColor = contentColor, checkedContainerColor = checkedContainerColor, checkedContentColor = checkedContentColor, outlineColor = outlineColor)
     }
 

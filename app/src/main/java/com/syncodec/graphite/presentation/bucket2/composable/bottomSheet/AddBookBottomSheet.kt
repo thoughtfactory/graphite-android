@@ -40,11 +40,14 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.openLibrary.OLBookSearchResult
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryApi2
 import com.syncodec.graphite.di.network.openLibrary.OpenLibraryTitleSearchResult2
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchErrorView
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchInitView
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchNoDataView
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
@@ -112,10 +115,10 @@ fun AddBookBottomSheet(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 when (it) {
-                    is NetworkResponse.Init -> SearchInitView()
+                    is NetworkResponse.Init -> SearchInitView(bucketType = BucketBoxEncrypted.BucketType.Book)
                     is NetworkResponse.Loading -> LoadingView()
-                    is NetworkResponse.Error -> ErrorView()
-                    is NetworkResponse.Success -> SuccessView(
+                    is NetworkResponse.Error -> SearchErrorView()
+                    is NetworkResponse.Success ->if (it.data.docs.isEmpty()) SearchNoDataView() else SuccessView(
                         olTitleSearchResult = it.data,
                         onClickPrevious = { searchForBookUsingTitle(page = it) },
                         onClickNext = { searchForBookUsingTitle(page = it) },
@@ -140,11 +143,6 @@ private fun LoadingView() {
             strokeWidth = 2.dp
         )
     }
-}
-
-@Composable
-private fun ErrorView() {
-    Text("ErrorView")
 }
 
 @Composable

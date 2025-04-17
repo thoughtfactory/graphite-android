@@ -104,6 +104,14 @@ fun AddTodoBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 4.dp))
 
+            BucketItemStateView(
+                bucketType = BucketBoxEncrypted.BucketType.Todo,
+                bucketItemState = bucketItemState.ordinal,
+                onClickBucketItemState = { bucketItemState = BucketItemBoxDecrypted.State.entries.get(index = it) }
+            )
+
+            Spacer(modifier = Modifier.height(height = 2.dp))
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -112,14 +120,6 @@ fun AddTodoBottomSheet(
                 Spacer(modifier = Modifier.width(width = 6.dp))
                 LockButton(isLocked = isLocked) { isLocked = !isLocked }
             }
-
-            Spacer(modifier = Modifier.height(height = 2.dp))
-
-            BucketItemStateView(
-                bucketType = BucketBoxEncrypted.BucketType.Todo,
-                bucketItemState = bucketItemState.ordinal,
-                onClickBucketItemState = { bucketItemState = BucketItemBoxDecrypted.State.entries.get(index = it) }
-            )
 
             Spacer(modifier = Modifier.height(height = 20.dp))
 

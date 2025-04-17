@@ -49,10 +49,14 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.syncodec.graphite.R
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemShow
 import com.syncodec.graphite.di.network.NetworkResponse
 import com.syncodec.graphite.di.network.trakt.TraktApi
 import com.syncodec.graphite.di.network.trakt.TraktShowSearchResult
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchErrorView
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchInitView
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchNoDataView
 import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
@@ -181,17 +185,16 @@ fun AddShowBottomSheet(
                 }
             }
 
-
             AnimatedContent(
                 targetState = traktSearchResultNetworkResponse,
                 transitionSpec = { AnimationDefaults.Fade },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 when (it) {
-                    is NetworkResponse.Init -> InitView()
+                    is NetworkResponse.Init -> SearchInitView(bucketType = BucketBoxEncrypted.BucketType.Show)
                     is NetworkResponse.Loading -> LoadingView()
-                    is NetworkResponse.Error -> ErrorView()
-                    is NetworkResponse.Success -> SuccessView(
+                    is NetworkResponse.Error -> SearchErrorView()
+                    is NetworkResponse.Success -> if (it.data.isEmpty()) SearchNoDataView() else SuccessView(
                         traktSearchResultList = it.data,
                         onClickShow = onClickShow,
                     )
@@ -201,11 +204,6 @@ fun AddShowBottomSheet(
             Spacer(modifier = Modifier.height(height = 8.dp))
         }
     }
-}
-
-@Composable
-private fun InitView() {
-    Text("init view")
 }
 
 @Composable

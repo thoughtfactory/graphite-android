@@ -34,7 +34,8 @@ val lightColorScheme0 = lightColorScheme(
     onSurfaceVariant = Color(0xFF131313),
 //	background = Color(0xFFECF1F4),
     background = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF02060A)
+    onBackground = Color(0xFF02060A),
+    outline = Color(color = 0xFF373737)
 )
 
 val darkColorScheme0 = darkColorScheme(
@@ -54,7 +55,8 @@ val darkColorScheme0 = darkColorScheme(
     background = Color(color = 0xFF000000),
     onBackground = Color(color = 0xFFCDC9C3),
     errorContainer = Color(color = 0xFFBB6464),
-    onErrorContainer = Color(color = 0xFFFFFFFF)
+    onErrorContainer = Color(color = 0xFFFFFFFF),
+    outline = Color(0xFF474747),
 )
 
 

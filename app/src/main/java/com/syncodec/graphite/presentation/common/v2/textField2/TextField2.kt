@@ -5,8 +5,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -86,7 +88,7 @@ object GenericTextField2 {
             errorTrailingIconColor = MaterialTheme.colorScheme.onErrorContainer,
             focusedLabelColor = MaterialTheme.colorScheme.onBackground,
             unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
-//        disabledLabelColor = ,
+            disabledLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.71f),
             errorLabelColor = MaterialTheme.colorScheme.onErrorContainer,
             focusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(0.71f),
             unfocusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(0.42f),
@@ -181,6 +183,7 @@ object GenericTextField2 {
         return remember { TextField2Controller.initialize(initialText = initialText, initialFocus = initialFocus) }
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun Composable(
         modifier: Modifier = Modifier,
@@ -199,6 +202,7 @@ object GenericTextField2 {
         keyboardActions: KeyboardActions = Actions.getKeyboardActionsDefault(),
         colors: TextFieldColors = Colors.getDefaultColors(),
         onClick: () -> Unit = {},
+        onLongClick: (() -> Unit)? = null
     ) {
 
         val text by controller.textFlow.collectAsState()
@@ -215,7 +219,7 @@ object GenericTextField2 {
                 leadingIcon = prefixIcon?.let { function -> { function.invoke() } },
                 trailingIcon = { if (suffixIcon == null) null else Row { suffixIcon(); Spacer(modifier = Modifier.width(width = 6.dp)) } },
                 readOnly = mode != Mode.Edit,
-                enabled = mode != Mode.Clickable,
+                enabled = mode == Mode.Edit,
                 minLines = minLines,
                 maxLines = maxLines,
                 singleLine = singleLine,
@@ -227,8 +231,9 @@ object GenericTextField2 {
                     .fillMaxWidth()
                     .focusRequester(focusRequester = controller.focusRequester)
                     .clip(shape = MaterialTheme.shapes.medium)
-                    .onlyIfComposable(modifier = { clickable(onClick = onClick) }) { true }
-                    .border(border = BorderStroke(width = 1.dp, color = colors.unfocusedTextColor), shape = MaterialTheme.shapes.medium)
+                    .onlyIfComposable(modifier = { clickable(onClick = onClick) }) { onLongClick == null }
+                    .onlyIfComposable(modifier = { combinedClickable(onClick = onClick, onLongClick = onLongClick) }) { onLongClick != null }
+                    .border(border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outline), shape = MaterialTheme.shapes.medium)
             )
 
 
@@ -269,6 +274,7 @@ object GenericTextField2 {
         minLines: Int = 1,
         maxLines: Int = 1,
         singleLine: Boolean = true,
+        mode: Mode = Mode.Edit,
         prefixIcon: @Composable (() -> Unit)? = null,
         suffixIcon: @Composable (RowScope.() -> Unit)? = { GraIconButton.ClearTextButton { controller.onValueChange("") } },
         keyboardOptions: KeyboardOptions = Options.getTextNextKeyboardOptionsDefault(),
@@ -282,10 +288,36 @@ object GenericTextField2 {
             minLines = minLines,
             maxLines = maxLines,
             singleLine = singleLine,
+            mode = mode,
             prefixIcon = prefixIcon,
             suffixIcon = suffixIcon,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions
+        )
+    }
+
+    @Composable
+    fun BottomSheetTextView(
+        key: String,
+        value: String,
+        onClick: () -> Unit = {},
+        onLongClick: (() -> Unit)? = null
+    ) {
+        val textFieldController = GenericTextField2.rememberTextField2Controller(initialText = value)
+        LaunchedEffect(key1 = value) { textFieldController.onValueChange(value = value) }
+
+        Composable(
+            controller = textFieldController,
+            label = key,
+            minLines = 1,
+            maxLines = Int.MAX_VALUE,
+            singleLine = false,
+            mode = Mode.ReadOnly,
+            prefixIcon = null,
+            suffixIcon = null,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            onClick = onClick,
+            onLongClick = onLongClick
         )
     }
 }

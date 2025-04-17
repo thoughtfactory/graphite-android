@@ -21,6 +21,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +46,7 @@ import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.Bucke
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.v2.buildingBlock.KeyValueCard
+import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.utils.decodeBase64ToBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -55,10 +56,12 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class, ExperimentalUuidApi::class)
 @Composable
-fun LinkBottomSheet(
+fun ViewLinkBottomSheet(
     bottomSheet2State: GenericBottomSheet2State<BucketItemBoxDecrypted> = GenericBottomSheet2State.rememberGenericBottomSheet2StateT(),
     onUpdateBucketItemBox: (BucketItemBoxDecrypted) -> Unit = {}
 ) {
+    val scope = rememberCoroutineScope()
+
     val bucketItemBox by bottomSheet2State.dataFlow.collectAsState()
 
     val linkData by remember(key1 = bucketItemBox?.bucketItemData) { derivedStateOf { bucketItemBox?.bucketItemData as? BucketItemLink } }
@@ -76,6 +79,7 @@ fun LinkBottomSheet(
         ) ?: return
 
         onUpdateBucketItemBox(updatedBucketItemBox)
+        bottomSheet2State.hideSheet(scope = scope)
     }
 
     GenericBottomSheet2(
@@ -93,9 +97,9 @@ fun LinkBottomSheet(
                     isFavourite = isFavourite,
                     isLocked = isLocked,
                     bucketItemState = bucketItemState,
-                    onUpdateBucketItemState = { bucketItemState = it; updateBucketItemObject() },
-                    onClickFavourite = { isFavourite = it; updateBucketItemObject() },
-                    onClickLock = { isLocked = it; updateBucketItemObject() }
+                    onUpdateBucketItemState = { bucketItemState = it },
+                    onClickFavourite = { isFavourite = it },
+                    onClickLock = { isLocked = it }
                 )
             }
 
@@ -105,7 +109,7 @@ fun LinkBottomSheet(
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = ::updateBucketItemObject,
-                content = { Text(text = stringResource(id = R.string.add_todo)) }
+                content = { Text(text = stringResource(id = R.string.update)) }
             )
         }
     }
@@ -128,46 +132,46 @@ private fun SuccessView(
         ThumbnailPreview(base64String = linkData.imageBase64)
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.url),
             value = linkData.url ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { linkData.url?.let { uriHandler.openUri(uri = it) } },
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.url) }) }
+            onClick = {
+                try {
+                    linkData.url ?: return@BottomSheetTextView
+                    uriHandler.openUri(uri = linkData.url)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            },
+            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(linkData.url ?: return@BottomSheetTextView) }) }
         )
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.title),
             value = linkData.title ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.title) }) }
+            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(linkData.title ?: return@BottomSheetTextView) }) }
         )
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.description),
             value = linkData.description ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.description) }) }
+            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(linkData.description ?: return@BottomSheetTextView) }) }
         )
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.site_name),
             value = linkData.siteName ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.siteName) }) }
         )
-        Spacer(modifier = Modifier.height(height = 6.dp))
+        Spacer(modifier = Modifier.height(height = 4.dp))
 
         BucketItemStateView(
             bucketType = BucketBoxEncrypted.BucketType.Link,
             bucketItemState = bucketItemState.ordinal,
             onClickBucketItemState = { onUpdateBucketItemState(BucketItemBoxDecrypted.State.entries.get(index = it)) }
         )
-
-        Spacer(modifier = Modifier.height(height = 4.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth()

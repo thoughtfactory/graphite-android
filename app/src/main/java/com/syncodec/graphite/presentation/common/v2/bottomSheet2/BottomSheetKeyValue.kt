@@ -20,57 +20,57 @@ import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 
 
-object BottomSheetKeyValue {
-    data class Colors(
-        val containerColor: Color,
-        val contentColor: Color,
-        val outlineColor: Color = Color.Transparent
-    )
-
-    object Defaults {
-        @Composable
-        fun colors(
-            containerColor: Color = MaterialTheme.colorScheme.background,
-            contentColor: Color = MaterialTheme.colorScheme.onBackground,
-            outlineColor: Color = Color.Transparent
-        ) = Colors(containerColor = containerColor, contentColor = contentColor, outlineColor = outlineColor)
-    }
-
-    @Composable
-    fun Composable(
-        key: String,
-        value: String?,
-        colors: Colors = Defaults.colors(),
-    ) {
-        Surface(
-            color = colors.containerColor,
-            contentColor = colors.contentColor,
-            shape = MaterialTheme.shapes.medium,
-            border = BorderStroke(width = 1.dp, color = colors.outlineColor),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text = key,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.contentColor.copy(alpha = 0.71f)
-                )
-                Spacer(modifier = Modifier.height(height = 4.dp))
-                Text(
-                    text = if (value.isNullOrBlank()) stringResource(id = R.string.no_data) else value,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontStyle = if (value.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
+//object BottomSheetKeyValue {
+//    data class Colors(
+//        val containerColor: Color,
+//        val contentColor: Color,
+//        val outlineColor: Color = Color.Transparent
+//    )
+//
+//    object Defaults {
+//        @Composable
+//        fun colors(
+//            containerColor: Color = MaterialTheme.colorScheme.background,
+//            contentColor: Color = MaterialTheme.colorScheme.onBackground,
+//            outlineColor: Color = Color.Transparent
+//        ) = Colors(containerColor = containerColor, contentColor = contentColor, outlineColor = outlineColor)
+//    }
+//
+//    @Composable
+//    fun Composable(
+//        key: String,
+//        value: String?,
+//        colors: Colors = Defaults.colors(),
+//    ) {
+//        Surface(
+//            color = colors.containerColor,
+//            contentColor = colors.contentColor,
+//            shape = MaterialTheme.shapes.medium,
+//            border = BorderStroke(width = 1.dp, color = colors.outlineColor),
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(horizontal = 4.dp, vertical = 2.dp)
+//        ) {
+//            Column(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .padding(horizontal = 12.dp, vertical = 12.dp)
+//            ) {
+//                Text(
+//                    text = key,
+//                    style = MaterialTheme.typography.labelMedium,
+//                    fontWeight = FontWeight.Bold,
+//                    color = colors.contentColor.copy(alpha = 0.71f)
+//                )
+//                Spacer(modifier = Modifier.height(height = 4.dp))
+//                Text(
+//                    text = if (value.isNullOrBlank()) stringResource(id = R.string.no_data) else value,
+//                    style = MaterialTheme.typography.bodySmall,
+//                    fontStyle = if (value.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
+//                    fontWeight = FontWeight.Bold
+//                )
+//            }
+//        }
+//    }
+//}
 

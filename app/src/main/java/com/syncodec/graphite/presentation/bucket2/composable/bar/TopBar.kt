@@ -28,17 +28,21 @@ import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaIcon
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaSelectedIcon
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToBetaText
 import com.syncodec.graphite.di.modelObjectBox.bucketTypeToGammaText
+import com.syncodec.graphite.presentation.bucket2.BucketViewModel2
 import com.syncodec.graphite.presentation.common.animation.AnimatedText
 import com.syncodec.graphite.presentation.common.v2.button.GraIconButton
 import com.syncodec.graphite.presentation.common.navigationTab.GenericTabRow
 import com.syncodec.graphite.presentation.common.navigationTab.TabItem
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
+import com.syncodec.graphite.utils.DataLoader
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun TopBar(
     title: String? = null,
     bucketType: BucketBoxEncrypted.BucketType = BucketBoxEncrypted.BucketType.Unknown,
+    bucketItemBoxOrderedDataFlow: StateFlow<DataLoader<BucketViewModel2.BucketItemBoxOrderedData>>,
     stateFilterInt: Int = 0,
     isLocked: Boolean = false,
     isFavourite: Boolean = false,
@@ -50,6 +54,8 @@ fun TopBar(
     val selectionContainerActor = LocalSelectionContainerActor.current
     val isSelecting by selectionContainerActor.isSelectingFlow.collectAsState()
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
+
+    val bucketItemBoxOrderedData by bucketItemBoxOrderedDataFlow.collectAsState()
 
     Column {
         Crossfade(
@@ -69,7 +75,7 @@ fun TopBar(
         Spacer(modifier = Modifier.height(height = 4.dp))
 
         BucketItemStateFilter(
-            visible = !isSelecting,
+            visible = !isSelecting&& bucketItemBoxOrderedData is DataLoader.Loaded,
             bucketType = bucketType,
             stateFilterInt = stateFilterInt,
             onUpdateFilterInt = onUpdateFilterInt

@@ -46,11 +46,12 @@ import com.syncodec.graphite.di.network.openGraph.LinkData
 import com.syncodec.graphite.di.network.openGraph.OpenGraphApi
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.FavouriteButton
 import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.LockButton
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchErrorView
+import com.syncodec.graphite.presentation.bucket2.composable.bottomSheet.buildingBlock.SearchInitView
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemStateView
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
-import com.syncodec.graphite.presentation.common.v2.buildingBlock.KeyValueCard
 import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.presentation.ui.AnimationDefaults
 import com.syncodec.graphite.utils.encodeBase64
@@ -134,9 +135,9 @@ fun AddLinkBottomSheet(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 when (it) {
-                    is NetworkResponse.Init -> InitView()
+                    is NetworkResponse.Init -> SearchInitView(bucketType = BucketBoxEncrypted.BucketType.Link)
                     is NetworkResponse.Loading -> LoadingView()
-                    is NetworkResponse.Error -> ErrorView()
+                    is NetworkResponse.Error -> SearchErrorView()
                     is NetworkResponse.Success -> SuccessView(
                         linkData = it.data,
                         bucketItemState = bucketItemState,
@@ -162,15 +163,10 @@ fun AddLinkBottomSheet(
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = ::saveBucketItem,
-                content = { Text(text = stringResource(id = R.string.add_todo)) }
+                content = { Text(text = stringResource(id = R.string.add_link)) }
             )
         }
     }
-}
-
-@Composable
-private fun InitView() {
-    Text("init view")
 }
 
 @Composable
@@ -184,11 +180,6 @@ private fun LoadingView() {
             strokeWidth = 2.dp
         )
     }
-}
-
-@Composable
-private fun ErrorView() {
-    Text("ErrorView")
 }
 
 @Composable
@@ -212,38 +203,40 @@ private fun SuccessView(
         ThumbnailPreview(thumbnailUrl = linkData.imagePath, onGetThumbnail = onGetThumbnail)
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.url),
             value = linkData.url ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { linkData.url?.let { uriHandler.openUri(uri = it) } },
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.url) }) }
+            onClick = {
+                try {
+                    linkData.url ?: return@BottomSheetTextView
+                    uriHandler.openUri(uri = linkData.url)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            },
+            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(linkData.url ?: return@BottomSheetTextView) }) }
         )
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.title),
             value = linkData.title ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.title) }) }
+            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(linkData.title ?: return@BottomSheetTextView) }) }
         )
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.description),
             value = linkData.description ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.description) }) }
+            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(linkData.description ?: return@BottomSheetTextView) }) }
         )
         Spacer(modifier = Modifier.height(height = 6.dp))
 
-        KeyValueCard(
+        GenericTextField2.BottomSheetTextView(
             key = stringResource(id = R.string.site_name),
             value = linkData.siteName ?: "",
-            modifier = Modifier.fillMaxWidth(),
-            onLongClick = { clipboardManager.setText(annotatedString = buildAnnotatedString { append(text = linkData.siteName) }) }
         )
-        Spacer(modifier = Modifier.height(height = 6.dp))
+        Spacer(modifier = Modifier.height(height = 4.dp))
 
         BucketItemStateView(
             bucketType = BucketBoxEncrypted.BucketType.Link,

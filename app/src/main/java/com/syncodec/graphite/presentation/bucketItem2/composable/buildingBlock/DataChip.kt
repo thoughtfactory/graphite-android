@@ -17,9 +17,9 @@ fun DataChip(
     text: String
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.47f)),
+        color = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outline),
         shape = MaterialTheme.shapes.small,
         modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp)
     ) {

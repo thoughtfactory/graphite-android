@@ -2,8 +2,10 @@ package com.syncodec.graphite.presentation.bucketItem2.composable.bottomSheet
 
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -17,10 +19,10 @@ import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.structureExtension.toPretty
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.BottomSheetActionButton
-import com.syncodec.graphite.presentation.common.v2.bottomSheet2.BottomSheetKeyValue
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheet2State
 import com.syncodec.graphite.presentation.common.v2.bottomSheet2.GenericBottomSheetSkeleton2
+import com.syncodec.graphite.presentation.common.v2.textField2.GenericTextField2
 import com.syncodec.graphite.utils.DataLoader
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.InternalSerializationApi
@@ -53,24 +55,29 @@ fun MetadataBottomSheet(
 
             Spacer(modifier = Modifier.height(height = 8.dp))
 
-            BottomSheetKeyValue.Composable(
+            GenericTextField2.BottomSheetTextView(
                 key = stringResource(id = R.string.id),
                 value = bucketItemBox?.uuid?.toString() ?: "-"
             )
-            BottomSheetKeyValue.Composable(
+            Spacer(modifier = Modifier.height(height = 6.dp))
+            GenericTextField2.BottomSheetTextView(
                 key = stringResource(id = R.string.created_on),
                 value = bucketItemBox?.createdTimestamp?.toPretty() ?: "-"
             )
-            BottomSheetKeyValue.Composable(
+            Spacer(modifier = Modifier.height(height = 6.dp))
+            GenericTextField2.BottomSheetTextView(
                 key = stringResource(id = R.string.modified_on),
                 value = bucketItemBox?.modifiedTimestamp?.toPretty() ?: "-"
             )
-            BottomSheetKeyValue.Composable(
+            Spacer(modifier = Modifier.height(height = 6.dp))
+            GenericTextField2.BottomSheetTextView(
                 key = stringResource(id = R.string.parent),
                 value = "${bucketBox?.uuid?.toString() ?: "-"}\n${bucketBox?.title ?: "-"}"
             )
 
-            Spacer(modifier = Modifier.height(height = 4.dp))
+            Spacer(modifier = Modifier.height(height = 16.dp))
+            HorizontalDivider(modifier = Modifier.fillMaxWidth(fraction = 0.71f))
+            Spacer(modifier = Modifier.height(height = 12.dp))
 
             BottomSheetActionButton.BottomSheetActionGrid(itemInRow = 3) {
                 BottomSheetActionButton.MoveButton(itemInRow = 3, onClick = onClickMove)

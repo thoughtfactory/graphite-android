@@ -21,30 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
+import com.syncodec.graphite.di.modelObjectBox.encryptable.EncryptedBucketType
 
 
 @Composable
-fun SearchInitView(
-    bucketType: BucketBoxEncrypted.BucketType
-) {
-    val iconIllustration = when(bucketType) {
-        BucketBoxEncrypted.BucketType.Todo -> return
-        BucketBoxEncrypted.BucketType.Book -> R.drawable.il_mm_bucket_book_search
-        BucketBoxEncrypted.BucketType.Show -> R.drawable.il_mm_bucket_show_search
-        BucketBoxEncrypted.BucketType.Link -> R.drawable.il_mm_bucket_link_search
-        BucketBoxEncrypted.BucketType.Location -> return
-        BucketBoxEncrypted.BucketType.Unknown -> return
-    }
-
-    val text = when(bucketType) {
-        BucketBoxEncrypted.BucketType.Todo -> return
-        BucketBoxEncrypted.BucketType.Book -> R.string.bucket_book_search
-        BucketBoxEncrypted.BucketType.Show -> R.string.bucket_show_search
-        BucketBoxEncrypted.BucketType.Link -> R.string.bucket_link_search
-        BucketBoxEncrypted.BucketType.Location -> return
-        BucketBoxEncrypted.BucketType.Unknown -> return
-    }
-
+fun SearchErrorView() {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -59,13 +40,13 @@ fun SearchInitView(
         ) {
             Spacer(modifier = Modifier.height(height = 32.dp))
             Image(
-                painter = painterResource(id = iconIllustration),
-                contentDescription = stringResource(id = text),
+                painter = painterResource(id = R.drawable.il_mm_bucket_search_error),
+                contentDescription = stringResource(id = R.string.bucket_search_error),
                 modifier = Modifier.fillMaxWidth(fraction = 0.471f)
             )
             Spacer(modifier = Modifier.height(height = 24.dp))
             Text(
-                text = stringResource(id = text),
+                text = stringResource(id = R.string.bucket_search_error),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 12.dp)

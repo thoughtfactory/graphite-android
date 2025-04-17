@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,12 +22,14 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.HapticFeedbackConstantsCompat
 import androidx.core.view.ViewCompat
 import com.syncodec.graphite.di.modelObjectBox.BucketBoxDecrypted
+import com.syncodec.graphite.di.modelObjectBox.BucketBoxEncrypted
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemTodo
 import com.syncodec.graphite.presentation.bucket2.BucketViewModel2
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemGridContainer
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.BucketItemListContainer
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.DragHandle
+import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.NoDataView
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.todoCard.TodoGridCard
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.todoCard.TodoListCard
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
@@ -67,7 +70,7 @@ fun TodoScreen(
         when (bucketItemBoxListData1) {
             DataLoader.Init::class.simpleName -> Unit
             DataLoader.Loading::class.simpleName -> Unit
-            DataLoader.NoData::class.simpleName -> Unit
+            DataLoader.NoData::class.simpleName -> NoDataView(bucketType = BucketBoxEncrypted.BucketType.Todo)
             DataLoader.Error::class.simpleName -> Unit
             DataLoader.Loaded::class.simpleName -> HorizontalPager(
                 state = pagerState,
@@ -197,10 +200,9 @@ private fun DataListView(
         TodoListCard(
             bucketItemBox = bucketItemBox,
             bucketItemTodo = bucketItemTodo,
-            state = bucketItemBox?.state ?: BucketItemBoxDecrypted.State.Alpha,
             isReorderable = pageNumber == 0,
             isLast = index == orderedIdList.lastIndex,
-            onClickTriStateButton = { bucketItemBox ?: return@TodoListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id, allItemIdList = orderedIdList) else onUpdateBucketItemBoxState(bucketItemBox, bucketItemBox.nextState()) },
+            onClickStateButton = { bucketItemBox ?: return@TodoListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id, allItemIdList = orderedIdList) else onUpdateBucketItemBoxState(bucketItemBox, bucketItemBox.nextState()) },
             onClick = { bucketItemBox ?: return@TodoListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id, allItemIdList = orderedIdList) else onClickBucketItem(bucketItemBox) },
             onLongClick = { bucketItemBox ?: return@TodoListCard; selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id, allItemIdList = orderedIdList) },
             dragHandle = {

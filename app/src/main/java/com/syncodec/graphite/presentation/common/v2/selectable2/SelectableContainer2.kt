@@ -35,7 +35,7 @@ fun SelectableContainer2(
     selected: Boolean,
     enabled: Boolean,
     shape: Shape,
-    border: BorderStroke? = null,
+    border: BorderStroke? = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outline),
     shadowElevation: Dp = 0.dp,
     color: SelectableContainer2Defaults.Colors = SelectableContainer2Defaults.defaultColors(),
     interactionSource: MutableInteractionSource? = null,
@@ -89,8 +89,8 @@ object SelectableContainer2Defaults {
 
     @Composable
     fun defaultColors(
-        containerColor: Color = MaterialTheme.colorScheme.surface,
-        onContainerColor: Color = MaterialTheme.colorScheme.onSurface,
+        containerColor: Color = MaterialTheme.colorScheme.background,
+        onContainerColor: Color = MaterialTheme.colorScheme.onBackground,
         selectedContainerColor: Color = MaterialTheme.colorScheme.surfaceBright,
         onSelectedContainerColor: Color = MaterialTheme.colorScheme.onSurface,
     ): Colors = Colors(

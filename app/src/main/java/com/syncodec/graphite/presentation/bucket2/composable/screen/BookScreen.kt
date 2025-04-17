@@ -50,6 +50,7 @@ fun BookScreen(
     bucketBoxDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init()),
     bucketItemBoxOrderedDataFlow: StateFlow<DataLoader<BucketViewModel2.BucketItemBoxOrderedData>>,
     onUpdateBucketItemOrder: (BucketBoxDecrypted, List<Long>) -> Unit = { _, _ -> },
+    onUpdateBucketItemBoxState: (BucketItemBoxDecrypted, BucketItemBoxDecrypted.State) -> Unit = { _, _ -> },
     onClickBucketItem: (BucketItemBoxDecrypted) -> Unit = {},
 ) {
     val bucketItemBoxOrderedData by bucketItemBoxOrderedDataFlow.collectAsState()
@@ -88,6 +89,7 @@ fun BookScreen(
                             bucketItemBoxOrdered = bucketItemBoxOrdered,
                             bucketBoxDataFlow = bucketBoxDataFlow,
                             pageNumber = pageNumber,
+                            onUpdateBucketItemBoxState = onUpdateBucketItemBoxState,
                             onUpdateBucketItemOrder = onUpdateBucketItemOrder,
                             onClickBucketItem = onClickBucketItem,
                         )
@@ -168,6 +170,7 @@ private fun DataListView(
     bucketItemBoxOrdered: BucketViewModel2.BucketItemBoxOrderedData,
     bucketBoxDataFlow: StateFlow<DataLoader<BucketBoxDecrypted>> = MutableStateFlow(value = DataLoader.Init()),
     pageNumber: Int = 0,
+    onUpdateBucketItemBoxState: (BucketItemBoxDecrypted, BucketItemBoxDecrypted.State) -> Unit = { _, _ -> },
     onUpdateBucketItemOrder: (BucketBoxDecrypted, List<Long>) -> Unit = { _, _ -> },
     onClickBucketItem: (BucketItemBoxDecrypted) -> Unit = {},
 ) {
@@ -209,6 +212,7 @@ private fun DataListView(
             bucketItemBook = bucketItemBook,
             isReorderable = pageNumber == 0,
             isLast = index == orderedIdList.lastIndex,
+            onClickStateButton = { bucketItemBox ?: return@BookListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id, allItemIdList = orderedIdList) else onUpdateBucketItemBoxState(bucketItemBox, bucketItemBox.nextState()) },
             onClick = { bucketItemBox ?: return@BookListCard; if (isSelecting) selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) else onClickBucketItem(bucketItemBox) },
             onLongClick = { bucketItemBox ?: return@BookListCard; selectionContainerActor.selectItem(objectBoxId = bucketItemBox.id) },
             dragHandle = {

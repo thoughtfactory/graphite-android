@@ -17,6 +17,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -37,6 +38,7 @@ import coil3.request.ImageRequest
 import com.syncodec.graphite.R
 import com.syncodec.graphite.di.modelObjectBox.BucketItemBoxDecrypted
 import com.syncodec.graphite.di.modelObjectBox.customObject.BucketItemLink
+import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.StateViewButton
 import com.syncodec.graphite.presentation.bucket2.composable.buildingBlock.StatusContainer
 import com.syncodec.graphite.presentation.common.v2.selectable2.LocalSelectionContainerActor
 import com.syncodec.graphite.presentation.common.v2.selectable2.SelectableContainer2
@@ -52,6 +54,7 @@ fun LinkListCard(
     isReorderable: Boolean = false,
     isLast: Boolean = false,
     dragHandle: @Composable () -> Unit = {},
+    onClickStateButton: () -> Unit = {},
     onClick: (Long) -> Unit = {},
     onLongClick: (Long) -> Unit = {}
 ) {
@@ -60,6 +63,7 @@ fun LinkListCard(
     val selectedItemIdList by selectionContainerActor.selectedItemIdListFlow.collectAsState()
 
     val linkData by remember(key1 = bucketItemLink) { derivedStateOf { bucketItemLink?.linkData } }
+    val state by remember(key1 = bucketItemBox) { derivedStateOf { bucketItemBox?.state ?: BucketItemBoxDecrypted.State.Alpha } }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -75,10 +79,14 @@ fun LinkListCard(
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(start = 8.dp, top = 12.dp, end = 16.dp, bottom = 12.dp)
             ) {
+
+                StateViewButton(state = state, onClickStateButton = onClickStateButton)
+
                 Box(
                     modifier = Modifier.requiredSize(size = 108.dp)
                 ) {
